@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000213","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["크루즈 숙박 노출 6일 후","ICU 중증 다엽성 CAP","쇼크성 혈압·저산소증","Legionella 검사 적응증"],"clinical_inference":"중증·여행연관 폐렴은 Legionella를 즉시 검사하며, 신속하지만 serogroup 1 중심인 요항원과 더 넓은 하기도 배양·분자검사를 병행한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"소변 항원검사는 빠르게 L. pneumophila serogroup 1을 확인하고 하부호흡기 PCR·특수배양은 다른 혈청군·종까지 보완한다. 크루즈 집단노출 가능성이 있어 배양 균주는 환경주와 비교하는 공중보건 가치도 있다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"요항원은 신속하지만 주로 L. pneumophila serogroup 1만 검출한다. 단독 음성으로 다른 혈청군·종을 배제하지 못하고 역학 비교용 균주도 확보할 수 없다.","could_be_correct_if":"신속 초기 선별로 시행하되 하부호흡기 검사와 함께 사용할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"일반 객담배양은 Legionella에 필요한 선택배지 없이 균을 놓칠 수 있다. ICU 중증도와 크루즈 숙박 노출은 치료 실패를 기다리지 않고 즉시 특이 검사를 할 근거다.","could_be_correct_if":"일반 세균 병원체 평가의 일부로 시행하되 Legionella 특이 검사를 동시에 추가할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"짝혈청 항체가는 회복기 검체가 필요해 후향적 확증·역학조사에는 도움이 될 수 있다. 오늘 ICU 항생제 범위를 정하기에는 너무 늦어 급성기 검사만으로 사용할 수 없다.","could_be_correct_if":"후향적 역학 확증을 위해 급성기·회복기 혈청을 보조적으로 비교할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"직접형광항체검사 단독은 민감도와 검출 범위가 충분하지 않으며 BAL은 침습적이다. 객담을 얻지 못하거나 광범위 감별이 필요한 경우 기관지경을 고려해도 UAT와 배양·PCR 조합을 대신하지 않는다.","could_be_correct_if":"비침습 하기도 검체를 얻을 수 없고 기관지경이 임상적으로 필요한 경우 보조검사로 사용할 때","misconception_tag":"검사 순서"}
+    ],"review_flags":["검체는 가능하면 항생제 전에 채취하되 중증 폐렴의 경험적 항균제와 패혈증 소생을 지연해서는 안 된다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000214","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["온수 욕조 공동 노출","약 30시간의 짧은 잠복기","집단 독감유사 증상","정상 산소화·혈압","폐침윤 없음","자연 호전"],"clinical_inference":"폐렴이 없는 자가제한성 Pontiac fever에 부합하므로 항생제 없이 대증치료와 공중보건·환경 평가를 시행한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"azithromycin은 Legionnaires' disease의 폐렴 치료에 사용한다. 이 집단은 폐침윤·저산소증 없이 이미 자연 호전하는 Pontiac fever여서 항균제가 경과를 단축한다는 근거가 없다.","could_be_correct_if":"영상상 폐렴과 임상적 Legionnaires' disease가 발생한 개별 환자","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"levofloxacin도 Legionella 폐렴의 활성 약제지만 자가제한성 비폐렴 증후군에 10일 투여할 이유가 없다. 건병증, QT 연장과 C. difficile 등 위해만 추가될 수 있다.","could_be_correct_if":"중증도·면역상태를 반영해 Legionella 폐렴 치료제로 fluoroquinolone이 적절할 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"amoxicillin-clavulanate는 일부 외래 CAP와 흡인감염에 사용하지만 Pontiac fever를 치료하지 않는다. 또한 세포내 Legionella 폐렴의 표적약도 아니다.","could_be_correct_if":"별도의 감수성 전형 세균 CAP 또는 흡인성 감염이 확인될 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"정주 ceftriaxone-azithromycin은 입원이 필요한 CAP의 경험요법이다. 참가자들은 혈역학·산소화가 안정되고 폐침윤도 없어 입원 폐렴 치료의 조건을 충족하지 않는다.","could_be_correct_if":"폐렴·저산소증·불안정이 발생해 입원 CAP로 치료해야 할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"correct","explanation":"수분 공급, 해열·진통 등 대증치료를 하고 자연 호전을 관찰한다. 동시에 집단 온수 욕조 노출을 보건당국에 알리고 추가 환자와 수계 오염을 평가하도록 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["임상적으로 폐렴이 새로 발생하거나 고위험 환자가 악화하면 Legionnaires' disease로 재평가해야 한다.","집단 발생 신고·환경조사는 지역 공중보건 규정에 따라 시행해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000215","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["Legionella UAT·배양 양성","발병 8일 전 해외 호텔·수영장·스파 노출","치료 중 호전","배양 균주 확보"],"clinical_inference":"여행연관 확진 Legionnaires' disease는 단일 사례도 국제·지역 자료와 연결될 수 있어 보건당국에 신속 신고하고 14일 노출력과 임상 균주를 제공한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"여행객은 여러 지역으로 흩어져 한 병원이 두 번째 환자를 발견하기 어렵다. 단일 확진 사례라도 보건당국 자료와 연결해야 같은 호텔의 숨은 집단발생을 조기에 확인할 수 있다.","could_be_correct_if":"해당 지역 법령상 비신고 대상이라도 내부 기록만으로 공중보건 위험을 놓치지 않도록 규정을 확인해야 한다.","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"호텔 자체 검사는 채취 지점·방법이 부적절하면 원인을 놓치거나 공식 조사에 영향을 줄 수 있다. 확진과 노출이 확인된 시점에 보건당국이 사례 정의와 환경검사를 조정해야 한다.","could_be_correct_if":"보건당국 지휘 아래 호텔이 공식 환경조사에 참여할 때에도 신고를 먼저 한다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"correct","explanation":"관할 보건당국에 신속 신고하고 증상 시작 전 14일의 호텔·수계·의료기관 노출을 제공한다. 배양 임상주는 환경 분리주와 분자 비교할 수 있어 집단발생 원인을 확인하는 핵심 자료다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"이 환자는 UAT뿐 아니라 배양도 양성으로 확진 근거가 중복된다. 배양 균주는 환경주와 비교할 수 있으므로 폐기할 것이 아니라 적절히 보존·공유해야 한다.","could_be_correct_if":"검체 보존·이송은 해당 검사실과 보건당국 프로토콜에 따라 수행할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Legionella는 주로 오염 수계 에어로졸로 전파되며 일상적 사람 간 전파가 아니다. 가족·의료진에게 예방적 azithromycin을 줄 근거가 없고 조사는 호텔 수계 노출에 집중한다.","could_be_correct_if":"예외적 사람 간 전파가 공중보건 조사로 확인되어 당국이 별도 조치를 권고할 때","misconception_tag":"적응증"}
+    ],"review_flags":["신고 의무와 보고 경로는 국가·지역별로 달라질 수 있으므로 한국 문제은행 출판 시 국내 감염병 신고 규정과 해외 여행연관 보고 절차를 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000216","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["17세 학교 집단 기침","발열·두통과 비정형 폐렴 양상","혈압·산소화 안정","Mycoplasma 의심"],"clinical_inference":"청소년 집단에서 서서히 진행하는 비정형 폐렴은 세포벽 없는 M. pneumoniae를 시사해 beta-lactam이 아닌 azithromycin이 적절하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"amoxicillin은 폐렴구균 등 세포벽을 가진 전형 세균에 효과가 있다. Mycoplasma는 세포벽이 없어 beta-lactam 표적이 존재하지 않으므로 임상적으로 듣지 않는다.","could_be_correct_if":"폐렴구균 등 amoxicillin 감수성 전형 세균성 CAP가 확인되거나 더 가능할 때","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"correct","explanation":"azithromycin은 세포내 단백합성을 억제해 Mycoplasma에 활성이 있고 안정 청소년의 외래 치료에 사용할 수 있다. 지역 macrolide 내성과 임상 반응을 확인하고 실패하면 진단·대체약을 재평가한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"vancomycin은 MRSA 등 그람양성 세포벽 병원체의 중증 감염에 쓰며 Mycoplasma에는 표적이 없다. 안정 외래 청소년에게 정주 투여할 중증도 근거도 없다.","could_be_correct_if":"MRSA 등 vancomycin 감수성 중증 그람양성 감염이 의심·확인될 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"oseltamivir는 인플루엔자 치료제이며 학교 집단발생만으로 바이러스 감염을 확정하지 않는다. 영상으로 폐렴이 있고 Mycoplasma 임상 맥락이므로 항바이러스 단독은 원인 치료가 아니다.","could_be_correct_if":"인플루엔자 검사가 양성이고 세균성 폐렴이 배제된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"piperacillin-tazobactam은 녹농균·혐기성균 위험이 있는 중증 입원 감염에서 사용한다. 안정 청소년에게 과도하고 세포벽 없는 Mycoplasma 활성이 없다.","could_be_correct_if":"Pseudomonas 또는 복합 흡인감염 위험이 있는 중증 입원 폐렴","misconception_tag":"적응증"}
+    ],"review_flags":["지문만으로 Mycoplasma를 확진할 수는 없고 X선도 비특이적이다. 학교 집단발생·연령·완만한 임상 경과를 이용한 경험적 최선답 문항임을 해설에 명시해야 한다.","17세 대상이므로 항균제 선택과 용량은 소아·청소년 지침 및 지역 macrolide 내성률을 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000217","answer_consistency":"questionable",
+    "core_reasoning":{"key_findings":["새 HIV 의심·CD4 78/μL","진행성 호흡곤란","PaO2 62 mmHg","CT상 양측 미만성 간유리음영","C1과 C4가 한글·영문 표기만 다른 동일 처방"],"clinical_inference":"중등도-중증 PJP는 TMP-SMX와 보조 prednisone 적응증이지만 C1과 C4가 완전히 같은 치료라 단일정답성이 성립하지 않는다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"트리메토프림-설파메톡사졸과 프레드니손은 C4의 영문 약제명과 정확히 동일하다. PaO2 70 mmHg 미만의 중등도-중증 PJP에서 원인치료와 보조 스테로이드를 함께 시작하는 올바른 처방이다.","could_be_correct_if":null,"misconception_tag":"기타"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"azithromycin은 PJP 치료제가 아니며 미만성 폐포자충 감염을 제거하지 못한다. 비정형 세균이나 MAC 관련 적응증이 있을 때 별도로 사용한다.","could_be_correct_if":"azithromycin 감수성 비정형 세균 감염이 확인될 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"결핵은 만성 증상, 상엽 공동·결절과 미생물학적 근거로 진단한다. CD4 저하와 미만성 간유리음영·저산소증은 PJP를 더 지지하며 경험적 4제만 시작할 근거가 없다.","could_be_correct_if":"활동성 결핵이 미생물·임상·영상으로 확인되거나 매우 강하게 의심될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"TMP-SMX는 PJP의 1차 원인치료이며 PaO2 62 mmHg는 보조 prednisone 기준에 해당한다. 다만 C1과 동일한 처방이므로 이 선택지만 정답으로 지정할 수 없다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기관지확장제는 동반 기관지수축 증상을 완화할 수 있어도 PJP를 치료하지 않는다. 진행성 저산소성 감염에는 즉각적인 항미생물·보조 스테로이드 치료가 필요하다.","could_be_correct_if":"동반 가역적 기관지수축의 보조치료로 원인치료와 함께 사용할 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["C1과 C4는 각각 한글과 영문으로만 표기된 동일한 TMP-SMX+prednisone 처방이며 둘 다 정답이다. 한 선택지를 완전히 다른 오답으로 교체하기 전에는 출판할 수 없다.","기존 C4 해설이 전혀 무관한 amoxicillin-clavulanate를 언급하는 생성 오류가 있다.","기존 핵심 해설 말미의 자동 결합 비문을 삭제하고 게시 전 CT의 양측 미만성 ground-glass 음영을 확인해야 한다.","지문의 'HIV 감염이 진단되지 않은'과 이미 제시된 CD4 78/μL의 관계를 '이번 평가에서 새로 HIV 감염이 확인된' 등으로 명확히 해야 한다."],"publication_recommendation":"hold"
+  }
+]

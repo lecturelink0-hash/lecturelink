@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000183","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["덜 익힌 민물가재 섭취","기침과 녹슨빛 객담","말초 폐결절","현미경상 유개 황갈색 충란"],"clinical_inference":"노출력과 Paragonimus 충란이 폐흡충증을 확진하므로 체중 기준 praziquantel 단기요법이 원인 치료다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"민물가재 노출과 특징적인 유개 충란으로 폐흡충증이 확인되었다. 체중 기준 praziquantel을 표준 단기요법으로 투여하고 이후 증상, 호산구와 영상 호전을 확인한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"항결핵 4제는 활동성 결핵의 치료이며 Paragonimus에 효과가 없다. BAL 항산균 검사가 음성이고 충란이 직접 확인되어 결핵 치료를 시작할 근거가 없다.","could_be_correct_if":"미생물학·임상 근거로 활동성 결핵이 별도로 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"전신스테로이드는 기생충을 제거하지 못하고 단독 사용 시 감염을 지속시킨다. 심한 염증 합병증에 보조적으로 고려할 수 있어도 praziquantel 원인 치료를 대신하지 않는다.","could_be_correct_if":"원인 치료와 함께 중증 염증·신경계 부종을 조절할 보조 적응증이 있을 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"metronidazole은 일부 혐기성 세균·원충 감염 치료제이며 폐흡충에 대한 표준 구충제가 아니다. 현미경으로 확인된 흡충 감염에는 praziquantel을 사용한다.","could_be_correct_if":"metronidazole 감수성 혐기성 또는 원충 감염이 별도로 확인될 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"itraconazole은 진균감염 치료제이며 Paragonimus 충란에 대한 구충 효과를 기대하지 않는다. 진균 검사가 음성이고 음식 노출·충란이 폐흡충증을 확증한다.","could_be_correct_if":"감수성 진균감염이 객관적으로 확인될 때","misconception_tag":"적응증"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 현미경 이미지가 두꺼운 껍질과 한쪽 끝의 뚜껑이 있는 Paragonimus 충란을 실제로 보여 주는지 확인해야 한다.","구체 용량·투여일은 인용한 WHO 또는 국내 구충 지침과 최종 대조해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000184","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["동일 모임에서 민물게장 공동 섭취","5명에게 비슷한 시기 증상","4개월 이상 지속","모두 호산구증가","세균·결핵 검사 음성","다양한 폐·흉막 영상"],"clinical_inference":"공통 음식 노출 뒤 발생한 호산구성 호흡기 질환 군집은 영상 표현형이 달라도 폐흡충증을 강하게 시사하므로 특이 항체와 충란 검사를 시행한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"감염 후 기침은 가능하지만 5명이 같은 음식 노출 후 수개월 증상과 호산구증가를 보이는 군집을 설명하지 못한다. 추가 검사를 중단하면 치료 가능한 기생충 감염을 놓친다.","could_be_correct_if":"폐흡충과 다른 원인이 배제되고 영상·호산구가 정상화된 단순 감염 후 기침으로 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"폐흡충증은 이동 과정과 병변 위치에 따라 결절, 공동, 침윤, 흉수·기흉 등 다양한 영상을 보일 수 있다. 영상이 다르더라도 동일 노출과 호산구증가라는 역학 연결을 우선 통합해야 한다.","could_be_correct_if":"개별 환자의 확정검사에서 서로 다른 독립 질환으로 확인될 때","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"호산구 수치만으로 EGPA를 확정할 수 없으며 천식, 부비동염과 혈관염 장기 소견이 필요하다. 공동 민물게 노출 뒤 발생한 집단 양상은 혈관염보다 기생충 감염을 지지한다.","could_be_correct_if":"개별 환자에게 천식·호산구성 혈관염과 장기침범이 확인되어 EGPA로 진단될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"흉수·기흉은 세균성 농흉만의 소견이 아니며 폐흡충의 흉막 이동 과정에서도 나타날 수 있다. 모든 환자를 농흉으로 분류하려면 화농성 흉수와 세균 감염 근거가 필요하다.","could_be_correct_if":"흉수 검사와 배양에서 세균성 농흉이 확인된 개별 환자","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"같은 민물게장을 먹은 뒤 호산구성 호흡기 질환이 군집 발생해 폐흡충증 역학에 맞는다. 혈청 Paragonimus 특이 항체와 객담·대변·가능한 흉수의 충란 검사를 시행해 개별 환자를 확인한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 복수 영상 예시가 서술된 결절·흉수·기흉·수기흉·공동 및 이동경로 소견과 각각 일치하는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000185","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["민물게장 섭취","혈담·흉통과 호산구성 흉수","Paragonimus 특이 IgG 양성","다른 감염 검사 음성","충란은 객담에서 미검출"],"clinical_inference":"충란 배출은 간헐적이므로 음성 객담에도 노출·임상·항체가 일치하면 폐흡충증을 치료하며 praziquantel 후 임상·혈액·영상 반응을 추적한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"객담 충란 검사는 민감도가 제한되어 한 번 음성이라고 폐흡충증을 배제하지 못한다. 특이 IgG는 치료 후 오래 양성일 수 있으므로 음전될 때까지 기다리는 전략도 적절하지 않다.","could_be_correct_if":"진단 근거가 불충분한 안정 환자에서 추가 검체와 감별평가를 먼저 할 때에도 항체 음전만 기다리지는 않는다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"결핵 검사가 음성이고 민물게 노출·호산구성 흉수·특이 항체가 폐흡충증을 지지한다. 항결핵제의 영상 반응을 진단시험처럼 사용하면 올바른 구충치료가 지연된다.","could_be_correct_if":"활동성 결핵이 객관적으로 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"체중 기준 praziquantel 표준요법으로 원인 기생충을 제거한다. 치료 뒤 혈담·흉통, 말초 호산구와 흉수·폐영상이 호전되는지 추적해 치료 반응과 다른 진단 가능성을 평가한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"전신스테로이드는 흉수의 염증을 일시 줄일 수 있어도 Paragonimus를 제거하지 못한다. 장기 단독 투여는 감염을 남기고 전신 부작용만 늘린다.","could_be_correct_if":"praziquantel과 함께 중증 염증성 합병증을 조절할 보조 적응증이 있을 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐흡충증은 약물로 치료 가능한 감염이며 다발·이동성 병변일 수 있어 폐절제로 모든 기생충을 제거할 수 없다. 수술은 진단 불명이나 치료되지 않는 국소 합병증 등 예외적 상황에 한정한다.","could_be_correct_if":"약물치료 후에도 지속되는 국소 합병증 또는 종양 감별을 위해 외과적 처치가 필요할 때","misconception_tag":"적응증"}
+    ],"review_flags":["구체 praziquantel 용량·기간은 게시 전 인용 지침과 최종 대조해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000186","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["중국 남서부 민물게 반복 섭취","복시·어지럼·혀 편위","뇌간 다발 군집성 고리조영 병변","경색 치료 무반응","정상 말초 호산구·흉부 X선·대변검사"],"clinical_inference":"유행지역 음식 노출과 포도송이형 뇌간 병변은 뇌흡충증을 시사하며 정상 폐·혈액·대변 소견으로 배제되지 않아 특이 항체 확인과 praziquantel 치료가 필요하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"초기 CT 저음영은 경색처럼 보일 수 있지만 MRI의 군집성 다발 고리조영 병변과 민물게 노출은 감염성 육아종을 시사한다. 항혈소판제만 계속하면 원인 기생충을 치료하지 못한다.","could_be_correct_if":"혈관 분포의 급성 확산제한과 혈관검사로 뇌간경색이 확정될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"혈청 및 필요 시 뇌척수액 Paragonimus 항체로 노출과 중추신경계 병변의 관련성을 확인한다. 뇌흡충증으로 판단되면 praziquantel을 투여하고 병변 관련 염증·부종과 신경학적 상태를 함께 관리한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"다발 고리조영 병변은 종양 외에도 기생충·결핵·농양 등을 포함해 감별해야 한다. 조직 또는 충분한 진단 근거 없이 원발성 종양으로 확정하고 방사선치료를 시작하면 감염을 악화시키고 진단을 가릴 수 있다.","could_be_correct_if":"종양이 조직학적으로 확진되고 병기·방사선 계획이 수립될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"신경낭미충증도 다발성 낭성·고리 병변을 만들 수 있지만 민물게 노출과 포도송이형 뇌흡충 영상이 다른 단서를 제공한다. 감별 확인 없이 albendazole만 투여하면 정확한 기생충 치료를 놓칠 수 있다.","could_be_correct_if":"영상·역학·혈청학으로 신경낭미충증이 확인되고 표준 치료 적응증이 성립할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐외 폐흡충증에서는 말초 호산구, 흉부 X선과 대변 충란검사가 모두 정상일 수 있다. 특징적 음식 노출과 뇌 MRI를 무시하고 관찰만 하면 진행성 신경 손상을 놓친다.","could_be_correct_if":"충분한 감염·종양·혈관 감별에서 위험 질환이 배제되고 안정 병변의 관찰이 적절할 때","misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 MRI가 뇌간의 군집성 다발 고리조영 병변을 실제로 보여 주는지 확인해야 한다.","C2는 최선이지만 실제 CNS 폐흡충증에서는 뇌부종·염증 반응에 대한 보조 글루코코르티코이드 및 신경외과적 필요성도 개별 평가해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000187","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["치료에도 반복되는 천식 악화","갈색 점액마개","총 IgE 920 IU/mL","Aspergillus 특이 IgE·IgG 양성","호산구 780/μL","중심성 기관지확장과 점액마개"],"clinical_inference":"천식 배경에 진균 감작, 총 IgE·호산구 증가와 전형적 중심성 기도 영상이 결합되어 ABPA가 가장 타당하다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"단순 감작은 Aspergillus 특이 IgE 양성만 있을 수 있지만 ABPA의 면역·영상 기준을 충족하지 않는다. 이 환자는 높은 총 IgE, 호산구증가와 중심성 기관지확장·점액마개가 있어 감작을 넘어선 알레르기성 기관지폐질환이다.","could_be_correct_if":"특이 IgE만 양성이고 총 IgE·호산구·영상 등 ABPA 추가 기준이 부족할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"만성 폐아스페르길루스증은 기저 공동성 폐질환, 두꺼운 공동벽·진균구와 만성 전신증상이 중심이다. 이 환자는 천식과 중심성 기도확장·점액 충전이라는 ABPA 표현형이다.","could_be_correct_if":"3개월 이상 지속되는 공동성 병변과 Aspergillus IgG 등 만성 폐아스페르길루스증 기준이 충족될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"침습성 폐아스페르길루스증은 호중구감소·이식·강한 면역억제 등 숙주 위험과 결절·halo sign, 조직 침습 근거가 중요하다. 천식과 점액마개·중심성 기관지확장만으로 침습성 질환을 진단하지 않는다.","could_be_correct_if":"고위험 면역저하 숙주에서 미생물·영상 또는 조직 침습 근거가 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"천식과 반복 악화·갈색 점액마개가 임상 배경을 이룬다. Aspergillus 감작, 총 IgE 증가, 호산구증가와 중심성 기관지확장·점액마개가 함께 있어 ABPA 진단에 부합한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"EGPA도 천식과 호산구증을 보이지만 부비동염, 신경병증, 피부·신장·심장 혈관염 등의 전신 소견이 필요하다. Aspergillus 감작과 전형적 중심성 기도 병변은 ABPA를 더 직접적으로 지지한다.","could_be_correct_if":"호산구성 괴사성 혈관염 또는 전형적 다장기 혈관염 소견이 확인될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 중심성 기관지확장증과 여러 엽의 점액마개를 실제로 보여 주는지 확인해야 한다.","총 IgE 단위와 진단 경계값은 2024 ISHAM 기준 표현을 정확히 유지해야 한다."],"publication_recommendation":"revise"
+  }
+]

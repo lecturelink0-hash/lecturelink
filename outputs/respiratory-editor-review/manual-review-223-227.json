@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000223","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["COPD 급성악화","pH 7.25 산증","PaCO2 76 고탄산혈증","의식·기도보호 유지","분비물 많지 않음"],"clinical_inference":"급성 고탄산성 호흡부전에서 NIV 성공 조건을 갖추어 기관삽관 전 비침습 양압환기를 즉시 시작하고 조기 반응을 확인한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"NIV는 환기량을 늘려 PaCO2와 호흡노력을 줄이고 COPD 악화의 삽관·사망 위험을 낮춘다. 기관지확장제·조절 산소·스테로이드와 함께 시행하고 1~2시간 내 의식, pH·PaCO2와 호흡노력을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"고농도 산소로 포화도를 100%까지 올리면 V/Q 변화와 Haldane 효과로 CO2 저류와 산증이 악화될 수 있다. 저산소증은 교정하되 COPD 악화의 목표 범위에 맞춰 산소를 적정한다.","could_be_correct_if":"심정지·일산화탄소중독 등 별도 적응증으로 최대 산소가 필요한 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"의식과 기도 보호가 유지되고 분비물도 적어 먼저 NIV를 시도할 수 있다. 진정과 즉시 삽관은 저혈압·인공호흡 합병증을 더하며 NIV 실패·금기 때로 남긴다.","could_be_correct_if":"의식저하·기도보호 실패·심정지·심한 불안정 또는 NIV 실패가 있을 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"전신스테로이드는 기도염증 회복을 돕지만 급성 기관지수축을 빠르게 완화하지 못한다. 흡입 SABA ± SAMA와 환기지원 없이 스테로이드만 투여하면 현재 환기부전을 해결하지 못한다.","could_be_correct_if":"스테로이드를 표준 기관지확장제·산소·환기 지원에 추가할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"항생제는 화농성 객담·감염 소견 또는 환기지원이 필요한 특정 악화에서 추가할 수 있지만 고탄산성 산증을 즉시 교정하지 않는다. 환기 악화를 관찰만 하면 호흡근 피로가 진행할 수 있다.","could_be_correct_if":"세균성 악화 근거가 있을 때 NIV와 표준 악화 치료에 병행할 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["근거 자료가 비어 있어 COPD 급성 고탄산성 호흡부전의 NIV 적응증·실패 기준과 목표 산소포화도 근거를 추가해야 한다.","pH 7.25는 NIV 실패 위험이 높은 중증 산증이므로 즉시 삽관 가능한 감시 환경에서 시행한다는 점을 포함해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000224","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["폐암 PET-CT","종격동 림프절 FDG 섭취 증가","원격전이 없음","수술 계획에 N병기 중요"],"clinical_inference":"PET 양성 종격동 림프절은 염증 위양성이 가능하고 수술 가능성을 바꾸므로 EBUS-TBNA로 병리적 N병기를 확인한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"종격동 림프절 전이가 있으면 수술 범위와 다중치료 순서가 달라질 수 있다. PET 양성을 조직 확인 없이 무시하고 폐엽절제술부터 하면 잘못된 병기로 수술할 수 있다.","could_be_correct_if":"침습적 종격동 병기 적응증이 없고 임상적으로 낮은 N병기 위험인 조기 종양","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"흉부 X선은 종격동 림프절의 대사활성이나 미세 전이를 병기화하지 못한다. 반복 촬영은 PET 양성의 진위와 치료 결정을 해결하지 않는다.","could_be_correct_if":"치료 후 단순 흉부 경과 관찰의 일부로 사용할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"CT의 림프절 크기만으로 악성·염증을 신뢰성 있게 구분할 수 없다. PET 양성으로 치료가 달라질 수 있는 종격동 림프절은 조직학적 확인이 필요하다.","could_be_correct_if":"조직검사가 불가능하고 다학제적으로 영상 임상병기를 사용할 수밖에 없는 예외 상황","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"방사선치료는 병기·조직형·분자검사와 환자 수술 가능성을 통합해 결정한다. 조직 확인 없이 시작하면 염증성 림프절을 암 전이로 오인해 근치 수술 기회를 잃을 수 있다.","could_be_correct_if":"조직으로 암과 병기가 확정되고 다학제 계획에서 방사선치료 적응증이 성립할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"EBUS-TBNA는 초음파로 접근 가능한 종격동·폐문 림프절을 최소침습적으로 채취해 N병기를 확인한다. 결과가 음성이지만 임상 의심이 높으면 검체 적절성과 추가 수술적 병기 필요성을 다학제적으로 판단한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],"review_flags":["근거 자료가 비어 있어 폐암 종격동 병기에서 EBUS-TBNA 적응증과 음성 후 확증 절차의 최신 가이드라인을 추가해야 한다.","문항 분류가 '기계보조환기'로 잘못 지정되어 있어 폐암 병기·기관지내시경 영역으로 taxonomy를 수정해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000225","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["ARDS 확진","PEEP 10·FiO2 0.80","PaO2/FiO2 105","폐보호환기 중 보조치료 질문"],"clinical_inference":"P/F 150 이하의 중등도-중증 ARDS에서 폐보호환기를 유지하며 조기 장시간 복와위를 시행하면 산소화와 생존을 개선할 수 있다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"12 mL/kg 일회호흡량은 과팽창과 환기유발폐손상을 증가시킨다. 산소화를 위해 용적을 높이지 말고 예측체중 기반 저용량 환기를 유지한다.","could_be_correct_if":"해당 없음; ARDS에서는 큰 일회호흡량을 피한다.","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"PEEP 0은 불안정 폐포의 호기말 허탈과 shunt를 악화시킨다. 혈역학·순응도·산소화를 보며 적절한 PEEP을 유지·조정한다.","could_be_correct_if":"PEEP로 심각한 혈역학 붕괴나 기압손상이 발생해 일시 감량이 필요할 때에도 0으로 일률 설정하지 않는다.","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"correct","explanation":"폐보호환기를 지속하면서 숙련된 팀이 조기 장시간 복와위를 시행한다. 등쪽 폐의 환기-관류 일치를 개선하고 중등도-중증 ARDS에서 생존 이득을 기대할 수 있다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"FiO2 1.0의 장기 고정은 산소독성을 유발할 수 있다. PEEP·복와위 등으로 산소화를 개선하면서 목표 산소화에 필요한 최소 FiO2로 낮춘다.","could_be_correct_if":"소생 직후 짧게 최대 산소가 필요할 때에도 가능한 빨리 감량한다.","misconception_tag":"병태생리"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"근이완제는 심한 비동조·복와위 수행 또는 최적 진정에도 폐보호환기가 불가능한 선택된 환자에서 단기간 고려한다. 모든 ARDS 환자에게 장기 사용하면 근병증과 ICU 획득 약화를 늘린다.","could_be_correct_if":"선택된 중증 ARDS에서 짧은 기간 환기 동조를 확보할 필요가 있을 때","misconception_tag":"적응증"}
+    ],"review_flags":["근거 자료가 비어 있어 P/F 150 이하 조기 복와위와 권장 지속시간을 뒷받침하는 검증된 ARDS 근거를 추가해야 한다.","기존 핵심 해설 말미의 자동 결합 비문을 삭제하고 게시 전 영상이 ARDS의 양측 폐포성 음영과 일치하는지 확인해야 한다.","복와위 금기·기도 및 압박손상 예방을 평가해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000226","answer_consistency":"questionable",
+    "core_reasoning":{"key_findings":["활동성 결핵 치료 중 임신 확인","도말 음전·간기능 정상","치료 지속 필요","C2 문장 손상","pyrazinamide 포함 여부가 지역 지침별 상이"],"clinical_inference":"임신 자체로 결핵 치료를 중단하지 않고 isoniazid·rifampin·ethambutol과 pyridoxine을 사용하며 PZA는 기준 시점의 국내·국제 지침에 맞춰 결정해야 한다. 현재 선택지 문장과 근거가 불완전해 기존 정답을 확정적으로 출판하기 어렵다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"치료를 출산까지 중단하면 산모 결핵 진행과 태아·주변인 전파 위험이 커진다. 임신은 효과적인 활동성 결핵 치료를 멈출 이유가 아니다.","could_be_correct_if":"중대한 약물독성으로 일시 중단이 필요해 결핵·산과 전문팀이 즉시 대체요법을 구성할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"isoniazid·rifampin·ethambutol은 임신 중 사용할 수 있고 isoniazid 관련 신경독성 예방을 위해 pyridoxine을 보충한다. 다만 문장의 '임신 중이고'는 동사가 유실된 손상 표현이며 PZA 제외 여부와 총 치료기간을 지역 지침에 맞춰 명시해야 한다.","could_be_correct_if":"의도가 '임신 중에도 계속하고'이며 PZA를 제외하는 지침에 따라 충분한 총 치료기간을 계획한 경우","misconception_tag":"기타"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"streptomycin은 태아의 청신경 독성 위험 때문에 임신 중 피한다. 이를 추가한다고 활동성 결핵 치료를 3개월로 안전하게 단축할 수 없다.","could_be_correct_if":"임신하지 않은 약제내성 결핵에서도 감수성·지침에 따라 aminoglycoside 필요성을 전문적으로 판단할 때","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"rifampin은 약제감수성 결핵의 핵심 살균약으로 임신만으로 중단하지 않는다. levofloxacin 단독은 내성 획득과 치료 실패를 유발하며 임신 중 표준 대체요법도 아니다.","could_be_correct_if":"rifampin 내성 결핵에서 감수성 결과에 따라 여러 유효약으로 전문 요법을 구성할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"isoniazid 단독은 활동성 결핵을 치료하지 못하고 빠른 내성을 선택한다. 간기능이 정상인 현재 예방 목적으로 다른 유효약을 중단할 이유가 없다.","could_be_correct_if":"활동성 결핵이 배제된 잠복결핵감염의 적절한 예방요법으로 사용할 때","misconception_tag":"적응증"}
+    ],"review_flags":["C2의 'isoniazid, rifampin, ethambutol을 임신 중이고'는 문법적으로 손상되어 '임신 중에도 계속하고' 등 원문 확인이 필요하다.","근거 자료가 비어 있고 임신 중 pyrazinamide 포함 여부가 국내·WHO·미국 지침에 따라 다를 수 있다. 한국 의대생 문항의 기준 지침과 총 치료기간을 명시하기 전에는 정답을 확정해 출판하면 안 된다.","현재 '4제 요법'의 정확한 약제와 약제감수성 결과가 지문에 없어 PZA 중단 판단의 맥락이 불충분하다."],"publication_recommendation":"hold"
+  },
+  {
+    "question_id":"RESP-000227","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["TNF 억제제 시작 예정","IGRA 양성","BCG 접종력","정상 X선·무증상","재활성화 고위험"],"clinical_inference":"BCG 영향을 받지 않는 IGRA 양성과 TNF 억제 예정은 LTBI 치료 적응증이며 활동성 결핵을 먼저 배제한 뒤 예방치료와 생물학적 제제 시점을 조정한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"TNF는 결핵 육아종 유지에 중요해 억제하면 잠복결핵 재활성화 위험이 크게 증가한다. 예방치료 없이 즉시 시작하면 파종·중증 결핵 위험이 커진다.","could_be_correct_if":"잠복·활동성 결핵이 충분히 배제되고 다른 위험이 없을 때","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"잠복결핵은 증상·영상·객담 배양이 음성이면서 면역검사가 양성인 상태다. 배양 양성을 기다리면 활동성 결핵이 생길 때까지 예방을 미루는 모순이 된다.","could_be_correct_if":"활동성 결핵이 의심되어 객담 검사가 필요한 경우에도 결과에 따라 치료를 신속히 구분한다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"IGRA는 BCG에 없는 특이 항원을 이용해 BCG 접종에 의한 교차반응이 TST보다 적다. 따라서 양성을 BCG 탓으로 무시할 수 없다.","could_be_correct_if":"검사 오류·낮은 사전확률을 고려해 반복 또는 다른 평가가 필요한 경우에도 BCG만으로 배제하지 않는다.","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"correct","explanation":"증상 문진과 흉부영상, 필요 시 객담 검사로 활동성 결핵을 먼저 배제한다. 그 뒤 isoniazid 기반 또는 환자 상호작용에 맞는 권고 LTBI 요법을 시작하고 류마티스·감염 전문팀이 TNF 억제 시작 시점을 조정한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"LTBI에서는 살아 있는 균을 배양해 감수성을 얻는 것이 보통 불가능하다. 알려진 감염원 약제내성 정보가 없다면 감수성 결과를 기다리지 않고 권고 예방요법을 선택한다.","could_be_correct_if":"다제내성 결핵 접촉자로 감염원 감수성에 맞춘 전문 예방요법이 필요한 경우","misconception_tag":"검사 순서"}
+    ],"review_flags":["근거 자료가 비어 있어 국내 LTBI 지침, TNF 억제 전 치료 시작 간격과 권고 단기 rifamycin 기반 요법을 추가해야 한다.","C4의 'isoniazid 기반'은 가능한 한 가지 접근이지만 rifampin·isoniazid-rifapentine 등 다른 권고 요법과 생물학적 제제 상호작용도 고려해야 한다."],"publication_recommendation":"revise"
+  }
+]

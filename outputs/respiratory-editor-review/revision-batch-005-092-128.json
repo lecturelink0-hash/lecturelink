@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000092",
+    "revised_stem":"67세 남자가 수년간 서서히 진행하는 운동 시 호흡곤란으로 왔다. 안정 시 산소포화도는 94%이고 청진에서 호기 시간이 연장되어 있다. 흉부 측면 X선에서 횡격막 편평화, 흉골 뒤 공기공간 증가와 흉곽 전후경 증가가 보인다. COPD 진단을 확인하는 데 가장 부합하는 검사 결과는?",
+    "revised_lead_in":"COPD 진단을 확인하는 데 가장 부합하는 검사 결과는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"TLC 감소와 정상 또는 증가한 FEV₁/FVC","is_correct":false},{"choice_id":"C2","text":"정상 폐활량과 고립성 DLCO 감소","is_correct":false},{"choice_id":"C3","text":"정상 기저 폐활량과 메타콜린 유발 기도과민성만 확인","is_correct":false},{"choice_id":"C4","text":"기관지확장제 투여 후에도 FEV₁/FVC가 0.70 미만으로 지속","is_correct":true},{"choice_id":"C5","text":"흡기 유량-용적곡선만 편평하고 호기 곡선은 보존","is_correct":false}
+    ],
+    "revised_core_explanation":"횡격막 편평화와 흉골 뒤 공기공간 증가는 폐기종성 과팽창을 시사하지만 영상만으로 COPD를 확진하지 않는다. 적절한 증상과 노출력이 있는 환자에서 기관지확장제 후 FEV₁/FVC가 0.70 미만으로 지속되는 기류제한을 폐활량측정으로 확인해야 한다. 경계값은 연령 관련 오분류 가능성을 고려해 임상 맥락과 반복 측정으로 해석한다.",
+    "references":[{"url":"https://goldcopd.org/2026-gold-report-and-pocket-guide/","title":"GOLD 2026 Report and Pocket Guide"},{"url":"https://publications.ersnet.org/content/erj/60/1/2101499","title":"ERS/ATS Technical Standard on Lung Function Interpretation"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"영상 핵심 소견을 지문에 옮기고 자동 결합 비문을 제거했으며 COPD 확진 기준을 GOLD 2026과 대조함"
+  },
+  {
+    "question_id":"RESP-000093",
+    "revised_stem":"28세 여자가 어릴 때부터 반복된 중이염·만성 부비동염과 매일 지속되는 습성 기침으로 왔다. 최근 객담에서 Pseudomonas aeruginosa가 동정되었다. 흉부 X선에서 심장 음영과 위 기포가 우측에 있어 내장역위가 확인된다. 원발섬모운동이상증과 동반 기관지확장증을 평가하기 위한 가장 적절한 조합은?",
+    "revised_lead_in":"가장 적절한 평가 조합은?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"고해상 흉부 CT와 전문센터의 비강 산화질소·섬모 기능검사 및 유전검사 조합","is_correct":true},{"choice_id":"C2","text":"땀 염화물과 CFTR 검사만 시행","is_correct":false},{"choice_id":"C3","text":"총 IgE와 Aspergillus 특이 항체만 측정","is_correct":false},{"choice_id":"C4","text":"혈청 면역글로불린과 백신 항체반응만 평가","is_correct":false},{"choice_id":"C5","text":"알파-1 항트립신 농도와 유전형만 검사","is_correct":false}
+    ],
+    "revised_core_explanation":"소아기부터 지속된 상·하기도 질환과 내장역위는 Kartagener 표현형의 원발섬모운동이상증을 강하게 시사한다. HRCT로 기관지확장증의 범위와 중증도를 확인하고 PCD 전문센터에서 검사를 조합한다. 2025 ERS/ATS 지침은 유전검사 또는 전자현미경을 기준 검사로 두고 비강 산화질소, 고속 비디오현미경과 면역형광을 보조적으로 함께 사용하며, 어느 한 검사만으로 모든 환자를 확진하거나 배제하지 않도록 권고한다.",
+    "references":[{"url":"https://publications.ersnet.org/content/erj/66/6/2500745","title":"2025 ERS/ATS Guideline for Diagnosis of Primary Ciliary Dyskinesia"},{"url":"https://channel.ersnet.org/media-121382-mastering-the-new-diagnostic-pathway-the-ersats-clinical-practice-guideline-for-primary-ciliary-dyskinesia-2-july-2026","title":"ERS: Implementing the New ERS/ATS PCD Diagnostic Pathway"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"내장역위를 문장화하고 자동 결합 비문을 삭제했으며 기존 2017 근거를 최신 2025 공동 ERS/ATS 지침으로 갱신함"
+  },
+  {
+    "question_id":"RESP-000095",
+    "revised_stem":"72세 남자가 6주간 지속되는 기침과 간헐적인 혈담으로 왔다. 55갑년 흡연력이 있고 최근 수술이나 기관내삽관 병력은 없으며 발열도 없다. 흉부 X선에서 좌상엽 음영 증가와 용적 감소, 좌측 폐문 상승 및 종격동의 병변 쪽 견인이 보인다. 가장 적절한 다음 조치는?",
+    "revised_lead_in":"가장 적절한 다음 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"폐렴으로 보고 항생제 후 6주 뒤에만 재촬영한다","is_correct":false},{"choice_id":"C2","text":"흉수로 보고 즉시 흉강천자를 시행한다","is_correct":false},{"choice_id":"C3","text":"조영증강 흉부 CT로 중심기관지 폐쇄 병변을 평가하고 결과에 따라 기관지내시경을 계획한다","is_correct":true},{"choice_id":"C4","text":"CT 없이 즉시 기관지내시경만 시행한다","is_correct":false},{"choice_id":"C5","text":"만성 섬유화로 보고 폐기능검사만 시행한다","is_correct":false}
+    ],
+    "revised_core_explanation":"좌상엽 음영 증가와 폐문 상승·동측 종격동 견인은 용적 감소를 동반한 좌상엽 무기폐를 시사한다. 수술 후 점액마개 상황이 아니고 고령의 중증 흡연자에게 혈담이 있어 중심부 폐암에 의한 기관지 폐쇄를 우선 배제해야 한다. NICE 권고에 따라 생검 전에 조영증강 CT로 폐쇄 위치, 종괴·림프절과 전이 의심 부위를 평가한 뒤 기관지내시경과 조직검사 경로를 정한다.",
+    "references":[{"url":"https://www.nice.org.uk/guidance/ng122/chapter/Diagnosis-and-staging","title":"NICE NG122: Lung Cancer Diagnosis and Staging"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"좌상엽 무기폐 소견을 지문에 명시하고 무관한 비외상성 흉통 ACR 근거와 자동 결합 비문을 제거함"
+  },
+  {
+    "question_id":"RESP-000100",
+    "revised_stem":"66세 남자가 2주 전 CT에서 우측 상엽 기관지 내 1.5 cm 결절을 발견했다. 증상과 급격한 진행 소견은 없다. 6주 전 급성관상동맥증후군으로 약물방출스텐트를 삽입받아 aspirin과 clopidogrel을 복용 중이며, 다음 주 선택적 굴곡성 기관지내시경 겸자생검이 예약되어 있다. 가장 적절한 조치는?",
+    "revised_lead_in":"가장 적절한 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"clopidogrel을 임의로 중단하고 다음 주 생검한다","is_correct":false},{"choice_id":"C2","text":"두 항혈소판제를 유지한 채 겸자생검과 경기관지폐생검을 함께 시행한다","is_correct":false},{"choice_id":"C3","text":"선택적 생검을 연기하고 심장내과와 스텐트 혈전 위험 및 항혈소판제 조정 시점을 협의한다","is_correct":true},{"choice_id":"C4","text":"두 항혈소판제를 즉시 중단하고 heparin으로 대체하면 스텐트 혈전을 완전히 예방한다고 본다","is_correct":false},{"choice_id":"C5","text":"세척액 세포검사만 시행하고 음성이면 양성 병변으로 확정한다","is_correct":false}
+    ],
+    "revised_core_explanation":"기관지내 겸자생검은 clopidogrel 복용 중 출혈 위험이 증가하지만, ACS로 DES를 삽입한 지 6주밖에 되지 않아 DAPT를 임의 중단하면 스텐트 혈전 위험이 크다. 2024 AHA/ACC 지침은 DES 삽입 후 3개월 이내 시간민감 비심장 시술에서는 출혈 위험이 이득을 넘지 않는 한 DAPT 유지를 권고하고, ACS 관련 DES 후 선택적 비심장 수술은 통상 충분히 연기하도록 한다. 병변이 안정적이므로 생검을 연기하고 심장내과·기관지내시경 팀이 시기와 대체 전략을 공동 결정한다.",
+    "references":[{"url":"https://professional.heart.org/en/-/media/PHD-Files-2/Science-News/2/2024/2024-Guideline-for-Perioperative-Cardiovascular-Management-slide-set.pdf?sc_lang=en","title":"2024 AHA/ACC Guideline for Perioperative Cardiovascular Management"},{"url":"https://www.acc.org/latest-in-cardiology/ten-points-to-remember/2024/09/23/04/15/2024-aha-acc-perioperative-guideline-gl","title":"ACC: 2024 Perioperative Cardiovascular Guideline Key Points"},{"url":"https://www.brit-thoracic.org.uk/document-library/guidelines/bronchoscopy/bts-guideline-for-diagnostic-flexible-bronchoscopy-in-adults/","title":"BTS Guideline for Diagnostic Flexible Bronchoscopy"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"기관지내시경 출혈 근거에 더해 최근 ACS·DES 후 DAPT와 선택적 시술 시점을 직접 다루는 2024 AHA/ACC 근거를 추가함"
+  },
+  {
+    "question_id":"RESP-000128",
+    "revised_stem":"72세 여자가 2주간의 야간 호흡곤란과 천명으로 왔다. 누우면 악화되어 베개 세 개를 사용한다. 양측 수포음, 경정맥 확장과 함요부종이 있고 BNP가 상승했다. 과거 가변적 호흡기 증상이나 알레르기 병력은 없으며 기관지확장제 후 FEV₁ 변화도 없다. 가장 적절한 다음 평가는?",
+    "revised_lead_in":"가장 적절한 다음 평가는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"심초음파로 좌심실 수축·이완기능과 판막질환을 평가하고 울혈 치료 반응을 확인한다","is_correct":true},{"choice_id":"C2","text":"천명만으로 성인발병 천식을 확진하고 고용량 ICS-LABA를 시작한다","is_correct":false},{"choice_id":"C3","text":"기관지유발검사 결과만으로 체액과다 소견을 무시한다","is_correct":false},{"choice_id":"C4","text":"알레르기 피부검사로 심부전을 배제한다","is_correct":false},{"choice_id":"C5","text":"산소포화도가 정상이면 심장·폐 평가를 모두 중단한다","is_correct":false}
+    ],
+    "revised_core_explanation":"천명은 천식에 특이적이지 않으며 기좌호흡, 경정맥 확장, 부종, 수포음과 BNP 상승은 심부전성 폐울혈을 강하게 지지한다. ESC 심부전 지침은 의심 환자에서 심초음파로 심장 구조, 수축·이완기능과 판막을 평가하도록 권고한다. 울혈을 치료하며 증상 반응을 확인하고, 이후에도 가변적 증상이 남을 때 객관적 기류 변동성 검사를 통해 천식 동반 여부를 평가한다.",
+    "references":[{"url":"https://www.escardio.org/static-file/Escardio/Guidelines/guidelines-HF-FT.pdf","title":"ESC Guidelines for Acute and Chronic Heart Failure"},{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"천식 감별 근거에 심초음파·BNP·울혈 치료를 직접 다루는 ESC 심부전 지침을 추가함"
+  }
+]

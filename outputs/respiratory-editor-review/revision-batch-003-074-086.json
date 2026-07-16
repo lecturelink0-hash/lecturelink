@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000074",
+    "revised_stem":"수술 후 opioid 진통제를 투여받은 66세 남자가 깨워도 졸리고 호흡수가 6회/분으로 감소했다. 해수면 실내공기에서 동맥혈가스는 pH 7.24, PaCO₂ 68 mmHg, PaO₂ 58 mmHg이다. 호흡계수는 0.8로 가정한다. 가장 적절한 저산소혈증의 기전과 즉각적 처치는?",
+    "revised_lead_in":"가장 적절한 저산소혈증의 기전과 즉각적 처치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"A–a 산소차가 증가한 폐색전증성 V/Q 불균형으로 보고 CT 폐혈관조영술을 우선한다","is_correct":false},{"choice_id":"C2","text":"우좌단락으로 보고 고농도 산소 반응만 관찰한다","is_correct":false},{"choice_id":"C3","text":"확산장애로 보고 DLCO를 먼저 측정한다","is_correct":false},{"choice_id":"C4","text":"낮은 흡입 산소분압으로 보고 고도 노출 여부만 확인한다","is_correct":false},{"choice_id":"C5","text":"거의 정상인 A–a 산소차를 보이는 폐포저환기로 판단하고 기도·환기를 지지하면서 naloxone을 투여한다","is_correct":true}
+    ],
+    "revised_core_explanation":"폐포가스식으로 PAO₂는 약 150−68/0.8=65 mmHg이고 A–a 산소차는 약 7 mmHg로 거의 정상이다. PaCO₂ 상승, 서호흡과 정상 A–a 차는 opioid 유발 폐포저환기를 지지한다. 즉시 기도와 환기를 보조하고 응급 도움을 요청하면서 naloxone을 투여하되, 길항 효과가 opioid보다 짧을 수 있어 재진정과 재투여 필요성을 계속 감시한다.",
+    "references":[{"url":"https://www.fda.gov/consumers/consumer-updates/access-naloxone-can-save-life-during-opioid-overdose","title":"FDA: Access to Naloxone Can Save a Life During an Opioid Overdose"},{"url":"https://www.fda.gov/drugs/drug-safety-and-availability/fda-recommends-health-care-professionals-discuss-naloxone-all-patients-when-prescribing-opioid-pain","title":"FDA: Naloxone reverses opioid-related breathing problems"},{"url":"https://www.thoracic.org/professionals/clinical-resources/critical-care/clinical-education/abgs.php","title":"ATS: Interpretation of Arterial Blood Gases"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"opioid 유발 서호흡과 naloxone·응급 환기 처치를 직접 뒷받침하는 FDA 근거를 추가하고 재진정 감시를 명시함"
+  },
+  {
+    "question_id":"RESP-000079",
+    "revised_stem":"평소 건강한 34세 남자가 해발 3,800 m에 빠르게 도착한 지 6시간 뒤 진통제에도 지속되는 심한 두통, 반복 구토, 숨참과 불면을 호소한다. 운동실조, 의식 변화, 안정 시 기침과 폐 수포음은 없다. PaO₂ 51 mmHg, PaCO₂ 29 mmHg이며 폐포가스식으로 계산한 A–a 산소차는 현지 연령 기준에서 정상이다. 가장 적절한 기전과 처치는?",
+    "revised_lead_in":"가장 적절한 기전과 처치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"경증 급성 고산병이므로 현 고도에서 휴식만 하며 추가 상승한다","is_correct":false},{"choice_id":"C2","text":"고고도폐부종으로 판단해 nifedipine만 투여한다","is_correct":false},{"choice_id":"C3","text":"고고도뇌부종으로 확정해 운동실조 여부와 무관하게 dexamethasone만 투여한다","is_correct":false},{"choice_id":"C4","text":"정상 A–a 산소차이므로 고산병을 배제하고 폐색전증 검사부터 시행한다","is_correct":false},{"choice_id":"C5","text":"저기압성 저산소증에 의한 중증 급성 고산병으로 보고 추가 상승을 중단하며 산소를 투여하고 하강한다","is_correct":true}
+    ],
+    "revised_core_explanation":"고도 상승으로 대기압과 흡입 산소분압이 낮아지면 폐질환 없이도 PAO₂와 PaO₂가 감소하므로 A–a 산소차는 대체로 정상이고 저산소성 과호흡으로 PaCO₂가 낮아진다. 심한 지속성 두통과 반복 구토는 경증으로 볼 수 없으므로 추가 상승을 중단하고 산소를 투여하며 하강한다. 운동실조나 의식 변화가 생기면 HACE로 간주해 즉시 하강·산소와 dexamethasone을 시행하고, 수포음·기침·심한 안정 시 호흡곤란이 생기면 HAPE 평가와 치료를 병행한다.",
+    "references":[{"url":"https://journals.sagepub.com/doi/10.1016/j.wem.2023.05.013","title":"Wilderness Medical Society Clinical Practice Guidelines for Acute Altitude Illness: 2024 Update"},{"url":"https://journals.sagepub.com/doi/pdf/10.1016/j.wem.2023.05.013","title":"WMS 2024 Acute Altitude Illness Guideline PDF"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"AMS·HACE·HAPE 구분 단서를 보강하고 2024 WMS 지침에 맞춰 산소·하강 및 약제 적응증을 정리함"
+  },
+  {
+    "question_id":"RESP-000084",
+    "revised_stem":"67세 남자가 3주간 지속된 기침과 점차 심해지는 호흡곤란으로 왔다. 과거 흉부 수술력은 없고 오른쪽 호흡음이 감소했다. 흉부 X선에서 우측 전폐가 균일하게 백색화되어 있고 우측 늑간격이 좁아졌으며 기관과 종격동이 우측으로 이동해 있다. 영상 소견의 기전과 다음 조치의 조합으로 가장 적절한 것은?",
+    "revised_lead_in":"영상 소견의 기전과 다음 조치의 조합으로 가장 적절한 것은?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"우측 대량 흉수가 종격동을 반대쪽으로 미는 것으로 보고 흉수천자를 우선한다","is_correct":false},{"choice_id":"C2","text":"우측 전폐성 폐렴이 용적 변화 없이 발생한 것으로 보고 항생제 반응만 관찰한다","is_correct":false},{"choice_id":"C3","text":"우측 긴장성 기흉이 폐를 내측으로 압박한 것으로 보고 즉시 감압한다","is_correct":false},{"choice_id":"C4","text":"우측 폐절제술 후 정상 변화로 보고 경과관찰한다","is_correct":false},{"choice_id":"C5","text":"우측 전폐 무기폐로 보고 조영증강 흉부 CT로 중심부 폐쇄 병변을 평가한다","is_correct":true}
+    ],
+    "revised_core_explanation":"한쪽 흉곽의 완전 백색화와 함께 늑간격이 좁아지고 종격동이 병변 쪽으로 이동한 것은 용적 감소성 병변인 전폐 무기폐를 시사한다. 대량 흉수는 대개 종격동을 반대쪽으로 밀고, 긴장성 기흉은 과투과성과 반대쪽 이동을 보인다. 수술력이 없는 성인에서는 점액마개나 중심부 종양에 의한 주기관지 폐쇄를 조영증강 CT로 평가하고 필요하면 기관지내시경으로 확인·치료한다.",
+    "references":[{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC6958895/","title":"Chest radiography in adult critical care: atelectasis signs"},{"url":"https://commons.wikimedia.org/wiki/File:Atelectasia1.jpg","title":"Wikimedia Commons image source: Atelectasia1.jpg"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"필수 X선 소견을 지문에 완전히 서술해 이미지 없이도 풀 수 있게 하고 자동 결합 비문을 삭제함"
+  },
+  {
+    "question_id":"RESP-000085",
+    "revised_stem":"고혈압과 심부전 병력이 있는 74세 여자가 갑자기 심해진 기좌호흡으로 응급실에 왔다. 혈압 168/96 mmHg, 호흡수 34회/분, SpO₂ 82%이고 보조호흡근을 사용한다. 양측 수포음, 경정맥 팽창과 하지 함요부종이 있으며 BNP가 상승해 있다. 동맥혈가스는 pH 7.29, PaCO₂ 52 mmHg이다. 흉부 X선에서 심장비대, 폐혈관 울혈과 양측성 폐포·간질성 음영이 보인다. 가장 적절한 초기 처치는?",
+    "revised_lead_in":"가장 적절한 초기 처치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"저유량 비강캐뉼라와 정주 고리이뇨제만 사용하고 산증을 관찰한다","is_correct":false},{"choice_id":"C2","text":"정주 질산염만 투여하고 양압환기는 사용하지 않는다","is_correct":false},{"choice_id":"C3","text":"비침습 양압환기를 지체 없이 시작하고 정주 고리이뇨제로 울혈을 치료한다","is_correct":true},{"choice_id":"C4","text":"기도 보호 실패 여부와 무관하게 즉시 기관내삽관하고 NIV는 생략한다","is_correct":false},{"choice_id":"C5","text":"세균성 다초점 폐렴으로 판단해 항생제와 고유량 비강캐뉼라만 시작한다","is_correct":false}
+    ],
+    "revised_core_explanation":"심부전 병력, 기좌호흡, 경정맥 팽창·말초부종, BNP 상승과 심장비대·폐혈관 울혈은 심인성 폐부종을 지지한다. 중증 저산소혈증, 호흡노력과 산증이 있어 조기에 NIV를 적용하고 정주 loop 이뇨제로 울혈을 치료한다. 혈압이 충분히 높으므로 질산염을 추가 고려할 수 있으며, 의식 저하나 기도 보호 실패 또는 NIV 실패가 발생하면 기관내삽관으로 전환한다.",
+    "references":[{"url":"https://www.escardio.org/static-file/Escardio/Guidelines/guidelines-HF-FT.pdf","title":"ESC Guidelines for Acute and Chronic Heart Failure"},{"url":"https://www.nice.org.uk/guidance/cg187/chapter/Recommendations","title":"NICE Acute Heart Failure Recommendations"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"심인성 울혈을 확정할 병력·진찰·BNP·X선 단서를 추가하고 NIV·이뇨제 적응증을 공식 심부전 지침과 대조함"
+  },
+  {
+    "question_id":"RESP-000086",
+    "revised_stem":"34세 여자가 건강검진 흉부 X선 이상으로 왔다. 기침이나 호흡곤란은 없고 폐기능검사, 심전도, 안과검사와 혈청 칼슘은 정상이다. 조직학적으로 사르코이드증이 확인되었으며 흉부 X선에서는 대칭적 양측 폐문 림프절비대가 보이지만 폐실질 침윤이나 섬유화는 없다. 방사선 병기와 처치의 조합으로 가장 적절한 것은?",
+    "revised_lead_in":"방사선 병기와 처치의 조합으로 가장 적절한 것은?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"Stage II로 분류하고 전신 glucocorticoid를 즉시 시작한다","is_correct":false},{"choice_id":"C2","text":"Stage I으로 분류하고 임상·폐기능을 정기 추적한다","is_correct":true},{"choice_id":"C3","text":"Stage III로 분류하고 항섬유화제를 시작한다","is_correct":false},{"choice_id":"C4","text":"Stage IV로 분류하고 폐이식 평가를 시작한다","is_correct":false},{"choice_id":"C5","text":"종격동 림프종으로 간주하고 항암치료를 시작한다","is_correct":false}
+    ],
+    "revised_core_explanation":"폐실질 병변 없이 양측 폐문 림프절비대만 있는 소견은 Scadding stage I이다. 환자는 무증상이고 폐기능과 주요 장기 평가도 정상이므로 즉시 전신 glucocorticoid를 투여할 이득이 분명하지 않다. 증상, 폐기능과 장기 침범을 정기적으로 추적하고 기능 저하나 치료가 필요한 장기 침범이 발생하면 치료를 재평가한다.",
+    "references":[{"url":"https://publications.ersnet.org/content/erj/58/6/2004079","title":"ERS Clinical Practice Guidelines on Treatment of Sarcoidosis"},{"url":"https://publications.ersnet.org/content/errev/29/155/190145","title":"ERS Review: Clinical phenotyping and treatment decisions in sarcoidosis"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"방사선 소견을 지문에 명시하고 자동 결합 비문을 삭제했으며 무증상 stage I 관찰 근거를 ERS 자료로 보강함"
+  }
+]

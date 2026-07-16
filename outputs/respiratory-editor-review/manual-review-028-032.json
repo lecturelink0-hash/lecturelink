@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000028","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["기관지확장증","반복 객혈","현재 안정·출혈 중단","색전술 가능성 고려"],"clinical_inference":"CTA는 원인 병변과 비대해진 기관지동맥·비기관지성 체동맥을 함께 지도화하므로 안정된 재발성 객혈에서 색전술 계획에 가장 유용하다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"CTA는 기관지확장증의 범위뿐 아니라 출혈을 공급하는 비정상 기관지동맥과 체동맥을 평가한다. 현재 안정된 환자에서 향후 색전술 표적과 접근을 계획하는 데 가장 직접적이다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"기관지내시경은 활동성 출혈의 기도 확보, 출혈 측 국소화와 치료에 유용하다. 현재 출혈은 멎었고 혈관 지도화가 목적이므로 CTA가 먼저다.","could_be_correct_if":"지속 출혈로 기도 확보가 필요하거나 CT에서 원인이 불명확한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"비조영 HRCT는 기관지확장증의 형태를 평가하지만 조영되는 비정상 혈관을 충분히 보여주지 못한다. 색전술 계획이라는 질문의 목표를 충족하지 못한다.","could_be_correct_if":"혈관 평가가 아니라 기관지확장증의 폐실질 분포만 평가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"카테터 혈관조영과 색전술은 지속되거나 생명위협인 객혈의 진단·치료가 될 수 있다. 현재 출혈이 멎고 안정적이므로 비침습적 CTA로 혈관 해부를 먼저 파악할 수 있다.","could_be_correct_if":"지속되는 생명위협 출혈로 즉각적 지혈이 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"감염성 악화가 확인되면 항생제가 필요하지만 발열·화농성 객담·새 침윤이 제시되지 않았다. X선 재촬영만으로는 반복 출혈의 혈관 표적을 평가할 수 없다.","could_be_correct_if":"감염성 악화가 확인되고 혈관성 출혈 평가가 필요하지 않은 경우","misconception_tag":"진단 오류"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000029","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["객혈·저산소혈증","급격한 빈혈","양측 간유리음영","신기능 저하와 적혈구 원주"],"clinical_inference":"폐-신장 증후군에 의한 미만성 폐포출혈이 의심된다. 연속 BAL 분획이 점차 혈성으로 나타나는지를 확인하는 검사가 폐포 내 출혈을 가장 직접적으로 입증한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"conditionally_correct","explanation":"ANCA와 anti-GBM 항체는 폐-신장 증후군의 원인을 구분하는 핵심 검사다. 그러나 혈청검사만으로 폐포강 내 출혈을 직접 확인하지는 못한다.","could_be_correct_if":"질문이 폐-신장 증후군의 원인 감별을 묻는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"심초음파는 심인성 폐부종과 판막질환 평가에 유용하다. 적혈구 원주와 급격한 빈혈을 설명하지 못하고 폐포출혈을 직접 증명하지 않는다.","could_be_correct_if":"심인성 폐부종이 주요 감별인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"객담 배양은 감염을 평가하지만 미만성 폐포출혈을 확인하지 못한다. 단독 시행하면 사구체신염과 급격한 빈혈이라는 전신 단서를 놓친다.","could_be_correct_if":"감염성 폐렴이 주된 의심 진단인 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"신장 조직검사는 혈관염이나 anti-GBM 질환의 조직학적 확진에 중요할 수 있다. 질문은 폐포출혈 자체를 직접 확인하는 검사이므로 목적이 다르다.","could_be_correct_if":"질문의 목표가 폐-신장 증후군의 조직학적 원인 확진인 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"기관지내시경의 연속 BAL에서 뒤쪽 분획으로 갈수록 더 혈성인 소견은 미만성 폐포출혈을 지지한다. 동시에 감염 배제와 원인 혈청검사를 병행해야 한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],"review_flags":["저산소혈증이 있어 기관지내시경의 안전성과 기도·산소화 안정화를 먼저 평가해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000030","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["반복 객혈","CT상 기관지내 돌출 병변","폐쇄 후 변화"],"clinical_inference":"접근 가능한 중심 기관지내 병변이 영상에서 확인됐다. 기관지내시경으로 직접 관찰하고 조직을 확보하는 것이 다음 단계다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"영상 추적은 낮은 위험의 우연성 결절에서 고려한다. 증상을 유발하고 폐쇄 후 변화까지 만든 기관지내 병변을 6개월 관찰하면 조직진단이 지연된다.","could_be_correct_if":"악성 위험이 낮고 추적 기준에 해당하는 우연성 결절인 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"PET-CT는 악성종양의 병기 평가에 유용하지만 염증에서도 섭취가 증가할 수 있다. 현재는 접근 가능한 병변의 조직학적 진단을 먼저 확보해야 한다.","could_be_correct_if":"악성 진단이 확보되어 전신 병기 평가가 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"correct","explanation":"기관지내시경은 기관지 입구의 병변을 직접 확인하고 생검할 수 있다. CT가 위치를 지도화했으므로 영상과 내시경이 순차적으로 진단을 완성한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"객담 세포검사는 중심성 폐암에서 보조적일 수 있지만 음성으로 종양을 배제하지 못한다. 직접 접근 가능한 병변이 있어 내시경 생검이 더 확정적이다.","could_be_correct_if":"침습적 검사가 불가능해 보조적 세포검사가 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"경피 생검은 기관지내시경 접근이 어려운 말초 병변에 주로 사용한다. 이 병변은 중심 기도에 있어 내시경 접근이 직접적이고 기흉 위험도 피할 수 있다.","could_be_correct_if":"기관지내 접근이 어려운 말초 병변인 경우","misconception_tag":"적응증"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000031","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["짧은 시간 120 mL 객혈","SpO2 84%·빈호흡","혈괴와 기도 위협","COPD와 폐절제 병력"],"clinical_inference":"생명위협 객혈은 절대량보다 기도 폐쇄, 가스교환 장애와 심폐 예비력으로 판단한다. 이 환자는 적은 잔여 폐기능에서 저산소혈증과 기도 위협이 있어 생명위협 상태다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"고정된 용량 기준만으로 중증도를 낮게 분류하면 안 된다. 현재는 저산소혈증과 혈괴로 인한 질식 위험이 이미 나타났다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"객혈의 즉각적 사망 위험은 실혈보다 기도 폐쇄와 가스교환 실패인 경우가 많다. 폐절제와 COPD로 예비력이 낮은 환자에게 현재 출혈은 절대량과 무관하게 생명위협이다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"정상 범위의 수축기혈압은 기도 안정성을 보장하지 않는다. SpO2 84%, 빈호흡과 말하기 곤란만으로도 외래 평가가 불가능하다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"급성 출혈 초기에 혈색소가 즉시 감소하지 않을 수 있다. 기도와 산소화의 임상 상태로 중증도를 즉시 판단해야 한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐절제 병력은 남은 폐의 예비력을 감소시켜 더 적은 출혈도 치명적으로 만든다. 절대 출혈량만 적용하는 것은 환자별 위험을 놓친다.","could_be_correct_if":null,"misconception_tag":"진단 오류"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000032","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["우하엽 출혈원","지속 다량 객혈","산소에도 SpO2 86%","의식 저하·흡인 불충분"],"clinical_inference":"출혈 폐를 아래로 두어 반대편 폐를 보호하고, 큰 내경 단일 기관내관으로 기도를 확보해 혈괴 흡인과 기관지내시경 통로를 마련해야 한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"건강한 왼쪽 폐를 아래로 두면 혈액이 그쪽으로 흘러 가스교환을 더 악화시킬 수 있다. 의식 저하와 지속 출혈에서는 NIV가 기도를 보호하지 못한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"CTA는 기도 안정화 후 출혈원 지도화에 중요하다. 현재는 검사 중 질식 위험이 커 자세 조정과 삽관이 선행돼야 한다.","could_be_correct_if":"기도와 산소화가 안정된 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"폐 격리는 특정 상황에서 필요하지만 이중관은 내경이 작아 큰 혈괴 흡인과 치료 기관지내시경이 어렵다. 응급 초기에는 큰 내경 단일관이 실용적이다.","could_be_correct_if":"전문 인력 하에 선택적 폐 격리가 필요하고 기도 흡인 문제가 해결된 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"출혈하는 오른쪽을 아래로 두면 혈액이 왼쪽 폐로 넘어가는 것을 줄인다. 큰 내경 단일 기관내관은 환기, 혈괴 흡인과 치료적 기관지내시경을 가능하게 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기관지동맥색전술은 최종 지혈에 중요하지만 기도 확보 없이 이동하면 질식 위험이 크다. 먼저 산소화와 기도를 안정화해야 한다.","could_be_correct_if":"기도와 산소화가 안정화된 뒤 즉시 지혈 치료로 이동하는 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  }
+]

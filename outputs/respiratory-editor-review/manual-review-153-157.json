@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000153","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["땅콩 섭취 10분 후 급성 발생","전신 두드러기와 입술부종","쌕쌕거림과 저산소혈증","혈압 82/48 mmHg"],"clinical_inference":"알레르겐 노출 후 피부·점막, 호흡기, 순환기 침범이 급격히 발생한 아나필락시스이므로 대퇴부 근육주사 epinephrine이 최우선이다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"근육주사 epinephrine은 기관지수축, 점막부종과 쇼크를 동시에 치료하는 아나필락시스의 첫 약제다. 대퇴부에 즉시 투여하고 반응에 따라 반복하면서 산소와 수액 등 소생치료를 병행한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"흡입 salbutamol은 남아 있는 기관지수축의 보조치료가 될 수 있다. 그러나 혈관확장성 쇼크와 상기도부종을 교정하지 못해 단독으로 쓰면 epinephrine 투여가 지연된다.","could_be_correct_if":"epinephrine 투여 후에도 하기도 기관지수축이 지속되어 보조적으로 추가할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"전신스테로이드는 작용 발현이 느려 현재의 저혈압과 기도 문제를 즉시 해결하지 못한다. hydrocortisone 단독 투여는 생명을 구하는 epinephrine을 대체하지 않는다.","could_be_correct_if":"epinephrine과 소생치료 후 동반 천식 악화 등 별도 적응증으로 보조 투여할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"항히스타민제는 피부 가려움이나 두드러기 완화에 보조적으로 사용할 수 있다. 쇼크와 기관지수축에는 효과가 불충분하므로 단독 투여해서는 안 된다.","could_be_correct_if":"epinephrine 투여 후 지속되는 피부 증상을 완화하기 위한 보조치료로 사용할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"ICS-formoterol은 천식의 조절·완화 전략이지 아나필락시스 쇼크의 일차 치료가 아니다. 저혈압과 입술부종이 동반된 상황에서는 근육주사 epinephrine을 먼저 투여해야 한다.","could_be_correct_if":"아나필락시스가 안정된 뒤 동반 천식의 장기 조절·완화요법을 재정비할 때","misconception_tag":"적응증"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000154","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["임신 24주","한두 단어 말하기","SpO2 89%","PEF 개인 최고치의 38%"],"clinical_inference":"임신부의 중증 천식 악화와 저산소혈증은 산모와 태아 모두를 위협하므로 약물 노출 우려보다 즉각적인 표준 악화 치료가 우선이다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"산소만으로는 중증 기관지수축과 기도염증을 해소하지 못한다. 치료되지 않은 산모 저산소혈증이 태아에도 위험하므로 기관지확장제와 전신스테로이드를 보류해서는 안 된다.","could_be_correct_if":"기관지수축이 없고 단순 저산소혈증의 원인 평가 중 산소를 보조적으로 투여하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"SABA는 급성 기관지수축을 빠르게 완화하며 임신 자체가 중단 이유가 아니다. 항히스타민제는 천식의 중증 기류 제한을 치료하지 못한다.","could_be_correct_if":"알레르기성 피부·비강 증상의 보조치료가 별도로 필요할 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"태아 심박동 확인은 현재 태아가 살아 있다는 정보일 뿐 산모의 중증 악화가 해결되었다는 뜻이 아니다. 산모의 산소포화도, PEF와 임상 반응을 추적해야 태아 저산소 위험도 줄일 수 있다.","could_be_correct_if":"산모 상태를 다른 적절한 지표로 연속 감시하면서 PEF 측정이 불가능한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"ICS 중단은 기도염증과 향후 악화 위험을 높일 수 있다. 임신 중에도 조절 상태를 유지하도록 ICS 포함 치료를 지속·조정하는 것이 산모와 태아에 더 안전하다.","could_be_correct_if":"천식 진단이 배제되거나 특정 제제의 중대한 이상반응으로 전문가가 대체 치료를 정할 때","misconception_tag":"병태생리"},
+      {"choice_id":"C5","verdict":"correct","explanation":"중증 악화이므로 산소, 반복 흡입 SABA-ipratropium과 조기 전신스테로이드를 즉시 시행한다. 산모의 임상 반응과 폐기능뿐 아니라 임신 주수에 맞게 태아 상태도 함께 감시한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["산소포화도 목표와 태아 감시 방식은 제공된 근거·산과 협진 기준에 맞춰 구체화해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000155","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["propranolol 시작 3일 후 악화","비선택성 베타차단제 노출","이전에는 ICS-formoterol로 안정","감염 증상 없음"],"clinical_inference":"시간적 연관성과 약리기전을 고려하면 propranolol 유발 기관지수축이 의심되므로 원인 약제를 중단하고 천식 악화를 치료하며 대안을 찾는다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"propranolol은 베타2 수용체를 차단해 기관지수축을 유발하고 완화제 반응도 약화시킬 수 있다. 원인 약제를 유지한 채 항염증 치료인 ICS를 중단하면 두 위험이 모두 커진다.","could_be_correct_if":"천식이 배제되고 propranolol과 무관한 증상으로 확인되며 ICS 적응증도 없을 때","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"새 약제 투여 직후 악화된 시간 관계와 비선택성 베타차단제의 알려진 기관지수축 효과가 있다. 용량 증가는 기류 제한과 베타2작용제 저항을 더 악화시킬 수 있다.","could_be_correct_if":"호흡기 위험이 배제되고 다른 적응증으로 처방의가 용량 조절을 판단할 때","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"correct","explanation":"의심되는 유발약인 propranolol을 중단하고 ICS가 포함된 천식 악화 치료를 시행한다. 본태성 떨림에는 처방의와 상의해 기관지수축을 유발하지 않는 대체약을 검토한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"LABA 단독요법은 천식의 기도염증을 치료하지 않아 사용하지 않는다. 비선택성 베타차단제를 유지하면 LABA의 기관지확장 효과까지 저해할 수 있다.","could_be_correct_if":"해당 없음; 천식에서는 LABA를 ICS 없이 단독 유지치료로 사용하지 않는다.","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"감염 증상이 없고 약제 노출과 악화의 연관성이 뚜렷해 항생제가 원인을 치료하지 못한다. 흡입치료를 보류하면 현재 기류 제한과 염증을 방치하게 된다.","could_be_correct_if":"별도로 세균성 호흡기 감염이 확인되어 천식 치료와 함께 항생제가 필요할 때","misconception_tag":"진단 오류"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000156","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["자동차 도장 작업 시작 후 증상 발생","근무일 PEF 저하","휴무일 회복","재근무 시 다시 저하"],"clinical_inference":"작업 노출과 반복되는 가역적 기류 제한의 시간적 연관성이 직업성 천식을 강하게 시사하므로 조기 노출 회피와 객관적 전문 평가가 필요하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"휴무일에 PEF가 회복되는 현상은 천식을 배제하는 것이 아니라 작업 노출과의 관련성을 강화한다. 원래 작업을 그대로 지속하면 감작과 질환이 더 악화될 수 있다.","could_be_correct_if":"충분한 객관적 평가로 직업 관련성이 배제되고 작업장 위험도 통제된 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"correct","explanation":"근무와 휴무에 따라 반복되는 PEF 변화는 직업성 천식을 의심할 중요한 객관적 단서다. 노출을 신속히 줄이거나 피하게 하고 직업환경의학·호흡기 전문 평가로 진단과 작업 조정을 진행한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"장기 경구스테로이드는 전신 부작용이 크고 계속되는 작업 노출을 제거하지 못한다. 우선 노출 관련성을 객관화하고 회피 조치와 적절한 흡입치료를 시행해야 한다.","could_be_correct_if":"최적 치료와 노출 회피에도 조절되지 않는 중증 악화에서 제한된 기간 전신스테로이드가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"흡연은 PEF에 영향을 줄 수 있지만 근무-휴무-재근무에 맞춘 반복 변화는 직업 노출 평가를 요구한다. 직업력을 더 묻지 않으면 교정 가능한 원인을 놓친다.","could_be_correct_if":"객관적 반복 측정에서 작업 관련성이 배제되고 흡연 효과가 별도로 입증된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"PEF 기록은 강한 의심 근거지만 노출 물질과 천식의 객관적 확인을 위한 추가 평가가 필요하다. 모든 흡입제를 중단하면 노출 회피 전후에도 증상과 악화 위험을 방치한다.","could_be_correct_if":"전문 평가에서 천식이 배제되어 흡입치료 적응증이 없다고 확인될 때","misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 PEF 그래프가 근무일 저하·휴무일 회복·재근무 후 재저하를 실제로 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000157","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["달리기 때만 증상","기저 폐활량 정상","FEV1 3.8 L에서 2.9 L로 감소","운동 후 약 24% 감소 후 회복"],"clinical_inference":"운동 후 일시적인 유의한 FEV1 감소는 운동유발기관지수축에 부합하며 운동 회피보다 ICS 포함 예방·조절 전략을 적용한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"운동유발기관지수축은 운동 후 FEV1의 최대 감소폭으로 판정하므로 이후 회복한다고 음성이 되지 않는다. 이 환자는 약 24% 감소해 객관적 기류 제한이 확인된다.","could_be_correct_if":"운동 후 유의한 FEV1 감소가 전혀 없고 증상의 다른 원인이 확인될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"FEV1의 약 24% 감소는 정상 생리 범위를 넘어 운동유발기관지수축을 지지한다. 그렇더라도 매일 경구스테로이드는 위험에 비해 과도하며 먼저 ICS 포함 흡입전략을 사용한다.","could_be_correct_if":"중증 천식 악화로 제한된 기간 전신스테로이드가 별도로 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"고정성 상기도폐쇄라면 운동 후 가역적으로 FEV1이 크게 감소했다 회복하는 양상만으로 진단할 수 없다. 제시된 시간 경과는 하기도의 운동유발기관지수축에 더 맞는다.","could_be_correct_if":"유량-용적곡선과 후두·기도 평가에서 고정성 상기도폐쇄가 객관적으로 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"기저 3.8 L에서 2.9 L로 약 24% 감소해 운동유발기관지수축에 부합한다. 활동을 유지하면서 운동 전 저용량 ICS-formoterol 등 ICS가 포함된 전략을 사용하고 전체 천식 조절도 평가한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"운동을 영구 금지해도 기도 과민성과 염증을 치료하지 못하며 건강상 이점도 잃게 된다. 적절한 예방·조절치료로 안전하게 활동하도록 돕는 것이 목표다.","could_be_correct_if":"평가가 끝날 때까지 심각한 운동 증상을 유발한 특정 활동을 일시 중단하는 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 운동유발검사 그래프의 실제 수치와 시간축을 확인해야 한다.","운동 전 ICS-formoterol 사용은 해당 제형의 허가·용법을 확인해야 한다."],"publication_recommendation":"revise"
+  }
+]

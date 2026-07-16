@@ -1,0 +1,98 @@
+[
+  {
+    "question_id": "RESP-000161",
+    "revised_stem": "임신 39주인 32세 여자가 저용량 ICS-formoterol로 천식이 잘 조절된 상태에서 질식분만했다. 태반 만출 뒤 자궁무력으로 산후출혈이 발생했으나 혈압은 안정적이고 현재 천명은 없다. 가장 적절한 계획은?",
+    "revised_lead_in": "가장 적절한 계획은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"분만 직후 모든 흡입제를 중단하고 carboprost를 천식 여부와 무관하게 우선 사용한다","is_correct":false},
+      {"choice_id":"C2","text":"천식 흡입치료를 계속하고 oxytocin을 우선 사용하며 carboprost는 가능하면 피한다","is_correct":true},
+      {"choice_id":"C3","text":"천식 병력이 있으므로 모든 자궁수축제를 금기시하고 관찰만 한다","is_correct":false},
+      {"choice_id":"C4","text":"출혈 치료보다 예방적 기관내삽관을 먼저 시행한다","is_correct":false},
+      {"choice_id":"C5","text":"천식 악화가 없어도 유지 경구 corticosteroid를 새로 시작하고 oxytocin은 금기시한다","is_correct":false}
+    ],
+    "revised_core_explanation": "자궁무력성 산후출혈은 즉시 산과 출혈 프로토콜에 따라 치료해야 하며 oxytocin은 일차 자궁수축제로 사용할 수 있다. 천식 조절을 위해 ICS-formoterol을 계속하고, 기관지수축을 유발할 수 있는 prostaglandin F2α 유사체 carboprost는 가능한 대안이 있으면 피한다. 현재 천식 악화나 기도부전이 없으므로 예방적 삽관이나 새 유지 경구 corticosteroid보다 출혈 치료가 우선이다.",
+    "references": [
+      {"url":"https://www.who.int/publications/i/item/9789240115637","title":"WHO Consolidated guidelines for the prevention, diagnosis and treatment of postpartum haemorrhage"},
+      {"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}
+    ],
+    "reference_date": "2026-07-16",
+    "image_resolution": "not_required",
+    "reapproval": "approve",
+    "reapproval_reason": "정답과 모순되던 선택지 해설을 제거하고 자궁무력성 산후출혈의 치료 우선순위와 천식에서 carboprost를 피하는 이유를 공식 근거로 명확히 함"
+  },
+  {
+    "question_id": "RESP-000162",
+    "revised_stem": "60세 남자가 내일 전신마취로 대장암 수술을 받을 예정이다. 천식은 고용량 ICS-LABA로 조절되며 현재 천명은 없다. 그러나 3개월 전까지 prednisolone 15 mg/day를 8개월간 복용했고 이후 부신기능 회복 여부는 확인하지 않았다. 가장 적절한 주술기 계획은?",
+    "revised_lead_in": "가장 적절한 주술기 계획은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"천식이 안정적이므로 흡입제와 모든 glucocorticoid를 수술 당일 중단한다","is_correct":false},
+      {"choice_id":"C2","text":"과거 경구 corticosteroid 사용은 무관하므로 주술기 부신기능 위험을 고려하지 않는다","is_correct":false},
+      {"choice_id":"C3","text":"기관지경련 예방을 위해 LABA 단독 용량만 두 배로 늘린다","is_correct":false},
+      {"choice_id":"C4","text":"흡입치료를 유지하고 잔존 부신억제 가능성을 고려해 수술 스트레스에 맞는 glucocorticoid 보충을 계획한다","is_correct":true},
+      {"choice_id":"C5","text":"감염 위험 때문에 주술기 glucocorticoid 투여를 절대 금기시한다","is_correct":false}
+    ],
+    "revised_core_explanation": "장기간 경구 prednisolone을 최근까지 사용했고 부신기능 회복이 확인되지 않았으므로 glucocorticoid 유발 부신기능저하가 남아 있을 수 있다. 2024 ESE/Endocrine Society 지침은 현재 또는 최근 glucocorticoid 사용자가 부신기능저하를 배제하지 못한 채 전신·부위마취 수술 같은 중등도 이상 스트레스에 노출되면 비경구 stress-dose 보충을 권고한다. 천식 조절을 위한 ICS-LABA는 유지하되 실제 보충 요법은 수술 스트레스와 임상 상태에 맞춘다.",
+    "references": [
+      {"url":"https://www.endocrine.org/journals/jcem/glucocorticoid-induced-adrenal-insufficiency","title":"2024 ESE/Endocrine Society Joint Guideline: Glucocorticoid-induced Adrenal Insufficiency"},
+      {"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}
+    ],
+    "reference_date": "2026-07-16",
+    "image_resolution": "not_required",
+    "reapproval": "approve",
+    "reapproval_reason": "마취 방식과 부신기능 미확인 상태를 지문에 추가하고 최신 내분비 지침에 맞춰 정답의 주술기 stress-dose 근거를 보강함"
+  },
+  {
+    "question_id": "RESP-000164",
+    "revised_stem": "38세 남자가 6주간 마른기침, 운동 시 호흡곤란과 간헐적 미열을 호소한다. 항생제에 반응하지 않았고 흡연력은 없다. 청진에서 양측 흡기말 수포음이 들린다. 흉부 HRCT에서 흉막하 부위가 비교적 보존되고 양측 폐에 경계가 흐린 중심소엽성 간유리결절이 미만성으로 보인다. 가장 적절한 다음 접근은?",
+    "revised_lead_in": "가장 적절한 다음 접근은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"영상만으로 특발성 폐섬유화증을 확정하고 노출력은 묻지 않는다","is_correct":false},
+      {"choice_id":"C2","text":"세균성 폐렴으로 확정해 같은 항생제를 장기간 반복한다","is_correct":false},
+      {"choice_id":"C3","text":"중심소엽성 폐기종으로 확정하고 흡연력과 무관하게 산소만 처방한다","is_correct":false},
+      {"choice_id":"C4","text":"폐색전증으로 간주해 객관적 평가 없이 항응고제를 시작한다","is_correct":false},
+      {"choice_id":"C5","text":"가정·직장·취미의 흡입 항원 노출을 구조적으로 재조사하고 BAL 림프구 분석을 고려한다","is_correct":true}
+    ],
+    "revised_core_explanation": "미만성의 경계가 흐린 중심소엽성 간유리결절과 흉막하 보존은 소기도와 간질을 함께 침범하는 비섬유성 과민성 폐장염을 시사한다. ATS/JRS/ALAT 지침은 새로 발견된 간질성폐질환에서 가정·직장·취미 노출을 체계적으로 확인하고, 비섬유성 과민성 폐장염이 의심되면 BAL 림프구 분석을 진단 과정에 포함하도록 권고한다. 노출력·HRCT·BAL 결과가 충분하지 않으면 다학제 논의로 추가 검사의 필요성을 결정한다.",
+    "references": [{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/","title":"Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"}],
+    "reference_date": "2026-07-16",
+    "image_resolution": "converted_to_textual_HRCT_findings",
+    "reapproval": "approve",
+    "reapproval_reason": "이미지의 결정적 HRCT 소견을 지문에 직접 기술하고 반복·비문 해설을 구조화된 노출력과 BAL 중심의 진단 경로로 교체함"
+  },
+  {
+    "question_id": "RESP-000165",
+    "revised_stem": "45세 여자가 새로 키우기 시작한 앵무새 우리를 청소한 날 저녁마다 마른기침, 오한과 호흡곤란이 생기고 외박하면 호전된다고 한다. 흡연력은 없고 심초음파는 정상이다. 흉부 HRCT에서 양측 간유리음영, 경계가 흐린 중심소엽결절과 모자이크 감쇠가 보이며 뚜렷한 섬유화는 없다. 가장 가능성 높은 진단은?",
+    "revised_lead_in": "가장 가능성 높은 진단은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"특발성 폐섬유화증","is_correct":false},
+      {"choice_id":"C2","text":"심인성 폐부종","is_correct":false},
+      {"choice_id":"C3","text":"비섬유성 과민성 폐장염","is_correct":true},
+      {"choice_id":"C4","text":"흡연 관련 호흡세기관지염","is_correct":false},
+      {"choice_id":"C5","text":"급성 폐혈전색전증","is_correct":false}
+    ],
+    "revised_core_explanation": "앵무새 항원에 노출된 날 증상이 반복되고 회피하면 호전되는 시간적 연관성이 핵심 단서다. HRCT의 간유리음영과 중심소엽결절은 침윤성 병변을, 모자이크 감쇠는 소기도 침범을 시사하며 뚜렷한 섬유화가 없어 비섬유성 과민성 폐장염에 부합한다. 실제 진료에서는 항원 회피와 함께 노출 평가, 필요 시 BAL 림프구 분석 및 다학제 판단으로 진단 신뢰도를 높인다.",
+    "references": [{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/","title":"Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"}],
+    "reference_date": "2026-07-16",
+    "image_resolution": "converted_to_textual_HRCT_findings",
+    "reapproval": "approve",
+    "reapproval_reason": "조류 노출-증상 시간관계와 비섬유성 HP의 결정적 HRCT 소견을 지문에 포함해 이미지 없이 정답을 도출할 수 있게 함"
+  },
+  {
+    "question_id": "RESP-000166",
+    "revised_stem": "64세 남자가 2년간 진행한 마른기침과 운동 시 호흡곤란으로 왔다. 15년간 비둘기 사육장을 관리했고 최근에도 주 4일 노출된다. 흉부 HRCT에서 망상음영, 견인기관지확장과 일부 벌집모양의 섬유화가 보이면서 모자이크 감쇠·공기가둠과 간유리음영이 함께 관찰된다. 가장 가능성 높은 진단은?",
+    "revised_lead_in": "가장 가능성 높은 진단은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"특발성 폐섬유화증","is_correct":false},
+      {"choice_id":"C2","text":"섬유성 과민성 폐장염","is_correct":true},
+      {"choice_id":"C3","text":"비섬유성 과민성 폐장염","is_correct":false},
+      {"choice_id":"C4","text":"심인성 폐부종","is_correct":false},
+      {"choice_id":"C5","text":"속립성 폐결핵","is_correct":false}
+    ],
+    "revised_core_explanation": "장기간 지속된 비둘기 항원 노출과 만성 진행 증상이 원인 노출을 강하게 뒷받침한다. HRCT에서 망상음영·견인기관지확장·벌집모양 같은 섬유화와 모자이크 감쇠·공기가둠 같은 소기도질환이 공존하는 혼합 패턴은 섬유성 과민성 폐장염에 부합한다. IPF도 섬유화를 보일 수 있지만 이 문항의 명확한 항원 노출과 공기가둠은 과민성 폐장염 쪽으로 판단하게 하는 단서다.",
+    "references": [{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/","title":"Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"}],
+    "reference_date": "2026-07-16",
+    "image_resolution": "converted_to_textual_HRCT_findings",
+    "reapproval": "approve",
+    "reapproval_reason": "섬유화와 소기도질환의 혼합 HRCT 패턴을 지문에 옮기고 IPF와 구별되는 지속 항원 노출·공기가둠 단서를 명시함"
+  }
+]

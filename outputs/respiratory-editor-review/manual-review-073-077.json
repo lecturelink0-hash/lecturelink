@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000073",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["지속되는 위장관 출혈","혈색소 4.2 g/dL","SpO2 99%·PaO2 96 mmHg","빈맥·흉통·젖산 상승"],"clinical_inference":"SpO2는 산소와 결합한 혈색소의 비율이지 혈색소 총량이나 동맥 산소함량을 나타내지 않는다. 극심한 빈혈 때문에 산소함량과 조직 산소전달이 부족한 상태이므로 출혈 조절과 적혈구 보충을 신속히 평가해야 한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"동맥 산소함량은 대부분 혈색소 결합 산소로 결정되므로 Hb 4.2 g/dL에서는 포화도가 99%여도 운반 가능한 산소가 매우 적다. 빈맥·흉통·젖산 상승은 산소전달 실패를 뒷받침하므로 지혈과 적혈구 보충을 함께 신속히 평가한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"산소 투여와 내시경 지혈은 필요할 수 있지만 용해 산소의 산소함량 기여는 작아 극심한 빈혈을 충분히 보상하지 못한다. 증상성 조직 저산소증이 이미 나타났으므로 적혈구 보충 판단을 반응 관찰 뒤로 미루는 것은 부적절하다.","could_be_correct_if":"적혈구 보충을 준비하는 동안 산소를 투여하고 응급 지혈을 병행하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"정질액은 저혈량성 순환장애를 일시 보조하지만 산소 운반 혈색소를 보충하지 못하고 추가 희석을 일으킬 수 있다. 정상 SpO2는 수혈 필요성을 판단하는 근거가 되지 않는다.","could_be_correct_if":"출혈성 쇼크의 초기 순환 보조로 혈액제제를 준비하는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"흉통과 젖산 상승은 관상동맥질환 평가를 요구할 수 있지만 Hb 4.2 g/dL의 산소 공급 부족만으로도 수요성 허혈이 생길 수 있다. 출혈과 산소운반능을 먼저 안정화하면서 심전도·심근표지자 등 심장 평가를 병행해야 한다.","could_be_correct_if":"빈혈과 출혈을 안정화하는 동시에 지속적인 ST 상승 등 즉각적 관상동맥 재관류 적응증이 확인되는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"COHb는 정상처럼 보이는 SpO2와 조직 저산소증을 만들 수 있지만 이 환자에게는 지속 출혈과 극심한 빈혈이라는 직접 원인이 있다. CO 노출 단서 없이 co-oximetry를 우선하면 치료 가능한 산소운반능 부족의 교정을 지연시킨다.","could_be_correct_if":"연소가스 노출, 동시 다발 두통 등 CO 중독 단서가 있는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["제시된 근거는 산소함량의 생리학은 뒷받침하지만, 활동성 위장관 출혈에서 적혈구 수혈 판단을 직접 뒷받침하지 않는다. 최신 수혈·위장관 출혈 지침을 추가해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000074",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["opioid 투여 후 졸림","호흡수 6회/분","PaCO2 68 mmHg·pH 7.24","PaO2 58 mmHg","계산 A–a 산소차 약 7 mmHg"],"clinical_inference":"해수면 실내공기에서 폐포기체방정식으로 계산한 PAO2는 약 65 mmHg여서 A–a 차가 거의 정상이다. opioid에 의한 폐포저환기가 저산소혈증과 호흡성 산증의 주기전이므로 기도·환기를 즉시 지지하고 naloxone을 투여한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"폐색전증의 V/Q 불균형은 보통 A–a 산소차를 증가시키며 빈호흡에 따른 낮은 PaCO2가 흔하다. 이 환자는 opioid 노출 직후 서호흡, 고탄산혈증, 거의 정상인 A–a 차를 보인다.","could_be_correct_if":"혈전 위험과 갑작스러운 흉통·빈맥 및 증가한 A–a 차가 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"우좌단락은 A–a 차가 증가하고 고농도 산소에도 교정이 제한되는 양상을 보인다. 현재는 전반적 저환기이므로 산소 반응만 관찰하지 말고 환기를 회복해야 한다.","could_be_correct_if":"폐포 경화·무기폐와 심한 산소 불응성이 있는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"확산장애는 A–a 차를 증가시키고 운동 중 더 두드러지는 경우가 많다. 의식이 저하되고 호흡성 산증이 있는 급성 상황에서 협조가 필요한 DLCO는 우선검사가 아니다.","could_be_correct_if":"안정된 환자에서 ILD나 폐기종에 의한 확산장애를 평가하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"고도에서는 흡입 산소분압 저하로 정상 A–a 차의 저산소혈증이 생길 수 있다. 하지만 환자는 해수면에 있고 PaCO2가 크게 상승했으며 opioid 투여와 서호흡이라는 원인이 명확하다.","could_be_correct_if":"고지대 노출 또는 저산소 혼합가스 흡입이 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"PAO2는 약 150−68/0.8=65 mmHg이고 A–a 차는 약 7 mmHg로 거의 정상이다. 산소 투여만으로는 고탄산혈증과 기도 위험을 해결할 수 없으므로 환기를 보조하고 opioid 효과를 naloxone으로 역전시킨다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["현재 참고문헌은 opioid 유발 호흡억제의 응급 처치와 naloxone 사용을 직접 뒷받침하지 않는다. 임상 독성학 또는 응급 기도·naloxone 지침을 추가해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000075",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["좌하엽 전체의 치밀한 폐렴성 경화","FiO2 약 1.0에도 PaO2 62 mmHg","PaCO2 34 mmHg","혈역학적 안정"],"clinical_inference":"삼출물로 채워져 환기되지 않는 폐포에 관류가 지속되면 V/Q=0에 가까운 폐내 단락이 형성된다. 단락혈은 흡입 산소와 접촉하지 않아 고농도 산소 반응이 제한되므로 원인 치료와 함께 중증도에 맞는 호흡지지·폐포 모집 전략을 고려한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"저 V/Q 폐단위에는 일부 환기가 남아 있어 흡입 산소 농도를 높이면 대개 PaO2가 상당히 개선된다. 이미 FiO2 약 1.0에도 중증 저산소혈증이 지속되는 점은 단순 저 V/Q보다 진성 단락을 지지한다.","could_be_correct_if":"일부 환기가 보존되고 저유량 산소에 충분히 교정되는 V/Q 불균형인 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"단순 폐포저환기에서는 PaCO2가 상승하고 A–a 산소차가 대체로 정상이다. PaCO2가 낮고 치밀한 국소 경화가 있어 호흡자극제만으로 해결되는 상태가 아니다.","could_be_correct_if":"진정제나 신경근 약화로 전반적 저환기와 고탄산혈증이 발생한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"경화된 폐포는 환기가 거의 없지만 혈류가 지나가므로 폐내 우좌단락을 만든다. 항균치료와 원인 조절을 시행하고, 산소화가 유지되지 않으면 적절한 양압·PEEP 등 호흡지지로 모집 가능한 폐포를 유지하는 전략을 고려한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"확산장애에 의한 저산소혈증은 산소 투여에 비교적 잘 반응하며 DLCO는 불안정한 급성 폐렴의 치료 결정을 위한 검사가 아니다. 폐포 충전과 산소 불응성이 단락을 직접 시사한다.","could_be_correct_if":"안정된 환자에서 ILD 등 만성 확산장애가 의심되는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"낮은 흡입 산소분압은 장치 연결·유량 문제나 고도에서 고려한다. 장치가 정상 작동하며 FiO2 약 1.0이 전달된다는 조건에서는 유량 조정만으로 지속 저산소혈증을 설명하거나 교정할 수 없다.","could_be_correct_if":"reservoir가 팽창하지 않거나 산소 공급이 끊기는 등 실제 전달 FiO2 저하가 확인되는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["'폐포 모집·적절한 PEEP'은 중증 저산소성 호흡부전에서 호흡보조 단계와 폐손상 위험을 함께 고려한다는 표현으로 유지해야 하며, 단순 폐렴에 일률적으로 적용하는 문구는 피해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000076",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["COPD 급성악화와 천명·호기 연장","PaO2 54 mmHg","PaCO2 38 mmHg","저유량 산소 후 PaO2 78 mmHg"],"clinical_inference":"기도폐쇄로 일부 폐단위의 환기가 관류보다 감소해 저 V/Q 영역이 생긴 것이 주된 기전이다. 환기가 완전히 소실된 단락과 달리 흡입 산소를 높였을 때 PaO2가 개선된다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"대규모 폐내 단락은 환기가 없는 폐포에 관류가 지속되는 상태로 고농도 산소에도 교정이 제한된다. 이 환자는 저유량 산소만으로 PaO2가 뚜렷하게 상승했다.","could_be_correct_if":"폐렴성 경화나 무기폐와 심한 산소 불응성이 있는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"correct","explanation":"COPD 악화에서는 기도저항이 큰 폐단위의 환기가 관류보다 더 감소해 저 V/Q 불균형이 생긴다. 일부 환기가 남아 있으므로 흡입 산소를 올리면 해당 단위의 폐포 산소분압과 동맥 산소화가 개선된다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"전반적 폐포저환기만이 원인이면 PaCO2 상승과 거의 정상인 A–a 산소차가 예상된다. PaCO2가 38 mmHg이고 뚜렷한 기도폐쇄가 있어 국소적 V/Q 불균형이 더 적절하다.","could_be_correct_if":"약물 억제나 신경근질환으로 전반적 저환기와 고탄산혈증이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐기종에서 확산면 감소가 기여할 수 있으나 급성 COPD 악화의 저산소혈증은 주로 V/Q 불균형으로 설명된다. 고립성 확산장애는 특히 운동 때 두드러지며 현재의 산소 반응 양상을 가장 잘 설명하지 못한다.","could_be_correct_if":"ILD 등 폐포-모세혈관막 질환에서 운동성 저산소혈증과 낮은 DLCO가 확인되는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"대기압 저하에 따른 저산소혈증은 고도 노출이라는 환경 단서가 필요하며 기도폐쇄 소견을 설명하지 못한다. 제시된 상황은 COPD 악화에 따른 폐 내 가스분포 이상이다.","could_be_correct_if":"고지대에 체류해 흡입 산소분압이 감소한 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000077",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["무릎관절치환술 5일 후","갑작스러운 호흡곤란·흉막성 흉통·빈맥","PaO2 61·PaCO2 29 mmHg","PaCO2−EtCO2 차이 9 mmHg","새 흉부 침윤 없음"],"clinical_inference":"수술 후 급성 증상과 저산소성 과호흡은 폐색전증 가능성을 높인다. 폐색전 부위의 관류 차단은 사강을 늘리고 혈류 재분배로 V/Q 불균형을 만들므로, 혈역학적으로 안정된 환자에서 CT 폐혈관조영술로 확인한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"폐포저환기는 PaCO2 상승과 거의 정상인 A–a 산소차를 보이는 것이 전형적이다. 이 환자는 빈호흡성 저탄산혈증과 급성 흉막통이 있어 진정제 관찰로 미루면 안 된다.","could_be_correct_if":"진정제 노출 후 서호흡·고탄산혈증이 발생한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"폐렴성 단락은 발열·객담·새 침윤과 산소 불응성 경화를 예상한다. 수술 후 갑작스러운 흉막통과 정상 흉부 X선은 폐색전증에 더 부합하므로 항생제 반응을 기다리는 것은 위험하다.","could_be_correct_if":"감염 증상과 새 폐포성 침윤이 확인되는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"DLCO는 안정된 만성 확산장애를 평가하는 검사로 급성 폐색전 의심을 배제하지 못한다. 수술 후 고위험 환자의 갑작스러운 증상에서는 진단 영상을 지연시켜서는 안 된다.","could_be_correct_if":"급성 혈전색전 단서 없이 만성 ILD나 폐기종의 확산장애를 평가하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"색전으로 관류가 차단된 폐단위는 환기만 남아 사강이 되고, 혈류 재분배는 다른 부위의 저 V/Q를 유발해 저산소혈증을 만든다. 수술 후 높은 임상 가능성과 안정된 혈압을 고려하면 금기가 없는 한 CTPA가 적절한 확진 검사다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"급성 좌심부전은 폐부종성 침윤, 기좌호흡, 울혈 소견 등이 진단을 지지한다. 이런 단서 없이 수술 후 급성 흉막통과 사강 증가 소견이 있으므로 이뇨제 반응을 기다리기보다 폐색전을 확인해야 한다.","could_be_correct_if":"폐울혈·심기능 저하와 용적 과다 소견이 확인되는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  }
+]

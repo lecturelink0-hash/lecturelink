@@ -1,0 +1,62 @@
+[
+  {
+    "question_id":"RESP-000248","answer_consistency":"confirmed","core_reasoning":{"key_findings":["중증 COPD","산소 증량 후 졸림","pH 7.22·PaCO₂ 92 mmHg","기도 보호 유지·혈압 안정"],"clinical_inference":"산소 증량 뒤 발생한 중증 급성 고탄산혈증성 산증이지만 NIV를 시도할 기도 보호와 혈역학이 유지된다. 산소를 목표 범위로 낮추고 NIV로 환기를 보조하며 실패 여부를 조기에 평가한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"산소를 88–92% 목표로 적정하면 저산소증을 피하면서 산소 유발 CO₂ 상승을 제한할 수 있다. NIV를 즉시 시작하고 혈액가스, 졸림, 호흡노력과 기도 보호를 면밀히 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"산소를 완전히 중단하면 COPD 악화에 동반된 저산소혈증이 드러나거나 악화할 수 있다. 실내공기에서도 안전한 포화도가 확인된 경우에만 산소를 중단하며, 현재는 조절 투여가 필요하다.","could_be_correct_if":"실내공기에서 목표 산소포화도가 안정적으로 유지되고 저산소혈증이 없는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"고유량 산소는 CO₂ 제거 치료가 아니며 환기-관류 불균형과 Haldane 효과 등으로 고탄산혈증을 악화할 수 있다. 극심한 저산소혈증 구조에는 잠시 사용할 수 있지만 이후 목표 포화도로 신속히 조절한다.","could_be_correct_if":"즉각적인 생명구조가 필요한 극심한 저산소혈증에서 일시적으로 사용하는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"진정제는 호흡구동과 기도 보호를 억제해 졸림과 CO₂ 저류를 심화할 수 있다. NIV 순응을 위한 최소 진정이 불가피하다면 집중감시와 즉시 삽관이 가능한 환경에서 전문가가 시행한다.","could_be_correct_if":"비약물적 방법에도 NIV가 불가능해 집중감시 아래 최소 진정이 불가피한 경우","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"pH가 낮아 삽관 준비는 필요하지만 기도 보호와 혈압이 유지돼 NIV를 먼저 시도할 수 있다. 의식 악화, 기도 보호 실패, 혈역학 불안정 또는 적절한 NIV에도 산증이 진행하면 즉시 삽관한다.","could_be_correct_if":"기도 보호 실패, 중증 불안정 또는 NIV 실패가 확인된 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["pH 7.22와 졸림은 NIV 실패 위험이 높으므로 삽관 준비와 매우 이른 재평가를 정답 해설에 명시해야 함","검증된 근거 자료가 입력되지 않음","RESP-000243과 임상 구조와 선택지가 거의 중복됨"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000249","answer_consistency":"confirmed","core_reasoning":{"key_findings":["소세포폐암 치료 중","갑작스러운 얼굴·목 부종과 호흡곤란","상체 거상 시 호전","신경학적 이상·저혈압 없음"],"clinical_inference":"종양성 상대정맥 증후군이 의심되지만 즉각적 기도·뇌·혈역학 위기는 없다. 상체 거상과 필요한 산소를 제공하면서 폐쇄 정도 및 혈전 여부를 평가해 스텐트와 종양 특이 치료의 긴급성을 정한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"눕히면 상체 정맥압과 호흡곤란이 악화할 수 있으며, 폐쇄된 상체 정맥에 중심정맥관을 넣으면 혈전과 기능 장애 위험이 커진다. 접근이 꼭 필요하면 영상과 폐쇄 위치를 고려해 대체 경로를 선택한다.","could_be_correct_if":"폐쇄 위치를 피해 안전한 중심정맥 경로가 확인되고 치료상 반드시 필요한 경우","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"조직형 확인은 중요하지만 그동안 상체 거상·산소·기도와 신경학적 감시까지 보류해서는 안 된다. 이 환자는 이미 소세포폐암 진단이 있어 현재는 진행·혈전 및 긴급 감압 필요성을 신속히 평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"악성 상대정맥 폐쇄는 개흉술을 일률적으로 시행하는 질환이 아니다. 증상 중증도와 종양 반응성을 고려해 혈관 내 스텐트, 항암치료 또는 방사선치료를 선택한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"이뇨제가 정맥 폐쇄를 해소하지 못하며 단독 사용의 근거도 제한적이다. 영상은 폐쇄 기전과 혈전, 스텐트 가능성을 판단해 원인 치료를 정하는 데 필요하다.","could_be_correct_if":"별도의 체액 과다 상태가 확인되어 증상 조절을 위해 보조적으로 사용하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"correct","explanation":"상체 거상은 정맥 울혈을 줄이고, 저산소혈증이 있으면 산소를 공급한다. 동시에 기도·뇌 증상과 폐쇄 정도를 평가해 빠른 증상 완화가 필요한 경우 스텐트를, 종양 조절에는 소세포폐암 치료를 조율한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["문항이 의존하는 CT 이미지가 입력 데이터에 없어 폐쇄 정도와 혈전 동반 여부를 출판 전 확인해야 함","이미 소세포폐암 진단이 명시되어 있어 C5의 '조직 진단' 표현은 재생검 필요 상황인지 명확히 해야 함","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000250","answer_consistency":"confirmed","core_reasoning":{"key_findings":["삽관 직후","삽관 깊이 25 cm","좌측 호흡음 감소·비대칭 흉곽 상승","혈압 안정"],"clinical_inference":"기관내관이 우측 주기관지까지 깊게 들어가 좌폐 환기가 감소한 상황이 가장 가능성이 높다. 관을 조금 후퇴시킨 뒤 양측 환기와 파형 ETCO₂를 즉시 재평가한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"관은 기도 내에 있으나 깊이가 문제이므로 제거하면 확보된 기도를 불필요하게 잃는다. 구강 삽관 유지가 불가능한 특별한 해부학적 사유가 있을 때만 다른 기도 경로를 검토한다.","could_be_correct_if":"현재 관 유지가 불가능하고 전문적으로 다른 기도 확보가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"PEEP를 0으로 낮춰도 우측 주기관지 삽관으로 인한 좌폐 환기 소실은 교정되지 않으며 ARDS 폐포 허탈을 악화할 수 있다. PEEP로 인한 과팽창·쇼크가 확인되면 관 위치 교정 후 개별적으로 조절한다.","could_be_correct_if":"관 위치가 정상이고 PEEP 관련 과팽창 또는 중대한 혈역학 저하가 확인된 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"correct","explanation":"25 cm의 깊은 관과 좌측 호흡음 감소는 우측 주기관지 삽관을 시사한다. cuff를 감압해 관을 2–3 cm 후퇴·재고정하고 양측 청진, 흉곽 움직임, 파형 ETCO₂와 필요 시 X선으로 확인한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"ARDS 환자의 환기를 기관지경까지 중단하면 급속한 저산소혈증이 발생할 수 있다. 단순 깊이 문제를 교정한 뒤에도 점액마개나 구조적 폐쇄가 의심되면 환기를 유지하며 기관지경을 시행한다.","could_be_correct_if":"환기를 유지하면서 기관지 내 폐쇄를 긴급히 진단·치료할 필요가 있는 경우","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"진정제 증량은 관의 기계적 위치를 바꾸지 않고 혈압과 호흡구동만 더 억제할 수 있다. 환자-호흡기 비동조가 원인이고 관 위치가 정상임을 확인한 경우에만 진정 깊이를 재평가한다.","could_be_correct_if":"관 위치가 정상이고 통증·불안에 의한 중대한 환자-호흡기 비동조가 확인된 경우","misconception_tag":"진단 오류"}
+    ],"review_flags":["지문이 의존하는 모니터 파형 이미지가 입력 데이터에 없어 지속 ETCO₂ 파형을 출판 전 확인해야 함","성별·키가 없어 25 cm 깊이만으로 과심부 삽관을 단정할 수 없으나 좌측 호흡음 감소가 진단을 보강함","검증된 근거 자료가 입력되지 않음","기존 핵심 해설의 '소견가' 문구 교정 필요"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000251","answer_consistency":"confirmed","core_reasoning":{"key_findings":["약제감수성 폐결핵 6개월 치료 완료","무증상","객담 도말 음성","치료 종료 영상 변화 없음"],"clinical_inference":"현재 임상적 재발이나 영상 악화 증거가 없어 잔존 방사선 이상만으로 치료 실패를 선언할 수 없다. 임상 추적 중 증상 또는 새로운 영상 변화가 생기면 객담 배양과 감수성검사로 재발·내성을 평가한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"적절한 6개월 요법을 완료했고 재발 증거가 없으므로 4제를 임의로 연장하면 독성만 늘어난다. 치료 반응 부족, 중단 또는 특정 병변·약제 조건으로 연장 적응증이 확인된 경우에는 개별적으로 기간을 조정한다.","could_be_correct_if":"표준 기간 연장이 필요한 명확한 임상·미생물학적 조건이 확인된 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"correct","explanation":"치료 후 섬유성 흉터는 남을 수 있으므로 영상이 완전히 정상화될 필요는 없다. 재발 증상이나 새로운 방사선 악화가 나타나면 객담을 다시 채취해 배양과 약제감수성검사로 재발 또는 재감염을 확인한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"변하지 않는 잔존 음영은 비활동성 흉터일 수 있어 그 자체가 치료 실패 증거가 아니다. 치료 중 지속 또는 재양전된 배양과 임상·영상 진행이 있으면 실패를 평가한다.","could_be_correct_if":"미생물학적 양성 지속 또는 명백한 임상·영상 진행이 함께 확인된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"무증상이고 악화가 없는데 전체 요법을 즉시 재시작하면 현재 감수성을 확인하지 못한 채 불필요한 독성을 준다. 재발이 의심되면 먼저 객담 검체를 확보하고 중증도와 내성 위험에 따라 경험적 치료 여부를 정한다.","could_be_correct_if":"중증 활동성 재발이 강하게 의심되어 검체 확보 직후 결과 전 경험적 다제치료가 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"매월 CT는 방사선 노출과 비용이 크며 무증상 치료 완료자의 표준 추적이 아니다. 새 증상이나 흉부 X선 변화 등 임상 적응증이 생기면 CT를 선택적으로 시행한다.","could_be_correct_if":"새로운 임상 또는 단순 영상 이상을 정밀 평가할 구체적 적응증이 생긴 경우","misconception_tag":"적응증"}
+    ],"review_flags":["C2의 명령형 존댓말과 나머지 선택지의 문체가 불일치하므로 통일 필요","'이전 연구'는 '이전 영상'으로 교정 필요","기존 핵심 해설의 '적절한다' 등 비문과 기존 선택지별 해설의 심한 인코딩 손상 교정 필요","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000252","answer_consistency":"confirmed","core_reasoning":{"key_findings":["중증 COPD","만성 고탄산증","발목 부종·운동 전 실신","우심부전 의심"],"clinical_inference":"COPD 관련 폐고혈압과 폐성심을 뒷받침하려면 우심실 압력 과부하와 구조 변화가 필요하다. 심초음파상 우심실 확장과 추정 폐동맥압 상승이 선택지 중 가장 직접적인 근거다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"고립된 좌심실 수축기 기능장애는 좌심질환성 폐고혈압과 부종을 설명해 COPD성 폐성심의 대안 진단이 된다. 좌심 기능이 보존된 채 우심실 압력 과부하가 나타나야 COPD 관련 우심부전을 더 지지한다.","could_be_correct_if":"질문이 COPD성 폐성심이 아니라 좌심실 기능장애에 의한 폐고혈압을 묻는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"기관지확장제 반응은 기류제한의 가역성을 평가하지만 폐동맥압이나 우심실 기능을 직접 보여 주지 않는다. 기도 질환 표현형을 평가하는 상황에서는 의미가 있어도 폐성심 확증 소견은 아니다.","could_be_correct_if":"질문이 기류제한의 가역성 또는 천식 중첩 가능성을 평가하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"호산구 증가는 흡입 corticosteroid 반응 가능성과 관련될 수 있으나 폐고혈압이나 우심부전을 입증하지 않는다. 특히 저산소혈증이 없다는 조건은 만성 저산소성 폐혈관 수축의 근거도 제공하지 않는다.","could_be_correct_if":"질문이 COPD 악화 예방을 위한 ICS 반응 가능성을 묻는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"우심실 확장은 만성 압력 과부하에 대한 구조적 반응이고 추정 폐동맥압 상승은 폐고혈압을 직접 지지한다. 다만 심초음파는 선별·추정 검사이므로 치료를 바꾸는 확정 평가에는 임상 맥락에 따라 우심도자가 필요할 수 있다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"정상 경정맥압은 임상적으로 뚜렷한 우심부전의 전신 정맥 울혈과 맞지 않으며, 정상 ECG도 진행된 우심실 부담을 지지하지 않는다. 경증 초기 폐고혈압에서는 둘 다 정상일 수 있지만 강한 뒷받침 소견은 아니다.","could_be_correct_if":"초기 또는 경증 폐고혈압으로 우심부전 징후가 아직 없는 경우","misconception_tag":"진단 오류"}
+    ],"review_flags":["선택지 C1의 '확산 능력 감소'가 좌심실 수축기 기능장애와 문법·인과상 어색해 문장 교정 필요","기존 선택지별 해설에 심한 인코딩 손상 존재","심초음파 폐동맥압은 추정치이므로 확정검사와 구분해야 함","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000253","answer_consistency":"confirmed","core_reasoning":{"key_findings":["우측 폐암","얼굴 부종·앙와위 호흡곤란·흉벽 측부정맥","조영 CT상 SVC 폐쇄 의심","조직 진단과 병기 진행 중"],"clinical_inference":"임상적으로 유의한 악성 상대정맥 증후군이다. 즉시 상체를 올리고 필요 시 산소를 공급하면서 위기 징후를 감시하고, 신속한 조직 진단으로 스텐트·항암·방사선치료 중 원인별 계획을 세운다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"머리를 높이면 상체 정맥압과 앙와위 호흡곤란을 줄일 수 있고 저산소혈증이 있으면 산소를 제공한다. 기도·뇌 증상과 폐쇄 중증도를 동시에 평가하며 조직형과 병기에 맞춘 치료를 긴급히 계획한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"이미 증상이 뚜렷한 상대정맥 폐쇄를 지지요법 없이 수주간 미루면 호흡곤란과 울혈이 악화할 수 있다. 경미하고 안정적이어도 조직 진단과 병기 평가는 신속히 진행해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"이뇨제만으로 종양의 상대정맥 압박을 해소할 수 없고 종양학적 치료 지연은 원인을 방치한다. 별도의 체액 과다가 확인되면 증상 조절에 보조적으로 사용할 수 있다.","could_be_correct_if":"동반 체액 과다 상태가 있어 보조적 이뇨가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"하대정맥 필터는 하지 정맥 혈전의 폐색전 예방 장치로 상대정맥 종양 압박을 치료하지 않는다. 급성 정맥혈전색전증이 있고 항응고 절대금기가 있을 때만 별도 적응증을 검토한다.","could_be_correct_if":"급성 하지 DVT 또는 PE와 항응고 절대금기가 함께 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"악성 외부 압박만으로 최대 용량 항응고를 시작하면 출혈 위험만 늘고 폐쇄를 해결하지 못한다. CT에서 상대정맥 혈전이 확인되고 출혈 위험이 허용되면 항응고를 원인 치료와 함께 고려한다.","could_be_correct_if":"상대정맥 혈전이 객관적으로 확인되고 항응고 금기가 없는 경우","misconception_tag":"적응증"}
+    ],"review_flags":["문항이 의존하는 조영 CT 이미지가 입력 데이터에 없어 SVC 폐쇄·혈전·측부순환을 출판 전 확인해야 함","기존 핵심 해설은 번역체 비문이며 기존 선택지별 해설에 심한 인코딩 손상이 있어 전면 교체 필요","산소는 저산소혈증이 있을 때 투여한다는 조건을 해설에 명확히 해야 함","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"revise"
+  }
+]

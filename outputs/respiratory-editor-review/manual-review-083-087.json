@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000083",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["HIV·ART 중단·CD4 42/μL","마른기침·발열·진행성 호흡곤란","양측 미만성 간유리음영","P. jirovecii PCR 양성","PaO2 66 mmHg·A–a 차 38 mmHg"],"clinical_inference":"임상·영상·미생물 소견은 HIV 관련 Pneumocystis 폐렴에 합당하다. PaO2 70 mmHg 미만과 A–a 차 35 mmHg 이상을 모두 충족하므로 1차 치료인 TMP-SMX와 함께 보조 코르티코스테로이드를 치료 시작 72시간 이내 투여한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"TMP-SMX는 HIV 관련 PCP의 우선 치료이며 현재 산소화 장애는 보조 스테로이드 기준을 충족한다. 스테로이드는 항미생물 치료 시작과 함께 가능한 빨리, 늦어도 초기 72시간 안에 시작한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"Atovaquone은 주로 경증~중등도 PCP에서 TMP-SMX를 사용할 수 없을 때 고려하는 대안이며 중증 질환의 우선 약제가 아니다. 이 환자는 이미 스테로이드 적응증이므로 산소화가 더 악화될 때까지 기다리면 안 된다.","could_be_correct_if":"경증~중등도 PCP이고 TMP-SMX 불내성 또는 금기가 있는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"정주 pentamidine은 중등도~중증 PCP에서 TMP-SMX를 사용할 수 없거나 치료 실패 시 대체할 수 있다. 현재 TMP-SMX 금기나 실패가 제시되지 않았으므로 처음부터 이를 피할 이유가 없다.","could_be_correct_if":"중증 sulfonamide 반응 등 TMP-SMX 금기·불내성 또는 치료 실패가 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"보조 스테로이드 기준은 실내공기 PaO2 70 mmHg 미만 또는 A–a 산소차 35 mmHg 이상이다. PaO2가 60 mmHg 아래로 떨어질 때까지 기다리면 유효한 초기 치료 시기를 놓친다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"ART는 PCP 치료 중 통상 조기에 시작하지만 중등도~중증 PCP에서 보조 스테로이드는 면역억제 때문에 금기인 치료가 아니다. 산소화 악화와 사망 위험을 줄이기 위한 적응 치료다.","could_be_correct_if":"ART 조기 시작을 TMP-SMX·적응증에 맞는 스테로이드와 함께 시행하는 경우","misconception_tag":"금기"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000084",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["우측 흉곽의 광범위한 백색화","우측 흉곽 용적 감소","기관·종격동의 우측 이동","과거 흉부 수술력 없음","3주간 진행성 증상"],"clinical_inference":"한쪽 흉곽 백색화와 동측 종격동 이동은 밀어내는 흉수보다 용적 감소성 전폐 무기폐를 뜻한다. 수술력이 없는 성인에서는 주기관지의 점액마개나 중심부 종양 등 폐쇄 병변을 조영증강 CT로 평가하고 필요 시 기관지내시경으로 확인한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"대량 흉수는 일반적으로 병변 측 흉곽을 팽창시키고 종격동을 반대쪽으로 밀어낸다. 이 영상은 기관과 종격동이 백색화된 우측으로 당겨져 있어 흉수보다 용적 감소를 나타낸다.","could_be_correct_if":"초음파에서 대량 흉수가 확인되고 종격동이 반대쪽으로 이동한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"전폐성 폐렴도 백색화를 만들 수 있지만 대개 폐용적이 유지되며 뚜렷한 동측 종격동 이동은 무기폐를 더 지지한다. 성인의 전폐 허탈에서 중심부 폐쇄를 배제하지 않은 채 항생제 반응만 기다리면 안 된다.","could_be_correct_if":"용적 감소 없이 감염 증상과 공기기관지음이 뚜렷한 전폐성 폐렴인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"긴장성 기흉은 병변 측 과투과성, 폐혈관 음영 소실, 허탈된 폐와 반대쪽 종격동 이동을 보인다. 현재의 우측 백색화와 동측 이동은 정반대 영상이다.","could_be_correct_if":"저혈압 등 긴장 생리와 병변 측 과투과성·반대쪽 종격동 이동이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"전폐절제 후에는 수술측 백색화와 동측 용적 감소가 정상 변화일 수 있다. 그러나 지문이 수술력을 명시적으로 배제하므로 원인 없는 정상 변화로 간주할 수 없다.","could_be_correct_if":"전폐절제 병력과 예상되는 수술 후 영상 변화가 이전 영상에서 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"우측 폐 전체의 용적 감소가 기관·종격동을 같은 쪽으로 이동시킨 전폐 무기폐 영상이다. 조영증강 CT로 우측 주기관지 폐쇄의 위치와 종괴 여부를 평가하고 결과에 따라 기관지내시경을 시행한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["기존 핵심 해설 끝부분에 자동 결합으로 생긴 '영상에서는…가…에 합당한지 확인해야 한다' 문장이 중복·비문이다. DB 반영 시 삭제하고 정제된 핵심 추론으로 교체해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000085",
+    "answer_consistency":"questionable",
+    "core_reasoning":{"key_findings":["갑작스러운 중증 호흡곤란","혈압 168/96 mmHg","SpO2 82%·호흡수 34회·보조근 사용","pH 7.29·PaCO2 52 mmHg","양측 미만성 폐포성·간질성 음영"],"clinical_inference":"영상과 고혈압성 급성 호흡부전은 심인성 폐부종을 시사하며, 산증·고탄산혈증·심한 호흡노력 때문에 조기 비침습 양압환기가 필요하다. 다만 영상이 심인성 원인에 특이적이지 않고 울혈의 병력·진찰 단서가 부족해 고리이뇨제를 포함한 정답 전체를 확정하려면 지문 보강이 필요하다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"저유량 산소와 이뇨제만으로는 SpO2 82%, pH 7.29, 보조근 사용을 동반한 환기부전을 충분히 지지하지 못한다. 산증이 저절로 좋아지기를 기다리지 말고 즉각 양압환기와 면밀한 재평가가 필요하다.","could_be_correct_if":"산증·고탄산혈증·심한 호흡노력이 없는 경증 울혈성 폐부종인 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"높은 혈압을 동반한 급성 심인성 폐부종에서 정주 질산염은 후부하·전부하 감소에 유용할 수 있다. 그러나 현재의 중증 호흡부전에서 질산염만 투여하고 양압환기를 배제하는 것은 부적절하다.","could_be_correct_if":"질산염을 비침습환기 및 다른 적절한 급성 심부전 치료와 병행하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"비침습 양압환기는 산소화와 환기를 개선하고 심한 호흡노력을 줄이므로 금기가 없다면 지체 없이 시작한다. 심인성 울혈이 임상적으로 확인되면 정주 고리이뇨제를 병행하고, 높은 혈압에서는 혈관확장제도 고려한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"즉시 삽관은 기도 보호 실패, 의식 저하, 쇼크, 호흡정지 임박 또는 NIV 실패·금기가 있을 때 필요하다. 지문에는 그런 단서가 없어 먼저 면밀한 감시 아래 NIV를 시도할 수 있다.","could_be_correct_if":"의식 저하·기도 보호 실패·혈역학 불안정 또는 NIV 실패가 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"양측 음영은 폐렴에서도 가능하지만 발열·감염 단서가 없고 갑작스러운 고혈압성 호흡부전이 제시됐다. 고탄산성 산증과 심한 호흡노력에서는 HFNC만으로 환기 보조를 대신하는 것도 적절하지 않다.","could_be_correct_if":"감염 단서와 폐렴성 침윤이 확인되고 주된 문제가 저산소성 호흡부전이며 환기부전이 없는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["영상은 양측 미만성 음영을 보이지만 심인성 폐부종에 특이적이지 않다. 기좌호흡, 경정맥 팽창, 말초부종, BNP 상승, 심초음파 또는 명확한 심부전 병력 중 하나를 추가해 정주 이뇨제까지 포함한 정답을 확정해야 한다.","기존 핵심 해설의 영상 설명 말미에 자동 결합 비문이 있으므로 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000086",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["대칭적 양측 폐문 림프절비대","뚜렷한 폐실질 침윤·섬유화 없음","사르코이드증 확인","무증상·정상 폐기능","심장·안과·칼슘 이상 없음"],"clinical_inference":"폐실질 침범 없이 양측 폐문 림프절비대만 있어 Scadding stage I이다. 증상·기능 저하·치료가 필요한 장기 침범이 없으므로 전신 면역억제보다 정기 추적관찰이 적절하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"Stage II는 폐문 림프절비대와 폐실질 침윤이 함께 있어야 하는데 영상의 폐실질은 비교적 깨끗하다. Stage II라 하더라도 증상·진행·장기 위협 없이 병기만으로 전신 스테로이드를 즉시 시작하지 않는다.","could_be_correct_if":"폐실질 침윤이 동반되고 증상·기능 악화 또는 장기 위협으로 치료 적응증이 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"correct","explanation":"대칭적 양측 폐문 림프절비대만 있고 폐실질 병변이 없어 stage I이다. 무증상이며 폐기능과 주요 장기 평가가 정상이라면 증상·폐기능·영상을 정기 추적한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"Stage III는 폐문 림프절비대 없이 폐실질 침윤이 있는 상태로 현재 영상과 반대다. 항섬유화제는 단순 방사선 stage III의 표준 초기 치료가 아니다.","could_be_correct_if":"림프절비대 없이 폐실질 침윤이 확인되면 stage III 분류는 가능하지만 치료는 별도 적응증에 따라 결정","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"Stage IV에는 폐섬유화, 상엽 용적 감소, 구조 왜곡 또는 견인성 기관지확장 같은 만성 변화가 필요하다. 그런 소견이나 기능 저하가 없는 환자에게 폐이식 평가를 시작할 이유가 없다.","could_be_correct_if":"진행성 섬유화와 중증 기능 저하가 있어 이식 적응증을 검토하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"림프종이 의심되면 조직진단이 필요하지만 영상만으로 항암치료를 시작하지 않는다. 지문은 사르코이드증이 확인됐다고 명시하며 영상도 전형적인 대칭성 폐문 비대다.","could_be_correct_if":"비전형적 비대칭 림프절과 전신 증상으로 림프종이 조직학적으로 확진된 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000087",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["4주간 기침·객혈·야간 발한","상엽 우세 공동과 주변 침윤","자발 객담 가능","전염성 활동성 폐결핵 의심"],"clinical_inference":"임상상과 공동성 상엽 병변은 전염성 폐결핵 가능성을 높이므로 즉시 공기매개 격리를 시행한다. 자발 객담의 연속 항산균 도말·배양과 첫 호흡기 검체 NAAT로 신속 진단, 배양 확정 및 약제감수성 평가를 준비한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"IGRA는 결핵균 감염 여부를 보조하지만 잠복감염과 활동성 폐결핵을 구분하지 못한다. 전염 가능성이 있는 폐질환은 객담의 미생물 검사로 확인해야 한다.","could_be_correct_if":"활동성 결핵이 배제된 뒤 결핵 감염 여부를 평가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"자발 객담이 가능한 환자에서는 객담 검체가 우선이며 기관지내시경은 불필요한 침습과 에어로졸 노출을 늘린다. 객담이 없거나 유도객담으로도 진단하지 못할 때 내시경을 고려한다.","could_be_correct_if":"자발·유도 객담을 얻지 못하거나 반복 검사에도 진단이 불명확한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"단일 항산균 도말 음성은 균량이 적은 결핵을 배제하지 못하며 배양과 NAAT의 역할도 대신하지 못한다. 격리 해제는 연속 검체와 임상 가능성, 대체 진단 및 기관 정책을 종합해 결정한다.","could_be_correct_if":"권고된 평가에서 감염성 결핵 가능성이 충분히 낮아지고 대체 진단이 확립된 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"활동성 공동성 폐결핵을 의심하므로 공기매개 격리를 즉시 시행한다. 연속 객담의 도말·배양과 첫 검체 NAAT를 시행해 신속한 결핵균 검출과 최종 배양·약제감수성 정보를 모두 확보한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"임상적으로 필요하면 검체 채취 후 경험적 4제 치료를 시작할 수 있지만 영상이나 치료 반응만으로 미생물 진단을 대체할 수 없다. 배양과 감수성 검사는 내성 확인과 치료 조정에 중요하다.","could_be_correct_if":"중증 환자에서 적절한 검체를 먼저 확보한 뒤 결과를 기다리지 않고 경험적 치료를 시작하는 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  }
+]

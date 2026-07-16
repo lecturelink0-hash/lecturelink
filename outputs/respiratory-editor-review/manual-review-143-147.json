@@ -1,0 +1,92 @@
+[
+  {
+    "question_id": "RESP-000143",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["기관지확장제 반응으로 확인된 천식", "운동 전 salbutamol을 주 4회 사용", "야간 호흡곤란 발생"],
+      "clinical_inference": "빈번한 운동 관련 증상과 야간 증상은 운동 전 SABA 단독보다 ICS가 포함된 완화 전략과 전반적 조절 평가가 필요함을 뜻한다.",
+      "best_answer": "C1"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"correct","explanation":"저용량 ICS-formoterol은 운동 전 기관지수축을 완화하면서 항염증 치료도 함께 전달한다. 주 4회 사용과 야간 증상이 있으므로 사용 빈도와 전체 증상 조절을 추적해 유지치료 필요성을 다시 판단해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"운동 전 SABA는 운동유발기관지수축을 줄일 수 있지만 ICS가 없는 단독 전략이다. 이 환자는 사용 빈도가 높고 야간 증상도 있어 항염증 치료 없이 SABA만 지속하기에는 악화 위험 관리가 부족하다.","could_be_correct_if":"천식이 배제된 일시적 운동 관련 증상이고 별도의 평가에서 항염증 치료 적응증이 없을 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"운동 회피는 기저 기도염증을 치료하지 않으며 모든 흡입제를 중단하면 예방 가능한 증상이 지속될 수 있다. 적절히 조절된 천식에서는 활동을 유지하도록 치료 계획을 맞추는 것이 목표다.","could_be_correct_if":"운동 중 즉시 평가가 필요한 심각한 증상이 발생해 원인 확인 전 일시적으로 해당 활동을 중단할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"fluticasone-salmeterol은 유지 조절제로 쓰일 수 있으나 salmeterol 조합은 필요 시 빠른 완화제로 선택하지 않는다. 운동 전 완화제로 사용하려는 목적과 약제의 작용 특성이 맞지 않는다.","could_be_correct_if":"정해진 일정의 유지치료가 필요하고 별도의 적절한 완화제를 함께 처방할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"유지 경구스테로이드는 전신 부작용 부담이 크며 이 정도의 운동 관련 증상에 우선 적용할 치료가 아니다. 먼저 ICS 포함 흡입치료로 조절하고 반응과 위험을 평가해야 한다.","could_be_correct_if":"최적화된 고강도 흡입치료와 추가치료에도 조절되지 않는 중증 천식에서 전문의가 제한적으로 판단할 때","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags": ["ICS-formoterol의 운동 전 사용은 해당 제형과 지역 허가·용법을 확인해야 한다."],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000144",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["한두 단어만 말함과 보조호흡근 사용", "SpO2 89%", "PEF 개인 최고치의 34%"],
+      "clinical_inference": "저산소혈증과 현저한 기류 제한을 동반한 중증 천식 악화이므로 검사 결과를 기다리지 않고 산소, 반복 기관지확장제, 조기 전신스테로이드를 병행해야 한다.",
+      "best_answer": "C5"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"흉부 X선이나 동맥혈가스는 합병증 또는 환기부전을 평가할 때 치료와 동시에 시행할 수 있다. 이 환자에게 기관지확장제를 검사 뒤로 미루면 중증 기류 제한의 교정이 지연된다.","could_be_correct_if":"즉시 치료를 시작한 뒤 합병증이나 호흡부전 평가가 추가로 필요할 때 검사를 병행하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"추가 ICS-formoterol은 일부 경증 악화의 행동계획에 포함될 수 있다. 그러나 단어 단위 말하기, SpO2 89%, PEF 34%인 중증 악화를 한 번 흡입 후 관찰만 하는 것은 치료 강도가 부족하다.","could_be_correct_if":"경증 악화로 산소화와 폐기능이 안정적이고 서면 행동계획에 따른 초기 자가치료를 하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"항생제는 세균감염 근거가 있을 때 추가하는 치료이며 급성 기관지수축을 해소하지 않는다. 감염 평가 때문에 기관지확장제를 배양 뒤로 미뤄서는 안 된다.","could_be_correct_if":"폐렴 등 세균감염을 시사하는 소견이 확인되어 천식 악화 치료와 함께 항생제를 투여할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"쌕쌕거림의 존재는 중증도를 낮추는 근거가 아니다. 말하기 제한, 보조근 사용, 저산소혈증과 낮은 PEF가 입원 수준의 적극적 초기 처치를 요구한다.","could_be_correct_if":"치료 후 증상·산소화·폐기능이 충분히 회복되고 안전한 퇴원 조건을 충족할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"조절 산소로 저산소혈증을 교정하면서 반복 SABA와 중증 악화에서 ipratropium을 투여하고 전신스테로이드를 조기에 시작한다. 이후 의식, 호흡노력, 산소화와 PEF 반응을 연속 재평가해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags": [],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000145",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["치료 중 새로 발생한 졸림", "거의 들리지 않는 호흡음", "pH 7.28과 PaCO2 44 mmHg", "지속되는 저산소혈증"],
+      "clinical_inference": "중증 천식에서 의식저하, silent chest, 산증과 정상화된 PaCO2는 호흡근 피로와 임박한 환기부전을 시사하므로 즉시 숙련된 기도관리 팀이 개입해야 한다.",
+      "best_answer": "C3"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"급성 천식의 초기 과호흡에서는 PaCO2가 낮은 경우가 흔해 44 mmHg는 안심할 정상치가 아니다. 산증과 졸림까지 동반되어 환기 실패가 진행 중이므로 재검사만 기다리면 위험하다.","could_be_correct_if":"의식과 호흡노력이 안정되고 산증·저산소혈증 없이 치료에 뚜렷이 호전되는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"호흡음 감소가 호전이라면 호흡노력과 산소화도 함께 좋아져야 한다. 이 환자의 silent chest와 졸림은 공기 흐름이 극도로 줄어든 생명위협 신호이므로 기관지확장치료를 중단하지 않는다.","could_be_correct_if":"객관적 폐기능과 증상이 회복되어 반복 SABA 간격을 안전하게 늘릴 수 있을 때","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"correct","explanation":"의식저하와 진행성 환기부전은 즉각적인 중환자실 및 기도관리 팀 호출의 근거다. 숙련자가 기관삽관과 기계환기를 준비하는 동안 산소와 기관지확장치료를 계속한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"비침습환기는 선택된 협조 가능한 환자에서 면밀한 감시 아래 고려될 수 있으나 의식저하 환자에게 장시간 단독 적용하면 삽관을 지연시킬 수 있다. 진정제는 호흡억제와 기도 보호 실패를 악화시킬 수 있다.","could_be_correct_if":"의식이 명료하고 기도 보호가 가능하며 즉시 삽관 가능한 환경에서 짧게 반응을 평가하는 엄선된 경우","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"흉부 X선은 기흉 등 합병증을 찾는 데 도움이 되지만 기도 확보 결정을 지연시킬 이유가 아니다. 현재의 임상·가스분석 소견만으로도 즉각적인 기도관리 준비가 필요하다.","could_be_correct_if":"기도와 환기가 안정된 뒤 합병증 평가를 위해 촬영할 때","misconception_tag":"검사 순서"}
+    ],
+    "review_flags": [],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000146",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["중증 천식 치료 중 갑작스러운 편측 흉통과 호흡곤란", "영상의 큰 좌측 기흉", "저산소혈증", "저혈압 등 명시적 긴장성 기흉 소견은 없음"],
+      "clinical_inference": "증상이 있는 큰 이차성 기흉이 천식 악화에 합병되었으므로 흉강 배액으로 폐를 재팽창시키면서 천식 치료를 계속해야 한다.",
+      "best_answer": "C2"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"반복 SABA는 지속되는 기관지수축을 치료하지만 흉막강 내 공기로 인한 폐허탈을 교정하지 못한다. 갑작스러운 편측 흉통과 영상상 기흉에는 별도의 배액 처치가 필요하다.","could_be_correct_if":"기흉 등 합병증이 배제되고 기관지수축만 지속되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"증상과 저산소혈증을 동반한 큰 좌측 기흉은 흉강 배액의 대상이다. 동시에 남아 있는 천식의 기관지수축과 기도염증 치료도 중단하지 않는다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"혈압이 유지된다는 사실만으로 큰 이차성 기흉을 외래 관찰할 수 있는 것은 아니다. 급성 호흡곤란과 저산소혈증이 있어 산소만으로는 기계적 폐허탈을 해결하지 못한다.","could_be_correct_if":"매우 작은 일차성 기흉으로 증상이 경미하고 관찰 기준과 안전한 추적 조건을 충족할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐색전증도 급성 흉통과 호흡곤란을 일으키지만 영상에 이를 대신 설명하는 기흉이 제시되어 있다. 근거 없이 항응고제를 시작하면 출혈 위험만 더한다.","could_be_correct_if":"기흉이 배제되고 임상확률과 진단검사로 폐색전증이 확인되거나 즉시 치료가 필요한 높은 가능성이 성립할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐렴이라면 발열, 감염 증상과 폐실질 침윤이 판단 근거가 된다. 제시된 급작스러운 증상과 영상은 기흉에 맞으며 항생제만으로는 폐허탈을 교정할 수 없다.","could_be_correct_if":"영상과 임상 소견으로 세균성 폐렴이 확인되어 천식 치료와 함께 항생제가 필요한 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags": ["기존 핵심 해설 말미에 자동 결합된 비문이 있어 정리 필요.", "게시 전 원본 흉부 X선이 실제로 큰 좌측 기흉을 보여 주는지 이미지-문항 매칭을 확인해야 한다."],
+    "publication_recommendation": "revise"
+  },
+  {
+    "question_id": "RESP-000147",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["39도 발열과 오한", "누런 가래와 흉막성 통증", "영상의 우중엽 폐포성 경화", "천식 악화 동반"],
+      "clinical_inference": "감염 증상과 국소 폐포성 침윤은 지역사회획득폐렴이 천식 악화를 유발한 상황을 지지하므로 폐렴 항생제와 천식 악화 치료를 병행해야 한다.",
+      "best_answer": "C4"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"바이러스 감염은 천식 악화의 흔한 유발 요인이지만 이 환자는 고열, 오한, 화농성 가래와 국소 경화를 보인다. 세균성 폐렴 근거가 있어 기관지확장제만 지속해서는 감염을 치료하지 못한다.","could_be_correct_if":"세균성 폐렴의 임상·영상 근거가 없고 바이러스성 악화로 판단되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"심부전은 폐부종이나 울혈 소견과 임상적 체액 과다를 근거로 판단한다. 고열과 화농성 가래, 국소 폐포성 음영은 폐렴에 더 부합하며 천식 악화 치료를 임의로 중단할 근거도 없다.","could_be_correct_if":"울혈과 폐부종을 뒷받침하는 임상·영상 소견으로 급성 심부전이 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"폐색전증은 흉막성 통증을 유발할 수 있으나 고열, 화농성 가래와 국소 경화를 모두 설명하는 데 폐렴보다 불리하다. 진단 근거 없이 항응고제만 시작하면 감염과 천식 악화 치료가 누락된다.","could_be_correct_if":"객관적 검사로 폐색전증이 확인되고 감염 소견이 다른 원인으로 설명될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"임상 증상과 영상은 지역사회획득폐렴을 지지하므로 환자 중증도와 지역 지침에 맞는 항생제를 시작한다. 폐렴이 유발한 천식 악화에 대한 산소, 기관지확장제와 전신스테로이드도 병행한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"국소 폐포성 경화는 천식 자체의 전형적인 영상 소견이 아니다. 감염 징후와 저산소혈증을 동반한 환자를 추가 치료 없이 퇴원시키면 폐렴과 악화가 진행될 위험이 있다.","could_be_correct_if":"치료 후 임상적으로 안정되고 적절한 외래 치료·추적 조건을 충족할 때 퇴원을 고려하는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags": ["기존 핵심 해설 말미에 자동 결합된 비문이 있어 정리 필요.", "게시 전 원본 흉부 X선이 실제로 우중엽 폐렴 소견과 일치하는지 이미지-문항 매칭을 확인해야 한다."],
+    "publication_recommendation": "revise"
+  }
+]

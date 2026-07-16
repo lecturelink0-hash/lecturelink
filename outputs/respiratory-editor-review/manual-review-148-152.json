@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000148",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["천식 악화 중 심한 기침 직후 흉통","혈역학과 산소화가 안정적","발열·구토·외상 없음","영상상 종격동 공기"],"clinical_inference":"기침으로 발생한 안정적 자발성 종격동기종에 부합하며 식도·기관 손상 단서가 없어 보존적 치료와 관찰이 적절하다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"혈역학적으로 안정된 자발성 종격동기종은 산소·진통과 원인인 천식 치료를 계속하며 관찰할 수 있다. 구토, 외상, 패혈증 등 식도나 기관 손상 단서가 생기면 그때 표적 검사를 추가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"바늘감압은 혈역학 또는 호흡이 위태로운 긴장성 기흉에 대한 응급 처치다. 현재 영상 병변은 흉막강이 아니라 종격동 공기이고 혈압도 안정적이다.","could_be_correct_if":"임상적으로 긴장성 기흉이 의심되어 영상 확인을 기다릴 수 없는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"급성 관상동맥증후군은 흉통 감별에 포함될 수 있으나 기침 직후 발생과 영상 소견이 다른 원인을 뒷받침한다. 확진 근거 없이 항혈소판제와 항응고제를 함께 투여하면 출혈 위험이 생긴다.","could_be_correct_if":"심전도·심근표지자와 임상 양상으로 급성 관상동맥증후군이 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"세균성 종격동염은 발열, 독성 소견이나 식도 천공 등 감염원이 판단 근거가 된다. 이러한 단서가 없는 안정적 자발성 종격동기종에 즉시 개흉 배액을 시행하는 것은 과잉 치료다.","could_be_correct_if":"식도 천공 또는 감염성 종격동염이 확인되어 외과적 감염원 통제가 필요할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"영상에서 종격동기종이라는 구조적 합병증이 보여 단순 근육통으로 치부할 수 없다. 천식 악화 치료를 중단하고 즉시 퇴원하면 원인 질환과 합병증의 변화를 놓칠 수 있다.","could_be_correct_if":"위험 원인이 배제되고 증상과 영상 소견이 해결되어 안전한 퇴원 기준을 충족할 때","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 흉부 X선이 실제 종격동기종 소견과 일치하는지 이미지-문항 매칭을 확인해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000149",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["초기 반복 SABA-ipratropium과 전신스테로이드 시행","문장 말하기 곤란 지속","SpO2 92%","PEF 36%에서 39%로만 상승"],"clinical_inference":"충분한 초기치료에도 중증 기류 제한이 지속되므로 기존 치료를 계속하면서 정맥 magnesium sulfate 단회 추가를 고려할 상황이다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"aminophylline은 추가 효과가 제한적인 반면 부정맥·구토 등 독성이 있어 일상적으로 사용하지 않는다. 더구나 효과가 입증된 흡입 기관지확장제를 중단하고 대체할 약제가 아니다.","could_be_correct_if":"전문가가 다른 치료 대안이 없는 예외적 상황에서 혈중농도와 독성을 면밀히 감시하며 판단할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"중증도만으로 세균감염이 증명되지는 않으며 항생제는 기관지수축을 직접 치료하지 않는다. 폐렴이나 다른 세균감염을 시사하는 근거가 있을 때 천식 치료에 추가한다.","could_be_correct_if":"발열, 화농성 객담, 영상 침윤 등 세균감염 근거가 있을 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"빈호흡은 현재 중증 기류 제한을 보상하는 반응일 수 있다. 진정제로 호흡을 억제하면 환기부전과 기도 보호 실패를 촉진할 수 있다.","could_be_correct_if":"침습적 기도 확보 후 기계환기 관리를 위해 적절한 감시 아래 진정이 필요한 경우","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"PEF가 3%p 증가했어도 여전히 개인 최고치의 39%이고 말하기 곤란과 저산소혈증이 남아 있다. 이는 안전한 퇴원 반응이 아니라 추가치료와 면밀한 재평가가 필요한 상태다.","could_be_correct_if":"증상과 산소화가 안정되고 폐기능이 충분히 회복되어 퇴원 조건을 충족할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"correct","explanation":"초기 집중치료에 반응이 불충분한 중증 악화에서는 정맥 magnesium sulfate 단회 투여를 추가할 수 있다. 이는 반복 기관지확장제와 전신스테로이드를 대체하지 않으며 악화 시 중환자 치료 준비도 병행한다.","could_be_correct_if":null,"misconception_tag":"적응증"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000150",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["치료 후 호흡곤란 거의 소실","SpO2 97%와 PEF 78%","마지막 완화제 후 90분 안정","입원 적응증 없음"],"clinical_inference":"퇴원은 가능하지만 최근 악화는 재발 위험 신호이므로 ICS 포함 치료, 경구스테로이드 완료, 흡입법·행동계획과 조기 추적을 함께 마련해야 한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"증상 호전은 급성 기관지수축이 완화되었다는 뜻이지 기도염증과 재발 위험이 사라졌다는 뜻이 아니다. ICS를 끊고 SABA만 사용하면 향후 중증 악화 위험을 줄이지 못한다.","could_be_correct_if":"해당 약제가 천식이 아닌 다른 질환에 잘못 처방된 것으로 재평가되어 천식 진단이 배제될 때","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"악화 직후는 재발과 재내원 위험이 높은 시기라 기존 처방의 실패 원인을 검토해야 한다. 조기 추적 없이 재발을 기다리면 흡입법, 순응도와 유발요인을 교정할 기회를 놓친다.","could_be_correct_if":"조기 추적과 행동계획이 이미 확실히 마련되어 있고 현재 처방의 적절성이 재확인된 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"퇴원 전 ICS 포함 조절·완화요법과 처방된 짧은 경구스테로이드 과정의 완료를 확인한다. 흡입법, 순응도, 악화 원인을 점검하고 서면 행동계획과 수일 내 추적을 제공해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"세균감염 근거가 없는 일반적인 천식 악화에 장기 예방 항생제를 시작하지 않는다. 장기 마크롤라이드는 최적화된 치료에도 조절되지 않는 선택된 중증 천식에서 전문 평가 후 고려하는 별도 전략이다.","could_be_correct_if":"선택된 중증 천식에서 적절한 사전 평가와 전문의 판단을 거쳐 추가치료로 고려할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"PEF 회복은 퇴원 판단의 한 요소일 뿐 악화 원인을 설명하지 않는다. 잘못된 흡입법이나 낮은 순응도는 다음 악화의 교정 가능한 위험 요인이므로 반드시 검토 가치가 있다.","could_be_correct_if":"흡입법과 악화 원인이 이미 객관적으로 확인·교정되어 추가 검토가 불필요한 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["경구스테로이드 기간·용량은 제공된 근거와 환자 상황에 맞춰 별도로 처방해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000151",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["3시간 치료 후에도 짧은 문장만 가능","보조호흡근 사용 지속","PEF 32%에서 43%로만 상승","치료 후에도 PEF 50% 미만"],"clinical_inference":"PEF의 소폭 상승에도 임상적 중증도와 현저한 기류 제한이 지속되어 퇴원이 아닌 입원 집중치료와 반복 평가가 필요하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"PEF의 방향만 좋아졌다고 충분한 치료 반응으로 볼 수 없다. 절대 수준이 개인 최고치의 43%에 머물고 말하기 제한과 보조근 사용도 남아 있어 즉시 퇴원은 위험하다.","could_be_correct_if":"증상·산소화·폐기능이 충분히 회복되고 일정 시간 안정되어 퇴원 조건을 충족할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"correct","explanation":"초기 집중치료 후에도 임상 증상이 심하고 PEF가 50% 미만이므로 불충분한 반응이다. 입원해 반복 기관지확장제와 전신스테로이드를 계속하고 의식·산소화·폐기능 악화 여부를 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"기계환기는 모든 악화가 아니라 의식저하, 탈진, 진행성 가스교환 장애 등 임박한 호흡부전에서 고려한다. 현재는 입원 집중치료가 필요하지만 제시된 정보만으로 모든 환자에게 삽관할 근거는 없다.","could_be_correct_if":"치료 중 의식저하, silent chest, 산증 또는 상승하는 PaCO2 등 호흡부전 소견이 나타날 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"지속되는 중증 증상은 전신스테로이드를 중단할 이유가 아니라 계속할 근거다. SABA만 처방하면 기도염증과 재발 위험 관리가 누락된다.","could_be_correct_if":"전신스테로이드의 중대한 부작용이나 금기가 확인되어 전문가가 대체 전략을 정할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"PEF 40% 초과 여부는 장기 항생제의 적응증이 아니다. 세균감염 근거도 제시되지 않았고 현재 우선순위는 지속되는 중증 기류 제한의 집중치료다.","could_be_correct_if":"별도로 확인된 세균성 호흡기 감염을 치료하기 위해 적절한 항생제를 사용할 때","misconception_tag":"적응증"}
+    ],
+    "review_flags":["기존 정답 선택지 해설에 '적응증과 시점이 맞지 않는다'는 정답과 반대되는 문장이 있어 교체 필요.","기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 PEF 추이 그래프가 32%→43%로 표시되는지 확인해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000152",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["호흡노력 감소와 반응 지연","pH 7.46에서 7.27로 하락","PaCO2 29에서 49 mmHg로 상승","저산소혈증 지속"],"clinical_inference":"초기 저탄산혈증이 사라지며 산증과 고탄산혈증이 진행하는 것은 호흡근 피로와 환기부전이므로 즉시 침습적 기도관리를 준비해야 한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"급성 천식의 과호흡 상태에서 PaCO2가 29에서 49 mmHg로 상승한 추세는 안심할 수 있는 정상화가 아니다. pH 저하, 반응 지연과 호흡노력 감소가 함께 있어 환기 실패가 진행 중이다.","could_be_correct_if":"의식과 호흡노력이 안정되고 가스분석이 산증 없이 호전되는 추세일 때","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"산소 투여로 PaO2가 일시 개선될 수 있어도 이산화탄소 배출 실패를 교정했다는 뜻은 아니다. 진행하는 산증과 고탄산혈증, 의식 변화가 있으므로 퇴원할 수 없다.","could_be_correct_if":"가스교환·증상·폐기능이 모두 충분히 회복되고 관찰 중 안정되어 퇴원 조건을 충족할 때","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"pH 저하는 PaCO2 상승과 함께 진행해 주된 문제는 환기부전이다. 중탄산나트륨만 투여하면 기도폐쇄와 이산화탄소 저류를 해결하지 못하고 기도 확보를 지연시킨다.","could_be_correct_if":"별도의 중증 대사산증 원인이 확인되어 원인 치료와 함께 제한적으로 고려할 때","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"correct","explanation":"의식 반응 저하, 호흡노력 감소와 진행성 호흡성 산증은 임박한 호흡정지를 경고한다. 중환자실·기도관리 팀을 즉시 호출해 숙련자가 기관삽관과 기계환기를 준비하는 동안 기존 천식 치료를 지속한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"진정제는 보상성 호흡을 억제하고 기도 보호 능력을 떨어뜨릴 수 있다. 필요한 것은 호흡수를 임의로 낮추는 것이 아니라 즉각적인 기도와 환기 지원이다.","could_be_correct_if":"기관삽관 후 안전한 기계환기 관리를 위해 적절한 감시 아래 진정이 필요한 경우","misconception_tag":"금기"}
+    ],
+    "review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 동맥혈가스 표가 pH 7.46→7.27, PaCO2 29→49 mmHg를 정확히 표시하는지 확인해야 한다."],
+    "publication_recommendation":"revise"
+  }
+]

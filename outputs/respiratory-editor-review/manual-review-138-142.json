@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000138",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["저용량 fluticasone-salmeterol과 SABA 사용","좋은 흡입법·순응도·비염 조절","10개월간 경구스테로이드 악화 2회","현재 안정·FEV1 78%"],"clinical_inference":"수정 가능한 요인이 교정된 저용량 ICS-LABA/SABA 경로에서 악화가 반복되어 단계 상향이 필요하다. 선호 경로인 budesonide-formoterol MART로 전환하면 증상 증가 시 완화제와 함께 ICS도 투여되어 악화 위험을 줄인다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"Formoterol은 빠른 작용 개시가 있어 budesonide-formoterol을 매일 유지와 증상 시 완화에 같은 흡입기로 사용할 수 있다. 반복 악화 환자에서 SABA 기반 경로보다 증상 악화 시 항염증제 노출도 함께 증가하는 장점이 있다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"LAMA는 중간용량 이상 ICS-LABA 또는 MART를 최적화했는데도 조절되지 않을 때 추가로 고려한다. 아직 저용량 단계에서 선호되는 MART 전환을 시도하지 않아 즉시 추가할 우선순위가 낮다.","could_be_correct_if":"중간용량 이상 ICS-LABA/MART 최적화 후에도 악화나 기류제한이 남는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"비-formoterol ICS-LABA를 중간용량으로 올리고 SABA를 유지하는 Track 2 단계 상향도 가능한 대안이다. 다만 반복 악화가 있는 현재에는 악화 감소 근거가 더 유리한 ICS-formoterol MART가 선호된다.","could_be_correct_if":"MART를 사용할 수 없거나 환자가 적합하지 않아 Track 2를 선택하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"Montelukast는 특정 알레르기질환이나 AERD에서 보조적으로 도움이 될 수 있지만 ICS-LABA 기반 단계 상향보다 악화 예방 효과가 약하다. 신경정신계 이상반응도 고려해야 한다.","could_be_correct_if":"임상적으로 관련된 동반 알레르기질환·AERD가 있고 이득과 위험을 고려해 추가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"생물학제는 고용량 ICS-LABA 등 치료를 충분히 최적화해도 조절되지 않는 중증 천식에서 표현형을 평가한 뒤 사용한다. 이 환자는 아직 중간 단계의 선호 치료를 거치지 않았다.","could_be_correct_if":"고용량 최적 치료에도 반복 악화가 지속되고 적합한 중증천식 표현형·허가 기준을 충족하는 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":["MART 전환에는 formoterol을 포함하고 유지·완화 용법이 승인된 ICS-LABA 제제가 필요하며 salmeterol 조합을 완화제로 사용해서는 안 된다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000139",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["저용량 ICS-LABA 처방","주 4일 호흡곤란","조절제 수령률 약 40%","분사-흡입 조화와 숨참기 오류","최근 악화·야간 각성 없음","FEV1 83%"],"clinical_inference":"약제를 충분히 수령하지 않았고 pMDI 사용 오류로 폐 전달도 부족해 현재 증상을 약물 용량 실패로 판단할 수 없다. 사용법을 시범·재시범으로 교정하고 순응도 장벽을 해결한 뒤 조절 상태를 재평가한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"용량을 올려도 흡입-분사 조화와 숨참기가 잘못되고 약을 수령하지 않으면 실제 전달량은 충분히 늘지 않는다. 먼저 사용법과 순응도를 최적화해야 약제 실패 여부를 판단할 수 있다.","could_be_correct_if":"정확한 사용법과 충분한 순응도에도 저용량으로 조절되지 않는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"LAMA는 최적화된 ICS-LABA에도 조절되지 않는 더 높은 단계에서 고려한다. 기본 조절제가 제대로 사용되지 않는 상태에 약을 추가하면 복잡성과 비용만 늘 수 있다.","could_be_correct_if":"ICS-LABA/MART를 충분히 최적화한 뒤에도 악화·기류제한이 남는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"난치성 또는 중증 천식은 정확한 고강도 치료와 순응도를 확인한 뒤에도 조절되지 않는 경우에 평가한다. 현재는 수정 가능한 비순응과 흡입 오류가 명확하다.","could_be_correct_if":"진단·흡입법·순응도·동반질환을 최적화한 고용량 치료에도 조절되지 않는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"주 4일 증상만으로 급성 중증 악화를 의미하지 않으며 최근 악화·야간 각성도 없고 기능도 비교적 보존됐다. 전신스테로이드보다 기본 흡입치료의 실제 사용을 바로잡아야 한다.","could_be_correct_if":"중등도~중증 급성 악화로 단기 전신스테로이드 적응증을 충족하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"correct","explanation":"기기별 올바른 순서, 흡입 속도와 흡입 후 숨참기를 직접 교육하고 환자가 다시 시범하도록 한다. 비용·우려·망각·처방 복잡성 등 수령률 저하 원인을 해결한 뒤 충분한 기간 후 증상과 폐기능을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000140",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["중간용량 budesonide-formoterol MART","5개월간 완전한 증상·악화 조절","좋은 사용법·순응도","FEV1 96%","2년간 응급실·경구스테로이드 없음","감량에 적절한 시기"],"clinical_inference":"충분한 기간 안정되고 악화 위험이 낮아 최소 유효 용량을 찾는 단계 하향을 고려할 수 있다. 기준 상태와 행동계획을 마련하고 ICS 용량을 점진 감량한 뒤 조절과 위험을 재평가하며 ICS는 완전히 중단하지 않는다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"안정 상태는 치료 효과일 수 있어 ICS-formoterol을 갑자기 완전히 중단하면 증상·악화가 재발할 수 있다. 단계 하향은 한 번에 중단하는 것이 아니라 최소 유효 용량을 찾는 과정이다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"Formoterol 단독은 천식의 기도 염증을 치료하지 않고 LABA 단독 사용의 안전성 문제가 있다. 단계 하향 후에도 ICS는 포함해야 한다.","could_be_correct_if":"해당 없음; formoterol은 ICS와 조합해 사용","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"correct","explanation":"감량 전 증상·폐기능을 기록하고 악화 시 복귀 기준을 포함한 서면 행동계획을 제공한다. ICS 용량을 약 25~50% 줄이고 2~3개월 내 증상·완화제 사용·악화·폐기능을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"Montelukast는 일부 환자의 대안 조절제지만 ICS보다 악화 예방 효과가 낮고 신경정신계 부작용을 고려해야 한다. 중간용량 ICS-LABA에서 단독 LTRA로 급전환하는 것은 적절한 단계 하향이 아니다.","could_be_correct_if":"ICS를 사용할 수 없는 선택된 환자에서 이득·위험을 고려한 대안으로 사용하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"과거 중증 악화나 지속적 기류제한 등 위험이 높다면 유지할 수 있지만 이 환자는 충분히 안정되고 위험이 낮다. 불필요한 중간용량을 영구 유지하기보다 감량 가능성을 주기적으로 검토한다.","could_be_correct_if":"감량에 부적절한 시기이거나 악화 위험이 높고 현재 용량이 최소 유효량인 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["25~50% 감량과 2~3개월 재평가는 일반적 범위이며 제제·기존 악화력·환자 선호에 따라 개별화해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000141",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["budesonide-formoterol MART 사용","감기 후 쌕쌕거림 증가","문장 발화 가능","SpO2 97%","PEF 개인 최고치의 82%","중증 악화 소견 없음"],"clinical_inference":"경증 증상 악화 단계의 MART 행동계획에서는 평소 유지용량을 계속하고 같은 저용량 ICS-formoterol을 증상 시 추가한다. 제품별 하루 최대 총 흡입횟수에 도달하거나 빠르게 악화하면 의료 평가를 받는다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"악화 중 유지 ICS-formoterol을 중단하면 항염증 치료가 줄어든다. SABA만 반복하는 방식은 MART의 항염증 완화 전략을 잃는다.","could_be_correct_if":"MART가 아닌 별도의 SABA 기반 행동계획을 의사가 처방한 경우에도 유지 ICS는 임의 중단하지 않음","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"correct","explanation":"정해진 유지 흡입은 계속하면서 쌕쌕거림이 생길 때 같은 ICS-formoterol을 추가해 기관지확장과 항염증 치료를 함께 제공한다. 최대 총 흡입횟수, 빠른 악화, 완화 지속 실패나 위험 징후가 나타나면 즉시 진료받는다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"Salmeterol은 빠른 완화제로 쓰지 않으며 기존 formoterol과 다른 LABA를 중복 투여하게 된다. 비-formoterol ICS-LABA를 임의로 추가하면 안 된다.","could_be_correct_if":"fluticasone-salmeterol을 별도의 유지요법으로 처방하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"PEF 82%와 정상 산소포화도는 현재 중증 악화가 아님을 시사하지만 증상 증가를 무치료로 관찰하라는 의미는 아니다. 행동계획에 따른 추가 완화 흡입과 재평가가 필요하다.","could_be_correct_if":"증상이 전혀 없고 평소 조절이 안정적인 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"모든 감기 시작에 전신스테로이드를 자동 투여하면 불필요한 누적 부작용이 발생한다. 증상·기능 저하와 초기 흡입치료 반응을 보고 행동계획의 정해진 기준에 따라 사용한다.","could_be_correct_if":"흡입치료에도 반응하지 않는 중등도~중증 악화로 행동계획상 단기 전신스테로이드 기준을 충족하는 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":["하루 최대 총 흡입횟수는 제제 강도·연령·지역 허가에 따라 달라지므로 구체 수치를 근거 없이 일률적으로 추가하지 않고 처방된 제품의 행동계획에 명시해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000142",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["고용량 ICS-formoterol MART·LAMA 최적 사용","금연 완료","연 4회 전신스테로이드 악화","호산구 70/μL·FeNO 12 ppb 반복","다년성 감작 없음","기관지확장증·일반 세균 배양 음성"],"clinical_inference":"최적화된 고강도 치료에도 악화가 반복되지만 호산구·알레르기 표적 생물학제 근거는 약한 비제2형 표현형이다. 전문의 감독 아래 QTc·상호작용·청력 및 비결핵항산균 감염 위험을 확인하고 저용량 azithromycin 장기 추가를 제한적으로 고려한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"Anti-IL5/IL5Rα는 반복 악화와 함께 높은 혈액 호산구가 있을 때 반응 근거가 가장 강하다. 반복 70/μL인 이 환자에서 우선 선택할 표적 근거가 약하다.","could_be_correct_if":"과거·반복 측정에서 호산구성 표현형과 지역 허가 기준을 충족하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"Omalizumab은 알레르기성 천식에서 다년생 알레르겐 감작과 IgE·체중 등 허가 조건을 확인해 사용한다. 감작이 없는 현재 환자에게 우선 시작할 근거가 없다.","could_be_correct_if":"중증 알레르기천식의 감작·IgE·허가 기준을 충족하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"ICS-formoterol을 중단하고 장기 경구스테로이드 단독으로 바꾸면 항염증 흡입 기반을 잃고 큰 전신 부작용을 초래한다. 스테로이드 절감 추가 치료를 우선 검토해야 한다.","could_be_correct_if":"다른 치료로도 조절되지 않아 전문 평가 후 최소 용량 전신스테로이드가 불가피한 경우에도 ICS는 보통 유지","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"correct","explanation":"성인의 비제2형 중증 천식에서 장기 저용량 azithromycin은 일부 환자의 악화를 줄일 수 있다. 시작 전 QTc와 상호작용, 청력·간기능 위험, 객담 비결핵항산균을 확인하고 항생제 내성과 위장관 이상반응을 설명한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기관지 열성형술의 장기 근거와 적용 대상은 제한적이며 모든 최적화 여부와 상관없이 일차 추가치료로 시행하지 않는다. 전문센터·등록연구 또는 엄격한 선택 기준에서 검토한다.","could_be_correct_if":"다른 적절한 치료 후에도 조절되지 않는 선택된 성인에서 전문 다학제로 제한적으로 고려하는 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":["장기 macrolide 전에는 비결핵항산균 배양뿐 아니라 QTc, 청력, 간기능, 약물상호작용과 항생제 내성 위험을 개별 확인해야 하며 일반 세균 배양 음성만으로 안전성을 판단하지 않는다."],
+    "publication_recommendation":"approve"
+  }
+]

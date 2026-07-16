@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000163","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["임신 8주","budesonide-formoterol로 4개월간 조절","약제 노출 우려로 자의 중단 희망"],"clinical_inference":"임신 중 치료되지 않은 천식과 악화가 산모·태아에 더 큰 위험을 줄 수 있으므로 효과적인 ICS 포함 치료를 유지하고 임의 감량 없이 주기적으로 평가한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"현재 조절을 만든 ICS 포함 치료를 계속해 임신 중 악화와 저산소혈증을 예방한다. 임의 단계 하향은 피하고 약 4~6주 간격으로 증상, 악화, 흡입법과 치료 순응도를 평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"임신 1삼분기라는 이유만으로 모든 ICS가 기형을 일으킨다고 볼 근거는 없다. 갑작스러운 중단으로 조절이 깨지면 산모 저산소혈증과 악화가 태아에도 위험해질 수 있다.","could_be_correct_if":"특정 제제에 중대한 이상반응이 확인되어 전문가가 안전한 대체치료로 변경할 때","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"증상이 없는 것은 현재 ICS 포함 치료가 효과적이기 때문일 수 있다. SABA 단독 전환은 항염증 보호를 잃게 하며 산후까지 추적을 미루면 임신 중 조절 변화를 놓친다.","could_be_correct_if":"해당 없음; 임신 중 천식에서 SABA 단독은 적절한 장기 전략이 아니다.","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"유지 경구스테로이드는 흡입치료보다 전신 노출과 부작용이 크다. 조절된 환자에서 안전성이 확보된 ICS 기반 치료를 대신할 이유가 없다.","could_be_correct_if":"중증 악화로 짧은 전신스테로이드 치료가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"악화 시 산소와 기관지확장제를 보류하면 산모 저산소혈증과 기류 제한이 지속되어 태아 위험도 커진다. 임신부의 급성 악화도 지체 없이 적극 치료해야 한다.","could_be_correct_if":"해당 없음; 임상적으로 필요한 산소와 기관지확장제를 태아 노출 우려만으로 보류하지 않는다.","misconception_tag":"금기"}
+    ],"review_flags":["4~6주 추적 간격은 제시된 기준 시점의 근거와 지역 산과 진료체계에 맞춰 유지해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000164","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["6주간 마른기침·운동 호흡곤란·미열","항생제 무반응","흡기말 수포음","HRCT상 흐린 중심소엽성 간유리결절과 흉막하 보존"],"clinical_inference":"비섬유성 과민성 폐장염을 시사하는 소기도-간질 영상 패턴이므로 숨은 흡입 항원을 구조적으로 찾고 BAL 림프구 분석을 포함한 다학제 진단을 진행한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"IPF는 임상·영상·노출 평가를 종합해 진단하며 흐린 중심소엽결절과 흉막하 보존만으로 확정할 수 없다. 노출력을 생략하면 치료 가능한 과민성 폐장염 원인을 놓친다.","could_be_correct_if":"다른 원인이 배제되고 다학제 평가에서 전형적 UIP/IPF로 판단될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"6주 경과와 항생제 무반응, 미만성 소기도-간질 패턴은 같은 항생제를 반복할 근거가 아니다. 세균성 폐렴이라면 감염의 임상·미생물·영상 근거를 새로 확인해야 한다.","could_be_correct_if":"새로운 평가에서 세균성 폐렴이 객관적으로 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"중심소엽성 폐기종은 저음영 파괴성 공간이 핵심이며 이 문항의 흐린 간유리결절과 다르다. 흡연력도 없고 산소 적응증을 뒷받침할 저산소혈증도 제시되지 않았다.","could_be_correct_if":"HRCT에서 폐기종이 확인되고 안정 시 저산소혈증이 산소치료 기준을 충족할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐색전증은 위험도 평가와 적절한 영상으로 진단하며 현재의 아급성 경과와 HRCT 패턴을 우선 설명하지 못한다. 객관적 근거 없이 항응고제를 시작하면 출혈 위험이 있다.","could_be_correct_if":"임상확률과 진단검사에서 폐색전증이 확인되거나 즉시 치료가 필요한 높은 가능성이 성립할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"가정, 직장, 취미에서 조류·곰팡이·가습기·농업 관련 항원 등 반복 흡입원을 구조적으로 재조사한다. BAL 림프구증가는 임상·HRCT·노출 정보와 함께 과민성 폐장염 진단 확률을 높이는 데 활용할 수 있다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 HRCT가 실제로 흐린 중심소엽성 간유리결절과 흉막하 보존을 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000165","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["앵무새 우리 청소 후 반복 증상","외박하면 호전","비흡연자","정상 심초음파","HRCT상 간유리음영·중심소엽결절·모자이크 감쇠"],"clinical_inference":"조류 항원 노출과 회피에 따른 증상 변화, 비섬유성 침윤 및 소기도질환 영상이 결합되어 비섬유성 과민성 폐장염이 가장 타당하다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"IPF는 대개 만성 섬유화와 UIP 양상이 중심이며 특정 조류 노출 직후 반복되고 회피 시 호전되는 경과와 맞지 않는다. 중심소엽결절과 모자이크 감쇠는 소기도 침범을 시사한다.","could_be_correct_if":"항원 관련성이 배제되고 HRCT·다학제 평가에서 UIP/IPF가 확정될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"심인성 폐부종은 심기능 이상과 울혈성 영상 소견이 뒷받침되어야 한다. 심초음파가 정상이고 조류 노출에 따라 증상이 반복되는 양상은 과민성 폐장염에 더 부합한다.","could_be_correct_if":"심부전의 임상·심초음파·울혈 소견이 새로 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"조류 항원 노출 후 증상이 반복되고 회피 시 좋아지는 관계가 핵심 단서다. 간유리음영과 중심소엽결절, 모자이크 감쇠는 비섬유성 과민성 폐장염의 침윤·소기도질환 조합을 지지한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"흡연 관련 호흡세기관지염은 흡연 노출이 중요한 배경인데 환자는 비흡연자다. 명확한 조류 노출-증상 관계를 흡연 질환으로 설명할 수 없다.","could_be_correct_if":"상당한 흡연력이 있고 임상·영상·병리 소견이 호흡세기관지염과 일치할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"급성 폐색전증은 보통 항원 노출과 회피에 따라 같은 증상이 반복되는 질환이 아니다. 제시된 HRCT의 중심소엽결절과 모자이크 감쇠도 혈전 자체를 확진하지 않는다.","could_be_correct_if":"혈전 위험인자와 객관적 혈관 영상으로 폐색전증이 확인될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 HRCT가 간유리음영·중심소엽결절·모자이크 감쇠를 실제로 보여 주는지 이미지 매칭을 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000166","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["2년간 진행성 증상","15년간 지속된 비둘기 노출","HRCT상 망상음영·견인기관지확장·벌집모양","공기가둠과 간유리음영 공존"],"clinical_inference":"장기 조류 노출과 폐섬유화·소기도 폐쇄가 함께 나타나는 패턴은 섬유성 과민성 폐장염에 가장 부합한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"IPF도 망상음영과 벌집모양을 보일 수 있지만 뚜렷한 조류 노출과 공기가둠 등 소기도질환의 공존은 섬유성 과민성 폐장염을 지지한다. 원인 노출을 배제하지 않고 IPF로 분류해서는 안 된다.","could_be_correct_if":"구조화된 노출 평가와 다학제 검토에서 HP가 배제되고 UIP/IPF로 확정될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"장기간의 비둘기 항원 노출과 진행성 만성 증상이 있다. HRCT에서 섬유화 소견과 공기가둠·간유리음영이 함께 보여 섬유성 과민성 폐장염의 혼합 패턴에 맞는다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"비섬유성 과민성 폐장염은 간유리음영, 중심소엽결절과 모자이크 감쇠가 주가 되고 확립된 섬유화가 없어야 한다. 견인기관지확장과 벌집모양은 이미 섬유성 단계임을 뜻한다.","could_be_correct_if":"HRCT에서 망상·견인기관지확장·벌집모양 없이 비섬유성 패턴만 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"심인성 폐부종은 심기능 및 체액 과다 소견과 비교적 급성 울혈 패턴이 필요하다. 2년의 진행성 경과와 견인기관지확장·벌집모양은 만성 섬유성 간질질환에 맞는다.","could_be_correct_if":"심부전과 폐울혈이 객관적으로 확인되고 섬유화 소견이 다른 원인으로 설명될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"속립성 결핵은 혈행성으로 퍼진 미세 결절과 감염의 임상·미생물 근거가 필요하다. 조류 노출과 섬유화-공기가둠 조합은 그보다 섬유성 HP에 부합한다.","could_be_correct_if":"미세결절 영상과 결핵 미생물학적 근거가 확인될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 HRCT가 섬유화와 공기가둠의 공존을 실제로 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000167","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["진행성 호흡곤란과 제한성 장애","자가면역 항체 음성","초기 노출력 불명","HRCT상 three-density pattern"],"clinical_inference":"정상 밀도, 저음영 공기가둠, 고음영 침윤·섬유화가 공존하는 패턴은 섬유성 HP 가능성을 높이므로 노출을 재조사하고 다학제 진단해야 한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"과민성 폐장염에서는 처음 문진에서 항원이 확인되지 않는 경우가 있어 한 번의 음성 노출력으로 배제할 수 없다. 주거·직업·취미·가습기·곰팡이·조류 등을 구조적으로 다시 조사해야 한다.","could_be_correct_if":"충분한 반복 노출 평가와 다른 진단 근거로 HP가 다학제적으로 배제될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"three-density pattern은 침윤과 소기도 폐쇄의 공존을 보여 섬유성 HP를 강하게 시사한다. 이 단서를 무시하고 영상만으로 IPF를 확정하면 노출 평가와 BAL 등 감별 과정이 누락된다.","could_be_correct_if":"HP와 다른 원인이 충분히 배제되고 다학제 평가에서 전형적 IPF로 확정될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"제한성 폐기능과 이 HRCT 패턴만으로 폐혈관질환을 확정할 수 없다. 폐혈관확장제는 폐고혈압의 유형과 혈역학을 확인하지 않고 시작할 치료가 아니다.","could_be_correct_if":"적절한 평가와 우심도자검사로 치료 대상 폐고혈압이 확인될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"three-density pattern은 섬유성 HP의 가능성을 높이는 중요한 영상 단서다. 가정과 직장의 숨은 항원을 다시 조사하고 필요 시 BAL·병리 정보를 더해 다학제적으로 진단 확률을 통합한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"세균성 폐렴은 감염 증상과 국소 또는 다발성 침윤, 미생물 근거를 종합한다. 진행성 제한성 장애와 three-density pattern을 항생제 반응만으로 진단하는 것은 부적절하다.","could_be_correct_if":"별도의 임상·영상·미생물 근거로 세균성 폐렴이 확인될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 정답 선택지 해설이 정답과 반대로 '적응증과 시점이 맞지 않는다'고 되어 있어 교체 필요.","기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 HRCT가 three-density pattern을 실제로 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  }
+]

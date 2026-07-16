@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000133",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["집먼지진드기 감작과 노출 연관 증상","중간용량 ICS-LABA에도 일부 증상","최근 악화 없음","FEV1 82%","좋은 흡입법·순응도"],"clinical_inference":"임상적으로 관련된 집먼지진드기 감작이 있고 ICS 포함 치료에도 조절이 일부 불충분하며 폐기능과 현재 안정성이 면역치료 고려에 적합하다. 기존 조절제를 유지하면서 집먼지진드기 설하면역치료를 선택적으로 고려한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"집먼지진드기 감작과 실제 노출 후 증상 연관성이 있어 면역치료 표적의 임상 관련성이 있다. FEV1이 보존되고 중증 악화 상태가 아니므로 기존 ICS 포함 치료에 설하면역치료를 추가로 고려할 수 있다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"조절되지 않는 중증 천식이나 급성 악화 중 면역치료 시작은 전신 반응 발생 시 위험이 커질 수 있다. 폐기능과 조절 상태를 확인하고 안정된 시점에 시작해야 한다.","could_be_correct_if":"악화가 안정되고 천식 조절과 폐기능이 시작 기준에 적합한 경우","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"설하면역치료는 효과가 즉시 나타나는 조절제 대체가 아니므로 시작 당일 ICS-LABA를 중단하면 악화 위험이 있다. 천식 상태를 추적하며 기존 치료 조정은 별도로 단계적으로 시행한다.","could_be_correct_if":"장기간 안정 후 의사의 감독 아래 최소 유효 조절제로 단계 하향하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"감작 검사 양성은 면역학적 감작을 뜻할 뿐 해당 알레르겐이 실제 증상을 일으킨다는 사실을 자동 확정하지 않는다. 노출 연관성, 조절 상태, 폐기능과 환자 선호를 함께 확인해야 한다.","could_be_correct_if":"임상적으로 관련된 노출-증상 연관성과 다른 적응 조건을 모두 충족하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"환경관리는 관련 노출을 줄이는 한 요소이며 유지 경구스테로이드는 누적 전신 부작용 때문에 단순 대체가 아니다. 현재 중증도에서 장기 경구스테로이드를 시작할 근거가 없다.","could_be_correct_if":"다른 최적 치료에도 조절되지 않는 중증 천식에서 전문 평가 후 최소 용량이 불가피한 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["집먼지진드기 SLIT의 제형·연령·폐기능·허가 조건은 지역별로 다를 수 있으므로 FEV1 수치 하나만으로 자동 처방하지 않고 제품 허가와 전신 반응 위험을 확인해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000134",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["pMDI 형태 ICS-LABA로 천식 조절","반복 쉰목소리·구강 백태","흡입 후 입 헹굼 안 함","스페이서 미사용"],"clinical_inference":"ICS의 구강인두 침착으로 발성이상과 구강칸디다증이 발생한 상황이다. 흡입법을 교정하고 pMDI 스페이서와 입 헹굼을 사용하며, 천식 조절을 유지할 최소 유효 ICS 용량을 검토한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"천식이 조절된 것은 ICS 포함 치료의 효과일 수 있어 항염증제를 즉시 영구 중단하면 악화할 수 있다. LABA 단독은 천식에서 안전하지 않다.","could_be_correct_if":null,"misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"경구스테로이드는 흡입제보다 전신 노출과 부작용이 커 구강칸디다증 예방을 위한 대체가 아니다. 국소 침착을 줄이는 방법과 적절한 항진균 치료 여부를 평가한다.","could_be_correct_if":"급성 중증 악화에 단기 전신스테로이드가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"ICS 용량을 두 배로 늘리면 구강인두 침착과 국소 부작용이 더 심해질 수 있다. 현재 문제는 조절 부족이 아니라 사용법·전달 방식과 부작용 관리다.","could_be_correct_if":"정확한 사용법과 순응도에도 천식 조절이 부족해 단계 상향이 별도로 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"모든 흡입 치료를 중단하면 항염증 보호와 기관지확장 치료를 잃는다. 수정 가능한 전달 문제를 먼저 교정해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"correct","explanation":"pMDI 스페이서는 큰 입자의 구강인두 침착을 줄이고 올바른 흡입법은 폐 전달을 개선한다. 흡입 후 물로 입을 헹구어 뱉고, 안정적 조절이 지속되면 최소 유효 ICS 용량을 단계적으로 검토한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["구강 백태가 실제 칸디다증인지 확인하고 필요하면 국소 항진균 치료를 병행할 수 있으나, 이는 ICS 기반 천식 치료를 자동 중단할 이유가 아니다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000135",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["1년간 salbutamol 200회분 흡입기 5개 조제","ICS 거의 미사용","FEV1 61%","8개월 전 전신스테로이드 악화","환자는 증상을 적게 인식"],"clinical_inference":"다량 SABA 조제는 높은 악화 위험 신호이며 낮은 FEV1, 과거 악화와 불충분한 ICS 사용이 위험을 더한다. SABA 의존을 줄이고 ICS-formoterol 기반 항염증 치료, 흡입교육·객관 모니터링과 서면 행동계획을 시행한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"SABA가 순간적으로 증상을 줄여도 잦은 조제는 조절 불량과 중증 악화·사망 위험 증가의 표지다. 공급량만 늘리면 기도 염증과 과사용 행동을 강화한다.","could_be_correct_if":"급성 완화제로 제한된 양을 ICS 포함 치료·재평가와 함께 처방하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"일부 환자는 기류제한을 적게 인식하므로 주관적 '괜찮다'는 말이 객관적 위험을 무효화하지 않는다. FEV1 61%와 과거 전신스테로이드 악화는 적극적인 위험 교정이 필요한 소견이다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"correct","explanation":"SABA 과다사용의 위험을 설명하고 ICS-formoterol 기반 완화·유지 전략을 환자 중증도에 맞게 선택한다. 사용법과 순응도 장벽을 교정하고 악화 인지·자가대처·응급 도움 기준을 서면으로 제공한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"정기 SABA 사용은 기도 염증을 치료하지 않고 효과 내성과 과사용 위험을 높일 수 있다. ICS 없는 예방적 SABA 사용은 현재 고위험 상태를 악화시킨다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"이미 낮은 폐기능과 이전 악화가 있어 다음 악화를 기다리는 것은 위험하다. 치료 전환 후 가까운 추적으로 증상 인지, 완화제 사용과 폐기능을 확인해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["SABA canister 조제 수는 위험 신호이지 단독 진단 기준이 아니므로 실제 사용량·처방 중복·흡입법·ICS 순응도와 함께 평가해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000136",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["19세·경증 지속성 천식과 알레르기비염","저용량 ICS·montelukast 시작 2주","새 생생한 악몽·불면·우울감","다른 변화 없음","자해 사고는 현재 부인"],"clinical_inference":"Montelukast 시작과 새 신경정신계 증상의 시간적 연관성이 뚜렷해 약물 이상반응을 우선 의심한다. Montelukast를 중단하고 정신상태·자해 위험과 증상 소실 여부를 추적하며 ICS 기반 항염증 치료는 유지한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"2주 조절만으로 ICS 단계 하향을 고려하기에는 기간이 짧고, 새 이상반응의 원인은 montelukast가 더 의심된다. ICS를 먼저 줄이면 천식 보호만 약화시키고 원인 약물은 남는다.","could_be_correct_if":"충분한 기간 안정된 저위험 천식에서 별도의 감독하 단계 하향을 시행하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"correct","explanation":"Montelukast를 중단하고 악몽·불면·우울감의 경과와 자해 사고를 다시 평가한다. 환자·가족에게 악화 시 즉시 도움을 요청하도록 안내하고 천식의 기본 항염증 치료인 ICS는 유지한다.","could_be_correct_if":null,"misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"LAMA는 더 높은 단계의 천식에서 추가하는 조절제이며 약물 유발 신경정신계 증상을 해결하지 않는다. 현재 천식 증상은 줄었으므로 불필요한 단계 상향이다.","could_be_correct_if":"ICS-LABA 최적 치료에도 조절되지 않는 더 높은 단계 천식에서 추가를 고려하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"알레르기비염이 있어도 심각할 수 있는 새 신경정신계 증상을 감수하며 montelukast를 유지할 이유가 없다. 비염은 비강 스테로이드·항히스타민제 등 다른 방법으로 관리할 수 있다.","could_be_correct_if":"신경정신계 이상반응이 없고 이득·위험을 설명한 뒤 적응에 맞게 사용하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Omalizumab은 최적화된 고용량 ICS-LABA에도 악화가 반복되는 중증 알레르기천식에서 적응증을 평가한다. 경증 천식과 약제 이상반응만으로 시작할 수 없다.","could_be_correct_if":"중증 알레르기천식의 허가·표현형 기준을 충족하는 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":["현재 자해 사고를 부인해도 이후 발생할 수 있으므로 증상 추적과 안전 안내가 필요하다. 몬테루카스트 신경정신계 경고를 직접 다루는 규제기관 근거를 추가하면 더 명확하다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000137",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["매년 4~5월 자작나무 꽃가루 때만 증상","주 2~3회 천명·야간기침","지난 계절 응급실 방문","비계절기 무증상·정상 폐기능","올해 계절 시작과 함께 기침 재발"],"clinical_inference":"순수 계절성 알레르기천식이지만 이전 응급실 악화가 있어 SABA나 LTRA 단독보다 ICS 포함 치료가 필요하다. 증상 시작 시 필요 시 저용량 ICS-formoterol을 시작하고 노출 계절 종료 후에도 일정 기간 유지한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"연중 지속 증상이나 지속적 높은 위험이면 매일 유지치료가 필요할 수 있지만 이 환자는 비계절기에 완전 무증상이다. 계절 외 중간용량 ICS-LABA를 같은 용량으로 계속하는 것은 최소 유효 치료보다 과할 수 있다.","could_be_correct_if":"계절 외에도 증상·악화 위험이나 기능 이상이 지속되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"Montelukast는 일부 계절성 알레르기 증상에 도움이 될 수 있지만 악화 예방 효과는 ICS보다 낮다. 지난 계절 응급실 방문이 있어 ICS를 악화 후까지 미루면 안 된다.","could_be_correct_if":"ICS 사용이 불가능한 특정 상황에서 이득·위험을 고려한 대안으로 사용하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"알레르겐 면역치료는 임상적으로 관련된 감작, 천식 조절과 폐기능을 평가해 선택적으로 고려한다. 효과가 즉시 나타나는 구조가 아니며 현재 필요한 ICS 포함 치료를 대체하지 않는다.","could_be_correct_if":"관련 꽃가루 감작과 적응 조건을 충족해 기존 천식 치료에 추가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"꽃가루 계절 증상이 시작될 때 저용량 ICS-formoterol을 필요 시 사용해 완화와 항염증 치료를 함께 제공한다. 노출이 끝난 직후 중단하지 않고 약 4주 더 유지한 뒤 비계절기 상태와 다음 계절 계획을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"지난해 이미 응급실 악화가 있었고 올해 증상이 시작됐으므로 추가 악화를 진단 조건처럼 기다릴 이유가 없다. 노출 계절 초기에 예방적 항염증 치료를 시작해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["계절 종료 후 약 4주라는 기간은 GINA 전략에 따른 일반적 안내이며, 실제 중단은 증상·노출 지속·악화 위험을 재평가해 결정해야 한다."],
+    "publication_recommendation":"approve"
+  }
+]

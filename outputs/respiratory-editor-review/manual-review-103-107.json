@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000103",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["성인의 생선뼈 흡인","우측 기관지중간줄기 원위부 8 mm 이물","호흡부전·협착음 없음","중재호흡기팀과 경성 장비 이용 가능"],"clinical_inference":"기도가 안정된 성인의 작은 원위부 이물은 숙련자가 굴곡성 기관지내시경으로 위치를 확인하면서 제거할 수 있다. 날카로운 이물의 회수 위험을 준비하고 제거 실패·출혈·기도 불안정이 생기면 경성 기관지내시경으로 즉시 전환한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"굴곡성 기관지내시경은 원위부 기관지 접근성이 좋아 안정된 성인 이물의 진단과 제거를 같은 시술에서 시행할 수 있다. 생선뼈의 날카로움과 출혈·천공 위험을 고려해 적절한 회수도구를 준비하고 경성 전환이 가능한 환경에서 시행한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"잔류 기도 이물은 폐쇄후폐렴, 농양, 육아조직과 기관지확장증을 유발할 수 있어 증상이 가볍다고 자연 배출을 기다리지 않는다. 항생제는 동반 감염을 치료할 수 있지만 이물을 제거하지 못한다.","could_be_correct_if":"동반된 폐쇄후 세균감염을 이물 제거와 함께 치료하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"개흉술이나 폐절제술은 기관지내시경으로 제거할 수 없고 심각한 폐손상·합병증이 있는 예외적 경우에 고려한다. 작고 원위부에 있으며 환자가 안정적인데 처음부터 폐절제를 시행하는 것은 과도하다.","could_be_correct_if":"반복 내시경 제거 실패와 비가역적 국소 폐손상 또는 수술이 필요한 합병증이 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"복부밀어올리기는 급성 완전 상기도 폐쇄로 의식이 있는 환자의 응급처치다. CT로 확인된 원위부 기관지의 비질식성 이물에 반복하면 제거 효과는 불확실하고 손상을 유발할 수 있다.","could_be_correct_if":"급성 중증 상기도 폐쇄로 효과적인 기침을 하지 못하는 상황","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"큰 중심부 이물, 기도 불안정, 소아 또는 굴곡성 제거 실패에서는 경성 기관지내시경이 우선일 수 있다. 그러나 모든 성인의 제거를 별도 경성 시술로 제한할 필요는 없으며 안정된 원위부 이물은 굴곡성으로 제거 가능하다.","could_be_correct_if":"큰 중심성 이물·기도 불안정 또는 굴곡성 제거 실패가 있는 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":["생선뼈는 날카로워 점막 손상·출혈 가능성이 있으므로 단순한 일반 이물처럼 표현하지 말고, 경성 전환과 외과 지원이 가능한 숙련 환경이라는 조건을 유지해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000104",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["새 노출","만성 호흡곤란·마른기침","혼합성 환기장애","흡기 HRCT의 모자이크 음영·중심소엽성 결절","소기도 폐쇄 여부 질문"],"clinical_inference":"흡기 모자이크 음영은 소기도·혈관·침윤성 원인이 모두 가능하다. 호기 HRCT에서 정상 폐는 밀도가 증가하지만 폐쇄된 소기도 뒤 구역이 저음영으로 남으면 공기포획이 확인되어 소기도 침범을 지지한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"조영증강 동맥기 CT는 혈관 폐쇄와 관류 차이를 평가할 때 사용할 수 있지만 소기도 뒤 공기 배출 실패를 직접 보여주지 않는다. 모든 저음영 구역의 조영 증가 여부도 공기포획의 진단 기준이 아니다.","could_be_correct_if":"만성 혈전색전증 등 혈관성 모자이크 관류가 의심되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"같은 흡기 상태를 반복하면 움직임 인공물의 재현성은 볼 수 있어도 정상 폐와 폐쇄 폐구역의 호기 배출 차이를 강조하지 못한다. 소기도 폐쇄 확인에는 호기 영상이 필요하다.","could_be_correct_if":"흡기 불량이나 움직임으로 영상 품질 자체가 부적절한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"FDG 섭취 여부는 소엽 단위 공기포획을 판정하지 못하고 PET-CT는 불필요한 방사선과 비용을 더한다. 과민성폐장염의 소기도 침범은 호기 HRCT의 형태학적 변화로 평가한다.","could_be_correct_if":"악성 또는 특정 염증성 병변의 대사활성을 별도로 평가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"호기 흉부 X선은 큰 일측성 공기포획을 시사할 수 있지만 소엽 단위의 패치형 공기포획을 정밀하게 보여주거나 정량화하기 어렵다. HRCT의 공간해상도가 필요하다.","could_be_correct_if":"큰 기도 이물에 의한 일측성 공기포획을 초기 선별하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"호기 시 정상 폐는 공기가 빠지며 더 작고 고음영으로 변한다. 폐쇄된 소기도 뒤 구역이 상대적으로 저음영으로 남으면 공기포획이며, 중심소엽성 결절과 함께 소기도 침범성 과민성폐장염을 지지한다.","could_be_correct_if":null,"misconception_tag":"병태생리"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000105",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["류마티스관절염","무증상·정상 폐기능","앙와위 흡기 HRCT의 하엽 후방 흉막하 옅은 망상음영","초기 ILD와 의존성 무기폐 감별"],"clinical_inference":"앙와위의 중력 의존 후방 폐는 불완전 팽창으로 가성 망상음영을 보일 수 있다. 복와위 흡기 HRCT에서 단순 의존성 음영은 사라지지만 실제 흉막하 간질 이상은 지속되므로 비침습적으로 구분할 수 있다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"호기 HRCT는 소기도 폐쇄에 의한 공기포획을 찾는 검사다. 후방 고음영이 중력 의존성 불완전 팽창인지 실제 간질 병변인지 판정하는 체위 변화의 역할을 대신하지 못한다.","could_be_correct_if":"과민성폐장염이나 폐쇄성세기관지염의 공기포획을 평가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"CT 폐동맥조영은 폐색전과 혈관성 모자이크 관류를 평가한다. 경미한 후방 흉막하 망상음영의 체위 의존성을 구분하는 데 조영제나 혈류 측정은 필요하지 않다.","could_be_correct_if":"폐색전증 또는 폐혈관질환이 의심되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"correct","explanation":"복와위에서는 하엽 후방이 비의존부가 되어 단순 의존성 무기폐가 재팽창하며 음영이 사라진다. 같은 부위의 망상음영이 지속되면 실제 흉막하 간질성 이상 가능성이 높다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"PET 대사활성은 미세 망상음영이 섬유화인지 의존성 무기폐인지 확진하는 표준 기준이 아니다. 간단한 복와위 HRCT보다 방사선량과 비특이성이 크다.","could_be_correct_if":"별도의 종양 또는 대사활성 병변 평가 적응증이 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"무증상이고 폐기능이 정상이며 영상 이상도 경계성인 환자에게 즉시 경기관지폐생검을 하면 불필요한 출혈·기흉 위험을 준다. 먼저 체위 촬영으로 가역적 의존성 음영을 배제해야 한다.","could_be_correct_if":"비침습 평가 후에도 진단이 불명확하고 조직 결과가 치료를 바꾸며 위험이 수용 가능한 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000106",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["수년간 매일 화농성 객담·반복 폐렴","비특이적 흉부 X선","경도 폐쇄성 장애","기관지확장증 확진 질문"],"clinical_inference":"얇은 절편 흉부 CT가 기관지확장증의 표준 확진 영상이다. 기관지가 인접 동맥보다 넓고 말초로 갈수록 가늘어지지 않으며 흉막 가까이까지 보이는 직접 소견을 확인한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"폐동맥 충만결손과 우심실 확장은 급성 또는 만성 폐혈전색전증 평가 소견이다. 기관지벽과 기관지-동맥 비, 말초 tapering을 확인하는 기관지확장증 확진 기준이 아니다.","could_be_correct_if":"폐색전증과 우심부하를 평가하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"1 mm 이하 얇은 절편 CT에서 기관지가 인접 폐동맥보다 넓은지, 말초로 가며 정상적으로 좁아지지 않는지 확인한다. 흉막 가까이까지 보이는 기관지도 확장과 비정상 말초 가시성을 뒷받침한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"단순 X선의 tram-track이나 ring shadow는 진행된 기관지확장증을 시사할 수 있지만 민감도가 낮다. 이런 소견이 없다고 질환을 배제할 수 없다.","could_be_correct_if":"명확한 전형적 X선 소견이 있어 추가 CT 필요성을 판단하는 보조 정보인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"기관지확장증은 폐쇄성·혼합성·정상 폐활량 등 다양한 기능 패턴을 보일 수 있다. 정상 FEV1/FVC는 구조적 기관지 확장을 배제하지 못한다.","could_be_correct_if":"진단 후 기능 장애의 정도와 추세를 평가하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기관지조영술은 CT 보급 전 사용한 침습 검사로 조영제 흡인과 불편 위험이 있어 모든 환자의 첫 확진검사가 아니다. 얇은 절편 CT가 비침습적으로 더 넓은 폐 범위를 평가한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["기관지-동맥 비는 연령·고도·동맥 직경의 영향을 받으므로 1 초과만 기계적으로 적용하지 말고 tapering 소실과 말초 기관지 가시성 등 여러 CT 소견 및 임상 맥락을 함께 해석해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000107",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["71세·18개월 진행성 호흡곤란·마른기침","기저부 Velcro 수포음","제한성 장애·DLCO 감소","노출·약물·자가면역 원인 배제","HRCT의 전형적 UIP 패턴"],"clinical_inference":"알려진 원인이 배제된 임상 맥락에서 흉막하·기저부 망상음영, 견인성 기관지확장과 벌집모양을 보이는 전형적 UIP HRCT는 IPF 진단을 지지한다. 다학제 논의로 진단하며 추가 수술폐생검의 위험을 감수하지 않는다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"작은 경기관지 겸자생검은 UIP의 패치형 공간적 이질성과 흉막하 분포를 충분히 포착하지 못할 수 있다. 전형적 UIP HRCT와 합당한 임상 맥락에서는 병리 확인이 필수 조건이 아니다.","could_be_correct_if":"영상이 비전형적이고 조직이 필요할 때도 겸자생검의 낮은 수율·위험을 고려해 적절한 방법을 다학제에서 선택","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"전형적 UIP 패턴에서 모든 환자에게 수술폐생검을 시행하면 진단 이득 없이 수술 합병증과 급성악화 위험을 준다. 조직검사는 영상·임상으로 진단이 불확실하고 결과가 치료를 바꿀 때 선별적으로 검토한다.","could_be_correct_if":"HRCT가 비확정적이고 다학제에서 조직 이득이 수술 위험을 넘는다고 판단한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"BAL 림프구증은 과민성폐장염 등 대체진단이 의심될 때 도움이 될 수 있지만 정상 림프구가 IPF 확진의 의무 조건은 아니다. 현재는 노출력이 없고 전형적 UIP 영상이 있다.","could_be_correct_if":"과민성폐장염·감염 등 대체진단이 임상적으로 남아 BAL이 감별에 기여하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"고령 환자의 합당한 임상상과 전형적 UIP HRCT, 알려진 원인 배제를 다학제에서 통합하면 IPF로 진단할 수 있다. 이 경우 수술폐생검은 진단 이득보다 위해가 커 시행하지 않는다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"벌집모양은 UIP 패턴의 중요한 소견이지만 IPF만의 고유 소견은 아니며 결합조직질환·노출·약물 등에서도 나타날 수 있다. 원인 평가 없이 영상 한 소견만으로 IPF를 확진하면 안 된다.","could_be_correct_if":"노출·약물·자가면역 등 대체 원인을 충분히 배제하고 전체 UIP 패턴과 임상 맥락을 통합한 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  }
+]

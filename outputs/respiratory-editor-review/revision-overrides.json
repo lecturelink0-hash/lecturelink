@@ -1,0 +1,2093 @@
+[
+    {
+        "question_id":  "RESP-000019",
+        "revised_stem":  "폐렴으로 삽관된 60세 남자가 용적조절환기를 받고 있다. 설정은 예측체중 기준 일회호흡량 6 mL/kg, 호흡수 18회/분, PEEP 5 cmH₂O이다. 호기 유량은 다음 흡기 전에 0으로 돌아오며 intrinsic PEEP는 없다. 산소포화도는 96%이고 동맥혈가스는 pH 7.22, PaCO₂ 68 mmHg이며 plateau pressure는 24 cmH₂O이다. 진정은 적절하고 기도폐쇄 소견은 없다. 다음 설정 변경으로 가장 적절한 것은?",
+        "revised_lead_in":  "다음 설정 변경으로 가장 적절한 것은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "분당환기를 늘리기 위해 호흡수를 단계적으로 증가시키고 혈액가스를 재평가한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "일회호흡량을 예측체중 8 mL/kg로 우선 증가시킨다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "현재 설정을 유지한 채 회로의 기계적 사강만 줄인다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "환기 설정을 바꾸지 않고 pH가 7.15 미만이 될 때까지 관찰한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "중탄산염을 투여해 pH를 먼저 교정한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "일회호흡량이 폐보호 범위이고 plateau pressure도 24 cmH₂O로 과도하지 않다. 현재 호흡수는 18회/분이며 완전한 호기가 가능하고 intrinsic PEEP가 없으므로, 호흡수를 단계적으로 높여 분당환기를 증가시키는 것이 우선이다. 변경 후 호기 유량, intrinsic PEEP, plateau pressure와 동맥혈가스를 다시 확인한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.thoracic.org/professionals/clinical-resources/critical-care/clinical-education/mechanical-ventilation.php",
+                               "title":  "American Thoracic Society: Mechanical Ventilation"
+                           },
+                           {
+                               "url":  "https://www.thoracic.org/professionals/clinical-resources/critical-care/clinical-education/abgs.php",
+                               "title":  "American Thoracic Society: Interpretation of Arterial Blood Gases"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "호흡수 증가의 안전성을 판단할 현재 호흡수, 일회호흡량, PEEP, 완전한 호기와 intrinsic PEEP 부재를 추가해 정답 유일성을 확보함"
+    },
+    {
+        "question_id":  "RESP-000020",
+        "revised_stem":  "63세 남자가 2개월간의 기침과 체중 감소로 검사 중이다. 최근 얼굴과 목이 붓고 누우면 숨이 더 차며, 조영증강 흉부 CT에서 우상엽 중심부 종괴가 상대정맥을 압박하고 종격동 림프절이 커져 있다. 혈전은 보이지 않는다. 혈압은 안정적이고 천명, 협착음, 의식 변화나 심한 두통은 없다. 아직 조직 진단은 얻지 못했다. 다음 조치로 가장 적절한 것은?",
+        "revised_lead_in":  "다음 조치로 가장 적절한 것은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "조직 진단 전에 응급 방사선치료를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "생명위협 소견이 없지만 응급 혈관 내 스텐트를 즉시 삽입한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "상체를 올리고 호흡·신경학적 상태를 감시하면서 신속히 조직 진단과 병기평가를 진행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "혈전성 상대정맥폐쇄로 간주하고 항응고제만 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "고용량 corticosteroid만 투여하고 종양 평가를 미룬다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "악성 상대정맥증후군이 의심되지만 협착음, 의식 변화, 심한 두통이나 혈역학적 불안정이 없어 즉각적 감압이 필요한 위기 상황은 아니다. 상체 거상과 면밀한 감시를 시행하면서 조직형과 병기를 신속히 확정해야 항암치료·방사선치료를 적절히 선택할 수 있다. 기도 또는 뇌부종, 혈역학적 악화가 발생하면 혈관 내 스텐트 등 빠른 감압의 긴급성을 다시 평가한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.eviq.org.au/radiation-oncology/palliative/295-respiratory-superior-vena-cava-obstruction-pal",
+                               "title":  "eviQ: Respiratory superior vena cava obstruction palliative EBRT"
+                           },
+                           {
+                               "url":  "https://education.eviq.org.au/getmedia/84e01d65-0f5e-4ad4-b769-9f3bc1ae3df4/SVCO-summary-sheet.aspx",
+                               "title":  "Cancer Institute NSW eviQ: Superior vena cava obstruction summary"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_CT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "CT의 압박·혈전 부재와 기도·뇌 위기 부재를 지문에 명시하고 조직 진단 우선순위를 직접 다루는 근거로 교체함"
+    },
+    {
+        "question_id":  "RESP-000026",
+        "revised_stem":  "54세 남자가 기침한 뒤 거품이 있고 소량의 가래와 섞인 선홍색 피를 뱉었다. 구역·구토·흑색변과 후비출혈 증상은 없고 구강·비강 출혈점도 보이지 않는다. 혈압 132/78 mmHg, 맥박 84회/분, 산소포화도 97%이며 현재 출혈은 멎었다. CT를 즉시 시행하기 어려운 일차 진료 환경에서 진성 비대량 객혈의 기본 선별 영상으로 가장 적절한 검사는?",
+        "revised_lead_in":  "기본 선별 영상으로 가장 적절한 검사는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "비위관 세척",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "흉부 X선 촬영",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "비강 내시경",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "영상검사 없이 1주 후 재평가",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "D-dimer 검사",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "발생 양상은 상부위장관이나 비강 출혈보다 진성 객혈에 부합하며 현재 혈역학적으로 안정된 비대량 객혈이다. CT를 즉시 시행하기 어려운 환경에서 흉부 X선은 감염, 종괴, 공동과 국소 침윤을 빠르게 선별하는 적절한 기본 영상이다. 다만 ACR 기준상 조영증강 흉부 CT 또는 CTA도 비대량 객혈의 초기 영상으로 적절하므로, 흉부 X선 결과·위험인자·재발 여부에 따라 CT/CTA로 이어간다.",
+        "references":  [
+                           {
+                               "url":  "https://acsearch.acr.org/docs/69449/Narrative",
+                               "title":  "ACR Appropriateness Criteria: Hemoptysis"
+                           },
+                           {
+                               "url":  "https://acsearch.acr.org/list/GetAppendix?PanelName=Thoracic\u0026TopicId=107",
+                               "title":  "ACR Hemoptysis appropriateness table"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "검사 환경과 \u0027기본 선별 영상\u0027을 명시해 CT/CTA와의 경쟁을 해소하고 ACR 권고에 맞춰 후속 CT 경로를 설명함"
+    },
+    {
+        "question_id":  "RESP-000038",
+        "revised_stem":  "46세 남자가 우상엽에 국한된 단일 단순 폐국균종으로 두 차례 생명위협 객혈을 겪었고 각각 기관지동맥색전술로 지혈되었다. 3개월 뒤 다시 중등도 객혈이 발생했다. 반대쪽 폐는 정상이고 FEV₁은 예측치의 88%, DLCO는 84%이며 수술을 제한할 동반질환은 없다. 현재 출혈은 안정되었다. 장기적인 재출혈 예방을 위한 가장 적절한 치료는?",
+        "revised_lead_in":  "장기적인 재출혈 예방을 위한 가장 적절한 치료는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "계획된 우상엽절제술",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "재출혈 때마다 기관지동맥색전술만 반복",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "경구 항진균제 단독 장기 투여",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "기관지내시경 국소 지혈만 반복",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "정기 흉부 X선 추적만 시행",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "IDSA는 금기가 없는 단일 국균종 환자에게 유의한 객혈이 있으면 수술적 절제를 권고한다. 이 환자는 병변이 한 엽에 국한되고 폐기능과 반대쪽 폐가 양호하며 BAE 후에도 재출혈했으므로, 급성 출혈이 안정된 뒤 계획 우상엽절제술이 장기 재출혈 예방에 가장 적절하다. BAE와 기관지내시경 지혈은 급성 조절 또는 수술 불가 환자의 가교가 될 수 있지만 구조적 병변을 제거하지 않는다.",
+        "references":  [
+                           {
+                               "url":  "https://www.idsociety.org/practice-guideline/aspergillosis/",
+                               "title":  "IDSA 2016 Clinical Practice Guideline for Aspergillosis, recommendations 89–91"
+                           },
+                           {
+                               "url":  "https://doi.org/10.1007/s00270-022-03127-w",
+                               "title":  "CIRSE Standards of Practice on Bronchial Artery Embolisation"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "수술 적응증을 직접 권고하는 IDSA 근거를 추가하고 현재 출혈 안정·수술 가능성을 명시함"
+    },
+    {
+        "question_id":  "RESP-000057",
+        "revised_stem":  "22세 육상선수가 달리기 5–10분 뒤 기침과 흉부 답답함을 호소한다. 안정 시 폐활량검사와 기관지확장제 반응은 정상이다. 표준화 운동유발검사 전 FEV₁은 4.10 L였고 운동 후 최저 FEV₁은 3.48 L였으며 30분 뒤 기저치로 회복되었다. 검사 적합성과 재현성 기준은 충족했다. 가장 적절한 해석은?",
+        "revised_lead_in":  "가장 적절한 해석은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "안정 시 폐활량검사가 정상이므로 운동유발기관지수축은 배제된다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "운동 후 FEV₁ 감소는 제한성 환기장애를 의미한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "30분 뒤 회복되었으므로 기술 오류로 판정한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "운동 후 FEV₁이 약 15% 감소해 운동유발기관지수축을 지지한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "운동유발후두폐쇄로 확정하고 기관지 평가를 종료한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "운동 후 FEV₁은 4.10 L에서 3.48 L로 약 15% 감소했다. ATS 지침은 운동 또는 과호흡 유발 후 FEV₁이 기저치보다 10% 이상 감소하면 운동유발기관지수축을 지지하는 것으로 본다. 안정 시 폐활량검사가 정상이어도 배제되지 않으며, 이후 회복되는 양상도 가역적 기관지수축과 일치한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.thoracic.org/statements/resources/allergy-asthma/exercise-induced-bronchoconstriction.pdf",
+                               "title":  "Official ATS Clinical Practice Guideline: Exercise-induced Bronchoconstriction"
+                           },
+                           {
+                               "url":  "https://academic.oup.com/ajrccm/article/187/9/1016/8510121",
+                               "title":  "ATS Exercise-induced Bronchoconstriction guideline publication"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "검사 품질을 명시하고 운동 후 FEV₁ 10% 이상 감소 기준을 직접 다루는 ATS 공식 지침을 추가함"
+    },
+    {
+        "question_id":  "RESP-000062",
+        "revised_stem":  "45갑년 흡연력이 있는 67세 남자가 점차 심해지는 운동 시 호흡곤란으로 왔다. 기관지확장제 후 FEV₁/FVC는 0.58, TLC 124%, RV 158% 예측치이며 혈색소 보정 DLCO는 43% 예측치이다. 청진에서 호기 연장이 들린다. 이 폐기능 패턴의 해부학적 원인과 분포를 확인하기 위한 가장 적절한 검사는?",
+        "revised_lead_in":  "이 폐기능 패턴의 해부학적 원인과 분포를 확인하기 위한 가장 적절한 검사는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "기관지유발검사",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "안정 시 심초음파와 NT-proBNP",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "혈색소 교정 없이 DLCO만 반복",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "얇은 절편 흉부 CT",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "혈청 알파-1 항트립신 농도와 유전형검사",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "지속성 기류제한, 과팽창·공기포획과 현저한 DLCO 감소는 폐포-모세혈관 표면적이 감소한 폐기종 표현형을 시사한다. 얇은 절편 흉부 CT는 폐기종의 존재, 분포와 범위를 직접 보여 주므로 질문한 해부학적 원인 확인에 가장 적절하다. 알파-1 항트립신 결핍 검사는 COPD 환자에게 별도로 권고되는 원인 평가이지만 폐기종의 해부학적 분포를 직접 확인하는 검사는 아니다.",
+        "references":  [
+                           {
+                               "url":  "https://goldcopd.org/2026-gold-report-and-pocket-guide/",
+                               "title":  "GOLD 2026 Report and Pocket Guide"
+                           },
+                           {
+                               "url":  "https://publications.ersnet.org/content/erj/60/1/2101499",
+                               "title":  "ERS/ATS technical standard on interpretive strategies for routine lung function tests"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "질문을 해부학적 원인과 분포 확인으로 좁혀 AAT 검사와의 경쟁을 제거하고, AAT 검사는 별도 필수 원인 평가임을 해설에 보존함"
+    },
+    {
+        "question_id":  "RESP-000063",
+        "revised_stem":  "70세 남자가 운동 시 호흡곤란으로 검사받았다. HRCT에서 상엽 우세 폐기종과 하엽 우세 폐섬유화가 함께 관찰된다. FEV₁/FVC 0.72, FVC 92%, TLC 96% 예측치로 폐용적은 비교적 보존되어 있으나 혈색소 보정 DLCO는 31% 예측치이고 6분보행 중 산소포화도가 95%에서 82%로 감소한다. 가장 적절한 해석과 다음 평가는?",
+        "revised_lead_in":  "가장 적절한 해석과 다음 평가는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "폐기종과 섬유화의 용적 효과가 상쇄된 CPFE로 해석하고 폐고혈압 동반 여부를 선별한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "섬유화만 있다고 보고 FVC 추세만 감시한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "폐기종만 있다고 보고 기관지확장제 반응만 추적한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "고립성 폐동맥고혈압으로 해석하고 HRCT 소견은 무시한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "운동 시 탈포화만 평가하고 폐고혈압 선별은 미룬다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "CPFE에서는 폐기종의 과팽창과 섬유화의 용적 감소가 상쇄되어 FVC와 TLC가 비교적 보존될 수 있지만 DLCO는 불균형하게 낮아질 수 있다. ATS/ERS/JRS/ALAT 공식 연구성명은 CPFE에서 FVC 단독 추적이 부적절할 수 있고 폐고혈압 선별·감시를 고려해야 한다고 설명한다. 따라서 심초음파와 바이오마커 등으로 폐고혈압 가능성을 평가하고 필요하면 우심도자로 확정한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.atsjournals.org/doi/abs/10.1164/rccm.202206-1041ST",
+                               "title":  "Official ATS/ERS/JRS/ALAT Research Statement: Combined Pulmonary Fibrosis and Emphysema"
+                           },
+                           {
+                               "url":  "https://publications.ersnet.org/content/erj/61/1/2200879",
+                               "title":  "2022 ESC/ERS Guidelines for pulmonary hypertension"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_HRCT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "CPFE의 보존된 폐용적·중증 DLCO 감소와 폐고혈압 선별을 직접 다루는 공식 다학회 성명을 추가함"
+    },
+    {
+        "question_id":  "RESP-000067",
+        "revised_stem":  "항합성효소증후군으로 추적 중인 46세 여자가 3개월 전부터 마른기침과 계단을 오를 때 숨참을 호소한다. 양쪽 폐기저부에 미세 수포음이 들린다. 흉부 X선은 정상이고 FVC 91%, TLC 94% 예측치이지만 혈색소 보정 DLCO는 57% 예측치이다. 간질성폐질환을 확인하기 위한 가장 적절한 다음 검사는?",
+        "revised_lead_in":  "간질성폐질환을 확인하기 위한 가장 적절한 다음 검사는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "기관지확장제 반응검사",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "심초음파와 NT-proBNP만 시행",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "추가 영상 없이 6개월 뒤 폐기능검사만 반복",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "고해상 흉부 CT",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "운동심폐검사만 시행",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "항합성효소증후군은 ILD 위험이 높은 특발염증근병증 범주이며 새 호흡기 증상, 기저부 수포음과 DLCO 감소가 동반되었다. ACR 지침은 ILD 고위험 전신자가면역 류마티스질환에서 흉부 X선이 아니라 HRCT와 폐기능검사로 선별하도록 조건부 권고한다. 따라서 정상 단순 X선과 보존된 폐용적만으로 배제하지 말고 HRCT로 실질 병변을 확인한다.",
+        "references":  [
+                           {
+                               "url":  "https://rheumatology.org/api/asset/blt7e2cadfc7bc986fb",
+                               "title":  "2023 ACR Guideline for Screening and Monitoring SARD-ILD"
+                           },
+                           {
+                               "url":  "https://rheumatology.org/interstitial-lung-disease-guideline",
+                               "title":  "American College of Rheumatology Interstitial Lung Disease Guidelines"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "항합성효소증후군을 포함하는 ACR SARD-ILD 지침의 HRCT 선별 권고를 직접 근거로 추가함"
+    },
+    {
+        "question_id":  "RESP-000071",
+        "revised_stem":  "짙은 피부색을 가진 58세 남자가 폐렴으로 입원했다. 산소 2 L/min에서 손가락 SpO₂는 94%로 반복 측정되지만 호흡수 32회/분, 보조호흡근 사용과 의식 저하가 진행한다. 손은 따뜻하고 측정 파형과 맥박 일치는 양호하며 매니큐어는 없다. 가장 적절한 다음 조치는?",
+        "revised_lead_in":  "가장 적절한 다음 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "다른 센서에서 반복한 SpO₂ 평균만으로 산소화를 판단한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "동맥혈가스로 PaO₂·PaCO₂와 산-염기 상태를 확인하고 임상적으로 치료하며, dyshemoglobinemia가 의심될 때만 co-oximetry를 병행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "SpO₂ 목표만 높이고 직접 동맥혈 평가를 미룬다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "정맥혈가스의 정맥 산소포화도로 동맥 산소화를 대신한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "폐 영상검사를 먼저 시행하고 SpO₂ 추세만 감시한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "FDA는 pulse oximeter가 유용하지만 피부색 등 여러 요인의 영향을 받아 부정확할 수 있으므로 수치만 의존하지 말고 임상 증상을 함께 보도록 안내한다. 이 환자는 양호한 파형에도 호흡노력과 의식 저하가 진행하므로 ABG로 산소화·환기·산-염기 상태를 직접 평가하고 치료를 지연하지 않는다. Co-oximetry는 COHb·MetHb 등 dyshemoglobinemia가 의심될 때 추가하며 ABG와 무조건 대체되는 검사가 아니다.",
+        "references":  [
+                           {
+                               "url":  "https://www.fda.gov/medical-devices/products-and-medical-procedures/pulse-oximeters",
+                               "title":  "FDA: Pulse Oximeters"
+                           },
+                           {
+                               "url":  "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/pulse-oximeters-medical-purposes-non-clinical-and-clinical-performance-testing-labeling-and",
+                               "title":  "FDA 2025 Draft Guidance: Pulse Oximeters for Medical Purposes"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "ABG와 co-oximetry의 역할을 분리하고, 피부색 관련 정확도 한계를 다루는 최신 FDA 자료를 직접 연결함"
+    },
+    {
+        "question_id":  "RESP-000073",
+        "revised_stem":  "활동성 위장관 출혈이 지속되는 61세 여자가 흉통과 어지럼으로 왔다. 실내공기에서 SpO₂ 99%, PaO₂ 96 mmHg이지만 혈색소는 4.2 g/dL이고 심박수 122회/분, lactate 4.1 mmol/L이다. 폐 청진과 흉부 X선은 정상이다. 가장 적절한 해석과 처치는?",
+        "revised_lead_in":  "가장 적절한 해석과 처치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "SpO₂가 정상이어도 동맥 산소함량과 조직 산소전달이 심하게 감소했으므로 긴급 지혈과 적혈구 수혈을 시행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "고농도 산소만으로 용해 산소를 늘리고 수혈은 미룬다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "정질액만 투여하고 SpO₂가 정상이므로 수혈하지 않는다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "빈혈 교정보다 관상동맥조영술을 먼저 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "COHb 상승으로 간주하고 co-oximetry 결과 전까지 지혈과 수혈을 미룬다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "동맥 산소함량은 대부분 혈색소에 결합된 산소로 결정되므로 Hb 4.2 g/dL에서는 SaO₂와 PaO₂가 정상이어도 운반 가능한 총 산소량이 심하게 감소한다. 빈맥, 흉통과 lactate 상승은 조직 산소전달 실패를 뒷받침한다. AABB의 제한적 수혈 기준보다도 훨씬 낮은 혈색소이며 활동성 출혈과 증상이 있으므로 출혈원을 긴급히 조절하면서 적혈구를 수혈하고 임상 반응을 재평가한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.aabb.org/news-resources/resources/clinical-practice-resources",
+                               "title":  "AABB Clinical Practice Resources: 2023 Red Blood Cell Transfusion Guidelines"
+                           },
+                           {
+                               "url":  "https://www.aabb.org/docs/default-source/default-document-library/resources/updates-in-red-blood-cell-transfusion-thresholds.pdf",
+                               "title":  "AABB: Updates in Red Blood Cell Transfusion Thresholds"
+                           },
+                           {
+                               "url":  "https://publications.ersnet.org/content/breathe/11/3/194",
+                               "title":  "Relating oxygen partial pressure, saturation and content"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "단순 \u0027수혈 필요성 평가\u0027를 긴급 지혈과 수혈로 명확히 하고 AABB 수혈 지침을 직접 근거로 추가함"
+    },
+    {
+        "question_id":  "RESP-000074",
+        "revised_stem":  "수술 후 opioid 진통제를 투여받은 66세 남자가 깨워도 졸리고 호흡수가 6회/분으로 감소했다. 해수면 실내공기에서 동맥혈가스는 pH 7.24, PaCO₂ 68 mmHg, PaO₂ 58 mmHg이다. 호흡계수는 0.8로 가정한다. 가장 적절한 저산소혈증의 기전과 즉각적 처치는?",
+        "revised_lead_in":  "가장 적절한 저산소혈증의 기전과 즉각적 처치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "A–a 산소차가 증가한 폐색전증성 V/Q 불균형으로 보고 CT 폐혈관조영술을 우선한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "우좌단락으로 보고 고농도 산소 반응만 관찰한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "확산장애로 보고 DLCO를 먼저 측정한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "낮은 흡입 산소분압으로 보고 고도 노출 여부만 확인한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "거의 정상인 A–a 산소차를 보이는 폐포저환기로 판단하고 기도·환기를 지지하면서 naloxone을 투여한다",
+                                    "is_correct":  true
+                                }
+                            ],
+        "revised_core_explanation":  "폐포가스식으로 PAO₂는 약 150−68/0.8=65 mmHg이고 A–a 산소차는 약 7 mmHg로 거의 정상이다. PaCO₂ 상승, 서호흡과 정상 A–a 차는 opioid 유발 폐포저환기를 지지한다. 즉시 기도와 환기를 보조하고 응급 도움을 요청하면서 naloxone을 투여하되, 길항 효과가 opioid보다 짧을 수 있어 재진정과 재투여 필요성을 계속 감시한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.fda.gov/consumers/consumer-updates/access-naloxone-can-save-life-during-opioid-overdose",
+                               "title":  "FDA: Access to Naloxone Can Save a Life During an Opioid Overdose"
+                           },
+                           {
+                               "url":  "https://www.fda.gov/drugs/drug-safety-and-availability/fda-recommends-health-care-professionals-discuss-naloxone-all-patients-when-prescribing-opioid-pain",
+                               "title":  "FDA: Naloxone reverses opioid-related breathing problems"
+                           },
+                           {
+                               "url":  "https://www.thoracic.org/professionals/clinical-resources/critical-care/clinical-education/abgs.php",
+                               "title":  "ATS: Interpretation of Arterial Blood Gases"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "opioid 유발 서호흡과 naloxone·응급 환기 처치를 직접 뒷받침하는 FDA 근거를 추가하고 재진정 감시를 명시함"
+    },
+    {
+        "question_id":  "RESP-000079",
+        "revised_stem":  "평소 건강한 34세 남자가 해발 3,800 m에 빠르게 도착한 지 6시간 뒤 진통제에도 지속되는 심한 두통, 반복 구토, 숨참과 불면을 호소한다. 운동실조, 의식 변화, 안정 시 기침과 폐 수포음은 없다. PaO₂ 51 mmHg, PaCO₂ 29 mmHg이며 폐포가스식으로 계산한 A–a 산소차는 현지 연령 기준에서 정상이다. 가장 적절한 기전과 처치는?",
+        "revised_lead_in":  "가장 적절한 기전과 처치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "경증 급성 고산병이므로 현 고도에서 휴식만 하며 추가 상승한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "고고도폐부종으로 판단해 nifedipine만 투여한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "고고도뇌부종으로 확정해 운동실조 여부와 무관하게 dexamethasone만 투여한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "정상 A–a 산소차이므로 고산병을 배제하고 폐색전증 검사부터 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "저기압성 저산소증에 의한 중증 급성 고산병으로 보고 추가 상승을 중단하며 산소를 투여하고 하강한다",
+                                    "is_correct":  true
+                                }
+                            ],
+        "revised_core_explanation":  "고도 상승으로 대기압과 흡입 산소분압이 낮아지면 폐질환 없이도 PAO₂와 PaO₂가 감소하므로 A–a 산소차는 대체로 정상이고 저산소성 과호흡으로 PaCO₂가 낮아진다. 심한 지속성 두통과 반복 구토는 경증으로 볼 수 없으므로 추가 상승을 중단하고 산소를 투여하며 하강한다. 운동실조나 의식 변화가 생기면 HACE로 간주해 즉시 하강·산소와 dexamethasone을 시행하고, 수포음·기침·심한 안정 시 호흡곤란이 생기면 HAPE 평가와 치료를 병행한다.",
+        "references":  [
+                           {
+                               "url":  "https://journals.sagepub.com/doi/10.1016/j.wem.2023.05.013",
+                               "title":  "Wilderness Medical Society Clinical Practice Guidelines for Acute Altitude Illness: 2024 Update"
+                           },
+                           {
+                               "url":  "https://journals.sagepub.com/doi/pdf/10.1016/j.wem.2023.05.013",
+                               "title":  "WMS 2024 Acute Altitude Illness Guideline PDF"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "AMS·HACE·HAPE 구분 단서를 보강하고 2024 WMS 지침에 맞춰 산소·하강 및 약제 적응증을 정리함"
+    },
+    {
+        "question_id":  "RESP-000084",
+        "revised_stem":  "67세 남자가 3주간 지속된 기침과 점차 심해지는 호흡곤란으로 왔다. 과거 흉부 수술력은 없고 오른쪽 호흡음이 감소했다. 흉부 X선에서 우측 전폐가 균일하게 백색화되어 있고 우측 늑간격이 좁아졌으며 기관과 종격동이 우측으로 이동해 있다. 영상 소견의 기전과 다음 조치의 조합으로 가장 적절한 것은?",
+        "revised_lead_in":  "영상 소견의 기전과 다음 조치의 조합으로 가장 적절한 것은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "우측 대량 흉수가 종격동을 반대쪽으로 미는 것으로 보고 흉수천자를 우선한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "우측 전폐성 폐렴이 용적 변화 없이 발생한 것으로 보고 항생제 반응만 관찰한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "우측 긴장성 기흉이 폐를 내측으로 압박한 것으로 보고 즉시 감압한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "우측 폐절제술 후 정상 변화로 보고 경과관찰한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "우측 전폐 무기폐로 보고 조영증강 흉부 CT로 중심부 폐쇄 병변을 평가한다",
+                                    "is_correct":  true
+                                }
+                            ],
+        "revised_core_explanation":  "한쪽 흉곽의 완전 백색화와 함께 늑간격이 좁아지고 종격동이 병변 쪽으로 이동한 것은 용적 감소성 병변인 전폐 무기폐를 시사한다. 대량 흉수는 대개 종격동을 반대쪽으로 밀고, 긴장성 기흉은 과투과성과 반대쪽 이동을 보인다. 수술력이 없는 성인에서는 점액마개나 중심부 종양에 의한 주기관지 폐쇄를 조영증강 CT로 평가하고 필요하면 기관지내시경으로 확인·치료한다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC6958895/",
+                               "title":  "Chest radiography in adult critical care: atelectasis signs"
+                           },
+                           {
+                               "url":  "https://commons.wikimedia.org/wiki/File:Atelectasia1.jpg",
+                               "title":  "Wikimedia Commons image source: Atelectasia1.jpg"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "필수 X선 소견을 지문에 완전히 서술해 이미지 없이도 풀 수 있게 하고 자동 결합 비문을 삭제함"
+    },
+    {
+        "question_id":  "RESP-000085",
+        "revised_stem":  "고혈압과 심부전 병력이 있는 74세 여자가 갑자기 심해진 기좌호흡으로 응급실에 왔다. 혈압 168/96 mmHg, 호흡수 34회/분, SpO₂ 82%이고 보조호흡근을 사용한다. 양측 수포음, 경정맥 팽창과 하지 함요부종이 있으며 BNP가 상승해 있다. 동맥혈가스는 pH 7.29, PaCO₂ 52 mmHg이다. 흉부 X선에서 심장비대, 폐혈관 울혈과 양측성 폐포·간질성 음영이 보인다. 가장 적절한 초기 처치는?",
+        "revised_lead_in":  "가장 적절한 초기 처치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "저유량 비강캐뉼라와 정주 고리이뇨제만 사용하고 산증을 관찰한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "정주 질산염만 투여하고 양압환기는 사용하지 않는다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "비침습 양압환기를 지체 없이 시작하고 정주 고리이뇨제로 울혈을 치료한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "기도 보호 실패 여부와 무관하게 즉시 기관내삽관하고 NIV는 생략한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "세균성 다초점 폐렴으로 판단해 항생제와 고유량 비강캐뉼라만 시작한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "심부전 병력, 기좌호흡, 경정맥 팽창·말초부종, BNP 상승과 심장비대·폐혈관 울혈은 심인성 폐부종을 지지한다. 중증 저산소혈증, 호흡노력과 산증이 있어 조기에 NIV를 적용하고 정주 loop 이뇨제로 울혈을 치료한다. 혈압이 충분히 높으므로 질산염을 추가 고려할 수 있으며, 의식 저하나 기도 보호 실패 또는 NIV 실패가 발생하면 기관내삽관으로 전환한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.escardio.org/static-file/Escardio/Guidelines/guidelines-HF-FT.pdf",
+                               "title":  "ESC Guidelines for Acute and Chronic Heart Failure"
+                           },
+                           {
+                               "url":  "https://www.nice.org.uk/guidance/cg187/chapter/Recommendations",
+                               "title":  "NICE Acute Heart Failure Recommendations"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "심인성 울혈을 확정할 병력·진찰·BNP·X선 단서를 추가하고 NIV·이뇨제 적응증을 공식 심부전 지침과 대조함"
+    },
+    {
+        "question_id":  "RESP-000086",
+        "revised_stem":  "34세 여자가 건강검진 흉부 X선 이상으로 왔다. 기침이나 호흡곤란은 없고 폐기능검사, 심전도, 안과검사와 혈청 칼슘은 정상이다. 조직학적으로 사르코이드증이 확인되었으며 흉부 X선에서는 대칭적 양측 폐문 림프절비대가 보이지만 폐실질 침윤이나 섬유화는 없다. 방사선 병기와 처치의 조합으로 가장 적절한 것은?",
+        "revised_lead_in":  "방사선 병기와 처치의 조합으로 가장 적절한 것은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "Stage II로 분류하고 전신 glucocorticoid를 즉시 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "Stage I으로 분류하고 임상·폐기능을 정기 추적한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "Stage III로 분류하고 항섬유화제를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "Stage IV로 분류하고 폐이식 평가를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "종격동 림프종으로 간주하고 항암치료를 시작한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "폐실질 병변 없이 양측 폐문 림프절비대만 있는 소견은 Scadding stage I이다. 환자는 무증상이고 폐기능과 주요 장기 평가도 정상이므로 즉시 전신 glucocorticoid를 투여할 이득이 분명하지 않다. 증상, 폐기능과 장기 침범을 정기적으로 추적하고 기능 저하나 치료가 필요한 장기 침범이 발생하면 치료를 재평가한다.",
+        "references":  [
+                           {
+                               "url":  "https://publications.ersnet.org/content/erj/58/6/2004079",
+                               "title":  "ERS Clinical Practice Guidelines on Treatment of Sarcoidosis"
+                           },
+                           {
+                               "url":  "https://publications.ersnet.org/content/errev/29/155/190145",
+                               "title":  "ERS Review: Clinical phenotyping and treatment decisions in sarcoidosis"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "방사선 소견을 지문에 명시하고 자동 결합 비문을 삭제했으며 무증상 stage I 관찰 근거를 ERS 자료로 보강함"
+    },
+    {
+        "question_id":  "RESP-000087",
+        "revised_stem":  "46세 남자가 4주간의 기침, 간헐적 객혈과 야간 발한으로 왔다. 스스로 객담을 배출할 수 있다. 흉부 X선에서 우측 상엽 공동과 양측 상부 폐야의 결절성 침윤이 보인다. 가장 적절한 초기 감염관리와 진단 검사는?",
+        "revised_lead_in":  "가장 적절한 초기 감염관리와 진단 검사는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "공기주의를 시행하되 IGRA만으로 활동성 결핵을 확진한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "공기주의 후 자발 객담 대신 기관지내시경 세척액을 첫 검체로 채취한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "공기주의 후 객담 AFB 도말 1회가 음성이면 배양과 NAAT 없이 격리를 해제한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "공기주의를 시행하고 연속 객담 AFB 도말·배양과 첫 호흡기 검체의 결핵 NAAT를 시행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "미생물 검체 없이 영상만으로 진단하고 치료 반응을 확진 검사로 사용한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "상엽 공동성 병변, 만성 기침·객혈과 야간 발한은 전염성 활동성 폐결핵을 강하게 시사하므로 즉시 공기주의를 적용한다. 자발 객담이 가능하면 연속 객담으로 AFB 도말과 배양을 시행하고 첫 호흡기 검체에 결핵 NAAT를 추가한다. NAAT는 신속한 판단을 돕지만 배양과 약제감수성검사를 대체하지 않으며, IGRA는 활동성 결핵 확진검사가 아니다.",
+        "references":  [
+                           {
+                               "url":  "https://www.cdc.gov/tb/hcp/testing-diagnosis/clinical-and-laboratory-diagnosis.html",
+                               "title":  "CDC: Clinical and Laboratory Diagnosis for Tuberculosis"
+                           },
+                           {
+                               "url":  "https://www.idsociety.org/practice-guideline/diagnosis-of-tb-in-adults-and-children/",
+                               "title":  "ATS/CDC/IDSA Clinical Practice Guideline: Diagnosis of Tuberculosis"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "공동과 상부 폐야 침윤을 문장화하고 자동 결합 비문을 삭제했으며 CDC·ATS/CDC/IDSA 진단 근거를 유지함"
+    },
+    {
+        "question_id":  "RESP-000088",
+        "revised_stem":  "65세 여자가 수개월간 식후 흉부 불편감과 신물 역류를 호소한다. 발열이나 호흡기 증상은 없다. 흉부 X선에서 횡격막 위 후심장부에 둥근 공기-액체층이 보여 식도열공탈장이 의심된다. 수술 전 위식도접합부와 위의 흉곽 내 이동 형태를 동적으로 평가하는 가장 적절한 검사는?",
+        "revised_lead_in":  "해부학적 이동 형태를 동적으로 평가하는 가장 적절한 검사는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "바륨 식도조영술",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "상부위장관내시경만 시행",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "24시간 보행성 pH 검사만 시행",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "고해상도 식도내압검사만 시행",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "기관지내시경",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "후심장부 공기-액체층은 흉곽 내로 이동한 위를 시사한다. 바륨 식도조영술은 위식도접합부 위치, 탈장 형태와 크기, 환원성과 식도 통과를 동적으로 보여 수술 전 해부학 평가에 유용하다. 내시경은 점막·Barrett 식도 등을, pH 검사는 산 노출을, 내압검사는 운동기능을 평가하므로 수술 전에는 상호 보완적으로 선택한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.sages.org/publications/guidelines/guidelines-for-the-surgical-treatment-of-hiatal-hernias/",
+                               "title":  "SAGES Guidelines for the Surgical Treatment of Hiatal Hernias"
+                           },
+                           {
+                               "url":  "https://journals.sagepub.com/doi/10.1089/lap.2022.0403",
+                               "title":  "Preoperative Workup of Patients with Paraesophageal Hernias"
+                           },
+                           {
+                               "url":  "https://webfiles.gi.org/links/virtgrandround/ACG_Clinical_Guidelines__EsophagealPhysiologicTesting.pdf",
+                               "title":  "ACG Clinical Guidelines: Esophageal Physiologic Testing"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "후심장부 공기-액체층을 문장화하고 수술 전 해부학 평가에서 식도조영술 역할을 다루는 SAGES·ACG 근거를 보강함"
+    },
+    {
+        "question_id":  "RESP-000089",
+        "revised_stem":  "62세 남자가 서서히 진행하는 운동 시 호흡곤란으로 왔다. 20년 전 우측 농흉으로 흉관 치료를 받았다. 흉부 X선에서 우측 흉막의 광범위한 비후·석회화와 우측 흉곽 용적 감소가 보인다. 가장 예상되는 폐기능검사 소견과 다음 평가의 조합은?",
+        "revised_lead_in":  "가장 예상되는 폐기능검사 소견과 다음 평가의 조합은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "FEV₁/FVC 감소와 TLC 증가; 기관지확장제 반응만 평가",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "정상 폐용적과 고립성 DLCO 감소; CT 폐혈관조영만 시행",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "FVC 감소와 정상 TLC로 제한성 장애를 확정하고 추가 검사를 생략",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "RV와 RV/TLC 증가; 호기 CT로 소기도질환만 평가",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "TLC와 FVC 감소 및 보존된 FEV₁/FVC; 흉부 CT로 흉막 피막과 잔여 폐 확장 가능성을 평가",
+                                    "is_correct":  true
+                                }
+                            ],
+        "revised_core_explanation":  "과거 농흉 후 광범위한 흉막 비후·석회화와 동측 흉곽 수축은 섬유흉에 합당하다. 단단한 흉막 피막이 폐와 흉벽의 팽창을 제한하므로 TLC와 FVC가 감소하고 FEV₁/FVC는 보존되는 폐외 제한성 환기장애가 예상된다. 흉부 CT로 흉막 피막의 범위, 폐실질 손상과 잔여 폐의 재팽창 가능성을 평가하며, 감압수술은 증상·기능 손상과 수술 위험을 종합해 흉부외과에서 판단한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.atsjournals.org/doi/10.1513/AnnalsATS.201604-238CC",
+                               "title":  "AnnalsATS Clinical Image: Fibrothorax"
+                           },
+                           {
+                               "url":  "https://publications.ersnet.org/content/erj/60/1/2101499",
+                               "title":  "ERS/ATS Technical Standard on Lung Function Interpretation"
+                           },
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC6943117/",
+                               "title":  "Imaging of Pulmonary Post-Tuberculosis Sequelae: Fibrothorax"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "영상 소견을 문장화하고 제한성 장애는 TLC 감소로 확인한다는 ERS/ATS 근거와 CT의 수술 전 해부학 역할을 명확히 함"
+    },
+    {
+        "question_id":  "RESP-000090",
+        "revised_stem":  "52세 남자가 반복적인 격렬한 구토 직후 발생한 심한 흉통과 호흡곤란으로 왔다. 체온 38.1℃, 맥박 118회/분이고 목 아래에서 피하기종이 만져진다. 흉부 X선에서 대동맥궁과 종격동 윤곽을 따라 선상 공기음영이 보인다. 가장 적절한 다음 조치는?",
+        "revised_lead_in":  "가장 적절한 다음 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "자발성 종격동기종으로 보고 진통제와 산소만 투여한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "식도경련으로 보고 질산염 반응 후에만 영상을 추가한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "금식·정주 수액·광범위 항생제를 시작하고 조영증강 CT 또는 CT 식도조영술과 응급 외과 협진을 시행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "기관지 파열로 단정하고 CT 없이 기관지내시경부터 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "급성 심낭염으로 보고 종격동 공기는 관찰한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "격렬한 구토 직후의 흉통, 발열·빈맥, 피하기종과 종격동 공기는 Boerhaave 증후군에 의한 식도천공을 우선 시사한다. 종격동염과 패혈증 위험 때문에 금식, 정주 수액과 광범위 항생제를 즉시 시작한다. 조영증강 CT 또는 CT 식도조영술로 천공과 오염 범위를 확인하되 응급 외과·내시경 치료 협진을 지연하지 않는다.",
+        "references":  [
+                           {
+                               "url":  "https://link.springer.com/article/10.1186/s13017-019-0245-2",
+                               "title":  "World Society of Emergency Surgery Guidelines: Esophageal Emergencies"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "종격동기종 소견을 문장화하고 자동 결합 비문을 제거했으며 WSES 응급 식도천공 처치와 일치함"
+    },
+    {
+        "question_id":  "RESP-000091",
+        "revised_stem":  "69세 남자가 2개월간 지속되는 기침과 4 kg의 체중 감소로 왔다. 50갑년 흡연력이 있고 활력징후는 안정적이며 발열은 없다. 흉부 X선에서 좌측 폐문에 겹치는 큰 종괴성 음영이 보인다. 조직검사 경로를 정하기 전에 가장 적절한 다음 검사는?",
+        "revised_lead_in":  "조직검사 경로를 정하기 전에 가장 적절한 다음 검사는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "PET-CT를 먼저 시행하고 진단용 흉부 CT는 생략한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "조영증강 흉부 CT로 종괴 범위와 종격동 림프절을 평가한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "추가 해부학 평가 없이 즉시 기관지내시경 생검을 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "추가 해부학 평가 없이 즉시 경피 바늘생검을 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "3개월 뒤 흉부 X선만 반복한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "고령의 중증 흡연자에게 체중 감소와 폐문부 종괴가 있어 폐암 가능성이 높다. NICE는 의심 폐암에서 생검 전에 조영증강 CT로 흉부, 하부 경부, 간과 부신을 평가하도록 권고한다. CT로 종괴의 기관지·혈관 관계와 림프절·전이 의심 부위를 확인한 뒤 기관지내시경, EBUS 또는 경피생검 중 가장 안전하고 병기 정보를 많이 주는 경로를 선택한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.nice.org.uk/guidance/ng122/chapter/Diagnosis-and-staging",
+                               "title":  "NICE NG122: Lung Cancer Diagnosis and Staging"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "폐문 종괴를 문장화하고 부적절한 우연 결절 ACR 근거를 제거한 뒤 생검 전 조영 CT를 직접 권고하는 NICE 근거로 교체함"
+    },
+    {
+        "question_id":  "RESP-000092",
+        "revised_stem":  "67세 남자가 수년간 서서히 진행하는 운동 시 호흡곤란으로 왔다. 안정 시 산소포화도는 94%이고 청진에서 호기 시간이 연장되어 있다. 흉부 측면 X선에서 횡격막 편평화, 흉골 뒤 공기공간 증가와 흉곽 전후경 증가가 보인다. COPD 진단을 확인하는 데 가장 부합하는 검사 결과는?",
+        "revised_lead_in":  "COPD 진단을 확인하는 데 가장 부합하는 검사 결과는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "TLC 감소와 정상 또는 증가한 FEV₁/FVC",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "정상 폐활량과 고립성 DLCO 감소",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "정상 기저 폐활량과 메타콜린 유발 기도과민성만 확인",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "기관지확장제 투여 후에도 FEV₁/FVC가 0.70 미만으로 지속",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "흡기 유량-용적곡선만 편평하고 호기 곡선은 보존",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "횡격막 편평화와 흉골 뒤 공기공간 증가는 폐기종성 과팽창을 시사하지만 영상만으로 COPD를 확진하지 않는다. 적절한 증상과 노출력이 있는 환자에서 기관지확장제 후 FEV₁/FVC가 0.70 미만으로 지속되는 기류제한을 폐활량측정으로 확인해야 한다. 경계값은 연령 관련 오분류 가능성을 고려해 임상 맥락과 반복 측정으로 해석한다.",
+        "references":  [
+                           {
+                               "url":  "https://goldcopd.org/2026-gold-report-and-pocket-guide/",
+                               "title":  "GOLD 2026 Report and Pocket Guide"
+                           },
+                           {
+                               "url":  "https://publications.ersnet.org/content/erj/60/1/2101499",
+                               "title":  "ERS/ATS Technical Standard on Lung Function Interpretation"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "영상 핵심 소견을 지문에 옮기고 자동 결합 비문을 제거했으며 COPD 확진 기준을 GOLD 2026과 대조함"
+    },
+    {
+        "question_id":  "RESP-000093",
+        "revised_stem":  "28세 여자가 어릴 때부터 반복된 중이염·만성 부비동염과 매일 지속되는 습성 기침으로 왔다. 최근 객담에서 Pseudomonas aeruginosa가 동정되었다. 흉부 X선에서 심장 음영과 위 기포가 우측에 있어 내장역위가 확인된다. 원발섬모운동이상증과 동반 기관지확장증을 평가하기 위한 가장 적절한 조합은?",
+        "revised_lead_in":  "가장 적절한 평가 조합은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "고해상 흉부 CT와 전문센터의 비강 산화질소·섬모 기능검사 및 유전검사 조합",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "땀 염화물과 CFTR 검사만 시행",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "총 IgE와 Aspergillus 특이 항체만 측정",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "혈청 면역글로불린과 백신 항체반응만 평가",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "알파-1 항트립신 농도와 유전형만 검사",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "소아기부터 지속된 상·하기도 질환과 내장역위는 Kartagener 표현형의 원발섬모운동이상증을 강하게 시사한다. HRCT로 기관지확장증의 범위와 중증도를 확인하고 PCD 전문센터에서 검사를 조합한다. 2025 ERS/ATS 지침은 유전검사 또는 전자현미경을 기준 검사로 두고 비강 산화질소, 고속 비디오현미경과 면역형광을 보조적으로 함께 사용하며, 어느 한 검사만으로 모든 환자를 확진하거나 배제하지 않도록 권고한다.",
+        "references":  [
+                           {
+                               "url":  "https://publications.ersnet.org/content/erj/66/6/2500745",
+                               "title":  "2025 ERS/ATS Guideline for Diagnosis of Primary Ciliary Dyskinesia"
+                           },
+                           {
+                               "url":  "https://channel.ersnet.org/media-121382-mastering-the-new-diagnostic-pathway-the-ersats-clinical-practice-guideline-for-primary-ciliary-dyskinesia-2-july-2026",
+                               "title":  "ERS: Implementing the New ERS/ATS PCD Diagnostic Pathway"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "내장역위를 문장화하고 자동 결합 비문을 삭제했으며 기존 2017 근거를 최신 2025 공동 ERS/ATS 지침으로 갱신함"
+    },
+    {
+        "question_id":  "RESP-000095",
+        "revised_stem":  "72세 남자가 6주간 지속되는 기침과 간헐적인 혈담으로 왔다. 55갑년 흡연력이 있고 최근 수술이나 기관내삽관 병력은 없으며 발열도 없다. 흉부 X선에서 좌상엽 음영 증가와 용적 감소, 좌측 폐문 상승 및 종격동의 병변 쪽 견인이 보인다. 가장 적절한 다음 조치는?",
+        "revised_lead_in":  "가장 적절한 다음 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "폐렴으로 보고 항생제 후 6주 뒤에만 재촬영한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "흉수로 보고 즉시 흉강천자를 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "조영증강 흉부 CT로 중심기관지 폐쇄 병변을 평가하고 결과에 따라 기관지내시경을 계획한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "CT 없이 즉시 기관지내시경만 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "만성 섬유화로 보고 폐기능검사만 시행한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "좌상엽 음영 증가와 폐문 상승·동측 종격동 견인은 용적 감소를 동반한 좌상엽 무기폐를 시사한다. 수술 후 점액마개 상황이 아니고 고령의 중증 흡연자에게 혈담이 있어 중심부 폐암에 의한 기관지 폐쇄를 우선 배제해야 한다. NICE 권고에 따라 생검 전에 조영증강 CT로 폐쇄 위치, 종괴·림프절과 전이 의심 부위를 평가한 뒤 기관지내시경과 조직검사 경로를 정한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.nice.org.uk/guidance/ng122/chapter/Diagnosis-and-staging",
+                               "title":  "NICE NG122: Lung Cancer Diagnosis and Staging"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "좌상엽 무기폐 소견을 지문에 명시하고 무관한 비외상성 흉통 ACR 근거와 자동 결합 비문을 제거함"
+    },
+    {
+        "question_id":  "RESP-000100",
+        "revised_stem":  "66세 남자가 2주 전 CT에서 우측 상엽 기관지 내 1.5 cm 결절을 발견했다. 증상과 급격한 진행 소견은 없다. 6주 전 급성관상동맥증후군으로 약물방출스텐트를 삽입받아 aspirin과 clopidogrel을 복용 중이며, 다음 주 선택적 굴곡성 기관지내시경 겸자생검이 예약되어 있다. 가장 적절한 조치는?",
+        "revised_lead_in":  "가장 적절한 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "clopidogrel을 임의로 중단하고 다음 주 생검한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "두 항혈소판제를 유지한 채 겸자생검과 경기관지폐생검을 함께 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "선택적 생검을 연기하고 심장내과와 스텐트 혈전 위험 및 항혈소판제 조정 시점을 협의한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "두 항혈소판제를 즉시 중단하고 heparin으로 대체하면 스텐트 혈전을 완전히 예방한다고 본다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "세척액 세포검사만 시행하고 음성이면 양성 병변으로 확정한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "기관지내 겸자생검은 clopidogrel 복용 중 출혈 위험이 증가하지만, ACS로 DES를 삽입한 지 6주밖에 되지 않아 DAPT를 임의 중단하면 스텐트 혈전 위험이 크다. 2024 AHA/ACC 지침은 DES 삽입 후 3개월 이내 시간민감 비심장 시술에서는 출혈 위험이 이득을 넘지 않는 한 DAPT 유지를 권고하고, ACS 관련 DES 후 선택적 비심장 수술은 통상 충분히 연기하도록 한다. 병변이 안정적이므로 생검을 연기하고 심장내과·기관지내시경 팀이 시기와 대체 전략을 공동 결정한다.",
+        "references":  [
+                           {
+                               "url":  "https://professional.heart.org/en/-/media/PHD-Files-2/Science-News/2/2024/2024-Guideline-for-Perioperative-Cardiovascular-Management-slide-set.pdf?sc_lang=en",
+                               "title":  "2024 AHA/ACC Guideline for Perioperative Cardiovascular Management"
+                           },
+                           {
+                               "url":  "https://www.acc.org/latest-in-cardiology/ten-points-to-remember/2024/09/23/04/15/2024-aha-acc-perioperative-guideline-gl",
+                               "title":  "ACC: 2024 Perioperative Cardiovascular Guideline Key Points"
+                           },
+                           {
+                               "url":  "https://www.brit-thoracic.org.uk/document-library/guidelines/bronchoscopy/bts-guideline-for-diagnostic-flexible-bronchoscopy-in-adults/",
+                               "title":  "BTS Guideline for Diagnostic Flexible Bronchoscopy"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "기관지내시경 출혈 근거에 더해 최근 ACS·DES 후 DAPT와 선택적 시술 시점을 직접 다루는 2024 AHA/ACC 근거를 추가함"
+    },
+    {
+        "question_id":  "RESP-000128",
+        "revised_stem":  "72세 여자가 2주간의 야간 호흡곤란과 천명으로 왔다. 누우면 악화되어 베개 세 개를 사용한다. 양측 수포음, 경정맥 확장과 함요부종이 있고 BNP가 상승했다. 과거 가변적 호흡기 증상이나 알레르기 병력은 없으며 기관지확장제 후 FEV₁ 변화도 없다. 가장 적절한 다음 평가는?",
+        "revised_lead_in":  "가장 적절한 다음 평가는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "심초음파로 좌심실 수축·이완기능과 판막질환을 평가하고 울혈 치료 반응을 확인한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "천명만으로 성인발병 천식을 확진하고 고용량 ICS-LABA를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "기관지유발검사 결과만으로 체액과다 소견을 무시한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "알레르기 피부검사로 심부전을 배제한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "산소포화도가 정상이면 심장·폐 평가를 모두 중단한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "천명은 천식에 특이적이지 않으며 기좌호흡, 경정맥 확장, 부종, 수포음과 BNP 상승은 심부전성 폐울혈을 강하게 지지한다. ESC 심부전 지침은 의심 환자에서 심초음파로 심장 구조, 수축·이완기능과 판막을 평가하도록 권고한다. 울혈을 치료하며 증상 반응을 확인하고, 이후에도 가변적 증상이 남을 때 객관적 기류 변동성 검사를 통해 천식 동반 여부를 평가한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.escardio.org/static-file/Escardio/Guidelines/guidelines-HF-FT.pdf",
+                               "title":  "ESC Guidelines for Acute and Chronic Heart Failure"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "천식 감별 근거에 심초음파·BNP·울혈 치료를 직접 다루는 ESC 심부전 지침을 추가함"
+    },
+    {
+        "question_id":  "RESP-000136",
+        "revised_stem":  "19세 여자가 경증 지속성 천식과 알레르기비염으로 저용량 흡입 corticosteroid와 montelukast를 시작했다. 2주 뒤 천식 증상은 줄었지만 이전에 없던 생생한 악몽, 불면과 우울감이 생겼다. 다른 약제 변화나 생활 사건은 없고 현재 자해 사고는 부인한다. 가장 적절한 조치는?",
+        "revised_lead_in":  "가장 적절한 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "흡입 corticosteroid를 먼저 감량하고 montelukast는 유지한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "montelukast를 중단하고 신경정신계 증상과 자해 위험을 추적하면서 흡입 corticosteroid 기반 치료를 유지한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "현재 치료를 유지하고 LAMA를 추가한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "montelukast를 유지한 채 항히스타민제만 추가한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "중증 알레르기천식으로 간주하고 omalizumab을 시작한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "Montelukast 시작 직후 새로 발생한 악몽, 불면과 우울감은 알려진 신경정신계 이상반응과 시간적으로 일치한다. FDA boxed warning은 행동·기분 변화가 생기면 약제를 중단하고 즉시 의료진과 상의하며, 중단 뒤에도 증상이 발생하거나 지속할 수 있어 추적하도록 안내한다. 현재 자해 사고를 부인해도 안전계획과 악화 시 즉시 도움을 받을 방법을 안내하고 천식의 기본 ICS 치료는 유지한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.fda.gov/drugs/drug-safety-communications/fda-requires-boxed-warning-about-serious-mental-health-side-effects-asthma-and-allergy-drug",
+                               "title":  "FDA Boxed Warning for Montelukast Neuropsychiatric Effects"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "신경정신계 증상 발생 시 중단·상담·중단 후 추적을 직접 권고하는 FDA boxed warning과 안전 안내를 추가함"
+    },
+    {
+        "question_id":  "RESP-000146",
+        "revised_stem":  "26세 남자가 중증 천식 악화로 반복 흡입 기관지확장제와 전신 corticosteroid를 투여받던 중 갑자기 왼쪽 흉통과 호흡곤란이 심해졌다. 혈압 112/70 mmHg, 맥박 118회/분, 산소포화도 91%이다. 흉부 X선에서 왼쪽 흉막선 바깥의 폐혈관 음영이 소실되고 왼쪽 폐가 안쪽으로 크게 허탈되어 있으나 뚜렷한 종격동 편위는 없다. 가장 적절한 다음 처치는?",
+        "revised_lead_in":  "가장 적절한 다음 처치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "기관지수축만 지속된 것으로 보고 SABA 빈도만 늘린다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "왼쪽 흉강 배액을 시행하고 천식 악화 치료를 계속한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "산소만 투여하며 외래 추적한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "폐색전증으로 간주하고 항응고제를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "항생제만 투여하고 기관지확장제는 중단한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "흉막선 바깥의 폐혈관 음영 소실과 폐 허탈은 큰 좌측 기흉을 보여 주며, 흉통·호흡곤란과 저산소혈증이 있어 단순 관찰 대상이 아니다. 급성 중증 천식이라는 기저 폐질환에 동반된 증상성 이차성 기흉으로 흉강 배액을 시행하면서 천식 치료를 계속한다. 저혈압이나 뚜렷한 긴장성 소견이 새로 나타나면 영상 대기 없이 즉시 응급 감압한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.brit-thoracic.org.uk/clinical-resources/guidelines/pleural-disease/",
+                               "title":  "BTS Guideline for Pleural Disease 2023: Spontaneous Pneumothorax"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "큰 좌측 기흉과 비긴장성 소견을 문장화해 이미지 의존성을 제거하고 BTS 2023 흉막질환 지침을 추가함"
+    },
+    {
+        "question_id":  "RESP-000147",
+        "revised_stem":  "67세 여자가 천식 악화로 내원했다. 3일간 39.0℃의 발열, 오한과 누런 가래가 있었고 우측 흉통이 깊은 숨에 심해진다. 산소, 반복 흡입 기관지확장제와 전신 corticosteroid를 시작했다. 흉부 X선에서 우측 심장 경계를 소실시키는 우중엽 폐포성 경화가 보인다. 가장 적절한 추가 조치는?",
+        "revised_lead_in":  "가장 적절한 추가 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "바이러스성 천식 악화로만 보고 항생제 없이 기관지확장제만 계속한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "급성 심부전으로 보고 이뇨제를 우선한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "폐색전증으로 확정하고 항응고제만 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "지역사회획득폐렴 항생제를 시작하고 천식 악화 치료를 병행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "영상 이상은 천식의 전형 소견이므로 추가 치료 없이 퇴원한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "고열, 오한, 화농성 가래, 흉막성 통증과 우중엽 경화는 세균성 지역사회획득폐렴이 천식 악화를 유발한 상황에 부합한다. 천식의 산소·기관지확장제·전신 corticosteroid 치료를 계속하면서 CAP 중증도와 지역 내 내성, MRSA·Pseudomonas 위험인자에 맞는 경험적 항생제를 시작한다. 배양과 임상 경과에 따라 항생제 범위를 조정한다.",
+        "references":  [
+                           {
+                               "url":  "https://www.idsociety.org/practice-guideline/community-acquired-pneumonia-cap-in-adults",
+                               "title":  "ATS/IDSA Guideline for Community-Acquired Pneumonia in Adults"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "우중엽 경화와 silhouette sign을 지문에 옮기고 CAP 항생제 결정을 직접 다루는 ATS/IDSA 지침을 추가함"
+    },
+    {
+        "question_id":  "RESP-000148",
+        "revised_stem":  "20세 남자가 천식 악화로 심하게 기침한 뒤 갑자기 앞가슴 통증을 호소한다. 혈압 124/76 mmHg, 산소포화도 96%이고 발열, 구토, 외상과 삼킴통은 없다. 흉부 X선에서 대동맥궁과 상부 종격동 경계를 따라 선상 공기음영이 보이며 기흉은 없다. 가장 적절한 조치는?",
+        "revised_lead_in":  "가장 적절한 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "진통과 천식 치료를 계속하며 관찰하고 식도·기관 손상 단서가 생길 때 표적 검사를 시행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "긴장성 기흉으로 확정하고 즉시 바늘감압한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "급성관상동맥증후군으로 확정하고 항혈소판제·항응고제를 투여한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "세균성 종격동염으로 간주해 즉시 개흉 배액술을 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "근육통으로 보고 천식 치료도 중단해 바로 퇴원시킨다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "기침 뒤 발생한 종격동 선상 공기음영은 천식 악화와 연관된 자발성 종격동기종에 부합한다. 혈역학적으로 안정되고 구토·발열·외상·삼킴통이나 기흉이 없어 진통, 휴식, 필요한 산소와 천식 치료를 지속하며 관찰하는 보존적 치료가 적절하다. 구토, 패혈증, 삼킴통, 외상 또는 지속 악화가 생기면 식도·기관 손상을 표적 평가한다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC10839511/",
+                               "title":  "Clinical Review of Spontaneous Pneumomediastinum"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_Xray_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "종격동기종과 기흉 부재를 텍스트로 명시하고 식도천공 저위험 단서를 추가해 보존적 치료의 적절성을 확보함"
+    },
+    {
+        "question_id":  "RESP-000151",
+        "revised_stem":  "42세 여자가 중증 천식 악화로 응급실에서 반복 SABA-ipratropium, 산소와 전신 corticosteroid를 투여받았다. 3시간 뒤에도 짧은 문장만 말할 수 있고 보조호흡근을 사용한다. 최대호기유속은 치료 전 개인 최고치의 32%에서 3시간 뒤 43%로 증가했지만 계속 50% 미만이다. 가장 적절한 조치는?",
+        "revised_lead_in":  "가장 적절한 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "PEF가 증가했으므로 즉시 귀가시킨다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "입원하여 집중 기관지확장치료와 전신 corticosteroid를 계속하고 악화 여부를 반복 평가한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "PEF와 임상상에 관계없이 즉시 기계환기한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "전신 corticosteroid를 중단하고 SABA만 처방한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "PEF가 40%를 넘었으므로 장기 항생제로 전환한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "PEF가 32%에서 43%로 일부 호전되었어도 3시간 뒤 계속 50% 미만이고 짧은 문장과 보조호흡근 사용이 지속되어 초기 치료 반응이 불충분한 중증 악화다. 귀가하지 말고 입원해 반복 기관지확장제와 전신 corticosteroid를 계속하며 의식, 호흡노력, 산소화와 PEF를 면밀히 재평가한다. 피로, 의식 저하, silent chest 또는 가스교환 악화가 나타나면 중환자 치료와 기도 확보를 준비한다.",
+        "references":  [
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_graph_values_to_text",
+        "reapproval":  "approve",
+        "reapproval_reason":  "PEF 32%→43%와 지속 중증 임상 소견을 지문에 직접 넣고 기존 정답 반대 해설과 자동 결합 비문을 교체함"
+    },
+    {
+        "question_id":  "RESP-000152",
+        "revised_stem":  "35세 남자가 중증 천식 악화로 산소와 반복 흡입 기관지확장제를 투여받고 있다. 호흡노력이 점차 약해지고 질문에 느리게 대답한다. 치료 시작 시 동맥혈가스는 pH 7.46, PaCO₂ 29 mmHg였으나 60분 뒤 pH 7.27, PaCO₂ 49 mmHg로 변했고 저산소혈증도 지속된다. 가장 적절한 다음 조치는?",
+        "revised_lead_in":  "가장 적절한 다음 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "PaCO₂가 일반 정상범위에 가까우므로 같은 치료로 2시간 더 관찰한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "PaO₂가 일시 상승하면 악화가 해결된 것으로 보고 퇴원한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "대사산증으로 판단해 중탄산염만 투여한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "중환자실·기도관리 팀을 즉시 호출해 기관내삽관과 기계환기를 준비하며 천식 치료를 지속한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "진정제를 먼저 투여해 호흡수를 낮춘다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "급성 중증 천식에서는 초기 과호흡으로 PaCO₂가 낮을 수 있다. 치료 중 PaCO₂가 29에서 49 mmHg로 상승하고 pH가 7.27로 하락하면서 호흡노력과 의식 반응이 감소하는 것은 호흡근 피로와 진행성 환기부전의 위험 신호다. 즉시 중환자실·기도관리 팀을 호출해 기관내삽관과 폐과팽창을 최소화하는 기계환기를 준비하면서 기관지확장제, corticosteroid와 산소치료를 계속한다.",
+        "references":  [
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_table_values_to_text",
+        "reapproval":  "approve",
+        "reapproval_reason":  "ABG 표의 핵심 수치와 시간축을 지문에 직접 넣고 자동 결합 비문을 제거해 진행성 환기부전을 명확히 함"
+    },
+    {
+        "question_id":  "RESP-000156",
+        "revised_stem":  "29세 남자가 자동차 도장 작업을 시작한 뒤 기침과 쌕쌕거림이 생겼다. 흡입법은 정확하고 감염 증상은 없다. 동일한 기기로 수주간 측정한 PEF는 근무일에 반복적으로 감소하고 휴무일에 회복되며 재근무 후 다시 감소했다. 가장 적절한 조치는?",
+        "revised_lead_in":  "가장 적절한 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "휴무일 수치가 정상에 가까우므로 천식을 배제하고 같은 노출을 계속한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "직업성 천식을 의심해 노출을 신속히 줄이거나 피하게 하고 직업환경의학·호흡기 전문 평가를 의뢰한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "근무 관련성 평가 없이 고용량 경구 corticosteroid만 장기 투여한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "PEF 변화는 흡연량만 반영하므로 직업력은 묻지 않는다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "객관적 추가 평가 없이 직업성 천식으로 확정하고 모든 흡입제를 중단한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "근무일 PEF 저하, 휴무일 회복과 재노출 후 재저하는 작업 노출과 가변적 기류제한의 반복적 연관성을 보여 직업성 천식을 강하게 시사한다. CDC/NIOSH는 근무일과 휴무일의 연속 PEF 측정과 노출력·폐기능검사를 결합해 객관적으로 평가하도록 안내한다. 예후를 위해 원인 노출을 조기에 줄이거나 회피하고 전문 평가를 진행하되, 진단과 조절을 위한 ICS 포함 천식 치료는 임의로 중단하지 않는다.",
+        "references":  [
+                           {
+                               "url":  "https://www.cdc.gov/niosh/asthma/hcp/diagnosing/index.html",
+                               "title":  "CDC/NIOSH: Diagnosing Work-related Asthma"
+                           },
+                           {
+                               "url":  "https://www.cdc.gov/niosh/asthma/prevention/index.html",
+                               "title":  "CDC/NIOSH: Preventing Work-related Asthma"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_graph_pattern_to_text",
+        "reapproval":  "approve",
+        "reapproval_reason":  "PEF 그래프 패턴을 지문에 옮기고 연속 PEF와 노출 저감을 직접 다루는 최신 CDC/NIOSH 근거를 추가함"
+    },
+    {
+        "question_id":  "RESP-000157",
+        "revised_stem":  "20세 여자가 달리기 때만 기침과 흉부 답답함을 호소한다. 기저 폐활량검사는 정상이다. 표준화 운동유발검사에서 FEV₁은 운동 전 3.8 L, 운동 10분 뒤 최저 2.9 L로 감소한 뒤 30분에 회복되었으며 검사 품질 기준은 충족했다. 가장 적절한 해석과 계획은?",
+        "revised_lead_in":  "가장 적절한 해석과 계획은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "30분에 회복되므로 음성 검사로 판정한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "운동 후 FEV₁ 감소는 정상 생리이므로 매일 경구 corticosteroid를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "고정성 상기도폐쇄로 진단한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "운동 후 FEV₁이 약 24% 감소한 운동유발기관지수축으로 진단하고 ICS 포함 조절치료와 처방된 운동 전 reliever 전략을 사용한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "운동을 영구 금지하고 모든 흡입제를 중단한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "FEV₁은 3.8 L에서 2.9 L로 약 24% 감소해 ATS의 운동유발기관지수축 양성 기준인 10% 이상 감소를 충족하며, 이후 회복도 가역적 기관지수축과 일치한다. 운동을 금지하기보다 ICS 포함 치료로 기도 염증을 관리하고 환자에게 처방된 reliever를 운동 전에 사용한다. GINA Track 1을 사용하는 경우 해당 국가에서 허가된 저용량 ICS-formoterol AIR/MART 제형과 용법을 따르며, 다른 치료 경로에서는 운동 전 SABA와 규칙적 ICS를 사용할 수 있다.",
+        "references":  [
+                           {
+                               "url":  "https://www.thoracic.org/statements/resources/allergy-asthma/exercise-induced-bronchoconstriction.pdf",
+                               "title":  "Official ATS Clinical Practice Guideline: Exercise-induced Bronchoconstriction"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_graph_values_to_text",
+        "reapproval":  "approve",
+        "reapproval_reason":  "그래프 수치·시간축을 텍스트화하고 운동 전 ICS-formoterol은 허가된 AIR/MART 제형·용법에 한정하도록 표현을 보완함"
+    },
+    {
+        "question_id":  "RESP-000159",
+        "revised_stem":  "54세 남자가 2주 뒤 비응급 선택적 복강경 수술을 받을 예정이다. 최근 한 달간 야간 천식 증상이 주 3회 있었고 5일 전 응급실에서 전신 corticosteroid를 투여받았다. 오늘도 천명이 들리고 PEF는 개인 최고치의 58%이다. 가장 적절한 조치는?",
+        "revised_lead_in":  "가장 적절한 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "예정대로 수술하되 수술 당일 모든 흡입제를 중단한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "조절 상태와 무관하게 예방 항생제만 추가한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "수술 전 LABA 단독요법으로 전환한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "장기 기계환기를 미리 계획하고 바로 수술한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "선택수술을 연기하고 ICS 포함 치료와 필요 시 단기 전신 corticosteroid로 조절을 최적화한 뒤 재평가한다",
+                                    "is_correct":  true
+                                }
+                            ],
+        "revised_core_explanation":  "최근 응급실 악화, 현재 천명과 PEF 58%는 조절 불량과 수술 중 기관지경련 위험을 보여 준다. GINA는 비응급 선택수술 전에 특히 최근 악화·지속 기류제한이 있는 환자의 천식 조절을 최적화하도록 권고한다. 수술을 연기해 ICS 포함 유지치료를 계속·조정하고 필요하면 단기 전신 corticosteroid를 사용한 뒤 증상과 폐기능을 재평가하며, 수술 전후 흡입제를 임의로 중단하지 않는다.",
+        "references":  [
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "정답과 모순되던 기존 해설을 제거하고 조절 불량 선택수술 환자의 수술 전 최적화 원칙으로 교체함"
+    },
+    {
+        "question_id":  "RESP-000160",
+        "revised_stem":  "41세 여자가 중간용량 ICS-formoterol을 정확히 사용하지만 운동 시 호흡곤란이 남아 있다. BMI는 36 kg/m²이고 큰 코골이와 주간졸림이 있다. 속쓰림이나 역류 증상은 없다. 가장 적절한 관리 계획은?",
+        "revised_lead_in":  "가장 적절한 관리 계획은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "무증상 위식도역류로 확정하고 고용량 PPI만 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "비만에서는 ICS가 효과가 없으므로 모든 흡입제를 중단한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "천식 진단·조절과 흡입치료를 재평가하면서 구조화된 체중감량과 수면무호흡 검사를 병행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "호흡곤란은 모두 비만 때문이므로 폐기능과 천식 조절 평가를 중단한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "체중감량 대신 유지 경구 corticosteroid를 시작한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "비만은 호흡곤란과 천식 조절에 영향을 주므로 진단·흡입법·순응도와 기류 변동성을 다시 확인하면서 구조화된 체중감량을 병행한다. BMI 36 kg/m², 큰 코골이와 주간졸림은 폐쇄성수면무호흡의 임상 위험을 높여 객관적 수면검사가 필요하다. 역류 증상이 없는 환자에게 천식 조절만을 목적으로 PPI를 일률적으로 사용하거나 ICS를 중단하지 않는다.",
+        "references":  [
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           },
+                           {
+                               "url":  "https://aasm.org/aasm-publishes-new-guideline-for-diagnostic-testing-for-adult-sleep-apnea/",
+                               "title":  "AASM Guideline for Diagnostic Testing for Adult Obstructive Sleep Apnea"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "정답 반대 기존 해설을 교체하고 비만·주간졸림·코골이의 객관적 OSA 평가를 AASM 근거로 보강함"
+    },
+    {
+        "question_id":  "RESP-000161",
+        "revised_stem":  "임신 39주인 32세 여자가 저용량 ICS-formoterol로 천식이 잘 조절된 상태에서 질식분만했다. 태반 만출 뒤 자궁무력으로 산후출혈이 발생했으나 혈압은 안정적이고 현재 천명은 없다. 가장 적절한 계획은?",
+        "revised_lead_in":  "가장 적절한 계획은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "분만 직후 모든 흡입제를 중단하고 carboprost를 천식 여부와 무관하게 우선 사용한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "천식 흡입치료를 계속하고 oxytocin을 우선 사용하며 carboprost는 가능하면 피한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "천식 병력이 있으므로 모든 자궁수축제를 금기시하고 관찰만 한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "출혈 치료보다 예방적 기관내삽관을 먼저 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "천식 악화가 없어도 유지 경구 corticosteroid를 새로 시작하고 oxytocin은 금기시한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "자궁무력성 산후출혈은 즉시 산과 출혈 프로토콜에 따라 치료해야 하며 oxytocin은 일차 자궁수축제로 사용할 수 있다. 천식 조절을 위해 ICS-formoterol을 계속하고, 기관지수축을 유발할 수 있는 prostaglandin F2α 유사체 carboprost는 가능한 대안이 있으면 피한다. 현재 천식 악화나 기도부전이 없으므로 예방적 삽관이나 새 유지 경구 corticosteroid보다 출혈 치료가 우선이다.",
+        "references":  [
+                           {
+                               "url":  "https://www.who.int/publications/i/item/9789240115637",
+                               "title":  "WHO Consolidated guidelines for the prevention, diagnosis and treatment of postpartum haemorrhage"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "정답과 모순되던 선택지 해설을 제거하고 자궁무력성 산후출혈의 치료 우선순위와 천식에서 carboprost를 피하는 이유를 공식 근거로 명확히 함"
+    },
+    {
+        "question_id":  "RESP-000162",
+        "revised_stem":  "60세 남자가 내일 전신마취로 대장암 수술을 받을 예정이다. 천식은 고용량 ICS-LABA로 조절되며 현재 천명은 없다. 그러나 3개월 전까지 prednisolone 15 mg/day를 8개월간 복용했고 이후 부신기능 회복 여부는 확인하지 않았다. 가장 적절한 주술기 계획은?",
+        "revised_lead_in":  "가장 적절한 주술기 계획은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "천식이 안정적이므로 흡입제와 모든 glucocorticoid를 수술 당일 중단한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "과거 경구 corticosteroid 사용은 무관하므로 주술기 부신기능 위험을 고려하지 않는다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "기관지경련 예방을 위해 LABA 단독 용량만 두 배로 늘린다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "흡입치료를 유지하고 잔존 부신억제 가능성을 고려해 수술 스트레스에 맞는 glucocorticoid 보충을 계획한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "감염 위험 때문에 주술기 glucocorticoid 투여를 절대 금기시한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "장기간 경구 prednisolone을 최근까지 사용했고 부신기능 회복이 확인되지 않았으므로 glucocorticoid 유발 부신기능저하가 남아 있을 수 있다. 2024 ESE/Endocrine Society 지침은 현재 또는 최근 glucocorticoid 사용자가 부신기능저하를 배제하지 못한 채 전신·부위마취 수술 같은 중등도 이상 스트레스에 노출되면 비경구 stress-dose 보충을 권고한다. 천식 조절을 위한 ICS-LABA는 유지하되 실제 보충 요법은 수술 스트레스와 임상 상태에 맞춘다.",
+        "references":  [
+                           {
+                               "url":  "https://www.endocrine.org/journals/jcem/glucocorticoid-induced-adrenal-insufficiency",
+                               "title":  "2024 ESE/Endocrine Society Joint Guideline: Glucocorticoid-induced Adrenal Insufficiency"
+                           },
+                           {
+                               "url":  "https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf",
+                               "title":  "GINA 2026 Strategy Report"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "not_required",
+        "reapproval":  "approve",
+        "reapproval_reason":  "마취 방식과 부신기능 미확인 상태를 지문에 추가하고 최신 내분비 지침에 맞춰 정답의 주술기 stress-dose 근거를 보강함"
+    },
+    {
+        "question_id":  "RESP-000164",
+        "revised_stem":  "38세 남자가 6주간 마른기침, 운동 시 호흡곤란과 간헐적 미열을 호소한다. 항생제에 반응하지 않았고 흡연력은 없다. 청진에서 양측 흡기말 수포음이 들린다. 흉부 HRCT에서 흉막하 부위가 비교적 보존되고 양측 폐에 경계가 흐린 중심소엽성 간유리결절이 미만성으로 보인다. 가장 적절한 다음 접근은?",
+        "revised_lead_in":  "가장 적절한 다음 접근은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "영상만으로 특발성 폐섬유화증을 확정하고 노출력은 묻지 않는다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "세균성 폐렴으로 확정해 같은 항생제를 장기간 반복한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "중심소엽성 폐기종으로 확정하고 흡연력과 무관하게 산소만 처방한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "폐색전증으로 간주해 객관적 평가 없이 항응고제를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "가정·직장·취미의 흡입 항원 노출을 구조적으로 재조사하고 BAL 림프구 분석을 고려한다",
+                                    "is_correct":  true
+                                }
+                            ],
+        "revised_core_explanation":  "미만성의 경계가 흐린 중심소엽성 간유리결절과 흉막하 보존은 소기도와 간질을 함께 침범하는 비섬유성 과민성 폐장염을 시사한다. ATS/JRS/ALAT 지침은 새로 발견된 간질성폐질환에서 가정·직장·취미 노출을 체계적으로 확인하고, 비섬유성 과민성 폐장염이 의심되면 BAL 림프구 분석을 진단 과정에 포함하도록 권고한다. 노출력·HRCT·BAL 결과가 충분하지 않으면 다학제 논의로 추가 검사의 필요성을 결정한다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/",
+                               "title":  "Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_HRCT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "이미지의 결정적 HRCT 소견을 지문에 직접 기술하고 반복·비문 해설을 구조화된 노출력과 BAL 중심의 진단 경로로 교체함"
+    },
+    {
+        "question_id":  "RESP-000165",
+        "revised_stem":  "45세 여자가 새로 키우기 시작한 앵무새 우리를 청소한 날 저녁마다 마른기침, 오한과 호흡곤란이 생기고 외박하면 호전된다고 한다. 흡연력은 없고 심초음파는 정상이다. 흉부 HRCT에서 양측 간유리음영, 경계가 흐린 중심소엽결절과 모자이크 감쇠가 보이며 뚜렷한 섬유화는 없다. 가장 가능성 높은 진단은?",
+        "revised_lead_in":  "가장 가능성 높은 진단은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "특발성 폐섬유화증",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "심인성 폐부종",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "비섬유성 과민성 폐장염",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "흡연 관련 호흡세기관지염",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "급성 폐혈전색전증",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "앵무새 항원에 노출된 날 증상이 반복되고 회피하면 호전되는 시간적 연관성이 핵심 단서다. HRCT의 간유리음영과 중심소엽결절은 침윤성 병변을, 모자이크 감쇠는 소기도 침범을 시사하며 뚜렷한 섬유화가 없어 비섬유성 과민성 폐장염에 부합한다. 실제 진료에서는 항원 회피와 함께 노출 평가, 필요 시 BAL 림프구 분석 및 다학제 판단으로 진단 신뢰도를 높인다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/",
+                               "title":  "Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_HRCT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "조류 노출-증상 시간관계와 비섬유성 HP의 결정적 HRCT 소견을 지문에 포함해 이미지 없이 정답을 도출할 수 있게 함"
+    },
+    {
+        "question_id":  "RESP-000166",
+        "revised_stem":  "64세 남자가 2년간 진행한 마른기침과 운동 시 호흡곤란으로 왔다. 15년간 비둘기 사육장을 관리했고 최근에도 주 4일 노출된다. 흉부 HRCT에서 망상음영, 견인기관지확장과 일부 벌집모양의 섬유화가 보이면서 모자이크 감쇠·공기가둠과 간유리음영이 함께 관찰된다. 가장 가능성 높은 진단은?",
+        "revised_lead_in":  "가장 가능성 높은 진단은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "특발성 폐섬유화증",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "섬유성 과민성 폐장염",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "비섬유성 과민성 폐장염",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "심인성 폐부종",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "속립성 폐결핵",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "장기간 지속된 비둘기 항원 노출과 만성 진행 증상이 원인 노출을 강하게 뒷받침한다. HRCT에서 망상음영·견인기관지확장·벌집모양 같은 섬유화와 모자이크 감쇠·공기가둠 같은 소기도질환이 공존하는 혼합 패턴은 섬유성 과민성 폐장염에 부합한다. IPF도 섬유화를 보일 수 있지만 이 문항의 명확한 항원 노출과 공기가둠은 과민성 폐장염 쪽으로 판단하게 하는 단서다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/",
+                               "title":  "Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_HRCT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "섬유화와 소기도질환의 혼합 HRCT 패턴을 지문에 옮기고 IPF와 구별되는 지속 항원 노출·공기가둠 단서를 명시함"
+    },
+    {
+        "question_id":  "RESP-000167",
+        "revised_stem":  "59세 여자가 진행성 호흡곤란과 제한성 폐기능장애로 평가받고 있다. 자가면역 항체는 음성이고 첫 면담에서는 뚜렷한 항원 노출이 확인되지 않았다. 흉부 HRCT에서 정상 밀도 폐, 혈관이 감소한 저음영 폐, 망상·간유리 고음영 폐가 함께 보이는 three-density pattern과 섬유화가 관찰된다. 가장 적절한 다음 접근은?",
+        "revised_lead_in":  "가장 적절한 다음 접근은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "첫 노출력이 음성이므로 과민성 폐장염을 완전히 배제한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "영상만으로 IPF를 확정하고 노출평가와 다학제 논의를 생략한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "폐혈관질환으로 확정하고 객관적 평가 없이 폐혈관확장제를 시작한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "섬유성 과민성 폐장염을 의심해 가정·직장·취미 노출을 구조적으로 재조사하고 다학제 진단을 진행한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "세균성 폐렴으로 판단해 항생제 반응만으로 진단한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "three-density pattern은 정상 폐, 폐쇄성 소기도질환에 의한 저음영 폐, 침윤성 병변에 의한 고음영 폐가 함께 존재하는 소견으로 섬유성 과민성 폐장염을 강하게 시사한다. 원인 항원은 첫 면담에서 확인되지 않을 수 있으므로 가정·직장·취미를 포함한 구조화된 노출력 재조사가 필요하다. HRCT와 노출력 및 필요한 추가 검사 결과를 다학제 논의에서 통합해 IPF 등 다른 섬유성 간질성폐질환과 구별한다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/",
+                               "title":  "Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_HRCT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "three-density pattern을 지문에 직접 기술하고 최초 노출력 음성이 HP를 배제하지 않는다는 진단 원칙을 보강함"
+    },
+    {
+        "question_id":  "RESP-000168",
+        "revised_stem":  "52세 여자가 곰팡이가 많은 지하 작업실에서 근무한 뒤 반복되는 기침과 호흡곤란으로 왔다. HRCT는 모자이크 감쇠를 보였고 BAL 림프구는 42%였다. 폐 냉동생검에서 세기관지 중심 간질염과 경계가 불분명한 비괴사성 육아종 및 다핵거대세포가 관찰된다. 가장 가능성 높은 진단은?",
+        "revised_lead_in":  "가장 가능성 높은 진단은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "과민성 폐장염",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "사르코이드증",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "결핵성 육아종",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "특발성 폐섬유화증",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "폐선암",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "곰팡이 노출, 모자이크 감쇠와 BAL 림프구증가는 과민성 폐장염의 임상·영상·세포학적 근거다. 세기관지 중심 간질염과 작고 경계가 불분명한 비괴사성 육아종·거대세포는 HP를 지지하는 병리 소견이다. 사르코이드증의 잘 형성된 림프관 주위 육아종이나 감염성 괴사성 육아종과 달리 모든 영역의 근거가 HP로 수렴한다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC7397797/",
+                               "title":  "Official ATS/JRS/ALAT Clinical Practice Guideline: Diagnosis of Hypersensitivity Pneumonitis in Adults"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_histopathology_to_text",
+        "reapproval":  "approve",
+        "reapproval_reason":  "병리 이미지의 결정적 기도 중심 염증·불분명 비괴사성 육아종을 텍스트화해 독립적으로 풀 수 있게 함"
+    },
+    {
+        "question_id":  "RESP-000174",
+        "revised_stem":  "24세 남자가 5일 전부터 발열, 마른기침과 빠르게 진행하는 호흡곤란을 겪었다. 2주 전 처음 전자담배와 일반담배를 사용하기 시작했다. 실내공기 산소포화도는 84%, 말초혈액 호산구는 1%이며 광범위 항생제에도 48시간 동안 호전되지 않았다. HRCT에서 양측 패치형 간유리음영·경결과 소엽사이막 비후가 보인다. 진단을 위해 가장 적절한 다음 검사는?",
+        "revised_lead_in":  "진단을 위해 가장 적절한 다음 검사는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "말초혈액 호산구가 증가할 때까지 반복 혈액검사만 시행한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "경피적 폐생검으로 조직 호산구 침윤을 먼저 확인한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "혈청 총 IgE와 Aspergillus 특이 IgE만 측정한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "우심도자술로 폐모세혈관쐐기압을 먼저 측정한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "기관지내시경과 BAL을 시행해 호산구 분율을 확인하고 감염을 배제한다",
+                                    "is_correct":  true
+                                }
+                            ],
+        "revised_core_explanation":  "최근 흡연·전자담배 시작 뒤 발생한 급성 발열성 저산소성 호흡부전과 양측 ARDS 유사 침윤은 급성 호산구성 폐렴을 시사한다. 발병 초기에는 말초혈액 호산구가 정상일 수 있으므로 혈액검사만 기다리면 진단이 지연된다. BAL에서 호산구 증가를 확인하고 감염과 다른 원인을 배제하는 것이 핵심이며, 전형적 상황에서는 폐생검이 첫 검사가 아니다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC11070545/",
+                               "title":  "Acute and chronic eosinophilic pneumonia: an overview"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_HRCT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "ARDS 유사 HRCT 소견을 텍스트화하고 초기 말초 호산구 정상에도 BAL이 필요한 이유를 명확히 함"
+    },
+    {
+        "question_id":  "RESP-000175",
+        "revised_stem":  "46세 여자가 4주간 발열, 체중감소, 기침과 호흡곤란을 겪었다. 성인기 발생 천식이 있고 말초혈액 호산구는 1,800/μL이다. 새 약물 노출은 없고 기생충 검사와 ANCA는 음성이다. 흉부 CT에서 양측 폐 말초·흉막하에 우세한 경결과 간유리음영이 보이며 중심부는 상대적으로 보존된다. 가장 적절한 치료와 추적 설명은?",
+        "revised_lead_in":  "가장 적절한 치료와 추적 설명은?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "흡입 glucocorticoid만 시작하고 폐침윤의 자연 소실을 기다린다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "정주 항생제를 장기간 투여한 뒤 영상 반응만으로 진단한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "전신 glucocorticoid를 시작하고 호전 후 서서히 감량하며 재발을 감시한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "항진균제를 우선 시작하고 총 IgE만으로 반응을 추적한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "혈관염 소견이 없어도 cyclophosphamide 병합치료를 즉시 시작한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "아급성 전신·호흡기 증상, 성인기 천식, 뚜렷한 말초 호산구증가와 말초 우세 폐침윤은 다른 원인을 배제한 뒤 만성 호산구성 폐렴에 부합한다. 표준 초기 치료는 전신 glucocorticoid이며 임상 및 영상 호전에 맞춰 서서히 감량한다. 반응은 빠른 편이지만 감량 또는 중단 중 재발할 수 있어 증상, 호산구와 영상을 추적한다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC11070545/",
+                               "title":  "Acute and chronic eosinophilic pneumonia: an overview"
+                           },
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC9745510/",
+                               "title":  "Predictive factors for relapse in corticosteroid-treated chronic eosinophilic pneumonia"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_CT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "말초 우세 영상 소견을 지문에 넣고 전신 치료 및 감량 중 재발 감시의 근거를 보강함"
+    },
+    {
+        "question_id":  "RESP-000177",
+        "revised_stem":  "72세 남자가 심방세동 때문에 amiodarone을 시작한 지 6주 뒤 기침, 발열과 호흡곤란이 발생했다. 말초혈액 호산구는 16%, 좌심실 박출률은 58%이고 감염 검사는 음성이다. 흉부 CT에서 양측 하엽 기저부 침윤과 우측 우세 흉막삼출이 보인다. 가장 적절한 조치는?",
+        "revised_lead_in":  "가장 적절한 조치는?",
+        "revised_choices":  [
+                                {
+                                    "choice_id":  "C1",
+                                    "text":  "amiodarone을 유지하면서 심인성 폐부종으로 보고 이뇨제만 증량한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C2",
+                                    "text":  "amiodarone을 유지하고 세균성 폐렴으로 간주해 항생제만 연장한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C3",
+                                    "text":  "amiodarone을 유지하면서 특발성 만성 호산구성 폐렴으로 분류한다",
+                                    "is_correct":  false
+                                },
+                                {
+                                    "choice_id":  "C4",
+                                    "text":  "amiodarone을 중단하고 저산소혈증·침윤 범위 등 중증도에 따라 전신 glucocorticoid를 투여한다",
+                                    "is_correct":  true
+                                },
+                                {
+                                    "choice_id":  "C5",
+                                    "text":  "amiodarone만 중단하고 폐침윤과 무관하다고 보아 호흡기 추적을 종료한다",
+                                    "is_correct":  false
+                                }
+                            ],
+        "revised_core_explanation":  "amiodarone 시작 뒤 새 호흡기 증상과 폐침윤·호산구증가가 발생했고 감염 및 명백한 좌심실 수축기능 저하가 확인되지 않아 약물 유발 호산구성 폐렴 또는 amiodarone 폐독성이 가장 타당하다. 원인 약물을 중단하는 것이 우선이며 저산소혈증이나 광범위 침윤 등 임상 중증도가 높으면 전신 glucocorticoid를 사용한다. 약물의 긴 반감기와 잔존 폐병변을 고려해 임상·영상 추적을 지속한다.",
+        "references":  [
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC11070545/",
+                               "title":  "Acute and chronic eosinophilic pneumonia: an overview"
+                           },
+                           {
+                               "url":  "https://pmc.ncbi.nlm.nih.gov/articles/PMC11508869/",
+                               "title":  "Amiodarone Therapy: Updated Practical Insights"
+                           }
+                       ],
+        "reference_date":  "2026-07-16",
+        "image_resolution":  "converted_to_textual_CT_findings",
+        "reapproval":  "approve",
+        "reapproval_reason":  "CT 소견과 약물-증상 시간관계를 지문에 통합하고 약물 중단·중증도별 steroid·추적 원칙을 보강함"
+    }
+]

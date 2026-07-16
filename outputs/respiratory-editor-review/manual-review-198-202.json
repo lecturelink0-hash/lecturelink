@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000198","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["국소 폐포성 X선 음영","활력·산소화 안정","의식 명료","동반질환과 내성균 위험 없음"],"clinical_inference":"영상으로 확인된 저위험 비중증 외래 CAP이므로 일상 배양 없이 경구 amoxicillin으로 즉시 경험치료할 수 있다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"환자는 혈역학과 산소화가 안정적이고 동반질환·MRSA·Pseudomonas 위험이 없어 외래 치료가 가능하다. 비중증 외래 CAP에서는 일상 혈액·객담배양의 이득이 낮으며 고용량 경구 amoxicillin이 적절한 경험적 선택이다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"중증 CAP나 내성균 경험치료가 필요한 입원환자에서는 배양이 중요하다. 이 저위험 외래 환자에게 일상 배양을 하고 결과까지 항생제를 보류하면 치료만 지연된다.","could_be_correct_if":"중증 폐렴 또는 MRSA·Pseudomonas 위험이 있어 항생제 전 배양이 치료 축소에 중요한 경우에도 결과를 기다리며 치료를 보류하지 않는다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"ICU 치료는 쇼크·기계환기 또는 여러 중증 기준이 있는 환자에게 필요하다. 현재 혈압, 호흡수, 산소포화도와 의식이 안정되어 정주 병합치료와 ICU 입원은 과도하다.","could_be_correct_if":"중증 CAP 기준을 충족하거나 빠른 악화·불안정으로 집중감시가 필요할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"MRSA 비강 PCR은 MRSA 위험이 있는 입원 폐렴에서 치료 축소 판단에 유용할 수 있다. 위험인자가 없는 안정 외래 CAP에 결과와 무관하게 vancomycin을 추가하면 신독성과 불필요한 광범위 치료가 생긴다.","could_be_correct_if":"MRSA 위험 또는 괴사성 폐렴이 있어 검사와 경험적 항-MRSA 치료가 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기관지내시경은 면역저하, 기도폐쇄, 비전형적 병변 또는 치료불응 폐렴에서 고려한다. 단순 외래 CAP의 초기 진단을 위해 침습검사 결과까지 치료를 기다릴 필요가 없다.","could_be_correct_if":"비침습 검사로 진단되지 않는 중증·비전형·치료불응 질환에서 결과가 치료를 바꿀 때","misconception_tag":"검사 순서"}
+    ],"review_flags":["게시 전 X선이 우측 중하폐야 국소 폐포성 음영을 실제로 보여 주는지 확인해야 한다.","고용량 amoxicillin의 구체 용량·지역 내성 적합성은 최신 국내 외래 CAP 지침과 대조해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000199","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["호흡수 32회/분","PaO2/FiO2 220","BUN 28 mg/dL","다엽성 침윤","승압제·기계환기 없음","MRSA·Pseudomonas 위험 없음"],"clinical_inference":"ATS/IDSA 중증 CAP 부기준을 4개 충족해 ICU 수준 감시가 필요하며 표준 beta-lactam-macrolide 병합요법이 적절하다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"경구 amoxicillin 외래치료는 중증 기준이 없는 안정 환자에게 사용한다. 이 환자는 빈호흡, 저산소화, 고BUN과 다엽 침윤으로 중증 부기준을 여러 개 충족해 외래 관리가 위험하다.","could_be_correct_if":"중증도와 저산소증이 없고 외래 추적이 안전한 저위험 CAP","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"ceftriaxone 단독은 비정형균 범위가 없고 일반 입원 CAP에서도 권장 경험요법을 충분히 구성하지 못한다. 여러 중증 부기준 때문에 일반병동보다 ICU 수준 감시가 필요하다.","could_be_correct_if":"병원체와 감수성이 확인되어 ceftriaxone 표적치료가 가능하고 ICU 필요성이 해소된 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"levofloxacin 단독은 비중증 입원 CAP의 선택지가 될 수 있다. 중증 CAP에서는 단독요법보다 beta-lactam과 macrolide 또는 적절한 병합요법이 권고된다.","could_be_correct_if":"비중증 입원 CAP이며 금기·상호작용을 평가해 호흡기 fluoroquinolone 단독을 선택할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"vancomycin은 MRSA를 포괄하지만 폐렴구균과 비정형균을 포함한 CAP 전체 경험범위를 단독으로 제공하지 못한다. MRSA 위험인자도 없어 단독 투여는 치료 공백을 만든다.","could_be_correct_if":"MRSA가 확인된 뒤 다른 필요한 CAP 범위를 함께 확보하며 표적치료로 사용할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"correct","explanation":"부기준 3개 이상인 중증 CAP로 ICU 수준에서 호흡·혈역학 악화를 면밀히 감시한다. 내성균 위험이 없으므로 ceftriaxone과 azithromycin으로 전형균과 비정형균을 함께 경험적으로 치료한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["ICU 배치는 병상·기관 운영과 임상 판단을 함께 반영하지만 중증 CAP로 관리해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000200","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["ceftriaxone 치료 3일째","체온·맥박·호흡·혈압·산소화 안정","의식·경구섭취 정상","균혈증·농흉·농양 없음"],"clinical_inference":"임상 안정성과 경구 복용 가능 조건을 충족해 경구 약제로 전환하고 합병증 없는 CAP의 최소 총 치료기간을 채운 뒤 종료한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"정주 치료 지속 여부는 임상 안정성과 경구 흡수 가능성으로 판단한다. 이미 안정된 합병증 없는 환자에게 ceftriaxone을 일률적으로 10일 유지하면 입원·정맥관 관련 위험과 항생제 노출만 늘어난다.","could_be_correct_if":"경구 복용이 불가능하거나 중증 합병증·느린 반응으로 장기 정주치료가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"3일째 안정은 정주-경구 전환의 근거지만 제시된 기준 시점의 표준 최소 총 치료기간을 아직 채우지 못했다. 오늘 모두 중단하면 불충분한 치료가 될 수 있다.","could_be_correct_if":"더 짧은 치료를 지지하는 최신 검증된 프로토콜을 엄격히 적용하는 대상이라도 해당 근거와 조건을 명시할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"경구 흡수와 임상 안정성이 확인되어 적절한 감수성 경구약으로 전환할 수 있다. 총 치료기간이 최소 5일이 되도록 하고 안정 상태가 유지되면 불필요하게 연장하지 않는다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"흉부 X선 음영은 증상과 생리적 회복보다 수주 늦게 소실될 수 있다. 영상의 완전 정상화를 치료 종료 기준으로 삼으면 임상 이득 없이 항생제를 과도하게 연장한다.","could_be_correct_if":"임상 악화나 지속 증상으로 합병증·종양 등을 평가하기 위해 영상을 추적할 때도 항생제 기간과 분리해 판단한다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐렴구균이라는 병원체만으로 합병증 없는 CAP를 14일 정주 치료하지 않는다. 균혈증, 수막염, 심내막염 또는 농흉 등 별도 감염이 있으면 병소에 맞춰 기간을 늘린다.","could_be_correct_if":"수막염·심내막염 등 장기 치료가 필요한 폐렴구균 합병증이 확인될 때","misconception_tag":"적응증"}
+    ],"review_flags":["최소 5일 치료는 기준 시점의 ATS/IDSA 권고에 따른 표현이며 최신 국내 지침이 다른 기간을 채택하면 기준 시점을 함께 표시해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000201","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["중증 CAP 항생제 5일에도 악화","발열·저산소혈증·객담 증가","연속 CT상 폐경화 확대","경화 내부 다발 미세공동과 비조영 괴사"],"clinical_inference":"단일 피막 농양보다 괴사성 폐렴의 진행에 부합하므로 병원체·내성을 재평가하고 항생제·지지치료와 배액 가능한 흉막 감염원 통제를 최적화한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"합병증 없는 폐렴이라면 임상과 염증 지표가 호전되어야 한다. 치료 중 악화와 새 다발성 공동·괴사는 현재 항생제 범위와 합병증을 즉시 재평가할 근거다.","could_be_correct_if":"임상적으로 안정되고 영상에 괴사·농양·흉막 합병증이 없는 단순 폐렴","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"correct","explanation":"배양, MRSA·혐기성균·그람음성균 위험과 항생제 도달·내성을 다시 확인해 치료를 최적화한다. 집중 지지치료와 농흉 등 배액 가능한 흉막 감염원 통제를 병행하고 지속 패혈증·괴저·대량 객혈 또는 내과치료 실패 시 수술을 논의한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"큰 단일 피막성 농양이 항생제에 반응하지 않으면 경피 배액을 고려할 수 있다. 현재는 폐경화 안에 여러 작은 괴사 공동이 퍼져 있어 무조건 폐실질을 천자하면 기관지흉막샛길 위험이 있다.","could_be_correct_if":"크고 접근 가능한 단일 폐농양이 적절한 항생제에도 지속되어 배액 이득이 위험을 넘을 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐괴저는 광범위한 혈류 소실과 폐실질 괴사가 있는 더 심한 단계이며 영상·임상 통합이 필요하다. 고위험 전폐절제술을 내과치료와 다학제 평가 없이 즉시 시행하지 않는다.","could_be_correct_if":"광범위 폐괴저와 지속 패혈증·대량 객혈 등 명확한 수술 적응증이 있고 다학제 판단이 이루어진 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"패혈성 폐색전은 말초 다발성 공동결절과 우측 심내막염·정맥 감염원을 시사하는 단서가 핵심이다. 이 문항은 폐경화 내부의 미세공동·괴사가 시간에 따라 진행해 괴사성 폐렴에 더 맞는다.","could_be_correct_if":"말초 혈행성 공동결절과 균혈증·심내막염 또는 감염 혈전 위험이 있을 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 연속 CT가 확대되는 폐경화 내부의 다발 미세공동·비조영 괴사를 실제로 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000202","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["주사 약물 사용","고열과 흉막성 흉통","새 수축기 심잡음","CT상 양측 말초 다발 공동성 결절"],"clinical_inference":"삼첨판 감염성 심내막염에서 유래한 패혈성 폐색전이 의심되므로 항생제 전 여러 혈액배양과 즉시 심초음파를 시행하고 S. aureus 포함 정주 치료를 시작한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"비감염성 혈전색전은 혈관 충만결손과 혈전 위험을 중심으로 평가한다. 고열, 새 심잡음과 말초 공동성 결절은 감염성 색전을 지지하며 항응고만으로 감염원을 치료하지 못한다.","could_be_correct_if":"감염성 심내막염과 패혈성 색전이 배제되고 급성 혈전색전증이 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"결핵은 만성 상엽 공동과 노출·미생물 근거가 중요하다. 급성 고열, 주사 약물 사용과 새 심잡음은 우측 심내막염을 더 강하게 시사하므로 객담 검사 하나만으로 항결핵제를 시작할 수 없다.","could_be_correct_if":"활동성 결핵의 임상·영상·미생물학적 근거가 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"일반 CAP 경험요법은 S. aureus 심내막염과 혈행성 감염원을 충분히 다루지 못할 수 있다. 새 심잡음과 패혈성 폐색전 영상이 있으므로 지속 균혈증을 기다리지 말고 첫 평가부터 심초음파를 시행한다.","could_be_correct_if":"국소 CAP이고 심내막염·혈행성 색전 단서가 전혀 없을 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"항생제 전에 여러 세트 혈액배양을 채취해 균혈증 병원체와 감수성을 확인한다. 즉시 심초음파로 삼첨판 증식물을 평가하고 MRSA를 포함한 정주 항포도알균 경험치료를 시작한 뒤 결과에 따라 조정한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"경구 amoxicillin은 저위험 비중증 외래 CAP에 사용한다. 주사 약물 사용, 심잡음과 양측 공동성 결절은 심내막염·패혈성 색전을 뜻해 입원 정주치료와 감염원 평가가 필요하다.","could_be_correct_if":"심내막염과 패혈성 색전이 배제된 안정 저위험 외래 CAP","misconception_tag":"적응증"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 혈관을 따라 분포하는 양측 말초 다발성 공동결절을 실제로 보여 주는지 확인해야 한다.","경험적 항포도알균 치료의 구체 조합은 지역 MRSA 유병률, 신기능과 판막 유형을 반영해야 한다."],"publication_recommendation":"revise"
+  }
+]

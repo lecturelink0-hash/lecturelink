@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000168","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["곰팡이 노출 후 반복 증상","HRCT 모자이크 감쇠","BAL 림프구 42%","세기관지 중심 염증과 불분명한 비괴사성 육아종"],"clinical_inference":"노출, 소기도 영상, BAL 림프구증가와 기도 중심의 성긴 육아종성 간질염이 서로 일치하여 과민성 폐장염이 가장 타당하다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"곰팡이 노출과 모자이크 감쇠, BAL 림프구증가는 HP의 노출·영상·세포학 축을 지지한다. 조직의 세기관지 중심 염증과 경계가 불분명한 비괴사성 육아종·거대세포도 이에 합치한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"사르코이드증은 대개 더 잘 형성된 비괴사성 육아종이 림프관 분포를 보이며 임상·영상 맥락도 달라야 한다. 이 문항의 성긴 기도 중심 육아종과 노출-소기도질환 조합은 HP에 더 맞는다.","could_be_correct_if":"잘 형성된 육아종과 전형적 림프절·기관지혈관 주위 영상 등 사르코이드증 근거가 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"결핵성 육아종은 괴사와 항산균 등 감염의 조직·미생물 근거가 중요하다. 비괴사성의 불분명한 육아종과 곰팡이 노출 관련 반복 증상만으로 결핵을 지지하지 않는다.","could_be_correct_if":"괴사성 육아종과 결핵 배양·분자검사 등 미생물학적 근거가 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"IPF는 UIP형 섬유화가 핵심이며 BAL 림프구증가와 성긴 세기관지 중심 육아종은 전형적이지 않다. 관련 항원 노출과 모자이크 감쇠도 HP를 우선 지지한다.","could_be_correct_if":"HP 근거가 배제되고 다학제 평가에서 UIP/IPF가 확정될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐선암은 악성 상피세포와 종양성 구조가 조직에서 확인되어야 한다. 제시된 염증·육아종성 병리와 미만성 노출 관련 양상은 선암을 설명하지 않는다.","could_be_correct_if":"조직에서 침윤성 악성 선세포가 확인될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 병리 이미지가 세기관지 중심 염증과 불분명한 비괴사성 육아종을 실제로 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000169","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["조류 항원 특이 IgG 양성","기억되는 조류 노출 없음","BAL 림프구 12%","HP의 전형적 HRCT 소견 없음"],"clinical_inference":"항원 특이 IgG는 노출 또는 감작을 시사할 뿐 질병을 확진하지 못하며 나머지 진단 축이 약하므로 실제 노출과 대체 ILD를 재평가해야 한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"특이 IgG 양성은 해당 항원에 노출된 면역학적 흔적일 수 있지만 HP 자체를 증명하지 않는다. 단일 검사만으로 확진하고 평생 면역억제를 시작하면 오진과 치료 독성 위험이 크다.","could_be_correct_if":"노출·HRCT·BAL·병리 정보를 통합해 HP가 확진되고 염증성 질환에 면역조절 적응증이 별도로 성립할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"BAL 림프구 12%는 현저한 림프구증가가 아니며 그 자체로 HP를 확정하지 못한다. BAL은 영상과 노출력 등 다른 축을 보완하는 검사이지 대신하지 않는다.","could_be_correct_if":"BAL 림프구증가가 뚜렷하고 전형적 노출·HRCT 정보와 일치할 때에도 통합 판단이 필요하다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"환자가 노출을 기억하지 못해도 숨은 환경·직업 노출이 존재할 수 있어 양성 결과를 곧바로 위양성이라 부를 수 없다. 다만 감작과 질병을 구분하지 못한다는 한계가 있다.","could_be_correct_if":"검사 성능과 교차반응을 검토해 분석학적 위양성이 확인될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"현재 정보가 HP 확진에 부족하다는 것과 HP가 완전히 배제되었다는 것은 다르다. 구조화된 환경·직업 문진은 숨은 조류 노출을 확인하고 다른 ILD 원인을 찾는 데 여전히 필요하다.","could_be_correct_if":"충분한 노출 조사와 다학제 평가로 HP가 명확히 배제된 뒤에도 임상적으로 필요한 환경 문진은 유지한다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"특이 IgG 양성은 과거 또는 숨은 조류 항원 노출 가능성을 알려 주지만 질병의 원인성을 확정하지 않는다. 실제 노출을 구조적으로 재조사하고 HRCT·BAL과 맞지 않는 이유 및 다른 ILD를 함께 평가한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000170","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["원인 항원 완전 제거와 적절한 치료","12개월 FVC 11% 감소","호흡곤란 진행","HRCT 섬유화 진행"],"clinical_inference":"표준 관리에도 생리·증상·영상 진행이 확인된 섬유성 HP는 진행성 폐섬유화 표현형이므로 항섬유화치료와 이식 평가를 검토한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"항원 회피는 치료의 핵심이지만 이미 형성된 섬유화가 반드시 회복되는 것은 아니다. FVC, 증상과 HRCT가 모두 악화되어 추적과 추가치료를 중단하면 진행을 놓친다.","could_be_correct_if":"비섬유성 경증 HP가 항원 회피 후 완전히 호전된 경우에도 정기 재평가는 필요하다.","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"HRCT 섬유화가 진행하고 FVC가 감소한 환자를 비섬유성 HP로 재분류할 근거가 없다. 치료 중단은 객관적 진행과 반대 방향이다.","could_be_correct_if":"재검토에서 섬유화가 영상 오류로 확인되고 비섬유성 질환으로 확정될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"1년 동안 FVC 11% 감소와 증상·영상 진행이 함께 있어 진행성 폐섬유화에 부합한다. 금기와 부작용을 평가해 nintedanib을 고려하고 질환 중증도와 진행 속도에 따라 폐이식 평가 시점도 놓치지 않는다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"항생제는 세균감염을 치료하며 섬유화 진행을 늦추는 약제가 아니다. 감염 근거 없이 평생 투여하면 내성·독성만 증가한다.","could_be_correct_if":"객관적으로 확인된 세균감염을 적절한 기간 치료할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"무기한 고용량 경구스테로이드는 감염·골다공증·대사 이상 위험이 크며 진행성 섬유화 자체에 대한 검증된 단독 전략이 아니다. 염증성 활성도를 평가하더라도 객관적 진행에 맞춰 치료 목표를 재설정해야 한다.","could_be_correct_if":"뚜렷한 염증성 악화가 확인되어 제한된 기간 전신스테로이드가 필요할 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["nintedanib 적응증과 폐이식 의뢰는 최신 국내 허가·급여 및 이식 기준을 확인해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000171","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["곰팡이 노출과 회피에 따른 증상 변화","비섬유성 HP 확립","실내공기 SpO2 89%","FVC 61%와 DLCO 55%"],"clinical_inference":"항원 회피가 필수이며 저산소혈증과 의미 있는 기능장애가 동반된 염증성 비섬유성 HP이므로 단기간 전신 글루코코르티코이드 추가가 타당하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"경증이고 기능장애가 적으면 항원 회피 후 관찰할 수 있다. 그러나 이 환자는 안정 시 SpO2 89%와 FVC·DLCO 저하가 있어 수개월 치료를 미루기에는 중증도가 높다.","could_be_correct_if":"저산소혈증이나 의미 있는 기능장애가 없는 경증 비섬유성 HP가 항원 회피 후 빠르게 호전될 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"correct","explanation":"원인 곰팡이 노출을 즉시 중단하는 것이 질병 진행을 막는 핵심이다. 저산소혈증과 기능장애가 있으므로 전신 글루코코르티코이드를 단기간 추가해 염증 회복을 촉진하고 반응을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"흡입 글루코코르티코이드는 동반 기도질환에는 도움이 될 수 있지만 미만성 폐실질 염증과 저산소혈증의 전신 치료를 대체하지 못한다. 현재 기능장애에는 흡입제 단독의 강도가 부족하다.","could_be_correct_if":"동반 천식이나 기도 과민 증상을 치료하기 위해 전신 관리에 보조적으로 사용할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"nintedanib은 진행성 섬유화 표현형에서 고려하는 항섬유화제다. 현재는 비섬유성 염증성 HP이며 진행성 섬유화가 제시되지 않았다.","could_be_correct_if":"추적 중 섬유화와 객관적 진행성 폐섬유화 기준을 충족할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"장기 면역억제제를 초기부터 우선 사용하면 감염과 약물 독성 부담이 커진다. 먼저 항원 회피와 단기 전신스테로이드에 대한 반응을 평가해야 한다.","could_be_correct_if":"항원 회피와 초기치료에도 지속·재발하는 염증성 질환에서 전문의가 스테로이드 절감 목적으로 판단할 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["전신 글루코코르티코이드의 구체 용량·기간은 근거와 환자 반응에 따라 정하며 문항에 없는 수치를 추가하지 않아야 한다.","저산소혈증에 대한 산소치료 필요성도 별도로 평가해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000172","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["비둘기 노출-증상·회피 연관성","전형적 비섬유성 HP HRCT","BAL 림프구 48%","감염·CTD 배제","다학제 정보 일치"],"clinical_inference":"노출, 영상과 BAL 정보가 일치해 진단 확신도가 높으므로 위험한 폐조직검사 없이 HP를 진단하고 즉시 항원 회피를 시행할 수 있다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"수술적 폐생검은 비침습적 정보가 불일치하고 결과가 치료를 바꿀 때 위험과 이득을 따져 고려한다. 이미 높은 확신도의 환자에게 일률적으로 시행하면 불필요한 합병증만 더한다.","could_be_correct_if":"충분한 비침습 평가 후에도 진단이 불확실하고 병리 결과가 치료 결정을 바꿀 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"항원 특이 IgG는 노출을 보조적으로 뒷받침하지만 음성이라고 HP를 배제하지 못한다. 이미 노출-증상 관계가 명확하므로 검사 결과를 기다리며 회피를 늦추면 안 된다.","could_be_correct_if":"숨은 노출원을 찾는 보조검사로 사용하되 회피와 진단 통합을 지연하지 않을 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"BAL 림프구증가는 HP의 확률을 높이지만 단독 확진 검사가 아니다. 노출력과 HRCT 패턴을 함께 봐야 감염·다른 ILD와 구분할 수 있다.","could_be_correct_if":"노출·HRCT·임상 정보와 BAL이 모두 일치할 때 통합 진단의 한 축으로 사용할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"관련 항원 노출, 전형적 HRCT와 현저한 BAL 림프구증가가 다학제 검토에서 서로 일치한다. 추가 조직검사의 위험보다 얻을 정보가 적으므로 높은 확신도로 진단하고 즉시 비둘기 항원을 회피한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"다학제 논의는 생검 필요성을 결정하기 전에도 비침습 자료를 통합하기 위해 시행한다. 진단 확신도가 이미 높다면 냉동생검을 먼저 할 이유가 없다.","could_be_correct_if":"다학제 검토 후 진단 불확실성이 남고 숙련된 기관에서 냉동생검 결과가 치료를 바꿀 것으로 판단될 때","misconception_tag":"검사 순서"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  }
+]

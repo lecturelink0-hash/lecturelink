@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000193","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["prednisolone 감량 때 4개월간 3회 악화","itraconazole 약인성 간손상","고용량 흡입치료에도 알레르기성 천식","총 IgE 760","현재 급성 악화 없음"],"clinical_inference":"치료의존성 ABPA에서 azole 재사용이 어렵고 IgE 매개 알레르기성 천식 표현형이 뚜렷해 장기 전신스테로이드 절감을 위한 omalizumab이 합리적이다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"스테로이드 감량 때 반복 악화해 치료의존성 ABPA이며 azole은 간손상으로 사용이 어렵다. 알레르기성 천식과 IgE 매개 표현형을 함께 고려하면 omalizumab을 장기 스테로이드 절감 치료로 우선 검토할 수 있다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"저용량이라도 경구 prednisolone을 무기한 유지하면 골다공증, 당뇨, 감염과 부신억제 위험이 누적된다. 반복 악화 환자에서는 생물학적 제제 등 스테로이드 절감 전략을 먼저 평가해야 한다.","could_be_correct_if":"대체 치료가 실패·금기이고 최소 유효용량의 전신스테로이드가 불가피한 경우 면밀히 독성을 감시할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"명확한 itraconazole 약인성 간손상 후 같은 용량 재투여는 재발과 중증 간손상 위험이 있다. 다른 azole을 고려하더라도 교차 독성, 상호작용과 간기능을 전문적으로 평가해야 한다.","could_be_correct_if":"원인 인과성이 낮다고 재평가되고 대안이 없으며 전문가가 엄격한 모니터링 아래 재도전을 결정할 때","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"mepolizumab은 호산구성 천식·ABPA에서 고려할 수 있지만 모든 표현형에서 다른 생물학적 제제보다 우선하지 않는다. 현재 호산구는 낮고 알레르기성 IgE 표현형이 더 두드러진다.","could_be_correct_if":"호산구성 천식·ABPA 표현형과 해당 생물학적 치료 기준이 충족되고 환자 요인상 최적일 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"흡입 amphotericin B는 일부 환자의 재발 예방 선택지가 될 수 있지만 생물학적 제제를 절대 배제하는 근거가 아니다. 치료의존성 ABPA와 동반 천식 표현형, 기존 약물 독성을 통합해야 한다.","could_be_correct_if":"전문가가 재발 예방 이득과 흡입 부작용을 평가해 선택하고 생물학적 치료가 부적절한 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["omalizumab 용량 결정 가능성과 허가·급여는 총 IgE, 체중 및 지역 기준에 따라 별도 확인해야 한다.","생물학적 제제 선택은 동반 천식 표현형, 호산구·IgE, 악화력과 기존 치료 독성을 종합해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000194","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["첫 급성 ABPA","천식 악화와 점액마개로 증상성","HbA1c 10.2%","최근 골다공증성 압박골절","itraconazole 금기·상호작용 없음"],"clinical_inference":"전신스테로이드 독성 위험이 매우 높고 azole 사용 조건은 양호하므로 첫 급성 ABPA의 동등한 단독 선택지인 itraconazole이 적절하다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"conditionally_correct","explanation":"경구 prednisolone은 첫 급성 ABPA의 표준 단독 치료 중 하나다. 그러나 이 환자는 조절되지 않는 당뇨와 최근 골다공증성 골절이 있어 스테로이드 독성이 특별히 높으므로 다른 동등한 선택을 우선한다.","could_be_correct_if":"azole 금기·상호작용이 있거나 중증 급성 상태에서 전신스테로이드의 이득이 위험을 넘을 때","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"prednisolone-itraconazole 병합은 모든 첫 급성 ABPA 환자의 일률적 치료가 아니다. 병합해도 이 환자의 고혈당·골절 관련 스테로이드 위험을 피하지 못하며 약물 부담만 늘 수 있다.","could_be_correct_if":"반복 악화나 고위험 특징으로 병합치료의 추가 이득이 예상되는 선택된 환자","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"omalizumab은 치료의존성 ABPA 또는 동반 중증 알레르기성 천식의 스테로이드 절감에 고려한다. 처음 발생한 증상성 급성 ABPA의 즉각적인 표준 단독 유도치료를 대체하는 근거는 부족하다.","could_be_correct_if":"반복·치료의존성 질환과 적합한 천식 표현형이 확인되어 장기 조절 목적으로 사용할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"호흡부전이 없어도 천식 악화와 점액마개를 동반한 증상성 급성 ABPA는 치료 대상이다. 총 IgE 추적만 하며 염증을 방치하면 기관지확장과 폐손상이 진행할 수 있다.","could_be_correct_if":"무증상 ABPA에서 영상·폐기능이 안정적이고 면밀한 추적이 가능한 선택된 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"correct","explanation":"itraconazole 단독은 첫 급성 ABPA에서 사용할 수 있고 전신스테로이드 노출을 피한다. 시작 전·치료 중 약물상호작용, 간기능과 필요 시 치료약물농도를 확인하며 임상·IgE·영상 반응을 추적한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["Itraconazole은 심부전 위험, 간독성, CYP 상호작용과 흡수 문제를 확인하고 필요 시 치료약물농도를 추적해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000195","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["급성 호흡곤란과 저산소혈증","양측 수포음","국소 기관지호흡음 없음","X선상 양측 중심성 대칭 폐포음영·혈관울혈·심비대"],"clinical_inference":"영상이 국소 감염성 경화보다 급성 심인성 폐부종을 지지하므로 산소화 지원과 울혈 완화 치료를 시작하며 유발 원인을 평가한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"경구 amoxicillin-clavulanate 기반 외래치료는 안정적인 비중증 CAP에서 고려한다. SpO2 86%와 빈호흡이 있고 영상도 양측 폐부종을 보여 외래 폐렴 치료로는 위험하다.","could_be_correct_if":"심인성 폐부종이 배제되고 안정적인 동반질환 보유 외래 CAP로 판단될 때 적절한 병합요법을 선택하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"ceftriaxone-azithromycin은 입원 비중증 CAP의 경험적 선택이 될 수 있다. 그러나 대칭적 중심성 음영, 혈관울혈과 심비대는 감염성 국소 경화보다 심인성 부종을 지지해 울혈 치료가 우선이다.","could_be_correct_if":"임상·영상에서 입원 CAP가 확인되거나 폐부종과 감염이 함께 의심되어 병행치료가 필요한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"산소를 공급하고 필요하면 비침습환기로 호흡 부담을 줄인다. 정맥 loop 이뇨제로 울혈을 완화하면서 심초음파, 심근허혈·부정맥·혈압 등 급성 심부전 유발 원인을 평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐색전증은 급성 저산소혈증의 감별이지만 X선의 대칭적 폐포부종·울혈·심비대를 잘 설명하지 못한다. 높은 임상확률이나 혈역학 불안정 근거 없이 영상 전 항응고를 우선하면 출혈 위험이 있다.","could_be_correct_if":"폐색전증 임상확률이 높고 객관적 검사 또는 불안정 상황에서 즉시 치료 적응증이 성립할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"바이러스 폐렴도 양측 음영을 보일 수 있으나 심비대와 폐혈관 울혈은 심인성 부종을 더 지지한다. 검사 결과를 기다리며 지지치료만 하면 교정 가능한 울혈이 지속된다.","could_be_correct_if":"바이러스 검사와 임상영상으로 바이러스 폐렴이 확인되고 심인성 부종이 배제될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","지문 자체에는 심부전 병력·말초부종·경정맥압 등 단서가 없어 정답이 영상에 크게 의존한다. 게시 전 X선이 심비대·혈관울혈·중심성 폐포음영을 명확히 보여 주는지 확인해야 한다.","산소·비침습환기·이뇨제 외 혈압에 따른 혈관확장제 등 실제 급성 심부전 치료는 환자 상태에 따라 달라진다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000196","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["인플루엔자 A 후 5일","고열·혈담·쇼크성 혈압·저산소혈증","백혈구감소","CT상 괴사·공동성 폐렴"],"clinical_inference":"인플루엔자 후 급속 진행 괴사성 중증 CAP는 MRSA 위험이 높아 표준 중증 CAP 요법에 linezolid 또는 vancomycin을 즉시 추가한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"ceftriaxone-azithromycin은 MRSA·Pseudomonas 위험이 없는 중증 CAP의 표준 조합이다. 인플루엔자 후 혈담, 백혈구감소와 괴사성 영상은 MRSA 위험 신호여서 항-MRSA 약제가 추가되어야 한다.","could_be_correct_if":"MRSA 위험이 없고 검사로 MRSA가 배제된 중증 CAP","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"correct","explanation":"ceftriaxone과 azithromycin으로 전형·비정형 중증 CAP 범위를 확보하고 linezolid 또는 vancomycin으로 MRSA를 포함한다. 배양과 신속검사 결과, 신기능·혈구수와 임상 반응에 따라 신속히 표적화·축소한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"ampicillin-sulbactam과 azithromycin은 입원 CAP나 일부 흡인 위험 상황에서 사용할 수 있지만 MRSA를 치료하지 못한다. 현재 괴사성 인플루엔자 후 폐렴의 핵심 위험을 포괄하지 않는다.","could_be_correct_if":"MRSA 위험이 배제되고 해당 beta-lactam 조합이 지역 지침상 적절한 입원 CAP","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"cefepime-levofloxacin은 검증된 Pseudomonas 위험이 있을 때 고려할 수 있지만 MRSA 범위가 없다. 현재는 배양 결과를 기다리며 항-MRSA 치료를 보류할 수 없는 괴사성 중증 감염이다.","could_be_correct_if":"Pseudomonas 위험이 확인되고 MRSA가 배제되었거나 별도 항-MRSA 약제를 함께 사용할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"piperacillin-tazobactam은 광범위 그람음성·혐기성 범위가 있지만 MRSA와 비정형균을 포괄하지 못한다. 단독요법으로는 인플루엔자 후 중증 괴사성 CAP의 필요한 경험적 범위가 부족하다.","could_be_correct_if":"감수성이 확인된 세균에 대한 표적치료 또는 해당 범위만 필요한 감염일 때","misconception_tag":"적응증"}
+    ],"review_flags":["선택지 C3의 '섭취한다', C4의 '잘하고 ... 좋은 결과까지 보게 된다'는 명백한 문장 손상이다. 각각 '투여한다', 'MRSA 치료는 배양 결과까지 보류한다'처럼 원자료를 확인해 재작성해야 한다.","기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 괴사성 저음영과 초기 공동성 변화를 실제로 보여 주는지 확인해야 한다.","인플루엔자 항바이러스 치료와 패혈증 소생도 항균제와 함께 즉시 시행해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000197","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["적절한 항생제 72시간에도 발열·빈맥·CRP 지속","CT상 큰 분획성 흉수와 격막","안전한 초음파 접근 공간"],"clinical_inference":"항생제 반응 실패와 분획성 흉수는 복잡성 폐렴연관흉수·농흉을 시사하므로 초음파 유도 흉관 배액으로 감염원을 통제한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"작은 자유흐름 흉수이고 임상적으로 호전될 때는 항생제와 관찰이 가능하다. 현재 큰 격막성 수집과 지속 염증은 배액되지 않은 감염원을 뜻해 48시간 더 기다리면 패혈증이 지속될 수 있다.","could_be_correct_if":"소량의 단순 폐렴연관흉수이고 임상·염증 지표가 뚜렷이 호전될 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"새 자유흐름 흉수의 성상을 확인할 때 진단적 천자는 적절하다. 그러나 이미 큰 분획성 수집과 치료 실패가 보여 결과와 무관하게 배액을 거부하는 일회 천자로는 감염원 통제가 불충분하다.","could_be_correct_if":"작은 비분획성 흉수에서 진단 결과가 배액 필요성을 결정하는 초기 단계","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"개흉 박피술은 조직화된 농흉이거나 흉관 배액과 흉강내 치료에도 감염이 조절되지 않을 때 고려한다. 안전한 접근 공간이 있는 안정 환자의 첫 배액 단계로 바로 개흉술을 선택하지 않는다.","could_be_correct_if":"진행된 조직화 농흉 또는 적절한 비수술적 배액 실패 후 수술 적응증이 성립할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"correct","explanation":"초음파 유도 소구경 흉관을 안전한 분획에 삽입해 감염성 흉수를 배액하고 적절한 항생제를 계속한다. 배액이 불충분한 잔류 분획에는 흉강내 tPA-DNase를 검토하고 실패 시 수술팀과 논의한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"악성 흉수도 일측성 삼출의 감별이지만 현재 폐렴 치료 중 지속 염증과 분획성 흉수가 시간적으로 감염 합병증을 지지한다. 악성 평가가 필요해도 항생제와 감염원 배액을 중단해서는 안 된다.","could_be_correct_if":"세포검사·영상으로 악성 흉수가 확인되어 감염이 배제될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 큰 분획성 흉수와 압박성 무기폐를 실제로 보여 주는지 확인해야 한다.","배액 전 흉수 pH·당·LDH·Gram·배양 검체를 가능한 범위에서 확보하되 감염원 통제를 지연하지 않아야 한다."],"publication_recommendation":"revise"
+  }
+]

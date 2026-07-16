@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000158","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["천식과 재발성 비용종","ibuprofen 후 30분 내 비강·안구·기관지 증상","저용량 acetaminophen은 허용"],"clinical_inference":"천식·비용종과 COX-1 억제 NSAID 후 급성 상·하기도 반응은 AERD에 전형적이므로 유발약 회피, 기도질환 최적화와 필요 시 전문 탈감작 평가가 필요하다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"COX-1 억제 NSAID를 피하고 ICS 기반 천식 치료와 비용종·비강 염증 치료를 최적화한다. aspirin이 꼭 필요하거나 비용종이 반복되는 선택된 환자는 전문기관에서 탈감작의 이득과 위험을 평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"AERD 반응은 전형적인 약물 특이 IgE 피부시험으로 배제하는 질환이 아니다. 피부시험 음성만 믿고 ibuprofen을 재복용하면 동일하거나 더 심한 호흡기 반응이 생길 수 있다.","could_be_correct_if":"전문의 감독 아래 진단 목적의 약물유발검사가 필요하고 안전 조건을 충족할 때","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"비용종 수술은 비강 폐쇄를 줄일 수 있지만 COX-1 억제제에 대한 전신적 호흡기 과민반응을 제거하지 않는다. 비용종도 재발할 수 있어 약물 회피와 염증 조절이 계속 필요하다.","could_be_correct_if":"수술 적응증이 있는 비용종의 국소 증상 개선을 목표로 다른 치료와 병행할 때","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"aspirin 탈감작 과정 자체가 기관지수축과 전신 반응을 유발할 수 있다. 천식 조절 상태를 확인하지 않고 집에서 증량하는 것은 위험하며 전문 감독과 구조화된 절차가 필요하다.","could_be_correct_if":"천식이 안정되고 적응증이 확인된 뒤 응급대응 가능한 전문기관에서 시행할 때","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"반복되는 ibuprofen 노출 직후 증상은 NSAID와 무관하지 않으며 기저 천식도 존재한다. ICS를 중단하면 기도염증과 악화 위험이 커질 수 있다.","could_be_correct_if":"재평가에서 천식 진단이 배제되어 ICS 적응증이 없다고 확인될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["대체 진통제의 안전성은 약제·용량별 차이가 있으므로 환자별 전문 상담 없이 일반화하지 않아야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000159","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["선택수술 예정","최근 한 달 야간 증상 주 3회","5일 전 전신스테로이드 치료","현재 천명과 PEF 58%"],"clinical_inference":"최근 악화와 현재 조절 불량은 주술기 기관지경련 위험을 높이므로 비응급 수술을 연기하고 천식을 최적화한 뒤 재평가해야 한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"현재 천명과 낮은 PEF를 무시하고 수술하면 마취·기도조작 중 기관지경련 위험이 높다. 유지 흡입제 중단 역시 조절을 악화시키므로 수술 전후 계속해야 한다.","could_be_correct_if":"천식이 충분히 조절되고 수술을 더 미룰 수 없으며 주술기 위험 완화 계획이 마련된 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"예방 항생제는 수술 종류에 따른 감염 예방 전략이지 천식 조절 불량을 교정하지 않는다. 감염 근거 없이 항생제만 추가해도 현재 기류 제한과 기관지 과민성은 남는다.","could_be_correct_if":"수술 자체의 표준 감염예방 지침에 따라 별도로 투여할 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"LABA 단독은 천식의 기도염증을 치료하지 않으며 ICS 없이 사용하지 않는다. 수술 위험을 줄이려면 ICS가 포함된 치료로 조절을 회복해야 한다.","could_be_correct_if":"해당 없음; 천식 유지치료에서 LABA 단독 전환은 적절하지 않다.","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"최근 악화가 있다고 예방적으로 장기 기계환기를 계획하는 것은 아니다. 선택수술이므로 가역적인 조절 불량을 먼저 치료해 불필요한 침습과 주술기 위험을 줄인다.","could_be_correct_if":"응급수술을 피할 수 없고 실제 호흡부전으로 침습적 환기가 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"correct","explanation":"비응급 수술을 연기하고 흡입법·순응도·유발요인을 확인하며 ICS 포함 치료를 최적화한다. 최근 악화와 현재 기류 제한에 따라 단기 전신스테로이드 필요성을 판단한 뒤 조절 상태를 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 정답 선택지 해설이 '적응증과 시점이 맞지 않는다'고 서술되어 정답과 모순되므로 교체 필요."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000160","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["중간용량 ICS-formoterol을 정확히 사용","운동 시 호흡곤란 지속","BMI 36 kg/m²","코골이와 주간졸림","역류 증상 없음"],"clinical_inference":"천식 치료를 재평가하면서 증상과 조절에 영향을 줄 수 있는 비만과 폐쇄성 수면무호흡을 동시에 다루고, 근거 없는 무증상 역류 치료는 피한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"속쓰림이나 역류 증상이 없는데 위식도역류를 호흡곤란의 원인으로 확정할 근거가 없다. 무증상 환자에게 천식 조절만을 목적으로 PPI만 투여하면 비만·수면무호흡과 천식 평가가 누락된다.","could_be_correct_if":"증상 또는 객관적 검사로 위식도역류가 확인되어 그 자체의 치료 적응증이 있을 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"비만이 천식 치료 반응에 영향을 줄 수 있어도 ICS가 무효라는 뜻은 아니다. ICS를 갑자기 중단하면 기도염증과 악화 위험이 증가할 수 있다.","could_be_correct_if":"천식 진단이 객관적으로 배제되어 ICS 적응증이 없는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"correct","explanation":"현재 천식 진단과 조절 상태를 재평가하면서 ICS 포함 치료는 유지·조정한다. 구조화된 체중감량을 지원하고 코골이·주간졸림에 대해 폐쇄성 수면무호흡을 평가하면 두 동반질환의 기여를 함께 줄일 수 있다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"비만은 운동 호흡곤란의 한 원인이지만 천식의 잔여 기류 제한이나 다른 동반질환을 배제하지 않는다. 모든 증상을 비만으로 돌리면 조절 평가와 폐기능 확인을 놓친다.","could_be_correct_if":"객관적 평가에서 천식이 안정적이고 호흡곤란이 비만 관련 탈조건화로 확인될 때에도 천식 추적은 유지하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"유지 경구스테로이드는 체중 증가와 대사 이상 등 비만 관련 위험을 더 악화시킬 수 있다. 최적 흡입치료와 동반질환 관리 전 우선 시작할 치료가 아니다.","could_be_correct_if":"최적화된 고강도 치료와 추가치료에도 조절되지 않는 중증 천식에서 전문의가 제한적으로 판단할 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 정답 선택지 해설이 정답의 적응증과 시점이 맞지 않는다고 잘못 서술되어 교체 필요."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000161","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["ICS-formoterol로 조절된 천식","분만 후 자궁무력 출혈","현재 천명 없음","carboprost의 기관지수축 위험"],"clinical_inference":"산후출혈은 즉시 치료하되 천식 조절치료를 유지하고 기관지수축 위험이 낮은 oxytocin을 우선 사용하며 carboprost는 가능한 피한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"분만 직후라고 ICS 포함 치료를 중단할 이유가 없으며 중단하면 산후 악화 위험이 생긴다. prostaglandin F2α 유사체인 carboprost는 기관지수축을 유발할 수 있어 천식 병력을 무시하고 우선 사용하지 않는다.","could_be_correct_if":"대안이 없고 생명위협 출혈에서 산과·마취과가 위험을 감수해 면밀히 감시하며 carboprost를 선택하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"correct","explanation":"잘 조절되던 ICS-formoterol을 계속해 산후에도 천식 조절을 유지한다. 자궁무력 출혈에는 oxytocin을 우선 사용하고 기관지수축 가능성이 있는 carboprost는 가능한 피한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"천식 병력은 모든 자궁수축제의 금기가 아니다. 진행 중인 산후출혈을 관찰만 하면 산모의 순환부전 위험이 커지므로 안전한 약제를 선택해 즉시 치료한다.","could_be_correct_if":"자궁수축제 금기가 별도로 확인되어 다른 약물·시술로 즉시 출혈을 치료하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"현재 혈압이 안정적이고 천명도 없어 예방적 기관삽관의 적응증이 없다. 우선순위는 자궁수축제와 표준 산후출혈 처치로 출혈원을 통제하는 것이다.","could_be_correct_if":"대량출혈이나 호흡부전으로 기도 보호와 기계환기가 실제로 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"천식 악화가 없는 조절된 환자에게 유지 경구스테로이드를 새로 시작할 이유가 없다. oxytocin은 천식 때문에 금기인 약제가 아니므로 출혈 치료 기회를 놓쳐서는 안 된다.","could_be_correct_if":"별도의 중증 천식 악화나 부신기능 저하 적응증으로 전신스테로이드가 필요한 경우","misconception_tag":"적응증"}
+    ],"review_flags":["기존 정답 선택지 해설이 '적응증과 시점이 맞지 않는다'고 잘못 서술되어 교체 필요.","산후출혈 약제 선택은 실제 출혈 프로토콜과 산과·마취과 판단을 우선해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000162","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["고용량 ICS-LABA로 현재 조절","8개월간 prednisolone 15 mg/day 사용","중단 후 3개월","대장암 수술 예정"],"clinical_inference":"장기 전신스테로이드 중단 후에도 HPA축 억제가 남을 수 있으므로 흡입치료를 유지하고 수술 스트레스와 부신억제 위험에 맞춘 glucocorticoid 보충을 계획한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"수술 당일 흡입제를 중단하면 안정된 천식 조절이 깨지고 기관지경련 위험이 커질 수 있다. 과거 장기 전신스테로이드로 인한 부신억제 가능성도 단순 중단으로 사라지지 않는다.","could_be_correct_if":"천식과 부신억제 가능성이 모두 객관적으로 배제되어 해당 약제 적응증이 없을 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"8개월간의 prednisolone 사용은 HPA축을 억제할 수 있고 중단 3개월 후에도 회복이 불완전할 수 있다. 주술기 설명되지 않는 저혈압이 발생하면 부신위기를 감별하고 즉시 대응해야 한다.","could_be_correct_if":"부신기능이 충분히 회복되었음이 객관적으로 확인되고 다른 원인이 명확한 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"LABA 용량만 늘리는 것은 기도염증을 치료하지 않으며 부신위험도 해결하지 못한다. 천식에서는 LABA를 ICS와 분리해 자의적으로 증량하지 않는다.","could_be_correct_if":"ICS-LABA 복합치료의 정식 단계 조정이 필요해 처방 기준에 따라 전체 요법을 재설계할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"현재 조절을 유지하도록 ICS-LABA를 수술 전후 계속한다. 장기 prednisolone 중단 후 남은 부신억제 가능성을 고려해 수술 스트레스 수준과 평가 결과에 맞는 glucocorticoid 보충을 계획한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"감염 위험은 스테로이드 사용의 이득과 함께 고려하지만 모든 투여의 절대 금기는 아니다. 부신억제 환자에게 필요한 보충을 하지 않으면 주술기 부신위기가 발생할 수 있다.","could_be_correct_if":"활동성 중증 감염에서 불필요한 고용량 면역억제 스테로이드를 피하는 경우에도 생리적 보충 필요성은 별도 판단한다.","misconception_tag":"금기"}
+    ],"review_flags":["기존 정답 선택지 해설이 정답과 반대로 '적응증과 시점이 맞지 않는다'고 되어 있어 교체 필요.","주술기 보충 용량은 수술 스트레스와 부신기능 평가에 따라 결정하며 문항 근거 없이 수치를 추가하지 않아야 한다."],"publication_recommendation":"revise"
+  }
+]

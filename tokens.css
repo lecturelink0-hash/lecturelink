@@ -1,0 +1,69 @@
+/* Hallmark · design-system: LectureLink · genre: modern-minimal · tone: calm clinical · anchor: pine */
+:root {
+  --color-paper: oklch(97.8% 0.012 92);
+  --color-paper-raised: oklch(99.2% 0.006 92);
+  --color-paper-muted: oklch(94.8% 0.018 96);
+  --color-ink: oklch(25% 0.035 158);
+  --color-ink-soft: oklch(47% 0.025 158);
+  --color-line: oklch(88.5% 0.022 92);
+  --color-line-strong: oklch(76% 0.045 151);
+  --color-accent-pine: oklch(42% 0.105 157);
+  --color-accent-pine-strong: oklch(34% 0.09 157);
+  --color-accent-pine-soft: oklch(92.5% 0.04 157);
+  --color-accent-coral: oklch(62% 0.15 45);
+  --color-accent-coral-strong: oklch(53% 0.14 42);
+  --color-accent-coral-soft: oklch(93.5% 0.045 52);
+  --color-accent-gold: oklch(78% 0.14 86);
+  --color-danger: oklch(55% 0.16 30);
+  --color-danger-soft: oklch(94% 0.045 30);
+
+  --color-bg: var(--color-paper);
+  --color-surface: var(--color-paper-raised);
+  --color-surface-muted: var(--color-paper-muted);
+  --color-text: var(--color-ink);
+  --color-muted: var(--color-ink-soft);
+  --color-border: var(--color-line);
+  --color-primary: var(--color-accent-pine);
+  --color-primary-strong: var(--color-accent-pine-strong);
+  --color-primary-soft: var(--color-accent-pine-soft);
+  --color-accent: var(--color-accent-coral);
+  --color-accent-dark: var(--color-accent-coral-strong);
+  --color-accent-bg: var(--color-accent-coral-soft);
+  --color-gold: var(--color-accent-gold);
+  --color-warn: var(--color-danger);
+  --color-warn-bg: var(--color-danger-soft);
+
+  --font-display: "Pretendard Variable", Pretendard, sans-serif;
+  --font-body: "Pretendard Variable", Pretendard, sans-serif;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  --text-display: clamp(2.8rem, 7vw, 5.7rem);
+  --text-display-s: clamp(2.35rem, 5.4vw, 4.5rem);
+  --text-title: clamp(1.75rem, 3vw, 2.6rem);
+  --text-body: 1rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-pill: 999px;
+  --rule-hairline: 1px;
+  --shadow-card: 0 1px 2px oklch(25% 0.035 158 / 0.04), 0 12px 32px -28px oklch(25% 0.035 158 / 0.28);
+  --shadow-menu: 0 18px 48px -24px oklch(25% 0.035 158 / 0.3);
+  --dur-short: 120ms;
+  --dur-medium: 220ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}

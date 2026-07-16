@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000203","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["14 Fr 흉관과 항생제 시행","48시간 후 배액 정지","발열·CRP 지속","CT상 잔류 분획성 흉수","출혈 위험 낮음"],"clinical_inference":"초기 흉관만으로 감염성 분획이 충분히 배액되지 않았으므로 흉강내 tPA-DNase 병합으로 섬유소 격막과 고점도 고름을 함께 해결한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"tPA는 섬유소 격막을 분해하고 DNase는 고름의 DNA 점도를 낮춰 잔류 분획의 배액을 개선한다. 출혈 위험을 확인한 뒤 병합요법을 시행하고 배액량·임상·영상 반응을 재평가하며 실패하면 수술을 논의한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"흉관 제거는 수집이 해소되고 배액·염증이 호전될 때 고려한다. 현재 큰 잔류 분획과 지속 발열·CRP는 감염원 조절 실패를 뜻해 흉관을 제거하면 감염이 악화될 수 있다.","could_be_correct_if":"영상상 수집이 해소되고 배액이 적절히 종료되며 임상 염증이 호전될 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"tPA 단독은 격막을 분해해도 점도 높은 고름을 충분히 액화하지 못해 임상적 이득이 입증되지 않았다. 잔류 감염성 수집에는 DNase와의 병합이 핵심이다.","could_be_correct_if":"해당 없음; 제시된 흉막감염에서 tPA 단독은 권고되지 않는다.","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"DNase 단독은 고름 점도를 낮춰도 섬유소성 격막을 충분히 해소하지 못한다. 두 기전이 함께 필요한 상황이므로 단독요법보다 tPA-DNase 병합을 사용한다.","could_be_correct_if":"해당 없음; 제시된 흉막감염에서 DNase 단독은 권고되지 않는다.","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"임상 불안정, 조직화된 두꺼운 흉막껍질 또는 비수술 치료 실패에서는 조기 VATS·수술이 필요할 수 있다. 현재는 출혈 위험이 낮고 병합 흉강내 치료를 시도할 조건이 있어 개흉술만 즉시 선택할 필요가 없다.","could_be_correct_if":"흉강내 치료 금기·실패, 조직화 농흉 또는 임상 악화로 수술 적응증이 성립할 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 잔류 분획성 흉수와 압박성 무기폐를 실제로 보여 주는지 확인해야 한다.","tPA-DNase의 구체 용량·횟수와 출혈 금기는 최신 BTS 경로 및 기관 프로토콜로 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000204","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["감수성 표적 항생제 4주 완료","2주 이상 무증상·무발열","산소 불필요","백혈구·CRP 정상화","CT상 공동·경화 해소와 소량 반흔만 잔존"],"clinical_inference":"임상·검사·영상 반응이 충분하고 활동성 감염 근거가 없어 항생제를 종료하며 늦게 소실되는 반흔은 계획 추적으로 확인한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"선상·반흔성 음영은 감염 후 구조적 회복 과정으로 활동성 세균 증식을 뜻하지 않을 수 있다. 임상과 염증 지표가 정상화된 환자에게 영상 완전 소실까지 정주 항생제를 무기한 투여하면 독성과 내성만 늘어난다.","could_be_correct_if":"지속 발열·염증 상승·공동 확대 등 활동성 감염 근거가 있어 치료기간 연장이 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"잔존 음영 하나만으로 치료 실패를 판정하지 않는다. 새 증상·염증 재상승이나 영상 악화가 없으므로 광범위 3제 병합은 C. difficile, 약물독성과 내성 위험만 높인다.","could_be_correct_if":"배양·임상·영상에서 다제내성 복합감염 또는 표적치료 실패가 확인될 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"폐엽절제술은 지속 패혈증, 광범위 괴저, 대량 객혈 또는 내과치료 실패에서 고려한다. 무증상 잔존 반흔을 제거하려고 정상 기능 폐까지 절제할 이유가 없다.","could_be_correct_if":"국소 폐괴저·지속 감염·대량 객혈 등 명확한 수술 적응증이 있을 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"기관지내시경은 폐쇄성 종양, 비전형 감염 또는 설명되지 않는 지속 음영을 의심할 때 선택적으로 시행한다. 명확히 호전된 모든 환자에게 정상 영상이 아니라는 이유만으로 생검하지 않는다.","could_be_correct_if":"고위험 환자에서 지속·재발하는 국소 음영이나 기도폐쇄 단서가 있어 결과가 치료를 바꿀 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"적절한 4주 표적치료 후 임상 안정, 염증 정상화와 공동·경화의 현저한 해소가 확인되었다. 항생제를 종료하고 재발 증상과 잔존 영상의 계획된 호전을 추적한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 추적 CT가 공동·경화의 해소와 소량 반흔만을 실제로 보여 주는지 확인해야 한다.","괴사성 폐렴 치료기간은 병원체·합병증·반응에 따라 달라져 4주를 모든 환자에게 일반화하지 않아야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000205","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["7일째 발열 소실·혈압 안정","산소 요구량·호흡수 감소","백혈구는 3일째 일시 상승 후 감소","CRP·procalcitonin 전반 하강"],"clinical_inference":"단일 시점 표지자 변동보다 임상 상태와 여러 표지자의 전체 추세가 치료 반응을 지지하므로 불필요한 확대 없이 현재 치료를 재평가하며 지속한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"백혈구는 스트레스·스테로이드·시간차 등으로 일시 상승할 수 있어 한 시점만으로 실패를 판정하지 않는다. 이후 감소하고 임상·CRP·procalcitonin이 호전되어 내성균 확대와 반복 CT의 근거가 없다.","could_be_correct_if":"지속 발열·쇼크·산소 악화, 배양 내성 또는 전반적 표지자 상승이 동반될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"procalcitonin 하강은 세균 부하 감소를 시사하는 보조자료지만 병원체·중증도·합병증과 최소 치료기간을 대신하지 않는다. 단일 수치만으로 계획보다 일찍 중단하면 치료 부족 위험이 있다.","could_be_correct_if":"검증된 항생제 관리 알고리즘에서 임상 안정성과 다른 종료 조건을 함께 충족할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"correct","explanation":"발열·혈압·산소화와 호흡수가 호전되고 CRP·procalcitonin도 전체적으로 감소해 치료 반응 중이다. 현재 항생제를 유지·표적화하면서 배양, 임상 안정성과 합병증 여부를 계속 재평가한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"CRP는 임상 회복보다 늦게 정상화될 수 있어 정상범위 도달 자체가 정주 치료 종료 기준이 아니다. 안정성과 경구 복용 가능 여부를 무시하면 불필요한 정주기간이 길어진다.","could_be_correct_if":"임상 악화와 지속 높은 CRP가 함께 있어 합병증·치료 실패로 기간을 재설정할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"CRP의 작은 단일 반등은 검사 변동일 수 있으며 임상 호전과 다른 지표의 하강을 함께 봐야 한다. 새 발열·저산소·흉통 또는 지속 재상승이 없다면 먼저 재측정과 임상평가가 적절하다.","could_be_correct_if":"소폭 반등이 지속되고 임상 악화나 새 국소 소견이 동반되어 합병증이 의심될 때","misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 그래프가 백혈구의 일시 상승 후 감소와 CRP·procalcitonin의 전반 하강을 정확히 표시하는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000206","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["중증 CAP 경험적 광범위 치료 후 호전","혈액·객담에서 ceftriaxone 감수성 폐렴구균 일치","MRSA PCR 음성","Pseudomonas·바이러스 음성","합병증 없음"],"clinical_inference":"단일 감수성 병원체가 확정되고 다른 경험적 범위가 불필요해 ceftriaxone 단독 표적치료로 축소한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"경험적 cefepime·vancomycin·azithromycin은 초기 불확실성을 포괄하지만 결과 후에도 모두 유지할 이유는 없다. 불필요한 광범위 치료는 신독성, C. difficile과 내성 선택을 늘린다.","could_be_correct_if":"쇼크가 지속되거나 복합감염·MRSA·Pseudomonas가 아직 배제되지 않았을 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"correct","explanation":"혈액과 객담에서 동일한 ceftriaxone 감수성 폐렴구균이 확인되어 원인과 표적약이 명확하다. ceftriaxone 단독으로 축소하고 임상 안정성, 균혈증 소실과 합병증 여부에 따라 기간·경구 전환을 결정한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"vancomycin 중단은 맞지만 cefepime의 항녹농균 범위와 azithromycin의 비정형균 범위도 더 이상 필요하지 않다. 부분 축소만 하면 불필요한 광범위 노출이 남는다.","could_be_correct_if":"MRSA만 배제되고 Pseudomonas·비정형 복합감염 가능성이 여전히 남을 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"확인된 폐렴구균은 macrolide 내성이고 환자는 균혈증성 중증 CAP의 초기 안정 단계다. azithromycin 경구 단독은 병원체를 신뢰성 있게 치료하지 못한다.","could_be_correct_if":"macrolide 감수성 비정형균 감염이 확인되고 임상적으로 경구 단독 치료가 안전할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"levofloxacin은 beta-lactam 사용이 어려울 때 대안일 수 있지만 감수성 좁은 beta-lactam이 가능한 현재에는 범위가 불필요하게 넓다. fluoroquinolone 관련 부작용과 내성 선택도 고려해야 한다.","could_be_correct_if":"중증 beta-lactam 알레르기 또는 표적 beta-lactam 사용 불가 상황","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 미생물 결과 표가 ceftriaxone 감수성 폐렴구균, macrolide 내성, MRSA PCR·Pseudomonas·바이러스 음성을 정확히 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000207","answer_consistency":"questionable",
+    "core_reasoning":{"key_findings":["인플루엔자 A 입원 저산소증","증상 4일","CT상 좌하엽 국소 경화·air bronchogram·소량 흉수","내성균 위험 없음","C3와 C4가 의미상 중복될 가능성"],"clinical_inference":"입원 인플루엔자는 48시간 이후에도 oseltamivir를 투여하고 세균성 CAP 동시감염 영상에는 ceftriaxone-azithromycin을 병행해야 한다. 다만 C3의 손상 문구가 C4와 사실상 같은 처방을 가리켜 단일정답성이 훼손되었다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"순수 인플루엔자만 있고 세균성 침윤 근거가 없다면 항바이러스 단독이 가능하다. 현재 국소 엽성 경화와 흉수·저산소증이 있어 세균성 동시감염 경험치료도 필요하다.","could_be_correct_if":"세균성 동시감염이 임상·영상·미생물 평가에서 배제될 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"항바이러스 효과는 조기 투여가 가장 크지만 입원·중증 인플루엔자는 증상 48시간 이후에도 oseltamivir를 시작한다. 항생제만 투여하면 확인된 바이러스 감염 치료가 누락된다.","could_be_correct_if":"인플루엔자 진단이 배제되거나 항바이러스제의 중대한 금기가 있을 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"'특수 팽창치료'는 의학적으로 의미가 불명확한 손상 문구다. 앞부분은 oseltamivir와 ceftriaxone-azithromycin 병합을 명시해 C4와 동일하게 해석될 수 있으므로 현재 형태로는 오답 처리할 수 없다.","could_be_correct_if":"문구가 단순 손상이고 의도가 oseltamivir와 표준 CAP 항생제 병합이었다면 C4와 동일한 정답","misconception_tag":"기타"},
+      {"choice_id":"C4","verdict":"correct","explanation":"입원 저산소성 인플루엔자에는 증상 기간과 무관하게 oseltamivir를 시작한다. 국소 폐경화와 흉수는 세균성 CAP 동시감염을 시사하므로 ceftriaxone-azithromycin 경험요법을 함께 투여한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"baloxavir 단회요법은 선택된 합병증 없는 외래 인플루엔자에서 고려한다. 입원 저산소증과 세균성 폐렴 의심이 있는 환자의 항바이러스·항생제 병합을 대체하지 못한다.","could_be_correct_if":"합병증 없는 안정 외래 인플루엔자이고 세균성 동시감염이 없을 때","misconception_tag":"적응증"}
+    ],"review_flags":["선택지 C3의 '특수 팽창치료'는 명백한 문자·문장 손상이며 앞의 약제 조합이 C4와 중복된다. 원문을 확인해 완전히 다른 오답으로 복원하기 전에는 단일정답 문항으로 출판할 수 없다.","기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 좌하엽 국소 경화, air bronchogram과 소량 흉수를 실제로 보여 주는지 확인해야 한다."],"publication_recommendation":"hold"
+  }
+]

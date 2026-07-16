@@ -1,0 +1,58 @@
+{
+  "name": "medai-learning-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "의료 교육 특화 AI 학습 인프라 — 백엔드 + API",
+  "scripts": {
+    "design:css": "node scripts/build-redesign-css.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "build:clean": "rm -rf .next && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",
+    "db:types:linked": "supabase gen types typescript --linked > lib/types/database.generated.ts",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@opentelemetry/api": "^1.9.1",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.46.1",
+    "@upstash/qstash": "^2.11.0",
+    "canvas": "3.2.3",
+    "clsx": "^2.1.1",
+    "fflate": "^0.8.3",
+    "lucide-react": "^0.460.0",
+    "nanoid": "^5.0.7",
+    "next": "^15.0.3",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^3.11.174",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tesseract.js": "^6.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.15.11",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.9.0",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.15.0",
+    "eslint-config-next": "^15.0.3",
+    "postcss": "^8.4.49",
+    "supabase": "^1.219.2",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "overrides": {
+    "canvas": "3.2.3"
+  }
+}

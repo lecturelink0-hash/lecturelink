@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000233","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["67세 흡연자","지속되는 기침","CT상 말초성 병변","수술 가능 상태이며 원격 전이 증거 없음"],"clinical_inference":"치료 가능한 폐암이 의심되므로 병리학적 확진이 필요하다. 병변이 말초에 있어 기관지경 세척보다 CT 유도 경피적 생검의 접근성과 수율이 적절하다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"말초 폐병변은 중심기도에서 떨어져 있어 통상적 기관지경보다 경피적 접근이 직접적이다. CT 유도 바늘생검으로 조직형과 필요한 바이오마커 평가에 쓸 검체를 얻는다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"PET 섭취는 염증이나 감염에서도 증가하므로 폐암의 조직학적 확진을 대신하지 못한다. PET는 병기 설정과 생검할 병변 선택에 보조적으로 사용한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"고위험 환자의 의심스러운 고형 병변을 흉부 X선만으로 6개월 관찰하면 진단과 근치 치료가 지연될 수 있다. 악성 가능성이 매우 낮은 작은 결절이라면 크기와 위험도에 맞춘 CT 추적을 선택할 수 있다.","could_be_correct_if":"결절의 영상 특성과 환자 위험도를 종합했을 때 악성 가능성이 낮아 지침에 따른 CT 추적 대상인 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"기관지 세척액 세포검사만으로는 말초 병변의 진단 수율과 조직량이 부족할 수 있다. 병변으로 향하는 기관지 경로가 확인되고 유도 기관지경으로 조직을 얻을 수 있다면 기관지경 생검을 대안으로 고려할 수 있다.","could_be_correct_if":"유도 기관지경으로 말초 병변에서 충분한 조직 검체를 안전하게 확보할 수 있는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"이 환자는 수술 가능하고 조직 채취도 가능하므로 병리 확인 없이 방사선치료를 시작할 이유가 없다. 생검 위험이 과도한 수술 불가 환자의 고확률 병변에서는 다학제 논의 후 예외적으로 조직 진단 없는 정위방사선치료를 검토할 수 있다.","could_be_correct_if":"악성 가능성이 매우 높지만 수술과 생검이 모두 부적절한 환자에서 다학제 합의가 이뤄진 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["문항이 의존하는 CT 이미지가 입력 데이터에 없어 병변의 말초 위치와 안전한 생검 경로를 출판 전 확인해야 함","검증된 근거 자료가 입력되지 않음","기존 핵심 해설의 '림프절가' 문구 교정 필요"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000234","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["CT로 확진된 폐색전증","혈압 118/72 mmHg","우심실 확장·기능 저하","troponin 상승"],"clinical_inference":"쇼크나 저혈압은 없지만 우심실 기능장애와 심근손상 표지자 상승이 함께 있어 중간-고위험 PE에 부합한다. 항응고와 면밀한 감시를 시작하고 혈역학적 악화 시 구제 재관류를 고려한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"고위험 PE는 급성 우심실 부담만이 아니라 쇼크 또는 지속성 저혈압으로 정의된다. 안정된 중간-고위험군에서 일상적 전신 혈전용해는 출혈 위해가 커서, 악화할 때 구제 치료로 남겨 둔다.","could_be_correct_if":"폐색전증으로 혈역학적 불안정이 발생하고 혈전용해 금기가 없는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"우심실 기능장애와 troponin 상승은 조기 악화 위험을 보여 즉시 퇴원할 저위험군이 아니다. 우심실 부담과 바이오마커 이상이 없고 임상 저위험 기준 및 외래 치료 여건을 충족할 때만 조기 퇴원을 고려한다.","could_be_correct_if":"검증된 저위험 기준을 충족하고 우심실 기능장애가 없으며 안전한 외래 추적이 가능한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"이미 CTPA로 PE가 확진되었으므로 D-dimer나 반복 CT가 항응고 시작에 필요한 단계가 아니다. 새 임상 악화로 진단 변경이나 합병증 평가가 필요할 때만 추가 영상을 고려한다.","could_be_correct_if":"치료 중 임상 상태가 새로 악화되어 혈전 진행이나 다른 원인을 재평가해야 하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"우심실 부담 자체는 하대정맥 필터 적응증이 아니다. 필터는 급성 혈전색전증에서 항응고를 시행할 수 없는 중대한 금기 등 제한된 상황에 고려한다.","could_be_correct_if":"급성 폐색전증이 있으나 활동성 중증 출혈 등으로 치료적 항응고가 불가능한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"correct","explanation":"정상 혈압과 우심실 기능장애·troponin 상승의 조합은 중간-고위험군을 가리킨다. 입원해 항응고하면서 혈압과 장기 관류를 감시하고, 보상 실패가 나타나면 재관류 치료로 전환한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["검증된 근거 자료가 입력되지 않아 위험도 분류 용어와 재관류 기준을 출판 전 대조해야 함"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000235","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["양압환기 중 갑작스러운 저혈압","peak airway pressure 상승","오른쪽 호흡음 소실","기관의 반대쪽 편위"],"clinical_inference":"양압환기 관련 긴장성 기흉으로 폐허탈과 폐쇄성 쇼크가 발생한 전형적 상황이다. 영상으로 확인하느라 지연하지 말고 즉시 흉강 감압 후 흉관으로 확정 치료한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"쇼크와 전형적 신체 소견이 있어 흉부 X선까지 기다리면 폐쇄성 쇼크가 진행할 수 있다. 혈역학적으로 안정되고 진단이 불확실한 기흉이라면 신속한 영상 확인이 가능하다.","could_be_correct_if":"환자가 안정적이고 긴장성 기흉의 임상 소견이 불확실하여 즉시 영상 확인이 가능한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"일회호흡량을 늘리면 흉강 내 압력과 공기 누출을 더 증가시켜 쇼크를 악화시킬 수 있다. 이 문제는 환기량 부족이 아니라 압력성 기흉이므로 먼저 감압해야 한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"correct","explanation":"편측 무호흡음, 반대쪽 기관 편위, 기도압 상승과 갑작스러운 저혈압은 긴장성 기흉의 결정적 조합이다. 즉시 바늘 또는 가용한 응급 감압을 시행하고 흉관 삽입으로 이어간다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐부종은 보통 양측성 호흡음 이상을 보이며 기관 편위와 편측 무호흡음을 설명하지 못한다. 체액 과다성 폐부종이 실제로 확인되고 관류가 유지된다면 이뇨제를 사용할 수 있다.","could_be_correct_if":"긴장성 기흉이 배제되고 체액 과다에 의한 폐부종이 확인된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"오른쪽 주기관지 삽관은 대개 왼쪽 호흡음을 감소시키며, 관을 더 깊이 넣는 것은 문제를 악화한다. 관 위치 이상이 원인이면 관을 적절히 뒤로 빼지만 현재 쇼크와 기관 편위에는 먼저 긴장성 기흉을 치료한다.","could_be_correct_if":"기관내관이 얕아 이탈할 위험이 확인되어 영상 또는 깊이 표시를 근거로 적정 위치까지 조정하는 경우","misconception_tag":"진단 오류"}
+    ],"review_flags":["검증된 근거 자료가 입력되지 않아 응급 감압 기법의 표현을 출판 전 현행 지침과 대조해야 함"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000236","answer_consistency":"questionable",
+    "core_reasoning":{"key_findings":["HRZE 복용 6주","황달과 심한 식욕 저하","AST 680 U/L, ALT 740 U/L","총 빌리루빈 5.2 mg/dL"],"clinical_inference":"증상과 황달을 동반한 현저한 간효소 상승은 중증 항결핵제 유발 간손상을 시사한다. Isoniazid와 rifampin뿐 아니라 pyrazinamide도 간독성 약제이므로 통상 세 약제를 모두 중단하고 원인을 평가해야 하는데, 선택지 C2는 pyrazinamide 중단을 명시하지 않아 불완전하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"증상성 황달과 현저한 간효소 상승에서 간독성 약제를 계속하면 중증 간손상이 진행할 수 있다. 경미한 무증상 상승이라면 면밀한 검사 추적으로 약제를 유지할 여지가 있다.","could_be_correct_if":"간효소 상승이 경미하고 환자가 무증상이며 중단 기준을 충족하지 않는 경우","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"Isoniazid와 rifampin 중단 및 다른 간손상 원인 평가는 방향상 맞다. 그러나 pyrazinamide 역시 주요 간독성 약제이므로 이 상황에서는 함께 중단한다는 문구가 필요하며, 현재 선택지는 단독 정답으로 불완전하다.","could_be_correct_if":"'isoniazid, rifampin, pyrazinamide를 중단하고 간독성 원인을 평가한다'로 수정하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"Ethambutol은 이 조합에서 대표적인 간독성 원인이 아니며, 이것만 중단하면 INH·RIF·PZA 노출이 계속된다. 시신경염 등 ethambutol 독성이 의심될 때는 중단 대상이 될 수 있다.","could_be_correct_if":"시력 저하와 색각 이상 등 ethambutol 관련 시신경병증이 의심되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"Pyrazinamide 자체가 간독성이 있고 단독요법은 내성을 선택하므로 현재 선택할 수 없다. 간기능 회복 전 치료 공백을 허용할 수 없다면 전문가가 비간독성 다제 대체요법을 구성한다.","could_be_correct_if":null,"misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Rifampin을 계속하면 의심 간독성 약제 노출이 남고, levofloxacin 단독치료는 결핵 치료로 불충분하다. 간기능 회복과 균 감수성을 고려해 여러 약제로 안전한 요법을 다시 구성해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["정답 C2가 pyrazinamide 중단을 명시하지 않아 중증 항결핵제 유발 간손상의 표준 초기 조치를 불완전하게 표현함","기존 핵심 해설은 INH·RIF·PZA 모두 중단한다고 기술해 선택지와 불일치함","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"hold"
+  },
+  {
+    "question_id":"RESP-000237","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["COPD","하지 부종·경정맥 팽창·우심실 heave","우심실 확장과 폐동맥 수축기압 상승","좌심실 기능 정상"],"clinical_inference":"COPD 관련 폐고혈압과 폐성심이 의심된다. 장기 관리는 기저 폐질환과 흡연을 교정하고, 안정 시 저산소혈증이 확인될 때 장기 산소요법을 적용하는 것이 중심이다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"장기 산소요법은 안정 상태에서 저산소혈증 기준을 충족할 때 생존 이득을 기대한다. 저산소혈증이 없는데 폐동맥압 수치만으로 일률적으로 시작하지 않는다.","could_be_correct_if":"안정 시 평가에서 장기 산소요법의 저산소혈증 기준을 충족하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"Loop 이뇨제는 체액 과다와 말초부종을 완화할 수 있지만 COPD와 저산소성 폐혈관 수축이라는 원인을 치료하지 못한다. 명백한 울혈이 있으면 신기능과 전부하를 보며 보조적으로 사용할 수 있다.","could_be_correct_if":"우심부전으로 임상적으로 유의한 체액 과다가 있어 증상 조절이 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"COPD 관련 폐고혈압에 특발성 PAH 약제를 즉시 일반 적용하면 환기-관류 불균형을 악화시킬 수 있고 근거도 다르다. 폐질환 정도에 비해 폐고혈압이 현저하거나 다른 원인이 의심되면 전문센터에서 우심도자와 표현형 평가 후 판단한다.","could_be_correct_if":"전문센터 평가에서 별도의 폐동맥고혈압 표현형과 해당 약제 적응증이 확인된 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"흡입치료 최적화와 금연은 기저 COPD의 진행과 악화를 줄이는 핵심이다. 안정 시 적응증에 해당하는 저산소혈증이 확인되면 장기 산소요법을 추가해 만성 저산소 부담을 줄인다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"우심부전만으로 폐동맥 혈전제거술을 시행하지 않으며, 지문에는 폐동맥 혈전성 폐쇄의 근거가 없다. 수술 가능한 만성 혈전색전성 폐고혈압이 정밀검사로 확인되면 폐동맥 내막절제술을 고려할 수 있다.","could_be_correct_if":"수술 가능한 만성 혈전색전성 폐고혈압이 확인된 경우","misconception_tag":"진단 오류"}
+    ],"review_flags":["검증된 근거 자료가 입력되지 않아 장기 산소요법 기준과 폐고혈압 치료 문구를 출판 전 대조해야 함","폐동맥 수축기압은 심초음파 추정치이므로 중증도 확정에 한계가 있음"],"publication_recommendation":"revise"
+  }
+]

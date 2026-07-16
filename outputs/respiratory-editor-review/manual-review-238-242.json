@@ -1,0 +1,52 @@
+[
+  {
+    "question_id":"RESP-000238","answer_consistency":"confirmed","core_reasoning":{"key_findings":["폐암 의심 환자의 얼굴 부종·목정맥 팽창·두통","안정 시 호흡곤란","혈압 안정·의식 명료","아직 조직 진단 없음"],"clinical_inference":"상대정맥 증후군이 의심되지만 기도 폐쇄, 뇌부종 또는 혈역학 붕괴 같은 즉각적 위기 징후는 없다. 상체 거상 등 지지치료와 함께 조직형 및 병기를 신속히 확정해야 원인별 치료를 선택할 수 있다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"상체를 올리면 상체 정맥압과 증상을 일부 완화할 수 있다. 안정적인 종양성 상대정맥 증후군에서는 안전한 경로로 정맥 접근을 마련하고 신속한 조직 진단과 병기 평가 후 종양 특이 치료를 정한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"고용량 방사선치료를 먼저 하면 조직 진단 수율을 낮추고 치료에 민감한 종양의 적절한 전신치료 선택을 방해할 수 있다. 심각한 기도 손상이나 뇌부종 등 생명을 위협하는 폐쇄가 있어 진단을 기다릴 수 없다면 긴급 재관류·방사선치료를 다학제로 결정한다.","could_be_correct_if":"기도 또는 뇌 기능을 위협하는 중증 폐쇄로 조직 진단 전 긴급 종양 축소가 불가피한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"대량 수액은 상체 정맥 울혈을 해소하지 못하고 부종과 호흡곤란을 악화시킬 수 있다. 실제 저혈량성 쇼크가 동반되었다면 관류 회복을 위한 신중한 수액이 필요하지만 지문에는 그런 소견이 없다.","could_be_correct_if":"별도의 저혈량성 쇼크가 확인되어 제한적 혈역학 소생이 필요한 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"상대정맥 폐쇄 상황에서 상지 중심정맥관은 울혈과 혈전 위험을 높일 수 있고, 조직형 없이 항암제를 고를 수도 없다. 중심정맥 접근이 필요하면 폐쇄 위치를 고려한 대체 경로를 선택하고 진단 후 치료한다.","could_be_correct_if":null,"misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"종양성 외부 압박만 있다면 항응고의 이득은 확립되지 않지만, 동반 혈전이 확인되면 항응고가 필요할 수 있다. 따라서 '절대 사용하지 않는다'는 표현은 향후 영상과 출혈 위험에 따른 판단을 막는다.","could_be_correct_if":"상대정맥 또는 카테터 관련 혈전이 확인되고 항응고 금기가 없는 경우","misconception_tag":"적응증"}
+    ],"review_flags":["문항이 의존하는 흉부 영상이 입력 데이터에 없어 상대정맥 압박과 원인 종괴를 출판 전 확인해야 함","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000239","answer_consistency":"confirmed","core_reasoning":{"key_findings":["CT로 확진된 폐색전증","혈압 82/50 mmHg","우심실 확장","출혈 위험 낮음"],"clinical_inference":"급성 PE에 의한 저혈압과 우심실 부담은 고위험 PE의 폐쇄성 쇼크를 의미한다. 조절 가능한 UFH를 시작하고 응급 재관류, 특히 전신 혈전용해 가능성을 즉시 평가해야 한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"혈압 회복까지 항응고를 미루면 혈전 진행을 막지 못하며, 저혈압의 원인인 폐혈관 폐쇄도 지속된다. 활동성 중증 출혈처럼 항응고 절대금기가 있을 때만 보류하고 다른 재관류 전략을 세운다.","could_be_correct_if":"활동성 중증 출혈 등 치료적 항응고의 절대금기가 있는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"쇼크를 동반한 고위험 PE는 외래 경구 항응고만으로 치료할 상황이 아니다. 혈역학적으로 안정되고 검증된 저위험 기준과 외래 추적 조건을 충족하면 경구 항응고 외래 치료를 고려할 수 있다.","could_be_correct_if":"혈역학적으로 안정적인 저위험 PE이고 안전한 외래 관리 조건을 충족한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"하대정맥 필터는 기존 폐동맥 혈전을 제거하지 않으며 항응고와 재관류를 대신하지 못한다. 항응고가 불가능한 절대금기가 있으면 추가 색전을 막기 위한 보조 수단으로 고려한다.","could_be_correct_if":"급성 정맥혈전색전증이 있으나 중증 출혈로 항응고가 불가능한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"수술 후 7일이라는 사실은 출혈 위험을 세밀히 평가하게 하지만 혈전용해의 일률적 절대금기를 뜻하지 않는다. 지속성 쇼크에서는 수술 종류와 지혈 상태를 검토해 전신 또는 카테터·수술 재관류의 위험과 이득을 긴급 비교한다.","could_be_correct_if":"혈전용해 위험이 과도하고 환자가 안정되어 항응고만으로 치료할 수 있는 경우","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"correct","explanation":"저혈압과 우심실 확장은 고위험 PE로 인한 혈역학적 불안정을 보여 준다. 신속히 중단·조절 가능한 정맥 UFH를 투여하고 출혈 위험을 확인하면서 긴급 혈전용해 또는 대체 재관류를 준비한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["최근 복부 수술의 종류·범위와 지혈 상태가 없어 전신 혈전용해 출혈 위험을 완전히 평가할 수 없음","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000240","answer_consistency":"confirmed","core_reasoning":{"key_findings":["삽관 직후","오른쪽 호흡음 감소","산소포화도 86%","X선상 기관내관이 우측 주기관지 입구를 지나 위치한다는 전제"],"clinical_inference":"기관내관이 너무 깊게 들어간 선택적 주기관지 삽관이 의심된다. 관을 후퇴시켜 기관 내 적정 위치로 조정하고 양측 환기와 지속 파형 ETCO₂로 즉시 재확인한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"관을 더 깊이 넣으면 선택적 주기관지 삽관과 반대쪽 폐의 환기 소실이 악화된다. 관이 너무 얕아 cuff가 성문 가까이에 있거나 이탈 위험이 확인된 경우에만 깊이를 늘린다.","could_be_correct_if":"관 끝이 지나치게 얕아 이탈 위험이 확인된 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"현재 저산소혈증이 발생했으므로 예약 검사까지 잘못된 관 위치를 유지할 수 없다. 후퇴 후에도 원인이 불명확하거나 기도 폐쇄가 의심될 때 기관지경을 즉시 진단·치료 목적으로 사용할 수 있다.","could_be_correct_if":"관 위치 교정 후에도 저산소혈증이 지속되고 점액마개나 기도 병변을 직접 확인해야 하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"깊은 기관내관을 2–3 cm 후퇴시키는 것이 선택적 주기관지 삽관의 즉각적 교정이다. 이후 양측 흉곽 움직임과 호흡음을 확인하고 지속 파형 ETCO₂ 및 필요 시 재촬영으로 위치를 검증한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"PEEP 증가는 관이 들어가지 않은 폐의 환기를 회복시키지 못하고 중증 천식에서는 동적 과팽창을 악화시킬 수 있다. 관 위치가 정상이고 폐포 허탈성 저산소혈증이 확인된 경우에는 환기역학을 보며 PEEP를 조절한다.","could_be_correct_if":"관 위치가 적절하고 PEEP 반응성 폐포 허탈이 저산소혈증의 원인인 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"문제는 관의 깊이이지 삽관 자체의 불필요성이 아니므로 발관하면 확보된 기도를 잃는다. 천식 악화가 충분히 호전되고 자발호흡과 기도 보호가 검증된 뒤 계획된 발관을 고려한다.","could_be_correct_if":"기계환기 이탈 기준을 충족하고 안전한 발관 평가를 통과한 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["지문의 '오른쪽 호흡음 감소'는 전형적인 우측 주기관지 삽관에서 보통 감소하는 왼쪽 호흡음과 모순됨","문항이 의존하는 X선 이미지가 입력 데이터에 없어 관 끝 위치를 출판 전 확인해야 함","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000241","answer_consistency":"questionable","core_reasoning":{"key_findings":["임신 10주","객담 도말 양성 활동성 폐결핵","간·신장 기능 정상","약제감수성 미확인"],"clinical_inference":"전염성 활동성 결핵은 임신 중에도 지체 없이 효과적인 다제요법으로 치료해야 하며 streptomycin은 피한다. 다만 임신 중 pyrazinamide 포함 여부는 적용 지침에 따라 차이가 있어, 기준 지침과 근거가 없는 상태에서 C2를 유일 정답으로 확정하기 어렵고 선택지의 '세트 약'도 문장이 손상돼 있다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"도말 양성 활동성 폐결핵을 분만까지 치료하지 않으면 산모의 진행, 전파와 임신 합병증 위험이 커진다. 임신은 효과적인 1차 다제치료를 보류할 이유가 아니다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"INH·RIF·EMB를 포함한 다제치료를 즉시 시작한다는 방향은 맞고, pyrazinamide를 포함하는 표준을 채택한 지침에서는 HRZE가 적절하다. Pyridoxine 보충과 간독성 감시가 필요하며, 출판 기준 지침에서 임신 중 PZA 권고를 명시해야 한다.","could_be_correct_if":"문항 기준 지침이 임신 중 pyrazinamide를 포함한 HRZE를 권고하고 '세트 약'을 '4제 요법'으로 교정한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"Streptomycin은 태아의 청각 독성 위험 때문에 임신 중 피해야 한다. 임신 중 사용 가능한 1차 경구 약제를 중심으로 다제요법을 구성한다.","could_be_correct_if":null,"misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"Isoniazid 단독은 잠복결핵 예방요법이지 도말 양성 활동성 폐결핵 치료가 아니다. 단독치료는 실패와 내성을 초래할 수 있으므로 즉시 적절한 다제요법을 사용한다.","could_be_correct_if":"활동성 결핵이 배제되고 잠복결핵 치료 적응증만 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Fluoroquinolone 단독은 약제감수성 활동성 결핵의 표준 초기치료가 아니며 내성을 선택한다. 내성결핵 등으로 필요하면 감수성 결과와 임신 중 위해를 전문적으로 평가해 다른 유효 약제와 함께 사용한다.","could_be_correct_if":"내성결핵에서 감수성과 임신 위험을 평가해 유효한 다제요법의 한 성분으로 선택된 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["C2의 '세트 약'은 비정상 표현으로 '4제 요법' 등으로 교정 필요","임신 중 pyrazinamide 포함 여부가 지침별로 달라 문항 기준 지침과 국가 맥락을 명시해야 함","검증된 근거 자료가 입력되지 않음"],"publication_recommendation":"hold"
+  },
+  {
+    "question_id":"RESP-000242","answer_consistency":"confirmed","core_reasoning":{"key_findings":["IGRA 양성","최근 활동성 결핵 밀접 접촉","증상 없음·흉부 X선 정상","6개월 뒤 infliximab 예정"],"clinical_inference":"TNF 억제는 잠복결핵 재활성화 위험을 크게 높인다. 먼저 활동성 결핵을 배제하고 infliximab 시작 전에 잠복결핵 치료를 시작해야 한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"잠복결핵은 원래 증상이 없을 수 있으며, 밀접 접촉력과 IGRA 양성은 감염 가능성을 뒷받침한다. 검사 오류가 강하게 의심되는 저위험 상황이라면 재평가할 수 있지만 이 환자는 재활성화 고위험 치료를 앞두고 있다.","could_be_correct_if":"결핵 노출 위험이 매우 낮고 검사 오류가 강하게 의심되어 반복 평가가 필요한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"Infliximab을 먼저 시작하면 잠복결핵이 치료되지 않은 기간에 재활성화 위험이 증가한다. 면역억제의 긴급성과 결핵 위험을 함께 평가하되 가능한 한 잠복결핵 치료를 선행한다.","could_be_correct_if":"생명을 위협하는 기저질환 때문에 면역억제를 미룰 수 없어 결핵 전문가와 동시 치료 시점을 개별 결정한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"정상 CT는 활동성 폐병변 가능성을 낮출 수 있지만 IGRA로 확인된 잠복 감염과 향후 TNF 억제 위험을 없애지 않는다. CT 결과만으로 잠복결핵 치료를 취소하지 않는다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"잠복결핵 치료 전에는 증상과 영상, 필요 시 미생물검사로 활동성 질환을 배제해야 단독 예방요법에 따른 내성 위험을 피할 수 있다. 그 뒤 infliximab보다 먼저 적합한 잠복결핵 요법을 시작하고 약물 상호작용과 간독성을 관리한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"잠복결핵은 균 수가 적어 통상 배양 양성을 기다려 진단하거나 치료하지 않는다. 배양 양성은 오히려 활동성 결핵을 시사하므로 그 경우에는 잠복결핵 예방요법이 아니라 활동성 다제치료가 필요하다.","could_be_correct_if":"객담 등에서 배양 양성으로 활동성 결핵이 확인되어 활동성 결핵 치료를 시작하는 경우","misconception_tag":"진단 오류"}
+    ],"review_flags":["검증된 근거 자료가 입력되지 않아 TNF 억제제 시작 전 잠복결핵 치료 선행 기간을 출판 전 기준 지침과 대조해야 함"],"publication_recommendation":"revise"
+  }
+]

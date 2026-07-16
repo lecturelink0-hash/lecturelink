@@ -1,0 +1,92 @@
+[
+  {
+    "question_id": "RESP-000018",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["코골이·목격된 무호흡·주간 졸림", "비만", "중증 COPD 동반"],
+      "clinical_inference": "폐쇄수면무호흡증의 임상 가능성이 높지만 중증 심폐질환이 동반되어 단순 가정검사보다 동반 저환기와 수면단계를 함께 평가할 수 있는 검사실 수면다원검사가 적절하다.",
+      "best_answer": "C4"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"conditionally_correct","explanation":"가정수면무호흡검사는 합병증이 없는 고위험 성인의 진단에 사용할 수 있다. 이 환자는 중증 COPD가 있어 수면 관련 저산소혈증이나 저환기를 함께 평가해야 하므로 단독 가정검사만으로는 부족하다.","could_be_correct_if":"유의한 심폐질환이나 수면 관련 저환기 의심이 없는 단순 고위험 성인인 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"야간 산소포화도는 저산소혈증의 존재를 보여줄 수 있지만 수면단계, 호흡 노력, 기류를 함께 측정하지 않는다. 따라서 폐쇄성 사건의 빈도와 유형을 확진하는 검사로 사용할 수 없다.","could_be_correct_if":"확진이 아니라 야간 저산소혈증의 선별 또는 산소치료 반응만 평가하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"다중수면잠복기검사는 객관적인 주간 수면 성향을 측정해 기면증이나 특발성 과다수면을 평가한다. 목격된 무호흡이 있는 환자의 OSA 확진을 위한 첫 검사가 아니다.","could_be_correct_if":"적절한 야간 수면검사 후에도 기면증이나 중추성 과다수면이 의심되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"검사실 수면다원검사는 수면단계와 기류, 호흡 노력, 산소화 등을 함께 기록한다. 중증 COPD가 동반된 이 환자에서는 폐쇄성 사건뿐 아니라 동반 수면 관련 가스교환 장애를 평가할 수 있어 가장 적절하다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"상기도 CT는 구조적 협착이나 수술 계획에 필요한 해부학적 정보를 줄 수 있다. 그러나 수면 중 실제 무호흡·저호흡 발생과 수면단계의 관계를 측정하지 못하므로 OSA를 확진하지 못한다.","could_be_correct_if":"확진 후 특정 해부학적 폐쇄 원인을 평가하거나 수술 계획을 세우는 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags": [],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000019",
+    "answer_consistency": "questionable",
+    "core_reasoning": {
+      "key_findings": ["기계환기 중 pH 7.22와 PaCO2 68 mmHg", "plateau pressure 24 cmH2O", "기도폐쇄 없음"],
+      "clinical_inference": "급성 호흡성 산증을 완화하려면 유효 분당환기를 늘려야 한다. 다만 현재 호흡수, 일회호흡량, 총 PEEP와 호기 종료 여부가 없어 호흡수 증가가 가장 안전한 단일 변경인지 확정하기 어렵다.",
+      "best_answer": "C1"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"conditionally_correct","explanation":"호흡수를 높이면 분당환기가 증가해 PaCO2를 낮출 수 있고, 일회호흡량을 늘리는 것보다 폐보호 전략을 유지하기 쉽다. 그러나 현재 호흡수와 호기 시간이 제시되지 않아 auto-PEEP 위험 없이 증가 가능한지 먼저 확인해야 한다.","could_be_correct_if":"현재 호흡수가 과도하지 않고 완전한 호기가 가능하며 auto-PEEP가 없는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"일회호흡량 증가는 분당환기를 높이지만 폐포 과팽창과 폐손상 위험을 증가시킬 수 있다. Plateau pressure가 낮다는 사실만으로 예측체중 8 mL/kg까지 올리는 것을 호흡수 조정보다 우선할 수는 없다.","could_be_correct_if":"호흡수 증가가 제한되고 폐역학과 driving pressure를 포함한 평가에서 더 큰 일회호흡량이 안전하다고 판단되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"회로 사강을 줄이면 같은 분당환기에서도 폐포환기를 늘릴 수 있어 고탄산혈증 완화에 도움이 된다. 다만 현재 회로 사강이 증가했다는 정보가 없고, pH 7.22에서 이것만 시행하는 것이 충분한지는 재평가가 필요하다.","could_be_correct_if":"불필요한 기계적 사강이 확인되고 폐보호환기 때문에 다른 환기량 증가가 제한되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"폐보호환기에서는 일정 수준의 허용성 고탄산혈증을 받아들일 수 있다. 그러나 현재 안전하게 분당환기를 늘릴 여지가 있는지 평가하지 않고 산증 악화를 관찰만 하는 것은 우선 선택으로 부족하다.","could_be_correct_if":"폐보호 한계 때문에 추가 환기 증가가 위험하고 허용 가능한 산증 범위를 사전에 정한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"중탄산염은 환기 부족의 원인을 해결하지 않으며 이산화탄소 생성을 늘려 세포 내 산증을 악화시킬 수 있다. 우선 기계환기 설정과 폐포환기를 교정해야 한다.","could_be_correct_if":"환기 교정과 별개로 중탄산염 투여가 필요한 특정 대사성 산증 또는 제한적 구조 상황이 확인된 경우","misconception_tag":"병태생리"}
+    ],
+    "review_flags": ["현재 설정 호흡수, 일회호흡량, 총 PEEP 또는 auto-PEEP 여부가 없어 C1의 안전성을 완전히 판단할 수 없다.", "문항에 현재 호흡수와 완전한 호기 여부를 추가한 뒤 승인하는 것이 좋다."],
+    "publication_recommendation": "revise"
+  },
+  {
+    "question_id": "RESP-000020",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["중심부 폐종괴와 종격동 림프절 비대", "얼굴·목 부종과 누우면 악화되는 호흡곤란", "혈역학적 안정", "기도폐쇄 소견 없음"],
+      "clinical_inference": "악성 종양에 의한 상대정맥증후군이 의심되지만 즉각적 감압이 필요한 생명위협 소견은 없다. 종양 유형에 따라 치료가 달라지므로 지지요법과 함께 조직진단·병기평가를 먼저 진행한다.",
+      "best_answer": "C3"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"conditionally_correct","explanation":"방사선치료는 방사선 감수성 종양의 상대정맥증후군 치료가 될 수 있지만 조직진단 전에 시행하면 이후 진단에 영향을 줄 수 있다. 현재는 기도폐쇄나 혈역학적 불안정이 없어 진단 절차를 생략할 근거가 없다.","could_be_correct_if":"생명위협 증상이 진행하고 다른 즉각적 감압 방법이 적절하지 않으며 임상적으로 긴급 종양치료가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"혈관내 스텐트는 정맥 폐쇄를 빠르게 완화해 심한 증상이나 생명위협 상황에서 유용하다. 이 환자는 혈압이 안정적이고 기도 폐쇄 소견이 없어 즉시 시행해야 한다는 단서가 없다.","could_be_correct_if":"심한 기도부종, 뇌부종, 혈역학적 문제 또는 빠른 증상 완화가 필요한 중증 상대정맥증후군인 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"correct","explanation":"상체를 올리는 것은 정맥압과 증상을 줄이는 지지요법이다. 안정 환자에서는 암종에 따른 항암치료·방사선치료 선택을 위해 조직학적 진단과 병기평가를 우선해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"항응고는 혈전성 상대정맥 폐쇄에서 필요할 수 있다. 이 증례는 중심부 종괴와 종격동 림프절 비대에 의한 종양성 압박이 우선 의심되며 혈전이 확인되지 않았다.","could_be_correct_if":"영상에서 혈전성 폐쇄가 확인되거나 혈전 가능성이 높은 도관 관련 상황인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"conditionally_correct","explanation":"스테로이드는 부종 완화나 스테로이드 반응성 종양에서 보조적으로 사용될 수 있다. 그러나 단독 투여는 폐쇄 원인을 치료하거나 조직진단을 대체하지 못한다.","could_be_correct_if":"스테로이드 반응성 종양이 강하게 의심되거나 기도·뇌 부종을 줄이기 위한 보조치료가 필요한 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags": ["제시된 NCCN 환자용 폐암 지침이 상대정맥증후군의 치료 순서를 직접 뒷받침하는지 관리자 검수에서 확인할 필요가 있다."],
+    "publication_recommendation": "revise"
+  },
+  {
+    "question_id": "RESP-000021",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["발열과 화농성 객담", "국소 둔탁음", "촉각진탕음 증가", "기관지호흡음과 egophony"],
+      "clinical_inference": "폐포가 액체·염증물질로 채워진 폐실질 경화에서는 소리 전달이 증가한다. 감염 증상과 국소 경화 징후가 함께 있어 폐렴성 경화를 우선 의심하고 흉부 X선으로 확인한다.",
+      "best_answer": "C2"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"흉막삼출은 타진음이 둔해질 수 있지만 흉수가 흉벽과 폐 사이의 소리 전달을 차단하므로 촉각진탕음과 호흡음은 대개 감소한다. 이 환자의 진탕음 증가와 기관지호흡음은 폐실질 경화에 더 부합한다.","could_be_correct_if":"촉각진탕음과 호흡음이 감소하고 영상 또는 초음파에서 흉수가 의심되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"증가한 촉각진탕음, 기관지호흡음과 egophony는 밀도가 증가한 폐실질을 통한 음성 전달 증가를 의미한다. 발열과 화농성 객담이 동반되어 폐렴성 경화가 우선이며 흉부 X선으로 범위와 합병증을 평가한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"기흉에서는 공기 때문에 과공명음과 호흡음·촉각진탕음 감소가 예상된다. 혈압이 안정적이고 긴장성 기흉을 시사하는 소견도 없어 영상 없이 바늘감압할 상황이 아니다.","could_be_correct_if":"혈역학적 불안정과 편측 호흡음 소실, 과공명 등 긴장성 기흉 소견이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐기종은 만성 증상과 양측 과공명, 호흡음 감소가 더 전형적이다. 급성 감염 증상과 국소 음성 전달 증가를 설명하지 못한다.","could_be_correct_if":"만성 호흡곤란과 폐쇄성 환기장애가 의심되고 급성 감염이 안정된 뒤 진단 평가를 하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"conditionally_correct","explanation":"중심기도 폐쇄는 국소 단음성 천명이나 반복되는 동일 부위 무기폐 등으로 의심할 수 있다. 이 문항에는 그러한 단서보다 폐포 경화를 지지하는 소견이 제시돼 있다.","could_be_correct_if":"중심기도 폐쇄를 시사하는 영상, 지속적 국소 천명 또는 반복성 무기폐가 확인된 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags": ["신체진찰만으로 폐렴을 확진할 수 없다는 제한을 핵심 해설에 유지한다."],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000022",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["점진적 호흡곤란과 체중감소", "편측 흉곽운동 감소", "매우 둔한 타진음", "촉각진탕음과 호흡음 감소"],
+      "clinical_inference": "매우 둔한 타진음과 소리 전달 감소는 흉막강 액체를 시사한다. 새로 발생한 편측 흉수와 체중감소는 원인 규명이 필요하므로 초음파 확인 후 진단적 흉강천자를 계획한다.",
+      "best_answer": "C4"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"폐실질 경화에서는 밀도 증가로 촉각진탕음과 기관지호흡음이 증가할 수 있다. 이 환자는 두 소견이 모두 감소하고 발열도 없어 항생제 반응만 관찰하면 흉수의 원인 평가가 지연된다.","could_be_correct_if":"감염성 폐렴의 임상·영상 근거가 확인되고 흉수가 배제된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"기흉은 타진에서 과공명음이 예상되며, 긴장성이라면 혈역학적 또는 호흡기 불안정 소견이 동반될 수 있다. 이 환자는 매우 둔한 타진음과 안정된 혈압을 보여 영상 없이 감압할 근거가 없다.","could_be_correct_if":"긴장성 기흉을 시사하는 불안정성과 편측 호흡음 소실·과공명음이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"무기폐도 흉곽 움직임과 호흡음 감소를 보일 수 있지만, 체중감소가 동반된 새 편측 흉막성 소견을 유발폐활량계만으로 처리할 수 없다. 영상으로 흉수와 폐실질 상태를 확인하고 원인을 평가해야 한다.","could_be_correct_if":"수술 후 단순 무기폐가 영상으로 확인되고 폐쇄성 원인이나 흉수가 배제된 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"correct","explanation":"침상 초음파는 흉수의 존재와 위치, 천자 가능한 깊이를 확인하는 데 유용하다. 새 편측 흉수와 체중감소가 있어 안전한 진단적 흉강천자로 원인을 평가해야 한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"횡격막 마비는 횡격막 상승과 역설운동을 평가하는 sniff test가 도움이 될 수 있다. 그러나 매우 둔한 타진음과 촉각진탕음·호흡음 감소의 조합은 횡격막 기능장애보다 흉수를 지지한다.","could_be_correct_if":"영상에서 횡격막 상승이 보이고 호흡 시 역설운동이 의심되는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags": ["흉강천자의 금기와 환자 상태를 확인한다는 안전 조건을 실제 운영 해설에 포함한다."],
+    "publication_recommendation": "approve"
+  }
+]

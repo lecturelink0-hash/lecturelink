@@ -1,0 +1,92 @@
+[
+  {
+    "question_id": "RESP-000228",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["LABA/LAMA 사용 중", "최근 1년간 입원이 필요한 급성 악화 2회", "혈액 호산구 420/μL", "폐렴 병력 없음"],
+      "clinical_inference": "이중 지속성 기관지확장제에도 악화가 반복되고 혈액 호산구가 높아 ICS 추가의 기대 이득이 크다. 폐렴 병력도 없어 제시된 선택지 중 LABA/LAMA/ICS 삼제요법이 타당하다.",
+      "best_answer": "C1"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"correct","explanation":"반복되는 중증 악화와 높은 혈액 호산구는 ICS를 추가했을 때 악화 감소 효과를 기대하게 하는 결정적 단서다. 기존 LABA/LAMA에 ICS를 더하는 삼제요법을 고려하고 이후 악화와 폐렴 발생을 함께 추적한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"ICS는 COPD 환자 모두에게 쓰는 약은 아니지만, 이 환자처럼 기관지확장제 치료에도 악화가 반복되고 호산구가 높은 경우에는 유용할 수 있다. 폐렴 반복이나 뚜렷한 부작용으로 위해가 이득보다 큰 상황이라면 회피 또는 중단을 검토할 수 있다.","could_be_correct_if":"ICS 관련 폐렴이 반복되거나 중대한 부작용으로 위해가 기대 이득보다 큰 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"SABA 단독 필요 시 사용은 지속성 기관지확장제를 대체하지 못하며, 이미 입원을 반복한 고위험 COPD의 유지치료를 오히려 약화한다. 증상이 매우 드물고 악화 위험이 낮은 초기 환자라면 필요 시 단기작용 기관지확장제 중심 접근을 고려할 수 있다.","could_be_correct_if":"증상이 드물고 악화 병력이 없는 저위험 환자의 초기 증상 완화가 목적일 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"매일 경구 prednisone을 유지하면 전신 부작용 부담이 크고 안정기 COPD의 표준 유지요법이 아니다. 전신 corticosteroid는 급성 악화의 단기 치료에는 사용될 수 있다.","could_be_correct_if":"현재 급성 악화로 단기간 전신 corticosteroid 치료가 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"모든 환자에게 항생제를 매일 예방 투여하는 전략은 아니며, 현재 선택지에는 약제·기간·대상 조건도 제시되지 않았다. 최적 흡입치료에도 특정 양상의 악화가 계속되는 선별 환자에서는 별도의 위험·이득 평가 후 예방적 항균 전략을 검토할 수 있다.","could_be_correct_if":"최적 흡입치료 후에도 악화가 지속되어 전문 평가에서 예방적 항균치료의 선별 적응증을 충족한 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags": ["검증된 근거 자료가 입력되지 않아 최신 권고와 문구를 출판 전 대조해야 함"],
+    "publication_recommendation": "revise"
+  },
+  {
+    "question_id": "RESP-000229",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["임신 28주", "CT 혈관조영에서 폐동맥 충만결손", "혈압 118/72 mmHg로 혈역학적 안정"],
+      "clinical_inference": "영상으로 급성 폐색전증이 확인되었고 쇼크나 저혈압이 없다. 임신 중 치료 항응고에는 태반을 통과하지 않는 LMWH가 적절하다.",
+      "best_answer": "C5"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"전신 혈전용해는 중대한 출혈 위험이 있어 혈역학적으로 안정한 PE의 일차 치료가 아니다. 지속성 저혈압이나 쇼크를 동반한 고위험 PE에서 생명구조 재관류가 필요하면 임신 중에도 다학제 판단으로 고려할 수 있다.","could_be_correct_if":"폐색전증으로 지속성 저혈압 또는 쇼크가 발생해 긴급 재관류가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"CT에서 PE가 확인된 뒤 D-dimer 정상화를 기다릴 이유가 없고, 치료 지연은 혈전 진행 위험을 높인다. D-dimer는 일부 진단 알고리즘에서 영상 전 배제에 활용될 수 있지만 확진 후 치료 반응 목표로 쓰지 않는다.","could_be_correct_if":"확진 전 임신 적응형 진단 알고리즘에서 임상확률과 함께 영상 필요성을 판단하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"Warfarin은 태반을 통과해 태아 위해가 우려되므로 임신 28주의 초기 치료 선택이 아니다. 출산 후에는 수유 여부와 출혈 위험 등을 고려해 경구 항응고제로 전환할 수 있다.","could_be_correct_if":"출산 후 장기 항응고제로 전환하는 상황","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"분만까지 항응고를 미루면 임신 중 확인된 PE를 치료하지 않은 채 두게 된다. 분만 시기에는 항응고 중단과 재개를 산과·마취과와 계획하지만, 그것이 현재 치료 개시를 지연시키는 근거는 아니다.","could_be_correct_if":"분만이 임박해 신경축 마취나 출혈 위험에 맞춘 짧은 항응고 중단 시점을 다학제로 조정하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"correct","explanation":"LMWH는 태반을 통과하지 않아 임신 중 PE 치료의 표준 항응고 선택이다. 혈역학적으로 안정하므로 치료 용량으로 시작하고 체중 변화, 출혈 위험 및 분만 계획을 전문과와 함께 추적한다.","could_be_correct_if":null,"misconception_tag":"적응증"}
+    ],
+    "review_flags": ["문항이 의존하는 CT 이미지가 입력 데이터에 없어 실제 폐동맥 충만결손을 출판 전 확인해야 함", "검증된 근거 자료가 입력되지 않음", "기존 핵심 해설의 '충만결손가', '합당에 합당' 문구 교정 필요"],
+    "publication_recommendation": "revise"
+  },
+  {
+    "question_id": "RESP-000230",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["패혈증 후 양측 폐침윤", "PEEP 10과 FiO₂ 0.80에서도 PaO₂/FiO₂ 90", "plateau pressure 28 cmH₂O"],
+      "clinical_inference": "중증 ARDS에 해당하는 저산소혈증이며 plateau pressure는 폐보호환기 범위에 있다. 폐보호환기를 유지하면서 장시간 복와위를 조기에 시행하는 것이 우선이다.",
+      "best_answer": "C3"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"일회호흡량 12 mL/kg은 과팽창과 ventilator-induced lung injury 위험을 높인다. ARDS에서는 예측체중에 따른 낮은 일회호흡량과 제한된 plateau pressure를 유지해야 한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"PEEP를 0으로 낮추면 불안정한 폐포가 허탈되어 이미 심한 산소화 장애가 악화될 수 있다. 기압손상이나 혈역학 저하가 있으면 PEEP를 재조정할 수 있지만 무조건 제거하는 선택은 아니다.","could_be_correct_if":"PEEP로 인한 심각한 혈역학 저하나 과팽창이 확인되어 개별적으로 하향 조정하는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"correct","explanation":"P/F 90은 중증 저산소혈증이며, 장시간 복와위는 환기-관류 분포와 폐의 균질성을 개선하는 핵심 보조 치료다. 숙련된 팀이 폐보호환기를 유지하면서 하루 약 16시간 시행한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"FiO₂ 1.0을 장기간 고정하면 산소독성 위험이 커지며 폐포 허탈 자체를 해결하지 못한다. 구조 과정에서 일시적으로 높은 FiO₂가 필요할 수 있지만 산소화가 허용하는 범위에서 낮춰야 한다.","could_be_correct_if":"생명을 위협하는 저산소혈증을 즉시 구조하기 위해 일시적으로 최대 산소 농도가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"무제한 수액은 폐부종과 산소화를 악화시킬 수 있다. 패혈성 쇼크의 초기 소생에는 수액이 필요할 수 있으나 안정화 이후에는 관류를 보존하면서 보수적 수액 전략을 적용한다.","could_be_correct_if":"저관류 또는 쇼크로 초기 혈역학 소생이 필요한 경우에도 반응을 재평가하며 제한적으로 투여","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags": ["문항이 의존하는 흉부 X선 이미지가 입력 데이터에 없어 양측성 음영을 출판 전 확인해야 함", "검증된 근거 자료가 입력되지 않음"],
+    "publication_recommendation": "revise"
+  },
+  {
+    "question_id": "RESP-000231",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["약제감수성 폐결핵 치료 완료 6개월 후", "체중 감소와 객혈 재발", "활력징후 안정"],
+      "clinical_inference": "활동성 결핵 재발 또는 재감염이 의심되며 현재 균주의 약제감수성은 과거 결과만으로 단정할 수 없다. 치료 전 객담으로 세균학적 확진과 내성 평가를 하고 전염 가능성에 대비해야 한다.",
+      "best_answer": "C2"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"과거 약제감수성은 재발 또는 재감염 균주의 현재 감수성을 보장하지 않는다. 급격히 악화해 경험적 치료가 필요하더라도 먼저 객담 검체를 확보하고 내성 위험을 반영한 요법을 정해야 한다.","could_be_correct_if":"생명을 위협하는 중증 상태에서 검체를 먼저 확보한 뒤 감수성 결과 전에 경험적 다제 치료가 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"correct","explanation":"재발 의심 결핵에서는 핵산증폭검사로 신속히 확인하고 배양·약제감수성검사로 재치료 조합을 결정해야 한다. 객혈과 의심 영상이 있는 동안에는 전염 가능성을 고려해 공기주의를 적용한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"배양은 시간이 걸리므로 결과까지 격리 없이 관찰하면 활동성 폐결핵의 전파 가능성을 방치한다. 전염성이 배제되거나 적절한 치료 후 격리 해제 기준을 충족했다면 외래 추적이 가능하다.","could_be_correct_if":"활동성·전염성 폐결핵이 합리적으로 배제되었거나 격리 해제 기준을 충족한 경우","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"3개월 isoniazid-rifapentine은 활동성 질환을 치료하는 요법이 아니다. 증상과 영상으로 활동성 재발이 의심되므로 잠복결핵 요법을 시작하기 전에 활동성 결핵을 확인해야 한다.","could_be_correct_if":"활동성 결핵이 배제되고 잠복결핵 치료 적응증이 확인된 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Levofloxacin 단독 투여는 불완전한 치료로 증상을 가리면서 fluoroquinolone 내성을 선택할 수 있다. 감수성 결과에 따라 내성결핵 다제요법의 한 구성 약제로 쓰일 수 있지만 배양검사를 대체하지 않는다.","could_be_correct_if":"약제감수성 결과와 전문가 평가에 따라 적절한 내성결핵 다제요법에 포함되는 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags": ["문항이 의존하는 흉부 X선 이미지가 입력 데이터에 없어 상엽 공동성·결절성 병변을 출판 전 확인해야 함", "검증된 근거 자료가 입력되지 않음", "기존 핵심 해설의 '음영가' 문구 교정 필요"],
+    "publication_recommendation": "revise"
+  },
+  {
+    "question_id": "RESP-000232",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["COPD 급성 악화", "pH 7.28과 PaCO₂ 68 mmHg의 급성 고탄산혈증 산증", "의식·기도 보호·분비물 배출 가능", "혈역학적 안정"],
+      "clinical_inference": "환기부전으로 산증이 있지만 NIV를 시행할 수 있는 협조도와 기도 보호 능력이 유지된다. 조절 산소와 NIV를 우선 적용하고 반응 또는 실패 징후를 면밀히 재평가한다.",
+      "best_answer": "C4"
+    },
+    "choice_explanations": [
+      {"choice_id":"C1","verdict":"incorrect","explanation":"산소포화도 100%를 목표로 과도한 산소를 투여하면 고탄산혈증이 악화될 수 있고, 현재 산증성 환기부전을 교정하지도 못한다. 생명을 위협하는 저산소혈증의 초기 구조에는 고농도 산소가 필요할 수 있으나 이후 신속히 목표 범위로 조절한다.","could_be_correct_if":"즉각적인 생명구조가 필요한 극심한 저산소혈증에서 일시적으로 고농도 산소를 사용하는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"현재 환자는 대화가 가능하고 분비물을 스스로 배출하며 혈압도 안정적이어서 NIV를 먼저 시도할 조건이다. 의식 저하, 기도 보호 실패, 심한 불안정 또는 NIV 실패가 발생하면 기관내삽관으로 전환한다.","could_be_correct_if":"기도 보호 불능, 호흡정지, 중증 혈역학 불안정 또는 적절한 NIV에도 악화하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"이 산증의 원인은 CO₂ 배출 실패이므로 bicarbonate가 아니라 환기 개선이 핵심이다. Bicarbonate는 별도의 중증 대사성 산증 적응증이 확인된 상황에서 원인 치료와 함께 고려할 수 있다.","could_be_correct_if":"호흡성 산증과 별개로 중증 대사성 산증에 대한 명확한 적응증이 있는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"correct","explanation":"pH 7.28과 PaCO₂ 68 mmHg는 COPD 악화에 따른 산증성 고탄산혈증 호흡부전을 보여 NIV 적응증에 부합한다. 산소포화도를 88–92%로 조절하면서 NIV를 시작하고 가스교환, 의식 및 호흡노력을 조기에 재평가한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"항생제는 세균성 악화 단서가 있을 때 원인 치료의 일부일 뿐, 이미 발생한 산증성 환기부전을 교정하지 못한다. CO₂가 더 오르기를 기다리지 말고 현재 NIV를 시작해야 한다.","could_be_correct_if":"환기부전이나 산증이 없고 세균성 악화가 의심되어 항생제만 추가하면 되는 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags": ["검증된 근거 자료가 입력되지 않아 목표 산소포화도와 NIV 적응증을 출판 전 대조해야 함"],
+    "publication_recommendation": "revise"
+  }
+]

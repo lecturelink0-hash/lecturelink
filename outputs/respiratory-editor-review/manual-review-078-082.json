@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000078",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["특발성 폐섬유화증","휴식 SpO2 95%","6분보행 중 SpO2 81%와 심한 호흡곤란","보행 산소로 SpO2·보행거리 개선"],"clinical_inference":"섬유화된 폐포-모세혈관 장벽에서는 운동으로 모세혈관 통과시간이 짧아질 때 확산제한과 V/Q 불균형의 영향이 두드러질 수 있다. 휴식 저산소혈증은 없지만 심한 운동성 탈포화가 재현되고 산소 반응도 있어 이동형 산소치료를 고려한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"운동 시 심박출량이 증가하면 폐모세혈관 통과시간이 짧아져 섬유화된 장벽을 통한 산소 평형이 더 어려워진다. 보행 중 심한 탈포화와 산소 투여 시 기능 회복이 확인됐으므로 활동 시 사용할 이동형 산소를 적정해 고려한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"장기산소치료를 하루 15시간 이상 지속하는 처방은 안정 시 중증 만성 저산소혈증이 확인될 때 적용한다. 이 환자는 휴식 SpO2와 PaO2가 보존되어 있어 활동 시 산소 처방과 구분해야 한다.","could_be_correct_if":"안정 상태의 휴식 중 중증 만성 저산소혈증이 반복 확인되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"폐재활은 운동능력과 호흡곤란 개선에 중요하지만 운동 중 SpO2 81%의 저산소혈증을 직접 교정하지는 않는다. 산소로 포화도와 보행거리가 함께 개선됐으므로 재활과 이동형 산소를 상호 배타적으로 선택할 이유가 없다.","could_be_correct_if":"의미 있는 운동성 탈포화가 없고 재활이 필요한 운동 제한만 있는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"수면 중 산소만 처방하려면 야간 탈포화가 실제로 확인되어야 한다. 지문에서 입증된 문제는 보행 중 저산소혈증이므로 처방 시점도 활동 중이어야 한다.","could_be_correct_if":"수면검사 또는 야간 산소측정에서 수면 관련 저산소혈증이 확인되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"conditionally_correct","explanation":"검사 표준화 실패, 불량 파형 또는 임상상과 불일치가 있으면 동일 조건 재검이 합리적이다. 그러나 이 사례는 증상과 심한 탈포화가 동반되고 산소 투여에 포화도와 기능이 함께 개선돼 처방 고려를 미룰 근거가 부족하다.","could_be_correct_if":"측정 품질이나 재현성이 의심되거나 결과가 처방 기준 경계에 있는 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000079",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["해발 3,800 m 도착 6시간 후","진통제에도 지속되는 심한 두통·반복 구토","PaO2 51·PaCO2 29 mmHg","현지 기준 정상 A–a 산소차","운동실조·의식 변화·폐수포음 없음"],"clinical_inference":"고도 상승으로 대기압과 흡입 산소분압이 낮아져 폐포 및 동맥 산소분압이 함께 감소하고, 저산소성 과호흡으로 PaCO2도 낮아진 상태다. 중증 급성 고산병 증상이 있으므로 추가 상승을 중단하고 산소와 하강을 우선 고려한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"현 고도 휴식과 acetazolamide는 경증 급성 고산병에서 사용할 수 있다. 진통제에 반응하지 않는 심한 두통과 반복 구토는 경증으로 보기 어려워 현 고도 관찰만 하기보다 산소와 하강을 우선해야 한다.","could_be_correct_if":"가벼운 두통·피로만 있고 휴식과 증상치료에 호전되는 경증 급성 고산병인 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"고고도폐부종은 휴식 호흡곤란, 기침, 운동능력 급감, 수포음 또는 폐침윤 등 폐부종 단서가 필요하다. 청진이 정상이고 신경계 증상이 중심이므로 nifedipine을 포함한 HAPE 치료로 단정할 근거가 없다.","could_be_correct_if":"저산소증과 함께 휴식 호흡곤란·기침·수포음 등 HAPE 소견이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"고고도뇌부종은 운동실조나 의식 변화가 핵심이며 즉시 하강·산소·dexamethasone이 필요하다. 이 환자에게 그런 소견은 없어 현재 단계에서 HACE로 진단할 수 없다.","could_be_correct_if":"운동실조, 혼돈, 의식수준 저하 등 HACE 소견이 발생한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"산소와 하강에도 증상이 지속되거나 흉막통·혈전 위험·증가한 A–a 차가 있으면 폐색전증 등 다른 원인을 찾아야 한다. 현재는 전형적 고도 노출 시간 경과와 정상 A–a 차가 있어 고도 질환 처치가 우선이다.","could_be_correct_if":"고도 저산소증 교정 후에도 증상이 남거나 별도의 심폐질환 단서가 나타나는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"대기압 저하로 흡입 및 폐포 산소분압이 감소하면 폐 자체 가스교환이 정상이더라도 PaO2가 낮아지고 A–a 차는 크게 늘지 않는다. 심한 증상이 있으므로 산소를 투여하고 더 낮은 고도로 하강한다.","could_be_correct_if":null,"misconception_tag":"병태생리"}
+    ],
+    "review_flags":["현재 참고문헌은 고산병의 중증도 판정과 산소·하강·acetazolamide·dexamethasone·nifedipine의 적응증을 직접 뒷받침하지 않는다. 고산의학 임상지침을 추가해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000080",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["COPD 악화 회복 8주 후 안정 상태","서로 다른 날 PaO2 57·58 mmHg","SpO2 89%","hematocrit 57%","폐고혈압·우심실 확장"],"clinical_inference":"안정 상태 PaO2가 56~59 mmHg이면서 저산소증 합병증인 적혈구증가증과 폐고혈압이 확인되어 중증 만성 휴식 저산소혈증의 장기산소치료 기준을 충족한다. 하루 15시간 이상 처방하고 상황별 유량과 화재 안전을 교육한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"PaO2가 55 mmHg를 약간 넘더라도 56~59 mmHg 범위에서 폐고혈압, 우심부전 소견 또는 hematocrit 55% 이상이 동반되면 장기산소치료 적응이 된다. 기관지확장제는 기류제한 치료이지 만성 저산소혈증의 합병증을 대체 치료하지 못한다.","could_be_correct_if":"휴식 저산소혈증이 경도이고 폐고혈압·적혈구증가증·우심부전 소견이 없는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"이동형 산소만 고려하는 경우는 휴식 산소화가 보존되고 활동 중 심한 탈포화가 중심일 때다. 이 환자는 안정 시에도 반복적으로 장기산소치료 기준을 충족하므로 휴식과 수면을 제외할 수 없다.","could_be_correct_if":"휴식 중 기준을 충족하지 않고 운동 중에만 심한 저산소혈증이 확인되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"correct","explanation":"PaO2 57~58 mmHg에 hematocrit 57%와 폐고혈압이 동반되어 장기산소치료 적응증에 해당한다. 하루 15시간 이상 사용하도록 처방하고 휴식·수면·활동 시 필요한 유량을 적정하며 흡연·화재 위험을 교육한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"야간 비침습환기는 선택된 만성 고탄산혈증 환자에서 환기 보조로 고려하지만 모든 시간대의 저산소혈증을 치료하는 장기산소의 대체재가 아니다. 지문에는 지속 고탄산혈증이나 수면저환기 자료도 없다.","could_be_correct_if":"최적 치료 후에도 만성 고탄산혈증이 지속되어 별도의 NIV 적응증을 충족하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"정맥절개술은 선택된 증상성 과점도 상황에서 고려할 수 있지만 만성 저산소혈증이라는 적혈구증가증의 원인을 해결하지 않는다. 산소치료 적응증은 그대로 유지된다.","could_be_correct_if":"산소치료와 원인 교정 중에도 증상성 과점도가 있어 별도 혈액학적 판단이 필요한 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000081",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["간경변","기립 시 악화·누우면 호전되는 호흡곤란","기립 시 PaO2 78→61 mmHg","조영제가 4~5 심박 뒤 좌심방에 출현"],"clinical_inference":"orthodeoxia와 지연된 미세기포의 좌심방 출현은 간질환에 동반된 폐내 혈관확장과 단락을 지지한다. 간폐증후군에서 산소는 저산소혈증의 보조 치료이며 근본 치료를 위해 간이식 평가가 필요하다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"심장 내 우좌단락에서는 미세기포가 일반적으로 우심방 조영 직후 초기 심박에 좌심방으로 나타난다. 4~5 심박 뒤의 지연 출현과 간경변·orthodeoxia는 폐내 혈관 통과를 더 지지한다.","could_be_correct_if":"미세기포가 즉시 좌심방에 나타나고 심방중격을 통한 단락이 해부학적으로 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"간폐증후군의 폐내 혈관확장은 특히 기립 시 중력 의존 폐기저부의 단락 효과를 키워 저산소혈증을 악화시킬 수 있다. 산소를 보조적으로 투여하면서 근본 치료인 간이식 가능성과 우선순위를 평가한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"문맥폐고혈압은 폐혈관수축·재형성으로 폐혈관저항과 폐동맥압이 상승하는 질환이며 우심도자로 확진한다. 폐내 혈관확장과 지연성 기포 통과를 보이는 간폐증후군과 병태생리가 다르다.","could_be_correct_if":"우심도자에서 전모세혈관성 폐고혈압과 상승한 폐혈관저항이 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"간성 흉수는 영상과 진찰에서 큰 흉수가 확인될 때 호흡곤란과 압박성 무기폐를 일으킬 수 있다. 그러나 자세성 저산소혈증과 지연된 미세기포의 좌심방 출현을 설명하지 못한다.","could_be_correct_if":"큰 간성 흉수가 영상으로 확인되고 저산소증의 주된 기계적 원인인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"과다환기는 PaCO2와 pH를 변화시킬 수 있지만 폐혈관을 통한 미세기포 출현을 만들지 않는다. 호흡 재훈련은 간폐증후군의 단락과 산소화 장애를 교정하지 못한다.","could_be_correct_if":"가스교환 장애나 단락 없이 기능성 과호흡이 확인되는 경우","misconception_tag":"병태생리"}
+    ],
+    "review_flags":["미세기포 출현 시점만으로 심장 내 단락과 폐내 단락을 절대적으로 구분하지 말고, 간질환·orthodeoxia 및 심초음파 소견을 함께 해석한다는 설명을 유지해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000082",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["COPD 급성악화","과거 고탄산혈증성 호흡부전과 NIV","실내공기 SpO2 82%","현재 의식 명료","초기 동맥혈가스 대기 중"],"clinical_inference":"고탄산혈증 위험이 높지만 중증 저산소혈증을 방치해서는 안 된다. 조절 산소를 즉시 투여해 SpO2 88~92%를 목표로 하고 초기 및 30~60분 후 혈액가스로 CO2 상승과 산증을 확인한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"SpO2 100%를 목표로 무제한 고농도 산소를 주면 V/Q 변화와 Haldane 효과 등으로 고탄산혈증이 악화될 수 있다. 임상 악화를 기다리지 말고 조절 산소와 조기 반복 혈액가스로 확인해야 한다.","could_be_correct_if":"심정지·소생 직후 또는 생명을 위협하는 즉각적 최고농도 산소 적응 상황","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"산소 유발 고탄산혈증 위험은 목표 포화도를 정해 관리할 이유이지 SpO2 82%의 저산소혈증을 방치할 이유가 아니다. 채혈과 동시에 조절 산소를 시작한다.","could_be_correct_if":null,"misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"94~98% 목표는 고탄산혈증 위험이 없는 다수의 급성 환자에게 적용한다. 이전 고탄산혈증성 호흡부전 병력이 있으면 초기 PaCO2가 정상이더라도 산소 투여 후 상승할 수 있어 반복 혈액가스가 필요하다.","could_be_correct_if":"COPD나 고탄산혈증 위험이 없고 일반 급성 저산소혈증 목표가 적용되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"Venturi mask 등으로 조절 산소를 투여해 초기 SpO2를 88~92%로 맞춘다. 동맥혈가스로 PaCO2와 pH를 확인하고 30~60분 내 재검해 산소 유발 CO2 상승이나 진행성 환기부전을 찾아 NIV 필요성까지 평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"고유량 비강캐뉼라를 사용하더라도 흡입 산소 농도와 목표 포화도를 처방해야 하며, 최대 유량이 자동으로 적절한 것은 아니다. 고탄산혈증 위험은 증상만으로 감시할 수 없어 혈액가스가 필요하다.","could_be_correct_if":"선택된 저산소성 호흡부전에서 목표 포화도와 혈액가스 감시를 정해 HFNC를 사용하는 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  }
+]

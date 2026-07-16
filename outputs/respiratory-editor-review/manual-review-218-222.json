@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000218","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["뇌졸중 후 연하장애","발열·기침과 국소 폐렴","혈역학 안정","최근 입원·항생제·내성균 위험 없음"],"clinical_inference":"연하장애에 따른 지역사회 발생 세균성 흡인폐렴으로 판단되며 광범위 MRSA·Pseudomonas 요법보다 ampicillin-sulbactam이 적절하다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"ampicillin-sulbactam은 지역사회 발생 흡인 관련 폐렴의 흔한 구강·호흡기 세균을 포괄하는 입원 치료 선택이다. 임상 반응을 보며 배양 결과와 폐농양·농흉 등 합병증 여부에 따라 범위와 기간을 조정한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"cefepime-vancomycin은 Pseudomonas와 MRSA 위험이 있는 중증·병원획득 감염에서 고려한다. 최근 입원·정주 항생제나 과거 분리력이 없는 안정 환자에게는 불필요하게 광범위하다.","could_be_correct_if":"중증 폐렴과 검증된 MRSA·Pseudomonas 위험 또는 병원획득 감염이 있을 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"발열·기침과 새로운 국소 침윤은 단순 화학성 흡인손상이 아니라 세균성 폐렴을 시사한다. 수액 관찰만 하면 진행성 감염을 치료하지 못한다.","could_be_correct_if":"무균성 흡인성 폐렴으로 임상·영상 경과가 빠르게 호전되고 세균감염 근거가 없을 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"oseltamivir는 인플루엔자 치료제로 연하장애 후 의존부위 세균성 침윤을 치료하지 않는다. 인플루엔자 검사나 유행 노출도 제시되지 않았다.","could_be_correct_if":"인플루엔자 동시감염이 확인되면 항균제와 함께 사용할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"isoniazid 단독은 잠복결핵 치료의 일부 상황에서 사용하며 활동성 결핵도 단독으로 치료하지 않는다. 급성 흡인 관련 폐렴의 일반 세균을 포괄하지 못한다.","could_be_correct_if":"잠복결핵 치료 적응증이 확인되어 다른 평가 후 적절한 요법으로 사용할 때","misconception_tag":"적응증"}
+    ],"review_flags":["흡인이라는 이유만으로 모든 CAP에 별도 혐기성 범위를 추가한다는 오개념을 피해야 한다. 폐농양·농흉이 없으면 표준 CAP 범위 안에서 환자 중증도와 진료 장소에 맞춰 선택한다.","지문은 외래·입원 여부와 신기능·알레르기를 명시하지 않아 ampicillin-sulbactam의 투여 경로·용량을 일반화하지 않아야 한다.","우중엽을 단독으로 '전형적 의존성 부위'라고 단정하지 말고 체위와 흡인 시점을 고려해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000219","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["알코올 사용장애·흡인 위험","악취 객담·발열","CT 공동성 병변","4 cm","혈역학 안정"],"clinical_inference":"안정적인 흡인 관련 폐농양으로 우선 혐기성·구강균을 포함하는 항생제를 투여하고 반응을 관찰하며 침습치료는 실패·합병증 때 고려한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"폐엽절제술은 항생제·선택적 배액 실패, 대량 객혈, 괴저 또는 종양 의심 등에서 고려한다. 안정적인 4 cm 농양의 첫 치료로 정상 폐실질을 즉시 절제하지 않는다.","could_be_correct_if":"지속 패혈증·대량 객혈·폐괴저 또는 내과치료 실패로 명확한 수술 적응증이 있을 때","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"isoniazid 단독은 급성 혐기성 폐농양을 치료하지 않으며 활동성 결핵에도 부적절한 단독요법이다. 결핵의 만성 경과·미생물 근거도 제시되지 않았다.","could_be_correct_if":"잠복결핵 치료 적응증에서 적절한 전체 계획의 일부로 사용할 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"cefazolin은 MSSA 등에 활성이 있지만 흡인 폐농양의 혼합 구강 혐기성균 범위를 충분히 확보하지 못한다. 악취 객담과 흡인 위험에 맞는 beta-lactam/beta-lactamase inhibitor가 더 적절하다.","could_be_correct_if":"MSSA 단일 병원체 감염이 감수성 검사로 확인될 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"경피 배액은 큰 농양이나 적절한 항생제에 반응하지 않는 환자에서 고려한다. 배액만 하고 항균제를 투여하지 않으면 주변 폐실질과 균혈증성 감염을 치료하지 못한다.","could_be_correct_if":"항생제와 함께 내과치료 실패한 접근 가능한 농양의 감염원 통제가 필요할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"correct","explanation":"ampicillin-sulbactam으로 구강 혐기성균과 호기성 혼합감염을 포괄하며 임상·염증·영상 반응을 추적한다. 해열과 객담 호전 후 경구 전환을 검토하고 치료 실패 시 폐쇄성 병변·비전형 병원체와 배액 필요성을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 핵심 해설 말미의 영상 설명이 '우중엽 국소 침윤'만 언급해 폐농양의 공동·공기액체층을 충분히 기술하지 못한다.","게시 전 CT가 실제 4 cm 공동성 폐농양과 공기액체층을 보여 주는지 확인해야 한다.","6 cm 미만이라는 숫자 하나만으로 침습치료 여부를 결정하지 말고 임상 반응·배액 가능성·합병증을 함께 판단해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000220","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["반복 다량 화농성 객담","HRCT상 기관지확장과 tapering 소실","객담량·호흡곤란 증가","38도 발열"],"clinical_inference":"기관지확장증의 감염성 급성 악화로 객담 배양을 먼저 채취하고 과거 균·중증도에 맞는 경험적 항생제와 기도청결을 시행한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"기침은 고름성 분비물을 배출하는 보호기전이라 억제제만 투여하면 객담 정체가 악화될 수 있다. 발열과 객담·호흡곤란 증가는 감염성 악화 치료가 필요함을 뜻한다.","could_be_correct_if":"원인 치료 후 수면을 방해하는 비생산성 기침에 제한적으로 사용할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"장기 고용량 전신스테로이드는 세균 감염을 치료하지 않고 감염·골다공증·대사 부작용을 늘린다. 동반 천식·ABPA 등 별도 적응증이 없으면 기관지확장증 단독 치료가 아니다.","could_be_correct_if":"동반 천식·ABPA 또는 다른 염증성 질환의 명확한 스테로이드 적응증이 있을 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"correct","explanation":"항생제 전 객담 Gram·배양을 채취하고 과거 Pseudomonas 등 분리력, 중증도와 지역 감수성에 맞춰 경험치료를 시작한다. 결과에 따라 좁히고 수분·기도청결을 함께 지속한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"결핵은 만성 증상, 상엽 공동과 항산균 검사 등 근거가 필요하다. 급성 기관지확장증 악화만으로 4제 요법을 즉시 시작하면 일반 세균 치료가 누락되고 독성이 생긴다.","could_be_correct_if":"활동성 결핵이 미생물·임상·영상으로 확인되거나 매우 강하게 의심될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기도청결은 기관지확장증에서 정체된 가래 배출을 돕는 핵심 치료이며 악화 중에도 환자 상태에 맞춰 강화할 수 있다. 모두 중단하면 점액폐쇄와 감염원 정체가 악화된다.","could_be_correct_if":"대량 객혈·기흉·불안정 등 특정 기법의 일시 중단이 필요한 상황에서 전문가가 조정할 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 HRCT가 기관지-동맥 비 증가와 말초 tapering 소실 등 기관지확장증을 실제로 보여 주는지 확인해야 한다.","항생제 종류·기간은 과거 객담균, 특히 Pseudomonas 분리력과 중증도에 따라 달라진다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000221","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["패혈증 후 양측 폐포성 음영","PEEP 10·FiO2 0.80","PaO2/FiO2 105","중등도-중증 ARDS"],"clinical_inference":"ARDS에서 예측체중 기준 저용량 일회호흡량과 plateau pressure 제한으로 환기유발폐손상을 줄이는 폐보호환기가 기본이다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"12 mL/kg의 큰 일회호흡량은 과팽창과 반복 개폐로 volutrauma·barotrauma를 증가시킨다. 산소화를 높이려 큰 용적을 주는 대신 예측체중 기준 폐보호환기를 유지한다.","could_be_correct_if":"ARDS가 아닌 특수 환기 상황에서도 일반적으로 큰 일회호흡량의 위해를 평가해야 한다.","misconception_tag":"병태생리"},
+      {"choice_id":"C2","verdict":"correct","explanation":"예측체중 기준 약 6 mL/kg 일회호흡량과 plateau pressure 30 cmH2O 이하를 목표로 환기유발폐손상을 줄인다. 필요하면 더 낮은 용적, 적절한 PEEP·FiO2 조정과 허용성 고탄산혈증을 임상 상황에 맞춰 사용한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"FiO2 1.0의 장기 사용은 산소독성을 높이고 PEEP 0은 폐포 허탈·shunt를 악화시킨다. 필요한 산소포화도를 달성하는 최소 FiO2와 적절한 PEEP을 조합한다.","could_be_correct_if":"소생 직후 짧게 최대 산소가 필요한 상황에서도 가능한 빨리 산소를 감량하고 PEEP을 재설정한다.","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"신경근차단은 심한 비동조·복와위 수행 또는 최적 진정에도 환기가 어려운 선택된 중증 ARDS에서 단기간 고려한다. 모든 환자에게 장기 투여하면 ICU 획득 근력저하와 합병증이 증가한다.","could_be_correct_if":"심한 환자-인공호흡기 비동조가 지속되는 중증 ARDS에서 제한된 기간 필요할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"PaO2/FiO2 약 105로 최적화 후에도 중증 저산소가 지속되면 조기 복와위가 산소화와 예후를 개선할 수 있다. 악화될 때까지 피하는 것이 아니라 금기를 평가해 적극 고려한다.","could_be_correct_if":"불안정 척추·개방복부 등 복와위 금기가 있거나 안전한 시행 인력이 없을 때","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["근거 자료가 비어 있어 ARDS 폐보호환기와 복와위 권고의 검증된 가이드라인·시험 근거를 추가해야 한다.","기존 정답 선택지 해설이 '적응증과 시점이 맞지 않는다'고 정답과 반대로 서술되어 교체 필요.","기존 핵심 해설 말미의 자동 결합 비문을 삭제하고 게시 전 영상이 양측 폐포성 음영을 보여 주는지 확인해야 한다.","일회호흡량은 실제체중이 아니라 예측체중 기준임을 명시해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000222","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["수술 7일 후 급성 호흡곤란","CTPA 폐동맥 충만결손","troponin 상승","혈압 112/70으로 안정","최근 수술 출혈 위험"],"clinical_inference":"혈역학적으로 안정된 중간위험 폐색전증으로 항응고와 입원 감시, 우심실 평가가 우선이며 혈전용해·카테터 치료는 악화·고위험 때 고려한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"전신 혈전용해는 쇼크·지속 저혈압의 고위험 PE 또는 구조 치료가 필요한 악화에서 이득을 고려한다. 현재 혈압이 안정적이고 수술 7일째라 출혈 위험도 높아 즉시 일률 투여하지 않는다.","could_be_correct_if":"혈역학 붕괴가 발생하고 출혈 위험 대비 생존 이득이 크다고 다학제 판단할 때","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"D-dimer는 낮은 임상확률에서 PE를 배제하는 선별검사이며 수술 후에는 비특이적으로 상승한다. CTPA에서 이미 PE가 확인되어 검사 때문에 항응고를 보류할 이유가 없다.","could_be_correct_if":"영상 전 낮은 임상확률 환자의 배제 알고리즘에서 D-dimer를 사용할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"카테터 혈전제거는 고위험 PE에서 혈전용해 금기·실패 또는 선택된 악화 중간위험 환자에게 고려한다. 혈역학적으로 안정된 모든 환자에게 즉시 시행하면 침습 위험이 불필요하다.","could_be_correct_if":"쇼크·임박한 악화가 있고 전신용해가 금기이거나 실패해 전문팀이 선택할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"출혈 위험과 신기능을 반영해 치료용 항응고를 시작하고 입원 상태에서 혈압·산소화·심박을 감시한다. 심초음파 또는 CT로 우심실 기능을 평가해 중간저위험과 중간고위험을 구분하고 악화 시 구조치료를 준비한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"저위험 PE는 선별된 경우 외래 DOAC 치료가 가능하다. 이 환자는 troponin 상승과 최근 수술로 위험도·출혈 평가 및 우심실 확인이 필요해 즉시 외래 단독치료가 부적절하다.","could_be_correct_if":"저위험 점수, 정상 우심실·표지자, 안정된 사회환경과 낮은 출혈 위험을 모두 충족할 때","misconception_tag":"적응증"}
+    ],"review_flags":["근거 자료가 비어 있어 최신 PE 위험층화·항응고·재관류 가이드라인을 추가해야 한다.","기존 정답 선택지 해설이 정답과 반대로 '적응증과 시점이 맞지 않는다'고 되어 있어 교체 필요.","기존 핵심 해설 말미의 자동 결합 비문을 삭제하고 게시 전 CTPA 폐동맥 충만결손을 확인해야 한다.","troponin 상승만으로 중간고위험이 확정되지 않으므로 우심실 기능 평가가 필요하다는 점을 유지해야 한다."],"publication_recommendation":"revise"
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000098",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["우상엽 외측 22 mm 가시모양 고형결절","CT bronchus sign","PET에서 결절만 섭취 증가","심한 양측 폐기종·FEV1 42%","유도 기관지내시경 장비·숙련자 이용 가능"],"clinical_inference":"기관지징후가 있는 2 cm 이상 말초결절은 유도 기관지내시경으로 기도 경로를 따라 접근할 수 있다. 심한 폐기종에서 흉막을 통과하는 경피생검의 기흉 위험을 고려하면 전자기유도와 방사상 EBUS로 위치를 확인한 경기관지 생검이 합리적이다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"전자기유도는 CT상 기관지 경로를 따라 말초 병변까지 접근하도록 돕고 방사상 EBUS는 병변 내 또는 인접 위치를 확인한다. 기관지징후와 22 mm 크기는 접근에 유리하며, 흉막 천자를 피하는 점이 중증 폐기종 환자의 기흉 위험을 줄이는 데 중요하다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"일반 기관지내시경의 육안으로 보이지 않는 말초결절을 위치 확인 없이 무작위 생검하면 진단 수율이 낮고 불필요한 손상을 늘린다. 이 환자에게는 이용 가능한 유도 기술을 사용해야 한다.","could_be_correct_if":"기관지 내강에 직접 노출된 중심성 병변이 육안으로 확인되는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"CT 유도 경피생검은 흉막 인접 말초병변에서 높은 진단 수율을 보일 수 있다. 그러나 심한 폐기종과 낮은 호흡 예비력은 기흉의 발생·결과 위험을 높이므로 이를 무시한다는 선택지 문구가 부적절하다.","could_be_correct_if":"기관지 접근이 불리하고 안전한 경피 경로가 있으며 개별 기흉 위험을 감수할 수 있는 경우","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"객담 세포검사는 중심성 기도암에서 상대적으로 유용하며 말초결절에서 음성이라고 악성을 배제할 수 없다. 반복 음성 결과는 조직형과 분자검사에 필요한 검체도 제공하지 않는다.","could_be_correct_if":"침습검사가 불가능한 중심성 병변에서 보조 진단 정보를 얻는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"PET 섭취는 악성 가능성을 높이지만 감염·염증에서도 증가해 조직학적 확진을 대신하지 않는다. 지문은 조직진단이 필요하고 상대적으로 안전한 기관지 접근법도 있다고 명시했다.","could_be_correct_if":"조직 채취가 불가능한 매우 고위험 환자에서 다학제 판단으로 비조직 치료를 예외적으로 고려하는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000099",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["좌상엽 3.1 cm 비소세포폐암 확진","PET 양성 4L·7번 종격동 림프절","원격전이 없음","수술 가능","N2 여부가 치료 순서를 변경"],"clinical_inference":"PET 양성 종격동 림프절은 위양성이 가능해 병리 확인이 필요하다. EBUS-TBNA로 접근 가능한 4L과 7번을 우선 채취하고, 적절한 검사에도 음성이지만 사전 의심이 높으면 수술적 종격동 병기검사로 잔여 위험을 확인한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"PET 양성 림프절은 염증·육아종성 질환에서도 나타날 수 있어 병리학적 N2와 같지 않다. 수술 가능한 환자에서 조직 확인 없이 치료를 결정하면 잠재적 근치 수술 기회를 잃을 수 있다.","could_be_correct_if":"조직검사가 불가능하고 다학제에서 임상 병기만으로 치료해야 하는 예외적 상황","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"원발 병변은 이미 비소세포폐암으로 확진되어 반복 생검의 정보 이득이 작다. 원발 조직을 다시 얻어도 4L·7번 림프절 전이 여부에는 답하지 못한다.","could_be_correct_if":"기존 원발 검체가 부적절해 조직형·분자검사를 위한 추가 검체가 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"EBUS-TBNA는 높은 진단 성능을 보이지만 불충분 채취, 접근·표적 오류 또는 작은 전이로 위음성이 가능하다. PET 양성 N2 의심이 높은데 음성이면 검사 적절성을 검토하고 수술적 확인을 고려한다.","could_be_correct_if":"체계적이고 충분한 EBUS 결과와 전체 임상 확률을 종합해 추가 수술 병기 없이 절제가 적절하다고 다학제에서 판단한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"CT 단축경이 1 cm 미만이어도 PET 섭취가 증가한 종격동 림프절은 전이 가능성이 있다. 크기만으로 침습적 병기검사 필요성을 배제할 수 없다.","could_be_correct_if":"영상상 정상 종격동이고 원발 종양 특성상 침습적 병기검사 적응이 없는 저위험 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"correct","explanation":"선형 EBUS-TBNA는 4L과 7번 림프절에 최소침습적으로 접근해 N2 여부를 병리 확인할 수 있다. 음성 결과가 영상 사전확률과 맞지 않으면 종격동경검사 등 수술적 병기검사를 고려한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["음성 EBUS 뒤 수술적 병기검사 여부는 EBUS의 체계성·검체 적절성·영상 사전확률과 다학제 판단에 따라 달라지므로 '모든 음성에서 필수'로 확대하지 않아야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000100",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["6주 전 급성관상동맥증후군","약물방출스텐트 삽입","aspirin·clopidogrel 복용","선택적 기관지내 겸자생검 예정","병변은 무증상·급격한 진행 없음"],"clinical_inference":"clopidogrel 유지 중 기관지 생검은 출혈 위험이 증가하지만 최근 ACS와 약물방출스텐트에서 임의 중단은 스텐트 혈전 위험이 크다. 검사가 응급이 아니므로 연기하고 심장내과와 항혈소판 치료 중단 가능 시점 및 대체 진단 전략을 협의한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"기관지 생검 전 clopidogrel 중단이 필요할 수 있어도 최근 ACS·스텐트 환자가 처방의와 상의 없이 중단해서는 안 된다. 생검 출혈만 줄이려다 치명적 스텐트 혈전을 유발할 수 있다.","could_be_correct_if":"스텐트 혈전 위험이 낮고 심장내과가 중단 시기와 기간을 승인한 경우","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"이중항혈소판요법을 유지한 채 겸자생검, 특히 경기관지폐생검까지 추가하면 임상적으로 중요한 출혈 위험이 커진다. 안정적인 선택적 병변 평가에서 감수할 이유가 없다.","could_be_correct_if":"조직 채취 없는 관찰·세척 등 저출혈위험 시술이 긴급히 필요한 경우","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"correct","explanation":"병변이 안정적이고 다음 주 생검이 시간 긴급한 상황은 아니므로 시술을 연기한다. 심장내과와 스텐트 혈전 위험, 필수 이중항혈소판 기간, 향후 중단 가능 시점 및 다른 조직 경로를 함께 계획한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"헤파린은 혈소판 활성화가 핵심인 스텐트 혈전을 이중항혈소판요법과 동일하게 예방하지 못한다. 두 약제의 즉시 중단과 가교를 임의로 시행하거나 위험이 완전히 사라진다고 간주하면 안 된다.","could_be_correct_if":"전문 심장팀이 특정 가교 전략을 개별적으로 계획하는 경우에도 완전한 위험 제거로 표현해서는 안 됨","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기관지 세척액 세포검사는 출혈 위험이 낮지만 민감도가 제한되어 음성으로 기관지내 종괴의 악성을 확정 배제할 수 없다. 안전한 시점의 조직검사 또는 대체 조직 경로가 여전히 필요하다.","could_be_correct_if":"조직검사를 연기하는 동안 보조 정보를 얻되 음성을 확정 진단으로 사용하지 않는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["현재 참고문헌은 기관지내시경 출혈 위험은 다루지만 최근 ACS·약물방출스텐트 후 이중항혈소판요법 중단 위험과 선택적 시술 시점을 직접 뒷받침하지 않는다. 최신 심장학·비심장수술 주위 항혈소판 지침을 추가해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000101",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["혈담·급격한 혈색소 감소","양측 간유리음영","신기능 저하·적혈구 원주","폐-신장 증후군 의심","BAL 예정"],"clinical_inference":"미만성 폐포출혈에서는 같은 분절의 연속 BAL에서도 혈액이 씻겨 맑아지지 않고 뒤 분획이 동일하거나 더 혈성으로 변한다. 신염 단서와 함께 이 소견이 나타나면 폐-신장 혈관염 등 원인 평가를 신속히 진행한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"첫 분획만 혈성이고 이후 빠르게 맑아지면 기관지경 삽입 외상이나 근위부 기도에 고여 있던 혈액이 씻겨 나온 경우를 더 시사한다. 폐포 내에서 계속 유입되는 출혈의 전형적 방향과 반대다.","could_be_correct_if":"기관지경 외상 또는 근위부 기도 출혈이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"같은 분절을 연속 세척할수록 육안상 더 혈성이 되고 적혈구가 증가하면 폐포 공간에서 지속적으로 출혈하고 있음을 지지한다. 급성 DAH에서는 헤모시데린 대식세포가 아직 충분히 나타나기 전에도 이 소견을 사용할 수 있다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"BAL 호산구 25% 이상은 적절한 임상 맥락에서 급성 또는 만성 호산구폐렴을 지지한다. 연속 분획의 적혈구 감소는 DAH의 지속적 혈성도와 맞지 않는다.","could_be_correct_if":"호산구성 폐질환의 임상·영상 소견이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"BAL 림프구증은 과민성폐렴·사르코이드증 등 여러 간질성 폐질환에서 보조적으로 나타날 수 있다. 모든 분획이 맑고 출혈성 변화가 없다면 급성 폐포출혈을 강하게 지지하지 않는다.","could_be_correct_if":"림프구성 간질성 폐질환을 감별하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"한 기관지 입구의 국소 출혈과 반대쪽 정상 BAL은 종양·기관지확장증 등 국소 기도 출혈을 시사한다. 양측 폐포 공간에 퍼지는 미만성 폐포출혈과 구분해야 한다.","could_be_correct_if":"국소 기관지 병변에서 발생한 객혈의 위치를 확인하는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000102",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["기관지확장증의 생명위협 대량 객혈","저산소혈증·의식저하로 굵은 단일내강관 삽관","큰 혈괴가 주기관지를 반복 폐쇄","출혈 지속","기관지동맥색전술 준비 중"],"clinical_inference":"즉각적 사망 위험은 혈액과 혈괴에 의한 질식이므로 큰 작업 통로와 강한 흡인·환기 능력을 가진 경성 기관지내시경으로 혈괴를 제거하고 출혈측을 격리·압박한다. 이는 최종 지혈을 위한 기관지동맥색전술로 안전하게 연결하는 교량 치료다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"굴곡성 기관지내시경은 병상에서 출혈 측을 확인하고 차단기를 배치하는 데 유용할 수 있다. 그러나 작은 작업 통로로 진단 세척만 하면 반복적으로 주기관지를 막는 큰 혈괴와 질식 위험을 해결하지 못한다.","could_be_correct_if":"혈괴 폐쇄가 없고 굴곡성 내시경으로 위치 확인·국소 처치가 가능한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"폐 격리는 필요할 수 있지만 이중내강관의 좁은 내강은 큰 혈괴 흡인과 치료 기관지경 통과에 불리하고 응급 교체도 어려울 수 있다. 이미 생긴 중심기도 혈괴를 제거하지 않은 채 색전술까지 기다릴 수 없다.","could_be_correct_if":"선택적 삽관이나 기관지 차단기를 전문팀이 안전하게 사용해 반대 폐를 보호하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"혈괴가 국소 압전 효과를 낼 수 있어도 주기관지를 반복 폐쇄해 저산소증을 만드는 상황에서는 기도 개통이 우선이다. 흡인을 중단하고 양측 환기를 유지하면 반대 폐 오염과 질식 위험이 커진다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"correct","explanation":"경성 기관지내시경은 큰 내강과 강한 흡인력으로 큰 혈괴를 제거하면서 환기를 유지할 수 있다. 출혈측 기관지를 기구·차단기 등으로 격리하거나 압박해 반대 폐를 보호하고 기관지동맥색전술로 연결한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"의식저하와 저산소혈증이 있었던 환자를 발관하면 기도 보호를 잃고 재삽관이 어려워질 수 있다. 국소마취 진단검사는 안정된 소량 객혈에서 가능하지만 현재는 치료적 기도 확보가 필요하다.","could_be_correct_if":"기도가 안정되고 소량 객혈의 진단만 필요한 경우","misconception_tag":"금기"}
+    ],
+    "review_flags":["경성 기관지내시경은 숙련된 중재 기관지내시경·마취팀과 장비가 가능한 환경을 전제로 한다는 점을 해설에 유지해야 한다."],
+    "publication_recommendation":"approve"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000033","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["대량 객혈 후 기도·혈역학 안정","출혈 측 불명확","신기능 정상","BAE 준비"],"clinical_inference":"안정화 뒤 CTA로 출혈 원인과 기관지·비기관지 체동맥 및 폐동맥 혈관 지도를 확보하면 색전술 표적을 정할 수 있다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"CTA는 출혈 위치와 원인 병변뿐 아니라 비대 기관지동맥, 비기관지성 체동맥과 폐동맥 이상을 평가한다. 신기능이 정상이고 안정화됐으므로 BAE 전 지도화에 적합하다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"비조영 CT는 폐실질 병변을 보여줄 수 있지만 책임 혈관의 기시와 주행을 평가하기 어렵다. 조영제 금기도 없어 저선량 비조영 검사를 선택할 이유가 없다.","could_be_correct_if":"조영제를 사용할 수 없고 폐실질 원인만 우선 평가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"기관지내시경은 기도 관리와 출혈 측 국소화에 유용하다. 그러나 혈관 전체 지도와 색전 표적 정보를 제공하지 못하므로 현재 목적에는 CTA가 더 적절하다.","could_be_correct_if":"활동성 출혈로 기도 확보·혈괴 제거 또는 측별 국소화가 우선인 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"불안정한 지속 출혈에서는 진단 혈관조영과 색전술로 곧바로 진행할 수 있다. 현재 안정적이고 출혈 측도 불명확해 CTA가 누락 혈관과 표적 선택에 도움이 된다.","could_be_correct_if":"지속되는 생명위협 출혈로 CTA를 기다릴 수 없는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"이동식 X선은 삽관 위치와 큰 폐음영 확인에 유용하지만 책임 혈관을 보여주지 못한다. 반복 촬영으로 BAE를 계획할 수 없다.","could_be_correct_if":"삽관 위치나 급성 흉부 합병증을 즉시 확인하는 경우","misconception_tag":"검사 순서"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000034","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["생명위협 객혈 안정화","CTA상 책임 기관지동맥과 유출","양측 기관지확장증","수술 고위험"],"clinical_inference":"책임 기관지동맥이 확인됐고 응급 절제술 위험이 높으므로 선택적 BAE가 우선 지혈 치료다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"conditionally_correct","explanation":"폐절제술은 국소 병변에서 반복 색전 실패 후 근치 치료가 될 수 있다. 양측 질환의 응급 절제는 기능 손실과 수술 위험이 커 우선 선택이 아니다.","could_be_correct_if":"질환이 절제 가능한 국소 병변이고 혈관 중재가 실패하거나 불가능한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"기관지 차단과 국소 지혈은 반대편 폐 보호와 일시적 출혈 조절에 유용하다. 확인된 책임 동맥의 지속적 혈관 조절을 대신하지 못한다.","could_be_correct_if":"기도 보호와 임시 지혈이 즉시 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"Tranexamic acid는 일부 객혈에서 보조적으로 고려할 수 있다. 조영제 유출이 확인된 생명위협 출혈을 단독 약물과 관찰로 치료해서는 안 된다.","could_be_correct_if":"비생명위협 객혈에서 보조치료가 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"대동맥 스텐트그래프트는 대동맥 자체 손상 등 다른 혈관 병변에서 사용한다. 이 문항의 책임 혈관은 기관지동맥이다.","could_be_correct_if":"대동맥 병변이 출혈원으로 확인된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"선택적 BAE는 책임 기관지동맥을 폐쇄해 출혈을 조절하면서 폐실질을 보존한다. CTA로 표적이 확인되고 수술 위험이 높은 이 환자에게 적절하다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000035","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["결핵 공동","폐동맥 분지 연결 가성동맥류","주변 조영제 유출"],"clinical_inference":"Rasmussen 가성동맥류로 폐동맥계 출혈이 직접 확인됐으므로 해당 폐동맥 분지를 선택적으로 색전한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"대부분의 객혈은 기관지동맥에서 기원하지만 이 환자의 유출은 폐동맥 분지에서 확인됐다. 기관지동맥만 색전하면 책임 병변이 남는다.","could_be_correct_if":"기관지동맥이 책임 혈관으로 확인되거나 동반 공급이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"수술은 혈관 중재 실패 또는 불가능한 국소 병변에서 근치 치료가 될 수 있다. 현재 표적 색전 가능한 병변이 있어 덜 침습적 치료가 우선이다.","could_be_correct_if":"색전술이 불가능·실패하고 수술을 견딜 수 있는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"결핵 공동 내 폐동맥 가성동맥류는 Rasmussen aneurysm에 부합한다. 출혈원인 폐동맥 분지를 선택적으로 폐쇄해야 한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"기관지 차단은 혈액의 반대편 유입을 줄이는 임시 조치다. 폐동맥 가성동맥류 자체를 폐쇄하지 못해 단독 최종 치료가 아니다.","could_be_correct_if":"확정 지혈 전 기도 보호와 폐 격리가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Tranexamic acid는 보조적으로 사용할 수 있지만 활동성 가성동맥류의 기계적 폐쇄를 대체하지 못한다. 단독 투여는 재출혈 위험을 남긴다.","could_be_correct_if":"비생명위협 객혈의 보조치료 상황인 경우","misconception_tag":"적응증"}
+    ],"review_flags":[],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000036","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["BAE 직후 발생","갑작스러운 양측 하지 마비와 감각 저하","혈압 안정"],"clinical_inference":"색전 물질이 척수 공급 동맥으로 비표적 유입되어 척수 허혈을 일으킨 합병증이 가장 우선 의심된다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"조영제 신손상은 시간 경과 후 크레아티닌 상승과 소변량 변화로 나타난다. 시술 직후의 국소 신경학적 결손을 설명하지 못한다.","could_be_correct_if":"시술 후 신기능 악화가 확인된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"척수동맥으로 비표적 색전이 일어나면 척수경색과 급성 하반신 운동·감각 결손이 발생할 수 있다. 즉각적인 신경학적 평가와 척수 MRI가 필요한 응급 합병증이다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"색전 후 흉통은 비교적 흔할 수 있으나 양측 하지 마비와 감각 소실을 만들지 않는다. 신경학적 응급상황을 양성 증후군으로 오인해서는 안 된다.","could_be_correct_if":"신경 결손 없이 일시적 흉통만 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"기관지벽 허혈은 흉통, 발열 또는 기도 손상으로 나타날 수 있다. 대칭적 하지 신경학적 결손과 맞지 않는다.","could_be_correct_if":"기도 괴사나 국소 흉부 증상이 나타나는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"천자부 가성동맥류는 서혜부 통증, 박동성 종괴와 출혈로 나타난다. 양측 하지의 척수성 운동·감각 결손을 설명하지 못한다.","could_be_correct_if":"천자부 박동성 종괴나 출혈이 확인되는 경우","misconception_tag":"진단 오류"}
+    ],"review_flags":["의심 즉시 시술팀·신경과와 협진하고 응급 영상평가가 필요하다는 안전 문구를 유지한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000037","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["BAE 후 조기 재출혈","CTA상 늑간동맥 유입","비기관지성 체동맥 조영제 유출"],"clinical_inference":"기존 기관지동맥이 아니라 누락된 책임 늑간동맥이 확인됐으므로 이를 초선택적으로 재색전한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"현재 유출은 기존 기관지동맥이 아니라 별도 늑간동맥에서 확인됐다. 기존 혈관에 맹목적으로 추가 주입하면 효과 없이 비표적 색전 위험만 높인다.","could_be_correct_if":"재조영에서 기존 책임 기관지동맥의 재개통이 확인된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"항섬유소용해제는 보조치료일 뿐 활동성 혈관 유출이 확인된 재발성 대량 객혈을 단독으로 조절하지 못한다. 관찰은 재출혈과 질식 위험을 남긴다.","could_be_correct_if":"비생명위협 객혈의 보조치료 상황인 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"수술은 반복 혈관중재 실패 후 국소 질환에서 고려할 수 있다. 현재는 표적 가능한 누락 혈관이 확인됐고 폐기능·수술 위험 평가도 없어 즉시 절제할 단계가 아니다.","could_be_correct_if":"반복 색전이 실패하고 국소 절제가 가능하며 수술 위험을 감수할 수 있는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"correct","explanation":"조기 재출혈은 누락 책임 혈관이나 불완전 색전을 시사한다. CTA에서 확인된 늑간동맥을 초선택적으로 평가하고 재색전하는 것이 원인에 맞는 치료다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"conditionally_correct","explanation":"기관지내시경은 기도 관리와 일시적 지혈에 도움이 된다. 그러나 확인된 늑간동맥 출혈원을 폐쇄하지 못해 단독 최종 치료가 아니다.","could_be_correct_if":"기도 확보와 혈괴 제거 또는 임시 출혈 격리가 필요한 경우","misconception_tag":"치료 우선순위"}
+    ],"review_flags":["늑간동맥 색전 시 척수동맥 분지 확인과 비표적 색전 방지가 중요하다."],"publication_recommendation":"approve"
+  }
+]

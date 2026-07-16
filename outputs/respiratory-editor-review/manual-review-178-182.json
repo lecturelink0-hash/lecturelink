@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000178","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["경미한 마른기침과 정상 산소화","호산구 1250/μL","10일 사이 소실·이동한 폐침윤","동남아 토양 맨발 노출"],"clinical_inference":"경한 증상, 말초 호산구증가와 이동성·일과성 침윤은 단순 폐호산구증을 시사하며 기생충 노출을 평가하고 안정 상태를 단기 추적한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"이동성·일과성 폐침윤과 경미한 증상은 Löffler형 단순 폐호산구증에 부합한다. 토양 노출을 고려해 기생충 원인을 평가하고 산소화가 안정적이면 증상, 호산구와 영상의 단기 소실 여부를 확인한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"만성 호산구성 폐렴은 보통 수주 이상의 전신·호흡기 증상과 지속적인 말초 우세 침윤이 나타난다. 10일 사이 빠르게 소실·이동하고 증상이 가벼운 환자에게 즉시 장기 전신스테로이드를 투여하면 과잉 치료다.","could_be_correct_if":"지속적인 말초 우세 침윤과 아급성 증상, 이차 원인 배제로 만성 호산구성 폐렴이 확진될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"급성 호산구성 폐렴은 급속한 저산소성 호흡부전과 양측 미만성 침윤이 핵심이다. SpO2 98%이고 증상이 경미한 환자에게 기관삽관과 고용량 정주 치료를 시행할 근거가 없다.","could_be_correct_if":"급성 저산소성 호흡부전과 BAL 호산구증가로 AEP가 확인되고 실제 기도·환기 지원이 필요할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"폐색전증은 임상확률과 혈관 영상으로 진단하며 호산구증가와 이동성 침윤을 잘 설명하지 못한다. 객관적 확인 없이 항응고제를 시작하면 출혈 위험이 있다.","could_be_correct_if":"혈전 위험과 적절한 영상으로 폐색전증이 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"침습성 진균감염은 면역저하, 결절·halo sign과 미생물 또는 조직 근거가 중요하다. 면역정상이고 병변이 빠르게 이동하는 경한 환자에게 조직 확인 없이 전신 항진균제를 시작할 근거가 약하다.","could_be_correct_if":"면역저하 상태와 미생물·조직 또는 강한 임상영상 근거로 침습성 진균감염이 확인될 때","misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 현재 HRCT가 새 위치의 비분절성 경결·간유리음영을 실제로 보여 주는지 확인해야 한다.","기생충 원인에 따라 검사와 치료가 달라지므로 노출 지역·시기·증상을 구체적으로 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000179","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["성인기 천식과 만성 부비동염","호산구 2300/μL","이동성 폐침윤","조직상 호산구성 괴사성 혈관염·육아종","ANCA 음성"],"clinical_inference":"천식·부비동염·호산구증가에 조직학적 괴사성 혈관염이 결합되어 ANCA 음성과 무관하게 EGPA가 가장 타당하다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"특발성 만성 호산구성 폐렴은 공기공간 호산구 침윤을 보일 수 있지만 괴사성 혈관염과 육아종은 설명하지 못한다. 혈관벽 침범은 폐에 국한된 호산구성 폐렴을 넘어 전신 혈관염을 시사한다.","could_be_correct_if":"조직과 임상에서 혈관염·육아종성 장기 침범이 없고 전형적 말초 우세 호산구성 폐렴으로 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"과호산구증후군도 다장기 침범이 가능하지만 이 환자의 천식·부비동염과 호산구성 괴사성 혈관염은 EGPA에 더 특이적이다. HES는 반응성·클론성 원인과 혈관염 표현형을 구분해 진단한다.","could_be_correct_if":"지속적 고호산구증과 장기손상이 있으면서 EGPA의 혈관염·천식 표현형 및 다른 원인이 배제될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"ABPA는 천식과 호산구증가가 겹치지만 Aspergillus 감작, 높은 총 IgE, 중심성 기관지확장이나 점액마개가 핵심이다. 괴사성 혈관염과 육아종은 ABPA의 진단 소견이 아니다.","could_be_correct_if":"Aspergillus 감작과 전형적 면역·영상 기준이 충족될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"단순 폐호산구증은 증상이 경미하고 침윤이 일과성이며 장기 손상이나 괴사성 혈관염이 없다. 이 환자의 수주 경과와 조직 혈관염을 설명하지 못한다.","could_be_correct_if":"경미한 증상과 일과성 침윤만 있고 혈관염·장기침범이 없는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"성인기 천식, 만성 부비동염, 현저한 호산구증가와 이동성 폐침윤이 EGPA의 임상 배경을 이룬다. 혈관벽의 호산구성 염증·괴사와 육아종이 혈관염을 확증하며 ANCA 음성은 진단을 배제하지 않는다.","could_be_correct_if":null,"misconception_tag":"진단 오류"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 병리 이미지가 혈관벽 염증·섬유소성 괴사와 괴사성 육아종을 실제로 보여 주는지 확인해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000180","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["4개월간 호산구 4800/μL 지속","폐·피부 침범","심내막 섬유화와 벽재혈전","천식·부비동염 없음","반응성 원인 평가 음성"],"clinical_inference":"지속성 고호산구증과 다장기 손상으로 HES가 의심되며 심장 침범이 있어 치료 가능한 골수성 클론을 신속히 찾기 위한 골수·분자검사가 필요하다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"EGPA를 진단하기 위해 천식이 새로 생길 때까지 기다릴 이유가 없다. 현재 이미 심내막 섬유화와 혈전이라는 중대한 호산구성 장기 손상이 있어 즉시 HES 원인평가와 치료가 필요하다.","could_be_correct_if":"추적 중 새로운 천식·혈관염 소견이 나타나 진단을 재분류할 때에도 현재 장기손상 치료는 지연하지 않는다.","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"총 IgE는 알레르기·기생충 등에서 상승할 수 있지만 호산구 수나 클론성 여부와 일대일로 비례하지 않는다. 반복 IgE만으로 치료 가능한 분자 이상이나 심장 손상의 원인을 찾을 수 없다.","could_be_correct_if":"알레르기성 질환 감별의 보조검사로 다른 평가와 함께 사용할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"correct","explanation":"골수 형태와 세포유전·분자검사로 골수성 클론과 FIP1L1-PDGFRA 같은 치료 가능한 변이를 평가한다. 결과는 표적치료 선택에 직접 영향을 주므로 지속성 고호산구증과 심장 침범에서 우선순위가 높다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"만성 호산구성 폐렴은 폐침윤을 설명할 수 있지만 피부와 심내막 섬유화·벽재혈전을 포함한 다장기 손상을 충분히 설명하지 못한다. 폐 소견 하나로 원인평가를 종료하면 HES와 클론성 질환을 놓친다.","could_be_correct_if":"질환이 폐에 국한되고 다른 장기 손상과 클론성·반응성 원인이 배제될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"심내막 섬유화와 벽재혈전은 HES에서 호산구 독성으로 발생할 수 있는 전형적 중증 장기 손상이다. 이를 호산구증과 무관한 특발성 심근병증으로 분리하면 원인 치료가 지연된다.","could_be_correct_if":"충분한 평가에서 심장병이 호산구증과 독립된 원인으로 확인될 때","misconception_tag":"병태생리"}
+    ],"review_flags":["심장 침범은 긴급 치료가 필요한 장기위협 소견이므로 분자검사와 동시에 혈액·심장 전문 평가 및 치료를 지연하지 않아야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000181","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["필리핀 농촌 장기 거주와 맨발 농사","간헐적 복통","호산구 2100/μL","전신스테로이드가 필요한 저산소성 폐질환"],"clinical_inference":"잠복 Strongyloides는 수십 년 지속되고 스테로이드로 치명적 과다감염이 될 수 있으므로 치료 전 검사하고 긴급도·가능성에 따라 선제 ivermectin을 고려한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"말초 호산구증가는 만성 호산구성 폐렴뿐 아니라 기생충 감염에서도 나타난다. 유행지역 토양 노출과 복통이 있어 Strongyloides를 배제하지 않고 스테로이드를 투여하면 과다감염 위험이 있다.","could_be_correct_if":"충분한 노출·검사 평가로 기생충 감염이 배제된 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"correct","explanation":"Strongyloides 혈청검사와 대변 검사를 시행해 잠복 감염을 평가한다. 저산소혈증 때문에 스테로이드를 늦추기 어렵고 노출 가능성이 높다면 검사 결과를 기다리는 동안 ivermectin 선제치료를 고려한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"스테로이드는 원인과 무관하게 말초 호산구를 감소시켜 감염 배제 검사로 사용할 수 없다. 오히려 Strongyloides 자가감염을 가속해 과다감염·파종을 유발할 수 있다.","could_be_correct_if":"해당 없음; 스테로이드 후 호산구 감소는 Strongyloides 배제 근거가 아니다.","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"기생충 가능성은 평가·선제치료 대상이지 저산소성 폐질환의 필요한 치료를 수개월 무조건 보류할 이유가 아니다. 검사, ivermectin과 호흡기 치료를 임상 긴급도에 맞춰 병행할 수 있다.","could_be_correct_if":"안정적 환자에서 매우 짧게 확진·치료를 우선할 수 있을 때에도 장기간 일률적 보류는 하지 않는다.","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Aspergillus 특이 IgE는 ABPA의 감작 평가에 쓰며 Strongyloides를 검출하지 않는다. 이 검사로 스테로이드 관련 기생충 과다감염 위험을 판단할 수 없다.","could_be_correct_if":"ABPA를 별도로 의심할 임상·영상 단서가 있을 때 보조검사로 시행할 때","misconception_tag":"검사 순서"}
+    ],"review_flags":["ivermectin 선제치료 여부는 노출 위험, 검사 지연, 면역억제 긴급도와 지역 감염 지침을 종합해 결정해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000182","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["캄보디아에서 민물게장 섭취 7주 후","기침과 혈담","좌상엽 말초 공동성 결절","객담 AFB·세포검사 음성"],"clinical_inference":"민물게 섭취와 혈담·공동성 말초 결절은 폐흡충증을 시사하므로 호흡기 검체의 충란과 Paragonimus 특이 항체로 확인한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"공동성 결절은 폐암을 포함한 감별이 필요하지만 영상만으로 암의 조직형과 병기를 확정할 수 없다. 민물게 섭취와 혈담이라는 치료 가능한 기생충 단서를 먼저 검증해야 한다.","could_be_correct_if":"조직으로 폐암이 확진되고 표준 병기검사가 완료된 뒤 적절한 항암치료를 선택할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"객담 항산균 도말 음성은 결핵을 확정하는 결과가 아니라 민감도가 제한된 음성 검사다. 결핵이 의심되면 배양·분자검사 등을 추가하고, 이 환자의 음식 노출에 맞는 폐흡충도 평가해야 한다.","could_be_correct_if":"미생물학·임상·영상으로 활동성 결핵이 확인되거나 높은 임상확률로 경험치료가 정당화될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"D-dimer 양성은 비특이적이어서 폐색전증을 확정하지 못한다. 임상확률에 따라 혈관 영상이 필요하며 민물게 노출과 공동성 결절·혈담을 폐흡충증이 더 직접적으로 설명한다.","could_be_correct_if":"낮거나 중간 임상확률에서 D-dimer를 선별검사로 사용하고 양성 시 적절한 영상으로 확인할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"객담 또는 필요 시 BAL에서 Paragonimus 충란을 찾는 것은 직접 진단 방법이다. 충란 배출이 간헐적일 수 있으므로 특이 항체검사를 병행해 민물게 노출과 영상의 원인성을 보강한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"Aspergillus 특이 IgE는 ABPA의 한 진단 축이지만 단독으로 확진하지 못한다. 천식, 중심성 기관지확장 또는 점액마개가 제시되지 않았고 민물게 노출과도 무관하다.","could_be_correct_if":"천식과 전형적 영상·면역 소견으로 ABPA가 의심되어 전체 기준의 일부로 검사할 때","misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 좌상엽 말초 공동성 결절과 주변 간유리음영을 실제로 보여 주는지 확인해야 한다.","말초 호산구 5%는 폐흡충증을 배제하지 않지만 진단적 특이 소견도 아님을 해설에서 과대해석하지 않아야 한다."],"publication_recommendation":"revise"
+  }
+]

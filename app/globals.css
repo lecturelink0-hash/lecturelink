@@ -1,0 +1,263 @@
+/* ============================================
+   @import block — CSS 사양상 모든 @import 는 @charset / @layer 외 다른 규칙보다
+   반드시 먼저 와야 한다. Pretendard CDN 도 본 블록 안에 둠.
+   (production: 셀프호스팅 권장)
+   ============================================ */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+@import "../tokens.css";
+@import "./redesign-reference.css";
+@import "tailwindcss";
+
+/* ============================================
+   Design tokens — 딥 포레스트 그린 · 크림 · 골드 (브랜드 레퍼런스)
+   토큰 이름은 sage-* 로 유지(전 페이지 호환), 값만 레퍼런스 팔레트로 매핑.
+   ============================================ */
+@theme {
+  /* Forest green spectrum — 레퍼런스 #1F5C43 기준 */
+  --color-sage-50:  #f3f7f4;
+  --color-sage-100: #e9f2ec;
+  --color-sage-200: #d8e8dd;
+  --color-sage-300: #bcd6c4;
+  --color-sage-400: #93bba3;
+  --color-sage-500: #5a8b70;
+  --color-sage-600: #2f6a4c;
+  --color-sage-700: #1f5c43;   /* PRIMARY */
+  --color-sage-800: #194b37;
+  --color-sage-900: #143c2c;
+
+  /* Functional aliases */
+  --color-primary:    #1f5c43;
+  --color-primary-light: #2f6a4c;
+  --color-bg:         #fcfaf4;   /* 따뜻한 크림 배경 */
+  --color-surface:    #ffffff;
+  --color-border:     #ece6d9;   /* 크림과 어울리는 웜 뉴트럴 보더 */
+  --color-text:       #18241e;   /* 딥 그린-잉크 */
+  --color-muted:      #6b7280;
+
+  /* Gold accent — 랜딩 하이라이트/배지 */
+  --color-gold:      #f3c64e;
+  --color-gold-dark: #d9a82f;
+  --color-gold-bg:   #fbf1d4;
+
+  /* Action accent — 오렌지 (문제 생성·이어풀기 등 강조 CTA) */
+  --color-accent:      #e0743a;
+  --color-accent-dark: #c9622e;
+  --color-accent-bg:   #fbeee4;
+
+  /* Semantic colors */
+  --color-warn:    #c0563f;
+  --color-warn-bg: #fbe9e3;
+  --color-note:    #b88a2a;
+  --color-note-bg: #fbf3e0;
+
+  /* Tier badge colors */
+  --color-curated:    #1f5c43;
+  --color-curated-bg: #dce9e1;
+  --color-beta:       #a07d23;
+  --color-beta-bg:    #fbf1d4;
+  --color-private:    #c25e2a;
+  --color-private-bg: #fbeee4;
+
+  /* Fonts */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont,
+               'SF Pro Display', 'Apple SD Gothic Neo',
+               'Malgun Gothic', sans-serif;
+}
+
+/* ============================================
+   Base styles
+   ============================================ */
+/* 기본 글자 크기 상향(16 → 17px) — rem 기반 타이포/간격이 전반적으로 커져
+   "글씨가 작다 / 답답하다"는 인상을 해소하고 여백을 넉넉하게 만든다. */
+html { font-size: 17px; }
+
+html, body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  letter-spacing: -0.01em;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html, body { overflow-x: clip; }
+
+body { min-width: 320px; }
+
+.ll-app-shell { background: var(--color-bg); }
+
+/* Exact shared shell structure from the supplied redesign HTML. */
+.ll-app-shell .icon{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.ll-app-shell .header{height:60px;border-bottom:1px solid var(--color-border);background:color-mix(in srgb,var(--color-bg) 92%,transparent);backdrop-filter:blur(14px)}
+.ll-app-shell .header-inner{height:60px;max-width:1140px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.ll-app-shell .logo{display:inline-flex;align-items:center;gap:10px;min-width:max-content;color:inherit;text-decoration:none}
+.ll-app-shell .logo-mark{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;color:#fff;background:var(--color-primary);box-shadow:0 1px 2px rgba(17,24,39,.08)}
+.ll-app-shell .logo-text{font-size:20px;font-weight:800;line-height:1;letter-spacing:-.01em}
+.ll-app-shell .beta{border-radius:999px;background:#fbf1d4;color:#9a7b16;padding:4px 7px;font-size:11px;font-weight:800}
+.ll-app-shell .nav{align-items:center;justify-content:center;gap:4px;flex:1}
+.ll-app-shell .nav a{border-radius:10px;padding:9px 12px;font-size:14px;font-weight:650;color:var(--color-muted);transition:.18s ease}
+.ll-app-shell .nav a.active,.ll-app-shell .nav a:hover{background:var(--color-primary-soft);color:var(--color-primary)}
+.ll-app-shell .account{align-items:center;gap:10px;min-width:max-content}
+.ll-app-shell .quota{align-items:center;gap:8px;color:var(--color-muted);font-size:12.5px;font-weight:600}
+.ll-app-shell .avatar{width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:var(--color-primary);color:#fff;font-size:13px;font-weight:800}
+.ll-app-shell .site-footer{margin-top:24px;border-top:1px solid var(--color-border);background:rgba(244,241,232,.62)}
+.ll-app-shell .footer-inner{max-width:1140px;margin:0 auto;padding:34px 28px 26px}
+.ll-app-shell .footer-grid{display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr;gap:28px}
+.ll-app-shell .footer-brand p{margin:12px 0 0;max-width:330px;color:var(--color-muted);font-size:13px;line-height:1.65}
+.ll-app-shell .footer-col h2{margin:0;color:var(--color-muted);font-size:12px;font-weight:750}
+.ll-app-shell .footer-col ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+.ll-app-shell .footer-col a{color:var(--color-primary);font-size:13px;font-weight:560}
+.ll-app-shell .footer-bottom{margin-top:30px;padding-top:18px;border-top:1px solid var(--color-border);display:flex;justify-content:space-between;gap:16px;color:var(--color-muted);font-size:12px;line-height:1.6}
+@media(max-width:920px){.ll-app-shell .header-inner{padding:0 20px}.ll-app-shell .footer-grid{grid-template-columns:1fr 1fr}.ll-app-shell .footer-bottom{flex-direction:column}}
+@media(max-width:560px){.ll-app-shell .footer-grid{grid-template-columns:1fr}}
+
+.ll-app-main {
+  background:
+    linear-gradient(var(--color-border), var(--color-border)) top / 100% 1px no-repeat,
+    var(--color-bg);
+}
+
+/* Pages without a dedicated supplied mockup inherit the spacing and typography
+   extracted from the supplied LectureLink screens. */
+.ll-system-page {
+  width: 100%;
+  color: var(--color-text);
+}
+
+.ll-system-page > :is(.page-head, div:first-child):first-child {
+  margin-bottom: 28px;
+}
+
+.ll-system-page h1 {
+  letter-spacing: -0.035em;
+}
+
+.ll-system-page :is(.ll-card, .card) {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
+.ll-page-frame > :first-child { min-width: 0; }
+
+button, a { -webkit-tap-highlight-color: transparent; }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-style: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* 제목은 조금 더 촘촘하게(대비되는 위계) */
+h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
+
+/* 숫자(스탯·가격·수치)는 정렬 폭이 고른 tabular-nums 로 — 정밀·전문적인 인상 */
+.tnum, .stat-num { font-variant-numeric: tabular-nums; }
+
+* { box-sizing: border-box; }
+
+::selection { background: var(--color-sage-200); color: var(--color-sage-900); }
+
+/* 전역 포커스 — 키보드 접근성 + 정제된 포커스 링 (마우스 클릭엔 안 뜸) */
+:focus-visible {
+  outline: 2px solid var(--color-sage-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 은은한 커스텀 스크롤바 — 브랜드 톤에 맞춘 차분한 마감 */
+* { scrollbar-width: thin; scrollbar-color: var(--color-sage-300) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--color-sage-300);
+  border: 3px solid var(--color-bg);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--color-sage-400); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================
+   표면 — 절제되되 "디자인된" 톤 (Stripe/Toss 급 미세 깊이감)
+   플랫 와이어프레임이 아니라, 배경에서 살짝 떠 보이는 소프트 그림자 + 라운드.
+   장식(칩/필/그라디언트)은 여전히 배제.
+   ============================================ */
+.ll-card {                                     /* 시안의 흰 종이 카드 + 절제된 깊이 */
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+.ll-card-hover {
+  transition: border-color var(--dur-medium) var(--ease-out), transform var(--dur-short) var(--ease-out);
+}
+.ll-card-hover:hover {
+  border-color: var(--color-line-strong);
+  transform: translateY(-1px);
+}
+
+.ll-card:has(button:focus-visible, a:focus-visible) {
+  border-color: var(--color-line-strong);
+}
+
+@media (max-width: 639px) {
+  .ll-page-header [role='group'],
+  .ll-page-header form { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* 시안 그대로: 수치 22px·weight 700·tabular (색 #1F302D) */
+.ll-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  color: #1f302d;
+}
+
+/* 아이콘 칩 → 플레인 아웃라인 아이콘(박스/틴트 없음) */
+.ll-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  background: transparent;
+  color: var(--color-sage-600);
+  flex-shrink: 0;
+}
+.ll-chip-accent { background: transparent; color: var(--color-accent); }
+.ll-chip-gold   { background: transparent; color: var(--color-gold-dark); }
+
+/* eyebrow → 플레인 소형 라벨(필 배경 없음) */
+.ll-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+/* 틴트 → 아주 은은한 플랫 웜 서피스(그라디언트 없음) */
+.ll-tint      { background: #f6f3ec; }
+.ll-tint-soft { background: #faf8f2; }
+
+/* 큰 수치(stat) — 그린-잉크 + tabular */
+.ll-stat {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--color-sage-800);
+}

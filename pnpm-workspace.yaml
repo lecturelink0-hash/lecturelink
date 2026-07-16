@@ -1,0 +1,8 @@
+overrides:
+  canvas: 3.2.3
+allowBuilds:
+  canvas: true
+  sharp: true
+  supabase: false
+  tesseract.js: false
+  unrs-resolver: false

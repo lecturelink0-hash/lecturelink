@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env*
+*.md
+npm-debug.log*
+.DS_Store
+reference/
+*.pdf
+렉처링크 랜딩.html
+scratchpad/

@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000173","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["섬유성 HP 진단","의심 항원 제거","광범위 HRCT 섬유화","FVC 66%와 DLCO 44%"],"clinical_inference":"항원 회피 후에도 진행 위험이 높은 섬유성 HP이므로 노출 회피의 지속 여부, 증상과 연속 폐기능을 추적하고 악화 때 영상·치료를 재평가한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"가습기·깃털 노출이 실제로 제거된 상태인지 반복 확인하고 증상, FVC와 DLCO의 시간적 변화를 추적한다. 임상 또는 기능 악화가 생기면 HRCT로 구조적 진행을 확인해 진행성 폐섬유화 치료와 이식 평가 필요성을 다시 판단한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"휴식 시 산소포화도가 안정적이어도 FVC와 DLCO가 이미 저하되어 있고 섬유화가 넓다. 증상이 심해질 때까지 폐기능검사를 미루면 무증상 또는 서서히 진행하는 기능 저하를 놓친다.","could_be_correct_if":"임상적으로 안정된 환자에서도 적절한 정기 추적 간격을 유지하며 불필요한 과잉 검사를 피하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"항원 제거는 추가 손상을 줄이지만 이미 확립된 섬유화가 반드시 멈추는 것은 아니다. 항원 회피 후에도 진행성 섬유화가 나타날 수 있어 영상 추적을 영구 종료할 수 없다.","could_be_correct_if":"장기간 증상·폐기능이 안정적이고 임상의가 추가 영상의 이득이 낮다고 판단해 간격을 늘릴 때","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"항원 특이 IgG는 노출 또는 감작을 시사하지만 섬유화의 활성도나 진행을 직접 측정하지 않는다. 질환 진행은 증상, 폐기능과 필요 시 HRCT를 통합해 판정한다.","could_be_correct_if":"숨은 항원 노출을 탐색하는 보조자료로 사용하되 진행 평가를 대신하지 않을 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"매달 HRCT는 누적 방사선 노출에 비해 추가 이득이 작고 임상 변화와 연계되지 않는다. FVC와 DLCO는 진행을 연속적으로 평가하는 핵심 도구이므로 생략하지 않는다.","could_be_correct_if":"급격한 임상 악화로 합병증이나 구조적 진행을 확인해야 할 때 적시에 HRCT를 반복하는 경우","misconception_tag":"검사 순서"}
+    ],"review_flags":["정기 추적 간격은 질환 중증도와 최신 지침에 맞춰 정하되 문항 근거 없이 획일적 수치를 추가하지 않아야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000174","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["5일의 급성 발열·호흡부전","최근 흡연·전자담배 시작","SpO2 84%","초기 말초 호산구 1%","항생제 무반응","ARDS 유사 HRCT"],"clinical_inference":"최근 흡연 시작 후 발생한 급성 저산소성 폐침윤은 AEP를 시사하며 초기 말초 호산구증가가 없을 수 있으므로 BAL 호산구 분율 확인이 핵심이다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"급성 호산구성 폐렴 초기에는 말초혈액 호산구가 정상일 수 있어 증가를 기다릴 필요가 없다. 중증 저산소혈증 환자에서 반복 혈액검사만 하면 직접적인 폐포 평가와 치료가 지연된다.","could_be_correct_if":"치료 반응과 혈액학적 변화를 추적하는 보조검사로 반복하되 진단을 지연하지 않을 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"폐생검은 침습적이며 출혈·기흉 위험이 있어 저산소성 환자의 첫 검사가 아니다. 임상·영상과 BAL로 진단이 불충분한 비전형적 상황에서만 고려한다.","could_be_correct_if":"BAL과 비침습 평가 후에도 진단이 불명확하고 조직 결과가 치료를 바꿀 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"총 IgE와 Aspergillus 특이 IgE는 ABPA 감별에 쓰이지만 이 환자는 최근 흡연 시작 후 급성 ARDS 유사 경과다. 두 혈청검사만으로 폐포 호산구증가나 감염 배제를 확인할 수 없다.","could_be_correct_if":"천식, Aspergillus 감작과 중심성 기관지확장·점액마개 등 ABPA 단서가 있을 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"우심도자술은 심인성 폐부종 여부가 비침습 검사로 불명확할 때 제한적으로 고려한다. 젊은 환자의 최근 흡연 노출과 급성 호흡부전에서는 BAL이 AEP를 더 직접적으로 평가한다.","could_be_correct_if":"심장 평가로도 혈역학적 폐부종 여부를 구분하기 어렵고 측정 결과가 치료를 바꿀 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"기관지내시경 BAL로 폐포 호산구 분율을 확인하고 동시에 감염 검체를 평가한다. 적절한 임상 맥락에서 뚜렷한 BAL 호산구증가와 이차 원인 배제는 급성 호산구성 폐렴 진단을 지지한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 HRCT가 양측 패치형 간유리음영·경결과 소엽사이막 비후를 실제로 보여 주는지 확인해야 한다.","기관지내시경은 중증 저산소혈증에서 시술 안전성과 호흡보조 계획을 먼저 평가해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000175","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["4주의 아급성 전신·호흡기 증상","성인 발병 천식","말초 호산구 1800/μL","이차 원인 검사 음성","말초·흉막하 우세 침윤"],"clinical_inference":"임상·혈액·영상 조합이 만성 호산구성 폐렴에 부합하며 전신 글루코코르티코이드에 반응하지만 재발이 흔해 서서히 감량하고 추적해야 한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"흡입 스테로이드는 동반 천식 조절에는 유용하지만 광범위 폐실질 호산구성 염증의 초기 단독 치료로는 부족하다. 전신 증상과 영상 침윤을 자연 소실만 기다리면 저산소증과 기능 저하가 진행할 수 있다.","could_be_correct_if":"전신 치료 후 동반 천식 조절과 재발 감소를 위한 보조 유지치료로 사용할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"발열과 침윤이 있어도 현저한 호산구증가, 성인 발병 천식과 말초 우세 영상은 세균성 폐렴보다 만성 호산구성 폐렴을 지지한다. 감염 근거 없이 장기 정주 항생제 반응을 진단 기준으로 삼을 수 없다.","could_be_correct_if":"배양·임상·영상 근거로 세균성 폐렴이 확인될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"전신 글루코코르티코이드는 만성 호산구성 폐렴의 폐실질 염증을 빠르게 호전시킨다. 증상, 혈액 호산구와 영상을 추적하며 서서히 감량하고 감량·중단 중 재발을 감시한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"ABPA라면 Aspergillus 감작, 높은 총 IgE와 중심성 기관지확장 또는 점액마개 등의 근거가 필요하다. 총 IgE만으로 현재 질환을 진단하거나 치료 반응 전체를 판정할 수 없다.","could_be_correct_if":"ABPA가 객관적으로 확인되어 전신스테로이드에 항진균제를 추가할 적응증이 있을 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"cyclophosphamide는 중증 장기위협 EGPA 등 혈관염에서 고려하는 강한 면역억제제다. 신경·피부·신장·심장 등 혈관염 장기 침범이 제시되지 않은 만성 호산구성 폐렴에 즉시 병합하면 독성이 과도하다.","could_be_correct_if":"중증 장기위협 혈관염이 확진되어 해당 면역억제 적응증이 성립할 때","misconception_tag":"적응증"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 영상이 말초·흉막하 우세 경결과 중심부 상대적 보존을 실제로 보여 주는지 확인해야 한다.","전신 글루코코르티코이드의 용량과 감량 기간은 근거와 반응에 따라 정한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000176","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["새 흡연 시작 3주 후 급성 발병","양측 폐침윤과 PaO2 52 mmHg","BAL 호산구 38%","감염 근거 없음","고유량 산소에도 빈호흡"],"clinical_inference":"중증 저산소성 급성 호산구성 폐렴으로 판단되므로 감염 평가를 병행하면서 필요한 호흡보조와 전신 글루코코르티코이드를 지체 없이 시행한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"감염 검체 채취와 필요 시 경험적 항균치료는 병행할 수 있지만 모든 결과가 확정될 때까지 기다리면 악화 중인 호흡부전의 치료가 지연된다. BAL 호산구증가와 노출·경과가 이미 AEP를 강하게 지지한다.","could_be_correct_if":"임상적으로 안정되고 침습성 감염 가능성이 매우 높아 스테로이드 위험이 이득을 넘는 특수 상황에서 신속한 추가평가를 할 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"correct","explanation":"산소·고유량 치료를 포함해 필요 수준의 호흡보조를 제공하고 악화 시 기계환기를 준비한다. 동시에 전신 글루코코르티코이드를 즉시 시작하면 AEP의 급성 폐포 염증이 대개 빠르게 호전된다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"흡입 스테로이드는 미만성 폐포 침윤과 중증 저산소혈증에 충분한 전신 항염증 효과를 제공하지 못한다. 고유량 산소에도 빈호흡인 환자에게 관찰만 하는 것은 위험하다.","could_be_correct_if":"동반 천식의 기도 염증을 보조적으로 치료할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"AEP는 적절한 치료 후 재발이 드물어 처음부터 1년 유지 경구스테로이드를 계획할 이유가 없다. 불필요한 장기 투여는 감염·골대사·대사 부작용을 늘린다.","could_be_correct_if":"재평가에서 만성 호산구성 폐렴 등 재발성 질환으로 진단이 바뀌어 장기 감량 전략이 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"항 IL-5 제제는 특정 중증 호산구성 천식이나 재발성 호산구 질환에서 고려하는 추가치료다. 급성 저산소성 AEP의 초기 단독 치료로 전신스테로이드와 호흡보조를 대체하지 못한다.","could_be_correct_if":"표준치료에도 재발하는 특정 호산구성 질환에서 전문의가 스테로이드 절감 목적으로 판단할 때","misconception_tag":"적응증"}
+    ],"review_flags":["흡연과 전자담배 노출을 즉시 중단하도록 교육하는 내용도 실제 치료계획에 포함해야 한다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000177","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["amiodarone 시작 6주 후 증상","말초 호산구 16%","감염 검사 음성","좌심실 기능 보존","CT상 양측 기저 침윤과 흉수"],"clinical_inference":"시간적 약물 노출과 호산구성 폐침윤, 감염·심부전 근거 부족은 amiodarone 유발 폐독성 또는 호산구성 폐렴을 지지하므로 약물을 중단하고 중증도에 따라 전신스테로이드를 사용한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"박출률 보존만으로 심부전을 완전히 배제하지는 못하지만 새 amiodarone 노출과 호산구증가가 약물성 폐질환을 강하게 시사한다. 원인 약물을 유지하고 이뇨제만 늘리면 폐독성이 계속될 수 있다.","could_be_correct_if":"객관적 울혈·이완기 기능 평가로 심인성 폐부종이 확인되고 약물성 폐질환이 배제될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"감염 검사가 음성이고 약물 시작과 증상의 시간 관계가 뚜렷하다. 항생제만 연장하면서 amiodarone을 유지하면 의심 원인이 계속 노출된다.","could_be_correct_if":"배양·임상·영상 근거로 세균성 폐렴이 확인될 때에도 원인 약물 평가를 병행한다.","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"특발성 만성 호산구성 폐렴은 약물·감염·기생충 등 이차 원인을 배제한 뒤 진단한다. 최근 시작한 amiodarone이라는 유력 원인을 유지한 채 특발성으로 분류할 수 없다.","could_be_correct_if":"amiodarone과 다른 이차 원인의 관련성이 충분히 배제되고 전형적 만성 호산구성 폐렴으로 확정될 때","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"의심 원인인 amiodarone을 즉시 중단하고 심방세동 치료 대안을 심장 전문의와 조정한다. 저산소혈증, 증상과 침윤 범위가 의미 있으면 전신 글루코코르티코이드를 투여하고 임상·영상 반응을 추적한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"amiodarone을 중단해도 반감기가 길어 폐손상이 지속되거나 회복이 지연될 수 있다. 폐침윤과 산소화, 폐기능의 호전을 확인하기 전 호흡기 추적을 종료해서는 안 된다.","could_be_correct_if":"충분한 추적에서 증상·영상·폐기능이 완전히 안정되고 재발 위험이 낮다고 판단될 때","misconception_tag":"병태생리"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 CT가 양측 기저부 침윤과 우측 우세 흉수를 실제로 보여 주는지 확인해야 한다.","amiodarone 폐독성은 비특이적 영상이 가능하므로 임상에서 심부전·감염 등 대체 원인을 충분히 배제해야 한다."],"publication_recommendation":"revise"
+  }
+]

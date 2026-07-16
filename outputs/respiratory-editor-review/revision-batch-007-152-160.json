@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000152",
+    "revised_stem":"35세 남자가 중증 천식 악화로 산소와 반복 흡입 기관지확장제를 투여받고 있다. 호흡노력이 점차 약해지고 질문에 느리게 대답한다. 치료 시작 시 동맥혈가스는 pH 7.46, PaCO₂ 29 mmHg였으나 60분 뒤 pH 7.27, PaCO₂ 49 mmHg로 변했고 저산소혈증도 지속된다. 가장 적절한 다음 조치는?",
+    "revised_lead_in":"가장 적절한 다음 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"PaCO₂가 일반 정상범위에 가까우므로 같은 치료로 2시간 더 관찰한다","is_correct":false},{"choice_id":"C2","text":"PaO₂가 일시 상승하면 악화가 해결된 것으로 보고 퇴원한다","is_correct":false},{"choice_id":"C3","text":"대사산증으로 판단해 중탄산염만 투여한다","is_correct":false},{"choice_id":"C4","text":"중환자실·기도관리 팀을 즉시 호출해 기관내삽관과 기계환기를 준비하며 천식 치료를 지속한다","is_correct":true},{"choice_id":"C5","text":"진정제를 먼저 투여해 호흡수를 낮춘다","is_correct":false}
+    ],
+    "revised_core_explanation":"급성 중증 천식에서는 초기 과호흡으로 PaCO₂가 낮을 수 있다. 치료 중 PaCO₂가 29에서 49 mmHg로 상승하고 pH가 7.27로 하락하면서 호흡노력과 의식 반응이 감소하는 것은 호흡근 피로와 진행성 환기부전의 위험 신호다. 즉시 중환자실·기도관리 팀을 호출해 기관내삽관과 폐과팽창을 최소화하는 기계환기를 준비하면서 기관지확장제, corticosteroid와 산소치료를 계속한다.",
+    "references":[{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_table_values_to_text","reapproval":"approve","reapproval_reason":"ABG 표의 핵심 수치와 시간축을 지문에 직접 넣고 자동 결합 비문을 제거해 진행성 환기부전을 명확히 함"
+  },
+  {
+    "question_id":"RESP-000156",
+    "revised_stem":"29세 남자가 자동차 도장 작업을 시작한 뒤 기침과 쌕쌕거림이 생겼다. 흡입법은 정확하고 감염 증상은 없다. 동일한 기기로 수주간 측정한 PEF는 근무일에 반복적으로 감소하고 휴무일에 회복되며 재근무 후 다시 감소했다. 가장 적절한 조치는?",
+    "revised_lead_in":"가장 적절한 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"휴무일 수치가 정상에 가까우므로 천식을 배제하고 같은 노출을 계속한다","is_correct":false},{"choice_id":"C2","text":"직업성 천식을 의심해 노출을 신속히 줄이거나 피하게 하고 직업환경의학·호흡기 전문 평가를 의뢰한다","is_correct":true},{"choice_id":"C3","text":"근무 관련성 평가 없이 고용량 경구 corticosteroid만 장기 투여한다","is_correct":false},{"choice_id":"C4","text":"PEF 변화는 흡연량만 반영하므로 직업력은 묻지 않는다","is_correct":false},{"choice_id":"C5","text":"객관적 추가 평가 없이 직업성 천식으로 확정하고 모든 흡입제를 중단한다","is_correct":false}
+    ],
+    "revised_core_explanation":"근무일 PEF 저하, 휴무일 회복과 재노출 후 재저하는 작업 노출과 가변적 기류제한의 반복적 연관성을 보여 직업성 천식을 강하게 시사한다. CDC/NIOSH는 근무일과 휴무일의 연속 PEF 측정과 노출력·폐기능검사를 결합해 객관적으로 평가하도록 안내한다. 예후를 위해 원인 노출을 조기에 줄이거나 회피하고 전문 평가를 진행하되, 진단과 조절을 위한 ICS 포함 천식 치료는 임의로 중단하지 않는다.",
+    "references":[{"url":"https://www.cdc.gov/niosh/asthma/hcp/diagnosing/index.html","title":"CDC/NIOSH: Diagnosing Work-related Asthma"},{"url":"https://www.cdc.gov/niosh/asthma/prevention/index.html","title":"CDC/NIOSH: Preventing Work-related Asthma"},{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_graph_pattern_to_text","reapproval":"approve","reapproval_reason":"PEF 그래프 패턴을 지문에 옮기고 연속 PEF와 노출 저감을 직접 다루는 최신 CDC/NIOSH 근거를 추가함"
+  },
+  {
+    "question_id":"RESP-000157",
+    "revised_stem":"20세 여자가 달리기 때만 기침과 흉부 답답함을 호소한다. 기저 폐활량검사는 정상이다. 표준화 운동유발검사에서 FEV₁은 운동 전 3.8 L, 운동 10분 뒤 최저 2.9 L로 감소한 뒤 30분에 회복되었으며 검사 품질 기준은 충족했다. 가장 적절한 해석과 계획은?",
+    "revised_lead_in":"가장 적절한 해석과 계획은?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"30분에 회복되므로 음성 검사로 판정한다","is_correct":false},{"choice_id":"C2","text":"운동 후 FEV₁ 감소는 정상 생리이므로 매일 경구 corticosteroid를 시작한다","is_correct":false},{"choice_id":"C3","text":"고정성 상기도폐쇄로 진단한다","is_correct":false},{"choice_id":"C4","text":"운동 후 FEV₁이 약 24% 감소한 운동유발기관지수축으로 진단하고 ICS 포함 조절치료와 처방된 운동 전 reliever 전략을 사용한다","is_correct":true},{"choice_id":"C5","text":"운동을 영구 금지하고 모든 흡입제를 중단한다","is_correct":false}
+    ],
+    "revised_core_explanation":"FEV₁은 3.8 L에서 2.9 L로 약 24% 감소해 ATS의 운동유발기관지수축 양성 기준인 10% 이상 감소를 충족하며, 이후 회복도 가역적 기관지수축과 일치한다. 운동을 금지하기보다 ICS 포함 치료로 기도 염증을 관리하고 환자에게 처방된 reliever를 운동 전에 사용한다. GINA Track 1을 사용하는 경우 해당 국가에서 허가된 저용량 ICS-formoterol AIR/MART 제형과 용법을 따르며, 다른 치료 경로에서는 운동 전 SABA와 규칙적 ICS를 사용할 수 있다.",
+    "references":[{"url":"https://www.thoracic.org/statements/resources/allergy-asthma/exercise-induced-bronchoconstriction.pdf","title":"Official ATS Clinical Practice Guideline: Exercise-induced Bronchoconstriction"},{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_graph_values_to_text","reapproval":"approve","reapproval_reason":"그래프 수치·시간축을 텍스트화하고 운동 전 ICS-formoterol은 허가된 AIR/MART 제형·용법에 한정하도록 표현을 보완함"
+  },
+  {
+    "question_id":"RESP-000159",
+    "revised_stem":"54세 남자가 2주 뒤 비응급 선택적 복강경 수술을 받을 예정이다. 최근 한 달간 야간 천식 증상이 주 3회 있었고 5일 전 응급실에서 전신 corticosteroid를 투여받았다. 오늘도 천명이 들리고 PEF는 개인 최고치의 58%이다. 가장 적절한 조치는?",
+    "revised_lead_in":"가장 적절한 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"예정대로 수술하되 수술 당일 모든 흡입제를 중단한다","is_correct":false},{"choice_id":"C2","text":"조절 상태와 무관하게 예방 항생제만 추가한다","is_correct":false},{"choice_id":"C3","text":"수술 전 LABA 단독요법으로 전환한다","is_correct":false},{"choice_id":"C4","text":"장기 기계환기를 미리 계획하고 바로 수술한다","is_correct":false},{"choice_id":"C5","text":"선택수술을 연기하고 ICS 포함 치료와 필요 시 단기 전신 corticosteroid로 조절을 최적화한 뒤 재평가한다","is_correct":true}
+    ],
+    "revised_core_explanation":"최근 응급실 악화, 현재 천명과 PEF 58%는 조절 불량과 수술 중 기관지경련 위험을 보여 준다. GINA는 비응급 선택수술 전에 특히 최근 악화·지속 기류제한이 있는 환자의 천식 조절을 최적화하도록 권고한다. 수술을 연기해 ICS 포함 유지치료를 계속·조정하고 필요하면 단기 전신 corticosteroid를 사용한 뒤 증상과 폐기능을 재평가하며, 수술 전후 흡입제를 임의로 중단하지 않는다.",
+    "references":[{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"정답과 모순되던 기존 해설을 제거하고 조절 불량 선택수술 환자의 수술 전 최적화 원칙으로 교체함"
+  },
+  {
+    "question_id":"RESP-000160",
+    "revised_stem":"41세 여자가 중간용량 ICS-formoterol을 정확히 사용하지만 운동 시 호흡곤란이 남아 있다. BMI는 36 kg/m²이고 큰 코골이와 주간졸림이 있다. 속쓰림이나 역류 증상은 없다. 가장 적절한 관리 계획은?",
+    "revised_lead_in":"가장 적절한 관리 계획은?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"무증상 위식도역류로 확정하고 고용량 PPI만 시작한다","is_correct":false},{"choice_id":"C2","text":"비만에서는 ICS가 효과가 없으므로 모든 흡입제를 중단한다","is_correct":false},{"choice_id":"C3","text":"천식 진단·조절과 흡입치료를 재평가하면서 구조화된 체중감량과 수면무호흡 검사를 병행한다","is_correct":true},{"choice_id":"C4","text":"호흡곤란은 모두 비만 때문이므로 폐기능과 천식 조절 평가를 중단한다","is_correct":false},{"choice_id":"C5","text":"체중감량 대신 유지 경구 corticosteroid를 시작한다","is_correct":false}
+    ],
+    "revised_core_explanation":"비만은 호흡곤란과 천식 조절에 영향을 주므로 진단·흡입법·순응도와 기류 변동성을 다시 확인하면서 구조화된 체중감량을 병행한다. BMI 36 kg/m², 큰 코골이와 주간졸림은 폐쇄성수면무호흡의 임상 위험을 높여 객관적 수면검사가 필요하다. 역류 증상이 없는 환자에게 천식 조절만을 목적으로 PPI를 일률적으로 사용하거나 ICS를 중단하지 않는다.",
+    "references":[{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"},{"url":"https://aasm.org/aasm-publishes-new-guideline-for-diagnostic-testing-for-adult-sleep-apnea/","title":"AASM Guideline for Diagnostic Testing for Adult Obstructive Sleep Apnea"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"정답 반대 기존 해설을 교체하고 비만·주간졸림·코골이의 객관적 OSA 평가를 AASM 근거로 보강함"
+  }
+]

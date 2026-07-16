@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000208","answer_consistency":"questionable",
+    "core_reasoning":{"key_findings":["안정적 외래 CAP","COPD·당뇨 동반","QTc 520 ms와 sotalol","fluoroquinolone 건병증","beta-lactam 알레르기 없음","C4가 C1과 동일 약제 조합"],"clinical_inference":"동반질환 외래 CAP에는 beta-lactam과 비정형균 치료 조합이 필요하며 macrolide·fluoroquinolone 안전성 문제가 있어 amoxicillin-clavulanate와 doxycycline이 최선이다. 그러나 손상된 C4도 같은 두 약제를 명시해 단일정답성이 없다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"amoxicillin-clavulanate는 폐렴구균과 beta-lactamase 생성 호흡기 세균을, doxycycline은 비정형균 범위를 보완한다. QT 연장을 더할 macrolide와 과거 건병증·QT 위험이 있는 fluoroquinolone을 피할 수 있다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"고용량 amoxicillin 단독은 동반질환 없는 저위험 외래 CAP에서 적절할 수 있다. COPD와 당뇨가 있는 환자에서는 beta-lactamase 생성균과 비정형균까지 고려한 확장 조합이 필요하다.","could_be_correct_if":"중요 동반질환이 없고 지역 지침상 저위험 외래 CAP 단독요법이 적합할 때","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"amoxicillin-clavulanate와 azithromycin은 동반질환 외래 CAP의 표준 조합 중 하나다. 하지만 QTc 520 ms이고 sotalol을 복용해 macrolide 추가 시 torsades de pointes 위험이 커지며 '절연 제제'도 손상 표현이다.","could_be_correct_if":"QT 연장·부정맥 위험과 상호작용이 없고 macrolide가 적절한 경우","misconception_tag":"금기"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"'감압 제제'는 의학적으로 의미 없는 손상 문구지만 앞부분은 C1과 동일한 amoxicillin-clavulanate와 doxycycline을 명시한다. 따라서 현재 문장만 보면 정답과 같은 처방으로 해석되어 오답 처리할 수 없다.","could_be_correct_if":"의도가 두 약제 병합요법이라면 C1과 동일한 정답","misconception_tag":"기타"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"levofloxacin은 동반질환 외래 CAP의 단독 선택지가 될 수 있다. 그러나 과거 fluoroquinolone 건병증과 현저한 QT 연장이 있어 재노출의 위해가 크다.","could_be_correct_if":"건병증·QT 연장 등 안전성 문제가 없고 beta-lactam 조합을 사용할 수 없을 때","misconception_tag":"금기"}
+    ],"review_flags":["C3의 '절연 제제'와 C4의 '감압 제제'는 명백한 문장 손상이다.","C4는 손상 부분을 제외하면 정답 C1과 같은 amoxicillin-clavulanate+doxycycline 조합이므로 단일정답성이 없다. 원자료를 확인해 서로 다른 오답으로 다시 작성해야 한다.","기존 C1 해설이 정답 약제에 없는 azithromycin의 QT 위험을 '남는다'고 서술해 정답 해설로 부적절하다."],"publication_recommendation":"hold"
+  },
+  {
+    "question_id":"RESP-000209","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["호흡수 34","PaO2/FiO2 190","다엽성 침윤","혼돈","ICU 중증 CAP","지역 인플루엔자 유행"],"clinical_inference":"중증 CAP에서는 치료 전 혈액·양질 하기도 배양, 계절성 바이러스 PCR과 폐렴구균·Legionella 요항원으로 병원체를 넓게 규명하되 경험치료를 지연하지 않는다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"미생물검사 생략은 안정적인 저위험 외래 CAP에서 가능하다. ICU 중증 CAP에서는 병원체 확인이 항생제 확대·축소, 감염관리와 예후에 직접 영향을 주므로 검사가 필요하다.","could_be_correct_if":"중증도와 내성균 위험이 없는 안정 외래 CAP","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"객담 배양과 인플루엔자 PCR은 필요하지만 중증 CAP에서는 균혈증 확인을 위한 혈액배양도 중요하다. 폐렴구균·Legionella 요항원은 항생제 후에도 진단을 보완할 수 있어 함께 시행한다.","could_be_correct_if":"비중증 환자에서 임상 상황에 맞춰 제한 검사를 선택할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"항산균·진균 검사와 폐생검은 면역저하, 만성 공동, 특정 노출 또는 비전형적 치료불응 경과에서 선택한다. 모든 중증 CAP 환자에게 침습적 생검까지 일률 시행하면 위해가 이득보다 크다.","could_be_correct_if":"비침습 검사로 진단되지 않는 비전형·면역저하 폐렴에서 조직 결과가 치료를 바꿀 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"중증 CAP에서는 폐렴구균·Legionella 요항원을 초기 병원체 검사에 포함한다. 72시간 실패를 기다리면 표적치료와 공중보건상 중요한 Legionella 진단이 늦어진다.","could_be_correct_if":"초기 검사가 누락된 뒤 치료불응으로 병원체 재평가를 하는 경우에도 본래는 초기 시행이 적절하다.","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"correct","explanation":"항생제 전 여러 혈액배양과 양질의 하기도 검체를 채취하고 유행 중인 인플루엔자 PCR을 시행한다. 중증 CAP이므로 폐렴구균·Legionella 요항원을 추가해 결과를 경험치료의 표적화와 축소에 활용한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],"review_flags":["검체 채취가 중증 CAP의 경험적 항생제 시작과 패혈증 처치를 지연해서는 안 된다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000210","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["발열·화농성 객담·흉막통","새 우하엽 폐포성 침윤","procalcitonin 0.08","혈압·산소화 안정"],"clinical_inference":"낮은 procalcitonin은 세균성 CAP를 안전하게 배제하지 못하므로 임상·영상으로 확인된 폐렴에 경험적 항생제를 시작한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"procalcitonin은 초기 국소 세균감염이나 비전형균 폐렴에서 낮을 수 있어 기준 미만만으로 CAP를 배제하지 못한다. 이미 발열·화농성 객담과 새 엽성 침윤이 있어 수치 재검만 기다리면 치료가 지연된다.","could_be_correct_if":"폐렴 임상·영상 근거가 약한 하기도감염에서 항생제 절감 알고리즘의 보조자료로 사용할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"바이러스 PCR이 양성이어도 세균성 동시감염은 가능하다. 현재 새 엽성 폐포침윤과 화농성 객담이 있어 결과 전 항생제를 전부 보류할 수 없다.","could_be_correct_if":"세균성 폐렴 근거가 없고 순수 바이러스 상기도·하기도 감염이 강하게 의심될 때","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"임상 증상과 새 X선 침윤으로 CAP가 확인되어 환자 동반질환·중증도·내성 위험에 맞는 경험적 항생제를 시작한다. 이후 임상 안정성, 병원체 결과와 합병증 여부로 범위와 기간을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"doxycycline의 시작 여부는 procalcitonin 상승만으로 결정하지 않는다. 병원체와 환자 위험에 맞는 전체 경험요법을 지금 선택해야 하며 단일 표지자 상승을 기다리지 않는다.","could_be_correct_if":"외래 CAP에서 doxycycline이 환자별 적절한 경험약이고 임상·영상 진단에 따라 즉시 시작할 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐렴은 이미 새 우하엽 침윤으로 영상 확인되었다. 병변 증가를 기다리는 것은 질환 진행을 치료 조건으로 삼는 오류이며 안정 환자라도 즉시 적절한 경험치료가 필요하다.","could_be_correct_if":"초기 영상이 불확실하고 임상 진단도 약해 짧은 간격 재평가를 선택한 경우","misconception_tag":"검사 순서"}
+    ],"review_flags":["경험적 항생제의 구체 선택은 동반질환·알레르기·최근 항생제·지역 내성 자료가 지문에 없어 제시하지 않는 것이 적절하다."],"publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000211","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["호텔 온천 노출","발열·마른기침·설사·의식저하","저나트륨혈증","우하엽 폐렴","Legionella pneumophila 요항원 양성"],"clinical_inference":"Legionella 감염이 확인되었고 세포내 병원체라 ceftriaxone 단독은 부적절하므로 azithromycin 같은 세포내 활성 약제로 표적 전환한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"ceftriaxone은 일반 전형 세균 CAP에는 유효하지만 세포내 증식 Legionella에 임상적으로 적절한 단독 활성이 없다. 요항원 양성 결과를 반영해 macrolide 또는 호흡기 fluoroquinolone으로 조정해야 한다.","could_be_correct_if":"폐렴구균 등 ceftriaxone 감수성 전형 세균이 확인되고 Legionella가 배제될 때","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"correct","explanation":"azithromycin은 세포내 침투와 Legionella 활성이 있어 입원 Legionnaires' disease의 표적 치료로 사용할 수 있다. 임상 반응과 중증도, QT·상호작용을 추적하며 치료기간을 결정한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"vancomycin은 MRSA 치료제로 Legionella의 세포내 감염을 치료하지 못한다. 괴사성 폐렴·인플루엔자 후 감염·과거 MRSA 분리 등 항-MRSA 근거도 제시되지 않았다.","could_be_correct_if":"MRSA 동시감염이 의심·확인되어 Legionella 활성 치료에 추가할 때","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"oseltamivir는 인플루엔자 치료제이며 Legionella 요항원 양성 세균성 폐렴의 표적약이 아니다. 바이러스 PCR도 음성이므로 이를 단독으로 바꾸면 확인된 감염이 무치료가 된다.","could_be_correct_if":"인플루엔자 동시감염이 확인되면 적절한 항균제와 함께 투여할 때","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"trimethoprim-sulfamethoxazole은 Pneumocystis나 Stenotrophomonas 등에서 핵심 약제다. Legionnaires' disease의 권장 1차 표적치료가 아니다.","could_be_correct_if":"해당 약제 감수성 병원체가 별도로 확인될 때","misconception_tag":"적응증"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 검사표가 Legionella pneumophila 요항원 양성, 폐렴구균 요항원·바이러스 PCR 음성을 정확히 보여 주는지 확인해야 한다.","azithromycin 선택 전 QT 연장과 약물상호작용을 평가해야 한다."],"publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000212","answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["신장이식 면역저하","리조트 노출 후 중증 다엽성 폐렴","Legionella serogroup 1 요항원 음성","하부호흡기 Legionella species PCR 양성","선택배지 배양 진행 중","치료 반응"],"clinical_inference":"요항원은 주로 serogroup 1만 검출하므로 음성으로 비-serogroup 1 감염을 배제할 수 없고, 양성 호흡기 PCR을 반영해 활성 치료와 배양을 유지한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"소변 항원검사는 주로 L. pneumophila serogroup 1을 검출해 다른 혈청군·종에는 음성일 수 있다. 더 넓은 하부호흡기 PCR이 양성이므로 azithromycin을 중단하면 실제 감염을 놓친다.","could_be_correct_if":"Legionella가 호흡기 분자·배양을 포함한 충분한 검사에서 배제되고 다른 병원체가 확인될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"면역저하·리조트 노출·중증 다엽성 폐렴으로 사전확률이 높고 PCR 결과와 치료 반응도 일치한다. 이를 근거 없이 위양성으로 치부하고 ceftriaxone 단독으로 바꾸면 세포내 Legionella 활성이 사라진다.","could_be_correct_if":"오염·비특이 증폭이 객관적으로 입증되고 반복 호흡기 검사·배양에서 다른 원인이 확인될 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"혈청항체는 급성기와 회복기 상승을 후향적으로 확인하는 보조검사라 즉각적 치료 결정에 느리다. ICU 진행성 폐렴에서 이미 양성 PCR이 있는데 항체를 기다리며 항균제를 보류하면 위험하다.","could_be_correct_if":"역학 조사나 후향적 진단 보완에 사용하되 치료를 지연하지 않을 때","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"하부호흡기 PCR 양성을 진단에 반영해 azithromycin 등 Legionella 활성 치료를 유지한다. 선택배지 배양을 완료하면 비-serogroup 1 균주 확보, 감수성·공중보건 환경주 비교에 도움이 된다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"같은 요항원을 반복해도 serogroup 1 중심이라는 검출 한계는 그대로다. 필요한 것은 제한 검사 반복이 아니라 양성 PCR을 수용하고 더 넓은 배양으로 균주를 확인하는 것이다.","could_be_correct_if":"검체 오류나 기술 실패가 명백해 동일 검사 재확인이 필요한 경우에도 다른 양성 검사를 무시하지 않는다.","misconception_tag":"검사 순서"}
+    ],"review_flags":["기존 핵심 해설 말미의 자동 결합 비문을 삭제해야 한다.","게시 전 검사표가 serogroup 1 요항원 음성, 하부호흡기 Legionella species PCR 양성과 선택배지 배양 진행을 정확히 표시하는지 확인해야 한다.","tacrolimus와 macrolide 간 상호작용 및 신기능·약물농도를 면밀히 감시해야 한다."],"publication_recommendation":"revise"
+  }
+]

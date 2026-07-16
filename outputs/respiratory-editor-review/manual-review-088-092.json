@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000088",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["식후 흉부 불편감·신물 역류","후심장부 둥근 연부조직 음영과 공기음영","횡격막 위 위장관 구조 의심","수술 전 해부학 평가"],"clinical_inference":"임상상과 후심장부 공기 함유 병변은 식도열공탈장으로 흉곽 내 이동한 위를 시사한다. 바륨 식도조영술은 위식도접합부 위치와 위의 이동·형태를 동적으로 보여 수술 전 해부학 평가에 가장 직접적이다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"바륨 식도조영술은 위식도접합부와 위가 횡격막을 통과하는 위치, 탈장의 형태와 식도 통과를 동적으로 보여준다. 흉부 X선에서 의심한 열공탈장의 수술 전 해부학을 구체화하는 검사다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"상부위장관내시경은 식도염, Barrett 식도, 궤양과 점막 병변을 평가하는 데 중요하다. 그러나 탈장의 동적 이동, 전체 크기와 환원성을 단독으로 모두 확정하는 검사는 아니다.","could_be_correct_if":"역류 합병증과 점막 병변을 평가하거나 수술 전 보완 검사가 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"24시간 pH 검사는 산 역류 노출과 증상 연관성을 측정하지만 위가 흉곽 안으로 얼마나 이동했는지는 보여주지 않는다. 해부학적 수술 계획을 위한 첫 답이 될 수 없다.","could_be_correct_if":"해부학 평가 후 역류의 객관적 증명이 추가로 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"고해상도 내압검사는 식도 연동운동과 하부식도괄약근 기능을 평가해 수술법 결정에 도움을 줄 수 있다. 위의 흉곽 내 범위와 탈장 형태를 영상처럼 직접 확인하지는 못한다.","could_be_correct_if":"항역류수술 전 식도 운동장애와 연동운동을 평가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"기관지내시경은 기도 내 병변을 평가하며 후심장부 위장관 구조의 해부학을 확인하지 못한다. 역류 증상과 영상 위치에 폐농양·기관지 연결을 의심할 단서도 없다.","could_be_correct_if":"공동성 폐병변과 기도 내 폐쇄 또는 누공이 의심되는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["현재 근거가 영상 출처만 있어 수술 전 열공탈장 검사 선택을 검증하지 못한다. 위식도외과 또는 GERD·열공탈장 진단지침을 추가해야 한다.","기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000089",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["20년 전 우측 농흉","우측 흉막의 광범위한 비후·석회화","우측 흉곽 용적 감소","서서히 진행하는 운동 호흡곤란"],"clinical_inference":"만성 농흉 후 섬유성 흉막 피막이 우측 폐의 팽창을 제한한 섬유흉에 합당하다. 폐용적 감소를 동반한 제한성 환기장애가 예상되며 CT로 흉막 피막과 잔여 폐실질의 확장 가능성을 평가한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"FEV1/FVC 감소와 TLC 증가는 COPD 같은 폐쇄성 과팽창 패턴이다. 영상은 흉막 피막과 수축된 우측 흉곽을 보여 기관지확장제 반응만으로 원인을 설명할 수 없다.","could_be_correct_if":"폐쇄성 증상과 과팽창이 있고 기관지확장제 반응을 평가하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"폐혈관질환은 정상 폐용적에 고립성 DLCO 저하를 보일 수 있지만 현재는 명확한 일측 흉막 질환과 흉곽 수축이 있다. 만성 폐색전만 평가하면 구조적 제한 원인을 놓친다.","could_be_correct_if":"흉막·실질 이상 없이 폐혈관질환 위험과 고립성 DLCO 감소가 있는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"낮은 FVC만으로 제한성 환기장애를 확정할 수 없고 TLC 감소를 측정해야 한다. TLC가 정상이라면 불완전 흡기, 공기포획 등 다른 원인을 검토해야 한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"RV와 RV/TLC 증가는 공기포획을 시사하며 호기 CT는 소기도 폐쇄를 찾는 데 유용하다. 이 영상의 핵심은 공기포획이 아니라 석회화된 흉막과 일측 용적 감소다.","could_be_correct_if":"소기도질환이 의심되고 공기포획을 확인하려는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"흉막 섬유화가 폐와 흉벽 팽창을 제한해 TLC와 FVC가 감소하고 FEV1/FVC는 보존되는 제한성 패턴이 예상된다. CT는 피막의 범위, 폐실질 손상과 잔여 폐의 재팽창 가능성을 평가하는 데 도움을 준다.","could_be_correct_if":null,"misconception_tag":"병태생리"}
+    ],
+    "review_flags":["제시된 근거는 섬유흉 영상 소견을 지지하지만 폐기능 패턴과 수술 전 CT 평가를 직접 다루는 근거는 제한적이다. 관련 흉막질환 또는 수술 평가 문헌을 보강해야 한다.","기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000090",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["격렬한 구토 직후 심한 흉통·호흡곤란","발열·빈맥","경부 피하기종","종격동 윤곽을 따라 보이는 공기"],"clinical_inference":"구토 후 흉통, 전신 염증 소견, 피하기종과 종격동기종은 Boerhaave 증후군에 의한 식도천공을 우선 시사한다. 금식·수액·광범위 정주 항생제를 시작하고 CT/CT 식도조영술과 응급 외과 협진으로 천공·오염 범위를 신속히 평가한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"천식이나 Valsalva 뒤 안정적으로 발생한 자발성 종격동기종은 보존적 치료가 가능할 수 있다. 그러나 구토 후 발열·빈맥·심한 흉통은 식도천공과 종격동염 위험 신호여서 외래 추적 대상이 아니다.","could_be_correct_if":"식도 손상 단서가 없고 안정적인 원발성 자발성 종격동기종이 확인된 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"식도경련은 흉통을 유발하지만 종격동 공기와 피하기종, 발열을 설명하지 못한다. 질산염 반응을 기다리면 시간 민감한 천공 진단과 감염 조절이 지연된다.","could_be_correct_if":"천공 단서 없이 식도운동장애가 확인된 안정적 환자인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"식도천공이 의심되면 경구섭취를 중단하고 정주 수액·광범위 항생제를 즉시 시작한다. 조영증강 CT 또는 CT 식도조영술로 누출과 오염 범위를 확인하면서 외과·내시경 치료팀과 응급으로 협의한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"기관지 파열은 큰 외상, 삽관 손상, 지속적 대량 공기누출 등의 맥락에서 의심한다. 구토 직후 발생한 현재 상황에서는 CT로 식도천공과 종격동 오염을 먼저 평가해야 한다.","could_be_correct_if":"기관·기관지 손상 기전과 지속적 공기누출이 확인되어 내시경 진단이 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"급성 심낭염은 자세성 흉통과 전형적 심전도 변화를 보일 수 있지만 종격동기종·피하기종을 만들지 않는다. 종격동 공기를 경과관찰하면 식도천공 치료가 지연될 수 있다.","could_be_correct_if":"식도·기도 손상이 배제되고 급성 심낭염이 별도로 진단된 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000091",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["69세·50갑년 흡연","2개월 기침·체중 감소","좌측 폐문부 큰 종괴성 음영","활력 안정·발열 없음"],"clinical_inference":"고위험 흡연자의 전신 증상과 중심부 폐종괴는 폐암 가능성이 높다. 조직 채취 전에 조영증강 흉부 CT로 병변·기관지·혈관·종격동 림프절의 해부학을 평가해 가장 안전하고 병기결정에도 유용한 생검 경로를 선택한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"PET-CT는 조직학적 확진 전후의 병기결정과 생검 표적 선정에 유용하지만 진단용 조영증강 흉부 CT의 상세 해부학을 생략하게 하지 않는다. FDG 섭취는 염증에서도 나타나므로 PET만으로 진단할 수 없다.","could_be_correct_if":"진단용 CT로 폐암이 의심되고 원격·종격동 병기 평가가 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"correct","explanation":"조영증강 CT는 종괴의 정확한 위치와 범위, 혈관·기관지 관계, 종격동 림프절과 전이 의심 부위를 평가한다. 이를 바탕으로 기관지내시경·EBUS·경피생검 중 진단과 병기를 함께 얻을 경로를 정한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"중심부 기관지 병변은 기관지내시경 생검의 수율이 높을 수 있다. 그러나 먼저 CT로 기관지 침범과 림프절 표적을 확인해야 EBUS 병행 여부와 안전한 접근을 합리적으로 선택할 수 있다.","could_be_correct_if":"CT에서 기관지 내 병변이 확인되고 기관지내시경이 최적 조직검사 경로로 선정된 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"경피적 생검은 흉벽 가까운 말초 병변에서 유용하지만 폐문부 병변은 혈관 손상과 기흉 위험 및 접근성을 따져야 한다. CT 해부학 없이 즉시 시행해서는 안 된다.","could_be_correct_if":"CT에서 안전하게 접근 가능한 말초 병변 또는 최적 경피 표적이 확인된 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"단기 영상 추적은 낮은 위험의 작은 불확정 결절에서 고려한다. 큰 폐문부 종괴와 체중 감소가 있는 고위험 환자에게 3개월 관찰은 진단과 병기결정을 지연시킨다.","could_be_correct_if":"악성 위험이 낮은 작은 결절이 지침상 영상 추적 대상인 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":["기존 핵심 해설의 자동 결합 비문을 삭제해야 한다. ACR의 우연히 발견된 폐결절 기준은 현재의 증상성 폐문부 종괴와 직접 맞지 않으므로 폐암 진단지침 중심으로 근거를 정리해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000092",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["수년간 진행하는 운동 호흡곤란","호기 연장","측면 X선의 횡격막 편평화","흉골 뒤 공기공간·전후경 증가"],"clinical_inference":"영상은 폐기종성 과팽창을 지지하지만 COPD는 영상만으로 확진하지 않는다. 적절한 임상 맥락에서 기관지확장제 투여 후에도 FEV1/FVC가 0.70 미만인 지속성 기류제한을 폐활량측정으로 확인한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"TLC 감소와 보존·증가한 FEV1/FVC는 제한성 환기장애를 시사한다. 현재 영상은 폐용적 감소가 아니라 과팽창을 보여 방향이 반대다.","could_be_correct_if":"ILD·흉막질환 등 제한성 질환에서 TLC 감소가 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"초기 폐기종이나 폐혈관질환에서 고립성 DLCO 감소가 가능하지만 이는 COPD의 지속성 기류제한을 확진하지 못한다. 폐활량측정상 폐쇄 여부를 먼저 확인해야 한다.","could_be_correct_if":"폐활량이 정상인 상태에서 초기 폐기종 또는 폐혈관질환을 추가 평가하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"메타콜린 유발검사는 기저 폐활량이 정상인데 천식이 의심될 때 기도과민성을 확인한다. 만성 진행성 증상과 고정된 과팽창 영상에서는 기관지확장제 후 기류제한 평가가 우선이다.","could_be_correct_if":"간헐적 천식이 의심되지만 기저 폐활량과 기관지확장제 반응이 정상인 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"correct","explanation":"기관지확장제 투여 후에도 FEV1/FVC가 0.70 미만이면 지속성 기류제한이 확인되어 임상상과 함께 COPD 진단을 뒷받침한다. 영상은 폐기종 표현형을 지지하지만 폐활량측정을 대신하지 않는다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"흡기 곡선만 편평하고 호기 곡선이 보존되는 패턴은 가변성 흉곽외 상기도 폐쇄를 시사한다. 이는 폐기종성 과팽창과 하기도의 지속성 폐쇄를 설명하지 못한다.","could_be_correct_if":"성대기능장애나 흉곽외 종괴로 가변성 상기도 폐쇄가 있는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  }
+]

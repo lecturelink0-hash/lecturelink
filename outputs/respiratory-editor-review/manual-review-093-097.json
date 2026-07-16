@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000093",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["소아기부터 반복된 중이염·만성 부비동염","매일 지속되는 습성 기침·Pseudomonas 감염","흉부 X선의 우심증과 내장역위","원발섬모운동이상증 의심"],"clinical_inference":"내장역위와 소아기부터 지속된 상·하기도 점액섬모청소 장애는 Kartagener 표현형의 원발섬모운동이상증을 강하게 시사한다. HRCT로 기관지확장증을 확인하고 전문센터에서 비강 산화질소와 섬모 기능·구조·유전검사를 조합해 진단한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"HRCT는 만성 습성 기침과 반복 감염의 구조적 결과인 기관지확장증의 범위와 분포를 확인한다. 내장역위와 전형적 임상 표현형이 있으므로 비강 산화질소와 섬모 운동·초미세구조·유전검사를 상보적으로 사용한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"낭성섬유증도 기관지확장증과 Pseudomonas 감염의 원인이므로 표현형과 유병 환경에 따라 땀 염화물·CFTR 검사를 포함할 수 있다. 그러나 내장역위와 소아기 중이염·부비동염을 가장 직접 설명하는 PCD 평가를 이것만으로 대체할 수 없다.","could_be_correct_if":"CF에 합당한 췌장기능부전·남성불임·가족력 등 표현형이 있거나 기관지확장증 원인 평가에 포함하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"총 IgE와 Aspergillus 특이 항체는 천식, 호산구증, 점액마개와 중심성 기관지확장증이 있는 ABPA를 평가한다. 내장역위와 어린 시절부터의 중이염은 ABPA로 설명되지 않는다.","could_be_correct_if":"천식과 호산구증·고IgE·중심성 기관지확장증으로 ABPA가 의심되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"반복 세균감염에서는 면역글로불린과 백신 항체반응으로 체액면역결핍을 평가할 수 있다. 하지만 내장역위와 점액섬모청소 장애를 직접 확인하지 못하므로 단독 검사 조합으로는 부족하다.","could_be_correct_if":"반복 감염의 감별에서 체액면역결핍을 병행 평가하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"알파-1 항트립신 결핍은 젊은 폐기종, 특히 기저부 우세 폐기종이나 가족력이 있을 때 검사한다. 만성 중이염·부비동염과 내장역위를 설명하지 못한다.","could_be_correct_if":"조기 발병 폐기종이나 원인 불명 간질환·가족력이 있는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000094",
+    "answer_consistency":"contradicted",
+    "core_reasoning":{"key_findings":["현재 연결 영상은 RESP-000089와 동일","우측 흉막 비후·석회화와 우측 흉곽 용적 감소","우측 심장 경계 소실형 우중엽 폐렴 영상이 아님","선택지와 영상 불일치"],"clinical_inference":"현재 첨부 영상은 우중엽 폐렴을 국소화할 수 있는 정면 X선이 아니라 만성 우측 섬유흉 영상이다. 따라서 제시된 영상으로 C5를 도출할 수 없으며 올바른 우중엽 폐렴 영상으로 교체한 뒤 다시 검수해야 한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"conditionally_correct","explanation":"우하엽 폐렴이라면 우측 횡격막 실루엣이 소실되고 측면영상 후하부에 음영이 보일 수 있다. 그러나 현재 잘못 연결된 영상으로는 이 선택지와 다른 엽성 폐렴 선택지를 유효하게 비교할 수 없다.","could_be_correct_if":"우측 횡격막 경계 소실과 측면 후하부 경화가 있는 올바른 영상이 제시되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"conditionally_correct","explanation":"우상엽 병변은 정면영상 상부 폐야와 측면영상 전상부에 위치한다. 현재 영상은 엽성 폐렴 문항용 영상이 아니므로 우상엽 여부를 판정하는 선택지 기능이 손상됐다.","could_be_correct_if":"우상엽 경화의 정면·측면 소견이 제시되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"conditionally_correct","explanation":"좌설엽 병변은 좌측 심장 경계를 소실시키고 측면영상 전하부에 나타날 수 있다. 현재 첨부 영상은 이를 포함한 정상적인 실루엣 징후 비교가 불가능하다.","could_be_correct_if":"좌측 심장 경계를 소실시키는 설엽 경화가 제시되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"좌하엽 폐렴은 좌측 횡격막 뒤쪽이나 후심장부 음영과 측면영상 후하부 경화를 보일 수 있다. 그러나 현재 영상 오류 때문에 이 선택지가 오답이라는 근거를 영상에서 얻을 수 없다.","could_be_correct_if":"좌하엽 후하부 경화와 해당 실루엣 소실이 제시되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"conditionally_correct","explanation":"올바른 우중엽 폐렴 영상이라면 우측 심장 경계가 소실되고 측면영상 전하부에서 쐐기형 음영이 예상된다. 현재 파일은 섬유흉 영상이므로 이 일반 원칙이 기존 정답을 확정해 주지 못한다.","could_be_correct_if":"우측 심장 경계 소실을 보이는 우중엽 경화 영상으로 교체되는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["치명적 자산 연결 오류: RESP-000094.jpg가 RESP-000089.jpg와 동일한 섬유흉 영상이다. 올바른 우중엽 폐렴 정면 영상을 연결하고 이미지 해시·경로 중복 검사를 시행해야 한다.","영상 교체 후 우측 심장 경계 소실이 실제로 보이는지 재검수해야 한다.","기존 핵심 해설의 자동 결합 비문을 삭제해야 한다."],
+    "publication_recommendation":"hold"
+  },
+  {
+    "question_id":"RESP-000095",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["72세·55갑년 흡연","6주간 기침·간헐적 혈담","좌상엽 음영 증가와 용적 감소","좌측 폐문 상승·병변측 견인","수술·삽관 병력 없음"],"clinical_inference":"영상은 좌상엽 무기폐를 시사하며, 고위험 흡연자에게 만성 증상과 혈담이 있어 중심기관지 종양에 의한 폐쇄를 우선 배제해야 한다. 조영증강 CT로 폐쇄 부위와 종괴·림프절을 평가한 뒤 기관지내시경을 계획한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"급성 발열과 용적 감소 없는 경화라면 폐렴 치료 후 영상 추적이 가능하다. 이 환자는 만성 증상·혈담·엽성 용적 감소가 있어 항생제 반응만 기다리면 폐쇄성 폐암 진단이 지연된다.","could_be_correct_if":"급성 감염 임상상과 폐렴성 경화가 있고 폐쇄 병변 위험이 낮은 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"흉수는 늑골횡격막각 둔화와 반월상 음영을 보이며 큰 경우 종격동을 반대쪽으로 민다. 현재는 좌상엽 용적 감소와 병변 쪽 구조물 견인이 있어 천자할 흉수 소견이 아니다.","could_be_correct_if":"초음파로 진단 가능한 흉수가 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"조영증강 CT는 좌상엽 기관지 폐쇄 위치, 중심부 종괴, 혈관 관계와 종격동 림프절을 평가한다. 그 결과에 따라 기관지내시경의 표적과 EBUS 병행 여부를 정해 조직을 확보한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"conditionally_correct","explanation":"급성 큰 기도 이물이나 위급한 점액마개 제거가 필요하면 기관지내시경을 먼저 시행할 수 있다. 안정적인 고위험 흡연자에서는 CT로 폐쇄 해부학과 림프절을 먼저 확인하는 편이 진단·병기 계획에 유리하다.","could_be_correct_if":"급성 기도 폐쇄로 즉각적인 내시경 치료가 필요한 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"폐기능검사는 환기장애를 정량화하지만 국소 좌상엽 허탈의 폐쇄 원인을 밝히지 못한다. 혈담과 흡연력이 있는 환자에서 영상 평가를 중단하면 악성 병변을 놓칠 수 있다.","could_be_correct_if":"종양과 국소 폐쇄가 배제된 뒤 만성 미만성 폐질환의 기능을 추적하는 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["기존 핵심 해설의 자동 결합 비문을 삭제해야 한다. 비외상성 흉통 ACR 기준은 이 문항과 직접 관련이 없어 근거 목록에서 제외해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000096",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["우측 주기관지 내강으로 돌출된 2.8 cm 종괴","우측 하부기관 림프절 비대","원격전이 없음","한 번의 시술로 원발 진단과 종격동 병기 필요"],"clinical_inference":"내강에 노출된 중심부 종괴는 굴곡성 기관지내시경 직접 생검에 적합하고, 같은 시술에서 선형 EBUS-TBNA로 의심 종격동 림프절을 채취할 수 있다. 이를 통해 조직형과 N 병기를 함께 평가한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"CT 유도 경피생검은 흉막 가까운 말초 병변에서 주로 유용하며 주기관지 내 병변에는 기관지내시경이 더 직접적이다. 비대한 종격동 림프절은 영상만으로 전이를 확정할 수 없어 조직 채취가 필요하다.","could_be_correct_if":"기관지 접근이 어려운 말초 병변이 안전한 경피 표적이고 종격동 병기 문제가 없는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"correct","explanation":"굴곡성 기관지내시경으로 내강 종괴를 직접 관찰하고 겸자생검할 수 있다. 같은 진정·시술에서 EBUS-TBNA로 우측 하부기관 림프절을 채취하면 진단과 종격동 병기를 함께 얻는다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"객담 세포검사는 일부 중심성 암에서 양성일 수 있지만 충분한 조직 구조와 분자검사 검체를 제공하지 못할 수 있다. 원발 병변이 양성이어도 치료를 바꿀 종격동 N 병기는 별도로 확인해야 한다.","could_be_correct_if":"침습검사가 불가능한 환자에서 제한적 진단 정보를 얻는 보조 검사인 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"흉강경 쐐기절제는 비수술적 방법으로 진단되지 않는 말초 결절에서 고려할 수 있다. 주기관지 중심 병변에 맞지 않고 수술 전 종격동 병기를 생략하게 한다.","could_be_correct_if":"말초 결절이 비수술적 생검으로 진단되지 않고 수술 적합성이 확인된 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"PET-CT는 의심 림프절과 원격 병변을 찾는 데 유용하지만 염증성 위양성과 작은 전이의 위음성이 있다. N 병기가 치료를 바꾸는 상황에서는 EBUS-TBNA 등 병리학적 확인이 필요하다.","could_be_correct_if":"조직 채취 표적과 전신 병기 범위를 선정하는 보조 영상으로 사용하는 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000097",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["AML 유도항암 중 면역저하","광범위 항균제에도 진행하는 발열·저산소혈증","새 다발성 결절·간유리음영","비침습 검사 비진단적·객담 불가","혈소판 28,000/mm3·교정 가능"],"clinical_inference":"진행성 폐침윤의 감염원과 비감염성 원인을 동시에 평가하려면 BAL이 필요하다. 출혈 위험을 평가하고 혈소판을 보완한 뒤 BAL 검체로 광범위 미생물·galactomannan·세포검사를 시행하되, 더 높은 출혈 위험의 경기관지폐생검은 피한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"혈청 galactomannan의 민감도는 숙주 상태와 선행 항진균제 등에 따라 달라 음성만으로 침습성 폐아스페르길루스증을 배제하지 못한다. BAL galactomannan, 배양과 현미경 검사가 국소 폐감염 정보를 추가한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"경기관지폐생검은 BAL보다 출혈 위험이 높아 심한 혈소판감소 상태에서 일률적으로 병행해서는 안 된다. 조직이 치료 결정에 꼭 필요하면 먼저 교정 가능성과 이득·위험을 별도로 판단해야 한다.","could_be_correct_if":"혈소판과 응고 상태가 충분히 교정되고 조직진단의 이득이 위험을 넘는 경우","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"산소 요구량이 당장 안정적이라는 사실은 기관지내시경을 시행할 여지가 있다는 뜻이지 감염 평가를 중단할 근거가 아니다. 호중구감소 환자의 진행성 폐침윤을 2주 관찰하면 치료 가능한 감염 진단이 지연된다.","could_be_correct_if":"임상·영상이 호전되고 비침습 검사로 원인이 확립되어 추적만 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"correct","explanation":"굴곡성 기관지내시경 BAL은 세균·진균·바이러스와 비감염성 세포 소견을 한 번에 평가할 수 있다. 혈소판감소의 출혈 위험을 개별 평가하고 보완한 뒤 시행하며, 이 상황에서는 경기관지폐생검을 제외하는 편이 안전하다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"유도객담은 Pneumocystis 등 일부 질환에서 유용하지만 진행성 다발 병변과 여러 병원체 가능성을 포괄하지 못할 수 있다. 기존 비침습 검사가 비진단적인데 BAL을 모든 검사가 양성이 될 때까지 미루는 조건은 논리적으로도 맞지 않는다.","could_be_correct_if":"기관지내시경 위험이 높고 특정 병원체를 위한 유도객담이 우선 가능한 경우","misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["BAL 전 혈소판 보완 기준은 기관·환자 위험에 따라 달라질 수 있으므로 특정 절대 역치를 추가하지 말고 개별 출혈 위험 평가와 기관 프로토콜을 따르는 문구를 유지해야 한다."],
+    "publication_recommendation":"approve"
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000113",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["경기 종료 5~10분 뒤 천명·기침","안정 시 정상 진찰·폐활량","운동 중 목 조임·흡기성 협착음 없음","운동유발기관지수축 의심"],"clinical_inference":"운동 후 발생하는 호기성 증상과 정상 기저 폐활량은 운동유발기관지수축에 합당하지만 증상만으로 확진하지 않는다. 표준화 운동유발 전후 FEV1 변화를 확인하고, ICS-formoterol 기반 치료를 선택한 경우 운동 전에 필요 시 사용해 기관지확장과 항염증 효과를 함께 얻는다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"표준화된 운동 또는 적절한 대체 유발검사 전후의 FEV1 감소로 운동유발기관지수축을 객관화한다. 저용량 ICS-formoterol을 완화제로 사용하는 전략에서는 필요 시 운동 전에 사용해 증상 예방과 항염증 치료를 함께 제공할 수 있다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"운동유발성후두폐쇄는 운동 중의 흡기성 소음과 목 조임이 흔하며 지속 운동 후두경으로 확인한다. 이 환자는 운동 후 천명·기침이 중심이고, 진단 전 성대 수술은 적절하지 않으며 수술이 일반적 일차치료도 아니다.","could_be_correct_if":"운동 중 흡기성 협착음이 재현되고 지속 운동 후두경에서 후두폐쇄가 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"운동유발기관지수축은 안정 시 폐활량이 정상일 수 있어 정상값이 진단 배제 근거가 되지 않는다. 객관적 유발검사와 적절한 예방 치료를 통해 대부분 운동 참여를 유지할 수 있으므로 영구 금지도 불필요하다.","could_be_correct_if":"특정 운동이 즉각적 중증 위험을 만들어 평가 완료 전 일시 제한이 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"천식에서 LABA 단독은 기도 염증을 치료하지 않고 안전성 문제가 있어 사용하지 않는다. 규칙적 단독 LABA는 내성으로 기관지보호 효과도 감소시킬 수 있다.","could_be_correct_if":"해당 없음; LABA는 적응 단계에서 ICS와 조합해 사용","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"운동 후 흉부 X선은 EIB를 확인하거나 배제하는 검사가 아니다. SABA는 운동 전 단기 예방에 사용할 수 있지만 반복적인 단독 의존은 기도 염증과 미래 악화 위험을 다루지 못한다.","could_be_correct_if":"ICS 포함 조절 전략 안에서 선택된 환자가 SABA를 제한적으로 운동 전 사용하는 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["운동 전 ICS-formoterol 사용은 해당 흡입기를 완화제로 채택한 치료 전략을 전제로 한다. 모든 EIB 환자에게 동일하게 적용하거나 LABA 단독 사용으로 오해되지 않도록 해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000114",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["임신 10주","임신 전 저용량 budesonide-formoterol로 양호한 조절","최근 악화 없음","태아 우려로 모든 흡입제 중단 희망"],"clinical_inference":"임신 중 천식 조절 불량과 저산소성 악화는 산모와 태아 모두에 위험하며, ICS 포함 치료를 유지하는 이득이 잠재적 약제 위험보다 크다. 임의 중단하지 말고 정기적으로 증상·폐기능·악화 위험을 평가한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"임신 1기라는 이유로 ICS와 기관지확장제를 모두 중단하면 기도 염증과 악화 위험이 증가한다. 산소는 발생한 저산소혈증을 보조할 뿐 천식 조절 치료를 대체하지 못한다.","could_be_correct_if":"급성 저산소혈증에서 산소를 기존 천식 악화 치료와 함께 투여하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"장기 경구스테로이드는 흡입 치료보다 전신 노출과 부작용이 커 더 안전한 대체가 아니다. 조절제 흡입을 유지하고 전신스테로이드는 필요한 급성 악화에 단기간 사용한다.","could_be_correct_if":"중증 악화에서 모체 산소화와 천식 회복을 위해 단기 전신스테로이드가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"임신 중 천식 경과는 호전·불변·악화가 모두 가능해 항상 좋아진다고 예측할 수 없다. 정기 평가로 조절 저하를 조기에 발견해야 한다.","could_be_correct_if":null,"misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"LABA 단독은 천식의 기도 염증을 치료하지 않으며 임신 여부와 관계없이 사용하지 않는다. 태아 노출을 줄이려다 ICS를 중단하면 모체 악화와 저산소증 위험을 높일 수 있다.","could_be_correct_if":"ICS와 고정 조합으로 임상적으로 필요한 단계에서 LABA를 유지하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"correct","explanation":"잘 조절되던 ICS 포함 치료를 유지하면 임신 중 악화와 모체·태아 저산소 위험을 줄인다. 약제 사용법과 순응도를 확인하고 임신 기간 동안 조절 상태를 정기 평가해 필요할 때 단계 조정한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000115",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["중간용량 ICS-formoterol MART","6개월간 증상·악화 없음","좋은 사용법·순응도","FEV1 94%","감염·여행 등 불리한 시기 아님"],"clinical_inference":"충분한 기간 안정되고 단계 하향 시기도 적절해 최소 유효 용량을 찾을 수 있다. 행동계획과 조기 추적을 마련한 뒤 ICS 용량을 점진적으로 줄이고, 성인 천식에서 ICS를 완전히 중단하지 않는다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"조절이 좋다는 사실은 치료 효과일 수 있어 ICS를 갑자기 완전히 중단하면 증상과 악화가 재발할 수 있다. SABA 단독으로 전환하면 항염증 보호도 사라진다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"단계 하향의 목적은 최소 유효 항염증 흡입 용량을 찾는 것이지 전신스테로이드를 추가하는 것이 아니다. 경구스테로이드는 더 큰 전신 부작용을 주며 ICS 중단을 보상하지 못한다.","could_be_correct_if":"중증 급성 악화에 단기 전신스테로이드가 필요한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"악화 시 대처와 원래 단계로 복귀할 기준을 서면 행동계획에 포함하고 조기 추적을 예약한다. ICS 용량을 한 단계씩 약 25~50% 감량해 증상·완화제 사용·악화·폐기능을 관찰하며 완전 중단은 피한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"정상 FEV1은 현재 조절을 반영할 수 있으며 천식이 완치됐다는 의미가 아니다. 단계 하향 후에도 재발과 악화 위험을 추적해야 한다.","could_be_correct_if":"체계적 재평가에서 원래 천식 진단이 잘못됐음이 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"증상과 악화가 6개월간 없고 기능도 정상인데 고용량으로 올릴 적응증이 없다. 불필요한 고용량 ICS는 부작용만 늘린다.","could_be_correct_if":"현재 치료에도 조절 불량과 악화가 지속되고 단계 상향 전 요인을 점검한 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":["25~50% 감량은 개인별 제제·용량과 악화 위험을 고려한 범위이며, 모든 환자에게 고정된 동일 감량으로 적용하지 않아야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000116",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["10주 지속 마른기침","새벽·찬 공기 노출 후 악화","비흡연·ACE억제제 없음","정상 흉부 X선","비염·속쓰림 없음","정상 기저 폐활량·기관지확장제 반응"],"clinical_inference":"천명 없이 기침만 나타나는 기침변이형 천식에서는 기저 폐활량이 정상일 수 있다. 전형적 변동성과 유발요인이 있으므로 기관지유발검사로 과민성을 평가하고, 양성 결과를 임상상 및 ICS 포함 치료 반응과 함께 해석한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"기침변이형 천식은 천명 없이 만성 기침만 나타날 수 있어 천명 부재로 배제할 수 없다. 장기 진해제만 사용하면 기도 염증의 진단과 치료를 지연시킨다.","could_be_correct_if":"원인을 평가·치료하는 동안 제한적으로 증상을 완화하는 보조요법인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"메타콜린 또는 적절한 운동유발검사는 정상 기저 폐활량에서 기도과민성을 객관화한다. 양성은 단독으로 완전히 특이적이지 않으므로 기침의 임상 패턴과 ICS 포함 치료 후 호전을 함께 확인한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"정상 X선은 GERD를 확진하지 않으며 속쓰림과 역류 단서도 없다. 원인 평가 없이 고용량 PPI를 시작하면 현재의 천식 가능성을 놓친다.","could_be_correct_if":"전형적 역류 증상이나 객관적 역류 근거가 있어 GERD 관련 기침을 평가·치료하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"화농성 객담·발열·감염 영상 없이 6주간 광범위 항생제를 사용할 근거가 없다. 비천식성 호산구기관지염도 만성 기침의 감별이지만 항생제가 아니라 호산구성 염증 평가와 ICS 반응을 본다.","could_be_correct_if":"세균성 감염이 객관적으로 확인되고 해당 기간의 항생제가 적응되는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"고용량 경구스테로이드는 부작용이 크고 객관적 평가 전에 시행할 진단치료가 아니다. 유발검사와 저위험 ICS 포함 치료 반응 평가가 더 적절하다.","could_be_correct_if":"중증 천식 악화에서 단기 전신스테로이드가 필요한 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["기관지유발검사 양성은 기침변이형 천식에 완전히 특이적이지 않으므로 ICS 치료 반응과 다른 만성기침 원인 평가를 함께 해석해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000117",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["성인 발병 천식","재발성 비용종","ibuprofen 후 40분 내 코막힘·천명·흉부 압박","COX-1 억제제 유발 상·하기도 반응"],"clinical_inference":"천식·비용종과 COX-1 억제 NSAID 후 급성 호흡기 반응은 아스피린악화호흡기질환에 전형적이다. COX-1 억제제를 회피하고 안전한 대체 진통제를 개별 안내하며, 적응이 있으면 전문센터에서 탈감작과 상·하기도 통합치료를 검토한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"문제는 모든 진통제가 아니라 주로 COX-1 억제제 교차반응이며 선택적 COX-2 억제제나 일부 acetaminophen은 개별 평가 후 대안이 될 수 있다. 천식 유지치료를 중단하면 기저 기도염증과 악화 위험이 증가한다.","could_be_correct_if":null,"misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"AERD 반응은 IgE성 피부발진이 없어도 발생하는 약리학적 교차반응이다. ibuprofen을 적은 용량으로 임의 재도전하면 다시 중증 기관지수축을 일으킬 수 있다.","could_be_correct_if":"전문센터에서 진단 또는 탈감작 목적으로 엄격한 감독하 계획된 유발을 시행하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"비용종 수술은 비폐색과 부비동 증상을 개선할 수 있지만 COX-1 억제제 과민 병태생리를 완치하지 않는다. 수술 뒤에도 회피·약물치료와 재발 관리가 필요하다.","could_be_correct_if":"비용종 부하를 줄이기 위한 통합치료의 한 구성요소로 수술하는 경우","misconception_tag":"병태생리"},
+      {"choice_id":"C4","verdict":"correct","explanation":"비선택적 COX-1 억제 NSAID를 피하도록 약물 목록과 교차반응을 교육하고 대체 진통제는 개인별 내약성을 고려해 안내한다. 아스피린이 필요하거나 비용종이 반복되면 전문센터에서 탈감작과 비강·천식 약물 또는 생물학제까지 통합 검토한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"LABA 단독은 NSAID 반응을 예방하지 않으며 천식에서 ICS 없이 사용하지 않는다. ICS를 중단하면 기도 염증 조절이 악화될 수 있다.","could_be_correct_if":"LABA를 ICS와 조합해 천식 단계에 맞게 사용하는 경우","misconception_tag":"금기"}
+    ],
+    "review_flags":["대체 진통제의 안전성은 용량과 개인 반응에 따라 달라질 수 있으므로 acetaminophen이나 COX-2 억제제를 무조건 안전하다고 표현하지 않아야 한다. 탈감작은 전문센터 감독이 전제다."],
+    "publication_recommendation":"approve"
+  }
+]

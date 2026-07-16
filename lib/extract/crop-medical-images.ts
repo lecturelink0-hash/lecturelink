@@ -1,0 +1,239 @@
+/**
+ * 슬라이드 이미지에서 의료 이미지(ECG·X-ray·CT·MRI·병리·해부 등) 영역 자동 절단.
+ *
+ * 전략:
+ *   1. 슬라이드 PNG 를 Claude Vision 에 넘겨 의료 이미지 영역의 정규화 좌표 [0..1] 요청
+ *   2. tool_use 로 구조화 응답 받기
+ *   3. @napi-rs/canvas 로 해당 영역만 잘라 PNG 산출
+ *
+ * 비용: 슬라이드당 1회 Vision 호출. Haiku 4.5 사용으로 비용 최소화.
+ */
+
+import type Anthropic from '@anthropic-ai/sdk';
+import {
+  getAnthropic,
+  MODELS,
+  calculateCost,
+  withRetry,
+  createMessage,
+} from '@/lib/ai/client';
+import { recordAiCost } from '@/lib/ai/cost-cap';
+
+export type MedicalImageKind =
+  | 'xray'
+  | 'ct'
+  | 'mri'
+  | 'ecg'
+  | 'pathology'
+  | 'microscope'
+  | 'ultrasound'
+  | 'anatomy_diagram'
+  | 'chart_graph'
+  | 'other';
+
+export interface CropRegion {
+  kind: MedicalImageKind;
+  /** 정규화 좌표 (0~1). x,y 는 좌상단. */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  caption?: string;
+  /** Claude 의 자신감 0~1 */
+  confidence: number;
+}
+
+export interface DetectionResult {
+  regions: CropRegion[];
+  costUsd: number;
+}
+
+const TOOL_SCHEMA = {
+  name: 'report_medical_regions',
+  description:
+    '슬라이드 이미지에서 의료 이미지(EKG, 영상의학, 병리, 해부 diagram, 임상 사진) 영역의 위치를 보고',
+  input_schema: {
+    type: 'object',
+    properties: {
+      regions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            kind: {
+              type: 'string',
+              enum: [
+                'xray',
+                'ct',
+                'mri',
+                'ecg',
+                'pathology',
+                'microscope',
+                'ultrasound',
+                'anatomy_diagram',
+                'chart_graph',
+                'other',
+              ],
+            },
+            x: { type: 'number', description: '좌상단 x (0~1)' },
+            y: { type: 'number', description: '좌상단 y (0~1)' },
+            width: { type: 'number', description: '너비 (0~1)' },
+            height: { type: 'number', description: '높이 (0~1)' },
+            caption: {
+              type: 'string',
+              description: '주변 텍스트에서 찾은 캡션 또는 라벨 (없으면 생략)',
+            },
+            confidence: {
+              type: 'number',
+              description: '0~1. 0.7 미만이면 호출자가 무시 권장',
+            },
+          },
+          required: ['kind', 'x', 'y', 'width', 'height', 'confidence'],
+        },
+      },
+    },
+    required: ['regions'],
+  },
+} as const;
+
+const SYSTEM = `너는 의대 강의 슬라이드 이미지를 분석해 의료 이미지(EKG/심전도, X-ray, CT, MRI, 초음파, 병리·현미경 사진, 임상 사진, 해부도/diagram, 그래프/차트)의 위치를 보고하는 도구다.
+
+규칙:
+- 텍스트 설명·제목·머리글·꼬리글 영역은 보고하지 말 것
+- 슬라이드 배경·로고는 보고하지 말 것
+- 의료 이미지가 없는 슬라이드면 regions=[] 로 반환
+- 좌표는 0~1 정규화 (슬라이드 좌상단=0,0 / 우하단=1,1)
+- 여러 이미지가 한 슬라이드에 있으면 각각 별도 region
+- confidence 가 낮으면 솔직히 낮게 보고 (0.5 이하 가능)`;
+
+/**
+ * 단일 슬라이드 PNG 에서 의료 이미지 영역 검출.
+ */
+export async function detectMedicalRegions(input: {
+  slidePng: Uint8Array;
+  userIdForLog?: string;
+}): Promise<DetectionResult> {
+  const client = getAnthropic();
+  const model = MODELS.verification(); // Haiku (저비용)
+  const base64 = Buffer.from(input.slidePng).toString('base64');
+
+  const response = await withRetry(() =>
+    createMessage(client, {
+      model,
+      max_tokens: 2048,
+      system: SYSTEM,
+      tools: [TOOL_SCHEMA],
+      tool_choice: { type: 'tool', name: 'report_medical_regions' },
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/png',
+                data: base64,
+              },
+            },
+            {
+              type: 'text',
+              text: '이 슬라이드의 의료 이미지 영역을 보고하라.',
+            },
+          ],
+        },
+      ],
+    }),
+  );
+
+  const toolUse = response.content.find(
+    (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+  );
+
+  const regionsRaw =
+    (toolUse?.input as { regions?: CropRegion[] } | undefined)?.regions ?? [];
+
+  // 유효성 필터링
+  const regions = regionsRaw
+    .filter(
+      (r) =>
+        r.x >= 0 &&
+        r.x < 1 &&
+        r.y >= 0 &&
+        r.y < 1 &&
+        r.width > 0.02 &&
+        r.height > 0.02 &&
+        r.x + r.width <= 1.01 &&
+        r.y + r.height <= 1.01 &&
+        r.confidence >= 0.6,
+    )
+    .map((r) => ({
+      ...r,
+      width: Math.min(r.width, 1 - r.x),
+      height: Math.min(r.height, 1 - r.y),
+    }));
+
+  const cost = calculateCost(
+    model,
+    response.usage.input_tokens,
+    response.usage.output_tokens,
+    response.usage.cache_read_input_tokens ?? 0,
+    response.usage.cache_creation_input_tokens ?? 0,
+  );
+
+  await recordAiCost({
+    userId: input.userIdForLog ?? null,
+    endpoint: 'extract.detect-regions',
+    model,
+    costUsd: cost,
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+  });
+
+  return { regions, costUsd: cost };
+}
+
+export interface CroppedImage {
+  region: CropRegion;
+  png: Uint8Array;
+  widthPx: number;
+  heightPx: number;
+}
+
+/**
+ * 슬라이드 PNG + region 정규화 좌표 → 절단된 PNG 들.
+ */
+export async function cropRegions(
+  slidePng: Uint8Array,
+  regions: CropRegion[],
+): Promise<CroppedImage[]> {
+  if (regions.length === 0) return [];
+
+  // canvas 백엔드는 node-canvas(cairo) — @napi-rs/canvas 의 napi 충돌 회피.
+  const { loadImage, createCanvas } = await import('canvas');
+  const img = await loadImage(Buffer.from(slidePng));
+  const W = img.width;
+  const H = img.height;
+
+  const out: CroppedImage[] = [];
+  for (const r of regions) {
+    const x = Math.floor(r.x * W);
+    const y = Math.floor(r.y * H);
+    const w = Math.floor(r.width * W);
+    const h = Math.floor(r.height * H);
+    if (w < 16 || h < 16) continue;
+
+    const canvas = createCanvas(w, h);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
+    const png = canvas.toBuffer('image/png');
+
+    out.push({
+      region: r,
+      png: new Uint8Array(png),
+      widthPx: w,
+      heightPx: h,
+    });
+  }
+  return out;
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "question_id":"RESP-000178",
+    "revised_stem":"35세 남자가 가벼운 마른기침으로 왔다. 산소포화도는 98%, 말초혈액 호산구는 1,250/μL이다. 10일 전 좌상엽에 있던 일시적 음영은 사라졌고, 현재 HRCT에서는 다른 부위에 새로 생긴 비분절성 말초 간유리음영과 경결이 보인다. 최근 동남아 농촌에서 맨발로 지낸 적이 있다. 가장 적절한 접근은?",
+    "revised_lead_in":"가장 적절한 접근은?",
+    "revised_choices":[{"choice_id":"C1","text":"단순 폐호산구증을 의심해 기생충 노출을 평가하고, 안정적이면 단기 영상·호산구 추적을 시행한다","is_correct":true},{"choice_id":"C2","text":"만성 호산구성 폐렴으로 확정해 장기 전신 glucocorticoid를 즉시 시작한다","is_correct":false},{"choice_id":"C3","text":"급성 호산구성 폐렴으로 판단해 기관내삽관과 고용량 정주 glucocorticoid를 시행한다","is_correct":false},{"choice_id":"C4","text":"폐색전증으로 판단해 추가 확인 없이 항응고제를 시작한다","is_correct":false},{"choice_id":"C5","text":"침습성 진균감염으로 판단해 미생물학적 확인 없이 전신 항진균제를 시작한다","is_correct":false}],
+    "revised_core_explanation":"서로 다른 부위로 이동하며 빠르게 소실되는 폐침윤, 경미한 증상과 말초 호산구증가는 단순 폐호산구증(Löffler syndrome)에 부합한다. 맨발 토양 노출은 회충·구충·분선충 등 기생충 유충의 폐 이동 가능성을 확인하게 하는 단서이므로 여행력에 맞춘 기생충 평가가 필요하다. 저산소증이나 장기기능 장애가 없어 안정적이므로 원인 평가와 함께 증상, 호산구 및 영상의 단기 변화를 추적한다.",
+    "references":[{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC11070545/","title":"Acute and chronic eosinophilic pneumonia: an overview"},{"url":"https://www.cdc.gov/parasites/testing-diagnosis/index.html","title":"CDC: Diagnosis of Parasitic Diseases"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_serial_imaging_to_text","reapproval":"approve","reapproval_reason":"이동성·일과성 침윤을 시간축과 함께 지문에 넣고 토양 노출에 따른 기생충 평가 및 안정 환자의 추적 원칙을 명확히 함"
+  },
+  {
+    "question_id":"RESP-000179",
+    "revised_stem":"49세 여자가 성인기 발생 천식, 만성 부비동염과 6주간 기침 및 이동성 폐침윤으로 평가받았다. 말초혈액 호산구는 2,300/μL이고 ANCA는 음성이며 기생충·약물·진균 관련 검사는 음성이다. 폐조직에서 공기공간의 호산구 침윤뿐 아니라 혈관벽의 호산구성 염증, 국소 섬유소성 괴사와 거대세포를 동반한 괴사성 육아종이 관찰된다. 가장 가능성 높은 진단은?",
+    "revised_lead_in":"가장 가능성 높은 진단은?",
+    "revised_choices":[{"choice_id":"C1","text":"특발성 만성 호산구성 폐렴","is_correct":false},{"choice_id":"C2","text":"과호산구증후군","is_correct":false},{"choice_id":"C3","text":"알레르기 기관지폐아스페르길루스증","is_correct":false},{"choice_id":"C4","text":"단순 폐호산구증","is_correct":false},{"choice_id":"C5","text":"호산구육아종다발혈관염","is_correct":true}],
+    "revised_core_explanation":"성인기 천식, 만성 부비동염, 현저한 호산구증가와 이동성 폐침윤은 EGPA의 임상 배경에 부합한다. 조직에서 혈관벽의 호산구성 염증과 섬유소성 괴사 및 괴사성 육아종이 확인되어 단순 호산구성 폐렴을 넘어선 괴사성 혈관염을 입증한다. EGPA는 ANCA 음성일 수 있으므로 음성 결과만으로 배제하지 않는다.",
+    "references":[{"url":"https://rheumatology.org/vasculitis-guideline","title":"2021 ACR/Vasculitis Foundation Guideline for ANCA-Associated Vasculitis"},{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC11070545/","title":"Acute and chronic eosinophilic pneumonia: an overview"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_histopathology_to_text","reapproval":"approve","reapproval_reason":"혈관벽 염증·괴사성 육아종을 지문에 직접 넣어 CEP와 EGPA의 결정적 차이를 명시하고 ANCA 음성의 한계를 보강함"
+  },
+  {
+    "question_id":"RESP-000182",
+    "revised_stem":"46세 여자가 20일간 기침과 간헐적 혈담을 겪었다. 7주 전 캄보디아에서 덜 익힌 민물게를 먹었다. 산소포화도는 98%, 말초혈액 호산구는 5%이며 객담 항산균 도말과 세포검사는 음성이다. 흉부 CT에서 좌상엽 말초의 공동성 결절과 주변 간유리음영이 보인다. 가장 적절한 다음 검사는?",
+    "revised_lead_in":"가장 적절한 다음 검사는?",
+    "revised_choices":[{"choice_id":"C1","text":"영상만으로 폐암 병기를 결정한 뒤 항암치료를 시작한다","is_correct":false},{"choice_id":"C2","text":"객담 항산균 도말이 음성이므로 결핵을 확정하고 경험적 항결핵제를 시작한다","is_correct":false},{"choice_id":"C3","text":"D-dimer가 양성이면 폐색전증으로 확정한다","is_correct":false},{"choice_id":"C4","text":"객담·대변 또는 BAL에서 충란을 찾고 Paragonimus 특이 항체검사를 시행한다","is_correct":true},{"choice_id":"C5","text":"Aspergillus 특이 IgE만 측정해 ABPA를 진단한다","is_correct":false}],
+    "revised_core_explanation":"덜 익힌 민물게 섭취 뒤 발생한 혈담과 말초 공동성 폐결절은 폐흡충증을 시사한다. 객담이나 대변, 필요 시 BAL에서 Paragonimus 충란을 확인하는 것이 직접 진단이며 초기 감염이나 충란 배출이 적은 경우 혈청 특이 항체가 보조적으로 유용하다. 항산균 도말 음성은 결핵을 확진하는 근거가 아니며, 영상만으로 암 치료를 시작할 수도 없다.",
+    "references":[{"url":"https://www.cdc.gov/paragonimus/hcp/diagnosis-testing/index.html","title":"CDC: Clinical Testing and Diagnosis for Paragonimiasis"},{"url":"https://www.who.int/news-room/questions-and-answers/item/neglected-tropical-diseases-paragonimiasis","title":"WHO: Paragonimiasis"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_CT_findings","reapproval":"approve","reapproval_reason":"공동성 말초 결절을 지문에 넣고 충란검사와 초기·저배출 감염에서 혈청검사의 역할을 CDC·WHO 근거로 보강함"
+  },
+  {
+    "question_id":"RESP-000183",
+    "revised_stem":"44세 남자가 1개월간 기침과 녹슨빛 객담으로 왔다. 과거 덜 익힌 민물가재를 먹었고 CT에서 말초 폐결절이 확인되었다. BAL 현미경검사에서 황갈색의 두꺼운 껍질을 가진 타원형 충란과 한쪽 끝의 뚜껑 구조가 관찰된다. 가장 적절한 치료는?",
+    "revised_lead_in":"가장 적절한 치료는?",
+    "revised_choices":[{"choice_id":"C1","text":"triclabendazole을 우선 투여하고, 이용할 수 없으면 praziquantel을 권고 용법으로 투여한다","is_correct":true},{"choice_id":"C2","text":"표준 4제 항결핵제를 6개월간 투여한다","is_correct":false},{"choice_id":"C3","text":"고용량 전신 glucocorticoid 단독으로 장기간 치료한다","is_correct":false},{"choice_id":"C4","text":"metronidazole을 10일간 투여한다","is_correct":false},{"choice_id":"C5","text":"itraconazole을 최소 6개월간 투여한다","is_correct":false}],
+    "revised_core_explanation":"민물가재 노출과 특징적인 뚜껑 달린 황갈색 충란은 폐흡충증을 확진한다. 최신 WHO 안내는 복약 편의성이 높은 triclabendazole을 우선 제시하며, 이용할 수 없을 때 praziquantel도 권고 치료로 사용할 수 있다. 치료 뒤 증상과 호산구 및 영상 호전을 확인하며, 뇌 침범이 의심되면 별도의 평가가 필요하다.",
+    "references":[{"url":"https://www.who.int/news-room/questions-and-answers/item/neglected-tropical-diseases-paragonimiasis","title":"WHO: Paragonimiasis"},{"url":"https://www.who.int/teams/control-of-neglected-tropical-diseases/foodborne-trematode-infections/recommendations-for-community-diagnosis","title":"WHO: Diagnosis and treatment recommendations for foodborne trematode infections"},{"url":"https://www.cdc.gov/paragonimus/hcp/clinical-overview/index.html","title":"CDC: Clinical Overview of Paragonimiasis"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_microscopy_to_text","reapproval":"approve","reapproval_reason":"충란 형태를 텍스트화하고 최신 WHO 우선순위에 맞춰 triclabendazole 우선·praziquantel 대안으로 정답과 해설을 갱신함"
+  },
+  {
+    "question_id":"RESP-000184",
+    "revised_stem":"같은 모임에서 덜 익힌 민물게장을 먹은 성인 5명이 1~3주 뒤 감기 유사 증상을 겪었고 이후 4개월 넘게 기침·흉통이 지속되었다. 모두 말초혈액 호산구가 560~15,000/μL로 증가했고 세균·결핵 검사는 음성이다. 영상에서는 환자에 따라 말초 폐결절, 공동, 폐침윤, 흉수, 기흉 또는 수기흉이 다양하게 보인다. 가장 적절한 다음 조치는?",
+    "revised_lead_in":"가장 적절한 다음 조치는?",
+    "revised_choices":[{"choice_id":"C1","text":"감염 후 기침으로 판단하고 추가 검사를 중단한다","is_correct":false},{"choice_id":"C2","text":"영상이 서로 다르므로 공통 원인은 없다고 판단한다","is_correct":false},{"choice_id":"C3","text":"호산구 수치만으로 EGPA를 확정하고 전신 면역억제를 시작한다","is_correct":false},{"choice_id":"C4","text":"흉수와 기흉이 있으므로 모든 환자를 세균성 농흉으로 간주한다","is_correct":false},{"choice_id":"C5","text":"집단 폐흡충증을 의심해 Paragonimus 특이 항체와 객담·대변 또는 흉수 충란검사를 시행한다","is_correct":true}],
+    "revised_core_explanation":"동일한 민물게 섭취 뒤 여러 사람에게 지속 호흡기 증상과 호산구증가가 발생한 공통 노출 역학이 개별 영상 차이보다 중요하다. 폐흡충은 이동과 성숙 단계에 따라 폐실질 결절·공동뿐 아니라 흉수, 기흉과 수기흉 등 다양한 흉막 소견을 만들 수 있다. 집단 폐흡충증을 의심해 특이 항체와 객담·대변, 흉수가 있으면 흉수의 충란검사를 시행하고 다른 동석자도 평가한다.",
+    "references":[{"url":"https://www.cdc.gov/paragonimus/hcp/diagnosis-testing/index.html","title":"CDC: Clinical Testing and Diagnosis for Paragonimiasis"},{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC9862018/","title":"A Cluster of Paragonimiasis with Delayed Diagnosis"},{"url":"https://www.who.int/news-room/questions-and-answers/item/neglected-tropical-diseases-paragonimiasis","title":"WHO: Paragonimiasis"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_image_series_to_text","reapproval":"approve","reapproval_reason":"여러 영상의 공통 소견을 텍스트로 통합하고 군집 노출 역학과 검체별 충란·항체검사 계획을 명확히 함"
+  }
+]

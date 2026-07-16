@@ -1,0 +1,242 @@
+[
+  {
+    "question_id": "RESP-000013",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["혈역학적으로 안정된 외래 지역사회획득폐렴", "동반질환 없음", "최근 항생제 사용력 없음"],
+      "clinical_inference": "입원 또는 광범위 항균 범위를 요구하는 소견이 없고 동반질환이나 내성균 위험요인이 제시되지 않았다. 제공된 ATS/IDSA 근거에서 이러한 외래 성인의 표준 선택지에 amoxicillin이 포함되므로 C4가 가장 직접적으로 부합한다.",
+      "best_answer": "C4"
+    },
+    "choice_explanations": [
+      {
+        "choice_id": "C1",
+        "verdict": "conditionally_correct",
+        "explanation": "Macrolide 단독요법은 비정형균을 포함하는 외래 치료 전략이지만, 제공된 근거에서는 지역 폐렴구균 macrolide 내성이 충분히 낮을 때에만 선택할 수 있다. 문항에는 그 조건이 제시되지 않아 일차 선택으로 확정하기 어렵다.",
+        "could_be_correct_if": "지역 폐렴구균 macrolide 내성이 낮고 환자에게 다른 금기가 없는 경우",
+        "misconception_tag": "적응증"
+      },
+      {
+        "choice_id": "C2",
+        "verdict": "conditionally_correct",
+        "explanation": "Amoxicillin-clavulanate와 macrolide 병합은 동반질환이 있거나 더 넓은 범위의 외래 경험적 치료가 필요한 경우 고려하는 전략이다. 이 환자는 동반질환과 최근 항생제 사용력이 없어 병합요법을 우선할 단서가 없다.",
+        "could_be_correct_if": "만성 심폐·간·신장질환, 당뇨, 악성종양 등 동반질환이 있거나 관련 위험요인이 있는 경우",
+        "misconception_tag": "적응증"
+      },
+      {
+        "choice_id": "C3",
+        "verdict": "conditionally_correct",
+        "explanation": "호흡기 fluoroquinolone은 동반질환이 있는 외래 환자의 단독요법 대안이 될 수 있다. 이 증례에서는 단순한 1차 약제로 치료 가능한 조건이 제시되어 더 넓은 항균 범위를 먼저 사용할 이유가 없다.",
+        "could_be_correct_if": "동반질환이 있거나 다른 권고 약제를 사용할 수 없는 사유가 있는 경우",
+        "misconception_tag": "치료 우선순위"
+      },
+      {
+        "choice_id": "C4",
+        "verdict": "correct",
+        "explanation": "환자는 혈압과 산소화가 안정적이고 동반질환 및 최근 항생제 사용력이 없어 저위험 외래 지역사회획득폐렴에 해당한다. 제공된 ATS/IDSA 근거에서 이 조건의 표준 외래 치료 선택지로 amoxicillin을 제시하므로 정답이다.",
+        "could_be_correct_if": null,
+        "misconception_tag": "적응증"
+      },
+      {
+        "choice_id": "C5",
+        "verdict": "incorrect",
+        "explanation": "Carbapenem과 vancomycin 병합은 내성 그람음성균과 MRSA까지 포괄하는 매우 광범위한 치료다. 이 환자에게는 중증도, 병원획득 감염 또는 해당 내성균 위험을 시사하는 정보가 없어 항균 범위가 과도하다.",
+        "could_be_correct_if": "중증 감염이면서 MRSA와 내성 그람음성균을 모두 경험적으로 치료해야 할 명확한 위험요인이 있는 경우",
+        "misconception_tag": "적응증"
+      }
+    ],
+    "review_flags": ["국내 적용 시 지역 macrolide 내성 및 국내 지침과의 일치 여부를 별도로 확인할 필요가 있다."],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000014",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["ethambutol 포함 4제 치료 6주", "시야 흐림", "적녹색각 구분 장애"],
+      "clinical_inference": "시력 저하와 적녹색각 이상은 ethambutol 연관 시신경독성을 시사한다. 원인 약제를 계속 투여하면 손상이 진행할 수 있으므로 ethambutol을 중단하고 시력·색각을 평가하는 C1이 타당하다.",
+      "best_answer": "C1"
+    },
+    "choice_explanations": [
+      {
+        "choice_id": "C1",
+        "verdict": "correct",
+        "explanation": "Ethambutol은 시력 저하와 적녹색각 이상을 동반하는 시신경병증을 일으킬 수 있다. 현재 증상이 전형적이므로 원인 약제를 중단하고 안과적 시력 및 색각 평가를 시행해야 한다.",
+        "could_be_correct_if": null,
+        "misconception_tag": "치료 우선순위"
+      },
+      {
+        "choice_id": "C2",
+        "verdict": "incorrect",
+        "explanation": "시각 증상은 단순 경과관찰 대상으로 보기 어렵고 ethambutol 독성의 경고 소견이다. 약제를 유지하면 회복 가능한 시점의 발견을 놓칠 수 있다.",
+        "could_be_correct_if": "증상이 ethambutol 독성과 무관함이 평가를 통해 확인된 경우",
+        "misconception_tag": "금기"
+      },
+      {
+        "choice_id": "C3",
+        "verdict": "incorrect",
+        "explanation": "Isoniazid는 말초신경병증과 간독성 등이 중요한 이상반응이지만, 이 문항의 적녹색각 장애를 가장 직접적으로 설명하지 않는다. 간기능도 정상이라 isoniazid만 중단할 근거가 제시되지 않았다.",
+        "could_be_correct_if": "isoniazid 관련 중증 간독성 또는 다른 중대한 이상반응이 확인된 경우",
+        "misconception_tag": "진단 오류"
+      },
+      {
+        "choice_id": "C4",
+        "verdict": "incorrect",
+        "explanation": "특정 약제 독성이 의심된다고 결핵 치료 전체를 영구 종료하면 치료 실패와 내성 위험이 생긴다. 원인 약제를 조정하면서 감수성 결과와 치료 단계에 맞춰 유효한 결핵 치료를 유지해야 한다.",
+        "could_be_correct_if": null,
+        "misconception_tag": "치료 우선순위"
+      },
+      {
+        "choice_id": "C5",
+        "verdict": "incorrect",
+        "explanation": "Pyrazinamide는 간독성과 고요산혈증이 대표적이며 적녹색각 이상을 설명하지 않는다. ethambutol을 유지한 채 pyrazinamide만 감량하면 의심되는 원인 노출이 계속된다.",
+        "could_be_correct_if": "pyrazinamide 관련 독성이 별도로 확인되어 해당 약제 조정이 필요한 경우",
+        "misconception_tag": "진단 오류"
+      }
+    ],
+    "review_flags": ["안과 평가와 동시에 결핵 치료 조정 계획을 결핵 전문가와 수립한다는 설명을 관리자용 근거에 추가할 수 있다."],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000015",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["활동성 폐결핵 밀접 접촉", "IGRA 양성", "무증상", "정상 흉부 X선과 음성 객담 검사"],
+      "clinical_inference": "양성 IGRA는 결핵 감염을 지지하지만 활동성 여부를 구분하지 않는다. 현재 활동성 질환의 임상·영상·객담 근거가 없으므로 활동성 결핵을 최종 배제한 뒤 잠복결핵감염 치료를 시행하는 C3이 맞다.",
+      "best_answer": "C3"
+    },
+    "choice_explanations": [
+      {
+        "choice_id": "C1",
+        "verdict": "incorrect",
+        "explanation": "잠복결핵감염은 무증상일 수 있으므로 증상이 없다는 이유만으로 치료 필요성이 사라지지 않는다. 이 환자는 활동성 결핵 환자의 밀접 접촉자이면서 IGRA 양성이어서 향후 발병 예방을 위한 치료 대상이다.",
+        "could_be_correct_if": "검사 결과가 위양성으로 판단되거나 치료 위해가 이득을 명확히 초과하는 별도 상황이 확인된 경우",
+        "misconception_tag": "적응증"
+      },
+      {
+        "choice_id": "C2",
+        "verdict": "incorrect",
+        "explanation": "IGRA 양성만으로 활동성 폐결핵을 진단할 수 없다. 증상, 흉부 영상 및 객담 검사에서 활동성 질환의 근거가 제시되지 않아 4제 치료를 시작할 근거가 부족하다.",
+        "could_be_correct_if": "임상·영상·미생물학적 평가에서 활동성 결핵이 진단된 경우",
+        "misconception_tag": "진단 오류"
+      },
+      {
+        "choice_id": "C3",
+        "verdict": "correct",
+        "explanation": "양성 IGRA와 밀접 접촉력은 결핵 감염을 지지하고, 현재 자료는 활동성 질환보다 잠복결핵감염에 부합한다. 잠복결핵 치료를 시작하기 전 활동성 결핵을 배제해야 한다.",
+        "could_be_correct_if": null,
+        "misconception_tag": "치료 우선순위"
+      },
+      {
+        "choice_id": "C4",
+        "verdict": "incorrect",
+        "explanation": "노출 직후 검사가 음성이면 면역반응이 형성되는 창기간을 고려해 재검할 수 있다. 이 환자는 이미 IGRA 양성이므로 반복검사만으로 치료 결정을 미룰 이유가 없다.",
+        "could_be_correct_if": "초기 접촉자 검사에서 IGRA가 음성이었고 마지막 노출 후 창기간 재평가가 필요한 경우",
+        "misconception_tag": "검사 순서"
+      },
+      {
+        "choice_id": "C5",
+        "verdict": "incorrect",
+        "explanation": "BCG는 잠복결핵감염을 제거하는 치료가 아니며 이미 확인된 감염의 진행 위험을 치료하는 방법도 아니다. 현재 필요한 것은 활동성 질환 배제 후 약물치료 여부를 결정하는 것이다.",
+        "could_be_correct_if": null,
+        "misconception_tag": "적응증"
+      }
+    ],
+    "review_flags": ["실제 치료 요법 선택에는 약물상호작용과 감염원 균주의 약제감수성 정보가 필요하지만, 본 문항은 치료 시행 여부만 묻는다."],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000016",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["갑작스러운 흉막성 흉통과 호흡곤란", "편측 하지 부종과 압통", "폐색전증 임상 고위험군", "혈역학적 안정", "조영제·신기능·임신 관련 금기 없음"],
+      "clinical_inference": "폐색전증 사전확률이 높아 D-dimer로 배제하는 단계보다 확진 영상이 필요하다. 혈역학적으로 안정되고 CTPA 금기가 없으므로 C5가 가장 적절하다.",
+      "best_answer": "C5"
+    },
+    "choice_explanations": [
+      {
+        "choice_id": "C1",
+        "verdict": "incorrect",
+        "explanation": "D-dimer는 임상확률이 낮거나 중간인 환자에서 음성 결과로 폐색전증을 배제하는 데 유용하다. 이 환자는 이미 고위험군이므로 D-dimer 결과를 기다리면 필요한 확진 영상만 지연될 수 있다.",
+        "could_be_correct_if": "폐색전증 임상 사전확률이 낮거나 중간이고 적절한 배제 알고리즘을 적용하는 경우",
+        "misconception_tag": "검사 순서"
+      },
+      {
+        "choice_id": "C2",
+        "verdict": "conditionally_correct",
+        "explanation": "환기-관류 스캔은 CTPA를 시행하기 어려울 때 사용하는 대체 영상검사다. 이 환자는 신기능이 정상이고 조영제 알레르기와 임신 가능성이 없어 이를 우선할 조건이 없다.",
+        "could_be_correct_if": "조영제 금기, 임신 또는 CTPA 시행이 부적절한 사유가 있는 경우",
+        "misconception_tag": "적응증"
+      },
+      {
+        "choice_id": "C3",
+        "verdict": "conditionally_correct",
+        "explanation": "하지 압박초음파에서 근위부 DVT가 확인되면 정맥혈전색전증 치료 결정에 도움을 줄 수 있다. 그러나 초음파 음성만으로 폐색전증을 배제할 수 없고, 이 안정 환자에게 CTPA 금기도 없다.",
+        "could_be_correct_if": "CTPA를 즉시 시행할 수 없거나 조영제 금기가 있고 하지 DVT 확인이 치료 결정에 직접 도움이 되는 경우",
+        "misconception_tag": "검사 순서"
+      },
+      {
+        "choice_id": "C4",
+        "verdict": "conditionally_correct",
+        "explanation": "심초음파는 우심실 부담과 위험도를 평가하며, 혈역학적으로 불안정해 CTPA를 즉시 시행하기 어려운 경우 진단·치료 판단에 중요하다. 현재는 혈압이 안정적이므로 폐색전증을 확진하는 첫 검사로는 적합하지 않다.",
+        "could_be_correct_if": "혈역학적으로 불안정하여 침상에서 즉각적인 평가가 필요한 경우",
+        "misconception_tag": "검사 순서"
+      },
+      {
+        "choice_id": "C5",
+        "verdict": "correct",
+        "explanation": "폐색전증 가능성이 높고 환자는 혈역학적으로 안정적이며 조영제와 신기능 관련 금기가 없다. 따라서 폐동맥 내 혈전을 직접 평가하는 CT 폐혈관조영술이 적절한 확진 검사다.",
+        "could_be_correct_if": null,
+        "misconception_tag": "검사 순서"
+      }
+    ],
+    "review_flags": ["제공 근거가 2019 ESC 지침이므로 최신 개정 여부를 정기적으로 점검해야 한다."],
+    "publication_recommendation": "approve"
+  },
+  {
+    "question_id": "RESP-000017",
+    "answer_consistency": "confirmed",
+    "core_reasoning": {
+      "key_findings": ["중증 COPD와 재택 산소", "고농도 산소 후 악화", "pH 7.25와 PaCO2 82 mmHg", "과도한 산소화", "의식 명료·협조 가능·분비물 배출 가능"],
+      "clinical_inference": "급성 고탄산성 호흡부전과 호흡성 산증이 있으며 과도한 산소 투여가 동반됐다. 기도보호와 협조가 가능해 즉시 삽관보다 조절 산소와 NIV를 우선하는 C2가 타당하다.",
+      "best_answer": "C2"
+    },
+    "choice_explanations": [
+      {
+        "choice_id": "C1",
+        "verdict": "incorrect",
+        "explanation": "산소포화도를 88–92%로 낮추는 것은 필요하지만 pH 7.25의 호흡성 산증은 산소 조절만으로 해결할 문제가 아니다. 환기 보조 없이 관찰하면 고탄산혈증과 산증이 지속될 수 있다.",
+        "could_be_correct_if": "호흡성 산증이 없고 조절 산소 후 임상 및 혈액가스가 안정적인 경우",
+        "misconception_tag": "치료 우선순위"
+      },
+      {
+        "choice_id": "C2",
+        "verdict": "correct",
+        "explanation": "환자는 고탄산혈증과 산증이 동반된 급성 환기부전 상태다. 의식이 명료하고 지시에 협조하며 분비물 배출이 가능하므로, 산소를 목표 범위로 조절하면서 NIV를 시작하고 반응을 면밀히 재평가하는 것이 적절하다.",
+        "could_be_correct_if": null,
+        "misconception_tag": "치료 우선순위"
+      },
+      {
+        "choice_id": "C3",
+        "verdict": "conditionally_correct",
+        "explanation": "침습환기는 기도보호 불능, 심한 의식 저하, NIV 금기 또는 NIV 실패 시 필요할 수 있다. 현재는 기도보호와 협조가 가능하므로 삽관을 첫 조치로 선택할 단서가 부족하다.",
+        "could_be_correct_if": "기도보호가 불가능하거나 NIV가 금기·실패하고 임상 상태가 악화되는 경우",
+        "misconception_tag": "적응증"
+      },
+      {
+        "choice_id": "C4",
+        "verdict": "incorrect",
+        "explanation": "고유량 비강캐뉼라는 산소화 지원에는 도움이 될 수 있지만 이 문항의 핵심은 산증을 동반한 환기부전이다. NIV가 가능한 환자에서 HFNC로 전환해 재검만 기다리는 것은 필요한 환기 보조를 지연시킨다.",
+        "could_be_correct_if": "주된 문제가 저산소혈증이고 NIV 적응증인 급성 고탄산성 산증이 없는 경우",
+        "misconception_tag": "적응증"
+      },
+      {
+        "choice_id": "C5",
+        "verdict": "conditionally_correct",
+        "explanation": "Doxapram은 NIV를 사용할 수 없는 제한적 상황에서 단기적 대안으로 고려될 수 있으나 표준적인 우선 치료는 아니다. 이 환자는 NIV를 시행할 수 있는 조건이 명시돼 있다.",
+        "could_be_correct_if": "NIV를 사용할 수 없고 다른 적절한 환기 지원으로 연결되는 동안 제한적으로 고려해야 하는 경우",
+        "misconception_tag": "치료 우선순위"
+      }
+    ],
+    "review_flags": ["NIV 시작 후 임상 상태와 혈액가스를 조기에 재평가하고 실패 시 삽관으로 전환한다는 안전 문구를 관리자용 해설에 유지해야 한다."],
+    "publication_recommendation": "approve"
+  }
+]

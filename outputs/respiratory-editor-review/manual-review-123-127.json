@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000123",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["4개월 마른기침","정상 흉부 X선","ACE억제제·비염·역류 단서 없음","반복 정상 폐활량·PEF 변동성","음성 메타콜린 검사","유도객담 호산구 8%"],"clinical_inference":"만성 기침과 객담 호산구증가가 있지만 천식의 가변적 기류제한과 기관지과민성은 반복 검사에서 확인되지 않았다. 이 조합은 기침변이형 천식보다 비천식성 호산구기관지염에 합당하다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"비천식성 호산구기관지염은 만성 기침과 기도 호산구성 염증이 있으면서 폐활량, 기류 변동성과 기관지과민성이 정상인 질환이다. 객담 호산구 8%와 반복 음성 천식 검사가 이 패턴에 부합한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"기침변이형 천식은 기저 폐활량이 정상일 수 있지만 보통 기관지과민성이나 다른 가변적 기류제한의 객관적 증거가 있다. 메타콜린, 반복 폐활량과 PEF가 모두 정상인데 객담 호산구만 증가한 점은 다른 진단을 지지한다.","could_be_correct_if":"만성 기침과 함께 유발검사 양성 또는 객관적 가변 기류제한이 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"전형적 천식은 천명·호흡곤란·흉부 압박 같은 가변 증상과 객관적 가변 기류제한을 함께 보인다. 기침만 있고 여러 가변성 검사가 음성이어서 전형적 기관지천식으로 분류하기 어렵다.","could_be_correct_if":"전형적 가변 증상과 폐기능 변동성이 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"세균성 만성기관지염은 화농성 객담, 반복 감염 또는 흡연·기도질환 맥락이 흔하다. 마른기침과 객담 호산구증가는 세균성 원인보다 호산구성 기도염증을 지지한다.","could_be_correct_if":"만성 화농성 객담과 미생물·구조적 기도질환 근거가 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"운동유발성 후두폐쇄는 운동 중 목 조임과 흡기성 소음이 급작스럽게 나타나는 질환이다. 4개월 지속 마른기침과 객담 호산구증가를 설명하지 못한다.","could_be_correct_if":"운동 중 흡기성 협착음이 재현되고 연속 운동 후두경에서 폐쇄가 확인되는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["유도객담 호산구 기준과 검사실 방법은 차이가 있을 수 있으므로 8%라는 수치 하나보다, 반복 음성 천식 검사와 호산구성 기도염증의 조합으로 진단한다는 설명을 유지해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000124",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["객관적 검사 없이 3년 전 기침만으로 천식 진단","중간용량 ICS-LABA 사용","1년간 무증상·무악화","FEV1 101%·기관지확장제 반응 음성","과거 중증 악화 없음"],"clinical_inference":"치료 중 정상 폐기능은 ICS 효과 때문에 천식을 배제하지 못하지만, 원래 객관적 근거가 전혀 없어 과진단 가능성도 있다. 낮은 위험 상태에서 감독하 단계 하향과 가까운 추적을 시행하며 가변적 기류제한을 다시 객관화한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"ICS-LABA 치료가 증상과 기류 변동성을 억제했을 수 있어 현재 정상 검사만으로 천식을 배제할 수 없다. 모든 흡입제를 갑자기 끊고 추적도 종료하면 재발이나 악화를 안전하게 확인할 수 없다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"과거 객관적 근거가 없다는 사실은 진단을 재확인할 이유이지 평생 확정할 이유가 아니다. 불필요한 중간용량 치료와 잘못된 진단표지를 피하려면 안전하게 재검증해야 한다.","could_be_correct_if":"객관적 가변 기류제한이 이후 확인되고 해당 용량이 조절 유지에 필요한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"고용량 경구스테로이드는 가변적 기류제한을 더 억제해 진단 확인을 어렵게 하고 전신 부작용을 준다. 안정적인 환자의 진단 재평가 수단이 아니다.","could_be_correct_if":"중증 급성 악화에 단기 전신스테로이드가 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"정상 FEV1은 세균성 폐렴을 진단하지 않으며 현재 발열·객담·침윤 같은 감염 소견도 없다. 항생제를 시작할 근거가 없다.","could_be_correct_if":"세균성 폐렴의 임상·영상 근거가 별도로 확인되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"서면 행동계획과 조기 추적을 마련하고 치료를 단계적으로 낮춰 기도 변동성이 다시 드러나는지 관찰한다. 증상 시 폐활량, 연속 PEF 또는 적절한 유발검사로 천식을 재확인하며 갑작스러운 무감시 중단은 피한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["진단 재확인을 위한 단계 하향은 낮은 악화 위험, 정상에 가까운 기능과 가까운 추적이 가능한 조건에서 시행해야 하며 고위험 환자에게 일반화하지 않아야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000125",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["35갑년 흡연","기관지확장 후 FEV1/FVC 0.58 지속","20대부터 계절성 천명·야간 증상","과거 FEV1 18%·420 mL 증가"],"clinical_inference":"지속성 폐쇄와 흡연은 COPD를, 젊은 시절부터의 가변 증상과 큰 과거 가역성은 천식 특성을 지지한다. 두 질환의 요소가 공존하므로 천식 안전 원칙에 따라 ICS를 포함하고 금연·장기작용 기관지확장제와 COPD 위험관리를 병행한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"천식은 장기간 지속되면 완전히 가역적이지 않은 기류제한이 남을 수 있어 현재의 불완전 가역성이 과거 천식 근거를 없애지 않는다. 천식 특성이 있는 환자에게 LABA 단독은 사용하지 않는다.","could_be_correct_if":"천식 특성이 충분히 배제된 COPD에서 적응에 맞는 장기작용 기관지확장제를 사용하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"흡연은 COPD 위험을 높이지만 천식과 공존할 수 있으며 가변 증상·과거 객관적 가역성의 진단 가치를 지우지 않는다. 서로 다른 시기의 자료를 통합해야 한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"correct","explanation":"지속성 폐쇄의 COPD 요소와 객관적 천식 요소를 모두 평가해 치료한다. ICS 포함 요법을 유지하면서 금연, 적절한 장기작용 기관지확장제, 예방접종·재활·악화 위험관리 등을 개별화한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"과거 큰 가역성은 천식을 지지하지만 현재의 고정 폐쇄와 흡연 관련 COPD 가능성을 배제하지 않는다. 한 요소만으로 다른 병태를 지우면 치료가 불완전해진다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"낮은 FEV1/FVC는 기류폐쇄를 확인하는 소견이며 기관지확장 치료를 중단할 이유가 아니다. 천식 특성이 명확하므로 ICS 중단도 악화 위험을 높일 수 있다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["'천식-COPD 중복'을 단일 독립 질환명으로 단순화하지 말고, 두 진단의 특성과 치료 가능 요소를 각각 확인하는 현재 표현을 유지해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000126",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["한 달간 거의 매일 천명·야간 기침","기저 FEV1 68%","기관지확장제 반응 9%·170 mL로 음성","감염 소견 없음","조절치료 지연 곤란"],"clinical_inference":"천식의 변동성은 한 번의 기관지확장제 검사에서 포착되지 않을 수 있다. 치료 전 증상과 폐기능 기준값을 기록한 뒤 ICS 포함 치료를 시작하고 수주 후 증상과 FEV1 개선으로 진단 근거와 치료 반응을 재평가한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"기관지확장제 반응은 질환 활성도와 검사 시점에 따라 음성일 수 있어 한 번의 음성으로 천식을 완전히 배제하지 못한다. 매일 증상과 낮은 FEV1이 있는데 항염증 치료를 보류하면 악화 위험이 있다.","could_be_correct_if":"반복 객관검사와 대체진단 평가에서 천식이 충분히 배제된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"correct","explanation":"치료 전 FEV1, 증상 빈도와 완화제 사용을 기록해 비교 기준을 남긴다. ICS 포함 치료를 시작한 뒤 약 4주 후 기능과 증상의 유의한 개선을 확인하고, 불충분하면 진단·사용법·순응도와 대체 원인을 재검토한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"객관적 기준값 없이 고용량 ICS를 시작하면 이후 정상화가 치료 효과인지 원래 상태인지 판정하기 어렵다. 초기 용량도 증상·위험에 맞게 선택하고 추적 폐기능으로 반응을 확인해야 한다.","could_be_correct_if":"중증 악화 등 즉시 고강도 치료가 필요해 기록과 치료를 동시에 신속히 시행하는 경우","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"정상 흉부 X선은 다른 구조적 질환 가능성을 일부 낮출 뿐 천식의 가변적 기류제한을 증명하지 않는다. 폐기능 또는 치료 전후 객관적 변화를 확인해야 한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"SABA만 수개월 사용하면 거의 매일 증상과 야간 기침을 일으키는 기도 염증을 치료하지 못하고 악화를 예방하지 못한다. 진단을 위해 환자를 의도적으로 저치료 상태에 둘 수 없다.","could_be_correct_if":"ICS 포함 전략 안에서 제한적 완화제로 사용하는 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["치료 후 호전은 진단을 지지하지만 완전히 특이적이지 않으므로, 치료 반응이 불명확하면 흡입법·순응도·대체진단을 재평가해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000127",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["객관적으로 확진된 천식","집먼지진드기 피부단자 양성","고양이 카페 방문 후 반복 악화","고양이 특이 IgE 음성"],"clinical_inference":"피부단자와 특이 IgE는 알레르겐 감작을 나타내지만 증상의 실제 원인성을 단독 확정하거나 완전히 배제하지 못한다. 노출 시 증상 패턴과 환경의 다른 자극 요인을 함께 평가해 임상적으로 관련된 환경관리 대상을 정한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"집먼지진드기 피부검사 양성은 IgE 감작을 뜻하지만 실제 진드기 노출이 증상을 유발한다는 사실까지 자동 확정하지 않는다. 노출력과 증상 변화가 일치하는지 확인해야 한다.","could_be_correct_if":"진드기 노출 시 객관적·반복적 증상 악화가 확인되어 임상 관련성이 입증되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"고양이 특이 IgE 음성은 IgE 감작 가능성을 낮추지만 검사 항원·민감도와 다른 비알레르기 자극 가능성 때문에 방문 후 증상 연관성 자체를 불가능하게 만들지 않는다. 카페의 향, 먼지, 연기 등 동시 노출도 검토한다.","could_be_correct_if":"충분한 평가에서 고양이와 환경 노출의 임상 관련성이 배제되는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"알레르기 감작은 천식이 없는 사람에게도 나타날 수 있어 천식의 가변적 호기 기류제한을 대신 증명하지 못한다. 이 환자의 천식은 이미 폐기능 가변성으로 별도 확진됐다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"correct","explanation":"양성 피부검사는 면역학적 감작 정보이며 실제 노출 후 반복되는 증상·폐기능 변화와 함께 해석해야 한다. 임상적으로 관련성이 확인된 알레르겐과 자극원을 중심으로 현실적인 환경관리를 계획한다.","could_be_correct_if":null,"misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"알레르기검사는 천식 자체를 확진하지는 못하지만 관련 알레르겐 회피, 면역치료 가능성, 일부 생물학제 표현형 평가에 정보를 줄 수 있다. 결과를 병력과 분리해 폐기할 이유가 없다.","could_be_correct_if":null,"misconception_tag":"적응증"}
+    ],
+    "review_flags":["고양이 카페 방문 후 악화가 고양이 알레르기 때문이라고 단정하지 말고, 음성 특이 IgE와 동시 환경 자극을 함께 평가하도록 유지해야 한다."],
+    "publication_recommendation":"approve"
+  }
+]

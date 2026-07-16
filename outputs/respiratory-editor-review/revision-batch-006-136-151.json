@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000136",
+    "revised_stem":"19세 여자가 경증 지속성 천식과 알레르기비염으로 저용량 흡입 corticosteroid와 montelukast를 시작했다. 2주 뒤 천식 증상은 줄었지만 이전에 없던 생생한 악몽, 불면과 우울감이 생겼다. 다른 약제 변화나 생활 사건은 없고 현재 자해 사고는 부인한다. 가장 적절한 조치는?",
+    "revised_lead_in":"가장 적절한 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"흡입 corticosteroid를 먼저 감량하고 montelukast는 유지한다","is_correct":false},{"choice_id":"C2","text":"montelukast를 중단하고 신경정신계 증상과 자해 위험을 추적하면서 흡입 corticosteroid 기반 치료를 유지한다","is_correct":true},{"choice_id":"C3","text":"현재 치료를 유지하고 LAMA를 추가한다","is_correct":false},{"choice_id":"C4","text":"montelukast를 유지한 채 항히스타민제만 추가한다","is_correct":false},{"choice_id":"C5","text":"중증 알레르기천식으로 간주하고 omalizumab을 시작한다","is_correct":false}
+    ],
+    "revised_core_explanation":"Montelukast 시작 직후 새로 발생한 악몽, 불면과 우울감은 알려진 신경정신계 이상반응과 시간적으로 일치한다. FDA boxed warning은 행동·기분 변화가 생기면 약제를 중단하고 즉시 의료진과 상의하며, 중단 뒤에도 증상이 발생하거나 지속할 수 있어 추적하도록 안내한다. 현재 자해 사고를 부인해도 안전계획과 악화 시 즉시 도움을 받을 방법을 안내하고 천식의 기본 ICS 치료는 유지한다.",
+    "references":[{"url":"https://www.fda.gov/drugs/drug-safety-communications/fda-requires-boxed-warning-about-serious-mental-health-side-effects-asthma-and-allergy-drug","title":"FDA Boxed Warning for Montelukast Neuropsychiatric Effects"},{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"신경정신계 증상 발생 시 중단·상담·중단 후 추적을 직접 권고하는 FDA boxed warning과 안전 안내를 추가함"
+  },
+  {
+    "question_id":"RESP-000146",
+    "revised_stem":"26세 남자가 중증 천식 악화로 반복 흡입 기관지확장제와 전신 corticosteroid를 투여받던 중 갑자기 왼쪽 흉통과 호흡곤란이 심해졌다. 혈압 112/70 mmHg, 맥박 118회/분, 산소포화도 91%이다. 흉부 X선에서 왼쪽 흉막선 바깥의 폐혈관 음영이 소실되고 왼쪽 폐가 안쪽으로 크게 허탈되어 있으나 뚜렷한 종격동 편위는 없다. 가장 적절한 다음 처치는?",
+    "revised_lead_in":"가장 적절한 다음 처치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"기관지수축만 지속된 것으로 보고 SABA 빈도만 늘린다","is_correct":false},{"choice_id":"C2","text":"왼쪽 흉강 배액을 시행하고 천식 악화 치료를 계속한다","is_correct":true},{"choice_id":"C3","text":"산소만 투여하며 외래 추적한다","is_correct":false},{"choice_id":"C4","text":"폐색전증으로 간주하고 항응고제를 시작한다","is_correct":false},{"choice_id":"C5","text":"항생제만 투여하고 기관지확장제는 중단한다","is_correct":false}
+    ],
+    "revised_core_explanation":"흉막선 바깥의 폐혈관 음영 소실과 폐 허탈은 큰 좌측 기흉을 보여 주며, 흉통·호흡곤란과 저산소혈증이 있어 단순 관찰 대상이 아니다. 급성 중증 천식이라는 기저 폐질환에 동반된 증상성 이차성 기흉으로 흉강 배액을 시행하면서 천식 치료를 계속한다. 저혈압이나 뚜렷한 긴장성 소견이 새로 나타나면 영상 대기 없이 즉시 응급 감압한다.",
+    "references":[{"url":"https://www.brit-thoracic.org.uk/clinical-resources/guidelines/pleural-disease/","title":"BTS Guideline for Pleural Disease 2023: Spontaneous Pneumothorax"},{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"큰 좌측 기흉과 비긴장성 소견을 문장화해 이미지 의존성을 제거하고 BTS 2023 흉막질환 지침을 추가함"
+  },
+  {
+    "question_id":"RESP-000147",
+    "revised_stem":"67세 여자가 천식 악화로 내원했다. 3일간 39.0℃의 발열, 오한과 누런 가래가 있었고 우측 흉통이 깊은 숨에 심해진다. 산소, 반복 흡입 기관지확장제와 전신 corticosteroid를 시작했다. 흉부 X선에서 우측 심장 경계를 소실시키는 우중엽 폐포성 경화가 보인다. 가장 적절한 추가 조치는?",
+    "revised_lead_in":"가장 적절한 추가 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"바이러스성 천식 악화로만 보고 항생제 없이 기관지확장제만 계속한다","is_correct":false},{"choice_id":"C2","text":"급성 심부전으로 보고 이뇨제를 우선한다","is_correct":false},{"choice_id":"C3","text":"폐색전증으로 확정하고 항응고제만 시작한다","is_correct":false},{"choice_id":"C4","text":"지역사회획득폐렴 항생제를 시작하고 천식 악화 치료를 병행한다","is_correct":true},{"choice_id":"C5","text":"영상 이상은 천식의 전형 소견이므로 추가 치료 없이 퇴원한다","is_correct":false}
+    ],
+    "revised_core_explanation":"고열, 오한, 화농성 가래, 흉막성 통증과 우중엽 경화는 세균성 지역사회획득폐렴이 천식 악화를 유발한 상황에 부합한다. 천식의 산소·기관지확장제·전신 corticosteroid 치료를 계속하면서 CAP 중증도와 지역 내 내성, MRSA·Pseudomonas 위험인자에 맞는 경험적 항생제를 시작한다. 배양과 임상 경과에 따라 항생제 범위를 조정한다.",
+    "references":[{"url":"https://www.idsociety.org/practice-guideline/community-acquired-pneumonia-cap-in-adults","title":"ATS/IDSA Guideline for Community-Acquired Pneumonia in Adults"},{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"우중엽 경화와 silhouette sign을 지문에 옮기고 CAP 항생제 결정을 직접 다루는 ATS/IDSA 지침을 추가함"
+  },
+  {
+    "question_id":"RESP-000148",
+    "revised_stem":"20세 남자가 천식 악화로 심하게 기침한 뒤 갑자기 앞가슴 통증을 호소한다. 혈압 124/76 mmHg, 산소포화도 96%이고 발열, 구토, 외상과 삼킴통은 없다. 흉부 X선에서 대동맥궁과 상부 종격동 경계를 따라 선상 공기음영이 보이며 기흉은 없다. 가장 적절한 조치는?",
+    "revised_lead_in":"가장 적절한 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"진통과 천식 치료를 계속하며 관찰하고 식도·기관 손상 단서가 생길 때 표적 검사를 시행한다","is_correct":true},{"choice_id":"C2","text":"긴장성 기흉으로 확정하고 즉시 바늘감압한다","is_correct":false},{"choice_id":"C3","text":"급성관상동맥증후군으로 확정하고 항혈소판제·항응고제를 투여한다","is_correct":false},{"choice_id":"C4","text":"세균성 종격동염으로 간주해 즉시 개흉 배액술을 시행한다","is_correct":false},{"choice_id":"C5","text":"근육통으로 보고 천식 치료도 중단해 바로 퇴원시킨다","is_correct":false}
+    ],
+    "revised_core_explanation":"기침 뒤 발생한 종격동 선상 공기음영은 천식 악화와 연관된 자발성 종격동기종에 부합한다. 혈역학적으로 안정되고 구토·발열·외상·삼킴통이나 기흉이 없어 진통, 휴식, 필요한 산소와 천식 치료를 지속하며 관찰하는 보존적 치료가 적절하다. 구토, 패혈증, 삼킴통, 외상 또는 지속 악화가 생기면 식도·기관 손상을 표적 평가한다.",
+    "references":[{"url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC10839511/","title":"Clinical Review of Spontaneous Pneumomediastinum"},{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_Xray_findings","reapproval":"approve","reapproval_reason":"종격동기종과 기흉 부재를 텍스트로 명시하고 식도천공 저위험 단서를 추가해 보존적 치료의 적절성을 확보함"
+  },
+  {
+    "question_id":"RESP-000151",
+    "revised_stem":"42세 여자가 중증 천식 악화로 응급실에서 반복 SABA-ipratropium, 산소와 전신 corticosteroid를 투여받았다. 3시간 뒤에도 짧은 문장만 말할 수 있고 보조호흡근을 사용한다. 최대호기유속은 치료 전 개인 최고치의 32%에서 3시간 뒤 43%로 증가했지만 계속 50% 미만이다. 가장 적절한 조치는?",
+    "revised_lead_in":"가장 적절한 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"PEF가 증가했으므로 즉시 귀가시킨다","is_correct":false},{"choice_id":"C2","text":"입원하여 집중 기관지확장치료와 전신 corticosteroid를 계속하고 악화 여부를 반복 평가한다","is_correct":true},{"choice_id":"C3","text":"PEF와 임상상에 관계없이 즉시 기계환기한다","is_correct":false},{"choice_id":"C4","text":"전신 corticosteroid를 중단하고 SABA만 처방한다","is_correct":false},{"choice_id":"C5","text":"PEF가 40%를 넘었으므로 장기 항생제로 전환한다","is_correct":false}
+    ],
+    "revised_core_explanation":"PEF가 32%에서 43%로 일부 호전되었어도 3시간 뒤 계속 50% 미만이고 짧은 문장과 보조호흡근 사용이 지속되어 초기 치료 반응이 불충분한 중증 악화다. 귀가하지 말고 입원해 반복 기관지확장제와 전신 corticosteroid를 계속하며 의식, 호흡노력, 산소화와 PEF를 면밀히 재평가한다. 피로, 의식 저하, silent chest 또는 가스교환 악화가 나타나면 중환자 치료와 기도 확보를 준비한다.",
+    "references":[{"url":"https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf","title":"GINA 2026 Strategy Report"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_graph_values_to_text","reapproval":"approve","reapproval_reason":"PEF 32%→43%와 지속 중증 임상 소견을 지문에 직접 넣고 기존 정답 반대 해설과 자동 결합 비문을 교체함"
+  }
+]

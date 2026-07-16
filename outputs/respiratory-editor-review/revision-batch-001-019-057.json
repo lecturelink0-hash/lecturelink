@@ -1,0 +1,107 @@
+[
+  {
+    "question_id": "RESP-000019",
+    "revised_stem": "폐렴으로 삽관된 60세 남자가 용적조절환기를 받고 있다. 설정은 예측체중 기준 일회호흡량 6 mL/kg, 호흡수 18회/분, PEEP 5 cmH₂O이다. 호기 유량은 다음 흡기 전에 0으로 돌아오며 intrinsic PEEP는 없다. 산소포화도는 96%이고 동맥혈가스는 pH 7.22, PaCO₂ 68 mmHg이며 plateau pressure는 24 cmH₂O이다. 진정은 적절하고 기도폐쇄 소견은 없다. 다음 설정 변경으로 가장 적절한 것은?",
+    "revised_lead_in": "다음 설정 변경으로 가장 적절한 것은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"분당환기를 늘리기 위해 호흡수를 단계적으로 증가시키고 혈액가스를 재평가한다","is_correct":true},
+      {"choice_id":"C2","text":"일회호흡량을 예측체중 8 mL/kg로 우선 증가시킨다","is_correct":false},
+      {"choice_id":"C3","text":"현재 설정을 유지한 채 회로의 기계적 사강만 줄인다","is_correct":false},
+      {"choice_id":"C4","text":"환기 설정을 바꾸지 않고 pH가 7.15 미만이 될 때까지 관찰한다","is_correct":false},
+      {"choice_id":"C5","text":"중탄산염을 투여해 pH를 먼저 교정한다","is_correct":false}
+    ],
+    "revised_core_explanation": "일회호흡량이 폐보호 범위이고 plateau pressure도 24 cmH₂O로 과도하지 않다. 현재 호흡수는 18회/분이며 완전한 호기가 가능하고 intrinsic PEEP가 없으므로, 호흡수를 단계적으로 높여 분당환기를 증가시키는 것이 우선이다. 변경 후 호기 유량, intrinsic PEEP, plateau pressure와 동맥혈가스를 다시 확인한다.",
+    "references": [
+      {"url":"https://www.thoracic.org/professionals/clinical-resources/critical-care/clinical-education/mechanical-ventilation.php","title":"American Thoracic Society: Mechanical Ventilation"},
+      {"url":"https://www.thoracic.org/professionals/clinical-resources/critical-care/clinical-education/abgs.php","title":"American Thoracic Society: Interpretation of Arterial Blood Gases"}
+    ],
+    "reference_date": "2026-07-16",
+    "image_resolution": "not_required",
+    "reapproval": "approve",
+    "reapproval_reason": "호흡수 증가의 안전성을 판단할 현재 호흡수, 일회호흡량, PEEP, 완전한 호기와 intrinsic PEEP 부재를 추가해 정답 유일성을 확보함"
+  },
+  {
+    "question_id": "RESP-000020",
+    "revised_stem": "63세 남자가 2개월간의 기침과 체중 감소로 검사 중이다. 최근 얼굴과 목이 붓고 누우면 숨이 더 차며, 조영증강 흉부 CT에서 우상엽 중심부 종괴가 상대정맥을 압박하고 종격동 림프절이 커져 있다. 혈전은 보이지 않는다. 혈압은 안정적이고 천명, 협착음, 의식 변화나 심한 두통은 없다. 아직 조직 진단은 얻지 못했다. 다음 조치로 가장 적절한 것은?",
+    "revised_lead_in": "다음 조치로 가장 적절한 것은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"조직 진단 전에 응급 방사선치료를 시작한다","is_correct":false},
+      {"choice_id":"C2","text":"생명위협 소견이 없지만 응급 혈관 내 스텐트를 즉시 삽입한다","is_correct":false},
+      {"choice_id":"C3","text":"상체를 올리고 호흡·신경학적 상태를 감시하면서 신속히 조직 진단과 병기평가를 진행한다","is_correct":true},
+      {"choice_id":"C4","text":"혈전성 상대정맥폐쇄로 간주하고 항응고제만 시작한다","is_correct":false},
+      {"choice_id":"C5","text":"고용량 corticosteroid만 투여하고 종양 평가를 미룬다","is_correct":false}
+    ],
+    "revised_core_explanation": "악성 상대정맥증후군이 의심되지만 협착음, 의식 변화, 심한 두통이나 혈역학적 불안정이 없어 즉각적 감압이 필요한 위기 상황은 아니다. 상체 거상과 면밀한 감시를 시행하면서 조직형과 병기를 신속히 확정해야 항암치료·방사선치료를 적절히 선택할 수 있다. 기도 또는 뇌부종, 혈역학적 악화가 발생하면 혈관 내 스텐트 등 빠른 감압의 긴급성을 다시 평가한다.",
+    "references": [
+      {"url":"https://www.eviq.org.au/radiation-oncology/palliative/295-respiratory-superior-vena-cava-obstruction-pal","title":"eviQ: Respiratory superior vena cava obstruction palliative EBRT"},
+      {"url":"https://education.eviq.org.au/getmedia/84e01d65-0f5e-4ad4-b769-9f3bc1ae3df4/SVCO-summary-sheet.aspx","title":"Cancer Institute NSW eviQ: Superior vena cava obstruction summary"}
+    ],
+    "reference_date": "2026-07-16",
+    "image_resolution": "converted_to_textual_CT_findings",
+    "reapproval": "approve",
+    "reapproval_reason": "CT의 압박·혈전 부재와 기도·뇌 위기 부재를 지문에 명시하고 조직 진단 우선순위를 직접 다루는 근거로 교체함"
+  },
+  {
+    "question_id": "RESP-000026",
+    "revised_stem": "54세 남자가 기침한 뒤 거품이 있고 소량의 가래와 섞인 선홍색 피를 뱉었다. 구역·구토·흑색변과 후비출혈 증상은 없고 구강·비강 출혈점도 보이지 않는다. 혈압 132/78 mmHg, 맥박 84회/분, 산소포화도 97%이며 현재 출혈은 멎었다. CT를 즉시 시행하기 어려운 일차 진료 환경에서 진성 비대량 객혈의 기본 선별 영상으로 가장 적절한 검사는?",
+    "revised_lead_in": "기본 선별 영상으로 가장 적절한 검사는?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"비위관 세척","is_correct":false},
+      {"choice_id":"C2","text":"흉부 X선 촬영","is_correct":true},
+      {"choice_id":"C3","text":"비강 내시경","is_correct":false},
+      {"choice_id":"C4","text":"영상검사 없이 1주 후 재평가","is_correct":false},
+      {"choice_id":"C5","text":"D-dimer 검사","is_correct":false}
+    ],
+    "revised_core_explanation": "발생 양상은 상부위장관이나 비강 출혈보다 진성 객혈에 부합하며 현재 혈역학적으로 안정된 비대량 객혈이다. CT를 즉시 시행하기 어려운 환경에서 흉부 X선은 감염, 종괴, 공동과 국소 침윤을 빠르게 선별하는 적절한 기본 영상이다. 다만 ACR 기준상 조영증강 흉부 CT 또는 CTA도 비대량 객혈의 초기 영상으로 적절하므로, 흉부 X선 결과·위험인자·재발 여부에 따라 CT/CTA로 이어간다.",
+    "references": [
+      {"url":"https://acsearch.acr.org/docs/69449/Narrative","title":"ACR Appropriateness Criteria: Hemoptysis"},
+      {"url":"https://acsearch.acr.org/list/GetAppendix?PanelName=Thoracic&TopicId=107","title":"ACR Hemoptysis appropriateness table"}
+    ],
+    "reference_date": "2026-07-16",
+    "image_resolution": "not_required",
+    "reapproval": "approve",
+    "reapproval_reason": "검사 환경과 '기본 선별 영상'을 명시해 CT/CTA와의 경쟁을 해소하고 ACR 권고에 맞춰 후속 CT 경로를 설명함"
+  },
+  {
+    "question_id": "RESP-000038",
+    "revised_stem": "46세 남자가 우상엽에 국한된 단일 단순 폐국균종으로 두 차례 생명위협 객혈을 겪었고 각각 기관지동맥색전술로 지혈되었다. 3개월 뒤 다시 중등도 객혈이 발생했다. 반대쪽 폐는 정상이고 FEV₁은 예측치의 88%, DLCO는 84%이며 수술을 제한할 동반질환은 없다. 현재 출혈은 안정되었다. 장기적인 재출혈 예방을 위한 가장 적절한 치료는?",
+    "revised_lead_in": "장기적인 재출혈 예방을 위한 가장 적절한 치료는?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"계획된 우상엽절제술","is_correct":true},
+      {"choice_id":"C2","text":"재출혈 때마다 기관지동맥색전술만 반복","is_correct":false},
+      {"choice_id":"C3","text":"경구 항진균제 단독 장기 투여","is_correct":false},
+      {"choice_id":"C4","text":"기관지내시경 국소 지혈만 반복","is_correct":false},
+      {"choice_id":"C5","text":"정기 흉부 X선 추적만 시행","is_correct":false}
+    ],
+    "revised_core_explanation": "IDSA는 금기가 없는 단일 국균종 환자에게 유의한 객혈이 있으면 수술적 절제를 권고한다. 이 환자는 병변이 한 엽에 국한되고 폐기능과 반대쪽 폐가 양호하며 BAE 후에도 재출혈했으므로, 급성 출혈이 안정된 뒤 계획 우상엽절제술이 장기 재출혈 예방에 가장 적절하다. BAE와 기관지내시경 지혈은 급성 조절 또는 수술 불가 환자의 가교가 될 수 있지만 구조적 병변을 제거하지 않는다.",
+    "references": [
+      {"url":"https://www.idsociety.org/practice-guideline/aspergillosis/","title":"IDSA 2016 Clinical Practice Guideline for Aspergillosis, recommendations 89–91"},
+      {"url":"https://doi.org/10.1007/s00270-022-03127-w","title":"CIRSE Standards of Practice on Bronchial Artery Embolisation"}
+    ],
+    "reference_date": "2026-07-16",
+    "image_resolution": "not_required",
+    "reapproval": "approve",
+    "reapproval_reason": "수술 적응증을 직접 권고하는 IDSA 근거를 추가하고 현재 출혈 안정·수술 가능성을 명시함"
+  },
+  {
+    "question_id": "RESP-000057",
+    "revised_stem": "22세 육상선수가 달리기 5–10분 뒤 기침과 흉부 답답함을 호소한다. 안정 시 폐활량검사와 기관지확장제 반응은 정상이다. 표준화 운동유발검사 전 FEV₁은 4.10 L였고 운동 후 최저 FEV₁은 3.48 L였으며 30분 뒤 기저치로 회복되었다. 검사 적합성과 재현성 기준은 충족했다. 가장 적절한 해석은?",
+    "revised_lead_in": "가장 적절한 해석은?",
+    "revised_choices": [
+      {"choice_id":"C1","text":"안정 시 폐활량검사가 정상이므로 운동유발기관지수축은 배제된다","is_correct":false},
+      {"choice_id":"C2","text":"운동 후 FEV₁ 감소는 제한성 환기장애를 의미한다","is_correct":false},
+      {"choice_id":"C3","text":"30분 뒤 회복되었으므로 기술 오류로 판정한다","is_correct":false},
+      {"choice_id":"C4","text":"운동 후 FEV₁이 약 15% 감소해 운동유발기관지수축을 지지한다","is_correct":true},
+      {"choice_id":"C5","text":"운동유발후두폐쇄로 확정하고 기관지 평가를 종료한다","is_correct":false}
+    ],
+    "revised_core_explanation": "운동 후 FEV₁은 4.10 L에서 3.48 L로 약 15% 감소했다. ATS 지침은 운동 또는 과호흡 유발 후 FEV₁이 기저치보다 10% 이상 감소하면 운동유발기관지수축을 지지하는 것으로 본다. 안정 시 폐활량검사가 정상이어도 배제되지 않으며, 이후 회복되는 양상도 가역적 기관지수축과 일치한다.",
+    "references": [
+      {"url":"https://www.thoracic.org/statements/resources/allergy-asthma/exercise-induced-bronchoconstriction.pdf","title":"Official ATS Clinical Practice Guideline: Exercise-induced Bronchoconstriction"},
+      {"url":"https://academic.oup.com/ajrccm/article/187/9/1016/8510121","title":"ATS Exercise-induced Bronchoconstriction guideline publication"}
+    ],
+    "reference_date": "2026-07-16",
+    "image_resolution": "not_required",
+    "reapproval": "approve",
+    "reapproval_reason": "검사 품질을 명시하고 운동 후 FEV₁ 10% 이상 감소 기준을 직접 다루는 ATS 공식 지침을 추가함"
+  }
+]

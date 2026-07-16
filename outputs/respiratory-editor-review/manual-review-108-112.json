@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000108",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["전신경화증","새 운동 호흡곤란·기저부 미세 수포음","FVC 정상 하한·DLCO 58%","정상 흉부 X선","폐실질 질환 평가 질문"],"clinical_inference":"초기 전신경화증 연관 ILD는 흉부 X선과 FVC가 아직 뚜렷하게 비정상이 아니어도 존재할 수 있다. 비조영 흡기 HRCT로 미세 간유리·망상음영의 분포, 견인성 기관지확장과 섬유화 패턴을 평가한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"HRCT는 단순 X선에서 보이지 않는 초기 흉막하 간유리음영과 망상음영, 구조 왜곡을 얇은 절편으로 확인한다. 전신경화증에서 ILD의 존재와 분포·패턴을 평가하는 직접적인 다음 검사다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"흉부 X선은 초기 CTD-ILD에 대한 민감도가 낮아 정상이라고 폐실질질환을 배제할 수 없다. 새 증상, 수포음과 낮은 DLCO가 있는데 1년을 기다리면 조기 평가가 지연된다.","could_be_correct_if":"증상·진찰·기능 이상이 없고 정해진 저위험 추적 계획에 따라 감시하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"CT 폐혈관조영은 폐색전증을 평가하는 검사이며 폐실질을 위한 적정 HRCT 프로토콜을 대체하지 않는다. 폐혈관질환도 별도 감별할 수 있지만 질문은 폐실질 질환의 평가다.","could_be_correct_if":"급성 폐색전증을 의심할 별도의 임상 단서가 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"PET-CT는 미세 섬유화의 일차 선별검사가 아니며 대사활성만으로 ILD 패턴이나 섬유화를 확진하지 못한다. 불필요한 방사선과 비특이적 결과를 더할 수 있다.","could_be_correct_if":"별도의 종양 또는 특정 대사활성 병변을 평가하는 적응증이 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"호흡곤란과 DLCO 감소는 ILD 외에도 폐고혈압·빈혈 등 여러 원인에서 나타날 수 있다. 영상 없이 ILD를 확진하면 구조적 패턴과 범위를 알 수 없고 다른 원인을 놓칠 수 있다.","could_be_correct_if":null,"misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["전신경화증의 낮은 DLCO는 폐고혈압도 시사할 수 있으므로, 문항이 폐실질 평가를 묻는다는 범위를 유지하되 실제 임상에서는 심초음파 등 폐혈관 평가를 병행할 수 있음을 해설에서 혼동하지 않아야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000109",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["밤·운동 후 반복되는 천명과 기침","무증상 시 정상 진찰·X선","정상 FEV1/FVC","기관지확장제 반응 기준 미충족","가변적 증상"],"clinical_inference":"천식은 가변적인 호흡기 증상과 가변적 호기 기류제한을 객관적으로 입증해야 한다. 무증상 시 한 번의 정상 폐활량검사로 배제하지 말고 증상 시 반복 폐활량, 연속 PEF 변동성 또는 적절한 기관지유발검사로 확인한다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"천식의 기류제한은 시간에 따라 변해 무증상 시 폐활량과 기관지확장제 반응이 정상일 수 있다. 전형적인 가변 증상이 있으므로 다른 시점이나 다른 객관적 방법으로 재평가해야 한다.","could_be_correct_if":"반복된 적절한 객관적 검사와 임상 평가에서 천식 가능성이 충분히 배제된 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"증상 양상은 천식을 의심하게 하지만 객관적 기류 변동성을 확인하지 않은 상태에서 중증 천식으로 확정할 수 없다. 고용량 ICS와 전신스테로이드를 바로 시작하면 과치료와 진단 혼선을 만든다.","could_be_correct_if":"객관적으로 확진된 천식이 최적 치료에도 조절되지 않고 중증 악화 치료가 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"총 IgE는 아토피나 여러 알레르기 상태에서 증가하며 천식의 가변적 기류제한을 증명하지 않는다. 높더라도 임상상과 폐기능 변동성 평가가 필요하다.","could_be_correct_if":"확진된 알레르기 천식의 표현형 평가와 특정 치료 적합성을 판단하는 보조 검사인 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"흉부 CT의 기도벽 비후는 비특이적이고 천식 환자에서도 없을 수 있다. CT 정상은 천식을 배제하지 않으며 일반적인 확진 검사는 폐기능 변동성이다.","could_be_correct_if":"다른 구조적 폐질환을 감별할 임상 적응증이 있는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C5","verdict":"correct","explanation":"증상 시 폐활량검사를 반복하면 당시의 폐쇄와 기관지확장제 가역성을 포착할 수 있다. 연속 PEF 변동성이나 메타콜린·운동 등 적절한 유발검사도 가변적 기류제한을 객관화할 수 있다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000110",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["객관적으로 확진된 천식","증상 월 2~3회","6개월 전 바이러스성 악화로 응급실·전신스테로이드","현재 정상 폐기능","흡입 치료 경험 없음"],"clinical_inference":"현재 증상은 드물어도 이전 중증 악화는 미래 악화 위험을 높인다. SABA 단독을 피하고 증상 시 저용량 ICS-formoterol을 사용해 기관지확장과 항염증 치료를 동시에 제공한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"SABA는 급성 기관지수축을 완화하지만 기도 염증을 치료하지 않아 단독 사용은 중증 악화 위험을 충분히 낮추지 못한다. 증상이 드물더라도 ICS를 포함하는 완화 치료가 필요하다.","could_be_correct_if":"ICS-formoterol을 사용할 수 없는 환경에서 SABA를 쓸 때마다 저용량 ICS를 함께 사용하는 대안 전략을 적용하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"고용량 ICS-LABA는 낮은 단계 치료로 조절되지 않는 더 지속적인 천식에 단계적으로 사용한다. 월 2~3회 증상만 있는 초기 환자에게 장기간 고용량을 시작하면 전신·국소 부작용에 비해 이득이 과도하지 않다.","could_be_correct_if":"중간 단계 치료와 수정 가능한 요인 교정에도 조절되지 않는 중증도에서 단계 상향이 필요한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"correct","explanation":"필요 시 저용량 ICS-formoterol은 증상이 생길 때 빠른 기관지확장제와 항염증제를 함께 전달한다. 드문 증상에서도 SABA 단독보다 중증 악화를 줄이는 선호 초기 전략이며 과거 전신스테로이드 악화 병력은 이를 더 뒷받침한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"LABA 단독은 천식의 기도 염증을 치료하지 않고 안전성 문제가 있어 사용하지 않는다. LABA는 반드시 ICS를 포함한 조합으로 사용해야 한다.","could_be_correct_if":"천식에서는 해당 없음; ICS와 고정 조합으로 적응 단계에 사용하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"악화 때마다 경구스테로이드만 사용하면 예방 가능한 중증 악화가 반복되고 누적 전신 부작용이 생길 수 있다. 드문 증상도 ICS 포함 흡입 치료로 악화 위험을 줄여야 한다.","could_be_correct_if":"중증 급성 악화에서 단기 전신스테로이드를 흡입 유지치료와 함께 사용하는 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000111",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["저용량 ICS-formoterol MART 처방","주 4회 증상·월 3회 야간 각성","3개월 중 1개월분만 조제","명백한 흡입 동작 오류","FEV1 82%·최근 응급실 방문 없음"],"clinical_inference":"약제를 충분히 사용하지 않았고 흡입기 전달도 실패해 현재 증상을 약제 자체의 실패로 판단할 수 없다. 단계 상향 전에 사용법을 직접 교정하고 순응도 장벽·노출·동반질환을 평가한 뒤 충분한 반응을 재평가한다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"생물학제는 최적화된 고용량 ICS-LABA에도 조절되지 않는 중증 천식에서 표현형과 바이오마커를 확인한 뒤 고려한다. 현재는 처방약을 충분히 사용하지 못해 치료 저항성을 입증하지 못했다.","could_be_correct_if":"진단·사용법·순응도·동반질환을 최적화한 뒤에도 고용량 치료에서 조절되지 않고 적합한 표현형이 있는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"correct","explanation":"흡입 전 충분히 내쉬고 올바른 흡입 흐름을 사용한 뒤 숨을 잠시 참도록 기기별 사용법을 직접 시범·재확인한다. 조제 부족의 원인과 알레르겐·흡연·직업 노출·비염 같은 수정 요인을 교정한 후 증상과 폐기능을 재평가한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"천식은 가변성 질환이라 치료 중 또는 증상이 덜한 시점에 FEV1이 정상 범위일 수 있다. 진단 재검토가 필요할 수 있어도 정상 수치 하나로 모든 ICS 치료를 갑자기 중단하지 않는다.","could_be_correct_if":"체계적 진단 재평가에서 천식이 배제되고 안전한 단계 감량 계획을 세운 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"장기 경구스테로이드는 심각한 전신 부작용 때문에 다른 조치를 충분히 최적화한 뒤에도 필요한 최후 수단에 가깝다. 흡입기 오류와 순응도 문제를 그대로 둔 채 추가하면 위해만 늘어난다.","could_be_correct_if":"전문 평가 후 다른 치료로 조절되지 않는 중증 천식에서 최소 용량이 불가피한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"중증 천식은 증상 횟수만이 아니라 진단 확인과 고용량 치료 최적화 후에도 조절되지 않는지로 판단한다. 사용 오류가 명백한 상태에서 기관지 열성형술을 의뢰할 근거가 없다.","could_be_correct_if":"전문 중증천식 평가와 최적 치료 후 선택된 성인 환자에서 다학제로 고려하는 경우","misconception_tag":"적응증"}
+    ],
+    "review_flags":[],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000112",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["제빵 업무 시작 후 천명·기침","주말 호전·긴 휴가 중 거의 소실","기관지확장제 후 FEV1 14%·260 mL 증가","현재도 노출 중·임상 안정"],"clinical_inference":"천식의 객관적 가역성은 확인됐으며 이제 업무 노출과 기류 변화의 시간적 연관성을 입증해야 한다. 아직 안전하게 근무 중일 때 근무일과 비근무일에 반복 PEF·증상·노출을 기록해 패턴을 비교하는 것이 실용적이다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"밀가루 특이 IgE는 감작을 지지하지만 감작이 실제 업무 관련 천식 증상을 일으킨다는 시간적 인과를 단독 입증하지 못한다. 근무와 비근무에 따른 객관적 기류 변화를 함께 확인해야 한다.","could_be_correct_if":"원인 항원 감작을 보조 확인하고 업무 관련 폐기능 변화와 함께 해석하는 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"천식은 가변적 기류제한 질환으로 근무 전후 흉부 X선의 침윤 변화를 기대하지 않는다. X선은 다른 폐질환을 감별할 수 있지만 직업성 인과를 확인하지 못한다.","could_be_correct_if":"과민성폐장염 등 작업 관련 폐침윤 질환을 감별하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"유해 노출 제거는 치료에 중요하지만 객관화 전에 완전히 퇴직하면 근무일과 비근무일의 변화를 비교하기 어려워질 수 있다. 한 번의 후속 폐활량검사는 인과관계를 보여주지 못한다.","could_be_correct_if":"노출이 즉각적 중증 위험을 만들어 안전을 위해 우선 중단해야 하는 경우에도 이후 전문 평가를 병행","misconception_tag":"검사 순서"},
+      {"choice_id":"C4","verdict":"correct","explanation":"근무일과 휴무일에 하루 여러 차례 PEF를 같은 기기로 기록하고 증상·업무·노출 시점을 함께 남긴다. 반복되는 업무 관련 저하와 비근무 중 회복 패턴은 직업성 천식의 시간적 연관성을 객관화한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"메타콜린 양성은 기도과민성을 나타내지만 직업성 천식과 비직업성 천식 모두에서 가능하다. 단일 양성 결과만으로 작업장과 무관하다고 분류할 수 없다.","could_be_correct_if":"근무·비근무 시 기관지 과민성 변화를 비교하는 보조 평가로 사용하는 경우","misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["연속 PEF 기록은 환자가 아직 노출 중이고 임상적으로 안전할 때 시행해야 하며, 진단을 위해 위험한 재노출을 강요해서는 안 된다는 조건을 유지해야 한다."],
+    "publication_recommendation":"approve"
+  }
+]

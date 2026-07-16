@@ -1,0 +1,57 @@
+[
+  {
+    "question_id":"RESP-000062",
+    "revised_stem":"45갑년 흡연력이 있는 67세 남자가 점차 심해지는 운동 시 호흡곤란으로 왔다. 기관지확장제 후 FEV₁/FVC는 0.58, TLC 124%, RV 158% 예측치이며 혈색소 보정 DLCO는 43% 예측치이다. 청진에서 호기 연장이 들린다. 이 폐기능 패턴의 해부학적 원인과 분포를 확인하기 위한 가장 적절한 검사는?",
+    "revised_lead_in":"이 폐기능 패턴의 해부학적 원인과 분포를 확인하기 위한 가장 적절한 검사는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"기관지유발검사","is_correct":false},{"choice_id":"C2","text":"안정 시 심초음파와 NT-proBNP","is_correct":false},{"choice_id":"C3","text":"혈색소 교정 없이 DLCO만 반복","is_correct":false},{"choice_id":"C4","text":"얇은 절편 흉부 CT","is_correct":true},{"choice_id":"C5","text":"혈청 알파-1 항트립신 농도와 유전형검사","is_correct":false}
+    ],
+    "revised_core_explanation":"지속성 기류제한, 과팽창·공기포획과 현저한 DLCO 감소는 폐포-모세혈관 표면적이 감소한 폐기종 표현형을 시사한다. 얇은 절편 흉부 CT는 폐기종의 존재, 분포와 범위를 직접 보여 주므로 질문한 해부학적 원인 확인에 가장 적절하다. 알파-1 항트립신 결핍 검사는 COPD 환자에게 별도로 권고되는 원인 평가이지만 폐기종의 해부학적 분포를 직접 확인하는 검사는 아니다.",
+    "references":[{"url":"https://goldcopd.org/2026-gold-report-and-pocket-guide/","title":"GOLD 2026 Report and Pocket Guide"},{"url":"https://publications.ersnet.org/content/erj/60/1/2101499","title":"ERS/ATS technical standard on interpretive strategies for routine lung function tests"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"질문을 해부학적 원인과 분포 확인으로 좁혀 AAT 검사와의 경쟁을 제거하고, AAT 검사는 별도 필수 원인 평가임을 해설에 보존함"
+  },
+  {
+    "question_id":"RESP-000063",
+    "revised_stem":"70세 남자가 운동 시 호흡곤란으로 검사받았다. HRCT에서 상엽 우세 폐기종과 하엽 우세 폐섬유화가 함께 관찰된다. FEV₁/FVC 0.72, FVC 92%, TLC 96% 예측치로 폐용적은 비교적 보존되어 있으나 혈색소 보정 DLCO는 31% 예측치이고 6분보행 중 산소포화도가 95%에서 82%로 감소한다. 가장 적절한 해석과 다음 평가는?",
+    "revised_lead_in":"가장 적절한 해석과 다음 평가는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"폐기종과 섬유화의 용적 효과가 상쇄된 CPFE로 해석하고 폐고혈압 동반 여부를 선별한다","is_correct":true},{"choice_id":"C2","text":"섬유화만 있다고 보고 FVC 추세만 감시한다","is_correct":false},{"choice_id":"C3","text":"폐기종만 있다고 보고 기관지확장제 반응만 추적한다","is_correct":false},{"choice_id":"C4","text":"고립성 폐동맥고혈압으로 해석하고 HRCT 소견은 무시한다","is_correct":false},{"choice_id":"C5","text":"운동 시 탈포화만 평가하고 폐고혈압 선별은 미룬다","is_correct":false}
+    ],
+    "revised_core_explanation":"CPFE에서는 폐기종의 과팽창과 섬유화의 용적 감소가 상쇄되어 FVC와 TLC가 비교적 보존될 수 있지만 DLCO는 불균형하게 낮아질 수 있다. ATS/ERS/JRS/ALAT 공식 연구성명은 CPFE에서 FVC 단독 추적이 부적절할 수 있고 폐고혈압 선별·감시를 고려해야 한다고 설명한다. 따라서 심초음파와 바이오마커 등으로 폐고혈압 가능성을 평가하고 필요하면 우심도자로 확정한다.",
+    "references":[{"url":"https://www.atsjournals.org/doi/abs/10.1164/rccm.202206-1041ST","title":"Official ATS/ERS/JRS/ALAT Research Statement: Combined Pulmonary Fibrosis and Emphysema"},{"url":"https://publications.ersnet.org/content/erj/61/1/2200879","title":"2022 ESC/ERS Guidelines for pulmonary hypertension"}],
+    "reference_date":"2026-07-16","image_resolution":"converted_to_textual_HRCT_findings","reapproval":"approve","reapproval_reason":"CPFE의 보존된 폐용적·중증 DLCO 감소와 폐고혈압 선별을 직접 다루는 공식 다학회 성명을 추가함"
+  },
+  {
+    "question_id":"RESP-000067",
+    "revised_stem":"항합성효소증후군으로 추적 중인 46세 여자가 3개월 전부터 마른기침과 계단을 오를 때 숨참을 호소한다. 양쪽 폐기저부에 미세 수포음이 들린다. 흉부 X선은 정상이고 FVC 91%, TLC 94% 예측치이지만 혈색소 보정 DLCO는 57% 예측치이다. 간질성폐질환을 확인하기 위한 가장 적절한 다음 검사는?",
+    "revised_lead_in":"간질성폐질환을 확인하기 위한 가장 적절한 다음 검사는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"기관지확장제 반응검사","is_correct":false},{"choice_id":"C2","text":"심초음파와 NT-proBNP만 시행","is_correct":false},{"choice_id":"C3","text":"추가 영상 없이 6개월 뒤 폐기능검사만 반복","is_correct":false},{"choice_id":"C4","text":"고해상 흉부 CT","is_correct":true},{"choice_id":"C5","text":"운동심폐검사만 시행","is_correct":false}
+    ],
+    "revised_core_explanation":"항합성효소증후군은 ILD 위험이 높은 특발염증근병증 범주이며 새 호흡기 증상, 기저부 수포음과 DLCO 감소가 동반되었다. ACR 지침은 ILD 고위험 전신자가면역 류마티스질환에서 흉부 X선이 아니라 HRCT와 폐기능검사로 선별하도록 조건부 권고한다. 따라서 정상 단순 X선과 보존된 폐용적만으로 배제하지 말고 HRCT로 실질 병변을 확인한다.",
+    "references":[{"url":"https://rheumatology.org/api/asset/blt7e2cadfc7bc986fb","title":"2023 ACR Guideline for Screening and Monitoring SARD-ILD"},{"url":"https://rheumatology.org/interstitial-lung-disease-guideline","title":"American College of Rheumatology Interstitial Lung Disease Guidelines"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"항합성효소증후군을 포함하는 ACR SARD-ILD 지침의 HRCT 선별 권고를 직접 근거로 추가함"
+  },
+  {
+    "question_id":"RESP-000071",
+    "revised_stem":"짙은 피부색을 가진 58세 남자가 폐렴으로 입원했다. 산소 2 L/min에서 손가락 SpO₂는 94%로 반복 측정되지만 호흡수 32회/분, 보조호흡근 사용과 의식 저하가 진행한다. 손은 따뜻하고 측정 파형과 맥박 일치는 양호하며 매니큐어는 없다. 가장 적절한 다음 조치는?",
+    "revised_lead_in":"가장 적절한 다음 조치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"다른 센서에서 반복한 SpO₂ 평균만으로 산소화를 판단한다","is_correct":false},{"choice_id":"C2","text":"동맥혈가스로 PaO₂·PaCO₂와 산-염기 상태를 확인하고 임상적으로 치료하며, dyshemoglobinemia가 의심될 때만 co-oximetry를 병행한다","is_correct":true},{"choice_id":"C3","text":"SpO₂ 목표만 높이고 직접 동맥혈 평가를 미룬다","is_correct":false},{"choice_id":"C4","text":"정맥혈가스의 정맥 산소포화도로 동맥 산소화를 대신한다","is_correct":false},{"choice_id":"C5","text":"폐 영상검사를 먼저 시행하고 SpO₂ 추세만 감시한다","is_correct":false}
+    ],
+    "revised_core_explanation":"FDA는 pulse oximeter가 유용하지만 피부색 등 여러 요인의 영향을 받아 부정확할 수 있으므로 수치만 의존하지 말고 임상 증상을 함께 보도록 안내한다. 이 환자는 양호한 파형에도 호흡노력과 의식 저하가 진행하므로 ABG로 산소화·환기·산-염기 상태를 직접 평가하고 치료를 지연하지 않는다. Co-oximetry는 COHb·MetHb 등 dyshemoglobinemia가 의심될 때 추가하며 ABG와 무조건 대체되는 검사가 아니다.",
+    "references":[{"url":"https://www.fda.gov/medical-devices/products-and-medical-procedures/pulse-oximeters","title":"FDA: Pulse Oximeters"},{"url":"https://www.fda.gov/regulatory-information/search-fda-guidance-documents/pulse-oximeters-medical-purposes-non-clinical-and-clinical-performance-testing-labeling-and","title":"FDA 2025 Draft Guidance: Pulse Oximeters for Medical Purposes"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"ABG와 co-oximetry의 역할을 분리하고, 피부색 관련 정확도 한계를 다루는 최신 FDA 자료를 직접 연결함"
+  },
+  {
+    "question_id":"RESP-000073",
+    "revised_stem":"활동성 위장관 출혈이 지속되는 61세 여자가 흉통과 어지럼으로 왔다. 실내공기에서 SpO₂ 99%, PaO₂ 96 mmHg이지만 혈색소는 4.2 g/dL이고 심박수 122회/분, lactate 4.1 mmol/L이다. 폐 청진과 흉부 X선은 정상이다. 가장 적절한 해석과 처치는?",
+    "revised_lead_in":"가장 적절한 해석과 처치는?",
+    "revised_choices":[
+      {"choice_id":"C1","text":"SpO₂가 정상이어도 동맥 산소함량과 조직 산소전달이 심하게 감소했으므로 긴급 지혈과 적혈구 수혈을 시행한다","is_correct":true},{"choice_id":"C2","text":"고농도 산소만으로 용해 산소를 늘리고 수혈은 미룬다","is_correct":false},{"choice_id":"C3","text":"정질액만 투여하고 SpO₂가 정상이므로 수혈하지 않는다","is_correct":false},{"choice_id":"C4","text":"빈혈 교정보다 관상동맥조영술을 먼저 시행한다","is_correct":false},{"choice_id":"C5","text":"COHb 상승으로 간주하고 co-oximetry 결과 전까지 지혈과 수혈을 미룬다","is_correct":false}
+    ],
+    "revised_core_explanation":"동맥 산소함량은 대부분 혈색소에 결합된 산소로 결정되므로 Hb 4.2 g/dL에서는 SaO₂와 PaO₂가 정상이어도 운반 가능한 총 산소량이 심하게 감소한다. 빈맥, 흉통과 lactate 상승은 조직 산소전달 실패를 뒷받침한다. AABB의 제한적 수혈 기준보다도 훨씬 낮은 혈색소이며 활동성 출혈과 증상이 있으므로 출혈원을 긴급히 조절하면서 적혈구를 수혈하고 임상 반응을 재평가한다.",
+    "references":[{"url":"https://www.aabb.org/news-resources/resources/clinical-practice-resources","title":"AABB Clinical Practice Resources: 2023 Red Blood Cell Transfusion Guidelines"},{"url":"https://www.aabb.org/docs/default-source/default-document-library/resources/updates-in-red-blood-cell-transfusion-thresholds.pdf","title":"AABB: Updates in Red Blood Cell Transfusion Thresholds"},{"url":"https://publications.ersnet.org/content/breathe/11/3/194","title":"Relating oxygen partial pressure, saturation and content"}],
+    "reference_date":"2026-07-16","image_resolution":"not_required","reapproval":"approve","reapproval_reason":"단순 '수혈 필요성 평가'를 긴급 지혈과 수혈로 명확히 하고 AABB 수혈 지침을 직접 근거로 추가함"
+  }
+]

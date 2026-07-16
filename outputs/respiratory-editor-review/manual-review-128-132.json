@@ -1,0 +1,72 @@
+[
+  {
+    "question_id":"RESP-000128",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["72세의 새 야간 호흡곤란·천명","기좌호흡·베개 3개","수포음·경정맥 확장·함요부종","BNP 상승","과거 가변 증상·알레르기 없음","기관지확장제 반응 없음"],"clinical_inference":"천명은 천식에 특이적이지 않으며 기좌호흡, 전신 울혈과 높은 BNP는 심부전성 폐울혈을 강하게 지지한다. 심초음파로 심실 기능과 판막·구조 이상을 평가하고 울혈 치료 반응을 확인한다.","best_answer":"C1"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"correct","explanation":"심초음파는 좌우 심실 기능, 판막질환과 구조적 심장질환을 평가해 심부전의 원인과 표현형을 구분한다. 체액과부하 치료 후 호흡곤란·천명과 울혈 소견이 호전되는지도 함께 확인한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"고령의 새 천명만으로 천식을 확진할 수 없고 객관적 가변 기류제한도 없다. 고용량 ICS-LABA를 먼저 시작하면 명확한 심부전성 체액과부하의 평가와 치료를 지연시킨다.","could_be_correct_if":"가변적 증상과 객관적 가변 기류제한으로 성인발병 천식이 확인되고 해당 단계 치료가 필요한 경우","misconception_tag":"진단 오류"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"기관지과민성은 천식 외 상황에서도 나타날 수 있고 단일 결과가 경정맥 확장·부종·높은 BNP를 무효화하지 않는다. 현재는 심부전 평가와 치료가 우선이며 필요하면 안정 후 기도질환을 별도 평가한다.","could_be_correct_if":"심부전이 배제·안정화된 뒤 천식 가능성을 객관화하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"알레르기 피부검사는 감작을 평가할 뿐 심장 기능이나 체액과부하를 평가하지 못한다. 음성 또는 양성 결과로 심부전을 배제할 수 없다.","could_be_correct_if":"객관적으로 의심되는 알레르기 천식의 표현형을 보조 평가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"안정 시 산소포화도가 정상이어도 심부전과 간헐적 폐울혈은 존재할 수 있다. 기좌호흡과 전신 울혈 소견이 있으므로 심장·폐 평가를 중단할 근거가 아니다.","could_be_correct_if":null,"misconception_tag":"진단 오류"}
+    ],
+    "review_flags":["현재 근거는 천식 감별에는 도움이 되지만 심초음파를 포함한 심부전 진단과 울혈 치료를 직접 뒷받침하지 않는다. 최신 심부전 진료지침을 근거에 추가해야 한다."],
+    "publication_recommendation":"revise"
+  },
+  {
+    "question_id":"RESP-000129",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["객관적으로 확진된 미치료 천식","지난달 거의 매일 증상","주 2회 야간 각성","FEV1 72%","현재 급성 악화 아님"],"clinical_inference":"대부분의 날 증상과 주 1회보다 잦은 야간 각성, 낮은 폐기능으로 경증 AIR-only보다 초기 Step 3 수준이 적절하다. 저용량 ICS-formoterol을 유지와 완화에 함께 사용하는 MART로 증상과 악화 위험을 동시에 줄인다.","best_answer":"C5"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"SABA 단독은 기관지수축만 일시 완화하고 기도 염증과 미래 악화 위험을 치료하지 않는다. 거의 매일 증상과 야간 각성이 있는데 ICS를 미루면 저치료다.","could_be_correct_if":"해당 없음; SABA를 사용하는 대안 경로에서도 ICS를 포함하는 조절 치료가 필요","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"LABA 단독은 천식에서 안전하지 않고 기도 염증을 치료하지 않는다. LABA는 ICS와 조합해 사용해야 하며 ICS를 악화 때만 임시 추가하는 방식은 적절하지 않다.","could_be_correct_if":"LABA를 ICS와 고정 조합으로 적응 단계에 사용하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"초기부터 고용량 ICS와 유지 경구스테로이드를 쓰면 필요한 수준을 넘는 전신·국소 부작용이 발생한다. 현재 급성 악화가 아니므로 중간 단계 흡입치료로 시작해 반응을 평가한다.","could_be_correct_if":"최적화된 고용량 흡입치료에도 조절되지 않는 중증 천식에서 전문 평가 후 전신스테로이드가 불가피한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"필요 시 저용량 ICS-formoterol만 사용하는 AIR-only는 더 경한 단계에 적합하다. 거의 매일 증상과 잦은 야간 각성이 있어 매일 유지 용량을 포함하는 MART가 더 적절하다.","could_be_correct_if":"증상이 드물고 폐기능·악화 위험이 낮아 경증 단계가 적합한 경우","misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"correct","explanation":"같은 저용량 ICS-formoterol을 매일 유지하고 증상 시 추가 완화제로 사용한다. 증상 증가 시 항염증제도 함께 늘어나며 현재의 증상 부담과 악화 위험에 맞는 초기 치료다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["MART는 formoterol을 포함해 빠른 작용을 하는 승인된 ICS-LABA 조합과 해당 용법을 전제로 하며 다른 LABA 조합에 일반화하지 않아야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000130",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["중간용량 budesonide-formoterol MART 정확히 사용","흡입법·순응도·흡연·동반질환 교정","연 2회 전신스테로이드 악화","기관지확장 후 FEV1 64%","호산구·IgE 결과 대기"],"clinical_inference":"최적화된 중간용량 MART에도 반복 악화와 기류제한이 남아 단계 상향과 전문 중증천식 평가가 필요하다. ICS는 유지하면서 LAMA 추가를 고려하고 바이오마커·알레르기·악화력을 이용해 생물학제 적응증을 평가한다.","best_answer":"C3"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"LAMA는 추가 기관지확장제로 고려하는 것이지 천식의 항염증 기반인 ICS를 대체하는 단독 치료가 아니다. ICS 중단은 악화 위험을 높일 수 있다.","could_be_correct_if":"COPD만 있고 천식 특성이 배제된 환자에서 적응에 맞는 LAMA를 사용하는 경우","misconception_tag":"금기"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"전신스테로이드가 필요한 악화 2회와 낮은 FEV1은 임상적으로 중요한 잔여 위험이다. 수정 요인을 이미 교정했으므로 단순 유지보다 단계 상향과 표현형 평가가 필요하다.","could_be_correct_if":"치료를 최근 시작해 충분한 반응 평가 기간이 지나지 않았거나 악화 원인이 별도로 교정되는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"correct","explanation":"ICS-formoterol 기반 치료를 유지하면서 LAMA 추가로 폐기능과 악화 위험의 추가 개선을 기대할 수 있다. 동시에 호산구·IgE·알레르기·비용종과 악화력을 전문적으로 평가해 적합한 생물학제를 선택한다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"유지 경구스테로이드는 누적 전신 부작용이 커 다른 최적화와 생물학제 등 스테로이드 절감 치료를 먼저 검토해야 한다. 처음부터 평생 처방하고 평가를 끝내는 것은 부적절하다.","could_be_correct_if":"전문 평가 후 다른 치료로도 조절되지 않아 최소 유효 용량이 불가피한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"SABA를 정해진 횟수로 규칙 사용해도 기도 염증을 치료하지 않고 내성·과사용 위험을 키울 수 있다. 현재 MART 완화제를 적절히 사용하며 조절치료를 상향해야 한다.","could_be_correct_if":"급성 증상 완화를 위한 제한적 사용이 별도 치료계획에 포함되는 경우","misconception_tag":"치료 우선순위"}
+    ],
+    "review_flags":["LAMA 추가의 효과는 대체로 제한적이며 생물학제 선택은 바이오마커 결과뿐 아니라 악화력·동반질환·허가 기준·환자 선호를 종합해야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000131",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["고용량 ICS-LABA·LAMA 최적 사용","동반질환 치료","연 4회 전신스테로이드 악화","반복 혈액 호산구 620/μL","비용종","낮은 IgE·다년생 감작 없음"],"clinical_inference":"최적화된 고강도 치료에도 악화가 반복되고 지속적 혈액 호산구증가와 비용종이 있어 중증 호산구성 제2형 천식에 합당하다. ICS 기반 치료에 anti-IL5 또는 anti-IL5Rα 생물학제를 추가해 악화와 전신스테로이드 노출을 줄인다.","best_answer":"C2"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"Omalizumab은 알레르기 감작과 허가 범위 IgE 등 적응 조건을 확인해 추가하는 치료이며 ICS를 대체하는 단독 치료가 아니다. 이 환자는 낮은 IgE와 감작 부재로 anti-IgE보다 호산구 표적 근거가 강하다.","could_be_correct_if":"중증 알레르기 천식의 anti-IgE 적응증을 충족해 ICS 기반 치료에 추가하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"correct","explanation":"반복되는 높은 혈액 호산구와 잦은 악화는 IL-5 경로 표적 치료의 적합성을 지지한다. 비용종도 제2형 염증 표현형과 반응 가능성을 보강하며 기존 ICS 포함 조절치료는 유지한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"장기 경구스테로이드는 골다공증·당뇨·감염 등 누적 위해가 커 생물학제 같은 스테로이드 절감 치료보다 우선하지 않는다. 호산구 표현형을 무시할 이유가 없다.","could_be_correct_if":"다른 치료로도 조절되지 않아 전문 평가 후 최소 용량 유지가 불가피한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"incorrect","explanation":"연 4회 전신스테로이드 악화는 기존 치료만 유지하기에 높은 위험이다. 명확한 호산구 표현형이 있으므로 표적치료를 평가하지 않으면 예방 가능한 악화와 스테로이드 노출이 지속된다.","could_be_correct_if":null,"misconception_tag":"치료 우선순위"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"LABA 단독 증량은 기도 염증을 치료하지 않고 천식에서 ICS 없이 사용할 수 없다. 이미 고용량 ICS-LABA를 사용 중이므로 호산구 표적 추가 치료가 더 합리적이다.","could_be_correct_if":null,"misconception_tag":"금기"}
+    ],
+    "review_flags":["구체적 anti-IL5/IL5Rα 제제 선택과 호산구 역치는 지역 허가 기준, 악화력·비용종·투여 방식에 따라 달라지므로 단일 수치만으로 특정 약을 자동 선택하지 않아야 한다."],
+    "publication_recommendation":"approve"
+  },
+  {
+    "question_id":"RESP-000132",
+    "answer_consistency":"confirmed",
+    "core_reasoning":{"key_findings":["고용량 ICS-formoterol·LAMA 최적 사용","연 2회 입원 악화","집먼지진드기 피부단자·특이 IgE 강양성","총 IgE·체중이 omalizumab 허가 범위","혈액 호산구 90/μL"],"clinical_inference":"최적화된 치료에도 심한 악화가 반복되고 다년생 알레르겐 감작과 허가 범위 IgE·체중을 충족해 중증 알레르기성 천식에 합당하다. ICS 기반 치료에 anti-IgE인 omalizumab을 추가한다.","best_answer":"C4"},
+    "choice_explanations":[
+      {"choice_id":"C1","verdict":"incorrect","explanation":"Anti-IL5/IL5Rα의 효과는 일반적으로 높은 혈액 호산구와 악화력이 있을수록 잘 예측된다. 호산구 90/μL에서 명확한 알레르기·anti-IgE 적합성을 무시하고 우선할 근거가 약하다.","could_be_correct_if":"과거·반복 검사에서 호산구성 표현형과 해당 제제 허가 기준을 충족하는 경우","misconception_tag":"적응증"},
+      {"choice_id":"C2","verdict":"incorrect","explanation":"항히스타민제는 알레르기비염 증상을 도울 수 있지만 중증 천식의 기도 염증과 입원 악화를 조절하지 못한다. ICS-LABA를 중단하면 위험이 커진다.","could_be_correct_if":"동반 알레르기비염을 기존 천식 치료와 함께 관리하는 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C3","verdict":"incorrect","explanation":"알레르겐 감작만으로 장기 경구스테로이드를 유지할 이유가 없고 누적 전신 부작용이 크다. 적합한 생물학제를 통해 악화와 스테로이드 노출을 줄이는 전략이 우선이다.","could_be_correct_if":"다른 모든 적절한 치료에도 조절되지 않아 전문 평가 후 최소 용량이 불가피한 경우","misconception_tag":"치료 우선순위"},
+      {"choice_id":"C4","verdict":"correct","explanation":"다년생 알레르겐 감작, 반복 중증 악화와 허가 범위의 총 IgE·체중이 omalizumab 적합성을 지지한다. 기존 ICS 포함 치료에 추가하고 정해진 기간 후 악화·조절·기능 반응을 평가한다.","could_be_correct_if":null,"misconception_tag":"적응증"},
+      {"choice_id":"C5","verdict":"incorrect","explanation":"입원 2회는 생물학제 평가가 필요한 높은 악화 위험을 나타낸다. 감작, IgE·체중, 호산구, 동반질환과 지역 허가 조건을 검토해 표적치료를 선택해야 한다.","could_be_correct_if":null,"misconception_tag":"검사 순서"}
+    ],
+    "review_flags":["특정 알레르겐 노출과 즉시 증상 악화가 항상 필요하지는 않지만, omalizumab 적응은 다년생 알레르겐 감작·중증 천식·허가 용량 범위 등 지역 기준을 모두 확인해야 한다."],
+    "publication_recommendation":"approve"
+  }
+]
