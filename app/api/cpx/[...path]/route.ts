@@ -13,9 +13,16 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   if (!path.length || !ALLOWED_ROOTS.has(path[0])) return ApiErrors.notFound('CPX API');
 
   const base = process.env.CPX_BACKEND_URL;
+  const proxySecret = process.env.CPX_PROXY_SHARED_SECRET;
   if (!base) {
     return NextResponse.json(
       { detail: 'CPX_BACKEND_URL이 설정되지 않았습니다. CPX FastAPI 서비스를 연결해주세요.' },
+      { status: 503 },
+    );
+  }
+  if (!proxySecret) {
+    return NextResponse.json(
+      { detail: 'CPX_PROXY_SHARED_SECRET이 설정되지 않았습니다. CPX 프록시와 백엔드를 같은 값으로 설정해주세요.' },
       { status: 503 },
     );
   }
@@ -33,6 +40,7 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
       headers: {
         ...(body ? { 'content-type': request.headers.get('content-type') ?? 'application/json' } : {}),
         'x-lecturelink-user-id': session.userId,
+        'x-cpx-proxy-secret': proxySecret,
       },
       body,
       cache: 'no-store',
