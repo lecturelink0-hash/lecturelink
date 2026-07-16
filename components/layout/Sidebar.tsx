@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { label: '홈', href: '/dashboard' },
   { label: '내신 대비', href: '/notes' },
   { label: '국시 대비', href: '/exam' },
+  { label: 'CPX 실습', href: '/cpx' },
   { label: '모의고사', href: '/mock' },
   { label: '오답노트', href: '/wrong-notes' },
   { label: '내 문제집', href: '/library' },

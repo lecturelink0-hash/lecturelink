@@ -42,6 +42,7 @@ const ONBOARDING_REQUIRED_PREFIXES = [
   '/plan',
   '/admin',
   '/exam',
+  '/cpx',
   '/mock',
   '/wrong-notes',
   '/library',
