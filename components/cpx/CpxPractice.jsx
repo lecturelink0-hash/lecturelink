@@ -58,6 +58,7 @@ export default function CpxPractice() {
   const [examTarget, setExamTarget] = useState(null);
   const [findings, setFindings] = useState([]);
   const [elapsed, setElapsed] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
   const [result, setResult] = useState(null);
   const liveRef = useRef(null);
   const micRef = useRef(null);
@@ -132,7 +133,7 @@ export default function CpxPractice() {
 
   const start = async () => {
     if (!selected || phase === 'starting') return;
-    setError(''); setResult(null); setTranscript([]); setFindings([]); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
+    setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     try {
       const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: selected.id }) });
       setSessionId(created.sessionId); setPersona(created.persona); startedAtRef.current = Date.now(); setElapsed(0);
@@ -141,10 +142,16 @@ export default function CpxPractice() {
         onStatus: (_state, nextStatus) => setStatus(nextStatus),
         onPatientText: (text) => push('patient', sanitizePatientText(text)),
         onInputText: (text, meta) => { if (meta?.final) push('student', text); },
+        onAudioLevel: setAudioLevel,
       });
       liveRef.current = live;
       await live.connect(token);
-      micRef.current = await startMic(live);
+      try {
+        micRef.current = await startMic(live);
+      } catch {
+        // 텍스트 문진은 마이크 권한과 무관하게 계속 가능해야 한다.
+        setError('마이크를 사용할 수 없습니다. 아래 입력창으로 텍스트 문진은 계속할 수 있습니다.');
+      }
       setPhase('live'); setStatus('진료 중 — 환자에게 질문해 보세요.');
     } catch (nextError) {
       liveRef.current?.disconnect?.({ silent: true });
@@ -212,7 +219,7 @@ export default function CpxPractice() {
     <Card className="p-5 sm:p-6"><div className="grid gap-4 lg:grid-cols-[1fr_auto]"><label className="grid gap-2 text-sm font-bold text-[var(--color-text)]">증례 선택<select value={caseId} onChange={(event) => setCaseId(event.target.value)} disabled={catalogLoading || phase === 'live' || phase === 'starting'} className="h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 font-medium outline-none focus:border-[var(--color-primary)]"><option value="">{catalogLoading ? '승인 증례를 불러오는 중…' : '증례를 선택하세요'}</option>{caseCatalog.categories.map((category) => <optgroup key={category} label={category}>{caseCatalog.cases.filter((item) => item.category === category).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</optgroup>)}</select></label><div className="flex items-end"><Button variant="accent" size="lg" onClick={start} loading={phase === 'starting'} disabled={!selected || phase === 'live' || phase === 'finishing'}><Mic className="h-4 w-4" /> {phase === 'ended' ? '새 진료 시작' : '진료 시작'}</Button></div></div><p className="mt-3 text-sm text-[var(--color-muted)]">{selected?.description || catalogError || '서비스에 공개된 증례만 표시합니다.'}</p>{(error || catalogError) && <div role="alert" className="mt-4 flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error || catalogError}</div>}</Card>
 
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,.9fr)]">
-      <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]"><div className="absolute left-4 top-4 z-10 rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="font-bold">{selected?.category}</div></div><div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white"><Wave active={phase === 'live'} />{status}</div><div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} speaking={phase === 'live'} audioLevel={0.2} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="max-h-52 space-y-2 overflow-y-auto pr-1">{transcript.length ? transcript.map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
+      <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]"><div className="absolute left-4 top-4 z-10 rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="font-bold">{selected?.category}</div></div><div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white"><Wave active={phase === 'live'} />{status}</div><div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} speaking={audioLevel > 0.02} audioLevel={audioLevel} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="max-h-52 space-y-2 overflow-y-auto pr-1">{transcript.length ? transcript.map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
 
       <div className="space-y-6"><Card title="환자 정보" icon={<UserRound className="h-5 w-5" />}><div className="space-y-2 text-sm"><p className="font-bold text-[var(--color-text)]">{persona ? `${persona.name} · ${persona.age}세 · ${persona.gender}` : '진료 시작 시 환자 정보가 확정됩니다.'}</p><p className="text-[var(--color-muted)]">{selected?.title}</p><p className="text-[var(--color-muted)]">{selected?.variant}</p></div></Card><Card title="남은 시간" icon={<Clock3 className="h-5 w-5" />} action={<span className={`tnum text-2xl font-bold ${remaining < 120 ? 'text-[var(--color-warn)]' : 'text-[var(--color-primary)]'}`}>{formatTime(remaining)}</span>}><Button fullWidth variant="accent" onClick={finish} disabled={phase !== 'live'}><Activity className="h-4 w-4" />진료 종료 및 채점</Button></Card></div>
     </section>
