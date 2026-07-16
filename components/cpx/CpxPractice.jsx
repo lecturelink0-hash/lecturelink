@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Activity, ChevronRight, Clock3, Mic, Send, ShieldAlert, Sparkles, Stethoscope, UserRound } from 'lucide-react';
 import Avatar3D from './Avatar3D';
 import { GeminiLivePatient } from './live';
@@ -218,7 +219,7 @@ export default function CpxPractice() {
   return <div className="ll-system-page space-y-7">
     <section className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
       <div><span className="ll-eyebrow"><Stethoscope className="h-3.5 w-3.5" /> CPX 실전 연습</span><h1 className="mt-2 text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와 실제처럼 진료하세요</h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
-      <div className="flex items-center gap-2"><Badge>{caseCatalog.cases.length}개 증례</Badge><Badge variant="beta">12분</Badge></div>
+      <div className="flex flex-wrap items-center gap-2"><Badge>{caseCatalog.cases.length}개 증례</Badge><Badge variant="beta">12분</Badge><Link href="/cpx/history" className="inline-flex h-9 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm font-bold text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">나의 기록 <ChevronRight className="h-4 w-4" /></Link></div>
     </section>
 
     <Card className="p-5 sm:p-6"><div className="grid gap-4 lg:grid-cols-[1fr_auto]"><label className="grid gap-2 text-sm font-bold text-[var(--color-text)]">증례 선택<select value={caseId} onChange={(event) => setCaseId(event.target.value)} disabled={catalogLoading || phase === 'live' || phase === 'starting'} className="h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 font-medium outline-none focus:border-[var(--color-primary)]"><option value="">{catalogLoading ? '승인 증례를 불러오는 중…' : '증례를 선택하세요'}</option>{caseCatalog.categories.map((category) => <optgroup key={category} label={category}>{caseCatalog.cases.filter((item) => item.category === category).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</optgroup>)}</select></label><div className="flex items-end"><Button variant="accent" size="lg" onClick={start} loading={phase === 'starting'} disabled={!selected || phase === 'live' || phase === 'finishing'}><Mic className="h-4 w-4" /> {phase === 'ended' ? '새 진료 시작' : '진료 시작'}</Button></div></div><p className="mt-3 text-sm text-[var(--color-muted)]">{selected?.description || catalogError || '서비스에 공개된 증례만 표시합니다.'}</p>{(error || catalogError) && <div role="alert" className="mt-4 flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error || catalogError}</div>}</Card>

@@ -529,7 +529,7 @@ export default function Avatar3D({ gender = '남성', age, speaking = false, aud
   return (
     <Canvas
       key={`${gender}-${age}`}
-      shadows
+      shadows="percentage"
       camera={{ position: [0, 1.35, 3.1], fov: 40 }}
       onCreated={({ camera }) => camera.lookAt(0, 0.75, 0)}
       dpr={[1, 2]}
