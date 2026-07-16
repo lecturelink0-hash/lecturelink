@@ -69,6 +69,10 @@ export default function CpxPractice() {
   const push = useCallback((role, text) => {
     const clean = String(text || '').replace(/\s+/g, ' ').trim();
     if (!clean) return;
+    // Live 전사 완료 신호와 텍스트 전송 응답이 같은 문장을 다시 보낼 수 있다.
+    // 직전 이벤트와 완전히 같으면 한 번만 세션 로그에 남긴다.
+    const previous = bufferRef.current[bufferRef.current.length - 1];
+    if (previous?.role === role && previous.text === clean) return;
     const event = { role, text: clean, tOffsetMs: Math.max(0, Date.now() - startedAtRef.current) };
     bufferRef.current.push(event);
     setTranscript((current) => [...current, event]);
@@ -166,9 +170,10 @@ export default function CpxPractice() {
     const text = draft.trim();
     if (!text || phase !== 'live') return;
     setDraft('');
+    // 텍스트 입력은 음성 전사 콜백이 오지 않는 환경에서도 채점 로그에 남아야 한다.
+    push('student', text);
     try {
-      const response = await liveRef.current.askText(text);
-      if (response) push('patient', response);
+      await liveRef.current.askText(text);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : '환자 응답을 받지 못했습니다.');
     }
