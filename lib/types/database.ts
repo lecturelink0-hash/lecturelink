@@ -85,6 +85,8 @@ export type StudyPurpose = 'naesin' | 'kmle' | 'usmle' | 'other';
 
 export type MockExamStatus = 'in_progress' | 'submitted' | 'abandoned';
 
+export type CpxSessionStatus = 'active' | 'ended';
+
 export type PaymentKind =
   | 'subscription_initial'
   | 'subscription_renewal'
@@ -425,6 +427,40 @@ export type MockExamSessionRow = {
   created_at: string;
 }
 
+export type CpxSessionRow = {
+  id: string;
+  user_id: string;
+  external_session_id: string;
+  case_id: string;
+  persona: Record<string, unknown>;
+  status: CpxSessionStatus;
+  result: Record<string, unknown> | null;
+  started_at: string;
+  ended_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CpxTranscriptEventRow = {
+  id: number;
+  user_id: string;
+  session_id: string;
+  role: 'student' | 'patient' | 'system';
+  text: string;
+  t_offset_ms: number;
+  created_at: string;
+}
+
+export type CpxPhysicalExamEventRow = {
+  id: number;
+  user_id: string;
+  session_id: string;
+  button_id: string;
+  t_offset_ms: number;
+  result: Record<string, unknown>;
+  created_at: string;
+}
+
 // ───────────── Insert/Update 타입 (DB writes) ─────────────
 
 /**
@@ -655,6 +691,30 @@ export interface Database {
         Insert: Insert<MockExamSessionRow>;
         Update: Update<MockExamSessionRow>;
         Relationships: [FK<'mock_exam_sessions', 'user_id', 'users'>];
+      };
+      cpx_sessions: {
+        Row: CpxSessionRow;
+        Insert: Insert<CpxSessionRow>;
+        Update: Update<CpxSessionRow>;
+        Relationships: [FK<'cpx_sessions', 'user_id', 'users'>];
+      };
+      cpx_transcript_events: {
+        Row: CpxTranscriptEventRow;
+        Insert: Insert<CpxTranscriptEventRow>;
+        Update: Update<CpxTranscriptEventRow>;
+        Relationships: [
+          FK<'cpx_transcript_events', 'user_id', 'users'>,
+          FK<'cpx_transcript_events', 'session_id', 'cpx_sessions'>,
+        ];
+      };
+      cpx_physical_exam_events: {
+        Row: CpxPhysicalExamEventRow;
+        Insert: Insert<CpxPhysicalExamEventRow>;
+        Update: Update<CpxPhysicalExamEventRow>;
+        Relationships: [
+          FK<'cpx_physical_exam_events', 'user_id', 'users'>,
+          FK<'cpx_physical_exam_events', 'session_id', 'cpx_sessions'>,
+        ];
       };
     };
     Functions: {

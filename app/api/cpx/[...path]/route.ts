@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireSession } from '@/lib/auth/session';
 import { ApiErrors } from '@/lib/utils/api';
+import { persistCpxExchange } from '@/lib/cpx/persistence';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -49,7 +50,26 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
     return NextResponse.json({ detail: 'CPX 서비스에 연결할 수 없습니다.' }, { status: 502 });
   }
 
-  return new NextResponse(response.body, {
+  const responseBody = await response.text();
+  if (response.ok && process.env.CPX_PERSIST_TO_SUPABASE === 'true') {
+    try {
+      await persistCpxExchange({
+        userId: session.userId,
+        path,
+        method,
+        requestBody: body,
+        responseBody,
+      });
+    } catch (error) {
+      console.error('[cpx persistence] mirror failed:', error);
+      return NextResponse.json(
+        { detail: 'CPX 기록을 저장하지 못했습니다. 입력은 보존되어 재시도할 수 있습니다.' },
+        { status: 503 },
+      );
+    }
+  }
+
+  return new NextResponse(responseBody, {
     status: response.status,
     headers: { 'content-type': response.headers.get('content-type') ?? 'application/json', 'cache-control': 'no-store' },
   });
