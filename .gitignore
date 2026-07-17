@@ -97,3 +97,4 @@ keys/
 
 .pnpm-store/
 .next-stalled-*/
+.vercel

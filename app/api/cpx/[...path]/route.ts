@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
-import { ApiErrors } from '@/lib/utils/api';
+import { ApiErrors, withErrorHandling } from '@/lib/utils/api';
 import { persistCpxExchange } from '@/lib/cpx/persistence';
 
 export const dynamic = 'force-dynamic';
@@ -111,5 +111,5 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   });
 }
 
-export const GET = forward;
-export const POST = forward;
+export const GET = withErrorHandling(forward);
+export const POST = withErrorHandling(forward);

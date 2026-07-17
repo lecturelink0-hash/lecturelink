@@ -2,7 +2,7 @@
 -- external_session_id는 CPX patient engine의 opaque ID이며, 브라우저에는 노출하지 않는다.
 
 create table if not exists public.cpx_sessions (
-    id                  uuid primary key default uuid_generate_v4(),
+    id                  uuid primary key default gen_random_uuid(),
     user_id             uuid not null references public.users(id) on delete cascade,
     external_session_id text not null unique,
     case_id             text not null,
