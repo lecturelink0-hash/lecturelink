@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_cough_v1",
+  "title": "기침 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.1 CPX 12 기침 — p351 채점표 + p339~342 병력청취 + p343~350 배경지식(급성/아급성/만성 기침·GERD·기관지확장증) 기반 재구성 (문장 직접 인용 없음, 2026-07-16)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 부분점수(충족 항목 비례)로 연속 계산, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "기침이 지속된 기간 질문 — 급성(3주 미만)/만성(8주 이상) 구분",
+          "contextHint": "만성 기침이면 약물·흡연을 가장 먼저 확인"
+        },
+        {
+          "id": "ht02",
+          "text": "가래의 유무·양상과 피가 섞이는지(혈담) 질문"
+        },
+        {
+          "id": "ht03",
+          "text": "기침이 심한 시간대와 유발 상황(식후, 야간, 기상 시, 말할 때) 질문"
+        },
+        {
+          "id": "ht04",
+          "text": "동반 상기도 증상(콧물, 인후통, 목 뒤로 넘어가는 분비물) 확인 — 상기도기침증후군 감별"
+        },
+        {
+          "id": "ht05",
+          "text": "전신 증상(발열, 야간 발한, 체중 감소) 확인 — 결핵·악성 감별"
+        },
+        {
+          "id": "ht06",
+          "text": "호흡곤란·쌕쌕거림(천명) 동반 확인 — 천식 감별"
+        },
+        {
+          "id": "ht07",
+          "text": "속쓰림·신물 올라옴 등 역류 증상 확인 — 위식도역류 기침 감별"
+        },
+        {
+          "id": "ht08",
+          "text": "복용 중인 약물 질문 — 혈압약(ACE억제제) 포함",
+          "contextHint": "만성 기침의 주요 원인 약물"
+        },
+        {
+          "id": "ht09",
+          "text": "흡연력(하루 양과 기간) 질문"
+        },
+        {
+          "id": "ht10",
+          "text": "직업·환경 노출(분진, 화학물질, 애완동물) 질문"
+        },
+        {
+          "id": "ht11",
+          "text": "기저질환(천식, 알레르기, 결핵 병력) 질문"
+        },
+        {
+          "id": "ht12",
+          "text": "주변 유행이나 결핵 환자 접촉 질문"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 5,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후 확인 (말로 언급)"
+        },
+        {
+          "id": "pe02",
+          "text": "인후 시진"
+        },
+        {
+          "id": "pe03",
+          "text": "경부 림프절 촉진"
+        },
+        {
+          "id": "pe04",
+          "text": "호흡음 청진"
+        },
+        {
+          "id": "pe05",
+          "text": "심음 청진"
+        },
+        {
+          "id": "pe06",
+          "text": "코·부비동 확인(비염·후비루)"
+        },
+        {
+          "id": "pe07",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe08",
+          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "현재 의심되는 기침의 원인에 대해 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "검사 계획(흉부 X선 등)의 필요성 또는 불필요함 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "금연 교육 (흡연자의 경우)"
+        },
+        {
+          "id": "ed04",
+          "text": "치료 계획(원인 약물 조정, 대증 치료 등) 설명"
+        },
+        {
+          "id": "ed05",
+          "text": "적신호(혈담, 체중 감소, 호흡곤란) 발생 시 즉시 내원 교육"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

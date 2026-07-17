@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_acute_abdomen_v1",
+  "title": "급성 복통 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.2 CPX 17 급성 복통 — p41 채점표(병력 6·진찰 7·교육 2·관계 5) 기반 재구성 (문장 직접 인용 없음, 2026-07-17)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "복통의 양상(위치, 발생 시점, 빈도, 연관통) 확인"
+        },
+        {
+          "id": "ht02",
+          "text": "발병 초기의 복통 양상과 위치 이동 여부를 중점적으로 질문",
+          "contextHint": "배꼽 주위→우하복부 이동은 충수염의 고전적 단서"
+        },
+        {
+          "id": "ht03",
+          "text": "동반 소화기 증상(오심, 구토, 설사)과 전신 증상(발열, 오한, 근육통) 질문"
+        },
+        {
+          "id": "ht04",
+          "text": "현재 복용하는 약물(진통소염제 포함) 확인",
+          "contextHint": "NSAIDs 복용력은 궤양 천공 단서"
+        },
+        {
+          "id": "ht05",
+          "text": "이전 수술 경력 질문"
+        },
+        {
+          "id": "ht06",
+          "text": "사회력(음주, 흡연) 질문"
+        },
+        {
+          "id": "ht07",
+          "text": "식사와의 관계(기름진 식사 후 등) 질문",
+          "contextHint": "지방식 후 우상복부 통증은 담도계 단서"
+        },
+        {
+          "id": "ht08",
+          "text": "통증의 강도와 진행(점점 심해지는지, 갑자기 최고조인지) 질문"
+        },
+        {
+          "id": "ht09",
+          "text": "배뇨 증상·혈뇨 확인 — 요로계 감별"
+        },
+        {
+          "id": "ht10",
+          "text": "마지막 식사 시간과 배변·배가스 여부 확인"
+        },
+        {
+          "id": "ht11",
+          "text": "여성의 경우 월경력·임신 가능성 확인",
+          "conditional": {
+            "flag": "femalePatient",
+            "note": "여성 케이스일 때만 평가 항목에 포함"
+          }
+        },
+        {
+          "id": "ht12",
+          "text": "이전 유사 통증 경험 질문"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 5,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후와 탈수 정도 평가(피부, 혀 관찰 등)"
+        },
+        {
+          "id": "pe02",
+          "text": "복부 진찰 자세 — 환자 오른편에 서서 바로 눕히고 양쪽 무릎을 세움",
+          "contextHint": "'무릎을 세워주세요' 등 자세 안내 발화로 인정"
+        },
+        {
+          "id": "pe03",
+          "text": "누운 상태에서 복부 팽만·긴장도 시진"
+        },
+        {
+          "id": "pe04",
+          "text": "복부 청진 실시"
+        },
+        {
+          "id": "pe05",
+          "text": "복부 촉진 — 압통과 반발통을 복부 전반에 걸쳐 확인"
+        },
+        {
+          "id": "pe06",
+          "text": "복부 타진을 올바르게 실시"
+        },
+        {
+          "id": "pe07",
+          "text": "특정 질환 의심 시 특수 검사(Murphy, Rovsing, Psoas, Obturator sign 등) 실시 또는 선언"
+        },
+        {
+          "id": "pe08",
+          "text": "진찰 전 손 소독을 표현하고, 진찰 중 통증 부위를 배려"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "여러 가지 원인에 의해 급성 복통이 발생할 수 있음을 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "수술적 치료가 필요할 수도 있음을 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "필요한 검사(혈액, 영상, 필요시 응급수술 평가) 계획 설명"
+        },
+        {
+          "id": "ed04",
+          "text": "금식 유지 등 검사·수술 대비 안내와 통증 악화 시 즉시 알리도록 교육"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

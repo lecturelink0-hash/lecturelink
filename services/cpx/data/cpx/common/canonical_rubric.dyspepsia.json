@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_dyspepsia_v1",
+  "title": "소화불량/만성복통 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.2 CPX 18 소화불량/만성복통 — p63 채점표(병력 11·진찰 4·교육 3·관계 5) + p55~58 병력청취·신체진찰 + 배경지식(Rome IV·소화성궤양) 기반 재구성 (문장 직접 인용 없음, 2026-07-16)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수",
+    "decisions": [
+      "met/partial/not_met 3상태를 보존하고 결과 화면에서 부분 수행을 별도 표시 — 2026-07-16 임상 검수 반영",
+      "적신호 확인(ht12)은 채점표에 명시 없으나 배경지식 감별 기준에서 파생 — 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": { "2": "우수", "1": "보통", "0": "미흡" }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": { "excellent": 8, "fairMin": 5 },
+      "items": [
+        { "id": "ht01", "text": "소화불량이 언제 시작되었는지(시기·경과) 질문" },
+        { "id": "ht02", "text": "증상의 심한 정도(잠을 깨우는지, 일상생활 영향) 질문" },
+        { "id": "ht03", "text": "주요 증상 부위(명치, 상복부 등) 질문" },
+        { "id": "ht04", "text": "동반 증상(속쓰림, 신물 올라옴, 야간 기침, 오심·구토, 배변 변화 등) 확인", "contextHint": "여러 동반 증상 중 일부를 구체적으로 확인하면 인정" },
+        { "id": "ht05", "text": "식사와의 관련성(식전/식후, 음식 종류 — 기름진 음식·고형식 등) 질문" },
+        { "id": "ht06", "text": "호전·악화 요인(언제 좋아지고 나빠지는지, 제산제 반응 등) 질문" },
+        { "id": "ht07", "text": "복용 중인 약물(진통소염제·아스피린 포함, 종류와 복용 기간) 질문", "contextHint": "NSAIDs·아스피린은 소화성궤양의 핵심 위험인자" },
+        { "id": "ht08", "text": "체중 변화 여부 질문 — 기질적 질환 적신호" },
+        { "id": "ht09", "text": "식사량의 변화(조기 포만감으로 식사량이 줄었는지) 질문" },
+        { "id": "ht10", "text": "과거 병력(위염·궤양 진단력, 내시경 검사 이력과 결과) 질문" },
+        { "id": "ht11", "text": "가족력(위장관 암 등) 질문" },
+        { "id": "ht12", "text": "적신호 증상(흑색변·토혈, 삼킴 곤란, 황달) 확인" }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": { "excellent": 5, "fairMin": 3 },
+      "declarationCountsAsPerformance": true,
+      "items": [
+        { "id": "pe01", "text": "활력징후 확인 (말로 언급)" },
+        { "id": "pe02", "text": "눈 진찰 — 결막(빈혈)·공막(황달) 확인" },
+        { "id": "pe03", "text": "복부 진찰 자세 안내 — 바로 눕히고 무릎을 세우게 함", "contextHint": "'침대에 누워주시고 무릎을 세워주세요' 등 자세 안내 발화로 인정" },
+        { "id": "pe04", "text": "복부 청진 시행 (장음 확인)", "contextHint": "MVP는 청진 수행 여부만 채점한다. 촉진 전 청진 원칙은 비채점 피드백으로 안내한다." },
+        { "id": "pe05", "text": "복부 촉진 — 4분면을 나누어 압통·종괴 확인" },
+        { "id": "pe06", "text": "타진 및 간·비장 종대 확인" },
+        { "id": "pe07", "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현" },
+        { "id": "pe08", "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검" }
+      ]
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": { "excellent": 4, "fairMin": 2 },
+      "items": [
+        { "id": "ed01", "text": "현재 의심되는 추정 진단(기능성 소화불량, 소화성궤양, 기질적 질환 가능성 등)에 대해 설명" },
+        { "id": "ed02", "text": "검사 계획(위내시경 등)의 필요성 또는 불필요함을 설명" },
+        { "id": "ed03", "text": "금연·금주에 대해 교육" },
+        { "id": "ed04", "text": "식이조절·체중조절·규칙적인 식사 등 생활습관 교육 시행" },
+        { "id": "ed05", "text": "스트레스 조절의 필요성 또는 약물 관련 주의(진통제·제산제 등) 교육" }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": { "excellent": 4, "fairMin": 2 },
+      "items": [
+        { "id": "ppi01", "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가" },
+        { "id": "ppi02", "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가" },
+        { "id": "ppi03", "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가" },
+        { "id": "ppi04", "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가" },
+        { "id": "ppi05", "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가" }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": { "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡", "excellentMaxViolations": 0, "fairMaxViolations": 2 },
+      "violationTypes": [
+        { "id": "et01", "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문", "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)" },
+        { "id": "et02", "text": "반말 사용 또는 부적절한 비속어·은어 사용" },
+        { "id": "et03", "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황" }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": ["totalScore", "sectionScores", "metItems", "missedItems", "penalties", "evidenceQuotes", "correctionFeedback"],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": ["ai_patient", "patient_response_quality", "patient_personality", "patient_prompt_following"]
+  }
+}

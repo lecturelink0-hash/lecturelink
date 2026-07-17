@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "diverticular_bleed_rule",
+  "title": "혈변 (게실 출혈 의심)",
+  "category": "혈변",
+  "targetDiagnosis": "급성 하부위장관 게실 출혈 의심 (Suspected diverticular lower GI bleeding)",
+  "variant": "고령·통증 없는 다량 암적색 혈변형",
+  "description": "복통 없이 암적색 피가 변기에 많이 나왔고 어지러운 고령 환자를 응급 평가하는 규칙입니다.",
+  "tags": ["혈변", "하부위장관출혈", "게실출혈", "고령", "응급"],
+  "sourceTextFile": "004_hematochezia.json·004_hematochezia_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (NIDDK GI bleeding·Merck diverticular bleeding 자료로 임상 단서 교차 확인, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {"fixed": {"location": "응급실"}, "recommended": {"gender": "무관", "age": "65~80세"}, "randomizable": ["성별", "이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
+  "scenarioRule": {"caseSummary": "고혈압 약과 아스피린을 복용하던 고령 환자가 오늘 아침 통증 없이 변기에 암적색 피가 많이 나온 것을 두 번 보고, 일어서면 어지러워 보호자와 내원했다.", "mustInclude": ["오늘 아침 통증 없는 암적색 혈변 2회", "변기 물이 붉어질 정도의 출혈", "기립 시 어지럼·기운 없음", "복통·발열·설사 없음", "저용량 아스피린 복용"], "preferredVariants": ["이전 대장내시경에서 게실 이야기를 들었다고 함", "보호자가 출혈량을 정확히 모름"], "mustAbsent": ["토혈", "흑색변", "항문 통증·배변 시 찢어지는 통증", "최근 여행·상한 음식"]},
+  "pastHistoryRule": {"mustInclude": ["고혈압", "수년 전 대장내시경에서 게실증 언급"], "mustAbsent": ["염증성 장질환", "최근 대장 수술"]},
+  "familyHistoryRule": {"recommended": ["대장암 가족력 없음"], "mustAbsent": []},
+  "socialHistoryRule": {"fixed": ["흡연 없음"], "recommended": ["음주 가끔"]},
+  "physicalExamRule": [
+    {"item": "활력징후", "method": "활력징후·기립 시 증상 확인", "expectedFinding": "누워서 혈압 108/68, 맥박 104회; 일어서면 어지럽고 혈압이 떨어짐", "polarity": "positive"},
+    {"item": "전반적 외견", "method": "전신 상태·결막 확인", "expectedFinding": "창백하고 다소 식은땀이 나나 의식은 명료", "polarity": "positive"},
+    {"item": "복부 시진", "method": "복부 시진·장음 청진", "expectedFinding": "팽만 없고 장음 들림"},
+    {"item": "복부 촉진", "method": "복부 촉진", "expectedFinding": "압통·반발통·종괴 없음"},
+    {"item": "항문 주위", "method": "항문 주위 시진", "expectedFinding": "설명과 동의 후 시행하면 활동성 외치핵·치열 소견 없음"},
+    {"item": "직장수지검사", "method": "직장수지검사", "expectedFinding": "설명과 동의 후 시행하면 암적색 혈액이 묻어남", "polarity": "positive"}
+  ],
+  "liveApiContext": {"patientContextFocus": "하부위장관 출혈이 의심되는 고령 환자이다. 출혈의 양상·무통성 여부·어지럼·아스피린 복용은 질문받을 때만 말한다.", "answerPolicy": ["진단명·원인을 먼저 말하지 않는다.", "질문받은 항목에만 환자 관점에서 1~3문장으로 답한다.", "응급 평가·수혈·내시경 설명을 들으면 불안하지만 협조한다."], "positiveClues": ["무통성 암적색 혈변", "기립 시 어지럼", "고령", "아스피린", "직장수지검사상 혈액"], "negativeClues": ["토혈·흑색변 없음", "복통·발열·설사 없음", "항문 통증 없음"]},
+  "evaluationUse": {"mustAsk": ["출혈의 시점·횟수·양·색", "피가 변에 섞였는지와 흑색변·토혈 여부", "어지럼·실신감·식은땀·호흡곤란", "복통·발열·설사·배변 습관 변화", "항문 통증·치핵·치열 증상", "아스피린·NSAIDs·항응고·항혈소판제", "이전 대장내시경·게실·이전 출혈", "대장암 가족력·체중감소"], "positiveClues": ["무통성 암적색 혈변", "기립 어지럼", "아스피린"], "negativeClues": ["복통·발열·설사 없음", "항문 통증 없음"], "educationTopics": ["출혈량과 원인을 확인하는 응급 평가가 필요함을 설명", "금식·활력 모니터링·혈액검사·혈액형/교차시험·대장내시경 또는 영상 가능성 설명", "다시 대량 출혈하거나 실신·의식 변화가 생기면 즉시 알리기", "혼자 화장실에 걷지 않도록 낙상 예방 안내"]},
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 혈변 (게실 출혈 의심)\n\n- 장소: 응급실\n- 요약: 고령 환자가 통증 없는 암적색 혈변 2회와 기립 시 어지럼으로 내원.\n- 병력: 고혈압·아스피린 복용, 과거 게실증 언급. 복통·발열·설사·항문 통증·토혈은 없음.\n- 신체진찰: 빈맥·기립 시 혈압 저하, 창백, 복부 압통 없음, 동의 후 DRE에 암적색 혈액.\n\n추가 질문: \"피가 이렇게 많이 나와도 대장검사를 해야 하나요?\"",
+  "rawRuleText": "# 증례명 : 혈변 (게실 출혈 의심)\n\n- 장소: 응급실\n- 요약: 고령 환자가 통증 없는 암적색 혈변 2회와 기립 시 어지럼으로 내원.\n- 병력: 고혈압·아스피린 복용, 과거 게실증 언급. 복통·발열·설사·항문 통증·토혈은 없음.\n- 신체진찰: 빈맥·기립 시 혈압 저하, 창백, 복부 압통 없음, 동의 후 DRE에 암적색 혈액.\n\n추가 질문: \"피가 이렇게 많이 나와도 대장검사를 해야 하나요?\""
+}

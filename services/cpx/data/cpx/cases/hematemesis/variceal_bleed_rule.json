@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "variceal_bleed_rule",
+  "title": "토혈 (식도정맥류 출혈 의심)",
+  "category": "토혈",
+  "targetDiagnosis": "간경변 연관 식도정맥류 출혈 의심 (Suspected variceal upper GI bleeding)",
+  "variant": "간경변 병력·선홍색 반복 토혈·혈역학 불안정형",
+  "description": "간경변 병력이 있는 환자가 선홍색 피를 반복해 토하고 식은땀과 실신감을 호소하는 고위험 규칙입니다.",
+  "tags": ["토혈", "상부위장관출혈", "식도정맥류", "간경변", "응급"],
+  "sourceTextFile": "003_hematemesis.json·003_hematemesis_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (NIDDK·Merck GI bleeding 자료로 임상 단서 교차 확인, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {"fixed": {"location": "응급실", "gender": "남성"}, "recommended": {"age": "45~65세"}, "randomizable": ["이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
+  "scenarioRule": {
+    "caseSummary": "간경변으로 추적 중이던 환자가 한 시간 전부터 선홍색 피를 세 번 토하고, 검은 변과 식은땀·실신감을 보여 보호자와 응급실에 왔다.",
+    "mustInclude": ["1시간 동안 선홍색 토혈 3회", "검고 끈적한 변", "식은땀·심한 어지럼과 실신할 듯한 느낌", "알코올 관련 간경변과 복수 치료 병력", "최근 음주 재개"],
+    "preferredVariants": ["보호자가 출혈량을 정확히 모른다고 함", "환자가 짧게 답하고 눕고 싶어 함"],
+    "mustAbsent": ["NSAIDs 복용", "반복 구토 후 처음 피가 남", "심한 국소 복통", "객혈"]
+  },
+  "pastHistoryRule": {"mustInclude": ["알코올 관련 간경변", "복수로 치료받은 적 있음", "이전 내시경에서 정맥류 이야기를 들음"], "mustAbsent": ["소화성궤양 진단력"]},
+  "familyHistoryRule": {"recommended": ["특이 가족력 없음"], "mustAbsent": []},
+  "socialHistoryRule": {"fixed": ["최근 다시 음주함", "현재 흡연 안 함"], "recommended": ["금주를 유지하지 못한 것에 죄책감"]},
+  "physicalExamRule": [
+    {"item": "활력징후", "method": "활력징후·산소포화도 확인", "expectedFinding": "혈압 88/56, 맥박 122회, 호흡수 24회, 산소포화도 96%", "polarity": "positive"},
+    {"item": "전반적 외견", "method": "전반 신체 상태·의식 확인", "expectedFinding": "창백하고 식은땀이 나며 질문에 느리지만 적절히 답함", "polarity": "positive"},
+    {"item": "결막", "method": "결막 창백 확인", "expectedFinding": "결막 창백", "polarity": "positive"},
+    {"item": "공막", "method": "공막 황달 확인", "expectedFinding": "경미한 공막 황달", "polarity": "positive"},
+    {"item": "복부 시진", "method": "복부 시진", "expectedFinding": "복부가 팽만해 있고 옆구리 팽창이 보임", "polarity": "positive"},
+    {"item": "복부 촉진", "method": "복부 촉진", "expectedFinding": "뚜렷한 국소 압통은 없고 복수 의심 소견", "polarity": "positive"}
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "출혈과 순환 저하가 의심되는 간질환 환자이다. 토혈 횟수·색, 실신감, 간경변·정맥류 병력과 최근 음주는 질문받을 때만 말하며 환자는 진단을 알지 못한다.",
+    "answerPolicy": ["진단명과 치료 결정을 먼저 말하지 않는다.", "짧고 불안한 환자 말투로 질문에만 답한다.", "응급 처치가 필요하다는 설명을 들으면 보호자를 찾으며 협조한다."],
+    "positiveClues": ["선홍색 반복 토혈", "저혈압·빈맥", "흑색변", "간경변·정맥류 병력", "복수·황달 단서"],
+    "negativeClues": ["NSAIDs 복용 없음", "구토가 먼저 반복된 것은 아님", "객혈 아님", "심한 복통 없음"]
+  },
+  "evaluationUse": {
+    "mustAsk": ["토혈의 시점·횟수·양·색", "흑색변·혈변 여부", "어지럼·실신·식은땀·호흡곤란 등 순환 저하 증상", "간경변·간염·정맥류·이전 출혈 및 내시경 병력", "음주력과 최근 폭음", "NSAIDs·아스피린·항응고·항혈소판제", "복통·발열·반복 구토 여부", "보호자·동의 가능한 연락처 확인"],
+    "positiveClues": ["반복 선홍색 토혈", "실신감", "간경변·정맥류 위험", "저혈압·빈맥"],
+    "negativeClues": ["NSAIDs 없음", "반복 구토 선행 없음"],
+    "educationTopics": ["현재 상태가 응급 평가와 지속 모니터링이 필요한 출혈 의심 상황임을 명확히 설명", "금식·정맥로·혈액검사·수혈 준비·응고 및 간기능검사·내시경 가능성을 설명", "의식 변화·출혈 지속 시 즉시 알리고 혼자 이동하지 않도록 안내", "보호자 연락과 안전한 이송을 안내"]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 토혈 (식도정맥류 출혈 의심)\n\n- 장소: 응급실\n- 요약: 알코올 관련 간경변 환자가 1시간 내 선홍색 피를 세 번 토하고 흑색변·식은땀·실신감이 있음.\n- 병력: 복수 치료 및 정맥류를 들은 적 있고 최근 음주 재개. NSAIDs·반복 구토·객혈 없음.\n- 신체진찰: 혈압 88/56, 맥박 122, 창백·식은땀, 경미한 황달, 팽만 복부.\n\n추가 질문: \"저 또 피를 토하면 어떡하죠?\"",
+  "rawRuleText": "# 증례명 : 토혈 (식도정맥류 출혈 의심)\n\n- 장소: 응급실\n- 요약: 알코올 관련 간경변 환자가 1시간 내 선홍색 피를 세 번 토하고 흑색변·식은땀·실신감이 있음.\n- 병력: 복수 치료 및 정맥류를 들은 적 있고 최근 음주 재개. NSAIDs·반복 구토·객혈 없음.\n- 신체진찰: 혈압 88/56, 맥박 122, 창백·식은땀, 경미한 황달, 팽만 복부.\n\n추가 질문: \"저 또 피를 토하면 어떡하죠?\""
+}

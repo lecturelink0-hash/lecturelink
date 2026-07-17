@@ -1,0 +1,39 @@
+# Fly.io 배포 설정 — CPX patient engine (FastAPI + SQLite)
+# SQLite 활성 세션 특성상 단일 머신 + 영속 볼륨(/data)이 전제다. 수평 확장 금지.
+app = "lecturelink-cpx"
+primary_region = "nrt"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview"
+  LOCK_CONSTRAINTS = "true"
+  REQUIRE_LECTURELINK_AUTH = "true"
+  CPX_RELEASE_READY_ONLY = "false"
+  CPX_DB_PATH = "/data/cpx.sqlite3"
+
+[[mounts]]
+  source = "cpx_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "15s"
+  method = "GET"
+  path = "/api/health"
+
+[deploy]
+  strategy = "immediate"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

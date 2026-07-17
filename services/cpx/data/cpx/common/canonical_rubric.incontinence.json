@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_incontinence_v1",
+  "title": "요실금 CPX 종합 채점 루브릭 (정본 초안)",
+  "provenance": {
+    "content": "022_urinary_incontinence Fable 초안의 문진·진찰 계약을 바탕으로 재구성 (문장 직접 인용 없음, 2026-07-17; 임상 최종 검수 필요)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "소변이 새는 시작·상황·빈도·패드 사용·일상 영향을 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "기침·웃음·운동 시 누출과 갑작스런 절박감·화장실 전 누출을 구분해 질문"
+        },
+        {
+          "id": "ht03",
+          "text": "빈뇨·야간뇨·배뇨통·혈뇨·주저뇨·약한 줄기·잔뇨감과 범람 단서를 확인"
+        },
+        {
+          "id": "ht04",
+          "text": "발열·변비·대변실금·골반 장기 탈출감·신경학적 증상과 이동 제한을 확인"
+        },
+        {
+          "id": "ht05",
+          "text": "산과력·골반/전립선 수술·요로/척추 외상·당뇨·신경질환을 이유 설명 후 정중하게 질문"
+        },
+        {
+          "id": "ht06",
+          "text": "이뇨제·진정제 등 약물, 음주·카페인·수분 섭취와 최근 스트레스를 질문"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후와 하복부·방광 팽만을 확인 또는 선언"
+        },
+        {
+          "id": "pe02",
+          "text": "하지 근력·감각·반사와 보행을 확인 또는 선언"
+        },
+        {
+          "id": "pe03",
+          "text": "필요 시 기침 유발 검사, 골반/외성기 또는 전립선·직장 진찰의 목적·동의·불편 여부를 설명"
+        },
+        {
+          "id": "pe04",
+          "text": "소변검사 시행 또는 선언"
+        },
+        {
+          "id": "pe05",
+          "text": "손 위생과 진찰 목적·동의를 표현"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "요실금은 원인과 유형을 구분해 치료할 수 있는 증상임을 비판단적으로 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "소변검사·배뇨일지와 상태에 따른 잔뇨·요역동학·골반 평가 계획을 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "방광훈련·골반저근 운동·수분·카페인 조절과 원인별 치료 가능성을 설명"
+        },
+        {
+          "id": "ed04",
+          "text": "발열·혈뇨·새 신경마비·요폐·대변실금에는 신속한 진료가 필요함을 안내"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

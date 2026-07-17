@@ -1,0 +1,2073 @@
+{
+  "version": "1.0.0",
+  "description": "CPX 신체진찰 ontology conceptId에 연결되는 객관적 진찰 소견 결과 카탈로그. 이 파일은 전역 결과 템플릿이며, 실제 케이스별 physicalExamFindings가 있으면 케이스 값이 우선한다.",
+  "valueSet": [
+    "normal",
+    "abnormal",
+    "present",
+    "absent",
+    "mild",
+    "moderate",
+    "severe",
+    "unknown",
+    "not_assessed",
+    "unable_to_assess",
+    "not_applicable"
+  ],
+  "resolutionPriority": [
+    "case_physicalExamFindings",
+    "concept_result_catalog",
+    "default_group_result",
+    "unknown_result"
+  ],
+  "unknownResult": {
+    "value": "unknown",
+    "note": "해당 진찰 개념은 인식되었으나 케이스 객관 소견이 정의되지 않음"
+  },
+  "unableToAssessResult": {
+    "value": "unable_to_assess",
+    "note": "환자 협조 부족, 통증, 안전 문제 등으로 진찰을 완료하지 못함"
+  },
+  "defaultGroupResults": {
+    "general": {
+      "normal": {
+        "value": "normal",
+        "note": "전반적인 외관상 특이소견 없음"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "전반적인 상태 이상이 관찰됨"
+      }
+    },
+    "vital_signs": {
+      "normal": {
+        "value": "normal",
+        "note": "활력징후가 안정적임"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "활력징후 이상이 관찰됨"
+      }
+    },
+    "inspection": {
+      "normal": {
+        "value": "normal",
+        "note": "시진상 특이소견 없음"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "시진상 이상 소견이 관찰됨"
+      }
+    },
+    "palpation": {
+      "normal": {
+        "value": "normal",
+        "note": "촉진상 특이 압통이나 종괴 없음"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "촉진상 이상 소견이 관찰됨"
+      }
+    },
+    "auscultation": {
+      "normal": {
+        "value": "normal",
+        "note": "청진상 특이소견 없음"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "청진상 이상 소견이 들림"
+      }
+    },
+    "percussion": {
+      "normal": {
+        "value": "normal",
+        "note": "타진상 특이소견 없음"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "타진상 이상 소견이 관찰됨"
+      }
+    },
+    "neurologic": {
+      "normal": {
+        "value": "normal",
+        "note": "신경학적 진찰상 뚜렷한 이상 없음"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "신경학적 이상 소견이 관찰됨"
+      }
+    },
+    "mental_status": {
+      "normal": {
+        "value": "normal",
+        "note": "의식과 지남력이 명료함"
+      },
+      "abnormal": {
+        "value": "abnormal",
+        "note": "의식 또는 지남력 이상이 관찰됨"
+      }
+    }
+  },
+  "conceptResults": {
+    "general_appearance": {
+      "label": "전신 상태 확인",
+      "normal": {
+        "id": "general_appearance",
+        "label": "전신 상태",
+        "value": "normal",
+        "note": "전신 상태는 안정적이며 급성 병색은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "general_appearance",
+          "label": "전신 상태",
+          "value": "abnormal",
+          "severity": "mild",
+          "note": "약간 지쳐 보이나 의식은 명료함"
+        },
+        {
+          "id": "general_appearance",
+          "label": "전신 상태",
+          "value": "abnormal",
+          "severity": "severe",
+          "note": "급성 병색이 뚜렷하고 전신 상태가 좋지 않음"
+        }
+      ]
+    },
+    "vital_signs": {
+      "label": "활력징후 확인",
+      "normal": {
+        "id": "vital_signs",
+        "label": "활력징후",
+        "value": "normal",
+        "note": "혈압, 맥박, 호흡수, 체온이 안정 범위임"
+      },
+      "abnormalOptions": [
+        {
+          "id": "fever",
+          "label": "발열",
+          "value": "present",
+          "note": "체온 상승이 관찰됨"
+        },
+        {
+          "id": "tachycardia",
+          "label": "빈맥",
+          "value": "present",
+          "note": "맥박이 빠름"
+        },
+        {
+          "id": "hypotension",
+          "label": "저혈압",
+          "value": "present",
+          "note": "혈압이 낮게 측정됨"
+        },
+        {
+          "id": "tachypnea",
+          "label": "빈호흡",
+          "value": "present",
+          "note": "호흡수가 증가되어 있음"
+        }
+      ]
+    },
+    "conjunctival_pallor": {
+      "label": "결막 창백 확인",
+      "normal": {
+        "id": "conjunctival_pallor",
+        "label": "결막 창백",
+        "value": "absent",
+        "note": "결막 창백은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "conjunctival_pallor",
+          "label": "결막 창백",
+          "value": "present",
+          "severity": "mild",
+          "note": "결막이 약간 창백해 보임"
+        },
+        {
+          "id": "conjunctival_pallor",
+          "label": "결막 창백",
+          "value": "present",
+          "severity": "moderate",
+          "note": "결막 창백이 관찰됨"
+        }
+      ]
+    },
+    "scleral_icterus": {
+      "label": "공막 황달 확인",
+      "normal": {
+        "id": "scleral_icterus",
+        "label": "공막 황달",
+        "value": "absent",
+        "note": "공막 황달은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "scleral_icterus",
+          "label": "공막 황달",
+          "value": "present",
+          "severity": "mild",
+          "note": "공막이 약간 노랗게 보임"
+        },
+        {
+          "id": "scleral_icterus",
+          "label": "공막 황달",
+          "value": "present",
+          "severity": "moderate",
+          "note": "공막 황달이 뚜렷하게 관찰됨"
+        }
+      ]
+    },
+    "oral_mucosa_dryness": {
+      "label": "구강 점막 건조 확인",
+      "normal": {
+        "id": "oral_mucosa_dryness",
+        "label": "구강 점막 건조",
+        "value": "absent",
+        "note": "구강 점막은 촉촉하며 탈수 소견은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "oral_mucosa_dryness",
+          "label": "구강 점막 건조",
+          "value": "present",
+          "severity": "mild",
+          "note": "구강 점막이 약간 건조해 보임"
+        },
+        {
+          "id": "oral_mucosa_dryness",
+          "label": "구강 점막 건조",
+          "value": "present",
+          "severity": "moderate",
+          "note": "구강 점막 건조가 뚜렷함"
+        }
+      ]
+    },
+    "skin_turgor": {
+      "label": "피부 긴장도 확인",
+      "normal": {
+        "id": "skin_turgor",
+        "label": "피부 긴장도",
+        "value": "normal",
+        "note": "피부 긴장도는 정상임"
+      },
+      "abnormalOptions": [
+        {
+          "id": "skin_turgor",
+          "label": "피부 긴장도 저하",
+          "value": "abnormal",
+          "note": "피부 긴장도가 감소되어 탈수 가능성이 있음"
+        }
+      ]
+    },
+    "thyroid_palpation": {
+      "label": "갑상샘 촉진",
+      "normal": {
+        "id": "thyroid_palpation",
+        "label": "갑상샘",
+        "value": "normal",
+        "note": "갑상샘 비대나 결절은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "goiter",
+          "label": "갑상샘 비대",
+          "value": "present",
+          "note": "갑상샘이 커져 보이거나 촉지됨"
+        },
+        {
+          "id": "thyroid_nodule",
+          "label": "갑상샘 결절",
+          "value": "present",
+          "note": "갑상샘 부위에 결절이 촉지됨"
+        },
+        {
+          "id": "thyroid_tenderness",
+          "label": "갑상샘 압통",
+          "value": "present",
+          "note": "갑상샘 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "lung_auscultation": {
+      "label": "폐 청진",
+      "normal": {
+        "id": "lung_auscultation",
+        "label": "폐 청진",
+        "value": "normal",
+        "note": "양측 폐음은 깨끗하며 천명음이나 수포음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "wheezing",
+          "label": "천명음",
+          "value": "present",
+          "note": "호기 시 쌕쌕거리는 천명음이 들림"
+        },
+        {
+          "id": "crackles",
+          "label": "수포음",
+          "value": "present",
+          "note": "폐 하부에서 수포음이 들림"
+        },
+        {
+          "id": "decreased_breath_sound",
+          "label": "호흡음 감소",
+          "value": "present",
+          "note": "한쪽 또는 양측 폐에서 호흡음이 감소되어 들림"
+        },
+        {
+          "id": "prolonged_expiration",
+          "label": "호기 연장",
+          "value": "present",
+          "note": "호기 시간이 연장되어 들림"
+        }
+      ]
+    },
+    "heart_auscultation": {
+      "label": "심음 청진",
+      "normal": {
+        "id": "heart_auscultation",
+        "label": "심음 청진",
+        "value": "normal",
+        "note": "심음은 규칙적이며 뚜렷한 심잡음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "heart_murmur",
+          "label": "심잡음",
+          "value": "present",
+          "note": "심잡음이 청진됨"
+        },
+        {
+          "id": "irregular_heartbeat",
+          "label": "불규칙한 심박",
+          "value": "present",
+          "note": "심박이 불규칙하게 들림"
+        },
+        {
+          "id": "s3_gallop",
+          "label": "제3심음",
+          "value": "present",
+          "note": "제3심음이 의심됨"
+        }
+      ]
+    },
+    "abdominal_inspection": {
+      "label": "복부 시진",
+      "normal": {
+        "id": "abdominal_inspection",
+        "label": "복부 시진",
+        "value": "normal",
+        "note": "복부 팽만, 수술 흉터, 피부 병변은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_distension",
+          "label": "복부팽만",
+          "value": "present",
+          "note": "복부팽만이 관찰됨"
+        },
+        {
+          "id": "surgical_scar",
+          "label": "수술 흉터",
+          "value": "present",
+          "note": "복부 수술 흉터가 관찰됨"
+        }
+      ]
+    },
+    "abdominal_auscultation": {
+      "label": "복부 청진",
+      "normal": {
+        "id": "abdominal_auscultation",
+        "label": "장음",
+        "value": "normal",
+        "note": "장음은 정상적으로 들림"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hyperactive_bowel_sound",
+          "label": "장음 증가",
+          "value": "present",
+          "note": "장음이 증가되어 들림"
+        },
+        {
+          "id": "decreased_bowel_sound",
+          "label": "장음 감소",
+          "value": "present",
+          "note": "장음이 감소되어 들림"
+        },
+        {
+          "id": "absent_bowel_sound",
+          "label": "장음 소실",
+          "value": "present",
+          "note": "장음이 거의 들리지 않음"
+        }
+      ]
+    },
+    "light_deep_palpation": {
+      "label": "복부 얕은/깊은 촉진",
+      "normal": {
+        "id": "light_deep_palpation",
+        "label": "복부 촉진",
+        "value": "normal",
+        "note": "복부 얕은/깊은 촉진상 뚜렷한 압통, 방어, 종괴는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_tenderness",
+          "label": "복부 압통",
+          "value": "present",
+          "note": "복부 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "localized_abdominal_tenderness",
+          "label": "국소 복부 압통",
+          "value": "present",
+          "note": "특정 부위 복부 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "abdominal_palpation": {
+      "label": "복부 촉진",
+      "normal": {
+        "id": "abdominal_palpation",
+        "label": "복부 촉진",
+        "value": "normal",
+        "note": "복부는 부드럽고 뚜렷한 압통이나 종괴는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_tenderness",
+          "label": "복부 압통",
+          "value": "present",
+          "note": "복부 촉진 시 압통이 있음"
+        },
+        {
+          "id": "abdominal_mass",
+          "label": "복부 종괴",
+          "value": "present",
+          "note": "복부에서 종괴가 촉지됨"
+        },
+        {
+          "id": "guarding",
+          "label": "복부 방어",
+          "value": "present",
+          "note": "복부 촉진 시 방어가 관찰됨"
+        }
+      ]
+    },
+    "rebound_tenderness": {
+      "label": "반발통 확인",
+      "normal": {
+        "id": "rebound_tenderness",
+        "label": "반발통",
+        "value": "absent",
+        "note": "반발통은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "rebound_tenderness",
+          "label": "반발통",
+          "value": "present",
+          "note": "반발통이 관찰되어 복막 자극 가능성이 있음"
+        }
+      ]
+    },
+    "murphy_sign": {
+      "label": "Murphy 징후 확인",
+      "normal": {
+        "id": "murphy_sign",
+        "label": "Murphy 징후",
+        "value": "absent",
+        "note": "Murphy 징후는 음성임"
+      },
+      "abnormalOptions": [
+        {
+          "id": "murphy_sign",
+          "label": "Murphy 징후",
+          "value": "present",
+          "note": "Murphy 징후가 양성임"
+        }
+      ]
+    },
+    "suprapubic_tenderness": {
+      "label": "치골상부 압통 확인",
+      "normal": {
+        "id": "suprapubic_tenderness",
+        "label": "치골상부 압통",
+        "value": "absent",
+        "note": "치골상부 압통은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "suprapubic_tenderness",
+          "label": "치골상부 압통",
+          "value": "present",
+          "severity": "mild",
+          "note": "치골상부 촉진 시 약간의 불편감을 호소함"
+        },
+        {
+          "id": "suprapubic_tenderness",
+          "label": "치골상부 압통",
+          "value": "present",
+          "severity": "moderate",
+          "note": "치골상부 촉진 시 압통이 있음"
+        }
+      ]
+    },
+    "cva_tenderness": {
+      "label": "늑골척추각 압통 확인",
+      "normal": {
+        "id": "cva_tenderness",
+        "label": "CVA 압통",
+        "value": "absent",
+        "note": "늑골척추각 압통은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "cva_tenderness",
+          "label": "CVA 압통",
+          "value": "present",
+          "note": "늑골척추각 타진 시 압통이 있음"
+        }
+      ]
+    },
+    "rectal_exam": {
+      "label": "직장수지검사",
+      "normal": {
+        "id": "rectal_exam",
+        "label": "직장수지검사",
+        "value": "normal",
+        "note": "직장수지검사상 특이 종괴나 혈액은 확인되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "rectal_blood",
+          "label": "직장 내 혈액",
+          "value": "present",
+          "note": "직장수지검사에서 혈액이 확인됨"
+        },
+        {
+          "id": "rectal_mass",
+          "label": "직장 종괴",
+          "value": "present",
+          "note": "직장수지검사에서 종괴가 촉지됨"
+        },
+        {
+          "id": "hard_stool_in_rectum",
+          "label": "직장 내 딱딱한 변",
+          "value": "present",
+          "note": "직장 내 딱딱한 변이 촉지됨"
+        }
+      ]
+    },
+    "perianal_inspection": {
+      "label": "항문 주위 시진",
+      "normal": {
+        "id": "perianal_inspection",
+        "label": "항문 주위",
+        "value": "normal",
+        "note": "항문 주위에 뚜렷한 치핵, 열상, 종괴는 보이지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hemorrhoid",
+          "label": "치핵",
+          "value": "present",
+          "note": "항문 주위 치핵이 관찰됨"
+        },
+        {
+          "id": "anal_fissure",
+          "label": "치열",
+          "value": "present",
+          "note": "항문 주위 열상이 관찰됨"
+        }
+      ]
+    },
+    "pretibial_pitting_edema": {
+      "label": "정강이 함요부종 확인",
+      "normal": {
+        "id": "pretibial_pitting_edema",
+        "label": "정강이 함요부종",
+        "value": "absent",
+        "note": "정강이 압박 후 뚜렷한 함요부종은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "pretibial_pitting_edema",
+          "label": "정강이 함요부종",
+          "value": "present",
+          "severity": "mild",
+          "note": "정강이 부위에 경도의 함요부종이 관찰됨"
+        },
+        {
+          "id": "pretibial_pitting_edema",
+          "label": "정강이 함요부종",
+          "value": "present",
+          "severity": "moderate",
+          "note": "양측 정강이에 뚜렷한 함요부종이 관찰됨"
+        }
+      ]
+    },
+    "peripheral_pulse": {
+      "label": "말초 맥박 확인",
+      "normal": {
+        "id": "peripheral_pulse",
+        "label": "말초 맥박",
+        "value": "normal",
+        "note": "말초 맥박은 대칭적으로 잘 촉지됨"
+      },
+      "abnormalOptions": [
+        {
+          "id": "weak_peripheral_pulse",
+          "label": "약한 말초 맥박",
+          "value": "present",
+          "note": "말초 맥박이 약하게 촉지됨"
+        },
+        {
+          "id": "asymmetric_pulse",
+          "label": "비대칭 말초 맥박",
+          "value": "present",
+          "note": "좌우 말초 맥박 차이가 관찰됨"
+        }
+      ]
+    },
+    "breast_inspection_palpation": {
+      "label": "유방 시진/촉진",
+      "normal": {
+        "id": "breast_inspection_palpation",
+        "label": "유방 진찰",
+        "value": "normal",
+        "note": "유방 시진 및 촉진상 뚜렷한 종괴나 피부 변화는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "breast_mass",
+          "label": "유방 종괴",
+          "value": "present",
+          "note": "유방에서 종괴가 촉지됨"
+        },
+        {
+          "id": "nipple_discharge",
+          "label": "유두 분비물",
+          "value": "present",
+          "note": "유두 분비물이 관찰됨"
+        },
+        {
+          "id": "skin_dimpling",
+          "label": "피부 함몰",
+          "value": "present",
+          "note": "유방 피부 함몰이 관찰됨"
+        }
+      ]
+    },
+    "pelvic_exam": {
+      "label": "골반 진찰",
+      "normal": {
+        "id": "pelvic_exam",
+        "label": "골반 진찰",
+        "value": "normal",
+        "note": "골반 진찰상 뚜렷한 압통이나 비정상 분비물은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "cervical_discharge",
+          "label": "자궁경부 분비물",
+          "value": "present",
+          "note": "자궁경부 분비물이 관찰됨"
+        },
+        {
+          "id": "cervical_motion_tenderness",
+          "label": "자궁경부 운동통",
+          "value": "present",
+          "note": "자궁경부 운동통이 있음"
+        },
+        {
+          "id": "adnexal_tenderness",
+          "label": "부속기 압통",
+          "value": "present",
+          "note": "부속기 부위 압통이 있음"
+        }
+      ]
+    },
+    "joint_inspection": {
+      "label": "관절 시진",
+      "normal": {
+        "id": "joint_inspection",
+        "label": "관절 시진",
+        "value": "normal",
+        "note": "관절 부종, 발적, 변형은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "joint_swelling",
+          "label": "관절 부종",
+          "value": "present",
+          "note": "관절 부종이 관찰됨"
+        },
+        {
+          "id": "joint_erythema",
+          "label": "관절 발적",
+          "value": "present",
+          "note": "관절 주위 발적이 관찰됨"
+        },
+        {
+          "id": "joint_deformity",
+          "label": "관절 변형",
+          "value": "present",
+          "note": "관절 변형이 관찰됨"
+        }
+      ]
+    },
+    "joint_range_of_motion": {
+      "label": "관절 운동범위 확인",
+      "normal": {
+        "id": "joint_range_of_motion",
+        "label": "관절 운동범위",
+        "value": "normal",
+        "note": "관절 운동범위는 보존되어 있음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "limited_range_of_motion",
+          "label": "운동범위 제한",
+          "value": "present",
+          "note": "관절 운동범위가 제한됨"
+        },
+        {
+          "id": "painful_range_of_motion",
+          "label": "운동 시 통증",
+          "value": "present",
+          "note": "관절 움직임 시 통증을 호소함"
+        }
+      ]
+    },
+    "skin_rash_inspection": {
+      "label": "피부 발진 확인",
+      "normal": {
+        "id": "skin_rash_inspection",
+        "label": "피부 발진",
+        "value": "absent",
+        "note": "뚜렷한 피부 발진은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "maculopapular_rash",
+          "label": "반구진성 발진",
+          "value": "present",
+          "note": "반구진성 발진이 관찰됨"
+        },
+        {
+          "id": "urticaria",
+          "label": "두드러기",
+          "value": "present",
+          "note": "두드러기 양상의 피부 병변이 관찰됨"
+        },
+        {
+          "id": "petechiae",
+          "label": "점상출혈",
+          "value": "present",
+          "note": "점상출혈이 관찰됨"
+        }
+      ]
+    },
+    "cranial_nerve_exam": {
+      "label": "뇌신경 검사",
+      "normal": {
+        "id": "cranial_nerve_exam",
+        "label": "뇌신경 검사",
+        "value": "normal",
+        "note": "뇌신경 진찰상 뚜렷한 이상은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "facial_palsy",
+          "label": "안면마비",
+          "value": "present",
+          "note": "안면 근력 약화가 관찰됨"
+        },
+        {
+          "id": "dysarthria",
+          "label": "구음장애",
+          "value": "present",
+          "note": "말이 어눌하게 들림"
+        }
+      ]
+    },
+    "sensory_exam": {
+      "label": "감각 검사",
+      "normal": {
+        "id": "sensory_exam",
+        "label": "감각",
+        "value": "normal",
+        "note": "감각 저하는 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hypoesthesia",
+          "label": "감각 저하",
+          "value": "present",
+          "note": "일부 부위에서 감각 저하가 관찰됨"
+        },
+        {
+          "id": "paresthesia",
+          "label": "이상감각",
+          "value": "present",
+          "note": "저림 또는 이상감각을 호소함"
+        }
+      ]
+    },
+    "deep_tendon_reflex": {
+      "label": "심부건반사",
+      "normal": {
+        "id": "deep_tendon_reflex",
+        "label": "심부건반사",
+        "value": "normal",
+        "note": "심부건반사는 대칭적으로 관찰됨"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hyperreflexia",
+          "label": "반사항진",
+          "value": "present",
+          "note": "심부건반사가 항진되어 있음"
+        },
+        {
+          "id": "hyporeflexia",
+          "label": "반사저하",
+          "value": "present",
+          "note": "심부건반사가 저하되어 있음"
+        }
+      ]
+    },
+    "gait_observation": {
+      "label": "보행 관찰",
+      "normal": {
+        "id": "gait_observation",
+        "label": "보행",
+        "value": "normal",
+        "note": "보행은 안정적이며 뚜렷한 파행은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "ataxic_gait",
+          "label": "실조성 보행",
+          "value": "present",
+          "note": "휘청거리는 보행이 관찰됨"
+        },
+        {
+          "id": "limping_gait",
+          "label": "파행",
+          "value": "present",
+          "note": "절뚝거리는 보행이 관찰됨"
+        }
+      ]
+    },
+    "pediatric_growth_measurement": {
+      "label": "소아 성장 지표 측정",
+      "normal": {
+        "id": "pediatric_growth_measurement",
+        "label": "성장 지표",
+        "value": "normal",
+        "note": "키, 체중, 머리둘레가 연령에 맞는 범위에 있음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "low_height_percentile",
+          "label": "저신장",
+          "value": "present",
+          "note": "키가 연령 대비 낮은 백분위수에 위치함"
+        },
+        {
+          "id": "low_weight_percentile",
+          "label": "저체중",
+          "value": "present",
+          "note": "체중이 연령 대비 낮은 백분위수에 위치함"
+        },
+        {
+          "id": "microcephaly",
+          "label": "작은 머리둘레",
+          "value": "present",
+          "note": "머리둘레가 연령 대비 낮은 백분위수에 위치함"
+        }
+      ]
+    },
+    "abdominal_light_palpation": {
+      "label": "복부 얕은 촉진",
+      "normal": {
+        "id": "abdominal_light_palpation",
+        "label": "복부 얕은 촉진",
+        "value": "normal",
+        "note": "복부 얕은 촉진상 뚜렷한 압통은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_tenderness",
+          "label": "복부 압통",
+          "value": "present",
+          "note": "복부 얕은 촉진 시 통증을 호소함"
+        },
+        {
+          "id": "localized_abdominal_tenderness",
+          "label": "국소 복부 압통",
+          "value": "present",
+          "note": "특정 부위의 복부 얕은 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "abdominal_deep_palpation": {
+      "label": "복부 깊은 촉진",
+      "normal": {
+        "id": "abdominal_deep_palpation",
+        "label": "복부 깊은 촉진",
+        "value": "normal",
+        "note": "복부 깊은 촉진상 뚜렷한 압통이나 종괴는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_tenderness",
+          "label": "복부 압통",
+          "value": "present",
+          "note": "복부 깊은 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "abdominal_mass",
+          "label": "복부 종괴",
+          "value": "present",
+          "note": "복부 깊은 촉진 시 종괴가 촉지됨"
+        },
+        {
+          "id": "deep_palpation_discomfort",
+          "label": "깊은 촉진 시 불편감",
+          "value": "present",
+          "note": "복부 깊은 촉진 시 불편감을 호소함"
+        }
+      ]
+    },
+    "localized_abdominal_tenderness": {
+      "label": "국소 복부 압통 확인",
+      "normal": {
+        "id": "localized_abdominal_tenderness",
+        "label": "국소 복부 압통",
+        "value": "absent",
+        "note": "특정 부위에 국한된 복부 압통은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "right_lower_quadrant_tenderness",
+          "label": "우하복부 압통",
+          "value": "present",
+          "location": "right_lower_quadrant",
+          "note": "우하복부 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "right_upper_quadrant_tenderness",
+          "label": "우상복부 압통",
+          "value": "present",
+          "location": "right_upper_quadrant",
+          "note": "우상복부 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "left_lower_quadrant_tenderness",
+          "label": "좌하복부 압통",
+          "value": "present",
+          "location": "left_lower_quadrant",
+          "note": "좌하복부 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "epigastric_tenderness",
+          "label": "명치부 압통",
+          "value": "present",
+          "location": "epigastric_area",
+          "note": "명치 부위 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "periumbilical_tenderness",
+          "label": "배꼽 주위 압통",
+          "value": "present",
+          "location": "periumbilical_area",
+          "note": "배꼽 주위 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "guarding": {
+      "label": "근성 방어 확인",
+      "normal": {
+        "id": "guarding",
+        "label": "근성 방어",
+        "value": "absent",
+        "note": "복부 촉진 시 뚜렷한 근성 방어는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "guarding",
+          "label": "근성 방어",
+          "value": "present",
+          "note": "복부 촉진 시 환자가 배에 힘을 주며 방어하는 소견이 관찰됨"
+        },
+        {
+          "id": "voluntary_guarding",
+          "label": "수의적 방어",
+          "value": "present",
+          "note": "촉진 시 통증 또는 긴장으로 인해 복부에 힘을 주는 반응이 관찰됨"
+        }
+      ]
+    },
+    "abdominal_rigidity": {
+      "label": "복부 강직 확인",
+      "normal": {
+        "id": "abdominal_rigidity",
+        "label": "복부 강직",
+        "value": "absent",
+        "note": "복부 강직은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_rigidity",
+          "label": "복부 강직",
+          "value": "present",
+          "note": "복부가 딱딱하게 긴장되어 복부 강직이 관찰됨"
+        },
+        {
+          "id": "board_like_rigidity",
+          "label": "판자 모양 강직",
+          "value": "present",
+          "severity": "severe",
+          "note": "복부가 판자처럼 단단하게 긴장되어 있음"
+        }
+      ]
+    },
+    "abdominal_mass_palpation": {
+      "label": "복부 종괴 촉진",
+      "normal": {
+        "id": "abdominal_mass_palpation",
+        "label": "복부 종괴",
+        "value": "absent",
+        "note": "복부 촉진상 뚜렷하게 만져지는 종괴는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_mass",
+          "label": "복부 종괴",
+          "value": "present",
+          "note": "복부 촉진 시 종괴가 촉지됨"
+        },
+        {
+          "id": "tender_abdominal_mass",
+          "label": "압통성 복부 종괴",
+          "value": "present",
+          "note": "복부에서 압통을 동반한 종괴가 촉지됨"
+        }
+      ]
+    },
+    "mcburney_point_tenderness": {
+      "label": "맥버니점 압통 확인",
+      "normal": {
+        "id": "mcburney_point_tenderness",
+        "label": "맥버니점 압통",
+        "value": "absent",
+        "note": "맥버니점 압통은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "mcburney_point_tenderness",
+          "label": "맥버니점 압통",
+          "value": "present",
+          "note": "맥버니점 부위 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "right_lower_quadrant_tenderness",
+          "label": "우하복부 압통",
+          "value": "present",
+          "location": "right_lower_quadrant",
+          "note": "우하복부 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "rovsing_sign": {
+      "label": "Rovsing 징후 확인",
+      "normal": {
+        "id": "rovsing_sign",
+        "label": "Rovsing 징후",
+        "value": "absent",
+        "note": "Rovsing 징후는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "rovsing_sign",
+          "label": "Rovsing 징후",
+          "value": "present",
+          "note": "좌하복부를 누를 때 우하복부 통증이 유발됨"
+        }
+      ]
+    },
+    "psoas_sign": {
+      "label": "Psoas 징후 확인",
+      "normal": {
+        "id": "psoas_sign",
+        "label": "Psoas 징후",
+        "value": "absent",
+        "note": "Psoas 징후는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "psoas_sign",
+          "label": "Psoas 징후",
+          "value": "present",
+          "note": "고관절 신전 또는 관련 동작 시 복통이 유발됨"
+        }
+      ]
+    },
+    "obturator_sign": {
+      "label": "Obturator 징후 확인",
+      "normal": {
+        "id": "obturator_sign",
+        "label": "Obturator 징후",
+        "value": "absent",
+        "note": "Obturator 징후는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "obturator_sign",
+          "label": "Obturator 징후",
+          "value": "present",
+          "note": "고관절 굴곡 및 내회전 동작 시 하복부 통증이 유발됨"
+        }
+      ]
+    },
+    "abdominal_distension_inspection": {
+      "label": "복부팽만 시진",
+      "normal": {
+        "id": "abdominal_distension_inspection",
+        "label": "복부팽만",
+        "value": "absent",
+        "note": "시진상 복부팽만은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_distension",
+          "label": "복부팽만",
+          "value": "present",
+          "note": "시진상 복부팽만이 관찰됨"
+        },
+        {
+          "id": "marked_abdominal_distension",
+          "label": "뚜렷한 복부팽만",
+          "value": "present",
+          "severity": "severe",
+          "note": "복부가 뚜렷하게 팽만되어 보임"
+        }
+      ]
+    },
+    "surgical_scar_inspection": {
+      "label": "수술 흉터 시진",
+      "normal": {
+        "id": "surgical_scar_inspection",
+        "label": "복부 수술 흉터",
+        "value": "absent",
+        "note": "복부에 뚜렷한 수술 흉터는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "surgical_scar",
+          "label": "복부 수술 흉터",
+          "value": "present",
+          "note": "복부에 이전 수술로 보이는 흉터가 관찰됨"
+        }
+      ]
+    },
+    "bowel_sound_auscultation": {
+      "label": "장음 청진",
+      "normal": {
+        "id": "bowel_sound_auscultation",
+        "label": "장음",
+        "value": "normal",
+        "note": "장음은 정상적으로 들림"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hyperactive_bowel_sound",
+          "label": "장음 증가",
+          "value": "present",
+          "note": "장음이 증가되어 들림"
+        },
+        {
+          "id": "decreased_bowel_sound",
+          "label": "장음 감소",
+          "value": "present",
+          "note": "장음이 감소되어 들림"
+        },
+        {
+          "id": "absent_bowel_sound",
+          "label": "장음 소실",
+          "value": "present",
+          "note": "장음이 거의 들리지 않음"
+        },
+        {
+          "id": "metallic_bowel_sound",
+          "label": "금속성 장음",
+          "value": "present",
+          "note": "금속성 장음이 들림"
+        }
+      ]
+    },
+    "abdominal_percussion_tenderness": {
+      "label": "복부 타진 압통 확인",
+      "normal": {
+        "id": "abdominal_percussion_tenderness",
+        "label": "복부 타진 압통",
+        "value": "absent",
+        "note": "복부 타진 시 뚜렷한 통증은 유발되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "percussion_tenderness",
+          "label": "타진 압통",
+          "value": "present",
+          "note": "복부 타진 시 통증을 호소함"
+        }
+      ]
+    },
+    "liver_span_percussion": {
+      "label": "간 크기 타진",
+      "normal": {
+        "id": "liver_span_percussion",
+        "label": "간 크기",
+        "value": "normal",
+        "note": "간 크기는 뚜렷하게 증가되어 보이지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hepatomegaly",
+          "label": "간비대",
+          "value": "present",
+          "note": "간 크기 증가가 의심됨"
+        }
+      ]
+    },
+    "shifting_dullness": {
+      "label": "이동탁음 확인",
+      "normal": {
+        "id": "shifting_dullness",
+        "label": "이동탁음",
+        "value": "absent",
+        "note": "이동탁음은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "shifting_dullness",
+          "label": "이동탁음",
+          "value": "present",
+          "note": "자세 변화에 따라 타진음이 변해 복수 가능성을 시사함"
+        },
+        {
+          "id": "ascites",
+          "label": "복수 의심",
+          "value": "present",
+          "note": "이동탁음이 관찰되어 복수 가능성이 있음"
+        }
+      ]
+    },
+    "wheezing_auscultation": {
+      "label": "천명음 청진",
+      "normal": {
+        "id": "wheezing_auscultation",
+        "label": "천명음",
+        "value": "absent",
+        "note": "청진상 천명음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "wheezing",
+          "label": "천명음",
+          "value": "present",
+          "note": "호기 시 쌕쌕거리는 천명음이 들림"
+        }
+      ]
+    },
+    "crackles_auscultation": {
+      "label": "수포음 청진",
+      "normal": {
+        "id": "crackles_auscultation",
+        "label": "수포음",
+        "value": "absent",
+        "note": "청진상 수포음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "crackles",
+          "label": "수포음",
+          "value": "present",
+          "note": "폐 하부에서 수포음이 들림"
+        },
+        {
+          "id": "bibasal_crackles",
+          "label": "양측 폐 하부 수포음",
+          "value": "present",
+          "note": "양측 폐 하부에서 수포음이 들림"
+        }
+      ]
+    },
+    "decreased_breath_sound": {
+      "label": "호흡음 감소 확인",
+      "normal": {
+        "id": "decreased_breath_sound",
+        "label": "호흡음 감소",
+        "value": "absent",
+        "note": "양측 폐 호흡음은 대칭적으로 잘 들림"
+      },
+      "abnormalOptions": [
+        {
+          "id": "decreased_breath_sound",
+          "label": "호흡음 감소",
+          "value": "present",
+          "note": "한쪽 또는 특정 부위에서 호흡음이 감소되어 들림"
+        },
+        {
+          "id": "unilateral_decreased_breath_sound",
+          "label": "편측 호흡음 감소",
+          "value": "present",
+          "note": "한쪽 폐에서 호흡음이 상대적으로 감소되어 들림"
+        }
+      ]
+    },
+    "respiratory_effort_inspection": {
+      "label": "호흡 노력 관찰",
+      "normal": {
+        "id": "respiratory_effort_inspection",
+        "label": "호흡 노력",
+        "value": "normal",
+        "note": "호흡은 안정적이며 보조근 사용은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "accessory_muscle_use",
+          "label": "보조근 사용",
+          "value": "present",
+          "note": "호흡 시 보조근 사용이 관찰됨"
+        },
+        {
+          "id": "labored_breathing",
+          "label": "힘든 호흡",
+          "value": "present",
+          "note": "숨쉬기 힘들어하는 모습이 관찰됨"
+        },
+        {
+          "id": "tachypneic_appearance",
+          "label": "빠른 호흡 양상",
+          "value": "present",
+          "note": "호흡이 빠르고 불편해 보임"
+        }
+      ]
+    },
+    "chest_percussion": {
+      "label": "흉부 타진",
+      "normal": {
+        "id": "chest_percussion",
+        "label": "흉부 타진음",
+        "value": "normal",
+        "note": "흉부 타진상 뚜렷한 탁음이나 과공명은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "dullness_to_percussion",
+          "label": "타진상 탁음",
+          "value": "present",
+          "note": "흉부 타진상 일부 부위에서 탁음이 관찰됨"
+        },
+        {
+          "id": "hyperresonance",
+          "label": "과공명",
+          "value": "present",
+          "note": "흉부 타진상 과공명이 관찰됨"
+        }
+      ]
+    },
+    "heart_murmur_auscultation": {
+      "label": "심잡음 청진",
+      "normal": {
+        "id": "heart_murmur_auscultation",
+        "label": "심잡음",
+        "value": "absent",
+        "note": "뚜렷한 심잡음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "heart_murmur",
+          "label": "심잡음",
+          "value": "present",
+          "note": "심잡음이 청진됨"
+        },
+        {
+          "id": "systolic_murmur",
+          "label": "수축기 심잡음",
+          "value": "present",
+          "note": "수축기 심잡음이 들림"
+        },
+        {
+          "id": "diastolic_murmur",
+          "label": "이완기 심잡음",
+          "value": "present",
+          "note": "이완기 심잡음이 들림"
+        }
+      ]
+    },
+    "heart_rhythm_auscultation": {
+      "label": "심박 리듬 청진",
+      "normal": {
+        "id": "heart_rhythm_auscultation",
+        "label": "심박 리듬",
+        "value": "normal",
+        "note": "심박 리듬은 규칙적으로 들림"
+      },
+      "abnormalOptions": [
+        {
+          "id": "irregular_heartbeat",
+          "label": "불규칙한 심박",
+          "value": "present",
+          "note": "심박 리듬이 불규칙하게 들림"
+        }
+      ]
+    },
+    "jvp_inspection": {
+      "label": "경정맥 팽대 확인",
+      "normal": {
+        "id": "jvp_inspection",
+        "label": "경정맥 팽대",
+        "value": "absent",
+        "note": "경정맥 팽대는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "jugular_venous_distension",
+          "label": "경정맥 팽대",
+          "value": "present",
+          "note": "경정맥 팽대가 관찰됨"
+        },
+        {
+          "id": "elevated_jvp",
+          "label": "JVP 상승",
+          "value": "present",
+          "note": "경정맥 압력 상승이 의심됨"
+        }
+      ]
+    },
+    "cervical_lymph_node_palpation": {
+      "label": "경부 림프절 촉진",
+      "normal": {
+        "id": "cervical_lymph_node_palpation",
+        "label": "경부 림프절",
+        "value": "normal",
+        "note": "뚜렷하게 만져지는 비정상 경부 림프절은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "cervical_lymphadenopathy",
+          "label": "경부 림프절 비대",
+          "value": "present",
+          "note": "경부 림프절 비대가 촉지됨"
+        },
+        {
+          "id": "tender_cervical_lymph_node",
+          "label": "압통성 경부 림프절",
+          "value": "present",
+          "note": "압통을 동반한 경부 림프절이 촉지됨"
+        }
+      ]
+    },
+    "babinski_sign": {
+      "label": "Babinski 반사",
+      "normal": {
+        "id": "babinski_sign",
+        "label": "Babinski 반사",
+        "value": "absent",
+        "note": "Babinski 반사는 음성임"
+      },
+      "abnormalOptions": [
+        {
+          "id": "babinski_reflex",
+          "label": "Babinski 반사",
+          "value": "present",
+          "note": "Babinski 반사가 양성임"
+        }
+      ]
+    },
+    "hearing_response": {
+      "label": "청각 반응 확인",
+      "normal": {
+        "id": "hearing_response",
+        "label": "청각 반응",
+        "value": "normal",
+        "note": "소리에 적절히 반응함"
+      },
+      "abnormalOptions": [
+        {
+          "id": "poor_sound_response",
+          "label": "소리 반응 저하",
+          "value": "present",
+          "note": "소리에 대한 반응이 감소되어 보임"
+        }
+      ]
+    },
+    "mental_status_exam": {
+      "label": "의식 상태 확인",
+      "normal": {
+        "id": "mental_status_exam",
+        "label": "의식 상태",
+        "value": "normal",
+        "note": "의식은 명료하며 질문에 적절히 대답함"
+      },
+      "abnormalOptions": [
+        {
+          "id": "mental_status",
+          "label": "의식 상태",
+          "value": "abnormal",
+          "note": "혼돈이 관찰되며 질문에 대한 반응이 부정확함"
+        },
+        {
+          "id": "mental_status",
+          "label": "의식 상태",
+          "value": "abnormal",
+          "severity": "severe",
+          "note": "기면 또는 의식 저하가 관찰됨"
+        }
+      ]
+    },
+    "motor_strength": {
+      "label": "근력 검사",
+      "normal": {
+        "id": "motor_strength",
+        "label": "근력",
+        "value": "normal",
+        "note": "사지 근력은 대칭적이며 뚜렷한 저하는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "motor_weakness",
+          "label": "근력 저하",
+          "value": "present",
+          "severity": "mild",
+          "note": "일부 사지에서 경도의 근력 저하가 관찰됨"
+        },
+        {
+          "id": "hemiparesis",
+          "label": "편측 근력 저하",
+          "value": "present",
+          "note": "한쪽 팔다리 근력 저하가 관찰됨"
+        }
+      ]
+    },
+    "neck_lymph_node": {
+      "label": "림프절 촉진",
+      "normal": {
+        "id": "neck_lymph_node",
+        "label": "림프절",
+        "value": "normal",
+        "note": "뚜렷하게 만져지는 비정상 림프절은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "lymphadenopathy",
+          "label": "림프절 비대",
+          "value": "present",
+          "note": "림프절 비대가 촉지됨"
+        },
+        {
+          "id": "tender_lymph_node",
+          "label": "압통성 림프절",
+          "value": "present",
+          "note": "압통을 동반한 림프절이 촉지됨"
+        }
+      ]
+    },
+    "breast_inspection": {
+      "label": "유방 시진",
+      "normal": {
+        "id": "breast_inspection",
+        "label": "유방 시진",
+        "value": "normal",
+        "note": "양쪽 유방 대칭성, 피부 변화, 함몰 없이 정상"
+      },
+      "abnormalOptions": [
+        {
+          "id": "breast_asymmetry",
+          "label": "유방 비대칭",
+          "value": "present",
+          "note": "양쪽 유방의 비대칭이 관찰됨"
+        },
+        {
+          "id": "skin_dimpling_visible",
+          "label": "피부 함몰",
+          "value": "present",
+          "note": "유방 피부 함몰이 관찰됨"
+        },
+        {
+          "id": "nipple_retraction",
+          "label": "유두 함몰",
+          "value": "present",
+          "note": "유두 함몰이 관찰됨"
+        },
+        {
+          "id": "skin_erythema_breast",
+          "label": "피부 발적",
+          "value": "present",
+          "note": "유방 피부 발적이 관찰됨"
+        }
+      ]
+    },
+    "breast_palpation": {
+      "label": "유방 촉진",
+      "normal": {
+        "id": "breast_palpation",
+        "label": "유방 촉진",
+        "value": "normal",
+        "note": "유방 종괴, 압통, 분비물 없이 정상"
+      },
+      "abnormalOptions": [
+        {
+          "id": "breast_mass",
+          "label": "유방 종괴",
+          "value": "present",
+          "note": "유방에서 종괴가 촉진됨"
+        },
+        {
+          "id": "breast_tenderness",
+          "label": "유방 압통",
+          "value": "present",
+          "note": "유방 압통이 있음"
+        },
+        {
+          "id": "nipple_discharge",
+          "label": "유두 분비물",
+          "value": "present",
+          "note": "유두 분비물이 확인됨"
+        }
+      ]
+    },
+    "breast_mass_palpation": {
+      "label": "유방 종괴 촉진",
+      "normal": {
+        "id": "breast_mass_palpation",
+        "label": "유방 종괴 촉진",
+        "value": "absent",
+        "note": "유방에서 종괴가 촉진되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "breast_mass_present",
+          "label": "유방 종괴 존재",
+          "value": "present",
+          "note": "유방에서 종괴가 촉진됨"
+        },
+        {
+          "id": "breast_mass_mobile",
+          "label": "가동성 종괴",
+          "value": "present",
+          "note": "가동성 있는 종괴가 촉진됨"
+        },
+        {
+          "id": "breast_mass_fixed",
+          "label": "고정성 종괴",
+          "value": "present",
+          "note": "고정된 종괴가 촉진됨"
+        },
+        {
+          "id": "breast_mass_tender",
+          "label": "압통 있는 종괴",
+          "value": "present",
+          "note": "압통이 있는 종괴가 촉진됨"
+        }
+      ]
+    },
+    "axillary_lymph_node_palpation": {
+      "label": "액와 림프절 촉진",
+      "normal": {
+        "id": "axillary_lymph_node_palpation",
+        "label": "액와 림프절 촉진",
+        "value": "absent",
+        "note": "액와 림프절 종대 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "axillary_lymphadenopathy",
+          "label": "액와 림프절 종대",
+          "value": "present",
+          "note": "액와 림프절이 촉진됨"
+        },
+        {
+          "id": "axillary_lymph_tender",
+          "label": "액와 림프절 압통",
+          "value": "present",
+          "note": "액와 림프절 압통이 있음"
+        }
+      ]
+    },
+    "digital_rectal_exam": {
+      "label": "직장수지검사",
+      "normal": {
+        "id": "digital_rectal_exam",
+        "label": "직장수지검사",
+        "value": "normal",
+        "note": "직장 내 종괴, 혈액, 통증 없이 정상"
+      },
+      "abnormalOptions": [
+        {
+          "id": "rectal_mass_dre",
+          "label": "직장 내 종괴",
+          "value": "present",
+          "note": "직장 내 종괴가 촉진됨"
+        },
+        {
+          "id": "fecal_blood_dre",
+          "label": "혈액 혼재",
+          "value": "present",
+          "note": "직장수지검사에서 혈액이 확인됨"
+        },
+        {
+          "id": "rectal_tenderness_dre",
+          "label": "직장 압통",
+          "value": "present",
+          "note": "직장 압통이 있음"
+        }
+      ]
+    },
+    "speculum_exam": {
+      "label": "질경 검사",
+      "normal": {
+        "id": "speculum_exam",
+        "label": "질경 검사",
+        "value": "normal",
+        "note": "자궁경부 및 질 내 이상 소견 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "cervical_discharge_abnormal",
+          "label": "비정상 분비물",
+          "value": "present",
+          "note": "비정상 자궁경부 분비물이 관찰됨"
+        },
+        {
+          "id": "cervical_erosion",
+          "label": "자궁경부 미란",
+          "value": "present",
+          "note": "자궁경부 미란이 관찰됨"
+        },
+        {
+          "id": "cervical_mass",
+          "label": "자궁경부 종괴",
+          "value": "present",
+          "note": "자궁경부 종괴가 관찰됨"
+        }
+      ]
+    },
+    "bimanual_pelvic_exam": {
+      "label": "양손 골반 진찰",
+      "normal": {
+        "id": "bimanual_pelvic_exam",
+        "label": "양손 골반 진찰",
+        "value": "normal",
+        "note": "자궁 및 부속기 압통, 종괴 없이 정상"
+      },
+      "abnormalOptions": [
+        {
+          "id": "uterine_tenderness",
+          "label": "자궁 압통",
+          "value": "present",
+          "note": "자궁 압통이 있음"
+        },
+        {
+          "id": "adnexal_tenderness",
+          "label": "부속기 압통",
+          "value": "present",
+          "note": "부속기 압통이 있음"
+        },
+        {
+          "id": "adnexal_mass",
+          "label": "부속기 종괴",
+          "value": "present",
+          "note": "부속기에서 종괴가 촉진됨"
+        },
+        {
+          "id": "cmt_finding",
+          "label": "자궁경부 운동통",
+          "value": "present",
+          "note": "자궁경부 운동 시 통증이 있음"
+        }
+      ]
+    },
+    "cervical_motion_tenderness": {
+      "label": "자궁경부 운동통",
+      "normal": {
+        "id": "cervical_motion_tenderness",
+        "label": "자궁경부 운동통",
+        "value": "absent",
+        "note": "자궁경부 운동 시 통증 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "cervical_motion_tender_positive",
+          "label": "자궁경부 운동통 양성",
+          "value": "present",
+          "note": "자궁경부 운동 시 통증이 있음 (PID 의심)"
+        }
+      ]
+    },
+    "prostate_exam": {
+      "label": "전립선 검사",
+      "normal": {
+        "id": "prostate_exam",
+        "label": "전립선 검사",
+        "value": "normal",
+        "note": "전립선 크기, 경도, 압통 정상"
+      },
+      "abnormalOptions": [
+        {
+          "id": "prostate_enlarged",
+          "label": "전립선 비대",
+          "value": "present",
+          "note": "전립선이 비대되어 있음"
+        },
+        {
+          "id": "prostate_tender",
+          "label": "전립선 압통",
+          "value": "present",
+          "note": "전립선 압통이 있음 (전립선염 의심)"
+        },
+        {
+          "id": "prostate_nodule",
+          "label": "전립선 결절",
+          "value": "present",
+          "note": "전립선에서 딱딱한 결절이 촉진됨"
+        }
+      ]
+    },
+    "joint_palpation": {
+      "label": "관절 촉진",
+      "normal": {
+        "id": "joint_palpation",
+        "label": "관절 촉진",
+        "value": "normal",
+        "note": "관절 압통, 부종, 열감 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "joint_tenderness_present",
+          "label": "관절 압통",
+          "value": "present",
+          "note": "관절 압통이 있음"
+        },
+        {
+          "id": "joint_swelling",
+          "label": "관절 부종",
+          "value": "present",
+          "note": "관절 부종이 있음"
+        },
+        {
+          "id": "joint_warmth",
+          "label": "관절 열감",
+          "value": "present",
+          "note": "관절 열감이 있음"
+        }
+      ]
+    },
+    "petechiae_purpura_bruise": {
+      "label": "점상출혈/자반/멍",
+      "normal": {
+        "id": "petechiae_purpura_bruise",
+        "label": "점상출혈/자반/멍",
+        "value": "absent",
+        "note": "점상출혈, 자반, 이상 멍 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "petechiae_present",
+          "label": "점상출혈",
+          "value": "present",
+          "note": "점상출혈이 관찰됨"
+        },
+        {
+          "id": "purpura_present",
+          "label": "자반",
+          "value": "present",
+          "note": "자반이 관찰됨"
+        },
+        {
+          "id": "ecchymosis_present",
+          "label": "반상출혈",
+          "value": "present",
+          "note": "반상출혈이 관찰됨"
+        }
+      ]
+    },
+    "neck_stiffness": {
+      "label": "경부 강직",
+      "normal": {
+        "id": "neck_stiffness",
+        "label": "경부 강직",
+        "value": "absent",
+        "note": "경부 강직 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "neck_stiffness_positive",
+          "label": "경부 강직 양성",
+          "value": "present",
+          "note": "경부 강직이 있음 (수막염 의심)"
+        },
+        {
+          "id": "kernig_sign",
+          "label": "Kernig 징후",
+          "value": "present",
+          "note": "Kernig 징후 양성"
+        },
+        {
+          "id": "brudzinski_sign",
+          "label": "Brudzinski 징후",
+          "value": "present",
+          "note": "Brudzinski 징후 양성"
+        }
+      ]
+    },
+    "blood_glucose": {
+      "label": "혈당 측정",
+      "normal": {
+        "id": "blood_glucose",
+        "label": "혈당",
+        "value": "normal",
+        "note": "손끝 혈당이 정상 범위임"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hypoglycemia",
+          "label": "저혈당",
+          "value": "low",
+          "note": "혈당이 낮아 즉시 교정과 원인 평가가 필요함"
+        },
+        {
+          "id": "hyperglycemia",
+          "label": "고혈당",
+          "value": "high",
+          "note": "혈당이 높아 추가 평가가 필요함"
+        }
+      ]
+    },
+    "urine_pregnancy_test": {
+      "label": "소변 임신검사",
+      "normal": {
+        "id": "urine_pregnancy_test",
+        "label": "소변 임신검사",
+        "value": "negative",
+        "note": "소변 임신검사 음성"
+      },
+      "abnormalOptions": [
+        {
+          "id": "urine_pregnancy_test_positive",
+          "label": "임신검사 양성",
+          "value": "positive",
+          "note": "소변 임신검사 양성으로 임신 관련 평가가 필요함"
+        }
+      ]
+    },
+    "coordination_exam": {
+      "label": "소뇌 기능 검사",
+      "normal": {
+        "id": "coordination_exam",
+        "label": "소뇌 기능 검사",
+        "value": "normal",
+        "note": "손가락코검사, 발뒤꿈치정강이검사 정상"
+      },
+      "abnormalOptions": [
+        {
+          "id": "finger_nose_dysmetria",
+          "label": "손가락코검사 이상",
+          "value": "abnormal",
+          "note": "조화운동불능이 있음"
+        },
+        {
+          "id": "heel_shin_ataxia",
+          "label": "발뒤꿈치정강이 이상",
+          "value": "abnormal",
+          "note": "발뒤꿈치정강이검사 이상"
+        },
+        {
+          "id": "dysdiadochokinesia",
+          "label": "반복운동 이상",
+          "value": "abnormal",
+          "note": "반복운동 불능이 있음"
+        }
+      ]
+    },
+    "growth_general_assessment": {
+      "label": "발육·전신 상태 확인",
+      "normal": {
+        "id": "growth_general_assessment",
+        "label": "발육·전신 상태",
+        "value": "normal",
+        "note": "연령에 맞는 발육 상태이며 전신 상태가 양호함"
+      },
+      "abnormalOptions": [
+        {
+          "id": "growth_or_general_abnormal",
+          "label": "발육·전신 상태 이상",
+          "value": "abnormal",
+          "note": "발육 또는 전신 상태에 추가 평가가 필요한 소견이 있음"
+        }
+      ]
+    },
+    "acute_illness_throat_skin_screen": {
+      "label": "인후·피부 급성 질환 선별",
+      "normal": {
+        "id": "acute_illness_throat_skin_screen",
+        "label": "인후·피부",
+        "value": "normal",
+        "note": "인후와 피부에 급성 감염을 시사하는 소견이 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "acute_illness_sign_present",
+          "label": "급성 질환 징후",
+          "value": "present",
+          "note": "인후 또는 피부에 급성 질환을 시사하는 소견이 있음"
+        }
+      ]
+    },
+    "smoking_stain_inspection": {
+      "label": "흡연 관련 구강·손가락 착색 확인",
+      "normal": {
+        "id": "smoking_stain_inspection",
+        "label": "구강·손가락 착색",
+        "value": "absent",
+        "note": "흡연과 연관된 치아 또는 손가락 착색이 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "tobacco_staining_present",
+          "label": "흡연 관련 착색",
+          "value": "present",
+          "note": "치아 또는 손가락에 흡연과 연관될 수 있는 착색이 관찰됨"
+        }
+      ]
+    },
+    "exhaled_carbon_monoxide": {
+      "label": "호기 일산화탄소 측정",
+      "normal": {
+        "id": "exhaled_carbon_monoxide",
+        "label": "호기 일산화탄소",
+        "value": "normal",
+        "note": "호기 일산화탄소가 비흡연 범위로 측정됨"
+      },
+      "abnormalOptions": [
+        {
+          "id": "exhaled_carbon_monoxide_high",
+          "label": "호기 일산화탄소 상승",
+          "value": "high",
+          "note": "호기 일산화탄소가 흡연 노출을 시사하는 수준으로 상승함"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "description": "CPX scenario generation rule registry. Add new rule files here to make the Scenario > Customize autofill generator extensible.",
+  "rules": [
+    {
+      "id": "sleep_disorder",
+      "file": "sleep_disorder.json",
+      "title": "수면장애(불면) 생성 규칙",
+      "matchCaseIds": ["034_sleep_disorder"],
+      "matchKeywords": ["수면", "잠", "불면", "sleep"]
+    },
+    {
+      "id": "general_cpx",
+      "file": "general_cpx.json",
+      "title": "일반 CPX 증상 기반 생성 규칙",
+      "matchCaseIds": [],
+      "matchKeywords": []
+    }
+  ],
+  "defaultRuleId": "general_cpx"
+}

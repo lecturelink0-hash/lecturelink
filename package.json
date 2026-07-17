@@ -11,6 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "cpx:smoke": "node scripts/test-cpx-deployment.mjs",
+    "cpx:bundle-check": "node scripts/check-cpx-client-bundle.mjs",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",
     "db:types:linked": "supabase gen types typescript --linked > lib/types/database.generated.ts",
     "db:reset": "supabase db reset",
@@ -18,7 +20,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@google/genai": "^2.12.0",
     "@opentelemetry/api": "^1.9.1",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.46.1",
     "@upstash/qstash": "^2.11.0",
@@ -33,6 +38,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tesseract.js": "^6.0.1",
+    "three": "^0.185.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

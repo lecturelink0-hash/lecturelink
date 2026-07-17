@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_smoking_cessation_v1",
+  "title": "금연 상담 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.3 CPX 40 금연 상담 — p172 채점표(병력 3·교육 7·관계 5) + p160~161 문진 목록 기반 재구성 (문장 직접 인용 없음). 병력 3→6 세분화, 진찰 3항목 신설, 가중치 30/5/30/25/10은 파생 규칙.",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric_counsel.py로 생성 — 상담형 커스텀 섹션)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(met/partial/not_met)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "상담형 가중치: 병력 30 + 진찰 5 + 교육 30 + PPI 25 + 임상예의 10 (교육 중심 상담형) — 파생 규칙, 사용자 검수 대상",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 30,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "sh01",
+          "text": "흡연력을 정량적으로 파악하였는가 (하루 개비 수·흡연 기간, 갑년)"
+        },
+        {
+          "id": "sh02",
+          "text": "니코틴 의존도를 평가하였는가 (기상 후 첫 흡연까지의 시간, 금연 구역에서 참기 어려움 등)",
+          "contextHint": "Fagerstrom 항목 일부를 구체 질문하면 인정"
+        },
+        {
+          "id": "sh03",
+          "text": "금연 의지와 금연 단계(계획 전·계획·준비·실행)를 파악하였는가",
+          "contextHint": "'1개월 내 금연할 생각이 있으세요?' 등"
+        },
+        {
+          "id": "sh04",
+          "text": "과거 금연 시도 이력과 실패 요인(금단증상·스트레스·체중 증가 등)을 확인하였는가"
+        },
+        {
+          "id": "sh05",
+          "text": "흡연 관련 동반 증상·질환(기침·가래, 고혈압·당뇨 등)과 기본 정보를 파악하였는가"
+        },
+        {
+          "id": "sh06",
+          "text": "주변 환경(가족 내 흡연자, 금연을 도와줄 사람, 음주 등 연관 습관)을 확인하였는가"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 5,
+      "gradeCutoffs": {
+        "excellent": 2,
+        "fairMin": 1
+      },
+      "items": [
+        {
+          "id": "sp01",
+          "text": "생체 징후를 확인하였는가"
+        },
+        {
+          "id": "sp02",
+          "text": "흡연 관련 신체 소견(구강·치아 착색, 손가락 변색, 호흡음 청진)을 확인하였는가"
+        },
+        {
+          "id": "sp03",
+          "text": "니코틴 의존 객관화 검사(호기 일산화탄소 또는 소변 코티닌) 시행을 언급하였는가"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 30,
+      "gradeCutoffs": {
+        "excellent": 5,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "se01",
+          "text": "금연 후 나타날 수 있는 금단증상(초조, 집중력 저하, 갈망, 체중 증가 등)과 그 경과를 설명하였는가"
+        },
+        {
+          "id": "se02",
+          "text": "흡연이 건강에 미치는 유해한 영향을 환자 상황에 맞게 설명하였는가",
+          "contextHint": "환자의 증상·질환·상황(임신 계획 등)과 연결하면 상위 인정"
+        },
+        {
+          "id": "se03",
+          "text": "적절한 금연 방법에 대한 행동요법을 제공하였는가 (금연 시작일 정하기, 흡연 유발 상황 회피, 물 마시기·대체 행동 등)"
+        },
+        {
+          "id": "se04",
+          "text": "금연을 위한 약물요법(니코틴 보충제, 부프로피온·바레니클린)을 설명하였는가",
+          "contextHint": "환자 상황에 따른 금기 고려(임신 등) 시 상위 인정"
+        },
+        {
+          "id": "se05",
+          "text": "자조 집단·금연 지원 서비스(보건소 금연클리닉, 금연상담전화 1544-9030 등) 정보를 제공하였는가"
+        },
+        {
+          "id": "se06",
+          "text": "치료에 대한 동기부여에 성공하였는가 (금연의 이득 제시, 환자의 동기 강화 반응 끌어내기)",
+          "contextHint": "5R 등 동기면담 요소 — 환자 반응과 연결해 판정"
+        },
+        {
+          "id": "se07",
+          "text": "환자의 금연 단계에 맞는 교육과 상담이 이루어졌는가",
+          "contextHint": "계획 전 단계엔 동기 부여, 준비 단계엔 실행 계획 중심이었는지"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

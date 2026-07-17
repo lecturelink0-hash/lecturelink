@@ -1,0 +1,1036 @@
+{
+  "categories": [
+    "관절 통증",
+    "기억력 저하",
+    "기침",
+    "두근거림",
+    "두통",
+    "목 통증",
+    "발열",
+    "배뇨 이상",
+    "변비",
+    "설사",
+    "소화불량/만성복통",
+    "수면장애",
+    "실신",
+    "어지럼",
+    "체중 감소",
+    "콧물/코막힘",
+    "피로",
+    "허리 통증"
+  ],
+  "cases": [
+    {
+      "id": "lumbar_hnp_rule",
+      "title": "허리 통증 (추간판탈출 의심)",
+      "category": "허리 통증",
+      "variant": "하지 방사통·SLR 양성 동반형",
+      "description": "허리 통증과 함께 한쪽 엉덩이부터 종아리까지 전기가 오듯 저리고 당기는 규칙입니다.",
+      "tags": [
+        "허리통증",
+        "추간판탈출",
+        "방사통",
+        "좌골신경통"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "lumbar_strain_rule",
+      "title": "급성 요추 염좌",
+      "category": "허리 통증",
+      "variant": "무거운 물건 들다 발생한 기계적 요통형",
+      "description": "이사 짐을 들다가 삐끗한 뒤 움직일 때마다 허리가 아픈 규칙입니다.",
+      "tags": [
+        "허리통증",
+        "요추염좌",
+        "기계적요통"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "spinal_stenosis_rule",
+      "title": "허리 통증 (척추관협착 의심)",
+      "category": "허리 통증",
+      "variant": "신경인성 파행 동반 고령 만성 요통형",
+      "description": "걸으면 다리가 저려 쉬어야 하고, 앉거나 허리를 굽히면 편해지는 고령 환자 규칙입니다.",
+      "tags": [
+        "허리통증",
+        "척추관협착",
+        "신경인성파행",
+        "고령"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "colon_cancer_constipation_rule",
+      "title": "변비 (적신호 동반)",
+      "category": "변비",
+      "variant": "배변 습관 급변 + 혈변·체중감소 적신호형",
+      "description": "평생 규칙적이던 배변이 석 달 전부터 변하고, 변이 가늘어지며 피가 묻어나는 적신호 규칙입니다.",
+      "tags": [
+        "변비",
+        "대장암",
+        "적신호",
+        "혈변",
+        "체중감소"
+      ],
+      "peCount": 4,
+      "mustAskCount": 7
+    },
+    {
+      "id": "drug_induced_constipation_rule",
+      "title": "변비 (약물 유발 의심)",
+      "category": "변비",
+      "variant": "진통제·철분제 복용 고령 변비형",
+      "description": "허리 통증으로 진통제를 늘리고 빈혈약을 시작한 뒤부터 변을 못 보는 고령 환자 규칙입니다.",
+      "tags": [
+        "변비",
+        "약물유발",
+        "고령",
+        "진통제"
+      ],
+      "peCount": 4,
+      "mustAskCount": 7
+    },
+    {
+      "id": "functional_constipation_rule",
+      "title": "기능성 변비",
+      "category": "변비",
+      "variant": "다이어트·불규칙 생활의 청년 변비형",
+      "description": "다이어트를 시작한 뒤 일주일에 두 번, 힘줘야 겨우 단단한 변을 보는 규칙입니다.",
+      "tags": [
+        "변비",
+        "기능성",
+        "식이",
+        "생활습관"
+      ],
+      "peCount": 4,
+      "mustAskCount": 7
+    },
+    {
+      "id": "acei_cough_rule",
+      "title": "만성 기침 (약물 유발 의심)",
+      "category": "기침",
+      "variant": "혈압약 변경 후 마른기침형",
+      "description": "두 달 전 혈압약을 바꾼 뒤부터 목이 간질간질한 마른기침이 밤낮없이 이어지는 규칙입니다.",
+      "tags": [
+        "기침",
+        "약물유발",
+        "ACE억제제",
+        "만성기침"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "acute_uri_cough_rule",
+      "title": "급성 기침 (상기도 감염)",
+      "category": "기침",
+      "variant": "감기 경과 중 기침형",
+      "description": "일주일 전 감기에 걸린 뒤 콧물과 함께 기침이 이어지는 규칙입니다.",
+      "tags": [
+        "기침",
+        "급성",
+        "상기도감염",
+        "감기"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "chronic_cough_redflag_rule",
+      "title": "만성 기침 (적신호 동반)",
+      "category": "기침",
+      "variant": "장기 흡연자의 기침 양상 변화 + 혈담·체중감소 적신호형",
+      "description": "40년 넘게 담배를 피운 환자의 기침이 두 달 전부터 달라지고 가래에 피가 비친 적신호 규칙입니다.",
+      "tags": [
+        "기침",
+        "적신호",
+        "흡연",
+        "혈담",
+        "체중감소"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "antibiotic_diarrhea_rule",
+      "title": "설사 (항생제 연관 의심)",
+      "category": "설사",
+      "variant": "항생제 치료 중 발생한 수양성 설사형",
+      "description": "항생제를 열흘 넘게 먹던 중 물설사가 하루 예닐곱 번 시작된 규칙입니다.",
+      "tags": [
+        "설사",
+        "항생제연관",
+        "C.difficile",
+        "수양성"
+      ],
+      "peCount": 4,
+      "mustAskCount": 7
+    },
+    {
+      "id": "food_poisoning_diarrhea_rule",
+      "title": "급성 설사 (식중독 의심)",
+      "category": "설사",
+      "variant": "의심 음식 섭취 후 급성 구토·설사형",
+      "description": "회식에서 굴을 먹고 반나절 뒤부터 구토와 물설사가 쏟아진 규칙입니다.",
+      "tags": [
+        "설사",
+        "식중독",
+        "급성",
+        "집단발병"
+      ],
+      "peCount": 4,
+      "mustAskCount": 7
+    },
+    {
+      "id": "ibs_diarrhea_rule",
+      "title": "만성 설사 (과민성 장증후군 의심)",
+      "category": "설사",
+      "variant": "스트레스 연관 만성 반복 설사형",
+      "description": "중요한 발표나 시험 때마다 배가 아프고 설사를 하는, 몇 년째 반복되는 규칙입니다.",
+      "tags": [
+        "설사",
+        "과민성장증후군",
+        "만성",
+        "스트레스"
+      ],
+      "peCount": 4,
+      "mustAskCount": 7
+    },
+    {
+      "id": "bppv_rule",
+      "title": "양성 발작성 체위성 현훈 (BPPV)",
+      "category": "어지럼",
+      "variant": "기상·두위 변화 시 단발 회전성 반복형",
+      "description": "아침에 일어나거나 머리 위치를 바꿀 때마다 세상이 빙글 도는 짧은 어지럼이 반복되는 규칙입니다.",
+      "tags": [
+        "어지럼",
+        "현훈",
+        "BPPV",
+        "말초성"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "cerebellar_stroke_dizziness_rule",
+      "title": "지속 어지럼 (중추성 의심)",
+      "category": "어지럼",
+      "variant": "혈관 위험인자 보유 고령의 급성 지속 회전성 어지럼 적신호형",
+      "description": "고혈압·당뇨약을 먹는 환자가 반나절째 계속되는 어지럼과 한쪽으로 쏠리는 증상으로 내원한 적신호 규칙입니다.",
+      "tags": [
+        "어지럼",
+        "현훈",
+        "중추성",
+        "적신호",
+        "소뇌"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "vestibular_neuritis_rule",
+      "title": "전정신경염",
+      "category": "어지럼",
+      "variant": "감기 선행 후 지속성 회전성 어지럼형",
+      "description": "감기를 앓은 뒤부터 하루 종일 지속되는 회전성 어지럼과 구역감으로 걷기도 힘들어진 규칙입니다.",
+      "tags": [
+        "어지럼",
+        "현훈",
+        "전정신경염",
+        "말초성",
+        "선행감염"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "functional_dyspepsia_rule",
+      "title": "기능성 소화불량",
+      "category": "소화불량/만성복통",
+      "variant": "스트레스·불규칙 식사의 식후 더부룩·조기포만형",
+      "description": "8개월 전 시작되어 최근 3개월간 지속된 식후 더부룩함과 조기 포만감이 있는 규칙입니다.",
+      "tags": [
+        "소화불량",
+        "기능성",
+        "조기포만감",
+        "스트레스"
+      ],
+      "peCount": 6,
+      "mustAskCount": 8
+    },
+    {
+      "id": "gastric_alarm_rule",
+      "title": "소화불량 (적신호 동반)",
+      "category": "소화불량/만성복통",
+      "variant": "체중 감소·위암 가족력 동반 중년의 만성 소화불량 적신호형",
+      "description": "석 달째 소화가 안 되고 밥량이 줄면서 몸무게가 5kg 빠진, 위암 가족력이 있는 규칙입니다.",
+      "tags": [
+        "소화불량",
+        "적신호",
+        "체중감소",
+        "위암가족력"
+      ],
+      "peCount": 6,
+      "mustAskCount": 8
+    },
+    {
+      "id": "peptic_ulcer_rule",
+      "title": "소화성궤양 의심",
+      "category": "소화불량/만성복통",
+      "variant": "진통소염제 장기 복용자의 공복·야간 명치 통증형",
+      "description": "무릎 관절염 약을 오래 먹는 환자가 두 달째 배가 고플 때와 새벽에 명치가 쓰려 잠을 깨는 규칙입니다.",
+      "tags": [
+        "소화불량",
+        "소화성궤양",
+        "NSAIDs",
+        "공복통"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "chronic_fatigue_rule",
+      "title": "만성 피로 (기질적 원인 배제형)",
+      "category": "피로",
+      "variant": "휴식 무회복·운동 후 악화의 1년 지속 피로형",
+      "description": "1년 넘게 쉬어도 풀리지 않는 피로와 근육통, 집중력 저하가 계속되는 규칙입니다.",
+      "tags": [
+        "피로",
+        "ME/CFS",
+        "만성피로증후군",
+        "PEM",
+        "휴식무회복"
+      ],
+      "peCount": 6,
+      "mustAskCount": 9
+    },
+    {
+      "id": "hypothyroidism_fatigue_rule",
+      "title": "만성 피로 (갑상샘저하증)",
+      "category": "피로",
+      "variant": "중년 여성의 서서히 진행한 만성 피로 + 저하증 증상군형",
+      "description": "1년 가까이 하루 종일 피곤하고, 추위를 못 견디고 살이 찌며 변비가 생긴 규칙입니다.",
+      "tags": [
+        "피로",
+        "갑상샘저하증",
+        "만성피로",
+        "내분비"
+      ],
+      "peCount": 6,
+      "mustAskCount": 8
+    },
+    {
+      "id": "pulmonary_tb_fatigue_rule",
+      "title": "피로 (기질적 원인 의심)",
+      "category": "피로",
+      "variant": "청년의 아급성 피로 + 야간 발한·체중 감소·기침 적신호형",
+      "description": "두 달째 기운이 없고, 밤에 식은땀이 나며 기침과 체중 감소가 함께 나타난 규칙입니다.",
+      "tags": [
+        "피로",
+        "결핵",
+        "적신호",
+        "감염",
+        "체중감소"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "influenza_fever_rule",
+      "title": "발열 (인플루엔자 의심)",
+      "category": "발열",
+      "variant": "유행기 급성 고열 + 전신 근육통형",
+      "description": "어제 오후 갑자기 시작된 고열과 온몸이 두들겨 맞은 듯한 몸살, 마른기침의 규칙입니다.",
+      "tags": [
+        "발열",
+        "인플루엔자",
+        "독감",
+        "유행"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "pyelonephritis_fever_rule",
+      "title": "발열 (급성 신우신염 의심)",
+      "category": "발열",
+      "variant": "배뇨 증상 선행 + 옆구리 통증 동반 고열형",
+      "description": "이틀 전 소변볼 때 따가움이 시작되더니 오늘부터 열이 펄펄 나고 오른쪽 옆구리가 아픈 규칙입니다.",
+      "tags": [
+        "발열",
+        "신우신염",
+        "배뇨통",
+        "비뇨기감염"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "scrub_typhus_fever_rule",
+      "title": "발열 (쯔쯔가무시병 의심)",
+      "category": "발열",
+      "variant": "가을 야외활동 후 고열 + 가피 동반형",
+      "description": "추석 벌초를 다녀오고 일주일 뒤부터 고열과 심한 두통, 몸살이 나는 가을철 규칙입니다.",
+      "tags": [
+        "발열",
+        "쯔쯔가무시",
+        "가을철열성질환",
+        "가피"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "migraine_rule",
+      "title": "편두통",
+      "category": "두통",
+      "variant": "월경 연관 반복성 일측 박동성 두통형",
+      "description": "수년 전부터 한 달에 몇 차례, 한쪽 관자놀이가 욱신거리며 속이 메스껍고 빛이 거슬리는 두통이 반복되는 규칙입니다.",
+      "tags": [
+        "두통",
+        "편두통",
+        "박동성",
+        "일차성두통",
+        "가족력"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "tension_headache_rule",
+      "title": "긴장형 두통",
+      "category": "두통",
+      "variant": "만성 스트레스 유발 양측성 조이는 두통형",
+      "description": "업무 스트레스 이후 시작된, 머리 양쪽을 띠로 조이는 듯한 둔한 두통이 지속되는 규칙입니다.",
+      "tags": [
+        "두통",
+        "긴장형",
+        "스트레스",
+        "일차성두통"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "thunderclap_sah_rule",
+      "title": "벼락 두통 (이차성 의심)",
+      "category": "두통",
+      "variant": "고혈압 방치 중년의 급성 벼락 두통 적신호형",
+      "description": "한 시간 전 갑자기 시작된, 태어나서 처음 겪는 극심한 두통과 구토로 급히 내원한 적신호 규칙입니다.",
+      "tags": [
+        "두통",
+        "벼락두통",
+        "적신호",
+        "이차성두통",
+        "응급"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "acute_gout_rule",
+      "title": "급성 관절염 (통풍 의심)",
+      "category": "관절 통증",
+      "variant": "음주 다음날 새벽 제1중족지 급성 발작형",
+      "description": "회식 다음날 새벽, 엄지발가락 뿌리가 바람만 스쳐도 아플 만큼 붓고 벌게진 규칙입니다.",
+      "tags": [
+        "관절통증",
+        "통풍",
+        "급성단관절염",
+        "음주"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "knee_oa_rule",
+      "title": "무릎 통증 (골관절염 의심)",
+      "category": "관절 통증",
+      "variant": "고령 사용 시 악화 만성 무릎 통증형",
+      "description": "몇 년 전부터 계단을 오르내리거나 오래 걸으면 무릎이 아프고, 쉬면 나아지는 규칙입니다.",
+      "tags": [
+        "관절통증",
+        "골관절염",
+        "무릎",
+        "퇴행성"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "rheumatoid_arthritis_rule",
+      "title": "다발 관절통 (류마티스 의심)",
+      "category": "관절 통증",
+      "variant": "아침 강직 동반 양측 소관절 만성형",
+      "description": "석 달째 양쪽 손가락 마디가 붓고, 아침이면 한 시간 넘게 뻣뻣해 주먹이 안 쥐어지는 규칙입니다.",
+      "tags": [
+        "관절통증",
+        "류마티스",
+        "아침강직",
+        "다발관절"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "early_alzheimer_rule",
+      "title": "기억력 저하 (초기 치매 의심)",
+      "category": "기억력 저하",
+      "variant": "서서히 진행하는 최근 기억 장애형",
+      "description": "2년에 걸쳐 서서히 심해진 건망증으로 약속을 잊고 같은 질문을 반복하게 된 규칙입니다.",
+      "tags": [
+        "기억력저하",
+        "치매",
+        "알츠하이머"
+      ],
+      "peCount": 4,
+      "mustAskCount": 8
+    },
+    {
+      "id": "mci_memory_rule",
+      "title": "기억력 저하 (경도인지장애 의심)",
+      "category": "기억력 저하",
+      "variant": "주관적 호소 크나 일상 기능 유지형",
+      "description": "최근 단어와 이름이 잘 떠오르지 않아 걱정하지만 일상생활은 문제없이 하고 있는 규칙입니다.",
+      "tags": [
+        "기억력저하",
+        "경도인지장애",
+        "MCI"
+      ],
+      "peCount": 4,
+      "mustAskCount": 8
+    },
+    {
+      "id": "pseudodementia_rule",
+      "title": "기억력 저하 (우울증 관련 인지저하 의심)",
+      "category": "기억력 저하",
+      "variant": "아급성 경과·우울 동반·\"모르겠다\" 답변형",
+      "description": "배우자와 사별한 뒤 몇 달 만에 기억력이 뚝 떨어졌다며 무기력하게 호소하는 규칙입니다.",
+      "tags": [
+        "기억력저하",
+        "우울증관련인지저하",
+        "노인우울증",
+        "자살위험평가"
+      ],
+      "peCount": 4,
+      "mustAskCount": 8
+    },
+    {
+      "id": "cervical_radiculopathy_rule",
+      "title": "목 통증 (신경근병증 의심)",
+      "category": "목 통증",
+      "variant": "상지 방사통·저림 동반형",
+      "description": "목 통증과 함께 한쪽 팔을 타고 손가락까지 전기처럼 저린 규칙입니다.",
+      "tags": [
+        "목통증",
+        "신경근병증",
+        "방사통",
+        "저림"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "myofascial_neck_rule",
+      "title": "목 통증 (근막통증증후군 의심)",
+      "category": "목 통증",
+      "variant": "압통점·연관통 동반 만성 뒷목·어깨 통증형",
+      "description": "뒷목과 어깨가 늘 뭉치고, 특정 지점을 누르면 머리 뒤까지 뻗치는 통증이 있는 규칙입니다.",
+      "tags": [
+        "목통증",
+        "근막통증",
+        "압통점",
+        "자세"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "whiplash_neck_rule",
+      "title": "목 통증 (외상 후 경부염좌)",
+      "category": "목 통증",
+      "variant": "추돌사고 후 지연 발생 목 통증형",
+      "description": "이틀 전 접촉사고 후 다음날부터 목이 뻣뻣하고 돌리기 힘들어진 규칙입니다.",
+      "tags": [
+        "목통증",
+        "경부염좌",
+        "교통사고",
+        "외상"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "hyperthyroid_palpitation_rule",
+      "title": "두근거림 (갑상선기능항진 의심)",
+      "category": "두근거림",
+      "variant": "지속성 두근거림 + 체중감소·더위 못 견딤형",
+      "description": "몇 달째 계속 가슴이 두근거리고, 잘 먹는데도 살이 빠지며 더위를 못 견디는 규칙입니다.",
+      "tags": [
+        "두근거림",
+        "갑상선기능항진",
+        "체중감소"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "panic_palpitation_rule",
+      "title": "두근거림 (불안 연관)",
+      "category": "두근거림",
+      "variant": "상황 유발·과호흡 동반 발작 불안형",
+      "description": "발표나 지하철 같은 상황에서 갑자기 두근거리고 숨이 막히며 죽을 것 같은 공포가 몰려오는 규칙입니다.",
+      "tags": [
+        "두근거림",
+        "공황",
+        "불안",
+        "과호흡"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "psvt_palpitation_rule",
+      "title": "발작성 두근거림 (PSVT 의심)",
+      "category": "두근거림",
+      "variant": "갑자기 시작·갑자기 끝나는 반복 발작형",
+      "description": "몇 달 전부터 심장이 스위치 켜듯 갑자기 빠르게 뛰다가 뚝 멈추는 발작이 반복되는 규칙입니다.",
+      "tags": [
+        "두근거림",
+        "PSVT",
+        "발작성",
+        "부정맥"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "acute_sinusitis_rule",
+      "title": "콧물/코막힘 (급성 부비동염 의심)",
+      "category": "콧물/코막힘",
+      "variant": "감기 후 화농성 콧물 + 안면 압통형",
+      "description": "감기가 나을 듯하다가 다시 심해지며 누런 콧물과 광대뼈 부위 통증이 생긴 규칙입니다.",
+      "tags": [
+        "콧물",
+        "부비동염",
+        "축농증",
+        "안면통"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "allergic_rhinitis_rule",
+      "title": "콧물/코막힘 (알레르기 비염 의심)",
+      "category": "콧물/코막힘",
+      "variant": "계절성 맑은 콧물 + 가려움·재채기형",
+      "description": "봄만 되면 맑은 콧물이 줄줄 나고 재채기가 연달아 터지며 눈까지 가려운 규칙입니다.",
+      "tags": [
+        "콧물",
+        "알레르기비염",
+        "재채기",
+        "계절성"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "vasomotor_rhinitis_rule",
+      "title": "콧물/코막힘 (혈관운동성 비염 의심)",
+      "category": "콧물/코막힘",
+      "variant": "온도 변화·자극 유발 맑은 콧물형",
+      "description": "찬 공기를 쐬거나 뜨거운 국물을 먹을 때마다 맑은 콧물이 흐르는, 가려움 없는 규칙입니다.",
+      "tags": [
+        "콧물",
+        "혈관운동성비염",
+        "비알레르기"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "alcohol_related_sleep_disorder_rule",
+      "title": "알코올 관련 수면장애",
+      "category": "수면장애",
+      "variant": "음주 후 입면 후 잦은 각성형",
+      "description": "술로 잠들지만 자주 깨고 꿈이 많아지는 알코올 관련 수면장애 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "알코올",
+        "음주",
+        "수면유지장애"
+      ],
+      "peCount": 4,
+      "mustAskCount": 6
+    },
+    {
+      "id": "bph_nocturia_sleep_disorder_rule",
+      "title": "전립선비대증 관련 수면장애",
+      "category": "수면장애",
+      "variant": "야간뇨 수면분절형",
+      "description": "60세 이상 남성에서 야간뇨로 3~4회 깨는 전립선비대증 관련 수면장애 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "전립선비대증",
+        "야간뇨",
+        "BPH"
+      ],
+      "peCount": 2,
+      "mustAskCount": 6
+    },
+    {
+      "id": "chronic_primary_insomnia_rule",
+      "title": "만성/일차성 불면장애",
+      "category": "수면장애",
+      "variant": "입면곤란·수면유지곤란 혼합 가능",
+      "description": "3개월 이상 지속되는 입면곤란/야간각성과 주간 기능 저하를 중심으로 한 불면장애 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "불면장애",
+        "일차성불면",
+        "수면위생"
+      ],
+      "peCount": 4,
+      "mustAskCount": 9
+    },
+    {
+      "id": "circadian_rhythm_shift_work_rule",
+      "title": "하루주기 율동 수면장애",
+      "category": "수면장애",
+      "variant": "교대·야간근무형",
+      "description": "교대·야간근무 시작 이후 수면 시간대 불일치와 근무 중 졸림이 생기는 증례 생성 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "하루주기율동",
+        "교대근무",
+        "야간근무"
+      ],
+      "peCount": 4,
+      "mustAskCount": 9
+    },
+    {
+      "id": "depression_related_sleep_disorder_rule",
+      "title": "우울장애 관련 수면장애",
+      "category": "수면장애",
+      "variant": "조기각성/우울 증상 동반형",
+      "description": "조기각성과 2주 이상 지속되는 우울 증상, 식욕·체중·집중력 변화를 동반하는 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "우울장애",
+        "조기각성",
+        "정신건강"
+      ],
+      "peCount": 4,
+      "mustAskCount": 8
+    },
+    {
+      "id": "medication_induced_sleep_disorder_rule",
+      "title": "약물 유발 수면장애",
+      "category": "수면장애",
+      "variant": "각성 유발 약물형",
+      "description": "다이어트약, 스테로이드, 항고혈압제, 기관지확장제 등 복용 후 입면이 방해되는 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "약물유발",
+        "다이어트약",
+        "스테로이드",
+        "기관지확장제"
+      ],
+      "peCount": 4,
+      "mustAskCount": 5
+    },
+    {
+      "id": "menopause_related_sleep_disorder_rule",
+      "title": "폐경 관련 수면장애",
+      "category": "수면장애",
+      "variant": "안면홍조/식은땀 수면유지장애형",
+      "description": "48~55세 여성에서 생리 불규칙/무월경, 안면홍조, 식은땀으로 자주 깨는 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "폐경",
+        "안면홍조",
+        "여성건강"
+      ],
+      "peCount": 4,
+      "mustAskCount": 6
+    },
+    {
+      "id": "narcolepsy_rule",
+      "title": "기면병",
+      "category": "수면장애",
+      "variant": "1형/2형/초기형 랜덤",
+      "description": "참을 수 없는 주간 졸림과 짧은 토막잠 후 일시적 회복을 중심으로 한 기면병 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "기면병",
+        "주간졸림",
+        "탈력발작"
+      ],
+      "peCount": 3,
+      "mustAskCount": 9
+    },
+    {
+      "id": "obstructive_sleep_apnea_rule",
+      "title": "폐쇄수면무호흡 OSA",
+      "category": "수면장애",
+      "variant": "비만·코골이·목격된 무호흡형",
+      "description": "큰 코골이, 목격된 무호흡, 비회복성 수면과 심한 주간 졸림을 중심으로 한 OSA 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "OSA",
+        "코골이",
+        "무호흡",
+        "비만"
+      ],
+      "peCount": 6,
+      "mustAskCount": 11
+    },
+    {
+      "id": "periodic_limb_movement_disorder_rule",
+      "title": "주기성 사지운동장애 PLMD",
+      "category": "수면장애",
+      "variant": "동거인 목격 수면 중 다리 움직임형",
+      "description": "자는 중 주기적 하지 움직임을 동거인이 목격하고 본인은 자각하지 못하는 PLMD 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "PLMD",
+        "하지운동",
+        "수면분절"
+      ],
+      "peCount": 6,
+      "mustAskCount": 11
+    },
+    {
+      "id": "physical_disease_gerd_hyperthyroid_sleep_disorder_rule",
+      "title": "신체질환 관련 수면장애 GERD/갑상샘",
+      "category": "수면장애",
+      "variant": "GERD 또는 갑상샘기능항진증 변형",
+      "description": "GERD의 야간 역류/기침 또는 갑상샘기능항진증의 각성·두근거림으로 잠을 못 자는 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "GERD",
+        "갑상샘기능항진증",
+        "신체질환"
+      ],
+      "peCount": 3,
+      "mustAskCount": 6
+    },
+    {
+      "id": "ptsd_nightmare_disorder_rule",
+      "title": "PTSD 연동 악몽장애",
+      "category": "수면장애",
+      "variant": "외상 사건 재현 악몽형",
+      "description": "과거 외상 사건과 연결된 반복 악몽, 회피, 침습, 과각성을 중심으로 한 PTSD 연동 악몽 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "PTSD",
+        "악몽장애",
+        "트라우마"
+      ],
+      "peCount": 3,
+      "mustAskCount": 9
+    },
+    {
+      "id": "rem_sleep_behavior_disorder_rule",
+      "title": "렘수면 행동장애 RBD",
+      "category": "수면장애",
+      "variant": "고령 남성 꿈-행동 일치형",
+      "description": "새벽녘 꿈 내용과 실제 주먹질·발길질·고함이 일치하고 각성 후 꿈을 생생히 기억하는 RBD 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "RBD",
+        "렘수면행동장애",
+        "잠꼬대",
+        "퇴행성질환"
+      ],
+      "peCount": 2,
+      "mustAskCount": 9
+    },
+    {
+      "id": "restless_legs_syndrome_rule",
+      "title": "하지불안증후군 RLS",
+      "category": "수면장애",
+      "variant": "URGE 4요건 중심 입면곤란형",
+      "description": "자기 전 다리 불편감, 움직이고 싶은 충동, 움직이면 완화, 저녁·밤 악화를 중심으로 한 RLS 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "RLS",
+        "하지불안증후군",
+        "다리불편감"
+      ],
+      "peCount": 6,
+      "mustAskCount": 13
+    },
+    {
+      "id": "sleepwalking_somnambulism_rule",
+      "title": "몽유병/수면보행증",
+      "category": "수면장애",
+      "variant": "NREM 수면 전반부 보행형",
+      "description": "잠든 지 1~3시간 이내 눈을 뜨고 돌아다니지만 아침에 기억하지 못하는 몽유병 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "몽유병",
+        "수면보행증",
+        "NREM"
+      ],
+      "peCount": 2,
+      "mustAskCount": 8
+    },
+    {
+      "id": "transient_insomnia_rule",
+      "title": "일과성 수면장애",
+      "category": "수면장애",
+      "variant": "3주 이내 수면환경/스트레스 유발형",
+      "description": "3주 이내 시작된 급성·일과성 입면곤란과 수면위생 요인을 중심으로 한 규칙입니다.",
+      "tags": [
+        "수면장애",
+        "일과성불면",
+        "급성불면",
+        "수면위생"
+      ],
+      "peCount": 2,
+      "mustAskCount": 6
+    },
+    {
+      "id": "cardiac_syncope_rule",
+      "title": "실신 (심장성 고위험)",
+      "category": "실신",
+      "variant": "운동 중·전구증상 없는 실신 + 급사 가족력 긴급평가형",
+      "description": "운동 중 전조 없이 실신하고 급사 가족력이 있어 즉시 심장 평가가 필요한 고위험 규칙입니다.",
+      "tags": [
+        "실신",
+        "심장성",
+        "적신호",
+        "운동중",
+        "가족력"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "orthostatic_gi_bleed_syncope_rule",
+      "title": "실신 (상부위장관 출혈 의심)",
+      "category": "실신",
+      "variant": "흑색변·저혈압·빈맥 동반 중년의 저혈량성 실신 적신호형",
+      "description": "회사에서 일어서다 쓰러진 중년 환자가 저혈압·빈맥과 흑색변을 보이는 상부위장관 출혈 적신호 규칙입니다.",
+      "tags": [
+        "실신",
+        "기립성",
+        "위장관출혈",
+        "적신호"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "vasovagal_syncope_rule",
+      "title": "혈관미주신경성 실신",
+      "category": "실신",
+      "variant": "붐비는 환경·전구증상 동반 청년 실신형",
+      "description": "붐비는 지하철에서 어지럽고 식은땀이 나더니 잠깐 정신을 잃고 쓰러진 규칙입니다.",
+      "tags": [
+        "실신",
+        "혈관미주신경성",
+        "전구증상"
+      ],
+      "peCount": 7,
+      "mustAskCount": 7
+    },
+    {
+      "id": "acute_cystitis_rule",
+      "title": "배뇨 이상 (급성 방광염 의심)",
+      "category": "배뇨 이상",
+      "variant": "배뇨통·빈뇨·급박뇨의 젊은 여성형",
+      "description": "어제부터 소변볼 때 찌릿하게 아프고, 화장실을 들락거리는데 시원하지 않은 규칙입니다.",
+      "tags": [
+        "배뇨이상",
+        "방광염",
+        "배뇨통",
+        "요로감염"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "bladder_cancer_hematuria_rule",
+      "title": "배뇨 이상 (무통성 혈뇨 적신호)",
+      "category": "배뇨 이상",
+      "variant": "장기 흡연자의 무통성 육안 혈뇨 적신호형",
+      "description": "아프지는 않은데 소변이 벌겋게 나온 적이 두 번 있는, 담배를 오래 피운 환자의 적신호 규칙입니다.",
+      "tags": [
+        "배뇨이상",
+        "혈뇨",
+        "방광암",
+        "적신호",
+        "흡연"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "bph_luts_rule",
+      "title": "배뇨 이상 (전립선비대 의심)",
+      "category": "배뇨 이상",
+      "variant": "약한 요류·잔뇨감·야간뇨의 고령 남성형",
+      "description": "소변 줄기가 가늘고 힘이 없어졌으며, 봐도 시원하지 않고 밤에 두세 번 깨는 규칙입니다.",
+      "tags": [
+        "배뇨이상",
+        "전립선비대",
+        "LUTS",
+        "고령남성"
+      ],
+      "peCount": 5,
+      "mustAskCount": 7
+    },
+    {
+      "id": "ibd_weight_loss_rule",
+      "title": "체중 감소 (염증성 장질환 의심)",
+      "category": "체중 감소",
+      "variant": "만성 혈성 설사 동반 청년 체중 감소형",
+      "description": "석 달째 하루 네댓 번 설사가 이어지고 변에 피가 섞이며 살이 빠지는 규칙입니다.",
+      "tags": [
+        "체중감소",
+        "염증성장질환",
+        "혈변",
+        "만성설사"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "malignancy_weight_loss_rule",
+      "title": "체중 감소 (악성 종양 의심)",
+      "category": "체중 감소",
+      "variant": "고령 흡연자의 식욕부진 동반 진행성 감소 적신호형",
+      "description": "입맛이 없어 먹는 게 줄고 반년 새 9kg이 빠진, 오래 흡연한 고령 환자의 적신호 규칙입니다.",
+      "tags": [
+        "체중감소",
+        "악성종양",
+        "적신호",
+        "식욕부진",
+        "고령"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    },
+    {
+      "id": "new_dm_weight_loss_rule",
+      "title": "체중 감소 (당뇨병 의심)",
+      "category": "체중 감소",
+      "variant": "다음·다뇨·다식 동반 체중 감소형",
+      "description": "밥도 잘 먹고 물을 달고 사는데 석 달 새 살이 쭉 빠지고 소변이 잦아진 규칙입니다.",
+      "tags": [
+        "체중감소",
+        "당뇨병",
+        "다음다뇨"
+      ],
+      "peCount": 6,
+      "mustAskCount": 7
+    }
+  ]
+}

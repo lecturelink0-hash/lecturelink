@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "hypothyroidism_weight_gain_rule",
+  "title": "체중 증가 (갑상샘저하증 의심)",
+  "category": "체중 증가",
+  "targetDiagnosis": "갑상샘저하증 의심 (Suspected hypothyroidism)",
+  "variant": "서서히 늘어난 체중과 추위불내성·변비형",
+  "description": "체중 증가가 단순 지방 증가인지 부종인지 구분하고 내분비·심장·신장·간·약물 원인과 위험 신호를 평가하는 규칙입니다.",
+  "tags": ["체중 증가", "갑상샘저하증", "추위불내성", "변비"],
+  "sourceTextFile": "027_weight_gain.json·027_weight_gain_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {
+    "fixed": {"location": "외래"},
+    "recommended": {"gender": "무관", "age": "30~60세"},
+    "randomizable": ["성별", "이름", "직업", "키", "몸무게"],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "42세 환자가 8개월 사이 식사량 변화가 크지 않은데 8kg이 늘고 추위를 많이 타며 변비와 피로가 생겨 내원했다. 다리 부종·호흡곤란·흉통·소변량 감소는 없고, 최근 스테로이드나 정신과 약물 복용도 없다.",
+    "mustInclude": ["8개월간 8kg 체중 증가", "추위불내성·변비·피로", "식사량 변화 크지 않음", "다리 부종·호흡곤란·흉통 없음", "스테로이드·정신과 약물 복용 없음"],
+    "preferredVariants": ["피부가 건조하고 머리카락이 푸석한 느낌", "허리둘레도 늘어 걱정함"],
+    "mustAbsent": ["급격한 전신 부종", "황달·복수", "소변량 감소·거품뇨", "심한 두통·시야 변화"]
+  },
+  "pastHistoryRule": {
+    "mustInclude": ["심장·신장·간질환 진단 없음", "이전 갑상샘 치료력 없음"],
+    "mustAbsent": ["쿠싱증후군 진단", "최근 임신"]
+  },
+  "familyHistoryRule": {
+    "recommended": ["어머니가 갑상샘 질환 치료 중"],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": ["주 1회 가벼운 걷기", "음주 드묾"],
+    "recommended": ["비흡연", "야식 거의 없음"]
+  },
+  "physicalExamRule": [
+    {"item": "활력징후·체형·허리둘레", "method": "혈압·맥박·키·체중·허리둘레와 전신 체형 확인", "expectedFinding": "혈압 124/78, 맥박 58회, BMI 27, 허리둘레 증가", "polarity": "positive", "examConceptId": "vital_signs"},
+    {"item": "결막·공막·피부·모발", "method": "결막 창백·공막 황달과 피부·모발 건조 확인", "expectedFinding": "결막 창백·공막 황달은 없고 피부와 모발이 다소 건조함", "polarity": "positive", "examConceptId": "conjunctival_pallor"},
+    {"item": "갑상샘·쿠싱 양상", "method": "갑상샘 촉진과 얼굴·자색선조 확인", "expectedFinding": "갑상샘 종대·압통, moon face·자색선조 없음", "examConceptId": "thyroid_palpation"},
+    {"item": "심음·호흡음·경정맥", "method": "심음·호흡음 청진과 경정맥 팽대 확인", "expectedFinding": "심음·호흡음 정상, 경정맥 팽대 없음", "examConceptId": "jvp"},
+    {"item": "복부·간비장·하지 부종", "method": "복부 시진·촉진으로 복수·간비장 비대 확인 및 하지 부종 평가", "expectedFinding": "복수·간비장 비대·하지 함요부종 없음", "examConceptId": "peripheral_edema"}
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "식사량은 비슷한데 체중이 늘고 추위를 타며 변비가 생겨 걱정하는 환자다. 체중 변화·부종·식습관·동반 증상·가족력은 질문할 때만 답한다.",
+    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "체중과 식습관 질문에는 비판단적인 말투일 때 협조적으로 답한다.", "호흡곤란·급격한 부종·소변 감소 질문에는 현재 없다고 명확히 답한다."],
+    "positiveClues": ["서서히 증가한 체중", "추위불내성·변비·피로", "피부·모발 건조", "갑상샘 질환 가족력"],
+    "negativeClues": ["심부전·신증후군·간질환 시사 부종 없음", "스테로이드·정신과 약물 복용 없음", "쿠싱 양상 없음"]
+  },
+  "evaluationUse": {
+    "mustAsk": ["체중 증가 시작·기간·증가량·부위·키·체중·허리둘레", "지방 증가와 얼굴·다리 부종, 소변량·거품뇨 구분", "호흡곤란·흉통·피로·황달·복부팽만 등 장기질환 단서", "추위불내성·변비·피부/모발 변화와 쿠싱·월경·다모증 단서", "식사량·야식·운동·스트레스·수면", "스테로이드·호르몬·정신과 약물, 심장·신장·간·갑상샘 병력·가족력", "혈당·지질·갑상샘·간/신장·소변검사와 악화 시 진료 기준"],
+    "positiveClues": ["8개월 8kg 체중 증가", "추위불내성·변비", "피부·모발 건조"],
+    "negativeClues": ["전신 부종·호흡곤란·소변 감소 없음", "약물 유발·쿠싱·간질환 단서 없음"],
+    "educationTopics": ["원인별 혈액·소변 검사", "비난 없는 식사·활동·체중 기록", "급격한 부종·숨참·흉통·소변 감소 시 신속한 진료"]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 체중 증가 (갑상샘저하증 의심)\n- 8개월간 8kg 증가와 추위불내성·변비·피로, 피부·모발 건조.\n- 다리 부종·호흡곤란·소변 감소는 없고 스테로이드·정신과 약은 복용하지 않음.\n\n추가 질문: \"먹는 건 비슷한데 자꾸 체중이 늘어서 걱정돼요.\"",
+  "rawRuleText": "# 증례명 : 체중 증가 (갑상샘저하증 의심)\n- 8개월간 8kg 증가와 추위불내성·변비·피로, 피부·모발 건조.\n- 다리 부종·호흡곤란·소변 감소는 없고 스테로이드·정신과 약은 복용하지 않음.\n\n추가 질문: \"먹는 건 비슷한데 자꾸 체중이 늘어서 걱정돼요.\""
+}

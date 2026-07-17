@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "essential_hand_tremor_rule",
+  "title": "손떨림 (본태떨림 의심)",
+  "category": "손떨림",
+  "targetDiagnosis": "본태떨림 의심 (Suspected essential tremor)",
+  "variant": "양측 자세·동작 떨림과 가족력형",
+  "description": "점진적인 양측 손떨림에서 떨림 유형과 일상 기능을 구분하고, 뇌졸중·파킨슨증·소뇌질환·대사 및 약물 원인을 안전하게 감별하는 규칙입니다.",
+  "tags": ["손떨림", "본태떨림", "신경학적 진찰", "갑상샘", "응급 감별"],
+  "sourceTextFile": "041_hand_tremor.json·041_hand_tremor_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {"fixed": {"gender": "여성", "age": 57}, "recommended": {"occupation": "초등학교 교사"}, "randomizable": ["이름", "키", "몸무게"], "mustAbsent": []},
+  "scenarioRule": {
+    "caseSummary": "57세 교사가 4년 전부터 양손이 물건을 들거나 칠판에 글씨를 쓸 때 떨린다고 내원했다. 서서히 심해져 찻잔을 들 때 불편하지만, 가만히 둘 때는 거의 떨리지 않고 보행·말·감각 변화는 없다. 아버지도 나이가 들며 손이 떨렸다고 한다.",
+    "mustInclude": ["4년간 서서히 진행한 양측 손떨림", "자세·동작 시 악화되고 안정 시 거의 없음", "글씨·찻잔 들기 불편", "가족력", "보행·말·감각 변화 없음"],
+    "preferredVariants": ["발표 전 긴장·커피를 많이 마신 날 악화", "술을 치료 목적으로 사용하지 않음"],
+    "mustAbsent": ["갑작스러운 발병", "편측 마비·말 어눌함", "심한 두통·의식저하", "근경직·느린 보행"]
+  },
+  "pastHistoryRule": {"mustInclude": ["고혈압 외 특이 병력 없음"], "mustAbsent": ["갑상샘 질환", "뇌졸중", "당뇨 약물 사용"]},
+  "familyHistoryRule": {"recommended": ["아버지의 고령기 손떨림"], "mustAbsent": ["유전성 운동실조 진단"]},
+  "socialHistoryRule": {"fixed": ["커피 하루 3~4잔", "음주 드묾", "비흡연"], "recommended": ["수업·학부모 상담 전 긴장" ]},
+  "physicalExamRule": [
+    {"item": "활력징후·결막", "method": "혈압·맥박·체온과 결막 창백 확인", "expectedFinding": "혈압 132/78 mmHg, 맥박 76회/분 규칙적, 발열·결막 창백 없음", "examConceptId": "vital_signs"},
+    {"item": "갑상샘", "method": "갑상샘 시진·촉진", "expectedFinding": "갑상샘 비대·결절·압통 없음", "examConceptId": "thyroid_palpation"},
+    {"item": "안정떨림", "method": "양손을 무릎 위에 둔 상태에서 관찰", "expectedFinding": "안정 시 뚜렷한 떨림 없음", "examConceptId": "tremor_observation"},
+    {"item": "자세·동작 떨림", "method": "양팔을 앞으로 뻗고 나선 그리기·글씨 쓰기 관찰", "expectedFinding": "양손에서 자세·동작 시 미세한 대칭 떨림이 보이고 나선과 글씨가 약간 흔들림", "polarity": "positive", "examConceptId": "tremor_observation"},
+    {"item": "신경학적 진찰", "method": "안구운동·근력·감각·반사·근경직 확인", "expectedFinding": "뇌신경·근력·감각·심부건반사 정상, 근경직 없음", "examConceptId": "neurologic_screening"},
+    {"item": "협응·보행", "method": "손가락-코·빠른 교대운동·보행·Tandem/Romberg 검사", "expectedFinding": "협응·보행·Tandem/Romberg 정상", "examConceptId": "gait_observation"}
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "환자는 손떨림 때문에 수업과 식사 자리에서 창피하다고 느끼지만, 구체적인 떨림 유형·가족력·카페인·적신호는 질문할 때만 답한다.",
+    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "떨림이 안정 시에는 거의 없고 동작 시 악화된다는 정보는 관련 질문에만 제공한다.", "말·시야·근력·보행·의식 변화 질문에는 없다고 명확히 답한다."],
+    "positiveClues": ["양측 자세·동작 떨림", "서서히 진행", "가족력", "글씨·찻잔 기능 저하"],
+    "negativeClues": ["안정떨림·근경직·서동·보행 이상 없음", "뇌졸중 적신호 없음", "갑상샘 항진·저혈당 단서 없음"]
+  },
+  "evaluationUse": {
+    "mustAsk": ["발병 시점·경과·편측/양측·다른 부위와 일상 기능", "안정·자세·동작/의도 떨림과 규칙성", "보행·근경직·협응과 말·시야·근력·두통 등 적신호", "공복·식은땀·체중·더위불내성·심계항진", "카페인·음주/금주·스트레스·약물·보충제·가족력", "활력징후·갑상샘·떨림 유형·신경·협응/보행 진찰", "검사·신경과 평가와 응급 적신호·안전 교육"],
+    "positiveClues": ["자세·동작 떨림", "양측성", "가족력", "일상 기능 저하"],
+    "negativeClues": ["파킨슨증·소뇌·뇌졸중·갑상샘 항진 적신호 없음"],
+    "educationTopics": ["떨림 원인 감별 검사와 신경과 평가", "새 신경학적 적신호의 응급 평가", "카페인·약물·음주 기록 및 임의 변경 금지", "낙상·운전·위험 작업 안전"]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 손떨림 (본태떨림 의심)\n- 57세 교사, 4년간 양손이 자세를 유지하거나 글씨·찻잔 동작 중 떨림. 안정 시 거의 없고 가족력 있음.\n- 말·시야·근력·보행 변화, 심한 두통·의식저하는 없음.\n\n추가 질문: \"혹시 파킨슨병이나 뇌졸중 같은 큰 병은 아닐까요?\"",
+  "rawRuleText": "# 증례명 : 손떨림 (본태떨림 의심)\n- 57세 교사, 4년간 양손이 자세를 유지하거나 글씨·찻잔 동작 중 떨림. 안정 시 거의 없고 가족력 있음.\n- 말·시야·근력·보행 변화, 심한 두통·의식저하는 없음.\n\n추가 질문: \"혹시 파킨슨병이나 뇌졸중 같은 큰 병은 아닐까요?\""
+}

@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_hypertension_v1",
+  "title": "고혈압 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.1 CPX 11 고혈압 — p323 채점표(병력 8·진찰 4·교육 6·관계 5) 기반 재구성 (문장 직접 인용 없음, 2026-07-17)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "고혈압·심혈관질환 가족력과 가족의 발병 나이 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "고혈압 유병 기간(언제 처음 알았는지) 질문"
+        },
+        {
+          "id": "ht03",
+          "text": "과거력(뇌졸중, 관상동맥질환, 심부전, 신장질환, 당뇨) 질문"
+        },
+        {
+          "id": "ht04",
+          "text": "현재 복용 중인 약물 여부와 종류(복용 순응도 포함) 질문"
+        },
+        {
+          "id": "ht05",
+          "text": "표적기관 손상 증상(시력 감퇴, 호흡곤란, 소변 거품, 흉통) 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "식이 습관(짜게 먹는지, 기름진 음식) 질문"
+        },
+        {
+          "id": "ht07",
+          "text": "흡연 여부와 흡연량 질문"
+        },
+        {
+          "id": "ht08",
+          "text": "수면무호흡 의심 증세(비만, 코골이, 주간 졸림) 질문",
+          "contextHint": "이차성 고혈압 원인 중 하나"
+        },
+        {
+          "id": "ht09",
+          "text": "음주량과 운동 습관 질문"
+        },
+        {
+          "id": "ht10",
+          "text": "혈압 측정 이력(몇 번, 어디서 측정했는지) 확인",
+          "contextHint": "진단은 서로 다른 날 2회 이상 측정 원칙"
+        },
+        {
+          "id": "ht11",
+          "text": "젊은 나이 발병·급격한 악화 등 이차성 의심 단서 확인"
+        },
+        {
+          "id": "ht12",
+          "text": "스트레스·카페인·건강보조식품(감초 등) 확인"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 5,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "혈압을 올바르게 측정(안정 후, 적절한 커프, 재측정) 또는 그 선언"
+        },
+        {
+          "id": "pe02",
+          "text": "양팔 혈압 비교 측정"
+        },
+        {
+          "id": "pe03",
+          "text": "심장 검사 — 청진·촉진"
+        },
+        {
+          "id": "pe04",
+          "text": "말초 맥박(대퇴동맥 포함) 검사 — 대동맥축착 감별"
+        },
+        {
+          "id": "pe05",
+          "text": "복부 검사 — 청진(신동맥 잡음)·촉진",
+          "contextHint": "복부 잡음은 신혈관성 고혈압 단서"
+        },
+        {
+          "id": "pe06",
+          "text": "안저검사 또는 하지 부종 확인 — 표적기관 평가"
+        },
+        {
+          "id": "pe07",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe08",
+          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "다음 방문 때까지 다른 곳(약국·자가)에서 혈압을 재보고 기록해 오도록 권고"
+        },
+        {
+          "id": "ed02",
+          "text": "생활습관 교정(식이·체중·절주·금연·카페인·운동 중 2가지 이상) 교육"
+        },
+        {
+          "id": "ed03",
+          "text": "치료받지 않는 고혈압의 위험성과 합병증 교육"
+        },
+        {
+          "id": "ed04",
+          "text": "본인 혈압 수치를 인식시키고 목표 혈압 제시"
+        },
+        {
+          "id": "ed05",
+          "text": "자가혈압 측정의 중요성과 규칙적인 투약의 중요성 설명"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

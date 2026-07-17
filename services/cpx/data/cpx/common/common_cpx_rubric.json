@@ -1,0 +1,568 @@
+{
+  "schemaVersion": "1.0.0",
+  "schemaId": "cpx_common_schema",
+  "name": "CPX 공통 평가 루브릭",
+  "version": "1.0.0",
+  "description": "1~54번 CPX 주호소별 케이스가 공통으로 상속하는 평가 기준",
+  "sourceLevel": "CPX_general_framework_based",
+  "commercializationPolicy": {
+    "scoringPrinciple": "LLM은 점수를 직접 계산하지 않고, 평가 항목 충족 근거만 추출한다. 점수는 rule engine이 계산한다.",
+    "traceabilityRequired": true,
+    "rubricVersioningRequired": true,
+    "evidenceRequired": true,
+    "humanReviewRecommendedWhenLowConfidence": true
+  },
+  "evaluationTypes": {
+    "binary_intent": {
+      "description": "명확한 행동을 했는지 여부를 평가한다.",
+      "allowedStatus": [
+        "met",
+        "missed"
+      ]
+    },
+    "partial_intent": {
+      "description": "여러 하위 행동 중 일부를 수행했는지 평가한다.",
+      "allowedStatus": [
+        "met",
+        "partial",
+        "missed"
+      ]
+    },
+    "multi_slot": {
+      "description": "케이스별 증상, 위험신호, 사회력 등 여러 슬롯 중 몇 개를 확인했는지 평가한다.",
+      "allowedStatus": [
+        "met",
+        "partial",
+        "missed"
+      ]
+    },
+    "quality_likert": {
+      "description": "공감, 경청, 설명처럼 질적 수준을 평가한다.",
+      "allowedStatus": [
+        "excellent",
+        "adequate",
+        "poor",
+        "missed"
+      ]
+    },
+    "physical_exam": {
+      "description": "신체진찰 요청, 설명, 동의, 소견 확인을 평가한다.",
+      "allowedStatus": [
+        "met",
+        "partial",
+        "missed"
+      ]
+    },
+    "clinical_reasoning": {
+      "description": "감별진단, 위험 질환 배제, 성급한 진단 회피를 평가한다.",
+      "allowedStatus": [
+        "met",
+        "partial",
+        "missed"
+      ]
+    },
+    "education": {
+      "description": "환자 설명, 검사/치료 계획, 주의사항 안내를 평가한다.",
+      "allowedStatus": [
+        "met",
+        "partial",
+        "missed"
+      ]
+    },
+    "timing": {
+      "description": "제한 시간 내 수행 여부를 시스템 로그로 평가한다.",
+      "allowedStatus": [
+        "met",
+        "partial",
+        "missed"
+      ]
+    },
+    "penalty": {
+      "description": "비전문적 표현, 위험한 조언, 성급한 진단 등을 감점한다.",
+      "allowedStatus": [
+        "triggered",
+        "not_triggered"
+      ]
+    }
+  },
+  "commonRubric": {
+    "rubricId": "common_cpx_rubric",
+    "version": "1.0.0",
+    "totalScore": 100,
+    "sections": [
+      {
+        "id": "opening",
+        "name": "진료 시작",
+        "maxScore": 10,
+        "items": [
+          {
+            "id": "greeting",
+            "label": "환자에게 인사를 했는가",
+            "score": 2,
+            "evaluationType": "binary_intent",
+            "intent": "진료 시작 시 환자에게 예의 있게 인사한다."
+          },
+          {
+            "id": "self_introduction",
+            "label": "자기소개를 했는가",
+            "score": 2,
+            "evaluationType": "binary_intent",
+            "intent": "본인이 의료진 또는 실습생임을 밝힌다."
+          },
+          {
+            "id": "patient_identification",
+            "label": "환자 확인을 했는가",
+            "score": 2,
+            "evaluationType": "binary_intent",
+            "intent": "환자의 이름, 나이 등 기본 정보를 확인한다."
+          },
+          {
+            "id": "interview_consent",
+            "label": "문진 동의를 구했는가",
+            "score": 2,
+            "evaluationType": "binary_intent",
+            "intent": "질문을 시작하기 전 문진을 진행해도 되는지 허락을 구한다."
+          },
+          {
+            "id": "rapport",
+            "label": "편안한 분위기를 형성했는가",
+            "score": 2,
+            "evaluationType": "quality_likert",
+            "intent": "환자가 편안하게 말할 수 있도록 존중하는 태도를 보인다."
+          }
+        ]
+      },
+      {
+        "id": "history_taking",
+        "name": "병력청취",
+        "maxScore": 40,
+        "items": [
+          {
+            "id": "chief_complaint",
+            "label": "주호소를 확인했는가",
+            "score": 4,
+            "evaluationType": "binary_intent",
+            "intent": "환자가 병원에 온 가장 큰 이유를 확인한다."
+          },
+          {
+            "id": "open_question",
+            "label": "초반에 개방형 질문을 사용했는가",
+            "score": 4,
+            "evaluationType": "quality_likert",
+            "intent": "환자가 자유롭게 증상을 설명할 수 있도록 열린 질문을 사용한다."
+          },
+          {
+            "id": "hpi_onset_duration_course",
+            "label": "증상 발생 시점, 지속 기간, 경과를 확인했는가",
+            "score": 6,
+            "evaluationType": "partial_intent",
+            "subItems": [
+              {
+                "id": "onset",
+                "label": "발생 시점",
+                "score": 2
+              },
+              {
+                "id": "duration",
+                "label": "지속 기간",
+                "score": 2
+              },
+              {
+                "id": "course",
+                "label": "경과",
+                "score": 2
+              }
+            ]
+          },
+          {
+            "id": "symptom_character",
+            "label": "증상의 양상, 강도, 빈도, 위치를 확인했는가",
+            "score": 4,
+            "evaluationType": "partial_intent",
+            "subItems": [
+              {
+                "id": "character",
+                "label": "증상 성격",
+                "score": 1
+              },
+              {
+                "id": "severity",
+                "label": "증상 강도",
+                "score": 1
+              },
+              {
+                "id": "frequency",
+                "label": "증상 빈도",
+                "score": 1
+              },
+              {
+                "id": "location_or_pattern",
+                "label": "위치 또는 발생 양상",
+                "score": 1
+              }
+            ]
+          },
+          {
+            "id": "aggravating_relieving_factors",
+            "label": "악화 요인과 완화 요인을 확인했는가",
+            "score": 4,
+            "evaluationType": "partial_intent",
+            "subItems": [
+              {
+                "id": "aggravating_factor",
+                "label": "악화 요인",
+                "score": 2
+              },
+              {
+                "id": "relieving_factor",
+                "label": "완화 요인",
+                "score": 2
+              }
+            ]
+          },
+          {
+            "id": "associated_symptoms",
+            "label": "동반 증상을 확인했는가",
+            "score": 5,
+            "evaluationType": "multi_slot",
+            "slotsFromCaseRubric": true,
+            "scoringPolicy": "confirmed_slots_ratio"
+          },
+          {
+            "id": "negative_symptoms",
+            "label": "관련 음성 증상을 확인했는가",
+            "score": 4,
+            "evaluationType": "multi_slot",
+            "slotsFromCaseRubric": true,
+            "scoringPolicy": "confirmed_slots_ratio"
+          },
+          {
+            "id": "red_flags",
+            "label": "위험 신호를 확인했는가",
+            "score": 5,
+            "evaluationType": "multi_slot",
+            "slotsFromCaseRubric": true,
+            "scoringPolicy": "critical_slots_weighted"
+          },
+          {
+            "id": "past_history",
+            "label": "과거력을 확인했는가",
+            "score": 4,
+            "evaluationType": "partial_intent",
+            "subItems": [
+              {
+                "id": "major_disease_history",
+                "label": "주요 질환 과거력",
+                "score": 2
+              },
+              {
+                "id": "surgery_admission_history",
+                "label": "수술 또는 입원력",
+                "score": 1
+              },
+              {
+                "id": "similar_symptom_history",
+                "label": "비슷한 증상 경험",
+                "score": 1
+              }
+            ]
+          },
+          {
+            "id": "medication_allergy",
+            "label": "복용약과 알레르기를 확인했는가",
+            "score": 5,
+            "evaluationType": "partial_intent",
+            "subItems": [
+              {
+                "id": "current_medication",
+                "label": "현재 복용약",
+                "score": 3
+              },
+              {
+                "id": "allergy",
+                "label": "약물 또는 음식 알레르기",
+                "score": 2
+              }
+            ]
+          },
+          {
+            "id": "social_family_sensitive_history",
+            "label": "사회력, 가족력, 민감 병력을 필요한 범위에서 확인했는가",
+            "score": 4,
+            "evaluationType": "multi_slot",
+            "slotsFromCaseRubric": true,
+            "defaultSlots": [
+              {
+                "id": "smoking",
+                "label": "흡연력"
+              },
+              {
+                "id": "alcohol",
+                "label": "음주력"
+              },
+              {
+                "id": "occupation",
+                "label": "직업"
+              },
+              {
+                "id": "family_history",
+                "label": "가족력"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication",
+        "name": "환자-의사 관계 및 의사소통",
+        "maxScore": 20,
+        "items": [
+          {
+            "id": "empathy",
+            "label": "공감 표현을 했는가",
+            "score": 5,
+            "evaluationType": "quality_likert"
+          },
+          {
+            "id": "listening",
+            "label": "환자의 말을 경청했는가",
+            "score": 4,
+            "evaluationType": "quality_likert"
+          },
+          {
+            "id": "clear_language",
+            "label": "환자가 이해할 수 있는 쉬운 표현을 사용했는가",
+            "score": 4,
+            "evaluationType": "quality_likert"
+          },
+          {
+            "id": "sensitive_question_manner",
+            "label": "민감한 질문을 적절히 했는가",
+            "score": 4,
+            "evaluationType": "quality_likert"
+          },
+          {
+            "id": "summary_and_check",
+            "label": "중간 요약과 이해 확인을 했는가",
+            "score": 3,
+            "evaluationType": "quality_likert"
+          }
+        ]
+      },
+      {
+        "id": "physical_exam",
+        "name": "신체진찰",
+        "maxScore": 10,
+        "items": [
+          {
+            "id": "relevant_physical_exam",
+            "label": "증상에 맞는 신체진찰을 요청했는가",
+            "score": 5,
+            "evaluationType": "physical_exam",
+            "actionsFromCaseRubric": true
+          },
+          {
+            "id": "exam_explanation_consent",
+            "label": "진찰 전 설명과 동의를 구했는가",
+            "score": 2,
+            "evaluationType": "physical_exam",
+            "requiredActions": [
+              {
+                "id": "explain_exam",
+                "label": "진찰 목적 설명",
+                "score": 1
+              },
+              {
+                "id": "ask_permission",
+                "label": "진찰 동의",
+                "score": 1
+              }
+            ]
+          },
+          {
+            "id": "exam_finding_check",
+            "label": "진찰 소견을 확인했는가",
+            "score": 3,
+            "evaluationType": "physical_exam",
+            "requiredActions": [
+              {
+                "id": "request_finding",
+                "label": "진찰 소견 요청",
+                "score": 3
+              }
+            ]
+          },
+          {
+            "id": "consent_before_exam",
+            "label": "신체진찰 전 동의 획득",
+            "score": 0,
+            "evaluationType": "physical_exam",
+            "intent": "민감하거나 침습적인 신체진찰 전 검사 목적과 방법을 설명하고 동의를 구한다."
+          },
+          {
+            "id": "sensitive_exam_explanation",
+            "label": "민감 진찰 설명",
+            "score": 0,
+            "evaluationType": "physical_exam",
+            "intent": "직장수지검사, 골반진찰, 유방진찰 등 민감 진찰의 필요성, 불편감, 중단 가능성을 설명한다."
+          }
+        ]
+      },
+      {
+        "id": "clinical_reasoning",
+        "name": "임상추론",
+        "maxScore": 10,
+        "items": [
+          {
+            "id": "problem_representation",
+            "label": "환자 문제를 적절히 요약했는가",
+            "score": 3,
+            "evaluationType": "quality_likert"
+          },
+          {
+            "id": "differential_diagnosis",
+            "label": "감별진단을 고려했는가",
+            "score": 4,
+            "evaluationType": "clinical_reasoning"
+          },
+          {
+            "id": "avoid_premature_closure",
+            "label": "성급한 확정 진단을 피했는가",
+            "score": 3,
+            "evaluationType": "clinical_reasoning"
+          }
+        ]
+      },
+      {
+        "id": "education_closing",
+        "name": "설명 및 마무리",
+        "maxScore": 10,
+        "items": [
+          {
+            "id": "explain_assessment",
+            "label": "현재 평가 내용을 설명했는가",
+            "score": 3,
+            "evaluationType": "education"
+          },
+          {
+            "id": "explain_plan",
+            "label": "검사 또는 치료 계획을 설명했는가",
+            "score": 3,
+            "evaluationType": "education",
+            "pointsFromCaseRubric": true
+          },
+          {
+            "id": "warning_signs",
+            "label": "위험 신호와 재방문 기준을 안내했는가",
+            "score": 2,
+            "evaluationType": "education",
+            "pointsFromCaseRubric": true
+          },
+          {
+            "id": "ask_final_questions",
+            "label": "마지막 질문 여부를 확인했는가",
+            "score": 1,
+            "evaluationType": "binary_intent"
+          },
+          {
+            "id": "closing_greeting",
+            "label": "마무리 인사를 했는가",
+            "score": 1,
+            "evaluationType": "binary_intent"
+          }
+        ]
+      },
+      {
+        "id": "time_management",
+        "name": "시간 관리",
+        "maxScore": 0,
+        "items": [
+          {
+            "id": "finish_within_time",
+            "label": "제한 시간 내 문진을 마쳤는가",
+            "score": 0,
+            "evaluationType": "timing",
+            "maxDurationSec": 720,
+            "graceSec": 30,
+            "note": "기본 점수에는 포함하지 않고, 리포트와 감점 후보로 사용한다."
+          }
+        ]
+      }
+    ],
+    "penalties": [
+      {
+        "id": "unprofessional_expression",
+        "label": "비전문적 표현 사용",
+        "evaluationType": "penalty",
+        "penaltyScore": -5,
+        "criteria": [
+          "ㅋㅋ, ㅎㅎ 등 장난스러운 표현",
+          "환자를 가볍게 대하는 표현",
+          "의료 면담에 부적절한 말투"
+        ]
+      },
+      {
+        "id": "premature_diagnosis",
+        "label": "성급한 진단 단정",
+        "evaluationType": "penalty",
+        "penaltyScore": -5,
+        "criteria": [
+          "충분한 근거 없이 특정 질환이라고 단정함",
+          "환자에게 병명을 유도함",
+          "가능성 설명 없이 확정적으로 말함"
+        ]
+      },
+      {
+        "id": "ignored_patient_response",
+        "label": "환자 답변을 무시하고 기계적으로 진행함",
+        "evaluationType": "penalty",
+        "penaltyScore": -3
+      },
+      {
+        "id": "ignoring_red_flags",
+        "label": "위험 신호를 무시함",
+        "evaluationType": "penalty",
+        "penaltyScore": -10
+      },
+      {
+        "id": "unsafe_advice",
+        "label": "환자 안전에 반하는 조언",
+        "evaluationType": "penalty",
+        "penaltyScore": -10
+      },
+      {
+        "id": "privacy_violation",
+        "label": "개인정보 또는 민감정보 배려 부족",
+        "evaluationType": "penalty",
+        "penaltyScore": -5
+      }
+    ]
+  },
+  "caseRubricContract": {
+    "description": "1~54개 각 주호소별 JSON이 반드시 채워야 하는 필드",
+    "requiredFields": [
+      "complaintId",
+      "complaintName",
+      "category",
+      "templateType",
+      "associatedSymptoms",
+      "negativeSymptoms",
+      "redFlags",
+      "relevantPhysicalExams",
+      "recommendedTests",
+      "educationPoints",
+      "warningSigns",
+      "patientBehaviorHints"
+    ],
+    "templateTypes": [
+      "general_symptom",
+      "emergency_symptom",
+      "chronic_disease",
+      "mental_health",
+      "sensitive_history",
+      "counseling",
+      "pediatrics",
+      "prenatal_care"
+    ]
+  }
+}

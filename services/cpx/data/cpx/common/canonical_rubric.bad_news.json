@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_bad_news_v1",
+  "title": "나쁜소식 전하기 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.1 CPX 06 나쁜소식 전하기 — p170 채점표(수행 12·관계 5) + p156~158 면담 절차 기반 재구성 (문장 직접 인용 없음). 상담형 가중치 65/25/10은 파생 규칙.",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric_counsel.py로 생성 — 상담형 커스텀 섹션)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(met/partial/not_met)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "상담형 가중치: 상담수행 65 + PPI 25 + 임상예의 10 (병력·진찰·교육 섹션 없음 — 원 채점표 구조 준수) — 파생 규칙, 사용자 검수 대상",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "counseling",
+      "name": "나쁜소식 전하기 수행",
+      "type": "checklist",
+      "weightPercent": 65,
+      "gradeCutoffs": {
+        "excellent": 9,
+        "fairMin": 6
+      },
+      "items": [
+        {
+          "id": "ct01",
+          "text": "존중과 관심을 표현하였는가",
+          "contextHint": "면담 전반의 태도 — 첫인사·경청 자세 포함"
+        },
+        {
+          "id": "ct02",
+          "text": "바로 나쁜 소식을 전하지 않고 마음의 준비를 시켰는가",
+          "contextHint": "'결과를 말씀드리려 하는데…' 등 warning shot"
+        },
+        {
+          "id": "ct03",
+          "text": "통보 전, 환자가 자신의 병에 대해 어느 정도 알고 있는지(인식) 파악하였는가"
+        },
+        {
+          "id": "ct04",
+          "text": "얼마나 자세히 알고 싶은지, 혼자/보호자와 함께 듣고 싶은지 등 정보 수용 방식을 질문하였는가"
+        },
+        {
+          "id": "ct05",
+          "text": "전달해야 할 검사 결과 또는 진단명을 정확히 전달하였는가",
+          "contextHint": "얼버무리지 않고 명확한 병명·결과 전달"
+        },
+        {
+          "id": "ct06",
+          "text": "나쁜 소식을 전하게 되어 유감이라는 표현을 하였는가"
+        },
+        {
+          "id": "ct07",
+          "text": "환자가 의심·부정하거나 강한 감정을 표현할 때 잠시 기다리거나 이를 수용함을 말로 표현하였는가",
+          "contextHint": "감정 반응(부정·분노·눈물)에 침묵 허용·공감 반응"
+        },
+        {
+          "id": "ct08",
+          "text": "환자가 이해하기 쉬운 말로 설명하였는가",
+          "contextHint": "전문 용어 남발 없이"
+        },
+        {
+          "id": "ct09",
+          "text": "설명한 내용을 환자가 이해했는지 확인하였는가"
+        },
+        {
+          "id": "ct10",
+          "text": "향후 치료 계획에 대해 논의하거나 설명하였는가",
+          "contextHint": "다음 검사·치료 선택지·희망 요소 제시"
+        },
+        {
+          "id": "ct11",
+          "text": "전체 면담 과정과 내용을 간략히 요약하였는가"
+        },
+        {
+          "id": "ct12",
+          "text": "면담 종료 전 다른 질문이나 걱정거리가 있는지 질문하였는가"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

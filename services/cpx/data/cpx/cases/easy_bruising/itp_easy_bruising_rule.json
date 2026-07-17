@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "itp_easy_bruising_rule",
+  "title": "쉽게 멍이 듦 (면역성 혈소판감소증 의심)",
+  "category": "쉽게 멍이 듦",
+  "targetDiagnosis": "면역성 혈소판감소증 의심 (Suspected immune thrombocytopenia)",
+  "variant": "감염 뒤 점상출혈·잇몸 출혈 동반형",
+  "description": "저절로 생기는 멍과 점상출혈에서 점막 출혈·중증 출혈 적신호, 약물·간질환·혈액질환 단서를 평가하는 규칙입니다.",
+  "tags": ["쉽게 멍이 듦", "점상출혈", "혈소판감소", "출혈 경향"],
+  "sourceTextFile": "024_easy_bruising.json·024_easy_bruising_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {
+    "fixed": {"location": "외래"},
+    "recommended": {"gender": "무관", "age": "20~50세"},
+    "randomizable": ["성별", "이름", "직업", "키", "몸무게"],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "31세 환자가 2주 전 감기 증상 뒤부터 부딪힌 기억 없이 다리와 팔에 보랏빛 멍이 여러 개 생기고, 양치할 때 잇몸에서 피가 나는 문제로 내원했다. 흑색변·혈뇨·토혈·객혈·심한 두통·실신은 없으며 항응고제나 한약은 복용하지 않는다.",
+    "mustInclude": ["2주 전 감기 증상 뒤 저절로 생긴 다발성 멍", "팔·다리의 점상출혈", "양치 시 잇몸 출혈", "흑색변·혈뇨·토혈·객혈 없음", "항응고제·항혈소판제·한약 복용 없음"],
+    "preferredVariants": ["멍이 일주일 이상 남아 있음", "혈액병일까 걱정함"],
+    "mustAbsent": ["머리 외상", "의식 변화", "대량 출혈", "간경변 진단"]
+  },
+  "pastHistoryRule": {
+    "mustInclude": ["알려진 간질환·혈액질환 없음", "최근 수술·발치 때 출혈 문제 없음"],
+    "mustAbsent": ["항암치료", "혈우병 진단"]
+  },
+  "familyHistoryRule": {
+    "recommended": ["가족의 출혈질환 없음"],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": ["음주 드묾", "비흡연"],
+    "recommended": ["격한 접촉 운동 없음"]
+  },
+  "physicalExamRule": [
+    {"item": "활력징후·결막", "method": "혈압·맥박·체온과 결막 창백 확인", "expectedFinding": "혈압 118/72, 맥박 78회, 발열 없고 결막 창백 없음", "examConceptId": "vital_signs"},
+    {"item": "피부 멍·점상출혈", "method": "팔·다리와 몸통의 멍·점상출혈·자반 시진", "expectedFinding": "양쪽 종아리와 팔에 1~3cm 멍 여러 개와 산재한 점상출혈이 보임", "polarity": "positive", "examConceptId": "petechiae_purpura_bruise"},
+    {"item": "구강·잇몸", "method": "구강 점막과 잇몸 출혈 확인", "expectedFinding": "치은 가장자리에 경미한 점상출혈이 보이고 지속 출혈은 없음", "polarity": "positive", "examConceptId": "oral_cavity_inspection"},
+    {"item": "경부 림프절", "method": "경부 림프절 촉진", "expectedFinding": "경부 림프절 종대 없음", "examConceptId": "neck_lymph_node"},
+    {"item": "복부·간비장", "method": "복부 촉진으로 간비장 비대·압통 확인", "expectedFinding": "복부 압통·간비장 비대 없음", "examConceptId": "hepatomegaly_splenomegaly"}
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "최근 감기 뒤 이유 없이 멍과 점상출혈이 생겨 혈액병을 걱정하는 환자다. 멍의 경과·점막 출혈·대변과 소변 색·약물·가족력은 질문할 때만 답한다.",
+    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "질문받은 항목에만 짧게 답한다.", "대량 출혈·실신·신경학적 증상 질문에는 현재 없다고 명확히 답한다."],
+    "positiveClues": ["감염 뒤 다발성 멍·점상출혈", "경미한 잇몸 출혈", "멍이 오래 지속됨"],
+    "negativeClues": ["위장관·비뇨기·호흡기 대량 출혈 없음", "항응고제·한약·간질환 단서 없음", "의식 변화·심한 두통 없음"]
+  },
+  "evaluationUse": {
+    "mustAsk": ["멍의 시작·부위·외상·크기·색·개수·지속 시간", "저절로 생기는 멍·점상출혈·자반과 진행", "코피·잇몸 출혈·과다월경·혈뇨·흑색변·토혈·객혈", "어지럼·호흡곤란·실신·의식 변화·심한 두통·관절 종창", "최근 감염·간질환·피로·발열·체중 변화", "항응고제·NSAID·스테로이드·보조제·음주·가족력·과거 지혈 문제", "혈구·응고·간기능 검사와 출혈 악화 시 응급 기준"],
+    "positiveClues": ["감염 뒤 점상출혈·다발성 멍", "잇몸 출혈", "간비장 비대·림프절 종대 없음"],
+    "negativeClues": ["대량 출혈·쇼크·신경학적 적신호 없음", "약물·간질환·가족력 단서 없음"],
+    "educationTopics": ["혈구·응고·간기능 평가", "외상·아스피린·NSAID 회피와 약물 정보 공유", "새 점막 출혈·혈뇨·흑색변·심한 두통 시 즉시 진료"]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 쉽게 멍이 듦 (면역성 혈소판감소증 의심)\n- 감기 뒤 2주간 다리·팔의 다발성 멍과 점상출혈, 양치 시 경미한 잇몸 출혈.\n- 흑색변·혈뇨·토혈·객혈·심한 두통·실신은 없고 항응고제는 복용하지 않음.\n\n추가 질문: \"이런 멍이 계속 생기는데 혈액병은 아닐까요?\"",
+  "rawRuleText": "# 증례명 : 쉽게 멍이 듦 (면역성 혈소판감소증 의심)\n- 감기 뒤 2주간 다리·팔의 다발성 멍과 점상출혈, 양치 시 경미한 잇몸 출혈.\n- 흑색변·혈뇨·토혈·객혈·심한 두통·실신은 없고 항응고제는 복용하지 않음.\n\n추가 질문: \"이런 멍이 계속 생기는데 혈액병은 아닐까요?\""
+}

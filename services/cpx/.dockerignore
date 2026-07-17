@@ -1,0 +1,15 @@
+**
+
+!Dockerfile
+!server/
+!server/**
+!data/
+!data/cpx/
+!data/cpx/**
+
+server/venv
+server/.env
+server/cpx.sqlite3
+server/cpx.sqlite3-*
+server/**/__pycache__
+server/**/*.pyc

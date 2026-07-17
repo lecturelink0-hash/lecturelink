@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_sexual_violence_v1",
+  "title": "성폭력 CPX 종합 채점 루브릭 (정본 초안)",
+  "provenance": {
+    "content": "054_sexual_violence 원본 루브릭·환자 행동 방침과 WHO 생존자 중심 진료·CDC 성폭력 후 STI/HIV 지침을 바탕으로 재구성 (문장 직접 인용 없음, 2026-07-17; 지역 정책·임상 최종 검수 필요)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "사적이고 안전한 환경에서 면담 목적·비밀보장 범위·중단/거부 권리·신뢰할 동반인 선택을 설명하고 동의를 확인"
+        },
+        {
+          "id": "ht02",
+          "text": "환자 말로 사건 시각·장소·가해자 관계·현재 위협을 확인하고 불필요한 반복이나 피해자 비난을 피함"
+        },
+        {
+          "id": "ht03",
+          "text": "의료·증거 보존에 필요한 범위에서 접촉 부위·삽입/사정·콘돔·신체 폭행·목조름·무기·의식/기억 공백·약물 가능성을 확인"
+        },
+        {
+          "id": "ht04",
+          "text": "사건 후 세척·배뇨/배변·의복 변경·진료/약 복용을 확인하되 이러한 행동이 진료나 지원을 받을 자격을 없애지 않음을 표현"
+        },
+        {
+          "id": "ht05",
+          "text": "통증·출혈·호흡/연하곤란·의식 변화 등 응급 손상과 마지막 월경·임신 가능성·피임·기저질환·약물/알레르기를 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "현재 안전·지지체계·급성 스트레스와 자살/자해 위험, 환자가 원하는 진료·법의학 검사·지원 범위를 확인"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후·의식수준과 생명을 위협하는 손상을 먼저 확인 또는 선언"
+        },
+        {
+          "id": "pe02",
+          "text": "각 단계의 목적을 설명하고 별도 동의를 받아 전신 손상부터 구강·외음부/골반 등 필요한 부위를 환자가 허용한 범위에서 확인 또는 선언"
+        },
+        {
+          "id": "pe03",
+          "text": "접촉 부위별 검체·임신검사·STI/HIV/HBV 검사와 필요 시 법의학적 증거 채취를 선택권과 함께 설명"
+        },
+        {
+          "id": "pe04",
+          "text": "노출 최소화·샤프론/지원자 선택·중단 권리·손 위생과 기록/사진의 별도 동의를 표현"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "환자의 잘못이 아님을 명확히 하고 즉각적 안전·상처 치료와 생존자 중심 지원기관 연계를 제안"
+        },
+        {
+          "id": "ed02",
+          "text": "임신 가능성이 있으면 임신검사와 시간에 따른 사후피임 선택지를 신속히 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "노출 위험에 따라 STI 검사/예방치료·B형간염 예방과 HIV PEP를 가능한 빨리, 통상 72시간 이내 평가하도록 설명"
+        },
+        {
+          "id": "ed04",
+          "text": "법의학 검사·신고 여부는 가능한 범위에서 환자의 선택임을 설명하고 결과 확인·백신/치료·정신건강을 포함한 조기 및 후속 추적을 계획"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

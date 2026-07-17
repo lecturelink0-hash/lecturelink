@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_domestic_violence_v1",
+  "title": "가정폭력 CPX 종합 채점 루브릭 (정본 초안)",
+  "provenance": {
+    "content": "052_domestic_violence 원본 루브릭·환자 행동 방침과 WHO 생존자 중심 일차 지원 원칙을 바탕으로 재구성 (문장 직접 인용 없음, 2026-07-17; 지역 정책·임상 최종 검수 필요)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "동반인과 분리된 사적 환경에서 면담 동의·비밀보장 범위·중단 선택을 설명하고 걱정을 표현"
+        },
+        {
+          "id": "ht02",
+          "text": "상처의 경위와 신체·성적·정서적·경제적·통제 폭력의 종류·빈도·악화·가해자 관계를 비판단적으로 확인"
+        },
+        {
+          "id": "ht03",
+          "text": "현재 안전·귀가 안전·최근 위협, 목조름·무기·살해 위협·스토킹·강제 격리와 가해자의 위치를 확인"
+        },
+        {
+          "id": "ht04",
+          "text": "아동·노인·다른 가족의 노출/피해, 안전하게 연락 가능한 지지자·주거·경제·이동·통신 수단을 확인"
+        },
+        {
+          "id": "ht05",
+          "text": "머리/목·흉복부·임신 관련 손상, 의식소실·호흡/연하곤란·출혈·통증과 과거 외상·치료를 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "공포·우울·불안·외상 반응과 자살·자해·타해 위험, 환자가 원하는 도움과 기록·지원기관 연계 의사를 확인"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후·의식수준과 응급 손상 여부를 먼저 확인 또는 선언"
+        },
+        {
+          "id": "pe02",
+          "text": "설명·동의 후 환자가 허용한 범위에서 피부·머리·목·흉복부·사지 손상을 단계적으로 확인 또는 선언"
+        },
+        {
+          "id": "pe03",
+          "text": "신경학적 이상과 목조름 관련 호흡·발성·연하 적신호를 확인 또는 선언"
+        },
+        {
+          "id": "pe04",
+          "text": "손 위생·노출 최소화·동반 의료인 선택·사진/기록의 별도 동의와 언제든 중단할 권리를 표현"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "폭력은 환자의 잘못이 아니며 도움받을 권리가 있음을 인정하고 환자의 선택과 속도를 존중"
+        },
+        {
+          "id": "ed02",
+          "text": "즉각적 위험이나 중증 손상은 응급 도움을 요청하고, 안전한 연락·대피 장소·필수 물품·신뢰할 사람을 포함한 개별 안전계획을 수립"
+        },
+        {
+          "id": "ed03",
+          "text": "상처 치료·기록과 상담·쉼터·법률/지역 지원기관 선택지를 제공하되 신고나 관계 단절을 강요하지 않음"
+        },
+        {
+          "id": "ed04",
+          "text": "비밀보장과 보고 의무의 예외는 지역 법·기관 정책에 따라 사전에 설명하고 안전한 추적 연락 방법을 합의"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

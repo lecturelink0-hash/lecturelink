@@ -1,0 +1,722 @@
+{
+  "schemaVersion": "1.0.0",
+  "patchId": "physical_exam_result_catalog_patch_atomic_core",
+  "description": "기존 physical_exam_result_catalog.json에 병합할 CPX 신체진찰 atomic concept 결과 카탈로그 확장 패치. 기존 conceptResults와 id가 겹치면 normal 및 abnormalOptions를 병합/갱신하고, 없으면 새 항목으로 추가한다.",
+  "mergePolicy": {
+    "targetObject": "conceptResults",
+    "key": "examConceptId",
+    "onDuplicate": "merge_normal_and_abnormalOptions",
+    "arrayFieldsToMerge": [
+      "abnormalOptions"
+    ],
+    "doNotDeleteExistingResults": true
+  },
+  "valueSet": [
+    "normal",
+    "abnormal",
+    "present",
+    "absent",
+    "mild",
+    "moderate",
+    "severe",
+    "unknown",
+    "not_assessed",
+    "unable_to_assess",
+    "not_applicable"
+  ],
+  "conceptResults": {
+    "abdominal_light_palpation": {
+      "label": "복부 얕은 촉진",
+      "normal": {
+        "id": "abdominal_light_palpation",
+        "label": "복부 얕은 촉진",
+        "value": "normal",
+        "note": "복부 얕은 촉진상 뚜렷한 압통은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_tenderness",
+          "label": "복부 압통",
+          "value": "present",
+          "note": "복부 얕은 촉진 시 통증을 호소함"
+        },
+        {
+          "id": "localized_abdominal_tenderness",
+          "label": "국소 복부 압통",
+          "value": "present",
+          "note": "특정 부위의 복부 얕은 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "abdominal_deep_palpation": {
+      "label": "복부 깊은 촉진",
+      "normal": {
+        "id": "abdominal_deep_palpation",
+        "label": "복부 깊은 촉진",
+        "value": "normal",
+        "note": "복부 깊은 촉진상 뚜렷한 압통이나 종괴는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_tenderness",
+          "label": "복부 압통",
+          "value": "present",
+          "note": "복부 깊은 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "abdominal_mass",
+          "label": "복부 종괴",
+          "value": "present",
+          "note": "복부 깊은 촉진 시 종괴가 촉지됨"
+        },
+        {
+          "id": "deep_palpation_discomfort",
+          "label": "깊은 촉진 시 불편감",
+          "value": "present",
+          "note": "복부 깊은 촉진 시 불편감을 호소함"
+        }
+      ]
+    },
+    "localized_abdominal_tenderness": {
+      "label": "국소 복부 압통 확인",
+      "normal": {
+        "id": "localized_abdominal_tenderness",
+        "label": "국소 복부 압통",
+        "value": "absent",
+        "note": "특정 부위에 국한된 복부 압통은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "right_lower_quadrant_tenderness",
+          "label": "우하복부 압통",
+          "value": "present",
+          "location": "right_lower_quadrant",
+          "note": "우하복부 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "right_upper_quadrant_tenderness",
+          "label": "우상복부 압통",
+          "value": "present",
+          "location": "right_upper_quadrant",
+          "note": "우상복부 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "left_lower_quadrant_tenderness",
+          "label": "좌하복부 압통",
+          "value": "present",
+          "location": "left_lower_quadrant",
+          "note": "좌하복부 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "epigastric_tenderness",
+          "label": "명치부 압통",
+          "value": "present",
+          "location": "epigastric_area",
+          "note": "명치 부위 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "periumbilical_tenderness",
+          "label": "배꼽 주위 압통",
+          "value": "present",
+          "location": "periumbilical_area",
+          "note": "배꼽 주위 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "rebound_tenderness": {
+      "label": "반발통 확인",
+      "normal": {
+        "id": "rebound_tenderness",
+        "label": "반발통",
+        "value": "absent",
+        "note": "반발통은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "rebound_tenderness",
+          "label": "반발통",
+          "value": "present",
+          "note": "복부를 눌렀다가 뗄 때 통증이 심해져 반발통이 관찰됨"
+        }
+      ]
+    },
+    "guarding": {
+      "label": "근성 방어 확인",
+      "normal": {
+        "id": "guarding",
+        "label": "근성 방어",
+        "value": "absent",
+        "note": "복부 촉진 시 뚜렷한 근성 방어는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "guarding",
+          "label": "근성 방어",
+          "value": "present",
+          "note": "복부 촉진 시 환자가 배에 힘을 주며 방어하는 소견이 관찰됨"
+        },
+        {
+          "id": "voluntary_guarding",
+          "label": "수의적 방어",
+          "value": "present",
+          "note": "촉진 시 통증 또는 긴장으로 인해 복부에 힘을 주는 반응이 관찰됨"
+        }
+      ]
+    },
+    "abdominal_rigidity": {
+      "label": "복부 강직 확인",
+      "normal": {
+        "id": "abdominal_rigidity",
+        "label": "복부 강직",
+        "value": "absent",
+        "note": "복부 강직은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_rigidity",
+          "label": "복부 강직",
+          "value": "present",
+          "note": "복부가 딱딱하게 긴장되어 복부 강직이 관찰됨"
+        },
+        {
+          "id": "board_like_rigidity",
+          "label": "판자 모양 강직",
+          "value": "present",
+          "severity": "severe",
+          "note": "복부가 판자처럼 단단하게 긴장되어 있음"
+        }
+      ]
+    },
+    "abdominal_mass_palpation": {
+      "label": "복부 종괴 촉진",
+      "normal": {
+        "id": "abdominal_mass_palpation",
+        "label": "복부 종괴",
+        "value": "absent",
+        "note": "복부 촉진상 뚜렷하게 만져지는 종괴는 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_mass",
+          "label": "복부 종괴",
+          "value": "present",
+          "note": "복부 촉진 시 종괴가 촉지됨"
+        },
+        {
+          "id": "tender_abdominal_mass",
+          "label": "압통성 복부 종괴",
+          "value": "present",
+          "note": "복부에서 압통을 동반한 종괴가 촉지됨"
+        }
+      ]
+    },
+    "mcburney_point_tenderness": {
+      "label": "맥버니점 압통 확인",
+      "normal": {
+        "id": "mcburney_point_tenderness",
+        "label": "맥버니점 압통",
+        "value": "absent",
+        "note": "맥버니점 압통은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "mcburney_point_tenderness",
+          "label": "맥버니점 압통",
+          "value": "present",
+          "note": "맥버니점 부위 촉진 시 압통을 호소함"
+        },
+        {
+          "id": "right_lower_quadrant_tenderness",
+          "label": "우하복부 압통",
+          "value": "present",
+          "location": "right_lower_quadrant",
+          "note": "우하복부 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "rovsing_sign": {
+      "label": "Rovsing 징후 확인",
+      "normal": {
+        "id": "rovsing_sign",
+        "label": "Rovsing 징후",
+        "value": "absent",
+        "note": "Rovsing 징후는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "rovsing_sign",
+          "label": "Rovsing 징후",
+          "value": "present",
+          "note": "좌하복부를 누를 때 우하복부 통증이 유발됨"
+        }
+      ]
+    },
+    "psoas_sign": {
+      "label": "Psoas 징후 확인",
+      "normal": {
+        "id": "psoas_sign",
+        "label": "Psoas 징후",
+        "value": "absent",
+        "note": "Psoas 징후는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "psoas_sign",
+          "label": "Psoas 징후",
+          "value": "present",
+          "note": "고관절 신전 또는 관련 동작 시 복통이 유발됨"
+        }
+      ]
+    },
+    "obturator_sign": {
+      "label": "Obturator 징후 확인",
+      "normal": {
+        "id": "obturator_sign",
+        "label": "Obturator 징후",
+        "value": "absent",
+        "note": "Obturator 징후는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "obturator_sign",
+          "label": "Obturator 징후",
+          "value": "present",
+          "note": "고관절 굴곡 및 내회전 동작 시 하복부 통증이 유발됨"
+        }
+      ]
+    },
+    "abdominal_distension_inspection": {
+      "label": "복부팽만 시진",
+      "normal": {
+        "id": "abdominal_distension_inspection",
+        "label": "복부팽만",
+        "value": "absent",
+        "note": "시진상 복부팽만은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "abdominal_distension",
+          "label": "복부팽만",
+          "value": "present",
+          "note": "시진상 복부팽만이 관찰됨"
+        },
+        {
+          "id": "marked_abdominal_distension",
+          "label": "뚜렷한 복부팽만",
+          "value": "present",
+          "severity": "severe",
+          "note": "복부가 뚜렷하게 팽만되어 보임"
+        }
+      ]
+    },
+    "surgical_scar_inspection": {
+      "label": "수술 흉터 시진",
+      "normal": {
+        "id": "surgical_scar_inspection",
+        "label": "복부 수술 흉터",
+        "value": "absent",
+        "note": "복부에 뚜렷한 수술 흉터는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "surgical_scar",
+          "label": "복부 수술 흉터",
+          "value": "present",
+          "note": "복부에 이전 수술로 보이는 흉터가 관찰됨"
+        }
+      ]
+    },
+    "bowel_sound_auscultation": {
+      "label": "장음 청진",
+      "normal": {
+        "id": "bowel_sound_auscultation",
+        "label": "장음",
+        "value": "normal",
+        "note": "장음은 정상적으로 들림"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hyperactive_bowel_sound",
+          "label": "장음 증가",
+          "value": "present",
+          "note": "장음이 증가되어 들림"
+        },
+        {
+          "id": "decreased_bowel_sound",
+          "label": "장음 감소",
+          "value": "present",
+          "note": "장음이 감소되어 들림"
+        },
+        {
+          "id": "absent_bowel_sound",
+          "label": "장음 소실",
+          "value": "present",
+          "note": "장음이 거의 들리지 않음"
+        },
+        {
+          "id": "metallic_bowel_sound",
+          "label": "금속성 장음",
+          "value": "present",
+          "note": "금속성 장음이 들림"
+        }
+      ]
+    },
+    "abdominal_percussion_tenderness": {
+      "label": "복부 타진 압통 확인",
+      "normal": {
+        "id": "abdominal_percussion_tenderness",
+        "label": "복부 타진 압통",
+        "value": "absent",
+        "note": "복부 타진 시 뚜렷한 통증은 유발되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "percussion_tenderness",
+          "label": "타진 압통",
+          "value": "present",
+          "note": "복부 타진 시 통증을 호소함"
+        }
+      ]
+    },
+    "liver_span_percussion": {
+      "label": "간 크기 타진",
+      "normal": {
+        "id": "liver_span_percussion",
+        "label": "간 크기",
+        "value": "normal",
+        "note": "간 크기는 뚜렷하게 증가되어 보이지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "hepatomegaly",
+          "label": "간비대",
+          "value": "present",
+          "note": "간 크기 증가가 의심됨"
+        }
+      ]
+    },
+    "shifting_dullness": {
+      "label": "이동탁음 확인",
+      "normal": {
+        "id": "shifting_dullness",
+        "label": "이동탁음",
+        "value": "absent",
+        "note": "이동탁음은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "shifting_dullness",
+          "label": "이동탁음",
+          "value": "present",
+          "note": "자세 변화에 따라 타진음이 변해 복수 가능성을 시사함"
+        },
+        {
+          "id": "ascites",
+          "label": "복수 의심",
+          "value": "present",
+          "note": "이동탁음이 관찰되어 복수 가능성이 있음"
+        }
+      ]
+    },
+    "lung_auscultation": {
+      "label": "폐 청진",
+      "normal": {
+        "id": "lung_auscultation",
+        "label": "폐 청진",
+        "value": "normal",
+        "note": "양측 폐음은 깨끗하며 천명음이나 수포음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "wheezing",
+          "label": "천명음",
+          "value": "present",
+          "note": "호기 시 쌕쌕거리는 천명음이 들림"
+        },
+        {
+          "id": "crackles",
+          "label": "수포음",
+          "value": "present",
+          "note": "폐 하부에서 수포음이 들림"
+        },
+        {
+          "id": "decreased_breath_sound",
+          "label": "호흡음 감소",
+          "value": "present",
+          "note": "한쪽 또는 양측 폐에서 호흡음이 감소되어 들림"
+        },
+        {
+          "id": "prolonged_expiration",
+          "label": "호기 연장",
+          "value": "present",
+          "note": "호기 시간이 연장되어 들림"
+        }
+      ]
+    },
+    "wheezing_auscultation": {
+      "label": "천명음 청진",
+      "normal": {
+        "id": "wheezing_auscultation",
+        "label": "천명음",
+        "value": "absent",
+        "note": "청진상 천명음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "wheezing",
+          "label": "천명음",
+          "value": "present",
+          "note": "호기 시 쌕쌕거리는 천명음이 들림"
+        }
+      ]
+    },
+    "crackles_auscultation": {
+      "label": "수포음 청진",
+      "normal": {
+        "id": "crackles_auscultation",
+        "label": "수포음",
+        "value": "absent",
+        "note": "청진상 수포음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "crackles",
+          "label": "수포음",
+          "value": "present",
+          "note": "폐 하부에서 수포음이 들림"
+        },
+        {
+          "id": "bibasal_crackles",
+          "label": "양측 폐 하부 수포음",
+          "value": "present",
+          "note": "양측 폐 하부에서 수포음이 들림"
+        }
+      ]
+    },
+    "decreased_breath_sound": {
+      "label": "호흡음 감소 확인",
+      "normal": {
+        "id": "decreased_breath_sound",
+        "label": "호흡음 감소",
+        "value": "absent",
+        "note": "양측 폐 호흡음은 대칭적으로 잘 들림"
+      },
+      "abnormalOptions": [
+        {
+          "id": "decreased_breath_sound",
+          "label": "호흡음 감소",
+          "value": "present",
+          "note": "한쪽 또는 특정 부위에서 호흡음이 감소되어 들림"
+        },
+        {
+          "id": "unilateral_decreased_breath_sound",
+          "label": "편측 호흡음 감소",
+          "value": "present",
+          "note": "한쪽 폐에서 호흡음이 상대적으로 감소되어 들림"
+        }
+      ]
+    },
+    "respiratory_effort_inspection": {
+      "label": "호흡 노력 관찰",
+      "normal": {
+        "id": "respiratory_effort_inspection",
+        "label": "호흡 노력",
+        "value": "normal",
+        "note": "호흡은 안정적이며 보조근 사용은 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "accessory_muscle_use",
+          "label": "보조근 사용",
+          "value": "present",
+          "note": "호흡 시 보조근 사용이 관찰됨"
+        },
+        {
+          "id": "labored_breathing",
+          "label": "힘든 호흡",
+          "value": "present",
+          "note": "숨쉬기 힘들어하는 모습이 관찰됨"
+        },
+        {
+          "id": "tachypneic_appearance",
+          "label": "빠른 호흡 양상",
+          "value": "present",
+          "note": "호흡이 빠르고 불편해 보임"
+        }
+      ]
+    },
+    "chest_percussion": {
+      "label": "흉부 타진",
+      "normal": {
+        "id": "chest_percussion",
+        "label": "흉부 타진음",
+        "value": "normal",
+        "note": "흉부 타진상 뚜렷한 탁음이나 과공명은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "dullness_to_percussion",
+          "label": "타진상 탁음",
+          "value": "present",
+          "note": "흉부 타진상 일부 부위에서 탁음이 관찰됨"
+        },
+        {
+          "id": "hyperresonance",
+          "label": "과공명",
+          "value": "present",
+          "note": "흉부 타진상 과공명이 관찰됨"
+        }
+      ]
+    },
+    "heart_auscultation": {
+      "label": "심음 청진",
+      "normal": {
+        "id": "heart_auscultation",
+        "label": "심음 청진",
+        "value": "normal",
+        "note": "심음은 규칙적이며 뚜렷한 심잡음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "heart_murmur",
+          "label": "심잡음",
+          "value": "present",
+          "note": "심잡음이 청진됨"
+        },
+        {
+          "id": "irregular_heartbeat",
+          "label": "불규칙한 심박",
+          "value": "present",
+          "note": "심박이 불규칙하게 들림"
+        },
+        {
+          "id": "s3_gallop",
+          "label": "제3심음",
+          "value": "present",
+          "note": "제3심음이 의심됨"
+        }
+      ]
+    },
+    "heart_murmur_auscultation": {
+      "label": "심잡음 청진",
+      "normal": {
+        "id": "heart_murmur_auscultation",
+        "label": "심잡음",
+        "value": "absent",
+        "note": "뚜렷한 심잡음은 들리지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "heart_murmur",
+          "label": "심잡음",
+          "value": "present",
+          "note": "심잡음이 청진됨"
+        },
+        {
+          "id": "systolic_murmur",
+          "label": "수축기 심잡음",
+          "value": "present",
+          "note": "수축기 심잡음이 들림"
+        },
+        {
+          "id": "diastolic_murmur",
+          "label": "이완기 심잡음",
+          "value": "present",
+          "note": "이완기 심잡음이 들림"
+        }
+      ]
+    },
+    "heart_rhythm_auscultation": {
+      "label": "심박 리듬 청진",
+      "normal": {
+        "id": "heart_rhythm_auscultation",
+        "label": "심박 리듬",
+        "value": "normal",
+        "note": "심박 리듬은 규칙적으로 들림"
+      },
+      "abnormalOptions": [
+        {
+          "id": "irregular_heartbeat",
+          "label": "불규칙한 심박",
+          "value": "present",
+          "note": "심박 리듬이 불규칙하게 들림"
+        }
+      ]
+    },
+    "jvp_inspection": {
+      "label": "경정맥 팽대 확인",
+      "normal": {
+        "id": "jvp_inspection",
+        "label": "경정맥 팽대",
+        "value": "absent",
+        "note": "경정맥 팽대는 관찰되지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "jugular_venous_distension",
+          "label": "경정맥 팽대",
+          "value": "present",
+          "note": "경정맥 팽대가 관찰됨"
+        },
+        {
+          "id": "elevated_jvp",
+          "label": "JVP 상승",
+          "value": "present",
+          "note": "경정맥 압력 상승이 의심됨"
+        }
+      ]
+    },
+    "thyroid_palpation": {
+      "label": "갑상샘 촉진",
+      "normal": {
+        "id": "thyroid_palpation",
+        "label": "갑상샘",
+        "value": "normal",
+        "note": "갑상샘 비대나 결절은 뚜렷하지 않음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "goiter",
+          "label": "갑상샘 비대",
+          "value": "present",
+          "note": "갑상샘이 커져 보이거나 촉지됨"
+        },
+        {
+          "id": "thyroid_nodule",
+          "label": "갑상샘 결절",
+          "value": "present",
+          "note": "갑상샘 부위에 결절이 촉지됨"
+        },
+        {
+          "id": "thyroid_tenderness",
+          "label": "갑상샘 압통",
+          "value": "present",
+          "note": "갑상샘 촉진 시 압통을 호소함"
+        }
+      ]
+    },
+    "cervical_lymph_node_palpation": {
+      "label": "경부 림프절 촉진",
+      "normal": {
+        "id": "cervical_lymph_node_palpation",
+        "label": "경부 림프절",
+        "value": "normal",
+        "note": "뚜렷하게 만져지는 비정상 경부 림프절은 없음"
+      },
+      "abnormalOptions": [
+        {
+          "id": "cervical_lymphadenopathy",
+          "label": "경부 림프절 비대",
+          "value": "present",
+          "note": "경부 림프절 비대가 촉지됨"
+        },
+        {
+          "id": "tender_cervical_lymph_node",
+          "label": "압통성 경부 림프절",
+          "value": "present",
+          "note": "압통을 동반한 경부 림프절이 촉지됨"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,5746 @@
+{
+  "schemaVersion": "1.0.0",
+  "ontologyId": "physical_exam_ontology",
+  "description": "CPX 신체진찰 행동을 표준 examConceptId로 정규화하기 위한 ontology. JSON 내부에는 특정 도서명이나 페이지 출처를 넣지 않고, 평가 엔진과 진료카드 생성기가 사용하는 필드만 둔다.",
+  "designPrinciples": {
+    "deterministicFirst": true,
+    "modelAsFallbackOnly": true,
+    "doNotInferUnavailableObjectiveFindings": true,
+    "patientReactionAndObjectiveFindingMustBeSeparated": true,
+    "caseRubricMappingUsesExamConceptIds": true
+  },
+  "bodyRegions": [
+    "general",
+    "skin",
+    "head_neck",
+    "respiratory",
+    "cardiovascular",
+    "abdomen",
+    "genitourinary",
+    "rectal",
+    "breast",
+    "gynecologic",
+    "obstetric",
+    "musculoskeletal",
+    "neurologic",
+    "pediatric",
+    "psychiatric",
+    "counseling",
+    "peripheral_vascular"
+  ],
+  "examTypes": [
+    "inspection",
+    "palpation",
+    "auscultation",
+    "percussion",
+    "vital_sign",
+    "measurement",
+    "movement"
+  ],
+  "matchRules": {
+    "normalization": [
+      "lowercase",
+      "remove_whitespace",
+      "strip_punctuation_light"
+    ],
+    "priority": [
+      "exact_alias_match",
+      "longest_alias_substring_match",
+      "multiple_alias_overlap",
+      "legacy_keyword_fallback",
+      "model_fallback"
+    ],
+    "confidencePolicy": {
+      "exactAliasMatch": 0.9,
+      "partialAliasMatch": 0.75,
+      "legacyFallback": 0.45,
+      "modelOnly": 0.6,
+      "unknown": 0.2
+    }
+  },
+  "commonRubricItemIdsDefault": [
+    "relevant_physical_exam",
+    "exam_finding_check",
+    "physical_exam"
+  ],
+  "examConcepts": [
+    {
+      "id": "vital_signs",
+      "label": "활력징후 확인",
+      "bodyPart": "vital_signs",
+      "bodyRegion": "general",
+      "examType": "vital_sign",
+      "examGroup": "general",
+      "aliases": [
+        "활력징후",
+        "vital",
+        "바이탈",
+        "혈압 맥박 체온",
+        "혈압, 맥박, 체온",
+        "산소포화도"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "vital_signs_exam",
+        "vital_sign"
+      ],
+      "findingKeys": [
+        "vital_signs",
+        "temperature",
+        "blood_pressure",
+        "heart_rate",
+        "respiratory_rate",
+        "oxygen_saturation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "body_temperature",
+      "label": "체온 확인",
+      "bodyPart": "vital_signs",
+      "bodyRegion": "general",
+      "examType": "vital_sign",
+      "examGroup": "general",
+      "aliases": [
+        "체온",
+        "열 재",
+        "발열 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "vital_signs_exam",
+        "fever_exam",
+        "vital_sign"
+      ],
+      "findingKeys": [
+        "body_temperature",
+        "temperature",
+        "fever"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "blood_pressure",
+      "label": "혈압 확인",
+      "bodyPart": "vital_signs",
+      "bodyRegion": "general",
+      "examType": "vital_sign",
+      "examGroup": "general",
+      "aliases": [
+        "혈압",
+        "혈압 측정",
+        "저혈압",
+        "고혈압"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "vital_signs_exam",
+        "vital_sign"
+      ],
+      "findingKeys": [
+        "blood_pressure"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "pulse_rate",
+      "label": "맥박 확인",
+      "bodyPart": "vital_signs",
+      "bodyRegion": "general",
+      "examType": "vital_sign",
+      "examGroup": "general",
+      "aliases": [
+        "맥박",
+        "심박수",
+        "빈맥",
+        "서맥"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "vital_signs_exam",
+        "cardiovascular_exam",
+        "vital_sign"
+      ],
+      "findingKeys": [
+        "pulse_rate",
+        "heart_rate",
+        "pulse"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "respiratory_rate",
+      "label": "호흡수 확인",
+      "bodyPart": "vital_signs",
+      "bodyRegion": "general",
+      "examType": "vital_sign",
+      "examGroup": "general",
+      "aliases": [
+        "호흡수",
+        "숨쉬는 횟수",
+        "호흡 상태"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "vital_signs_exam",
+        "respiratory_exam",
+        "vital_sign"
+      ],
+      "findingKeys": [
+        "respiratory_rate"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "oxygen_saturation",
+      "label": "산소포화도 확인",
+      "bodyPart": "vital_signs",
+      "bodyRegion": "general",
+      "examType": "vital_sign",
+      "examGroup": "general",
+      "aliases": [
+        "산소포화도",
+        "산소 포화도",
+        "SpO2",
+        "산소 수치"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "vital_signs_exam",
+        "respiratory_exam",
+        "vital_sign"
+      ],
+      "findingKeys": [
+        "oxygen_saturation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "general_appearance",
+      "label": "전신 상태 관찰",
+      "bodyPart": "general_appearance",
+      "bodyRegion": "general",
+      "examType": "inspection",
+      "examGroup": "general",
+      "aliases": [
+        "전신 상태",
+        "전신 상태 확인",
+        "전반 신체 상태 확인",
+        "전반적 신체 상태 확인",
+        "겉보기 상태",
+        "환자 상태",
+        "아파 보이는지",
+        "창백한지",
+        "식은땀",
+        "통증으로 힘들어하는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "general_appearance_exam",
+        "inspection",
+        "inspection"
+      ],
+      "findingKeys": [
+        "general_appearance",
+        "generalAppearance"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "mental_status_general",
+      "label": "의식 상태 확인",
+      "bodyPart": "mental_status",
+      "bodyRegion": "general",
+      "examType": "inspection",
+      "examGroup": "general",
+      "aliases": [
+        "의식 상태",
+        "정신 상태",
+        "의식이 명료",
+        "혼돈",
+        "대화가 되는지",
+        "지남력"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "mental_status_exam",
+        "neurologic_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "mental_status_general",
+        "mental_status",
+        "consciousness",
+        "orientation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "hydration_status_general",
+      "label": "탈수 상태 확인",
+      "bodyPart": "hydration",
+      "bodyRegion": "general",
+      "examType": "inspection",
+      "examGroup": "general",
+      "aliases": [
+        "탈수",
+        "탈수 상태",
+        "수분 부족",
+        "입마름",
+        "마른지",
+        "건조한지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "hydration_status_exam",
+        "inspection",
+        "inspection"
+      ],
+      "findingKeys": [
+        "hydration_status_general",
+        "dehydration",
+        "hydration_status"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "skin_color_pallor",
+      "label": "피부 창백 확인",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "inspection",
+      "examGroup": "skin",
+      "aliases": [
+        "피부 창백",
+        "창백한지",
+        "얼굴이 창백",
+        "피부색"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "skin_exam",
+        "pallor_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "skin_color_pallor",
+        "pallor",
+        "skin_pallor"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "skin_jaundice",
+      "label": "피부 황달 확인",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "inspection",
+      "examGroup": "skin",
+      "aliases": [
+        "피부가 노란지",
+        "피부 황달",
+        "노랗게 보이는지",
+        "황달 확인",
+        "피부·손바닥 시진"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "skin_exam",
+        "jaundice_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "skin_jaundice",
+        "jaundice"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "skin_cyanosis",
+      "label": "청색증 확인",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "inspection",
+      "examGroup": "skin",
+      "aliases": [
+        "청색증",
+        "입술이 파란지",
+        "손끝이 파란지",
+        "파래 보이는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "skin_exam",
+        "cyanosis_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "skin_cyanosis",
+        "cyanosis"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "skin_rash_inspection",
+      "label": "피부 발진 확인",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "inspection",
+      "examGroup": "skin",
+      "aliases": [
+        "피부 발진",
+        "발진",
+        "두드러기",
+        "피부 병변",
+        "피부를 보겠습니다",
+        "피부에 뭐가 났는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "skin_exam",
+        "rash_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "skin_rash_inspection",
+        "rash",
+        "skin_lesion"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "petechiae_purpura_bruise",
+      "label": "점상출혈/자반/멍 확인",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "inspection",
+      "examGroup": "skin",
+      "aliases": [
+        "점상출혈",
+        "자반",
+        "멍",
+        "쉽게 멍",
+        "출혈반",
+        "피부 출혈"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "skin_exam",
+        "bleeding_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "petechiae_purpura_bruise",
+        "petechiae",
+        "purpura",
+        "bruise"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "scratch_marks",
+      "label": "긁은 자국 확인",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "inspection",
+      "examGroup": "skin",
+      "aliases": [
+        "긁은 자국",
+        "가려워서 긁은",
+        "소양감 흔적",
+        "피부 긁힘"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "skin_exam",
+        "pruritus_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "scratch_marks",
+        "excoriation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "skin_turgor",
+      "label": "피부 긴장도 확인",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "palpation",
+      "examGroup": "skin",
+      "aliases": [
+        "피부 긴장도",
+        "피부 탄력",
+        "피부를 잡아",
+        "탈수 확인 위해 피부",
+        "skin turgor"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "skin_exam",
+        "hydration_status_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "skin_turgor",
+        "dehydration"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "capillary_refill",
+      "label": "모세혈관 재충만 시간 확인",
+      "bodyPart": "finger_nailbed",
+      "bodyRegion": "peripheral_vascular",
+      "examType": "inspection",
+      "examGroup": "peripheral_vascular",
+      "aliases": [
+        "모세혈관 재충만",
+        "손톱 눌러",
+        "CRT",
+        "capillary refill"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "peripheral_vascular_exam",
+        "perfusion_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "capillary_refill"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "peripheral_edema",
+      "label": "말초 부종 확인",
+      "bodyPart": "lower_extremity",
+      "bodyRegion": "peripheral_vascular",
+      "examType": "inspection",
+      "examGroup": "peripheral_vascular",
+      "aliases": [
+        "부종",
+        "다리가 붓",
+        "하지 부종",
+        "말초 부종",
+        "발목 부종",
+        "몸이 붓"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "edema_exam",
+        "peripheral_vascular_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "peripheral_edema",
+        "lower_extremity_edema"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "pretibial_pitting_edema",
+      "label": "정강이 함요부종 확인",
+      "bodyPart": "pretibial_area",
+      "bodyRegion": "peripheral_vascular",
+      "examType": "palpation",
+      "examGroup": "peripheral_vascular",
+      "aliases": [
+        "정강이",
+        "정강이 부위",
+        "다리 눌러",
+        "눌렀을 때 들어가는지",
+        "함요부종",
+        "pitting edema"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "edema_exam",
+        "lower_extremity_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "pretibial_pitting_edema",
+        "peripheral_edema"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "peripheral_pulse",
+      "label": "말초 맥박 확인",
+      "bodyPart": "peripheral_pulse",
+      "bodyRegion": "peripheral_vascular",
+      "examType": "palpation",
+      "examGroup": "peripheral_vascular",
+      "aliases": [
+        "말초 맥박",
+        "발등 맥박",
+        "요골동맥",
+        "족배동맥",
+        "맥이 잡히는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "peripheral_vascular_exam",
+        "pulse_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "peripheral_pulse"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "conjunctival_pallor",
+      "label": "결막 창백 확인",
+      "bodyPart": "conjunctiva",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "결막",
+        "눈꺼풀 안쪽",
+        "눈 안쪽",
+        "결막 창백",
+        "빈혈 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "head_neck_exam",
+        "eye_exam",
+        "pallor_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "conjunctival_pallor",
+        "conjunctiva"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "scleral_icterus",
+      "label": "공막 황달 확인",
+      "bodyPart": "sclera",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "공막",
+        "눈 흰자",
+        "눈이 노란지",
+        "공막 황달",
+        "눈 흰자가 노란지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "head_neck_exam",
+        "eye_exam",
+        "jaundice_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "scleral_icterus",
+        "sclera"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "pupil_light_reflex",
+      "label": "동공 및 빛반사 확인",
+      "bodyPart": "pupil",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "동공",
+        "빛반사",
+        "동공 반사",
+        "pupil",
+        "대광반사"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "eye_exam",
+        "neurologic_exam",
+        "cranial_nerve_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "pupil_light_reflex",
+        "pupil",
+        "light_reflex"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "extraocular_movement",
+      "label": "안구운동 확인",
+      "bodyPart": "eye_movement",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "안구운동",
+        "눈 움직임",
+        "외안근",
+        "복시",
+        "따라보세요"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "eye_exam",
+        "cranial_nerve_exam",
+        "neurologic_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "extraocular_movement",
+        "eom"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "visual_field",
+      "label": "시야 확인",
+      "bodyPart": "visual_field",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "시야",
+        "주변이 보이는지",
+        "visual field",
+        "시야 검사"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "eye_exam",
+        "neurologic_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "visual_field"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "nystagmus",
+      "label": "안진 확인",
+      "bodyPart": "eye_movement",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "안진",
+        "눈 떨림",
+        "nystagmus"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "eye_exam",
+        "neurologic_exam",
+        "dizziness_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "nystagmus"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "fundoscopy",
+      "label": "안저 확인",
+      "bodyPart": "fundus",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "안저",
+        "눈 바닥",
+        "망막",
+        "시신경유두",
+        "안저검사"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "eye_exam",
+        "fundoscopy",
+        "inspection"
+      ],
+      "findingKeys": [
+        "fundoscopy",
+        "papilledema",
+        "retina"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "ear_tympanic_membrane",
+      "label": "고막/외이 확인",
+      "bodyPart": "ear",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "고막",
+        "귀 안",
+        "외이도",
+        "중이염",
+        "귀를 보겠습니다"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "ear_exam",
+        "head_neck_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "ear_tympanic_membrane",
+        "tympanic_membrane",
+        "otitis_media"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "hearing_response",
+      "label": "청력/소리 반응 확인",
+      "bodyPart": "ear",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "청력",
+        "소리 반응",
+        "잘 들리는지",
+        "큰 소리에 놀라는지",
+        "소리 나는 쪽"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "hearing_exam",
+        "pediatric_exam",
+        "head_neck_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "hearing_response",
+        "hearing",
+        "sound_response"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "nasal_mucosa",
+      "label": "비강/코 점막 확인",
+      "bodyPart": "nose",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "코",
+        "코 진찰",
+        "코 확인",
+        "코 검사",
+        "코를 본다",
+        "코를 확인",
+        "코 안",
+        "비강",
+        "비강 확인",
+        "비강 검사",
+        "코 점막",
+        "콧속",
+        "콧속 확인",
+        "비루",
+        "코막힘",
+        "비점막·비갑개·비중격 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "nose_exam",
+        "head_neck_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "nasal_mucosa",
+        "rhinorrhea"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "oral_mucosa_dryness",
+      "label": "구강 점막 건조 확인",
+      "bodyPart": "oral_mucosa",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "입안 점막",
+        "구강 점막",
+        "입이 마른",
+        "입안이 건조",
+        "혀가 마른",
+        "입술이 마른",
+        "점막이 건조"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "mouth_exam",
+        "hydration_status_exam",
+        "oral_dehydration_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "oral_mucosa_dryness",
+        "oral_mucosa",
+        "dehydration"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "oral_ulcer_or_lesion",
+      "label": "구강 병변 확인",
+      "bodyPart": "oral_cavity",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "입안 궤양",
+        "구강 궤양",
+        "입안 병변",
+        "혀 병변",
+        "구내염",
+        "입안을 보겠습니다"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "mouth_exam",
+        "head_neck_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "oral_ulcer_or_lesion",
+        "oral_ulcer",
+        "oral_lesion"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "pharynx_tonsil",
+      "label": "인두/편도 확인",
+      "bodyPart": "pharynx",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": [
+        "목 안",
+        "인두",
+        "편도",
+        "목구멍",
+        "편도가 부었는지",
+        "목을 보겠습니다"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "throat_exam",
+        "head_neck_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "pharynx_tonsil",
+        "pharynx",
+        "tonsil"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "neck_lymph_node",
+      "label": "경부 림프절 촉진",
+      "bodyPart": "neck_lymph_node",
+      "bodyRegion": "head_neck",
+      "examType": "palpation",
+      "examGroup": "head_neck",
+      "aliases": [
+        "림프절",
+        "목 림프절",
+        "목에 멍울",
+        "경부 림프절",
+        "목을 만져"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "lymph_node_exam",
+        "head_neck_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "neck_lymph_node",
+        "lymphadenopathy"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "thyroid_palpation",
+      "label": "갑상샘 촉진",
+      "bodyPart": "thyroid",
+      "bodyRegion": "head_neck",
+      "examType": "palpation",
+      "examGroup": "head_neck",
+      "aliases": [
+        "갑상샘",
+        "갑상선",
+        "목 앞쪽",
+        "갑상샘 촉진",
+        "갑상선이 커졌는지",
+        "목 앞쪽 만져",
+        "갑상선 촉진",
+        "갑상샘 비대",
+        "갑상선 결절"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "thyroid_exam",
+        "head_neck_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "thyroid_palpation",
+        "thyroid",
+        "goiter",
+        "thyroid_nodule"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "neck_stiffness",
+      "label": "목 경직 확인",
+      "bodyPart": "neck",
+      "bodyRegion": "neurologic",
+      "examType": "palpation",
+      "examGroup": "neurologic",
+      "aliases": [
+        "목 경직",
+        "목이 뻣뻣",
+        "수막자극",
+        "목을 숙여",
+        "neck stiffness"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "meningeal_sign_exam",
+        "neurologic_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "neck_stiffness",
+        "meningeal_sign"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "jvp",
+      "label": "경정맥 팽대 확인",
+      "bodyPart": "neck_vein",
+      "bodyRegion": "cardiovascular",
+      "examType": "inspection",
+      "examGroup": "cardiovascular",
+      "aliases": [
+        "경정맥",
+        "목정맥",
+        "JVP",
+        "목 혈관",
+        "정맥 팽대"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "cardiovascular_exam",
+        "neck_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "jvp",
+        "jugular_venous_distension"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "chest_inspection",
+      "label": "흉부 시진",
+      "bodyPart": "chest",
+      "bodyRegion": "respiratory",
+      "examType": "inspection",
+      "examGroup": "respiratory",
+      "aliases": [
+        "흉부 시진",
+        "가슴 모양",
+        "흉곽",
+        "호흡 보조근",
+        "숨쉬기 힘든 모습"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "chest_exam",
+        "respiratory_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "chest_inspection",
+        "respiratory_distress"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "lung_auscultation",
+      "label": "폐 청진",
+      "bodyPart": "lung",
+      "bodyRegion": "respiratory",
+      "examType": "auscultation",
+      "examGroup": "respiratory",
+      "aliases": [
+        "폐 청진",
+        "폐음",
+        "숨소리",
+        "호흡음",
+        "가슴 청진",
+        "등에서 소리",
+        "가슴에 청진기",
+        "청진기를 가슴에",
+        "숨을 크게 들이마시고",
+        "숨을 크게 쉬어",
+        "lung auscultation"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "lung_exam",
+        "respiratory_exam",
+        "auscultation",
+        "auscultation"
+      ],
+      "findingKeys": [
+        "lung_auscultation",
+        "breath_sound",
+        "wheeze",
+        "crackle",
+        "respiratory_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "chest_percussion",
+      "label": "흉부 타진",
+      "bodyPart": "chest",
+      "bodyRegion": "respiratory",
+      "examType": "percussion",
+      "examGroup": "respiratory",
+      "aliases": [
+        "흉부 타진",
+        "가슴 두드",
+        "폐 타진",
+        "둔탁음",
+        "과공명",
+        "가슴을 두드려",
+        "폐를 타진",
+        "타진음",
+        "탁음"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "chest_exam",
+        "respiratory_exam",
+        "percussion",
+        "percussion"
+      ],
+      "findingKeys": [
+        "chest_percussion",
+        "percussion_note"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "chest_wall_tenderness",
+      "label": "흉벽 압통 확인",
+      "bodyPart": "chest_wall",
+      "bodyRegion": "respiratory",
+      "examType": "palpation",
+      "examGroup": "respiratory",
+      "aliases": [
+        "흉벽 압통",
+        "가슴 눌러",
+        "갈비뼈 눌러",
+        "가슴벽 통증",
+        "누르면 아픈지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "chest_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "chest_wall_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "heart_auscultation",
+      "label": "심음 청진",
+      "bodyPart": "heart",
+      "bodyRegion": "cardiovascular",
+      "examType": "auscultation",
+      "examGroup": "cardiovascular",
+      "aliases": [
+        "심음",
+        "심장 청진",
+        "심잡음",
+        "심장 소리",
+        "murmur",
+        "가슴에 청진기를 대고 심음",
+        "heart auscultation"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "heart_exam",
+        "cardiovascular_exam",
+        "auscultation",
+        "auscultation"
+      ],
+      "findingKeys": [
+        "heart_auscultation",
+        "murmur",
+        "heart_sound",
+        "cardiac_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "precordial_inspection_palpation",
+      "label": "전흉부 시진/촉진",
+      "bodyPart": "precordium",
+      "bodyRegion": "cardiovascular",
+      "examType": "palpation",
+      "examGroup": "cardiovascular",
+      "aliases": [
+        "전흉부",
+        "심첨박동",
+        "apex beat",
+        "가슴 앞쪽 만져",
+        "thrill"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "heart_exam",
+        "cardiovascular_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "precordial_inspection_palpation",
+        "precordial_exam",
+        "apex_beat",
+        "thrill"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "carotid_bruit",
+      "label": "경동맥 잡음 청진",
+      "bodyPart": "carotid",
+      "bodyRegion": "cardiovascular",
+      "examType": "auscultation",
+      "examGroup": "cardiovascular",
+      "aliases": [
+        "경동맥",
+        "목 혈관 잡음",
+        "경동맥 잡음",
+        "carotid bruit"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "cardiovascular_exam",
+        "auscultation",
+        "auscultation"
+      ],
+      "findingKeys": [
+        "carotid_bruit"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "abdominal_exam_position",
+      "label": "복부 진찰 자세 준비",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "preparation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "진찰 자세",
+        "오른편에 서서 바로 눕히고 무릎 세움",
+        "바로 눕히고 무릎 세움",
+        "무릎 세움",
+        "무릎을 세움"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "patient_positioning",
+        "preparation"
+      ],
+      "findingKeys": [
+        "abdominal_exam_position",
+        "patient_position"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "xanthoma_xanthelasma_inspection",
+      "label": "황색종/황색판종·각막환 확인",
+      "bodyPart": "skin_eye",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "metabolic",
+      "aliases": [
+        "황색종",
+        "황색판종",
+        "각막환",
+        "눈 주위 황색종",
+        "손바닥 황색종",
+        "힘줄 황색종"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "metabolic_exam",
+        "dyslipidemia_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "xanthoma",
+        "xanthelasma",
+        "corneal_arcus"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "abdominal_inspection",
+      "label": "복부 시진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "inspection",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부 시진",
+        "배를 보",
+        "배 모양",
+        "복부팽만",
+        "수술 자국",
+        "복부를 관찰"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "inspection",
+        "inspection"
+      ],
+      "findingKeys": [
+        "abdominal_inspection",
+        "inspection",
+        "abdominalDistension",
+        "surgicalScar"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "abdominal_auscultation",
+      "label": "복부 청진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "auscultation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부 청진",
+        "장음",
+        "배에서 소리",
+        "장 소리",
+        "bowel sound"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "auscultation",
+        "auscultation"
+      ],
+      "findingKeys": [
+        "abdominal_auscultation",
+        "auscultation",
+        "bowelSound"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "abdominal_percussion",
+      "label": "복부 타진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "percussion",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부 타진",
+        "배를 두드",
+        "복부를 두드",
+        "타진음"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "percussion",
+        "percussion"
+      ],
+      "findingKeys": [
+        "abdominal_percussion",
+        "percussion"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "light_deep_palpation",
+      "label": "복부 얕은/깊은 촉진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부를 얕게 촉진",
+        "복부 얕은 촉진",
+        "복부를 가볍게 촉진",
+        "배를 얕게 촉진",
+        "배를 가볍게 촉진",
+        "얕게 촉진",
+        "가볍게 촉진",
+        "살짝 눌러",
+        "가볍게 눌러",
+        "배를 눌러",
+        "복부를 눌러",
+        "배를 만져",
+        "복부를 만져",
+        "복부 압통 확인",
+        "배 압통 확인",
+        "복부 진찰(간·비장)",
+        "압통이 있는지 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "light_deep_palpation",
+        "abdominal_tenderness",
+        "abdominal_palpation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "abdominal_palpation",
+      "label": "복부 촉진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부 촉진",
+        "배를 눌",
+        "배를 만져",
+        "복부 압통",
+        "압통이 있는지",
+        "얕은 촉진",
+        "깊은 촉진",
+        "복부를 얕게 촉진",
+        "복부 얕은 촉진",
+        "복부를 가볍게 촉진",
+        "배를 얕게 촉진",
+        "배를 가볍게 촉진",
+        "얕게 촉진",
+        "가볍게 촉진",
+        "살짝 눌러",
+        "가볍게 눌러",
+        "복부를 눌러",
+        "복부를 만져",
+        "복부 압통 확인",
+        "배 압통 확인",
+        "압통이 있는지 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "abdominal_palpation",
+        "palpation",
+        "maxTendernessLocation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "right_upper_quadrant_tenderness",
+      "label": "우상복부 압통 확인",
+      "bodyPart": "right_upper_quadrant",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "우상복부",
+        "오른쪽 윗배",
+        "간 부위",
+        "담낭 부위",
+        "오른쪽 상복부"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "ruq_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "right_upper_quadrant_tenderness",
+        "ruq_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "epigastric_tenderness",
+      "label": "명치/상복부 압통 확인",
+      "bodyPart": "epigastrium",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "명치",
+        "상복부",
+        "윗배",
+        "epigastric",
+        "명치 누르면"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "epigastric_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "epigastric_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "right_lower_quadrant_tenderness",
+      "label": "우하복부 압통 확인",
+      "bodyPart": "right_lower_quadrant",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "우하복부",
+        "오른쪽 아랫배",
+        "오른쪽 하복부",
+        "맥버니",
+        "McBurney"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "rlq_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "right_lower_quadrant_tenderness",
+        "mcburney_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "left_lower_quadrant_tenderness",
+      "label": "좌하복부 압통 확인",
+      "bodyPart": "left_lower_quadrant",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "좌하복부",
+        "왼쪽 아랫배",
+        "왼쪽 하복부"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "llq_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "left_lower_quadrant_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "suprapubic_tenderness",
+      "label": "치골상부/방광 부위 압통 확인",
+      "bodyPart": "suprapubic_area",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "방광 부위",
+        "치골상부",
+        "아랫배 가운데",
+        "하복부 가운데",
+        "소변 보는 부위",
+        "방광 쪽 압통",
+        "방광 부위 압통이 있는지 확인",
+        "방광 부위 압통 확인",
+        "방광 부위를 눌러",
+        "방광 위 압통",
+        "치골상부 압통"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "suprapubic_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "suprapubic_tenderness",
+        "lower_abdominal_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "rebound_tenderness",
+      "label": "반발통 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "반발통",
+        "눌렀다 뗄 때",
+        "떼면 아픈지",
+        "rebound",
+        "눌렀다가 뗄 때",
+        "손을 뗄 때 아픈지",
+        "뗄 때 통증",
+        "복막자극징후",
+        "rebound tenderness",
+        "블룸버그 징후",
+        "Blumberg"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "peritoneal_sign_exam",
+        "palpation",
+        "palpation",
+        "rebound_tenderness"
+      ],
+      "findingKeys": [
+        "rebound_tenderness",
+        "reboundTenderness",
+        "peritonealSigns",
+        "peritoneal_signs"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "guarding_rigidity",
+      "label": "근성 방어/복부 경직 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "근성 방어",
+        "복부 경직",
+        "배가 딱딱",
+        "guarding",
+        "rigidity"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "peritoneal_sign_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "guarding_rigidity",
+        "guarding",
+        "rigidity",
+        "peritonealSigns"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "murphy_sign",
+      "label": "Murphy 징후 확인",
+      "bodyPart": "right_upper_quadrant",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "Murphy",
+        "머피",
+        "숨 들이마실 때 우상복부",
+        "담낭 압통"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "biliary_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "murphy_sign"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "psoas_obturator_sign",
+      "label": "Psoas/Obturator 징후 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "psoas",
+        "장요근",
+        "obturator",
+        "폐쇄근",
+        "다리 들어",
+        "고관절 굽혀"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "appendicitis_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "psoas_obturator_sign",
+        "psoas_sign",
+        "obturator_sign"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "hepatomegaly_splenomegaly",
+      "label": "간/비장 촉진",
+      "bodyPart": "liver_spleen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "간 촉진",
+        "비장 촉진",
+        "간비대",
+        "비장비대",
+        "간이 커졌는지",
+        "비장이 커졌는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "liver_spleen_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "hepatomegaly_splenomegaly",
+        "hepatomegaly",
+        "splenomegaly"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "ascites_exam",
+      "label": "복수 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "percussion",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복수",
+        "이동탁음",
+        "fluid wave",
+        "배에 물",
+        "복부팽만과 복수"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "ascites_exam",
+        "percussion",
+        "percussion"
+      ],
+      "findingKeys": [
+        "ascites_exam",
+        "ascites",
+        "shifting_dullness",
+        "fluid_wave"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "cva_tenderness",
+      "label": "늑골척추각 압통 확인",
+      "bodyPart": "cva",
+      "bodyRegion": "genitourinary",
+      "examType": "percussion",
+      "examGroup": "genitourinary",
+      "aliases": [
+        "CVA",
+        "늑골척추각",
+        "옆구리 두드",
+        "콩팥 부위",
+        "신장 압통",
+        "옆구리 통증"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "genitourinary_exam",
+        "abdomen_exam",
+        "percussion",
+        "percussion"
+      ],
+      "findingKeys": [
+        "cva_tenderness",
+        "cvaTenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "bladder_distension",
+      "label": "방광 팽만 확인",
+      "bodyPart": "suprapubic_area",
+      "bodyRegion": "genitourinary",
+      "examType": "palpation",
+      "examGroup": "genitourinary",
+      "aliases": [
+        "방광 팽만",
+        "소변이 차",
+        "방광이 만져지는지",
+        "치골상부 팽만"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "genitourinary_exam",
+        "suprapubic_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "bladder_distension"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "external_genital_exam",
+      "label": "외부 생식기 진찰",
+      "bodyPart": "genital",
+      "bodyRegion": "genitourinary",
+      "examType": "inspection",
+      "examGroup": "genitourinary",
+      "aliases": [
+        "외부 생식기",
+        "생식기 진찰",
+        "고환",
+        "음낭",
+        "음경",
+        "외음부",
+        "성기 진찰"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "genitourinary_exam",
+        "inspection",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "external_genital_exam",
+        "genital_lesion",
+        "genital_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {},
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true
+    },
+    {
+      "id": "prostate_dre",
+      "label": "전립선 직장수지검사",
+      "bodyPart": "rectum",
+      "bodyRegion": "genitourinary",
+      "examType": "palpation",
+      "examGroup": "genitourinary",
+      "aliases": [
+        "전립선",
+        "직장수지검사",
+        "DRE",
+        "항문으로 검사",
+        "전립선 촉진",
+        "prostate DRE"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "rectal_exam",
+        "genitourinary_exam",
+        "sensitive_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "prostate_dre",
+        "prostate_tenderness",
+        "prostate_enlargement",
+        "digital_rectal_exam",
+        "rectal_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {},
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true
+    },
+    {
+      "id": "perianal_inspection",
+      "label": "항문 주위 시진",
+      "bodyPart": "perianal_area",
+      "bodyRegion": "rectal",
+      "examType": "inspection",
+      "examGroup": "rectal",
+      "aliases": [
+        "항문 주위",
+        "항문을 보",
+        "치핵",
+        "치열",
+        "항문 덩이",
+        "항문 병변",
+        "항문 주변 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "rectal_exam",
+        "perianal_exam",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "perianal_inspection",
+        "hemorrhoid",
+        "anal_fissure"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {},
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true
+    },
+    {
+      "id": "digital_rectal_exam",
+      "label": "직장수지검사",
+      "bodyPart": "rectum",
+      "bodyRegion": "rectal",
+      "examType": "palpation",
+      "examGroup": "rectal",
+      "aliases": [
+        "직장수지검사",
+        "DRE",
+        "손가락으로 항문",
+        "직장 진찰",
+        "직장 촉진",
+        "직장 수지 검사",
+        "항문에 손가락",
+        "직장 검사",
+        "digital rectal exam"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "rectal_exam",
+        "sensitive_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "digital_rectal_exam",
+        "rectal_mass",
+        "stool_blood",
+        "rectal_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {},
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true
+    },
+    {
+      "id": "breast_inspection",
+      "label": "유방 시진",
+      "bodyPart": "breast",
+      "bodyRegion": "breast",
+      "examType": "inspection",
+      "examGroup": "breast",
+      "aliases": [
+        "유방 시진",
+        "가슴 모양",
+        "유두 함몰",
+        "피부 함몰",
+        "유방 피부",
+        "?? ??",
+        "?? ??? ??",
+        "?? ?? ?",
+        "?? ?? ??"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "breast_exam",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "breast_inspection",
+        "nipple_retraction",
+        "skin_dimpling"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {},
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true
+    },
+    {
+      "id": "breast_palpation",
+      "label": "유방 촉진",
+      "bodyPart": "breast",
+      "bodyRegion": "breast",
+      "examType": "palpation",
+      "examGroup": "breast",
+      "aliases": [
+        "유방 촉진",
+        "유방 멍울",
+        "가슴 멍울",
+        "덩이를 만져",
+        "유방을 만져",
+        "?? ??",
+        "??? ??",
+        "???? ??"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "breast_exam",
+        "sensitive_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "breast_palpation",
+        "breast_mass",
+        "breast_tenderness",
+        "breast_mass_palpation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {},
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true
+    },
+    {
+      "id": "axillary_lymph_node",
+      "label": "액와 림프절 촉진",
+      "bodyPart": "axilla",
+      "bodyRegion": "breast",
+      "examType": "palpation",
+      "examGroup": "breast",
+      "aliases": [
+        "겨드랑이 림프절",
+        "액와 림프절",
+        "겨드랑이 멍울"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "breast_exam",
+        "lymph_node_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "axillary_lymph_node"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "pelvic_speculum_exam",
+      "label": "질경 진찰",
+      "bodyPart": "pelvis",
+      "bodyRegion": "gynecologic",
+      "examType": "inspection",
+      "examGroup": "gynecologic",
+      "aliases": [
+        "질경",
+        "질경 검사",
+        "자궁경부를 보",
+        "질분비물 확인",
+        "speculum"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pelvic_exam",
+        "gynecologic_exam",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "pelvic_speculum_exam",
+        "speculum_exam",
+        "vaginal_discharge",
+        "cervix"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "bimanual_pelvic_exam",
+      "label": "양손 골반진찰",
+      "bodyPart": "pelvis",
+      "bodyRegion": "gynecologic",
+      "examType": "palpation",
+      "examGroup": "gynecologic",
+      "aliases": [
+        "양손 진찰",
+        "골반 진찰",
+        "내진",
+        "자궁 압통",
+        "부속기 압통",
+        "bimanual",
+        "bimanual pelvic exam"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pelvic_exam",
+        "gynecologic_exam",
+        "sensitive_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "bimanual_pelvic_exam",
+        "bimanual_exam",
+        "uterine_tenderness",
+        "adnexal_tenderness",
+        "pelvic_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {},
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true
+    },
+    {
+      "id": "cervical_motion_tenderness",
+      "label": "자궁경부 운동 압통 확인",
+      "bodyPart": "cervix",
+      "bodyRegion": "gynecologic",
+      "examType": "palpation",
+      "examGroup": "gynecologic",
+      "aliases": [
+        "자궁경부 운동 압통",
+        "CMT",
+        "경부를 움직일 때 통증",
+        "골반염 압통"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pelvic_exam",
+        "gynecologic_exam",
+        "sensitive_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "cervical_motion_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "uterine_fundal_height",
+      "label": "자궁저부 높이 측정",
+      "bodyPart": "uterus",
+      "bodyRegion": "obstetric",
+      "examType": "palpation",
+      "examGroup": "obstetric",
+      "aliases": [
+        "자궁저부",
+        "자궁 높이",
+        "배 크기 측정",
+        "fundal height"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "obstetric_exam",
+        "pregnancy_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "uterine_fundal_height"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "fetal_heart_sound",
+      "label": "태아 심음 확인",
+      "bodyPart": "fetus",
+      "bodyRegion": "obstetric",
+      "examType": "auscultation",
+      "examGroup": "obstetric",
+      "aliases": [
+        "태아 심음",
+        "태아 심박",
+        "아기 심장소리",
+        "fetal heart"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "obstetric_exam",
+        "pregnancy_exam",
+        "auscultation",
+        "auscultation"
+      ],
+      "findingKeys": [
+        "fetal_heart_sound",
+        "fetal_heart_rate"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "leopold_maneuver",
+      "label": "Leopold 촉진",
+      "bodyPart": "uterus",
+      "bodyRegion": "obstetric",
+      "examType": "palpation",
+      "examGroup": "obstetric",
+      "aliases": [
+        "Leopold",
+        "레오폴드",
+        "태위",
+        "태향",
+        "아기 위치"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "obstetric_exam",
+        "pregnancy_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "leopold_maneuver",
+        "fetal_position"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "joint_inspection",
+      "label": "관절 시진",
+      "bodyPart": "joint",
+      "bodyRegion": "musculoskeletal",
+      "examType": "inspection",
+      "examGroup": "musculoskeletal",
+      "aliases": [
+        "관절 시진",
+        "관절 붓기",
+        "관절 변형",
+        "발적",
+        "관절 모양"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "musculoskeletal_exam",
+        "joint_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "joint_inspection",
+        "joint_swelling",
+        "joint_deformity"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "joint_palpation",
+      "label": "관절 촉진",
+      "bodyPart": "joint",
+      "bodyRegion": "musculoskeletal",
+      "examType": "palpation",
+      "examGroup": "musculoskeletal",
+      "aliases": [
+        "관절 촉진",
+        "관절을 만져",
+        "열감",
+        "압통",
+        "관절 통증 확인",
+        "다른 관절·대칭성 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "musculoskeletal_exam",
+        "joint_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "joint_palpation",
+        "joint_tenderness",
+        "joint_warmth"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "joint_range_of_motion",
+      "label": "관절 운동범위 확인",
+      "bodyPart": "joint",
+      "bodyRegion": "musculoskeletal",
+      "examType": "movement",
+      "examGroup": "musculoskeletal",
+      "aliases": [
+        "관절 운동범위",
+        "움직여 보",
+        "ROM",
+        "굽혀",
+        "펴보",
+        "돌려보"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "musculoskeletal_exam",
+        "joint_exam",
+        "range_of_motion",
+        "movement"
+      ],
+      "findingKeys": [
+        "joint_range_of_motion",
+        "rom_limitation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "spine_inspection",
+      "label": "척추 시진",
+      "bodyPart": "spine",
+      "bodyRegion": "musculoskeletal",
+      "examType": "inspection",
+      "examGroup": "musculoskeletal",
+      "aliases": [
+        "척추 시진",
+        "허리 모양",
+        "척추 휨",
+        "자세를 보",
+        "등을 보"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "spine_exam",
+        "musculoskeletal_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "spine_inspection",
+        "scoliosis"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "spine_palpation",
+      "label": "척추/허리 촉진",
+      "bodyPart": "spine",
+      "bodyRegion": "musculoskeletal",
+      "examType": "palpation",
+      "examGroup": "musculoskeletal",
+      "aliases": [
+        "척추 촉진",
+        "허리를 눌",
+        "등을 눌",
+        "척추 압통",
+        "요추 압통"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "spine_exam",
+        "musculoskeletal_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "spine_palpation",
+        "spine_tenderness",
+        "paraspinal_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "spine_range_of_motion",
+      "label": "척추 운동범위 확인",
+      "bodyPart": "spine",
+      "bodyRegion": "musculoskeletal",
+      "examType": "movement",
+      "examGroup": "musculoskeletal",
+      "aliases": [
+        "허리 굽혀",
+        "허리 젖혀",
+        "척추 운동범위",
+        "목을 움직여",
+        "허리를 움직여"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "spine_exam",
+        "range_of_motion",
+        "movement"
+      ],
+      "findingKeys": [
+        "spine_range_of_motion"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "straight_leg_raise",
+      "label": "하지직거상검사",
+      "bodyPart": "lower_extremity",
+      "bodyRegion": "musculoskeletal",
+      "examType": "movement",
+      "examGroup": "musculoskeletal",
+      "aliases": [
+        "하지직거상",
+        "SLR",
+        "다리 들어",
+        "좌골신경",
+        "straight leg raise"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "spine_exam",
+        "neurologic_exam",
+        "musculoskeletal_exam",
+        "movement"
+      ],
+      "findingKeys": [
+        "straight_leg_raise"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "gait_observation",
+      "label": "보행 관찰",
+      "bodyPart": "gait",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "보행",
+        "걸어보",
+        "걷는 모습",
+        "걸음걸이",
+        "gait"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "gait_exam",
+        "neurologic_exam",
+        "musculoskeletal_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "gait_observation",
+        "gait"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "cranial_nerve_exam",
+      "label": "뇌신경 검사",
+      "bodyPart": "cranial_nerves",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "뇌신경",
+        "얼굴 움직임",
+        "눈 움직임",
+        "혀 내밀",
+        "삼차신경",
+        "안면신경"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "cranial_nerve_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "cranial_nerve_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "motor_strength",
+      "label": "근력 검사",
+      "bodyPart": "limb",
+      "bodyRegion": "neurologic",
+      "examType": "movement",
+      "examGroup": "neurologic",
+      "aliases": [
+        "근력",
+        "힘을 줘",
+        "밀어보",
+        "당겨보",
+        "팔다리 힘",
+        "motor strength"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "motor_exam",
+        "movement"
+      ],
+      "findingKeys": [
+        "motor_strength",
+        "muscle_power"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "muscle_tone",
+      "label": "근긴장도 확인",
+      "bodyPart": "limb",
+      "bodyRegion": "neurologic",
+      "examType": "movement",
+      "examGroup": "neurologic",
+      "aliases": [
+        "근긴장",
+        "강직",
+        "저긴장",
+        "힘이 빠져",
+        "tone"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "motor_exam",
+        "movement"
+      ],
+      "findingKeys": [
+        "muscle_tone",
+        "rigidity",
+        "hypotonia"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "sensory_exam",
+      "label": "감각 검사",
+      "bodyPart": "limb",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "감각",
+        "느낌이 같은지",
+        "저린지",
+        "차갑고 뜨거운",
+        "핀으로",
+        "sensory"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "sensory_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "sensory_exam",
+        "hypoesthesia"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "deep_tendon_reflex",
+      "label": "심부건반사 검사",
+      "bodyPart": "reflex",
+      "bodyRegion": "neurologic",
+      "examType": "percussion",
+      "examGroup": "neurologic",
+      "aliases": [
+        "심부건반사",
+        "DTR",
+        "무릎 반사",
+        "아킬레스 반사",
+        "반사망치"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "reflex_exam",
+        "percussion"
+      ],
+      "findingKeys": [
+        "deep_tendon_reflex",
+        "dtr"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "babinski_sign",
+      "label": "Babinski 징후 확인",
+      "bodyPart": "foot",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "Babinski",
+        "바빈스키",
+        "발바닥 긁",
+        "족저반사"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "reflex_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "babinski_sign"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "ankle_clonus",
+      "label": "Ankle clonus 확인",
+      "bodyPart": "ankle",
+      "bodyRegion": "neurologic",
+      "examType": "movement",
+      "examGroup": "neurologic",
+      "aliases": [
+        "ankle clonus",
+        "발목 클로누스",
+        "간대성 경련",
+        "발목 반사"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "reflex_exam",
+        "movement"
+      ],
+      "findingKeys": [
+        "ankle_clonus"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "coordination_exam",
+      "label": "소뇌/협응 검사",
+      "bodyPart": "coordination",
+      "bodyRegion": "neurologic",
+      "examType": "movement",
+      "examGroup": "neurologic",
+      "aliases": [
+        "소뇌",
+        "협응",
+        "손가락 코",
+        "finger to nose",
+        "빠른 교대운동",
+        "heel to shin"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "cerebellar_exam",
+        "movement"
+      ],
+      "findingKeys": [
+        "coordination_exam",
+        "coordination",
+        "cerebellar_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "romberg_test",
+      "label": "Romberg 검사",
+      "bodyPart": "balance",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "Romberg",
+        "롬버그",
+        "눈 감고 서",
+        "균형 검사"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "balance_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "romberg_test"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "speech_assessment",
+      "label": "말/언어 관찰",
+      "bodyPart": "speech",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "말이 어눌",
+        "발음",
+        "언어",
+        "실어증",
+        "말하는 모습",
+        "speech"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "speech_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "speech_assessment",
+        "speech",
+        "aphasia",
+        "dysarthria"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "tremor_observation",
+      "label": "손떨림 관찰",
+      "bodyPart": "hand",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": [
+        "손떨림",
+        "떨림",
+        "진전",
+        "tremor",
+        "손을 뻗어"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "tremor_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "tremor_observation",
+        "tremor"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "meningeal_signs",
+      "label": "수막자극징후 확인",
+      "bodyPart": "neck",
+      "bodyRegion": "neurologic",
+      "examType": "movement",
+      "examGroup": "neurologic",
+      "aliases": [
+        "수막자극",
+        "Kernig",
+        "Brudzinski",
+        "케르니그",
+        "브루진스키",
+        "목 경직"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "neurologic_exam",
+        "meningeal_sign_exam",
+        "movement"
+      ],
+      "findingKeys": [
+        "meningeal_signs",
+        "kernig",
+        "brudzinski",
+        "neck_stiffness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "pediatric_growth_measurement",
+      "label": "소아 성장 지표 측정",
+      "bodyPart": "growth_measurement",
+      "bodyRegion": "pediatric",
+      "examType": "measurement",
+      "examGroup": "pediatric",
+      "aliases": [
+        "키",
+        "몸무게",
+        "체중",
+        "머리둘레",
+        "가슴둘레",
+        "성장곡선",
+        "백분위수"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pediatric_exam",
+        "growth_exam",
+        "measurement",
+        "measurement"
+      ],
+      "findingKeys": [
+        "pediatric_growth_measurement",
+        "height",
+        "weight",
+        "head_circumference",
+        "chest_circumference",
+        "percentile"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "developmental_observation",
+      "label": "발달 상태 관찰",
+      "bodyPart": "development",
+      "bodyRegion": "pediatric",
+      "examType": "inspection",
+      "examGroup": "pediatric",
+      "aliases": [
+        "발달 관찰",
+        "운동 발달",
+        "언어 발달",
+        "사회성",
+        "고개 가누",
+        "걷는지",
+        "말하는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pediatric_exam",
+        "development_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "developmental_observation",
+        "milestones"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "primitive_reflex",
+      "label": "원시반사 확인",
+      "bodyPart": "reflex",
+      "bodyRegion": "pediatric",
+      "examType": "movement",
+      "examGroup": "pediatric",
+      "aliases": [
+        "원시반사",
+        "모로반사",
+        "파악반사",
+        "빨기반사",
+        "신생아 반사"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pediatric_exam",
+        "reflex_exam",
+        "movement"
+      ],
+      "findingKeys": [
+        "primitive_reflex",
+        "moro_reflex"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "fontanelle_exam",
+      "label": "대천문 확인",
+      "bodyPart": "fontanelle",
+      "bodyRegion": "pediatric",
+      "examType": "palpation",
+      "examGroup": "pediatric",
+      "aliases": [
+        "대천문",
+        "천문",
+        "머리 숨구멍",
+        "fontanelle"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pediatric_exam",
+        "head_exam",
+        "palpation",
+        "palpation"
+      ],
+      "findingKeys": [
+        "fontanelle_exam",
+        "fontanelle"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "tanner_stage",
+      "label": "성성숙도 확인",
+      "bodyPart": "genital_breast",
+      "bodyRegion": "pediatric",
+      "examType": "inspection",
+      "examGroup": "pediatric",
+      "aliases": [
+        "성성숙도",
+        "Tanner",
+        "태너",
+        "2차 성징",
+        "사춘기 발달"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "pediatric_exam",
+        "puberty_exam",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "tanner_stage",
+        "puberty"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "mental_status_exam",
+      "label": "정신상태검사",
+      "bodyPart": "mental_status",
+      "bodyRegion": "psychiatric",
+      "examType": "inspection",
+      "examGroup": "psychiatric",
+      "aliases": [
+        "정신상태검사",
+        "MSE",
+        "기분",
+        "정동",
+        "사고",
+        "망상",
+        "환청",
+        "자살사고"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "psychiatric_exam",
+        "mental_status_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "mental_status_exam",
+        "mood",
+        "affect",
+        "thought",
+        "suicidal_ideation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "suicide_risk_assessment",
+      "label": "자살위험 평가",
+      "bodyPart": "mental_status",
+      "bodyRegion": "psychiatric",
+      "examType": "inspection",
+      "examGroup": "psychiatric",
+      "aliases": [
+        "자살",
+        "죽고 싶",
+        "자해",
+        "계획이 있는지",
+        "자살 생각",
+        "극단적 선택"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "psychiatric_exam",
+        "safety_exam",
+        "risk_assessment",
+        "inspection"
+      ],
+      "findingKeys": [
+        "suicide_risk_assessment",
+        "suicide_risk",
+        "self_harm_risk"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "domestic_violence_safety_check",
+      "label": "폭력/안전 확인",
+      "bodyPart": "safety",
+      "bodyRegion": "counseling",
+      "examType": "inspection",
+      "examGroup": "counseling",
+      "aliases": [
+        "가정폭력",
+        "맞은 적",
+        "안전한지",
+        "위협",
+        "폭력",
+        "성폭력"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "counseling_exam",
+        "safety_assessment",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "domestic_violence_safety_check",
+        "domestic_violence",
+        "safety_check"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ],
+      "valueHints": {}
+    },
+    {
+      "id": "abdominal_light_palpation",
+      "label": "복부 얕은 촉진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부를 얕게 촉진",
+        "복부 얕은 촉진",
+        "배를 얕게 촉진",
+        "배를 가볍게 촉진",
+        "복부를 가볍게 촉진",
+        "얕게 촉진",
+        "가볍게 촉진",
+        "살짝 눌러",
+        "가볍게 눌러",
+        "배를 살짝 눌러",
+        "복부를 살짝 눌러",
+        "얕은 촉진을 하겠습니다",
+        "복부 얕은 촉진을 하겠습니다"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "light_palpation"
+      ],
+      "findingKeys": [
+        "abdominal_light_palpation",
+        "abdominal_tenderness",
+        "localized_abdominal_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "abdominal_deep_palpation",
+      "label": "복부 깊은 촉진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부를 깊게 촉진",
+        "복부 깊은 촉진",
+        "배를 깊게 촉진",
+        "깊게 촉진",
+        "깊게 눌러",
+        "배를 깊게 눌러",
+        "복부를 깊게 눌러",
+        "깊은 촉진을 하겠습니다",
+        "복부 깊은 촉진을 하겠습니다"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "deep_palpation"
+      ],
+      "findingKeys": [
+        "abdominal_deep_palpation",
+        "abdominal_tenderness",
+        "abdominal_mass"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "localized_abdominal_tenderness",
+      "label": "국소 복부 압통 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "어느 부위가 아픈지 눌러",
+        "압통 위치",
+        "국소 압통",
+        "아픈 부위 눌러",
+        "우하복부 압통",
+        "우상복부 압통",
+        "좌하복부 압통",
+        "좌상복부 압통",
+        "명치 압통",
+        "배꼽 주위 압통",
+        "특정 부위 압통",
+        "최대 압통 부위",
+        "압통이 가장 심한 부위"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "tenderness_exam",
+        "localized_tenderness"
+      ],
+      "findingKeys": [
+        "localized_abdominal_tenderness",
+        "max_tenderness_location",
+        "abdominal_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "guarding",
+      "label": "근성 방어 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "근성 방어",
+        "방어",
+        "배에 힘이 들어가는지",
+        "복부 방어",
+        "guarding",
+        "누를 때 배에 힘",
+        "배가 긴장되는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "peritoneal_sign_exam",
+        "guarding"
+      ],
+      "findingKeys": [
+        "guarding",
+        "abdominal_guarding",
+        "peritoneal_signs"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "abdominal_rigidity",
+      "label": "복부 강직 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부 강직",
+        "배가 딱딱한지",
+        "복부가 딱딱한지",
+        "board-like rigidity",
+        "강직",
+        "복막염 강직"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "peritoneal_sign_exam",
+        "rigidity"
+      ],
+      "findingKeys": [
+        "abdominal_rigidity",
+        "rigidity",
+        "peritoneal_signs"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "abdominal_mass_palpation",
+      "label": "복부 종괴 촉진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부 종괴",
+        "배에 덩어리",
+        "종괴가 만져지는지",
+        "덩어리가 만져지는지",
+        "복부에서 만져지는 덩어리",
+        "mass palpation"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "mass_exam"
+      ],
+      "findingKeys": [
+        "abdominal_mass_palpation",
+        "abdominal_mass",
+        "mass"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "mcburney_point_tenderness",
+      "label": "맥버니점 압통 확인",
+      "bodyPart": "right_lower_quadrant",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "맥버니점",
+        "McBurney",
+        "우하복부 압통",
+        "오른쪽 아랫배 압통",
+        "충수 부위 압통",
+        "우하복부를 눌러"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "appendicitis_exam",
+        "localized_tenderness"
+      ],
+      "findingKeys": [
+        "mcburney_point_tenderness",
+        "right_lower_quadrant_tenderness",
+        "localized_abdominal_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "rovsing_sign",
+      "label": "Rovsing 징후 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "Rovsing",
+        "로브징",
+        "로브싱",
+        "좌하복부를 누를 때 우하복부 통증",
+        "반대쪽 배를 눌렀을 때 통증"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "palpation",
+        "appendicitis_exam"
+      ],
+      "findingKeys": [
+        "rovsing_sign",
+        "appendicitis_sign"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "psoas_sign",
+      "label": "Psoas 징후 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "movement",
+      "examGroup": "abdomen",
+      "aliases": [
+        "psoas sign",
+        "장요근 징후",
+        "다리를 펴고 들어올릴 때 통증",
+        "고관절 신전 시 통증",
+        "psoas"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "movement",
+        "appendicitis_exam"
+      ],
+      "findingKeys": [
+        "psoas_sign",
+        "appendicitis_sign"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "obturator_sign",
+      "label": "Obturator 징후 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "movement",
+      "examGroup": "abdomen",
+      "aliases": [
+        "obturator sign",
+        "폐쇄근 징후",
+        "고관절 굴곡 내회전",
+        "다리를 구부려 안쪽으로 돌릴 때 통증",
+        "obturator"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "movement",
+        "appendicitis_exam"
+      ],
+      "findingKeys": [
+        "obturator_sign",
+        "appendicitis_sign"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "abdominal_distension_inspection",
+      "label": "복부팽만 시진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "inspection",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부팽만",
+        "배가 불러 있는지",
+        "배가 빵빵한지",
+        "복부가 팽만한지",
+        "배가 부풀었는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "inspection",
+        "distension_exam"
+      ],
+      "findingKeys": [
+        "abdominal_distension_inspection",
+        "abdominal_distension",
+        "abdominal_inspection"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "surgical_scar_inspection",
+      "label": "수술 흉터 시진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "inspection",
+      "examGroup": "abdomen",
+      "aliases": [
+        "수술 흉터",
+        "복부 수술 자국",
+        "배 수술 자국",
+        "흉터가 있는지",
+        "수술 자국"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "inspection",
+        "surgical_history_exam"
+      ],
+      "findingKeys": [
+        "surgical_scar_inspection",
+        "surgical_scar",
+        "abdominal_inspection"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "bowel_sound_auscultation",
+      "label": "장음 청진",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "auscultation",
+      "examGroup": "abdomen",
+      "aliases": [
+        "장음",
+        "배에서 소리",
+        "복부 청진",
+        "장을 청진",
+        "배를 청진",
+        "bowel sound",
+        "장 소리"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "auscultation",
+        "bowel_sound_exam"
+      ],
+      "findingKeys": [
+        "bowel_sound_auscultation",
+        "bowel_sound",
+        "abdominal_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "abdominal_percussion_tenderness",
+      "label": "복부 타진 압통 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "percussion",
+      "examGroup": "abdomen",
+      "aliases": [
+        "복부 타진",
+        "배를 두드려",
+        "복부를 두드려",
+        "두드렸을 때 아픈지",
+        "타진 시 압통",
+        "복부를 톡톡 두드려"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "percussion",
+        "tenderness_exam"
+      ],
+      "findingKeys": [
+        "abdominal_percussion_tenderness",
+        "abdominal_percussion",
+        "percussion_tenderness"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "liver_span_percussion",
+      "label": "간 크기 타진",
+      "bodyPart": "liver",
+      "bodyRegion": "abdomen",
+      "examType": "percussion",
+      "examGroup": "abdomen",
+      "aliases": [
+        "간 크기",
+        "간비대",
+        "간을 타진",
+        "간 경계",
+        "liver span"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "percussion",
+        "liver_exam"
+      ],
+      "findingKeys": [
+        "liver_span_percussion",
+        "hepatomegaly",
+        "liver_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "shifting_dullness",
+      "label": "이동탁음 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "percussion",
+      "examGroup": "abdomen",
+      "aliases": [
+        "이동탁음",
+        "복수 확인",
+        "shifting dullness",
+        "옆으로 돌려 타진",
+        "복수가 있는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "abdomen_exam",
+        "percussion",
+        "ascites_exam"
+      ],
+      "findingKeys": [
+        "shifting_dullness",
+        "ascites",
+        "abdominal_percussion"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "wheezing_auscultation",
+      "label": "천명음 청진",
+      "bodyPart": "lung",
+      "bodyRegion": "respiratory",
+      "examType": "auscultation",
+      "examGroup": "respiratory",
+      "aliases": [
+        "천명음",
+        "쌕쌕거리는 소리",
+        "쌕쌕",
+        "wheezing",
+        "천식 소리",
+        "호기 시 쌕쌕"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "lung_exam",
+        "respiratory_exam",
+        "auscultation",
+        "wheezing_exam"
+      ],
+      "findingKeys": [
+        "wheezing_auscultation",
+        "wheezing",
+        "lung_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "crackles_auscultation",
+      "label": "수포음 청진",
+      "bodyPart": "lung",
+      "bodyRegion": "respiratory",
+      "examType": "auscultation",
+      "examGroup": "respiratory",
+      "aliases": [
+        "수포음",
+        "거품 소리",
+        "crackles",
+        "rales",
+        "폐 하부 수포음",
+        "악설음"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "lung_exam",
+        "respiratory_exam",
+        "auscultation",
+        "crackles_exam"
+      ],
+      "findingKeys": [
+        "crackles_auscultation",
+        "crackles",
+        "rales",
+        "lung_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "decreased_breath_sound",
+      "label": "호흡음 감소 확인",
+      "bodyPart": "lung",
+      "bodyRegion": "respiratory",
+      "examType": "auscultation",
+      "examGroup": "respiratory",
+      "aliases": [
+        "호흡음 감소",
+        "숨소리가 줄었는지",
+        "폐음 감소",
+        "breath sound decreased",
+        "한쪽 폐음 감소"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "lung_exam",
+        "respiratory_exam",
+        "auscultation",
+        "decreased_breath_sound_exam"
+      ],
+      "findingKeys": [
+        "decreased_breath_sound",
+        "lung_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "respiratory_effort_inspection",
+      "label": "호흡 노력 관찰",
+      "bodyPart": "chest",
+      "bodyRegion": "respiratory",
+      "examType": "inspection",
+      "examGroup": "respiratory",
+      "aliases": [
+        "호흡 노력",
+        "숨쉬기 힘들어 보이는지",
+        "보조근 사용",
+        "흉곽 움직임",
+        "호흡곤란 관찰",
+        "숨차 보이는지"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "respiratory_exam",
+        "inspection",
+        "dyspnea_exam"
+      ],
+      "findingKeys": [
+        "respiratory_effort_inspection",
+        "respiratory_effort",
+        "accessory_muscle_use"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "heart_murmur_auscultation",
+      "label": "심잡음 청진",
+      "bodyPart": "heart",
+      "bodyRegion": "cardiovascular",
+      "examType": "auscultation",
+      "examGroup": "cardiovascular",
+      "aliases": [
+        "심잡음",
+        "잡음이 들리는지",
+        "murmur",
+        "heart murmur",
+        "심장 잡음"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "heart_exam",
+        "cardiovascular_exam",
+        "auscultation",
+        "murmur_exam"
+      ],
+      "findingKeys": [
+        "heart_murmur_auscultation",
+        "heart_murmur",
+        "heart_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "heart_rhythm_auscultation",
+      "label": "심박 리듬 청진",
+      "bodyPart": "heart",
+      "bodyRegion": "cardiovascular",
+      "examType": "auscultation",
+      "examGroup": "cardiovascular",
+      "aliases": [
+        "심박 리듬",
+        "리듬이 규칙적인지",
+        "불규칙한 심박",
+        "부정맥 청진",
+        "irregular heartbeat"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "heart_exam",
+        "cardiovascular_exam",
+        "auscultation",
+        "rhythm_exam"
+      ],
+      "findingKeys": [
+        "heart_rhythm_auscultation",
+        "irregular_heartbeat",
+        "heart_auscultation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "jvp_inspection",
+      "label": "경정맥 팽대 확인",
+      "bodyPart": "neck_vein",
+      "bodyRegion": "cardiovascular",
+      "examType": "inspection",
+      "examGroup": "cardiovascular",
+      "aliases": [
+        "경정맥",
+        "목정맥",
+        "JVP",
+        "jugular venous pressure",
+        "경정맥 팽대",
+        "목정맥 팽대"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "cardiovascular_exam",
+        "neck_exam",
+        "inspection",
+        "volume_status_exam"
+      ],
+      "findingKeys": [
+        "jvp_inspection",
+        "jugular_venous_pressure",
+        "jvp"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "cervical_lymph_node_palpation",
+      "label": "경부 림프절 촉진",
+      "bodyPart": "cervical_lymph_node",
+      "bodyRegion": "head_neck",
+      "examType": "palpation",
+      "examGroup": "head_neck",
+      "aliases": [
+        "목 림프절",
+        "경부 림프절",
+        "림프절 촉진",
+        "목에 멍울",
+        "목에 혹",
+        "임파선"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "head_neck_exam",
+        "lymph_node_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "cervical_lymph_node_palpation",
+        "lymphadenopathy",
+        "lymph_node_palpation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ],
+      "expectedFindingValueSet": [
+        "present",
+        "absent",
+        "normal",
+        "abnormal",
+        "unknown"
+      ]
+    },
+    {
+      "id": "rectal_exam",
+      "label": "직장/항문 진찰",
+      "bodyPart": "rectum",
+      "bodyRegion": "rectal",
+      "examType": "palpation",
+      "examGroup": "rectal",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "직장 검사",
+        "직장 진찰",
+        "직장수지검사",
+        "항문 검사",
+        "항문 진찰",
+        "rectal exam"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "rectal_exam",
+        "sensitive_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "rectal_exam",
+        "digital_rectal_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "pelvic_exam",
+      "label": "골반진찰",
+      "bodyPart": "pelvis",
+      "bodyRegion": "gynecologic",
+      "examType": "palpation",
+      "examGroup": "gynecologic",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "골반 진찰",
+        "내진",
+        "질 진찰",
+        "부인과 진찰",
+        "pelvic exam"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "gynecologic_exam",
+        "sensitive_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "pelvic_exam",
+        "bimanual_pelvic_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "speculum_exam",
+      "label": "질경검사",
+      "bodyPart": "vagina",
+      "bodyRegion": "gynecologic",
+      "examType": "inspection",
+      "examGroup": "gynecologic",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "질경 검사",
+        "질경검사",
+        "speculum",
+        "speculum exam",
+        "질 안을 확인"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "gynecologic_exam",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "speculum_exam",
+        "pelvic_speculum_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "breast_inspection_palpation",
+      "label": "유방 시진/촉진",
+      "bodyPart": "breast",
+      "bodyRegion": "breast",
+      "examType": "palpation",
+      "examGroup": "breast",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "유방 진찰",
+        "유방 검사",
+        "유방 시진",
+        "유방 촉진",
+        "가슴 멍울",
+        "breast exam",
+        "?? ??"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "breast_exam",
+        "sensitive_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "breast_inspection_palpation",
+        "breast_inspection",
+        "breast_palpation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "genital_exam",
+      "label": "생식기 진찰",
+      "bodyPart": "genital",
+      "bodyRegion": "genitourinary",
+      "examType": "inspection",
+      "examGroup": "genitourinary",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "생식기 진찰",
+        "외부 생식기",
+        "성기 진찰",
+        "고환 검사",
+        "음낭 검사",
+        "genital exam"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "genitourinary_exam",
+        "sensitive_exam",
+        "inspection"
+      ],
+      "findingKeys": [
+        "genital_exam",
+        "external_genital_exam"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "prostate_exam",
+      "label": "전립선 진찰",
+      "bodyPart": "prostate",
+      "bodyRegion": "genitourinary",
+      "examType": "palpation",
+      "examGroup": "genitourinary",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "전립선 검사",
+        "전립선 진찰",
+        "전립선 촉진",
+        "prostate exam"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "genitourinary_exam",
+        "rectal_exam",
+        "sensitive_exam",
+        "palpation"
+      ],
+      "findingKeys": [
+        "prostate_exam",
+        "prostate_dre"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "breast_mass_palpation",
+      "label": "유방 몽우리 촉진",
+      "bodyPart": "breast",
+      "bodyRegion": "breast",
+      "examType": "palpation",
+      "examGroup": "breast",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "부드럽게 눌러",
+        "손가락 마디",
+        "유방 촉진",
+        "크기와 경도",
+        "몽우리가 느껴지는 부위",
+        "멍울",
+        "유방 덩이",
+        "유방 몽우리",
+        "?? ???",
+        "?? ??",
+        "??",
+        "???? ???? ??",
+        "??? ??",
+        "???? ??",
+        "?? ??? ???? ???? ??"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "breast_exam",
+        "sensitive_exam",
+        "palpation",
+        "mass_exam"
+      ],
+      "findingKeys": [
+        "breast_mass_palpation",
+        "breast_palpation"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "axillary_lymph_node_palpation",
+      "label": "액와 림프절 촉진",
+      "bodyPart": "axilla",
+      "bodyRegion": "breast",
+      "examType": "palpation",
+      "examGroup": "breast",
+      "sensitive": true,
+      "requiresConsent": true,
+      "requiresExplanation": true,
+      "aliases": [
+        "유방 림프절",
+        "유방 주변 림프절",
+        "림프절 촉진",
+        "림프절까지",
+        "액와 림프절",
+        "겨드랑이 림프절",
+        "주변 림프절",
+        "?? ???",
+        "???? ???",
+        "?????",
+        "??? ??",
+        "?? ?? ???",
+        "?? ??? ???? ???? ???? ?? ?????"
+      ],
+      "cpxTags": [
+        "physical_exam",
+        "breast_exam",
+        "sensitive_exam",
+        "palpation",
+        "lymph_node_exam"
+      ],
+      "findingKeys": [
+        "axillary_lymph_node_palpation",
+        "axillary_lymph_node"
+      ],
+      "commonRubricItemIds": [
+        "relevant_physical_exam",
+        "exam_finding_check",
+        "physical_exam"
+      ]
+    },
+    {
+      "id": "dix_hallpike",
+      "label": "Dix-Hallpike 두위검사",
+      "bodyPart": "balance",
+      "bodyRegion": "neurologic",
+      "examType": "movement",
+      "examGroup": "neurologic",
+      "aliases": ["Dix-Hallpike", "딕스 홀파이크", "두위검사", "체위성 안진 검사"],
+      "cpxTags": ["physical_exam", "vestibular_exam", "positional_test"],
+      "findingKeys": ["dix_hallpike"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "eye_external_inspection",
+      "label": "눈 외형 시진",
+      "bodyPart": "conjunctiva",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "eye",
+      "aliases": ["눈 시진", "눈 외형", "충혈", "눈물", "결막 충혈"],
+      "cpxTags": ["physical_exam", "eye_exam", "inspection"],
+      "findingKeys": ["eye_external_inspection"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "head_neck_muscle_palpation",
+      "label": "두피·목 근육 촉진",
+      "bodyPart": "neck",
+      "bodyRegion": "musculoskeletal",
+      "examType": "palpation",
+      "examGroup": "musculoskeletal",
+      "aliases": ["두피 촉진", "뒷목 촉진", "목 근육 촉진", "두피 뒷목", "근육 압통", "관자동맥·두피·근육 촉진"],
+      "cpxTags": ["physical_exam", "headache_exam", "palpation"],
+      "findingKeys": ["head_neck_muscle_palpation"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "body_habitus_assessment",
+      "label": "체형·전신 상태 관찰",
+      "bodyPart": "general_appearance",
+      "bodyRegion": "general",
+      "examType": "inspection",
+      "examGroup": "general",
+      "aliases": ["체형 확인", "체형 평가", "비만 체형", "비만도", "전반적 외견", "표정 긴장 상태", "전신 신체검진"],
+      "cpxTags": ["physical_exam", "general_exam", "body_habitus"],
+      "findingKeys": ["body_habitus_assessment"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "oral_cavity_inspection",
+      "label": "구강 시진",
+      "bodyPart": "oral_cavity",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "oral",
+      "aliases": ["구강검사", "구강 검사", "구강 시진", "입 안 확인", "입안 확인", "인후 시진", "인후·구강 확인"],
+      "cpxTags": ["physical_exam", "oral_exam", "inspection"],
+      "findingKeys": ["oral_cavity_inspection"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "skin_injury_inspection",
+      "label": "피부 외상 시진",
+      "bodyPart": "skin",
+      "bodyRegion": "skin",
+      "examType": "inspection",
+      "examGroup": "skin",
+      "aliases": ["외상 확인", "타박상", "찰과상", "수면 중 손상", "상처 확인", "피부 손상"],
+      "cpxTags": ["physical_exam", "skin_exam", "trauma_inspection"],
+      "findingKeys": ["skin_injury_inspection"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "electrocardiogram",
+      "label": "심전도 검사",
+      "bodyPart": "heart",
+      "bodyRegion": "cardiovascular",
+      "examType": "measurement",
+      "examGroup": "cardiovascular",
+      "aliases": ["심전도", "심전도 검사", "ECG", "EKG", "12유도 심전도"],
+      "cpxTags": ["physical_exam", "cardiovascular_exam", "diagnostic_test"],
+      "findingKeys": ["electrocardiogram", "ecg", "ekg"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "neurologic_screening",
+      "label": "신경학적 검사",
+      "bodyPart": "cranial_nerves",
+      "bodyRegion": "neurologic",
+      "examType": "inspection",
+      "examGroup": "neurologic",
+      "aliases": ["신경학적 검사", "신경학적 이상", "신경학적 진찰", "간단한 신경학적 검사", "neurologic exam"],
+      "cpxTags": ["physical_exam", "neurologic_exam", "screening"],
+      "findingKeys": ["neurologic_screening", "neurologic_exam"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "neck_range_of_motion",
+      "label": "목 운동범위 확인",
+      "bodyPart": "neck",
+      "bodyRegion": "musculoskeletal",
+      "examType": "movement",
+      "examGroup": "musculoskeletal",
+      "aliases": ["목 운동범위", "목 운동 범위", "목을 움직여", "경추 운동범위", "경추 움직임"],
+      "cpxTags": ["physical_exam", "neck_exam", "musculoskeletal_exam", "range_of_motion"],
+      "findingKeys": ["neck_range_of_motion", "cervical_range_of_motion"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "spurling_test",
+      "label": "Spurling 검사",
+      "bodyPart": "neck",
+      "bodyRegion": "musculoskeletal",
+      "examType": "movement",
+      "examGroup": "musculoskeletal",
+      "aliases": ["Spurling", "Spurling 검사", "Spurling 검사 축성 압박", "축성 압박", "신경구멍 압박"],
+      "cpxTags": ["physical_exam", "neck_exam", "neurologic_exam", "provocation_test"],
+      "findingKeys": ["spurling_test", "spurling"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "nasal_discharge_assessment",
+      "label": "콧물 성상·안면 통증 확인",
+      "bodyPart": "nose",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "head_neck",
+      "aliases": ["콧물 성상", "콧물 성상 안면", "콧물 성상과 얼굴 목 통증 확인", "안면 통증 확인", "비루 성상"],
+      "cpxTags": ["physical_exam", "nose_exam", "head_neck_exam", "inspection"],
+      "findingKeys": ["nasal_discharge_assessment", "rhinorrhea", "facial_pain"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "abdominal_special_sign_screen",
+      "label": "복부 특수 징후 추가 확인",
+      "bodyPart": "abdomen",
+      "bodyRegion": "abdomen",
+      "examType": "palpation",
+      "examGroup": "abdomen",
+      "aliases": ["특수 징후·추가 확인", "복부 특수검사", "특수검사"],
+      "cpxTags": ["physical_exam", "abdomen_exam", "provocation_test"],
+      "findingKeys": ["abdominal_special_sign_screen"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "blood_glucose",
+      "label": "혈당 측정",
+      "bodyPart": "blood",
+      "bodyRegion": "general",
+      "examType": "measurement",
+      "examGroup": "metabolic",
+      "aliases": ["혈당", "손끝 혈당", "혈당 측정", "혈당검사", "glucose"],
+      "cpxTags": ["physical_exam", "metabolic_exam", "point_of_care_test"],
+      "findingKeys": ["blood_glucose", "fingerstick_glucose"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "urine_pregnancy_test",
+      "label": "소변 임신검사",
+      "bodyPart": "urinary",
+      "bodyRegion": "abdomen",
+      "examType": "measurement",
+      "examGroup": "gynecologic",
+      "aliases": ["임신검사", "소변 임신검사", "임신 반응 검사", "hCG", "urine pregnancy test"],
+      "cpxTags": ["physical_exam", "gynecologic_exam", "diagnostic_test"],
+      "findingKeys": ["urine_pregnancy_test", "pregnancy_test", "urine_hcg"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "urinalysis",
+      "label": "소변검사(요검사·딥스틱)",
+      "bodyPart": "urinary",
+      "bodyRegion": "abdomen",
+      "examType": "measurement",
+      "examGroup": "urinary",
+      "aliases": ["소변검사", "요검사", "요검사 딥스틱", "딥스틱", "소변 딥스틱"],
+      "cpxTags": ["physical_exam", "urinary_exam", "diagnostic_test"],
+      "findingKeys": ["urinalysis", "urine_dipstick"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "growth_general_assessment",
+      "label": "발육·전신 상태 확인",
+      "bodyPart": "general_appearance",
+      "bodyRegion": "pediatric",
+      "examType": "measurement",
+      "examGroup": "general",
+      "aliases": ["발육·전신", "발육 전신", "체중·신장 등 발육·전반 상태 확인", "전반 상태 확인", "발육 상태 확인"],
+      "cpxTags": ["physical_exam", "general_exam", "pediatric_exam", "growth_assessment"],
+      "findingKeys": ["growth_general_assessment", "general_appearance"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "acute_illness_throat_skin_screen",
+      "label": "인후·피부 급성 질환 선별",
+      "bodyPart": "throat_skin",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "general",
+      "aliases": ["인후·피부", "인후 피부 확인", "인후·피부 확인", "인후·피부 확인 수두 발진 여부", "급성 질환 징후 확인"],
+      "cpxTags": ["physical_exam", "head_neck_exam", "skin_exam", "acute_illness_screen"],
+      "findingKeys": ["acute_illness_throat_skin_screen", "acute_illness_screen"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "smoking_stain_inspection",
+      "label": "흡연 관련 구강·손가락 착색 확인",
+      "bodyPart": "oral_hands",
+      "bodyRegion": "head_neck",
+      "examType": "inspection",
+      "examGroup": "general",
+      "aliases": ["구강·손가락", "구강 손가락", "구강 치아 착색·손가락 변색 확인", "치아 착색", "손가락 변색"],
+      "cpxTags": ["physical_exam", "oral_exam", "hand_exam", "smoking_exam"],
+      "findingKeys": ["smoking_stain_inspection", "tobacco_staining"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    },
+    {
+      "id": "exhaled_carbon_monoxide",
+      "label": "호기 일산화탄소 측정",
+      "bodyPart": "breath",
+      "bodyRegion": "respiratory",
+      "examType": "measurement",
+      "examGroup": "respiratory",
+      "aliases": ["호기 CO", "호기 일산화탄소", "호기 일산화탄소 측정", "일산화탄소 측정", "CO 측정"],
+      "cpxTags": ["physical_exam", "respiratory_exam", "smoking_exam", "point_of_care_test"],
+      "findingKeys": ["exhaled_carbon_monoxide", "breath_co"],
+      "commonRubricItemIds": ["relevant_physical_exam", "exam_finding_check", "physical_exam"]
+    }
+  ]
+}
