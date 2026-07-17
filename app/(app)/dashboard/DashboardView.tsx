@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Flame } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface Day { label: string; studied: boolean; isToday: boolean }
 interface Recent { isCorrect: boolean; subTopicName: string; subjectName: string; label: string }
@@ -87,7 +87,7 @@ export function DashboardView({
                 <div key={day.label} className="day">
                   {day.label}
                   <span className={`dot ${day.studied ? 'done' : day.isToday ? 'today' : ''}`}>
-                    {day.studied ? <Flame className="w-5 h-5 fill-current" strokeWidth={1.7} /> : <span className="text-2xl leading-none">·</span>}
+                    {day.studied ? <span className="text-xl leading-none">🔥</span> : <span className="text-2xl leading-none">·</span>}
                   </span>
                 </div>
               ))}

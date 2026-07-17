@@ -993,8 +993,10 @@ function Segmented<T extends string>({
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
+            aria-pressed={active}
             className={`${cards ? 'check-card' : ''} ${active ? 'active' : ''}`}
           >
+            {cards && <span className="check-box" aria-hidden />}
             {opt}
           </button>
         );

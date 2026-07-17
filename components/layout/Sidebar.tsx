@@ -6,21 +6,16 @@ import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Menu, X, LogOut, ChevronDown, CalendarDays, UserCog } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
-import { api } from '@/lib/api/client';
 
-interface QuotaLite {
-  questions: { remaining: number };
-  uploads: { remaining: number };
-}
-
+// 레퍼런스(lecturelink_connected_site) 순서 준수. CPX는 국시 대비 안으로 통합돼 상단 메뉴에서 제외.
+// feature: 레퍼런스처럼 골드 그라데이션 + ✦로 강조되는 핵심 메뉴(내신 대비·국시 대비).
 const NAV_ITEMS = [
   { label: '홈', href: '/dashboard' },
-  { label: '내신 대비', href: '/notes' },
-  { label: '국시 대비', href: '/exam' },
-  { label: 'CPX 실습', href: '/cpx' },
-  { label: '모의고사', href: '/mock' },
-  { label: '오답노트', href: '/wrong-notes' },
+  { label: '내신 대비', href: '/notes', feature: true },
+  { label: '국시 대비', href: '/exam', feature: true },
   { label: '내 문제집', href: '/library' },
+  { label: '오답노트', href: '/wrong-notes' },
+  { label: '모의고사', href: '/mock' },
   { label: '요금제', href: '/plan' },
 ] as const;
 
@@ -44,13 +39,7 @@ export function Sidebar({ user }: SidebarProps) {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [quota, setQuota] = useState<QuotaLite | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  // 상단 인라인 스탯(남은 문항 · 자료 업로드) — 시안 톤
-  useEffect(() => {
-    api.get<QuotaLite>('/api/me/quota').then(setQuota).catch(() => {});
-  }, []);
 
   // 경로 변경 시 모바일 드로어 / 프로필 드롭다운 자동 닫기
   useEffect(() => {
@@ -123,10 +112,21 @@ export function Sidebar({ user }: SidebarProps) {
     { label: '회원정보 수정', href: '/profile', icon: UserCog },
   ] as const;
 
+  // 레퍼런스 로고(투명 배경 forest 심볼 + "Lecturelink"). logo-mark 기본 배경/그림자는 인라인으로 무효화.
   const Logo = () => (
-    <Link href="/dashboard" className="logo">
-      <span className="logo-mark"><BookIcon /></span>
-      <span className="logo-text">렉쳐링크</span>
+    <Link href="/dashboard" className="logo" aria-label="Lecturelink 홈">
+      <span
+        className="logo-mark"
+        style={{ background: 'transparent', boxShadow: 'none', width: 40, height: 40 }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/lecturelink-mark.png"
+          alt="Lecturelink 로고"
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+      </span>
+      <span className="logo-text">Lecturelink</span>
       <span className="beta">BETA</span>
     </Link>
   );
@@ -143,36 +143,15 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={clsx(isActive(item.href) && 'active')}
+              className={clsx('feature' in item && item.feature && 'feature', isActive(item.href) && 'active')}
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* 우측: 인라인 스탯 + 사용자 드롭다운 (데스크톱) */}
+        {/* 우측: 사용자 드롭다운 (데스크톱) */}
         <div className="account hidden md:flex">
-          {quota && (
-            <div className="quota hidden lg:flex">
-              <span className="text-[var(--color-muted)]">
-                남은 문항{' '}
-                {quota.questions.remaining >= 1_000_000 ? (
-                  <b className="text-sage-800 font-semibold">무제한</b>
-                ) : (
-                  <><b className="text-sage-800 tabular-nums font-semibold">{quota.questions.remaining}</b>개</>
-                )}
-              </span>
-              <span className="text-[var(--color-border)]">·</span>
-              <span className="text-[var(--color-muted)]">
-                자료 업로드{' '}
-                {quota.uploads.remaining >= 1_000_000 ? (
-                  <b className="text-sage-800 font-semibold">무제한</b>
-                ) : (
-                  <><b className="text-sage-800 tabular-nums font-semibold">{quota.uploads.remaining}</b>회</>
-                )}
-              </span>
-            </div>
-          )}
         <div className="relative" ref={menuRef}>
           <button
             type="button"
@@ -339,6 +318,3 @@ export function Sidebar({ user }: SidebarProps) {
   );
 }
 
-function BookIcon() {
-  return <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>;
-}

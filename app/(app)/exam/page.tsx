@@ -284,7 +284,21 @@ export default function ExamPage() {
             <span className="eyebrow"><GraduationCap className="icon" />국시 대비</span>
             <h1><span className="headline-accent">임상추론</span>을<br/><span className="headline-accent">시험 톤</span>으로 연습합니다</h1>
             <p className="lead">교과서적 의학 지식과 임상 시나리오를 결합한 국가고시형 문제입니다. 과목·세부주제별로 풀고, 오답 데이터로 약한 개념을 반복 학습하세요.</p>
-          </div><div />
+          </div>
+          {/* CPX 실전 연습 — 국시 대비 우측 대표 배너(별도 진입) */}
+          <a href="/cpx" className="cpx-banner">
+            <div className="cpx-banner-top">
+              <span className="cpx-banner-icon"><Stethoscope className="w-5 h-5" strokeWidth={2} /></span>
+              <span className="cpx-banner-badge">CPX</span>
+            </div>
+            <h2 className="cpx-banner-title">CPX 실전 연습</h2>
+            <p className="cpx-banner-desc">AI 표준화 환자와 12분 진료 세션 · 음성/텍스트 문진 · 부위별 신체진찰 · 루브릭 채점</p>
+            <div className="cpx-banner-meta">
+              <span><strong>197</strong> 증례</span>
+              <span><strong>50</strong> 주호소</span>
+            </div>
+            <span className="cpx-banner-cta"><Play className="w-4 h-4" strokeWidth={2.4} /> 연습 시작</span>
+          </a>
         </section>
 
         {totalQuestions > 0 && (

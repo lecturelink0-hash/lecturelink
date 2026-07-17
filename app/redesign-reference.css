@@ -769,6 +769,17 @@
     .ll-exam-page h1{margin:10px 0 0;color:var(--ink);font-size:clamp(27px,3.5vw,38px);line-height:1.18;font-weight:830;letter-spacing:-.012em}
     .ll-exam-page .headline-accent{color:var(--forest)}
     .ll-exam-page .lead{margin:10px 0 0;max-width:680px;color:var(--ink-soft);font-size:14.5px;line-height:1.65;font-weight:500}
+    /* CPX 실전 연습 배너 — 국시 대비 헤더 우측 약 3/10 폭의 대표 진입 버튼 */
+    .ll-exam-page .cpx-banner{flex:0 0 31%;max-width:340px;align-self:stretch;min-height:236px;display:flex;flex-direction:column;gap:2px;border-radius:18px;background:linear-gradient(155deg,var(--forest) 0%,var(--forest-800) 100%);color:#fff;padding:22px 22px 20px;text-decoration:none;box-shadow:0 22px 46px -26px rgba(31,92,67,.7),0 0 0 4px rgba(243,198,78,.12);transition:.18s ease}
+    .ll-exam-page .cpx-banner:hover{transform:translateY(-2px);box-shadow:0 28px 54px -24px rgba(31,92,67,.78),0 0 0 4px rgba(243,198,78,.2)}
+    .ll-exam-page .cpx-banner-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .ll-exam-page .cpx-banner-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.15);color:#fff}
+    .ll-exam-page .cpx-banner-badge{border-radius:999px;background:var(--gold,#F3C64E);color:#143C2C;padding:4px 10px;font-size:11px;font-weight:820;letter-spacing:.02em}
+    .ll-exam-page .cpx-banner-title{margin:2px 0 0;color:#fff;font-size:21px;font-weight:840;letter-spacing:-.01em}
+    .ll-exam-page .cpx-banner-desc{margin:8px 0 0;color:rgba(255,255,255,.82);font-size:12.5px;line-height:1.55;font-weight:500}
+    .ll-exam-page .cpx-banner-meta{display:flex;gap:18px;margin:14px 0 0;color:rgba(255,255,255,.75);font-size:12px;font-weight:600}
+    .ll-exam-page .cpx-banner-meta strong{color:#fff;font-size:19px;font-weight:840;margin-right:2px}
+    .ll-exam-page .cpx-banner-cta{margin-top:auto;height:46px;border-radius:13px;background:#fff;color:var(--forest);display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:14.5px;font-weight:820}
     .ll-exam-page .total-line{margin:18px 0 18px;color:var(--ink-soft);font-size:14px;font-weight:560}
     .ll-exam-page .total-line strong{color:var(--forest);font-weight:820}
     .ll-exam-page .grid-head{display:flex;justify-content:flex-end;margin:-4px 0 12px}
@@ -2249,6 +2260,35 @@
       border-color: var(--forest);
     }
     .ll-upload-page .check-card input:checked::after { opacity: 1; }
+
+    /* 통합본은 문항 유형을 button+span(.check-box)로 렌더(단일 선택 유지). 레퍼런스 체크박스 모양을 재현. */
+    .ll-upload-page .check-card .check-box {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--sage-400);
+      border-radius: 5px;
+      background: white;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+    .ll-upload-page .check-card .check-box::after {
+      content: "";
+      width: 8px;
+      height: 5px;
+      border-left: 2px solid white;
+      border-bottom: 2px solid white;
+      transform: rotate(-45deg) translateY(-1px);
+      opacity: 0;
+    }
+    .ll-upload-page .check-card.active {
+      border-color: var(--sage-400);
+      background: var(--sage);
+      color: var(--forest);
+    }
+    .ll-upload-page .check-card.active .check-box { background: var(--forest); border-color: var(--forest); }
+    .ll-upload-page .check-card.active .check-box::after { opacity: 1; }
 
     .ll-upload-page .range-head {
       display: flex;
