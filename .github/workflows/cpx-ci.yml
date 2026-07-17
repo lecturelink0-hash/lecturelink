@@ -40,6 +40,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
+      - run: npm run cpx:bundle-check
       - run: node --check scripts/test-cpx-deployment.mjs
 
   patient-engine:

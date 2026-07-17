@@ -28,6 +28,13 @@ CPX_PROXY_SHARED_SECRET=<동일한-공유-시크릿> \
 npm run cpx:smoke
 ```
 
+Next.js 빌드 후 서버 전용 시크릿 이름이나 값이 브라우저 정적 번들에 섞이지 않았는지도 확인합니다.
+
+```bash
+npm run build
+npm run cpx:bundle-check
+```
+
 ## 운영 연결
 
 1. 이 디렉터리를 Docker context로 배포합니다.
