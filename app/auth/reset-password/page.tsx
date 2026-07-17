@@ -20,12 +20,31 @@ export default function ResetPasswordPage() {
     const supabase = createBrowserClient();
     let settled = false;
     const done = () => { if (!settled) { settled = true; setReady('ok'); } };
-    // 복구 세션은 URL 토큰(해시/코드) 감지 후 비동기로 성립 → 이벤트와 초기 조회를 함께 대기.
+
+    async function init() {
+      // (1) implicit 방식: URL 해시의 access_token/refresh_token 을 직접 세션으로 설정.
+      //     (PKCE 클라이언트는 해시 토큰을 자동 처리하지 않으므로 수동 처리한다.)
+      if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+          window.history.replaceState(null, '', window.location.pathname);
+          if (!error) { done(); return; }
+        }
+      }
+      // (2) PKCE(?code) 또는 이미 성립된 세션.
+      const { data } = await supabase.auth.getSession();
+      if (data.session) done();
+    }
+
+    // detectSessionInUrl(코드 교환) 결과는 이벤트로도 도착 → 병행 대기.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) done();
     });
-    supabase.auth.getSession().then(({ data }) => { if (data.session) done(); });
-    const timer = setTimeout(() => { if (!settled) setReady('no-session'); }, 5000);
+    init();
+    const timer = setTimeout(() => { if (!settled) setReady('no-session'); }, 6000);
     return () => { sub.subscription.unsubscribe(); clearTimeout(timer); };
   }, []);
 
