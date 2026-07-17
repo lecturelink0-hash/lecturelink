@@ -98,6 +98,22 @@ export default function LoginPage() {
     window.location.href = postAuthDest();
   }
 
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'done'>('idle');
+  async function handleResend() {
+    if (!email || resendState === 'sending') return;
+    setResendState('sending');
+    try {
+      const supabase = createBrowserClient();
+      await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+    } finally {
+      setResendState('done');
+    }
+  }
+
   function handleKakao() {
     setErrorMsg('');
     setStatus('sending');
@@ -178,12 +194,25 @@ export default function LoginPage() {
               <p className="text-base text-[var(--color-muted)] leading-relaxed">
                 인증 메일을 보냈습니다. 메일 안의 링크를 누르면 가입이 완료됩니다.
               </p>
-              <button
-                onClick={() => { switchMode('login'); setEmailOpen(false); }}
-                className="text-sm text-sage-700 mt-6 underline"
-              >
-                로그인으로 돌아가기
-              </button>
+              <div className="mt-4 rounded-lg bg-[var(--color-sage-100)] px-4 py-3 text-sm text-sage-800 leading-relaxed">
+                메일이 몇 분 내에 오지 않으면 <b>스팸함·프로모션함</b>을 확인해주세요.
+                발신: <b>렉처링크 &lt;fornerdsofficial@gmail.com&gt;</b>
+              </div>
+              <div className="mt-5 flex flex-col items-center gap-2">
+                <button
+                  onClick={handleResend}
+                  disabled={resendState === 'sending'}
+                  className="text-sm font-semibold text-sage-700 underline disabled:opacity-50"
+                >
+                  {resendState === 'sending' ? '재전송 중…' : resendState === 'done' ? '인증 메일을 다시 보냈어요' : '인증 메일 다시 보내기'}
+                </button>
+                <button
+                  onClick={() => { switchMode('login'); setEmailOpen(false); }}
+                  className="text-sm text-[var(--color-muted)] underline"
+                >
+                  로그인으로 돌아가기
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>

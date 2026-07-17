@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
+import { createBrowserClient } from '@/lib/db/browser';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
@@ -12,7 +13,11 @@ import {
   GraduationCap,
   CalendarRange,
   Info,
+  Mail,
 } from 'lucide-react';
+
+// 카카오 커스텀 로그인 사용자의 합성 이메일 도메인 (수신 불가) — 실제 이메일 등록 유도 대상.
+const SYNTHETIC_EMAIL_SUFFIX = '@kakao.users.lecturelink.kro.kr';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -85,6 +90,48 @@ export default function ProfilePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // 이메일 등록/변경 (특히 카카오 커스텀 로그인 사용자)
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const isSyntheticEmail = !!authEmail && authEmail.endsWith(SYNTHETIC_EMAIL_SUFFIX);
+
+  useEffect(() => {
+    createBrowserClient().auth.getUser().then(({ data }) => {
+      setAuthEmail(data.user?.email ?? null);
+    }).catch(() => {});
+  }, []);
+
+  async function handleRegisterEmail() {
+    const em = newEmail.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
+      setEmailError('올바른 이메일 주소를 입력해 주세요.');
+      return;
+    }
+    if (em.endsWith(SYNTHETIC_EMAIL_SUFFIX)) {
+      setEmailError('사용할 수 없는 주소입니다.');
+      return;
+    }
+    setEmailSubmitting(true);
+    setEmailError('');
+    try {
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.updateUser(
+        { email: em },
+        { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      );
+      if (error) {
+        setEmailError(error.message.includes('registered') ? '이미 사용 중인 이메일입니다.' : '이메일 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
+      setEmailSent(true);
+    } finally {
+      setEmailSubmitting(false);
+    }
+  }
 
   // 초기 로드: 학교·과목 목록 + 현재 프로필 프리필
   useEffect(() => {
@@ -178,6 +225,47 @@ export default function ProfilePage() {
       <PageHeader eyebrow={HEADER_EYEBROW} title="회원 정보 수정" description={HEADER_DESC} />
 
       <div className="max-w-3xl">
+        {/* ── 이메일 등록/변경 카드 (카카오 사용자 등 합성 이메일 대상 강조) ── */}
+        {authEmail !== null && (
+          <div className={`ll-card p-7 sm:p-8 mb-6 ${isSyntheticEmail ? 'border-[var(--color-primary)]' : ''}`}>
+            <div className="flex items-start gap-3 mb-5">
+              <span className="ll-chip" style={{ width: '2.75rem', height: '2.75rem' }}>
+                <Mail className="w-5 h-5" strokeWidth={2} />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-sage-800 tracking-tight">{isSyntheticEmail ? '이메일 등록' : '이메일'}</h2>
+                <p className="text-sm text-[var(--color-muted)] mt-1 leading-relaxed">
+                  {isSyntheticEmail
+                    ? '카카오로 가입하셨어요. 비밀번호 재설정·중요 알림 메일을 받으려면 이메일을 등록해 주세요.'
+                    : <>현재 이메일: <b className="text-sage-800">{authEmail}</b></>}
+                </p>
+              </div>
+            </div>
+            {emailSent ? (
+              <div className="rounded-lg bg-[var(--color-sage-100)] px-4 py-3 text-sm text-sage-800 leading-relaxed">
+                입력하신 주소로 <b>확인 메일</b>을 보냈습니다. 메일 안의 링크를 누르면 이메일 등록이 완료됩니다.
+                <br />몇 분 내에 오지 않으면 <b>스팸함·프로모션함</b>도 확인해 주세요.
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder={isSyntheticEmail ? '이메일 주소 입력' : '변경할 이메일 주소'}
+                    className={fieldClass}
+                  />
+                  <Button onClick={handleRegisterEmail} loading={emailSubmitting} disabled={!newEmail.trim()}>
+                    {isSyntheticEmail ? '등록' : '변경'}
+                  </Button>
+                </div>
+                {emailError && <p className="mt-2 text-sm text-[var(--color-warn)]">{emailError}</p>}
+              </>
+            )}
+          </div>
+        )}
+
         {/* ── 폼 카드 ── */}
         <div className="ll-card p-7 sm:p-8">
           {/* 카드 헤더 */}
