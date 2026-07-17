@@ -20,6 +20,14 @@ docker run --rm -p 8787:8787 --env-file services/cpx/.env \
 curl http://127.0.0.1:8787/api/health
 ```
 
+LectureLink 저장소 루트에서는 인증 경계와 전체 증례 수까지 한 번에 확인할 수 있습니다.
+
+```bash
+CPX_BACKEND_URL=http://127.0.0.1:8787 \
+CPX_PROXY_SHARED_SECRET=<동일한-공유-시크릿> \
+npm run cpx:smoke
+```
+
 ## 운영 연결
 
 1. 이 디렉터리를 Docker context로 배포합니다.
