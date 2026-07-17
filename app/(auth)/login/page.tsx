@@ -98,25 +98,14 @@ export default function LoginPage() {
     window.location.href = postAuthDest();
   }
 
-  async function handleKakao() {
+  function handleKakao() {
     setErrorMsg('');
     setStatus('sending');
-    const supabase = createBrowserClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'kakao',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        // 주의: GoTrue 가 카카오 기본 scope(account_email·profile_image·profile_nickname)를 항상
-        // 함께 요청하므로 여기서 이메일을 제거할 수 없다. KOE205 는 카카오 콘솔의 "동의항목"
-        // (닉네임 필수 + 이메일 선택 동의 등)을 설정해야 해소된다. 아래 scopes 는 보강용.
-        scopes: 'profile_nickname',
-      },
-    });
-    // 성공 시 카카오로 리다이렉트되므로 이 아래는 실행되지 않는다.
-    if (error) {
-      setStatus('error');
-      setErrorMsg(authErrorMessage(error));
-    }
+    // Supabase 내장 카카오 provider 는 account_email 을 강제 요청해 KOE205 를 유발한다(비즈앱 필요).
+    // 이메일을 요구하지 않는 커스텀 카카오 로그인(/api/auth/kakao/start)으로 개시한다.
+    const next = new URLSearchParams(window.location.search).get('next');
+    const q = next && next.startsWith('/') && !next.startsWith('/login') ? `?next=${encodeURIComponent(next)}` : '';
+    window.location.href = `/api/auth/kakao/start${q}`;
   }
 
   return (
