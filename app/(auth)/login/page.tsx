@@ -98,6 +98,25 @@ export default function LoginPage() {
     window.location.href = postAuthDest();
   }
 
+  const [forgotState, setForgotState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  async function handleForgot() {
+    if (!email) {
+      setErrorMsg('먼저 이메일을 입력해 주세요.');
+      return;
+    }
+    setErrorMsg('');
+    setForgotState('sending');
+    try {
+      const supabase = createBrowserClient();
+      // 재설정 페이지로 직접 리다이렉트 — 클라이언트가 URL 토큰(해시/코드)을 자동 감지해 복구 세션 성립.
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+    } finally {
+      setForgotState('sent');
+    }
+  }
+
   const [resendState, setResendState] = useState<'idle' | 'sending' | 'done'>('idle');
   async function handleResend() {
     if (!email || resendState === 'sending') return;
@@ -307,6 +326,26 @@ export default function LoginPage() {
                     ? '로그인'
                     : '회원가입'}
               </Button>
+
+              {mode === 'login' && (
+                <div className="mt-3 text-center">
+                  {forgotState === 'sent' ? (
+                    <p className="text-[13px] text-[var(--color-muted)] leading-relaxed">
+                      재설정 메일을 보냈습니다. 메일의 링크로 새 비밀번호를 설정하세요.
+                      <br />안 보이면 <b>스팸함</b>도 확인해 주세요.
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleForgot}
+                      disabled={forgotState === 'sending'}
+                      className="text-[13px] text-[var(--color-muted)] underline underline-offset-2 hover:text-sage-800 disabled:opacity-50"
+                    >
+                      {forgotState === 'sending' ? '메일 보내는 중…' : '비밀번호를 잊으셨나요?'}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* 구분선 */}
               <div className="flex items-center gap-3 my-6">
