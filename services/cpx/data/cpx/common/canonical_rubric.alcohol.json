@@ -1,0 +1,247 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_alcohol_v1",
+  "title": "음주 문제 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.1 CPX 04 음주 문제 — 채점표 + 병력청취(CAGE 등 선별) 기반 재구성 (문장 직접 인용 없음, 2026-07-17)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "음주량·빈도·술 종류를 구체적으로 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "음주 기간과 최근 음주 패턴의 변화 질문"
+        },
+        {
+          "id": "ht03",
+          "text": "음주 조절 실패 경험(줄이려 했으나 실패, 갈망) 확인",
+          "contextHint": "CAGE의 C(Cut down) 해당"
+        },
+        {
+          "id": "ht04",
+          "text": "금단 증상(아침 손떨림, 식은땀, 해장술) 확인",
+          "contextHint": "CAGE의 E(Eye-opener) 해당"
+        },
+        {
+          "id": "ht05",
+          "text": "내성(같은 효과에 더 많은 술이 필요한지) 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "음주로 인한 문제(직장, 가족 갈등, 법적 문제) 확인",
+          "contextHint": "CAGE의 A(Annoyed) 관련"
+        },
+        {
+          "id": "ht07",
+          "text": "음주에 대한 죄책감이나 주변의 지적 확인",
+          "contextHint": "CAGE의 G(Guilty)"
+        },
+        {
+          "id": "ht08",
+          "text": "블랙아웃(필름 끊김)·음주 관련 사고 확인"
+        },
+        {
+          "id": "ht09",
+          "text": "신체 증상(속쓰림, 간 질환 지적, 체중 변화) 확인"
+        },
+        {
+          "id": "ht10",
+          "text": "기분·수면 문제(우울 동반) 확인과 자살 사고 스크리닝"
+        },
+        {
+          "id": "ht11",
+          "text": "과거 절주·금주 시도와 결과 질문"
+        },
+        {
+          "id": "ht12",
+          "text": "가족력(알코올 문제) 질문"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후 확인 (말로 언급)"
+        },
+        {
+          "id": "pe02",
+          "text": "손떨림·발한 등 금단 징후 관찰"
+        },
+        {
+          "id": "pe03",
+          "text": "복부 진찰 — 간 촉진(간비대 여부)"
+        },
+        {
+          "id": "pe04",
+          "text": "공막 황달·영양 상태 확인"
+        },
+        {
+          "id": "pe05",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe06",
+          "text": "시행할 검진을 미리 설명하고 비판단적 태도 유지"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "알코올 사용 문제의 심각도를 비판단적으로 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "간기능 등 신체 영향 확인 검사 계획 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "절주·금주 목표를 환자와 함께 합의(동기면담적 접근)"
+        },
+        {
+          "id": "ed04",
+          "text": "갑작스러운 단주 시 금단 위험과 치료 프로그램(약물·상담) 안내"
+        },
+        {
+          "id": "ed05",
+          "text": "가족 지지 활용과 추적 방문 약속"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

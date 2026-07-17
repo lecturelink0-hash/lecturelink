@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "familial_hypercholesterolemia_suspect_rule",
+  "title": "이상지질혈증 (가족성 고콜레스테롤혈증 의심)",
+  "category": "이상지질혈증",
+  "targetDiagnosis": "가족성 고콜레스테롤혈증 의심 (Suspected familial hypercholesterolemia)",
+  "variant": "젊은 성인 심한 LDL 상승·조기 심혈관질환 가족력형",
+  "description": "젊은 성인에서 심하게 상승한 LDL과 조기 심근경색 가족력을 확인하고 가족 선별·신속 위험평가를 연습하는 규칙입니다.",
+  "tags": ["이상지질혈증", "가족성고콜레스테롤혈증", "LDL상승", "조기심혈관질환", "가족력"],
+  "sourceTextFile": "013_dyslipidemia.json·013_dyslipidemia_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {"fixed": {"location": "외래"}, "recommended": {"gender": "무관", "age": "25~38세"}, "randomizable": ["성별", "이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
+  "scenarioRule": {"caseSummary": "건강검진에서 LDL 262가 나와 처음 내원한 32세 환자. 평소 큰 증상은 없지만 아버지가 44세에 심근경색으로 시술을 받았고, 어머니도 콜레스테롤 약을 복용한다.", "mustInclude": ["LDL 262·총콜레스테롤 334·중성지방 92", "32세의 젊은 성인", "아버지 44세 심근경색 시술", "어머니의 지질저하제 복용", "흉통·호흡곤란·운동 제한 없음"], "preferredVariants": ["젊은데 약을 평생 먹어야 하는지 걱정함", "형제자매도 검사해야 하는지 물음"], "mustAbsent": ["당뇨", "고혈압", "현재 흡연", "갑상샘저하 증상"]},
+  "pastHistoryRule": {"mustInclude": ["특별한 만성질환·복용약 없음"], "mustAbsent": ["신장질환", "간질환", "스테로이드·호르몬 복용"]},
+  "familyHistoryRule": {"recommended": ["아버지 44세 심근경색", "어머니 고지혈증 약 복용"], "mustAbsent": []},
+  "socialHistoryRule": {"fixed": ["비흡연", "주 2회 조깅"], "recommended": ["음주 가끔", "과도한 포화지방 섭취는 뚜렷하지 않음"]},
+  "physicalExamRule": [
+    {"item": "활력징후·체형·허리둘레", "method": "혈압·맥박 측정과 BMI·허리둘레 확인", "expectedFinding": "혈압 118/72, 맥박 68회, BMI 23.4, 허리둘레 정상 범위", "examConceptId": "body_habitus_assessment"},
+    {"item": "눈·피부 황색종", "method": "눈 주위·각막환과 손바닥·아킬레스건 황색종 관찰", "expectedFinding": "양쪽 아킬레스건이 약간 두꺼워 보이나 황색판종·각막환은 뚜렷하지 않음", "polarity": "positive", "examConceptId": "xanthoma_xanthelasma_inspection"},
+    {"item": "갑상샘·피부", "method": "갑상샘 촉진과 피부 건조 확인", "expectedFinding": "갑상샘 비대·피부 건조 없음", "examConceptId": "thyroid_palpation"},
+    {"item": "경동맥·심음·말초 맥박", "method": "경동맥 잡음과 심음, 말초 맥박 확인", "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 말초 맥박 대칭", "examConceptId": "carotid_bruit"},
+    {"item": "복부·하지 부종", "method": "간비대·복수와 하지 함요부종 확인", "expectedFinding": "간비대·복수·하지 함요부종 없음", "examConceptId": "pretibial_pitting_edema"}
+  ],
+  "liveApiContext": {"patientContextFocus": "젊은 나이에 LDL 수치가 매우 높다는 말을 듣고 걱정하는 환자다. 가족의 조기 심장질환과 구체 검사 수치는 질문받을 때만 공개한다.", "answerPolicy": ["스스로 가족성 질환이라고 단정하지 않는다.", "질문에 짧고 자연스럽게 답한다.", "가족 검사와 장기 복약 이야기에 걱정을 표현할 수 있다."], "positiveClues": ["LDL 262", "아버지 44세 심근경색", "어머니 지질저하제 복용", "아킬레스건 두꺼움"], "negativeClues": ["심혈관 증상 없음", "당뇨·고혈압·흡연 없음", "이차성 원인 단서 없음"]},
+  "evaluationUse": {"mustAsk": ["공복 지질검사 수치와 이전 검사", "젊은 나이 심혈관질환·고지혈증 가족력", "흉통·호흡곤란·운동 시 증상", "황색종·각막환·힘줄 변화", "당뇨·고혈압·흡연과 생활습관", "약물·갑상샘·신장·간질환 이차성 원인", "가족 선별과 추적관리 설명"], "positiveClues": ["심한 LDL 상승", "조기 심근경색 가족력", "힘줄 황색종 의심 소견"], "negativeClues": ["현재 허혈 증상 없음", "대사성 위험인자 뚜렷하지 않음"], "educationTopics": ["신속한 위험도 평가와 반복 검사", "가족 구성원 검사 필요성", "생활습관과 약물치료 가능성", "흉통·호흡곤란 발생 시 즉시 진료"]},
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 이상지질혈증 (가족성 고콜레스테롤혈증 의심)\n\n- 요약: 32세, LDL 262. 아버지가 44세에 심근경색 시술, 어머니도 지질 약 복용.\n- 단서: 증상은 없고 흡연·당뇨·고혈압이 없으나 아킬레스건이 약간 두꺼워 보임.\n- 진찰: 심음·경동맥·말초 맥박은 정상, 뚜렷한 각막환·황색판종 없음.\n\n추가 질문: \"동생도 검사를 받아야 하나요? 약은 평생 먹어야 해요?\"",
+  "rawRuleText": "# 증례명 : 이상지질혈증 (가족성 고콜레스테롤혈증 의심)\n\n- 요약: 32세, LDL 262. 아버지가 44세에 심근경색 시술, 어머니도 지질 약 복용.\n- 단서: 증상은 없고 흡연·당뇨·고혈압이 없으나 아킬레스건이 약간 두꺼워 보임.\n- 진찰: 심음·경동맥·말초 맥박은 정상, 뚜렷한 각막환·황색판종 없음.\n\n추가 질문: \"동생도 검사를 받아야 하나요? 약은 평생 먹어야 해요?\""
+}

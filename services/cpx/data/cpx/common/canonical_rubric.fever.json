@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_fever_v1",
+  "title": "발열 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.3 CPX 38 발열 — p129 채점표 + p119~122 병력청취·신체진찰 + p124~128 배경지식(FUO·신우신염·가을철 열성질환) 기반 재구성 (문장 직접 인용 없음, 2026-07-16)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 부분점수(충족 항목 비례)로 연속 계산, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "발열의 시작 시점·기간과 양상(계속 나는지, 오르내리는지) 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "최고 체온과 체온을 실제로 재봤는지 질문"
+        },
+        {
+          "id": "ht03",
+          "text": "오한·발한 동반 여부 확인"
+        },
+        {
+          "id": "ht04",
+          "text": "호흡기 국소 증상(기침, 인후통, 콧물) 확인 — 감염 병소 탐색"
+        },
+        {
+          "id": "ht05",
+          "text": "비뇨기 국소 증상(배뇨통, 빈뇨, 옆구리 통증) 확인",
+          "contextHint": "발열 환자에서 병소(focus) 계통 문진의 핵심"
+        },
+        {
+          "id": "ht06",
+          "text": "위장관 증상(복통·설사)과 피부 발진 확인"
+        },
+        {
+          "id": "ht07",
+          "text": "최근 여행력·야외활동(등산, 벌초, 캠핑 등) 질문 — 열성 질환 감별"
+        },
+        {
+          "id": "ht08",
+          "text": "주변 유행이나 아픈 사람과의 접촉 질문"
+        },
+        {
+          "id": "ht09",
+          "text": "복용 약물과 해열제 반응 질문"
+        },
+        {
+          "id": "ht10",
+          "text": "기저질환·최근 수술이나 시술 이력 질문"
+        },
+        {
+          "id": "ht11",
+          "text": "성 접촉력 등 필요한 위험 노출력 확인",
+          "contextHint": "골반염 등 감별에 필요할 때 자연스럽게 확인하면 인정"
+        },
+        {
+          "id": "ht12",
+          "text": "체중 감소·야간 발한 등 만성 소모성 증상 확인"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 5,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후 확인 — 체온 포함 (말로 언급)"
+        },
+        {
+          "id": "pe02",
+          "text": "인후·구강 시진"
+        },
+        {
+          "id": "pe03",
+          "text": "경부 림프절 촉진과 목 강직 확인"
+        },
+        {
+          "id": "pe04",
+          "text": "흉부(호흡음·심음) 청진"
+        },
+        {
+          "id": "pe05",
+          "text": "복부 진찰 — 압통과 CVA 압통(옆구리 두드림) 포함",
+          "contextHint": "'옆구리를 두드려 보겠습니다'도 인정 — 신우신염 감별"
+        },
+        {
+          "id": "pe06",
+          "text": "피부 발진·가피(딱지) 확인 — 열성 질환 감별"
+        },
+        {
+          "id": "pe07",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe08",
+          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "현재 의심되는 발열의 원인에 대해 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "검사 계획(혈액·소변 검사, 영상 등) 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "해열제 사용과 수분 섭취 등 대증 관리 교육"
+        },
+        {
+          "id": "ed04",
+          "text": "경과 관찰과 악화(의식 저하, 호흡곤란 등) 시 즉시 재내원 교육"
+        },
+        {
+          "id": "ed05",
+          "text": "감염 전파 예방(손 씻기, 마스크 등) 교육"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

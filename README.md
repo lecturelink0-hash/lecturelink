@@ -69,6 +69,17 @@ backend/
 - [x] **Checkpoint 11 (P1-B)** — 오픈 라이선스 의료 이미지 풀 + 문항 생성 + 라이선스 자동 표기
 - [x] **Checkpoint 12 (P2/P3)** — 미들웨어 게이트, 자동화 cron, 디자인/문서 정리
 
+## CPX 통합 서비스
+
+CPX 화면과 로그인 프록시는 Next.js 앱에 포함되며, Gemini Live 환자·신체진찰·채점 엔진은 [`services/cpx`](services/cpx)에서 같은 저장소의 Docker 서비스로 배포합니다. 따라서 별도의 비공개 CPX 소스 저장소가 필요하지 않습니다.
+
+- `/cpx` — 음성·텍스트 문진, 1차 chibi 환자, 부위별 신체진찰, 채점 결과
+- `/cpx/history` — Supabase에 저장된 사용자별 완료 기록
+- `services/cpx` — 197개 증례와 53개 루브릭을 포함한 FastAPI 서비스
+- `supabase/migrations/00022_cpx_sessions.sql` — 사용자별 CPX 기록 및 RLS
+
+배포 순서는 [`services/cpx/README.md`](services/cpx/README.md)를 따릅니다.
+
 ## ⚠️ 마이그레이션 경고
 
 - **00004_embedding_dim.sql** 은 `questions.embedding` 을 `vector(1536) → vector(1024)` 로 재생성합니다 (OpenAI text-embedding-3-small → Voyage `voyage-3` 기준). 운영 DB 에 기존 임베딩 데이터가 있는 상태에서 적용하면 컬럼 자체가 drop+add 되므로 **모든 기존 임베딩이 소실됩니다.** 안전한 경로:

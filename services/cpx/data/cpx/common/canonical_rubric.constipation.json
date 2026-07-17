@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_constipation_v1",
+  "title": "변비 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.2 CPX 20 변비 — p107 채점표(병력 8·진찰 3·교육 3·관계 5) + p95~96 병력청취 기반 재구성 (문장 직접 인용 없음, 2026-07-16)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "변비의 양상(배변 횟수, 변의 굳기·모양·색깔, 잔변감, 배변 습관의 변화) 질문",
+          "contextHint": "여러 요소 중 일부를 구체적으로 물으면 인정"
+        },
+        {
+          "id": "ht02",
+          "text": "언제부터 변비가 있었는지(갑자기 vs 서서히) 질문",
+          "contextHint": "최근 갑자기 생긴 배변 습관 변화는 기질적 질환 단서"
+        },
+        {
+          "id": "ht03",
+          "text": "호전·악화 요인 질문"
+        },
+        {
+          "id": "ht04",
+          "text": "심리적·정신적 상태(스트레스, 우울) 평가"
+        },
+        {
+          "id": "ht05",
+          "text": "식생활(식이섬유·수분 섭취)과 생활습관(운동) 질문"
+        },
+        {
+          "id": "ht06",
+          "text": "관련 질환을 의심할 증상(추위 못 견딤·체중 증가 — 갑상샘저하, 체중 감소 — 악성 등) 확인"
+        },
+        {
+          "id": "ht07",
+          "text": "내과적 병력과 복용 약물(진통제, 철분제, 제산제 등) 질문",
+          "contextHint": "변비 유발 약물 확인이 핵심 감별 축"
+        },
+        {
+          "id": "ht08",
+          "text": "가족력(대장암, 갑상선질환 등) 질문"
+        },
+        {
+          "id": "ht09",
+          "text": "혈변·변에 피 묻음 여부 확인 — 기질적 질환 적신호"
+        },
+        {
+          "id": "ht10",
+          "text": "체중 감소 여부 확인 — 적신호"
+        },
+        {
+          "id": "ht11",
+          "text": "변비약 사용 여부와 반응 질문"
+        },
+        {
+          "id": "ht12",
+          "text": "배변 시 과도한 힘주기·손가락 도움 등 배변 행태 확인"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후 확인 (말로 언급)"
+        },
+        {
+          "id": "pe02",
+          "text": "복부 진찰 — 시진·청진·촉진·타진(분변 덩이·종괴 확인)"
+        },
+        {
+          "id": "pe03",
+          "text": "직장수지검사 시행 또는 제안"
+        },
+        {
+          "id": "pe04",
+          "text": "전신 신체 검사(얼굴·목·갑상샘 등) — 이차성 원인 확인"
+        },
+        {
+          "id": "pe05",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe06",
+          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "변비에 대한 잘못된 인식(매일 봐야 정상 등)을 바로잡는 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "식이요법(식이섬유·수분 섭취) 교육"
+        },
+        {
+          "id": "ed03",
+          "text": "생활습관·배변습관(규칙적 배변 시도, 변의 참지 않기, 운동) 교육"
+        },
+        {
+          "id": "ed04",
+          "text": "필요한 검사(대장내시경 등) 또는 약물 조정 계획 설명"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

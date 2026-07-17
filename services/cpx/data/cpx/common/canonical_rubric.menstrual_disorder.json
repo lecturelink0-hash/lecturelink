@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_menstrual_disorder_v1",
+  "title": "월경 이상·월경통 CPX 종합 채점 루브릭 (정본 초안)",
+  "provenance": {
+    "content": "044_menstrual_disorder_dysmenorrhea Fable 초안의 문진·진찰 계약을 바탕으로 재구성 (문장 직접 인용 없음, 2026-07-17; 임상 최종 검수 필요)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "평소 월경 주기·규칙성·기간·양·마지막 월경일과 증상의 시작·경과를 확인"
+        },
+        {
+          "id": "ht02",
+          "text": "월경통의 위치·시기·양상·강도·일상 기능·진통제 반응과 초경 이후 지속/새 발생을 구분"
+        },
+        {
+          "id": "ht03",
+          "text": "과다출혈·혈괴·부정출혈·성교 후 출혈, 실신·어지럼·창백과 발열·분비물·골반통을 확인"
+        },
+        {
+          "id": "ht04",
+          "text": "임신 가능성·피임·성생활·산과력·최근 출산/수유와 자궁내장치 등 여성력을 이유 설명 후 정중히 질문"
+        },
+        {
+          "id": "ht05",
+          "text": "체중 변화·여드름/다모·유즙분비·갑상샘 증상, 빈혈·출혈경향·내분비/부인과 병력 및 약물을 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "갑작스런 심한 복통·대량 출혈·실신·임신 가능성·발열은 응급 평가가 필요한지 확인"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후·전신 상태·결막 창백과 하복부 압통을 확인 또는 선언"
+        },
+        {
+          "id": "pe02",
+          "text": "임신검사·혈액검사 필요성과 민감 진찰의 목적·동의·중단 선택을 설명"
+        },
+        {
+          "id": "pe03",
+          "text": "필요 시 동의 후 외음부·질경 진찰로 출혈·분비물·자궁경부를 확인 또는 선언"
+        },
+        {
+          "id": "pe04",
+          "text": "필요 시 동의 후 양손 골반진찰로 자궁·부속기·경부 이동 압통을 확인 또는 선언"
+        },
+        {
+          "id": "pe05",
+          "text": "손 위생·재피복을 배려하고 검사 결과 설명 계획을 제시"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "임신·빈혈·내분비·자궁/난소 원인 감별을 위해 임신검사·혈액검사·초음파가 필요할 수 있음을 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "임신 가능성과 함께 갑작스런 심한 복통·대량 출혈·실신·고열은 즉시 응급 평가가 필요함을 안내"
+        },
+        {
+          "id": "ed03",
+          "text": "월경일·출혈량·통증·약물 반응을 기록하고 진통제·호르몬을 임의로 과용/중단하지 않도록 안내"
+        },
+        {
+          "id": "ed04",
+          "text": "통증 조절·추적 진료와 비밀보장 범위 안의 상담을 설명"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

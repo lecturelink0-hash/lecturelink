@@ -1,0 +1,20 @@
+{
+  "043_vaginal_discharge": {
+    "sex": ["female"],
+    "reason": "질분비물 케이스는 질/자궁경부 관련 해부학 조건이 필요함",
+    "lockGenderInRandom": true,
+    "disableInvalidGenderInCustomize": true
+  },
+  "044_menstrual_disorder_dysmenorrhea": {
+    "sex": ["female"],
+    "reason": "월경 이상/월경통 케이스는 월경 가능성이 있는 환자 조건이 필요함",
+    "lockGenderInRandom": true,
+    "disableInvalidGenderInCustomize": true
+  },
+  "045_antenatal_care": {
+    "sex": ["female"],
+    "reason": "산전 진찰 케이스는 임신 관련 조건이 필요함",
+    "lockGenderInRandom": true,
+    "disableInvalidGenderInCustomize": true
+  }
+}

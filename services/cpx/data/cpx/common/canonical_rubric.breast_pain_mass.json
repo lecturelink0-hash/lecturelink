@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_breast_pain_mass_v1",
+  "title": "유방통·유방덩이 CPX 종합 채점 루브릭 (정본 초안)",
+  "provenance": {
+    "content": "042_breast_pain_mass Fable 초안의 문진·진찰 계약을 바탕으로 재구성 (문장 직접 인용 없음, 2026-07-17; 임상 최종 검수 필요)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "유방통/덩이의 시작·경과, 좌우·사분면 위치, 크기·개수·성장과 통증·일상 영향을 확인"
+        },
+        {
+          "id": "ht02",
+          "text": "덩이의 단단함·경계·가동성·압통과 월경 주기에 따른 통증·크기 변화를 정중히 확인"
+        },
+        {
+          "id": "ht03",
+          "text": "발열·오한·발적·열감, 피부/유두 함몰·변화, 유두 분비물의 색·혈성·양측성 및 액와 덩이를 확인"
+        },
+        {
+          "id": "ht04",
+          "text": "체중감소·피로, 임신 가능성·수유/최근 중단, 월경력·출산/수유력과 이전 유방 검진·외상을 이유 설명 후 질문"
+        },
+        {
+          "id": "ht05",
+          "text": "호르몬피임/대체요법·기타 약물, 유방질환/수술·보형물, 유방/난소암 가족력과 음주·흡연을 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "빠르게 커지는 고정 덩이·피부/유두 함몰·혈성 분비물·고열/심한 통증의 긴급 평가 필요성을 고려해 적신호를 확인"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후·전신 상태를 확인 또는 선언"
+        },
+        {
+          "id": "pe02",
+          "text": "진찰 목적·노출 최소화·동의와 필요 시 동반인/샤프론 선택을 설명"
+        },
+        {
+          "id": "pe03",
+          "text": "앉은 자세에서 양측 유방 대칭·피부·유두 변화와 쇄골상부/액와 림프절을 확인 또는 선언"
+        },
+        {
+          "id": "pe04",
+          "text": "누운 자세에서 체계적인 양측 유방 촉진으로 덩이의 위치·크기·경계·가동성·압통을 확인 또는 선언"
+        },
+        {
+          "id": "pe05",
+          "text": "필요 시 유두 분비물을 동의 하에 확인하고 손 위생·재피복을 배려"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "덩이·통증의 원인 감별을 위해 유방 진찰과 연령·상황에 맞는 초음파/유방촬영·필요 시 조직검사가 필요함을 비단정적으로 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "빠르게 커지는 덩이·피부/유두 함몰·혈성 분비물·액와 덩이, 발열·심한 통증은 지체 없이 진료받도록 안내"
+        },
+        {
+          "id": "ed03",
+          "text": "자가 발견 변화와 월경 주기·분비물·통증을 기록하고 처방약·호르몬을 임의로 중단하지 않도록 안내"
+        },
+        {
+          "id": "ed04",
+          "text": "결과가 나올 때까지 불안을 정상화하고, 추적 검사 일정·문의 경로와 개인별 검진 계획을 설명"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

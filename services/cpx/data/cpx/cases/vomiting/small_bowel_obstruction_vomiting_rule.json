@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "small_bowel_obstruction_vomiting_rule",
+  "title": "담즙성 구토 (장폐색 적신호)",
+  "category": "구토",
+  "targetDiagnosis": "소장폐색 의심 (Suspected small bowel obstruction)",
+  "variant": "복부 수술력·복부 팽만·가스·대변 배출 감소 동반형",
+  "description": "반복적인 녹색 구토와 복부 팽만, 배변·방귀 감소가 있는 환자의 응급 위험 신호를 평가하는 규칙입니다.",
+  "tags": ["구토", "담즙성구토", "장폐색", "복부팽만", "응급평가"],
+  "sourceTextFile": "005_vomiting.json·005_vomiting_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (Merck nausea and vomiting 자료로 적신호·진찰 단서 교차 확인, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {"fixed": {"location": "응급실"}, "recommended": {"gender": "무관", "age": "45~75세"}, "randomizable": ["성별", "이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
+  "scenarioRule": {"caseSummary": "이틀 전부터 배가 팽팽하게 불러오고 초록색 액체를 반복해서 토하며, 어제부터 방귀와 대변이 거의 나오지 않는 환자. 5년 전 복부 수술력이 있다.", "mustInclude": ["이틀간 반복되는 녹색 구토", "점차 심해지는 복부 팽만과 경련성 복통", "대변·방귀 배출 현저한 감소", "과거 복부 수술력", "물을 마시면 바로 토함"], "preferredVariants": ["통증이 파도처럼 왔다가 잠깐 줄어듦", "수술한 배가 다시 문제인지 걱정함"], "mustAbsent": ["설사·가족 유사 증상", "토혈·흑색변", "최근 두부 외상", "임신 가능성"]},
+  "pastHistoryRule": {"mustInclude": ["5년 전 충수절제술 후 복부 수술력"], "mustAbsent": ["염증성 장질환", "최근 대장내시경 시술"]},
+  "familyHistoryRule": {"recommended": ["특이 가족력 없음"], "mustAbsent": []},
+  "socialHistoryRule": {"fixed": ["최근 새로운 약물·음주 변화 없음"], "recommended": ["흡연 없음"]},
+  "physicalExamRule": [
+    {"item": "활력징후", "method": "활력징후·탈수 평가", "expectedFinding": "맥박 112회, 혈압 102/64, 구강 점막 건조", "polarity": "positive"},
+    {"item": "전반적 외견", "method": "전신 상태·의식 확인", "expectedFinding": "통증 때문에 안절부절못하나 의식 명료", "polarity": "positive"},
+    {"item": "복부 시진", "method": "복부 시진·장음 청진", "expectedFinding": "복부가 팽만하고 수술 흉터가 보이며 장음이 고음성으로 증가", "polarity": "positive"},
+    {"item": "복부 촉진", "method": "복부 촉진", "expectedFinding": "전반적 압통은 있으나 명확한 반발통·판자경직은 없음", "polarity": "positive"},
+    {"item": "구강", "method": "구강 점막·피부 긴장도 확인", "expectedFinding": "구강 점막이 건조함", "polarity": "positive"},
+    {"item": "신경학적 상태", "method": "의식·경부 강직 확인", "expectedFinding": "의식 명료, 경부 강직 없음"}
+  ],
+  "liveApiContext": {"patientContextFocus": "장폐색을 시사하는 반복 담즙성 구토와 복부 팽만 환자이다. 녹색 구토, 방귀·대변 감소, 수술력은 직접 질문을 받을 때만 말한다.", "answerPolicy": ["진단명을 먼저 말하지 않는다.", "질문받은 항목에만 짧게 답한다.", "응급 평가·금식·영상검사 필요성 설명에는 불안을 표현하되 판단을 대신하지 않는다."], "positiveClues": ["담즙성 구토", "팽만·경련성 복통", "배변·방귀 감소", "복부 수술력", "탈수"], "negativeClues": ["토혈·흑색변 없음", "설사·감염 노출 없음", "의식 변화 없음"]},
+  "evaluationUse": {"mustAsk": ["구토의 시작·횟수·양·색과 담즙성 여부", "복통 위치·양상·강도와 지속 여부", "복부 팽만·가스·대변 배출 변화", "수분 섭취 가능 여부·소변량·어지럼", "토혈·혈변·흑색변", "복부 수술·탈장·염증성 장질환 병력", "약물·음주·당뇨·신경학적 위험 신호"], "positiveClues": ["반복 담즙성 구토", "복부 팽만과 배변·방귀 감소", "복부 수술력", "탈수"], "negativeClues": ["출혈·신경학적 위험 신호 없음"], "educationTopics": ["장폐색 가능성과 신속한 평가 필요성", "금식·정맥 수액·전해질 검사 및 복부 영상 가능성", "수술 또는 감압 치료는 검사 결과에 따라 결정됨", "통증 악화·실신·의식 변화 시 즉시 알리기"]},
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 담즙성 구토 (장폐색 적신호)\n\n- 장소: 응급실\n- 요약: 이틀간 초록색 구토, 복부 팽만과 경련성 통증, 대변·방귀 감소.\n- 병력: 5년 전 복부 수술. 물을 마시면 바로 토함.\n- 진찰: 빈맥·건조한 점막, 팽만·고음성 장음, 전반 압통.\n\n추가 질문: \"배가 너무 불러서 물도 못 마시겠는데 바로 수술해야 하나요?\"",
+  "rawRuleText": "# 증례명 : 담즙성 구토 (장폐색 적신호)\n\n- 장소: 응급실\n- 요약: 이틀간 초록색 구토, 복부 팽만과 경련성 통증, 대변·방귀 감소.\n- 병력: 5년 전 복부 수술. 물을 마시면 바로 토함.\n- 진찰: 빈맥·건조한 점막, 팽만·고음성 장음, 전반 압통.\n\n추가 질문: \"배가 너무 불러서 물도 못 마시겠는데 바로 수술해야 하나요?\""
+}

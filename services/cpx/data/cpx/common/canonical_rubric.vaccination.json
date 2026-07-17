@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_vaccination_v1",
+  "title": "예방접종 상담 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.3 CPX 36 예방접종 — p70 채점표(병력 8·진찰 2·교육 3·관계 5) + p44~47 예진 문진 기반 재구성 (문장 직접 인용 없음). 소아·성인 공용 문구화 및 가중치 35/10/20/25/10은 파생 규칙.",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric_counsel.py로 생성 — 상담형 커스텀 섹션)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(met/partial/not_met)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "상담형 가중치: 병력 35 + 진찰 10 + 교육 20 + PPI 25 + 임상예의 10 (진찰 비중 축소·교육 확대 — 상담형) — 파생 규칙, 사용자 검수 대상",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취 (예진)",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 6,
+        "fairMin": 4
+      },
+      "items": [
+        {
+          "id": "vh01",
+          "text": "이전에 시행한 예방접종 이력을 확인하였는가",
+          "contextHint": "수첩·기록 확인 요청도 인정"
+        },
+        {
+          "id": "vh02",
+          "text": "연령·일정에 대비해 지연되었거나 시행해야 할 접종을 파악·설명하였는가"
+        },
+        {
+          "id": "vh03",
+          "text": "접종 금기와 관련된 과거 병력(경련·신경계 질환, 면역저하, 스테로이드·항암치료, 수혈·면역글로불린 투여, 가와사키병 등)을 확인하였는가",
+          "contextHint": "여러 금기 병력 중 일부를 구체적으로 확인하면 인정"
+        },
+        {
+          "id": "vh04",
+          "text": "최근 상태(발열, 급성 질환, 보챔·설사·피부 질환 등)를 확인하였는가",
+          "contextHint": "'오늘 컨디션은 어떤가요' 수준도 문맥상 인정"
+        },
+        {
+          "id": "vh05",
+          "text": "과거 접종 후 이상반응(심한 발열·보챔, 경련, 심한 알레르기 반응)이 있었는지 확인하였는가"
+        },
+        {
+          "id": "vh06",
+          "text": "생백신·사백신 구분과 동시 접종 가능 여부 또는 접종 간격을 설명할 수 있는가"
+        },
+        {
+          "id": "vh07",
+          "text": "기저질환·고위험군 여부를 확인하고 필요한 접종과 그 필요성을 설명하였는가",
+          "contextHint": "성인: 만성질환자 인플루엔자·폐렴구균 등 / 소아: 고위험 상황"
+        },
+        {
+          "id": "vh08",
+          "text": "알레르기(계란·약물 등)와 현재 복용 약물을 확인하였는가",
+          "contextHint": "임신 가능성 확인(가임기 여성)도 이 항목으로 인정 — 파생 항목"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 10,
+      "gradeCutoffs": {
+        "excellent": 2,
+        "fairMin": 1
+      },
+      "items": [
+        {
+          "id": "vp01",
+          "text": "생체 징후 이상 여부(발열 등)를 확인하였는가"
+        },
+        {
+          "id": "vp02",
+          "text": "전반적인 상태(소아: 체중·신장·두위 등 발육 상태)를 확인하였는가"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 20,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ve01",
+          "text": "접종 후 주의해서 관찰해야 할 이상반응(고열, 심한 보챔, 호흡곤란·두드러기 등 즉시 내원 기준)에 대해 설명하였는가"
+        },
+        {
+          "id": "ve02",
+          "text": "접종 후 유의사항(접종 부위 관리, 당일 목욕·과격한 활동, 20~30분 대기 관찰 등)을 설명하였는가"
+        },
+        {
+          "id": "ve03",
+          "text": "예방접종을 보류·연기해야 하는 경우(중등도 이상 급성 발열 질환 등)를 설명하였는가"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

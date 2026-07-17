@@ -1,0 +1,272 @@
+{
+  "001_acute_abdominal_pain": {
+    "promptFile": "001_acute_abdominal_pain_prompt.md",
+    "jsonFile": "001_acute_abdominal_pain.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "002_dyspepsia_chronic_abdominal_pain": {
+    "promptFile": "002_dyspepsia_chronic_abdominal_pain_prompt.md",
+    "jsonFile": "002_dyspepsia_chronic_abdominal_pain.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "003_hematemesis": {
+    "promptFile": "003_hematemesis_prompt.md",
+    "jsonFile": "003_hematemesis.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "004_hematochezia": {
+    "promptFile": "004_hematochezia_prompt.md",
+    "jsonFile": "004_hematochezia.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "005_vomiting": {
+    "promptFile": "005_vomiting_prompt.md",
+    "jsonFile": "005_vomiting.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "006_constipation": {
+    "promptFile": "006_constipation_prompt.md",
+    "jsonFile": "006_constipation.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "007_diarrhea": {
+    "promptFile": "007_diarrhea_prompt.md",
+    "jsonFile": "007_diarrhea.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "008_jaundice": {
+    "promptFile": "008_jaundice_prompt.md",
+    "jsonFile": "008_jaundice.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "009_chest_pain": {
+    "promptFile": "009_chest_pain_prompt.md",
+    "jsonFile": "009_chest_pain.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "010_syncope": {
+    "promptFile": "010_syncope_prompt.md",
+    "jsonFile": "010_syncope.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "011_palpitations": {
+    "promptFile": "011_palpitations_prompt.md",
+    "jsonFile": "011_palpitations.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "012_hypertension": {
+    "promptFile": "012_hypertension_prompt.md",
+    "jsonFile": "012_hypertension.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "013_dyslipidemia": {
+    "promptFile": "013_dyslipidemia_prompt.md",
+    "jsonFile": "013_dyslipidemia.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "014_cough": {
+    "promptFile": "014_cough_prompt.md",
+    "jsonFile": "014_cough.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "015_rhinorrhea_nasal_obstruction": {
+    "promptFile": "015_rhinorrhea_nasal_obstruction_prompt.md",
+    "jsonFile": "015_rhinorrhea_nasal_obstruction.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "016_hemoptysis": {
+    "promptFile": "016_hemoptysis_prompt.md",
+    "jsonFile": "016_hemoptysis.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "017_dyspnea": {
+    "promptFile": "017_dyspnea_prompt.md",
+    "jsonFile": "017_dyspnea.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "018_polyuria": {
+    "promptFile": "018_polyuria_prompt.md",
+    "jsonFile": "018_polyuria.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "019_oliguria": {
+    "promptFile": "019_oliguria_prompt.md",
+    "jsonFile": "019_oliguria.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "020_hematuria": {
+    "promptFile": "020_hematuria_prompt.md",
+    "jsonFile": "020_hematuria.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "021_dysuria": {
+    "promptFile": "021_dysuria_prompt.md",
+    "jsonFile": "021_dysuria.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "022_urinary_incontinence": {
+    "promptFile": "022_urinary_incontinence_prompt.md",
+    "jsonFile": "022_urinary_incontinence.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "023_fever": {
+    "promptFile": "023_fever_prompt.md",
+    "jsonFile": "023_fever.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "024_easy_bruising": {
+    "promptFile": "024_easy_bruising_prompt.md",
+    "jsonFile": "024_easy_bruising.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "025_fatigue": {
+    "promptFile": "025_fatigue_prompt.md",
+    "jsonFile": "025_fatigue.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "026_weight_loss": {
+    "promptFile": "026_weight_loss_prompt.md",
+    "jsonFile": "026_weight_loss.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "027_weight_gain": {
+    "promptFile": "027_weight_gain_prompt.md",
+    "jsonFile": "027_weight_gain.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "028_joint_pain": {
+    "promptFile": "028_joint_pain_prompt.md",
+    "jsonFile": "028_joint_pain.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "029_low_back_pain": {
+    "promptFile": "029_low_back_pain_prompt.md",
+    "jsonFile": "029_low_back_pain.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "030_neck_pain": {
+    "promptFile": "030_neck_pain_prompt.md",
+    "jsonFile": "030_neck_pain.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "031_skin_rash": {
+    "promptFile": "031_skin_rash_prompt.md",
+    "jsonFile": "031_skin_rash.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "032_mood_change": {
+    "promptFile": "032_mood_change_prompt.md",
+    "jsonFile": "032_mood_change.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "033_anxiety": {
+    "promptFile": "033_anxiety_prompt.md",
+    "jsonFile": "033_anxiety.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "034_sleep_disorder": {
+    "promptFile": "034_sleep_disorder_prompt.md",
+    "jsonFile": "034_sleep_disorder.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "035_memory_loss": {
+    "promptFile": "035_memory_loss_prompt.md",
+    "jsonFile": "035_memory_loss.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "036_dizziness": {
+    "promptFile": "036_dizziness_prompt.md",
+    "jsonFile": "036_dizziness.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "037_headache": {
+    "promptFile": "037_headache_prompt.md",
+    "jsonFile": "037_headache.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "038_convulsion": {
+    "promptFile": "038_convulsion_prompt.md",
+    "jsonFile": "038_convulsion.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "039_weakness_paresthesia": {
+    "promptFile": "039_weakness_paresthesia_prompt.md",
+    "jsonFile": "039_weakness_paresthesia.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "040_clouded_consciousness": {
+    "promptFile": "040_clouded_consciousness_prompt.md",
+    "jsonFile": "040_clouded_consciousness.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "041_hand_tremor": {
+    "promptFile": "041_hand_tremor_prompt.md",
+    "jsonFile": "041_hand_tremor.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "042_breast_pain_mass": {
+    "promptFile": "042_breast_pain_mass_prompt.md",
+    "jsonFile": "042_breast_pain_mass.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "043_vaginal_discharge": {
+    "promptFile": "043_vaginal_discharge_prompt.md",
+    "jsonFile": "043_vaginal_discharge.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "044_menstrual_disorder_dysmenorrhea": {
+    "promptFile": "044_menstrual_disorder_dysmenorrhea_prompt.md",
+    "jsonFile": "044_menstrual_disorder_dysmenorrhea.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "045_antenatal_care": {
+    "promptFile": "045_antenatal_care_prompt.md",
+    "jsonFile": "045_antenatal_care.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "046_developmental_delay": {
+    "promptFile": "046_developmental_delay_prompt.md",
+    "jsonFile": "046_developmental_delay.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "047_immunization": {
+    "promptFile": "047_immunization_prompt.md",
+    "jsonFile": "047_immunization.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "048_smoking_cessation": {
+    "promptFile": "048_smoking_cessation_prompt.md",
+    "jsonFile": "048_smoking_cessation.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "049_alcohol_problem": {
+    "promptFile": "049_alcohol_problem_prompt.md",
+    "jsonFile": "049_alcohol_problem.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "050_substance_misuse": {
+    "promptFile": "050_substance_misuse_prompt.md",
+    "jsonFile": "050_substance_misuse.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "051_breaking_bad_news": {
+    "promptFile": "051_breaking_bad_news_prompt.md",
+    "jsonFile": "051_breaking_bad_news.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "052_domestic_violence": {
+    "promptFile": "052_domestic_violence_prompt.md",
+    "jsonFile": "052_domestic_violence.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "053_suicide": {
+    "promptFile": "053_suicide_prompt.md",
+    "jsonFile": "053_suicide.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  },
+  "054_sexual_violence": {
+    "promptFile": "054_sexual_violence_prompt.md",
+    "jsonFile": "054_sexual_violence.json",
+    "source": "참고.zip Prompt & Json 폴더 우선, 없으면 내장 기본 지침 사용"
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_chest_pain_v1",
+  "title": "가슴 통증 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.1 CPX 08 가슴 통증 — p247 채점표(병력 10·진찰 3·교육 4·관계 5) + p235~238 병력청취·감별 기반 재구성 (문장 직접 인용 없음, 2026-07-17)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "통증의 시작 시간·상황·빈도 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "통증의 지속시간 질문",
+          "contextHint": "수 분(협심증) vs 30분 이상(심근경색) 구분 단서"
+        },
+        {
+          "id": "ht03",
+          "text": "통증의 위치 질문"
+        },
+        {
+          "id": "ht04",
+          "text": "통증의 양상(조이는·짓누르는·찌르는·화끈거리는) 질문"
+        },
+        {
+          "id": "ht05",
+          "text": "방사통 여부와 방사 부위(왼팔, 턱, 등) 질문"
+        },
+        {
+          "id": "ht06",
+          "text": "통증의 강도 질문"
+        },
+        {
+          "id": "ht07",
+          "text": "동반 증상(호흡곤란, 식은땀, 오심, 두근거림) 확인"
+        },
+        {
+          "id": "ht08",
+          "text": "악화·완화 요인(운동, 음식 섭취, 호흡, 자세) 질문",
+          "contextHint": "운동 악화·휴식 완화는 허혈성, 호흡·자세 연관은 비심장성 단서"
+        },
+        {
+          "id": "ht09",
+          "text": "심혈관 위험인자(흡연, 고혈압, 당뇨, 고지혈증, 가족력, 비만) 확인"
+        },
+        {
+          "id": "ht10",
+          "text": "정신질환 과거력이나 감정적 스트레스 질문"
+        },
+        {
+          "id": "ht11",
+          "text": "이전 유사 통증 경험과 당시 대처 질문"
+        },
+        {
+          "id": "ht12",
+          "text": "복용 약물(니트로글리세린 반응 포함) 질문"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 5,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "생명징후 평가·확인 (혈압, 맥박, 호흡수, 산소포화도 포함 언급)"
+        },
+        {
+          "id": "pe02",
+          "text": "흉부 시진·촉진 — 흉벽 압통 확인 포함",
+          "contextHint": "흉벽 압통 재현은 근골격계 감별 단서"
+        },
+        {
+          "id": "pe03",
+          "text": "심음 청진"
+        },
+        {
+          "id": "pe04",
+          "text": "호흡음 청진 — 양측 비교",
+          "contextHint": "한쪽 호흡음 감소는 기흉 단서"
+        },
+        {
+          "id": "pe05",
+          "text": "양팔 혈압 비교 또는 말초 맥박 확인 — 대동맥박리 감별"
+        },
+        {
+          "id": "pe06",
+          "text": "심전도 검사 시행 또는 선언"
+        },
+        {
+          "id": "pe07",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe08",
+          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "가슴 통증의 원인이 다양함(심장·폐·소화기·근골격)을 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "급성 흉통에서 생각할 치명적 질환과 필요한 검사(심전도·심근효소·영상) 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "심혈관 위험인자(흡연 등)에 대해 설명하고 개선 교육"
+        },
+        {
+          "id": "ed04",
+          "text": "치료·검사 계획과 다음 단계(입원·전원 포함) 설명"
+        },
+        {
+          "id": "ed05",
+          "text": "흉통 재발·악화 시 즉시 응급실 내원 교육"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

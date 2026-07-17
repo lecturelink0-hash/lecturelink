@@ -1,0 +1,274 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_syncope_v1",
+  "title": "실신 CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "Guide to Real CPX 5판 Vol.1 CPX 09 실신 — p269 채점표(병력 10·진찰 5·교육 3·관계 5) + p261~264 병력청취·신체진찰 기반 재구성 (문장 직접 인용 없음, 2026-07-16)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "met/partial/not_met 3상태를 보존하고 결과 화면에서 부분 수행을 별도 표시 — 2026-07-16 임상 검수 반영",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)",
+      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "실신 직전의 상황(무엇을 하다가, 유발 상황)을 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "실신 당시의 자세(서 있었는지, 일어나던 중인지) 질문"
+        },
+        {
+          "id": "ht03",
+          "text": "선행 증상(두근거림, 흉통, 어지러움, 식은땀, 오심 등) 확인",
+          "contextHint": "여러 선행 증상 중 일부를 구체적으로 확인하면 인정 — 전구증상 없는 실신은 심장성 적신호"
+        },
+        {
+          "id": "ht04",
+          "text": "발작 중의 상태(경련, 배뇨/배변, 혀 깨묾 — 목격자 진술) 확인 — 경련 감별"
+        },
+        {
+          "id": "ht05",
+          "text": "의식 소실의 여부·정도·지속시간 질문"
+        },
+        {
+          "id": "ht06",
+          "text": "실신 후의 증상(위약감, 의식 혼탁, 졸림, 두통) 확인"
+        },
+        {
+          "id": "ht07",
+          "text": "과거에도 실신한 경험이 있는지 질문"
+        },
+        {
+          "id": "ht08",
+          "text": "현재 복용 중인 약물 질문"
+        },
+        {
+          "id": "ht09",
+          "text": "과거 질병력(심장질환, 당뇨, 위장 질환 등) 질문"
+        },
+        {
+          "id": "ht10",
+          "text": "쓰러지면서 다친 곳(외상)이 있는지 질문"
+        },
+        {
+          "id": "ht11",
+          "text": "가족력(급사, 심장질환) 질문 — 심장성 실신 감별"
+        },
+        {
+          "id": "ht12",
+          "text": "출혈 단서(흑색변·혈변, 속쓰림 등) 확인 — 출혈성 기립성 저혈압 감별"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 5,
+        "fairMin": 3
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후 확인 — 호흡수·심박수 포함 (말로 언급)"
+        },
+        {
+          "id": "pe02",
+          "text": "혈역학적으로 안정적인 환자에서만 체위별 혈압 측정(누운 자세·앉은 자세·선 자세) — 기립성 저혈압 감별",
+          "contextHint": "저혈압·빈맥·활동성 출혈이 의심되면 환자를 세우지 않고 응급 안정화·출혈 평가를 우선한다"
+        },
+        {
+          "id": "pe03",
+          "text": "양팔의 혈압 차이 측정 또는 확인"
+        },
+        {
+          "id": "pe04",
+          "text": "심음·흉부 청진"
+        },
+        {
+          "id": "pe05",
+          "text": "신경학적 검사 시행 또는 선언"
+        },
+        {
+          "id": "pe06",
+          "text": "결막 창백(빈혈)·경동맥 잡음 등 확인"
+        },
+        {
+          "id": "pe07",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe08",
+          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "현재 의심되는 실신의 원인(혈관미주신경성, 기립성, 심장성 등)에 대해 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "감별을 위한 검사 계획(심전도, 혈액검사, 기립경사검사 등) 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "전구증상이 느껴지면 즉시 자세를 낮추는 등 낙상 방지 교육"
+        },
+        {
+          "id": "ed04",
+          "text": "보호자·주변인에게 실신 시 대처 방법 교육"
+        },
+        {
+          "id": "ed05",
+          "text": "실신 유형에 따른 일상 예방법(수분·염분 섭취, 유발 상황 회피 등) 교육"
+        },
+        {
+          "id": "ed06",
+          "text": "심장성 또는 출혈성 고위험 소견이면 운동·운전·귀가를 중단하고 즉시 응급·긴급 평가가 필요함을 설명"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "safetyGates": [
+    {
+      "id": "cardiac_syncope_urgent_evaluation",
+      "caseIds": ["cardiac_syncope_rule"],
+      "requiredItemIds": ["ht03", "ht11", "ed06"],
+      "maxOverallGrade": 0,
+      "message": "심장성 실신 고위험 증례에서 적신호 확인 또는 긴급 평가 설명이 누락되었습니다."
+    },
+    {
+      "id": "gi_bleed_syncope_urgent_evaluation",
+      "caseIds": ["orthostatic_gi_bleed_syncope_rule"],
+      "requiredItemIds": ["ht12", "pe01", "ed06"],
+      "maxOverallGrade": 0,
+      "message": "상부위장관 출혈 의심 실신에서 출혈 확인 또는 응급 안정화·입원 평가 설명이 누락되었습니다."
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_jaundice_v1",
+  "title": "황달 CPX 종합 채점 루브릭 (정본 초안)",
+  "provenance": {
+    "content": "008_jaundice Fable 초안의 문진·진찰 계약 + Merck jaundice 자료를 바탕으로 재구성 (문장 직접 인용 없음, 2026-07-17; 임상 최종 검수 필요)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ]
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 6,
+        "fairMin": 4
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "황달의 시작 시점·처음 보인 부위·진행 양상을 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "소변색·대변색·지방변과 전신 가려움 여부를 확인"
+        },
+        {
+          "id": "ht03",
+          "text": "복통 위치·강도, 발열·오한·오심·구토를 확인",
+          "contextHint": "발열·오한과 우상복부 통증은 신속 평가가 필요한 단서"
+        },
+        {
+          "id": "ht04",
+          "text": "체중 감소·식욕 저하·피로와 멍·출혈·복수·의식 변화를 확인"
+        },
+        {
+          "id": "ht05",
+          "text": "간염 위험 노출(여행·음식·성접촉·주사·수혈)과 예방접종을 질문"
+        },
+        {
+          "id": "ht06",
+          "text": "음주력·최근 약물·한약·건강보조제·독성 노출을 확인"
+        },
+        {
+          "id": "ht07",
+          "text": "간담도 질환·담석·복부 수술·염증성 장질환·용혈 질환 과거력을 질문"
+        },
+        {
+          "id": "ht08",
+          "text": "간질환·간암·담도암·용혈질환 가족력과 최근 검사력을 질문"
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후와 의식 상태를 평가 또는 선언"
+        },
+        {
+          "id": "pe02",
+          "text": "공막·피부 황달과 결막 창백을 관찰"
+        },
+        {
+          "id": "pe03",
+          "text": "피부 긁힌 자국·출혈 반점, 손바닥 홍반·거미혈관종 등 간질환 단서를 관찰"
+        },
+        {
+          "id": "pe04",
+          "text": "복부 시진과 장음 청진, 복수 여부를 확인"
+        },
+        {
+          "id": "pe05",
+          "text": "복부 촉진으로 우상복부 압통·간비대·종괴와 Murphy 징후를 확인"
+        },
+        {
+          "id": "pe06",
+          "text": "필요 시 손떨림(asterixis)과 의식 변화를 확인하고 손 위생·동의를 표현"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "황달은 간·담도·혈액 원인을 구분하는 평가가 필요한 증상임을 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "혈액검사와 복부초음파·CT 등 원인에 따른 검사 계획을 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "음주·간독성 약물·건강보조제는 의료진과 상의 전 피하도록 안내"
+        },
+        {
+          "id": "ed04",
+          "text": "고열·심한 복통, 의식 변화, 출혈·검은 변·토혈에는 즉시 진료가 필요함을 안내"
+        },
+        {
+          "id": "ed05",
+          "text": "환자의 이해와 질문을 확인하고 안전한 추적·응급 평가 계획을 정리"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}
