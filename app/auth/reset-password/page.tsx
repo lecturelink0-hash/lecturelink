@@ -2,12 +2,16 @@
 
 /**
  * 비밀번호 재설정 — 이메일 링크(복구 세션) 클릭 후 새 비밀번호 설정.
- * /auth/callback 에서 recovery 토큰을 세션으로 교환한 뒤 이 페이지로 온다.
+ * 로그인 페이지와 동일한 ll-auth-page / auth-card 디자인을 사용한다.
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/db/browser';
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
+
+const inputClass =
+  'w-full h-12 px-4 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base';
 
 export default function ResetPasswordPage() {
   const [ready, setReady] = useState<'checking' | 'ok' | 'no-session'>('checking');
@@ -22,8 +26,6 @@ export default function ResetPasswordPage() {
     const done = () => { if (!settled) { settled = true; setReady('ok'); } };
 
     async function init() {
-      // (1) implicit 방식: URL 해시의 access_token/refresh_token 을 직접 세션으로 설정.
-      //     (PKCE 클라이언트는 해시 토큰을 자동 처리하지 않으므로 수동 처리한다.)
       if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
         const params = new URLSearchParams(window.location.hash.slice(1));
         const access_token = params.get('access_token');
@@ -34,12 +36,10 @@ export default function ResetPasswordPage() {
           if (!error) { done(); return; }
         }
       }
-      // (2) PKCE(?code) 또는 이미 성립된 세션.
       const { data } = await supabase.auth.getSession();
       if (data.session) done();
     }
 
-    // detectSessionInUrl(코드 교환) 결과는 이벤트로도 도착 → 병행 대기.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) done();
     });
@@ -76,65 +76,73 @@ export default function ResetPasswordPage() {
       <header className="header">
         <div className="header-inner">
           <Link href="/" className="logo">
+            <span className="logo-mark"><BookOpen className="icon" /></span>
             <span className="logo-text">Lecturelink</span>
           </Link>
           <Link href="/login" className="header-link">로그인</Link>
         </div>
       </header>
-      <main className="grid place-items-center px-4 py-16">
-        <div className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-bold text-sage-800 mb-2">비밀번호 재설정</h1>
 
-          {ready === 'checking' && (
-            <p className="text-sm text-[var(--color-muted)] py-6 text-center">확인 중…</p>
-          )}
-
-          {ready === 'no-session' && (
-            <div className="text-center py-4">
-              <AlertCircle className="w-12 h-12 text-[var(--color-warn)] mx-auto mb-4" strokeWidth={1.5} />
-              <p className="text-sm text-[var(--color-muted)] leading-relaxed">
-                재설정 링크가 유효하지 않거나 만료되었습니다.<br />로그인 화면에서 다시 요청해 주세요.
-              </p>
-              <Link href="/login" className="inline-block mt-5 text-sm font-semibold text-sage-700 underline">
-                로그인으로 이동
-              </Link>
+      <main>
+        <div style={{ maxWidth: 440, margin: '0 auto', padding: '48px 20px' }}>
+          <section className="auth-card">
+            <div className="card-head">
+              <h2>비밀번호 재설정</h2>
+              {ready === 'ok' && status !== 'done' && <p>새 비밀번호를 입력해 주세요.</p>}
             </div>
-          )}
 
-          {ready === 'ok' && status === 'done' && (
-            <div className="text-center py-4">
-              <CheckCircle className="w-12 h-12 text-sage-700 mx-auto mb-4" strokeWidth={1.5} />
-              <p className="text-sm text-sage-800">비밀번호가 변경되었습니다. 잠시 후 이동합니다…</p>
-            </div>
-          )}
+            {ready === 'checking' && (
+              <p className="text-sm text-[var(--color-muted)] py-6 text-center">확인 중…</p>
+            )}
 
-          {ready === 'ok' && status !== 'done' && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <p className="text-sm text-[var(--color-muted)] mb-2">새 비밀번호를 입력해 주세요.</p>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="새 비밀번호 (8자 이상)"
-                className="w-full h-12 rounded-lg border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-primary)]"
-              />
-              <input
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                placeholder="새 비밀번호 확인"
-                className="w-full h-12 rounded-lg border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-primary)]"
-              />
-              {errorMsg && <p className="text-sm text-[var(--color-warn)]">{errorMsg}</p>}
-              <button
-                type="submit"
-                disabled={status === 'saving'}
-                className="w-full h-12 rounded-lg bg-[var(--color-primary)] text-white font-bold disabled:opacity-50"
-              >
-                {status === 'saving' ? '변경 중…' : '비밀번호 변경'}
-              </button>
-            </form>
-          )}
+            {ready === 'no-session' && (
+              <div className="text-center py-4">
+                <AlertCircle className="w-12 h-12 text-[var(--color-warn)] mx-auto mb-4" strokeWidth={1.5} />
+                <p className="text-sm text-[var(--color-muted)] leading-relaxed">
+                  재설정 링크가 유효하지 않거나 만료되었습니다.<br />로그인 화면에서 다시 요청해 주세요.
+                </p>
+                <Link href="/login" className="inline-block mt-5 text-sm font-semibold text-sage-700 underline">
+                  로그인으로 이동
+                </Link>
+              </div>
+            )}
+
+            {ready === 'ok' && status === 'done' && (
+              <div className="text-center py-4">
+                <CheckCircle className="w-12 h-12 text-sage-700 mx-auto mb-4" strokeWidth={1.5} />
+                <p className="text-sm text-sage-800">비밀번호가 변경되었습니다. 잠시 후 이동합니다…</p>
+              </div>
+            )}
+
+            {ready === 'ok' && status !== 'done' && (
+              <form onSubmit={handleSubmit}>
+                <label className="block text-sm font-semibold text-sage-800 mb-2">새 비밀번호</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="8자 이상"
+                  className={`${inputClass} mb-5`}
+                />
+                <label className="block text-sm font-semibold text-sage-800 mb-2">새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="비밀번호 다시 입력"
+                  className={`${inputClass} mb-5`}
+                />
+                {errorMsg && (
+                  <div className="text-sm text-[var(--color-warn)] bg-[var(--color-warn-bg)] rounded-lg p-3.5 mb-5">
+                    {errorMsg}
+                  </div>
+                )}
+                <Button type="submit" fullWidth size="lg" loading={status === 'saving'}>
+                  {status === 'saving' ? '변경 중…' : '비밀번호 변경'}
+                </Button>
+              </form>
+            )}
+          </section>
         </div>
       </main>
     </div>
