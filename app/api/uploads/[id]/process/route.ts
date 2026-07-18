@@ -11,6 +11,7 @@
  *   { desired_count?: number, style?: 'kmle' | 'professor' | 'internal' }
  */
 
+import { after } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/db/admin';
@@ -120,28 +121,36 @@ export const POST = withErrorHandling(async (
     );
   }
 
-  // inline 모드: 백그라운드로 처리하고 즉시 202 반환.
+  // inline 모드: after() 로 응답 후 처리하고 즉시 202 반환.
+  //
+  // ⚠️ Vercel 서버리스 주의: 예전엔 `void generate...()` fire-and-forget 이었는데,
+  // 서버리스는 응답을 반환하면 await 되지 않은 백그라운드 Promise 를 함수와 함께
+  // 동결/종료해 느린 생성이 중간에 죽는다(업로드가 'processing'에서 멈춤).
+  // Next 15 `after()` 는 응답 전송 후에도 런타임이 함수를 살려 콜백을 완주시키므로
+  // maxDuration(300s) 한도 내에서 안전하게 생성이 끝난다.
   // 동기로 await 하면 대용량 PDF(수십 페이지)에서 생성이 수 분 걸려 프록시/브라우저가
   // 먼저 연결을 끊는다(nginx 499). 이 서버는 상시 구동(next start)이라 응답 후에도
   // 백그라운드 Promise 가 계속 실행되며, generatePrivateQuestionsFromUpload 가
   // 업로드 status 를 processing→completed/failed 로 갱신한다. 클라이언트는
   // GET /api/uploads 폴링(최대 5분)으로 완료를 감지해 결과를 조회한다.
   // quota 는 enqueue 단계에서 이미 1회 차감됨.
-  void generatePrivateQuestionsFromUpload({
-    uploadId: id,
-    userId: session.userId,
-    desiredCount: body.desired_count,
-    style: body.style,
-    difficulty: body.difficulty,
-    questionType: body.question_type,
-    title: body.title,
-  }).catch((e) => {
-    // 생성 함수 내부에서 status='failed' 로 갱신하지만, 예기치 못한 예외를 로깅.
-    console.error(
-      '[process/inline-bg] 백그라운드 생성 실패:',
-      e instanceof Error ? e.message : String(e),
-    );
-  });
+  after(
+    generatePrivateQuestionsFromUpload({
+      uploadId: id,
+      userId: session.userId,
+      desiredCount: body.desired_count,
+      style: body.style,
+      difficulty: body.difficulty,
+      questionType: body.question_type,
+      title: body.title,
+    }).catch((e) => {
+      // 생성 함수 내부에서 status='failed' 로 갱신하지만, 예기치 못한 예외를 로깅.
+      console.error(
+        '[process/inline-bg] 백그라운드 생성 실패:',
+        e instanceof Error ? e.message : String(e),
+      );
+    }),
+  );
 
   return ok(
     {
