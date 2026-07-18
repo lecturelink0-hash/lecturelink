@@ -61,26 +61,46 @@ export default function LoginPage() {
     const supabase = createBrowserClient();
 
     if (mode === 'signup') {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) {
+      // supabase-js 의 signUp 은 신규·중복 모두 user=null 을 반환해 중복을 구분할 수 없다.
+      // GoTrue REST 는 기가입 이메일이면 이메일 노출 방지를 위해 identities 를 빈 배열로
+      // 돌려주고 메일도 보내지 않는다 → 이 값을 직접 확인해 중복을 판별한다.
+      const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supaAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      let body: {
+        identities?: unknown[];
+        access_token?: string;
+        msg?: string;
+        error_description?: string;
+      } = {};
+      try {
+        const res = await fetch(
+          `${supaUrl}/auth/v1/signup?redirect_to=${encodeURIComponent(`${window.location.origin}/auth/callback`)}`,
+          {
+            method: 'POST',
+            headers: { apikey: supaAnon, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          },
+        );
+        body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setStatus('error');
+          setErrorMsg(body.msg || body.error_description || '회원가입에 실패했습니다.');
+          return;
+        }
+      } catch {
         setStatus('error');
-        setErrorMsg(authErrorMessage(error));
+        setErrorMsg('네트워크 오류로 회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.');
         return;
       }
-      // 이미 가입된 이메일 — 이메일 확인이 켜진 경우 Supabase 는 보안상(이메일 존재
-      // 노출 방지) 가짜 성공을 반환하되 identities 를 빈 배열로 돌려준다. 이걸로 중복 감지.
-      if (data.user && (data.user.identities?.length ?? 0) === 0) {
+
+      const identities = Array.isArray(body.identities) ? body.identities : [];
+      if (identities.length === 0) {
         setStatus('error');
         setErrorMsg('이미 가입된 이메일입니다. 로그인해 주세요.');
         return;
       }
-      // 이메일 확인이 켜져 있으면 session 이 없음 → 확인 메일 안내.
-      // 꺼져 있으면 바로 세션 생성 → 홈으로.
-      if (data.session) {
+      // 자동 확인이 꺼져 있으면(현 설정) 세션 없이 확인 메일만 발송 → 안내 화면.
+      if (body.access_token) {
         window.location.href = postAuthDest();
       } else {
         setStatus('sent');
