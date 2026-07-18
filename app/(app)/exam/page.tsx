@@ -386,7 +386,8 @@ export default function ExamPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6 items-start">
+      {/* 전용 클래스 사용 — 과목 카드 그리드용 `.ll-exam-page .grid`(3등분)와 충돌 방지 */}
+      <div className="exam-detail-layout items-start">
         {/* 좌측: 세부주제 */}
         <div className="ll-card p-3 md:sticky md:top-6">
           <div className="flex items-center gap-2 px-2 pb-2.5 mb-1.5 border-b border-[var(--color-border)]">
