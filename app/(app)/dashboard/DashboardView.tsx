@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { KakaoEmailPrompt } from '@/components/auth/KakaoEmailPrompt';
 
 interface Day { label: string; studied: boolean; isToday: boolean }
 interface Recent { isCorrect: boolean; subTopicName: string; subjectName: string; label: string }
@@ -31,6 +32,8 @@ export function DashboardView({
 
   return (
     <div className="ll-dashboard-page content">
+      {/* 카카오(합성 이메일) 사용자 이메일 등록 유도 — 첫 진입 모달 + 이후 하루 1회 배너 */}
+      <KakaoEmailPrompt />
       <section className="welcome-row" aria-labelledby="page-title">
         <div>
           <h1 id="page-title">
