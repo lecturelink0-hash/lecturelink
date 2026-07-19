@@ -31,6 +31,7 @@ const bodySchema = z.object({
   difficulty: z.enum(['하', '중', '상']).optional(),
   question_type: z.enum(['지식형', '임상형', '이미지형']).optional(),
   title: z.string().max(100).optional(),
+  reference_upload_ids: z.array(z.string().uuid()).max(10).default([]),
 });
 
 export const maxDuration = 300;
@@ -107,6 +108,7 @@ export const POST = withErrorHandling(async (
     difficulty: body.difficulty,
     questionType: body.question_type,
     title: body.title,
+    referenceUploadIds: body.reference_upload_ids,
   });
 
   if (result.mode === 'qstash') {
@@ -135,6 +137,7 @@ export const POST = withErrorHandling(async (
     difficulty: body.difficulty,
     questionType: body.question_type,
     title: body.title,
+    referenceUploadIds: body.reference_upload_ids,
   }).catch((e) => {
     // 생성 함수 내부에서 status='failed' 로 갱신하지만, 예기치 못한 예외를 로깅.
     console.error(

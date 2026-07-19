@@ -31,13 +31,32 @@ export interface EnqueueInput {
   difficulty?: '하' | '중' | '상';
   questionType?: '지식형' | '임상형' | '이미지형';
   title?: string;
+  referenceUploadIds?: string[];
 }
 
 function getBackend(): QueueBackend {
-  if (process.env.QSTASH_TOKEN && process.env.QSTASH_TARGET_URL) {
+  if (process.env.QSTASH_TOKEN && getQStashTargetUrl()) {
     return 'qstash';
   }
   return 'inline';
+}
+
+function getQStashTargetUrl(): string | null {
+  const configured = process.env.QSTASH_TARGET_URL?.trim();
+  if (configured) return configured;
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!appUrl) return null;
+
+  try {
+    const url = new URL(appUrl);
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return null;
+    }
+    return new URL('/api/queue/process-upload', url).toString();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -108,7 +127,12 @@ async function setStatus(
  */
 async function enqueueQStash(payload: EnqueueInput): Promise<{ messageId: string }> {
   const token = process.env.QSTASH_TOKEN!;
-  let target = process.env.QSTASH_TARGET_URL!;
+  let target = getQStashTargetUrl();
+  if (!target) {
+    throw new Error(
+      'QStash target URL is missing. Set QSTASH_TARGET_URL or NEXT_PUBLIC_APP_URL.',
+    );
+  }
 
   // 진단: 함수 런타임이 실제로 본 env 값. Netlify Function logs 에서 확인.
   console.log(
@@ -249,6 +273,7 @@ export async function executeProcessUpload(
       difficulty: input.difficulty,
       questionType: input.questionType,
       title: input.title,
+      referenceUploadIds: input.referenceUploadIds,
     });
     // generatePrivateQuestionsFromUpload 내부에서 completed 마킹함.
   } catch (e) {
