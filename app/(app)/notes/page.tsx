@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
+import GenerationLoadingGame from '@/components/notes/GenerationLoadingGame';
 import {
   Upload,
   FileText,
@@ -174,6 +175,8 @@ export default function NotesPage() {
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const [uploadingReference, setUploadingReference] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  // 생성 세션(여러 자료를 순차 생성하는 동안 전체) — 대기 미니게임 로딩 화면 표시용.
+  const [genSession, setGenSession] = useState(false);
 
   // 문제 세트 정보 폼
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
@@ -442,9 +445,14 @@ export default function NotesPage() {
       return;
     }
     const collected: GenQ[] = [];
-    for (const m of pending) {
-      const qs = await kickoffProcessing(m.id);
-      collected.push(...qs);
+    setGenSession(true); // 대기 미니게임 로딩 화면 on
+    try {
+      for (const m of pending) {
+        const qs = await kickoffProcessing(m.id);
+        collected.push(...qs);
+      }
+    } finally {
+      setGenSession(false); // 생성 완료 → 즉시 게임 종료, 문제 화면으로 전환
     }
     // 생성된 문항이 하나라도 있으면 결과 뷰로 전환.
     if (collected.length > 0) {
@@ -486,6 +494,28 @@ export default function NotesPage() {
   }
 
   const isGenerating = processingId !== null;
+
+  // ─────────────────────────────────────────────────────────────
+  // (L) 생성 대기 로딩 화면(미니게임) — 생성 세션 동안 최상단 표시.
+  //     완료되면 genSession 이 false 가 되어 즉시 결과 뷰로 전환된다.
+  // ─────────────────────────────────────────────────────────────
+  if (genSession) {
+    const pm = materials.find((m) => m.id === processingId) ?? null;
+    let genProgress = 3;
+    if (pm) {
+      const total = pm.progress_total > 0 ? pm.progress_total : count;
+      const cur = pm.progress_current || pm.completed_question_count || 0;
+      if (total > 0 && cur > 0) {
+        genProgress = Math.min(99, (cur / total) * 100);
+      } else {
+        const stage = pm.processing_stage ?? '';
+        genProgress = stage === 'generating' ? 12 : stage && stage !== 'queued' ? 6 : 3;
+      }
+    }
+    return (
+      <GenerationLoadingGame progress={genProgress} fileName={pm?.file_name ?? undefined} />
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────
   // (B) 생성 결과 뷰
