@@ -186,6 +186,10 @@ export default function NotesPage() {
   const [generated, setGenerated] = useState<GeneratedResult | null>(null);
   const [showResult, setShowResult] = useState(false);
 
+  // 추천 설정(과목·주제·키워드) 직접 수정 모드
+  const [editingRec, setEditingRec] = useState(false);
+  const [keywordDraft, setKeywordDraft] = useState('');
+
   useEffect(() => {
     refresh();
     loadSubjects();
@@ -732,10 +736,19 @@ export default function NotesPage() {
                 title="추천 설정"
                 description="업로드된 자료를 기반으로 AI가 생성 설정을 제안합니다."
                 action={
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)]">
-                    <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
-                    수정
-                  </span>
+                  recommendation && !analyzing ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditingRec((v) => !v)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-muted)] hover:text-sage-700 transition-colors"
+                    >
+                      {editingRec ? (
+                        <><Check className="w-3.5 h-3.5" strokeWidth={2.5} />완료</>
+                      ) : (
+                        <><Pencil className="w-3.5 h-3.5" strokeWidth={2} />수정</>
+                      )}
+                    </button>
+                  ) : undefined
                 }
               />
 
@@ -745,44 +758,100 @@ export default function NotesPage() {
                   자료를 분석하는 중...
                 </div>
               ) : recommendation ? (
-                <>
-                  <dl className="space-y-3">
-                    <div className="flex gap-4">
-                      <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
-                        과목
-                      </dt>
-                      <dd className="text-sm font-semibold text-sage-800">
-                        {recommendation.subject || '—'}
-                      </dd>
+                editingRec ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-4 items-center">
+                      <label className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">과목</label>
+                      <input
+                        value={recommendation.subject}
+                        onChange={(e) => setRecommendation({ ...recommendation, subject: e.target.value })}
+                        placeholder="과목"
+                        className="flex-1 h-9 rounded-lg border border-[var(--color-border)] px-2.5 text-sm text-sage-800 outline-none focus:border-sage-600"
+                      />
+                    </div>
+                    <div className="flex gap-4 items-center">
+                      <label className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">주제</label>
+                      <input
+                        value={recommendation.topic}
+                        onChange={(e) => { setRecommendation({ ...recommendation, topic: e.target.value }); setTopic(e.target.value); }}
+                        placeholder="주제"
+                        className="flex-1 h-9 rounded-lg border border-[var(--color-border)] px-2.5 text-sm text-sage-800 outline-none focus:border-sage-600"
+                      />
                     </div>
                     <div className="flex gap-4">
-                      <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
-                        주제
-                      </dt>
-                      <dd className="text-sm font-semibold text-sage-800">
-                        {recommendation.topic || '—'}
-                      </dd>
+                      <label className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)] pt-2">핵심 키워드</label>
+                      <div className="flex-1 min-w-0">
+                        {recommendation.keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {recommendation.keywords.map((k) => (
+                              <span key={k} className="inline-flex items-center gap-1 rounded-full bg-[var(--color-sage-100)] px-2 py-0.5 text-xs font-medium text-sage-800">
+                                {k}
+                                <button type="button" aria-label={`${k} 삭제`} onClick={() => setRecommendation({ ...recommendation, keywords: recommendation.keywords.filter((x) => x !== k) })} className="text-[var(--color-muted)] hover:text-[var(--color-warn)]">
+                                  <X className="w-3 h-3" strokeWidth={2.5} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          value={keywordDraft}
+                          onChange={(e) => setKeywordDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const v = keywordDraft.trim();
+                              if (v && !recommendation.keywords.includes(v)) {
+                                setRecommendation({ ...recommendation, keywords: [...recommendation.keywords, v] });
+                              }
+                              setKeywordDraft('');
+                            }
+                          }}
+                          placeholder="키워드 입력 후 Enter"
+                          className="w-full h-9 rounded-lg border border-[var(--color-border)] px-2.5 text-sm text-sage-800 outline-none focus:border-sage-600"
+                        />
+                      </div>
                     </div>
-                    {recommendation.keywords.length > 0 && (
+                  </div>
+                ) : (
+                  <>
+                    <dl className="space-y-3">
                       <div className="flex gap-4">
-                        <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)] pt-1">
-                          핵심 키워드
+                        <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
+                          과목
                         </dt>
-                        <dd className="flex flex-wrap gap-1.5">
-                          {recommendation.keywords.map((k) => (
-                            <Badge key={k} variant="default">
-                              {k}
-                            </Badge>
-                          ))}
+                        <dd className="text-sm font-semibold text-sage-800">
+                          {recommendation.subject || '—'}
                         </dd>
                       </div>
-                    )}
-                  </dl>
-                  <div className="flex items-center gap-1.5 mt-4 text-xs font-medium text-sage-700">
-                    <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    추천 설정이 적용되었습니다.
-                  </div>
-                </>
+                      <div className="flex gap-4">
+                        <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
+                          주제
+                        </dt>
+                        <dd className="text-sm font-semibold text-sage-800">
+                          {recommendation.topic || '—'}
+                        </dd>
+                      </div>
+                      {recommendation.keywords.length > 0 && (
+                        <div className="flex gap-4">
+                          <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)] pt-1">
+                            핵심 키워드
+                          </dt>
+                          <dd className="flex flex-wrap gap-1.5">
+                            {recommendation.keywords.map((k) => (
+                              <Badge key={k} variant="default">
+                                {k}
+                              </Badge>
+                            ))}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                    <div className="flex items-center gap-1.5 mt-4 text-xs font-medium text-sage-700">
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      추천 설정이 적용되었습니다.
+                    </div>
+                  </>
+                )
               ) : (
                 <div className="text-sm text-[var(--color-muted)] py-1">
                   자료를 분석해 과목·주제·키워드를 제안합니다.
@@ -1099,16 +1168,14 @@ function Field({
 }) {
   return (
     <label className="field">
-      <span className="field-label">
+      {/* 라벨(난이도/문항 유형 등) 위에 마우스를 올리면 설명 툴팁이 뜬다(사용 설명서와 동일 구동). */}
+      <span
+        className={clsx('field-label', hint && 'has-hint')}
+        data-tip={hint || undefined}
+        tabIndex={hint ? 0 : undefined}
+      >
         {label}
-        {hint && (
-          <span
-            title={hint}
-            className="field-help inline-grid place-items-center w-[19px] h-[19px] rounded-full bg-[var(--sage)] border border-[var(--sage-400)] text-[12px] font-black leading-none text-[var(--forest)] cursor-help shrink-0"
-          >
-            ?
-          </span>
-        )}
+        {hint && <span className="field-help" aria-hidden>?</span>}
       </span>
       {children}
     </label>
