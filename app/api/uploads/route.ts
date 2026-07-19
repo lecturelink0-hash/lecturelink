@@ -27,7 +27,9 @@ export const GET = withErrorHandling(async () => {
     .select(
       `
       id, file_name, file_type, file_size_bytes, status,
-      page_count, processed_at, created_at, error_message
+      page_count, processed_at, created_at, error_message,
+      processing_stage, progress_current, progress_total,
+      completed_question_count, target_question_count, heartbeat_at
     `,
     )
     .eq('user_id', session.userId)

@@ -199,6 +199,19 @@ export async function enqueueProcessUpload(
   | { mode: 'qstash'; messageId: string }
   | { mode: 'inline' }
 > {
+  const backend = getBackend();
+  if (
+    backend === 'inline' &&
+    process.env.NODE_ENV === 'production' &&
+    process.env.ALLOW_INLINE_GENERATION !== '1'
+  ) {
+    throw new ApiException(
+      'generation_queue_unavailable',
+      '문항 생성 작업 큐가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.',
+      503,
+    );
+  }
+
   // 1) 원자적 점유 — race-free
   await claimForQueue(input.uploadId);
 
@@ -222,7 +235,6 @@ export async function enqueueProcessUpload(
     throw e;
   }
 
-  const backend = getBackend();
   if (backend === 'qstash') {
     try {
       const r = await enqueueQStash(input);

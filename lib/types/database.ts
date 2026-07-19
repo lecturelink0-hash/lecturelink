@@ -257,6 +257,12 @@ export type UserUploadRow = {
   extracted_text: string | null;
   page_count: number | null;
   error_message: string | null;
+  processing_stage: string | null;
+  progress_current: number;
+  progress_total: number;
+  completed_question_count: number;
+  target_question_count: number | null;
+  heartbeat_at: string | null;
   processed_at: string | null;
   created_at: string;
 }
@@ -272,6 +278,7 @@ export type PrivateQuestionRow = {
   explanation: string | null;
   concepts: string[];
   difficulty: 1 | 2 | 3;
+  generation_slot: number | null;
   created_at: string;
 }
 
