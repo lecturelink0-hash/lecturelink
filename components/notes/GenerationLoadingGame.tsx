@@ -53,29 +53,31 @@ const SCENES = ['도서관', '복도', '캠퍼스'] as const;
 
 // ── 캐릭터 스프라이트 정의 (메가맨 런 사이클 레퍼런스: 3단계) ──────
 // 문자 → 팔레트: H머리 S피부 B눈썹 E흰자 P눈동자 M입 T상의 L하의 W신발 .투명
+// 머리는 진행 방향(오른쪽)을 바라보는 대각선 측면(3/4) 뷰 —
+// 뒤통수(왼쪽)는 머리카락, 얼굴은 앞쪽, 눈은 한쪽만 보인다(눈동자는 전방).
 const HEAD_MALE = [
-  '....HHHH....',
+  '...HHHHHH...',
   '..HHHHHHHH..',
   '.HHHHHHHHHH.',
   '.HHHHHHHHHH.',
-  '.HSSSSSSSSH.',
-  '.SBBSSSBBSS.',
-  '.SEPSSSEPSS.',
-  '.SSSSSSSSSS.',
-  '..SSMMMSSS..',
+  '.HHHSSSSSSS.',
+  '.HHSSBBBSSS.',
+  '.HHSSEEPSSS.',
+  '.HHSSSSSSSS.',
+  '..SSSSMMMS..',
   '...SSSSSS...',
 ];
 const HEAD_FEMALE = [
-  '....HHHH....',
+  '...HHHHHH...',
   '..HHHHHHHH..',
   '.HHHHHHHHHH.',
   'HHHHHHHHHHHH',
-  'HHSSSSSSSSHH',
-  'HSBBSSSBBSSH',
-  'HSEPSSSEPSSH',
-  'HSSSSSSSSSSH',
-  'HSSSMMMSSSSH',
-  '...SSSSSS...',
+  'HHHHSSSSSSS.',
+  'HHHSSBBBSSS.',
+  'HHHSSEEPSSS.',
+  'HHHSSSSSSSS.',
+  'HHSSSSMMMS..',
+  'HH.SSSSSS...',
 ];
 // 몸통(팔 스윙) 3프레임 — 운동선수처럼 팔을 앞뒤로 크게 흔든다.
 // A: 앞주먹 얼굴 높이까지 전진 + 뒷주먹 엉덩이 뒤로 / B: 교차(양팔 몸 옆) / C: 반대 스윙
