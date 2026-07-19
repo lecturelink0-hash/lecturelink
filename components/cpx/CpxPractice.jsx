@@ -142,6 +142,7 @@ export default function CpxPractice() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [result, setResult] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null); // 채점 결과에서 펼친 영역 id
+  const [gradingProgress, setGradingProgress] = useState(0); // 채점 로딩 원형 게이지(%)
   const liveRef = useRef(null);
   const micRef = useRef(null);
   const bufferRef = useRef([]);
@@ -176,6 +177,18 @@ export default function CpxPractice() {
     const saver = window.setInterval(flush, 3000);
     return () => { window.clearInterval(timer); window.clearInterval(saver); };
   }, [phase, flush]);
+
+  // 채점(finishing) 중 원형 게이지를 95%까지 점점 느려지게 채운다.
+  // 실제 채점은 단일 API 호출(진행률 이벤트 없음)이라 예상 소요시간 기반으로 시뮬레이션하며,
+  // 채점이 끝나면 phase 가 'ended' 로 바뀌어 이 화면이 점수 화면으로 자동 전환된다.
+  useEffect(() => {
+    if (phase !== 'finishing') return undefined;
+    setGradingProgress(8);
+    const id = window.setInterval(() => {
+      setGradingProgress((p) => (p >= 95 ? 95 : Math.min(95, p + Math.max(0.6, (95 - p) * 0.05))));
+    }, 180);
+    return () => window.clearInterval(id);
+  }, [phase]);
 
   useEffect(() => () => {
     micRef.current?.stop?.();
@@ -399,6 +412,8 @@ export default function CpxPractice() {
 
     {/* 세션 진행/결과 뷰 — 진료 시작 이후 */}
     {phase !== 'ready' && (<>
+    {/* 진료 중 화면(아바타·전사·신체진찰) — 채점/결과 단계에서는 숨긴다 */}
+    {(phase === 'starting' || phase === 'live') && (<>
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,.9fr)]">
       <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]"><div className="absolute left-4 top-4 z-10 rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="font-bold">{selected?.category}</div></div><div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white"><Wave active={phase === 'live'} />{status}</div>{examTarget && phase === 'live' && <button type="button" onClick={() => setExamTarget(null)} className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-[var(--color-primary)] shadow-lg transition hover:bg-white"><PersonStanding className="h-4 w-4" /> 환자 앉히기</button>}<div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} speaking={audioLevel > 0.02} audioLevel={audioLevel} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="space-y-2">{transcript.length ? transcript.slice(-3).map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}{transcript.length > 3 && <p className="pt-1 text-center text-[11px] text-[var(--color-muted)]">실제 시험처럼 최근 대화만 표시됩니다 · 전체 기록은 채점에 반영됩니다</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
 
@@ -406,6 +421,34 @@ export default function CpxPractice() {
     </section>
 
     <Card title="신체진찰" description="신체 부위를 먼저 고른 뒤, 해당 부위의 진찰을 선택하세요." icon={<Stethoscope className="h-5 w-5" />}><div className="flex flex-wrap gap-2">{activeRegions.map((item) => <button key={item.id} onClick={() => { setRegion(item.id); setExamTarget(null); }} className={`rounded-full border px-3 py-1.5 text-sm font-bold transition ${region === item.id ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white' : 'border-[var(--color-border)] bg-white text-[var(--color-muted)] hover:border-[var(--color-primary)]'}`}>{item.label}</button>)}</div><div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{visibleButtons.map((button) => <Button key={button.id} variant="secondary" fullWidth disabled={phase !== 'live'} onClick={() => examine(button)}><Stethoscope className="h-4 w-4" />{button.label}</Button>)}</div>{findings.length > 0 && <div className="mt-5 grid gap-3">{findings.map((card) => <div key={card.buttonId} className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-4"><div className="font-bold text-[var(--color-text)]">{card.label}</div><ul className="mt-2 space-y-1 text-sm text-[var(--color-muted)]">{card.findings.map((finding, index) => <li key={index}>• {finding.finding}</li>)}</ul></div>)}</div>}</Card>
+
+    </>)}
+
+    {/* 채점 중 로딩 화면 — '진료 종료 및 채점' 직후 자동 표시, 완료되면 아래 점수 화면으로 자동 전환 */}
+    {phase === 'finishing' && (
+      <Card className="py-16">
+        <div className="flex flex-col items-center justify-center text-center">
+          <div className="relative h-44 w-44">
+            <svg className="h-44 w-44 -rotate-90" viewBox="0 0 120 120" aria-hidden>
+              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--color-sage-100)" strokeWidth="10" />
+              <circle
+                cx="60" cy="60" r="52" fill="none"
+                stroke="var(--color-primary)" strokeWidth="10" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 52}
+                strokeDashoffset={2 * Math.PI * 52 * (1 - gradingProgress / 100)}
+                style={{ transition: 'stroke-dashoffset 0.25s ease-out' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="tnum text-4xl font-bold text-[var(--color-primary)]">{Math.round(gradingProgress)}%</span>
+              <span className="mt-1 text-xs font-semibold text-[var(--color-muted)]">채점 진행</span>
+            </div>
+          </div>
+          <h2 className="mt-7 text-xl font-bold text-[var(--color-text)]">채점 중입니다. 잠시만 기다려 주세요</h2>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">{status || '대화 기록과 진찰 내역을 바탕으로 루브릭 채점을 진행하고 있어요.'}</p>
+        </div>
+      </Card>
+    )}
 
     {result && <Card title="CPX 결과" description="영역 카드를 누르면 항목별 상세 채점 근거가 펼쳐집니다." icon={<Sparkles className="h-5 w-5" />}><div className="grid gap-5 md:grid-cols-[auto_1fr]"><div className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-7 py-5 text-center text-white self-start"><div className="text-xs text-white/70">총점</div><div className="tnum mt-1 text-5xl font-bold">{result.totalScore}</div><div className="mt-1 text-sm">{result.overallGradeLabel}</div></div>
       <div className="space-y-3">
