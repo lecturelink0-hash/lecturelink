@@ -79,38 +79,11 @@ const HEAD_FEMALE = [
   'HHSSSSMMMS..',
   'HH.SSSSSS...',
 ];
-// 몸통(팔 스윙) 3프레임 — 운동선수처럼 팔을 앞뒤로 크게 흔든다.
-// A: 앞주먹 얼굴 높이까지 전진 + 뒷주먹 엉덩이 뒤로 / B: 교차(양팔 몸 옆) / C: 반대 스윙
-const BODY_FRAMES = [
-  ['..TTTTTTTSS.', '..TTTTTTTT..', 'SSTTTTTTTT..', '..TTTTTTTT..'],
-  ['..TTTTTTTT..', '.STTTTTTTTS.', '..TTTTTTTT..', '..TTTTTTTT..'],
-  ['SSTTTTTTTT..', '..TTTTTTTT..', '..TTTTTTTTSS', '..TTTTTTTT..'],
-];
-// 다리 3프레임 — 스프린트 자세: 앞다리 쭉 뻗고 뒷다리 뒤꿈치가 엉덩이까지 접힌다.
-// A: 오른다리 전진 착지 + 왼다리 뒤로 접어 올림
-// B: 교차(다리 모아 지나감)
-// C: 왼다리 전진(무릎 들어올림) + 오른다리 뒤로 뻗음
-const LEG_FRAMES = [
-  ['...LLLLLL...', '..LL...LLL..', '.WLL....LLL.', '..........LL', '..........WW'],
-  ['...LLLLLL...', '....LLLL....', '....LLLL....', '....LLLL....', '....WWWW....'],
-  ['...LLLLLL...', '..LLL.LLL...', '.LLL...LLL..', '.WW.....LL..', '........WW..'],
-];
-// 점프(무릎 모음)
-const LEG_JUMP = ['...LLLLLL...', '..LLLLLLLL..', '..LL....LL..', '..WW....WW..', '............'];
-
-// 달릴 때 머리를 1셀(4px) 앞으로 기울여 전방 주행감을 준다.
-const leanRight = (rows: string[]): string[] => rows.map((r) => ('.' + r).slice(0, SPRITE_W));
-
-function buildFrames(head: string[]): { run: string[][]; jump: string[] } {
-  const leanHead = leanRight(head);
-  const run = BODY_FRAMES.map((body, i) => [...leanHead, ...body, ...LEG_FRAMES[i]]);
-  const jump = [...head, ...BODY_FRAMES[1], ...LEG_JUMP];
-  return { run, jump };
-}
-const FRAMES: Record<Gender, { run: string[][]; jump: string[] }> = {
-  male: buildFrames(HEAD_MALE),
-  female: buildFrames(HEAD_FEMALE),
-};
+// 몸통·팔·다리는 격자 프레임 교체가 아니라 관절 스켈레톤(어깨-팔꿈치-주먹 /
+// 엉덩이-무릎-발목)을 사인 곡선으로 "연속" 구동해 그린다 — 레퍼런스 런 사이클처럼
+// 긴 팔다리, 팔꿈치·무릎 굽힘, CONTACT→PASS→HIGH 사이의 자연스러운 중간 자세와
+// 상하 바운스가 모두 나오고, 프레임 순간이동이 사라진다.
+const HEADS: Record<Gender, string[]> = { male: HEAD_MALE, female: HEAD_FEMALE };
 // 레퍼런스 얼굴(갈색 머리·살구 피부) 기반 팔레트
 const PALETTE = (g: Gender): Record<string, string> => ({
   H: g === 'male' ? '#4a3120' : '#7a4a28',
@@ -120,11 +93,14 @@ const PALETTE = (g: Gender): Record<string, string> => ({
   P: '#26190f',
   M: '#a05a48',
   T: g === 'male' ? '#3f74c2' : '#d1567f',
-  L: '#2f3a4a',
+  A: g === 'male' ? '#5f92dd' : '#e77fa2', // 앞쪽 팔(하이라이트) — 몸통보다 밝아 분리돼 보임
+  D: g === 'male' ? '#26497e' : '#96375c', // 뒤쪽 팔(음영)
+  L: '#3d4d68',
+  K: '#181d26', // 뒤쪽 다리(음영)
   W: '#e8e8e8',
 });
-// 런 사이클: 3단계 스프라이트를 0→1→2→1 순으로 연속시켜 자연스럽게.
-const RUN_SEQ = [0, 1, 2, 1];
+// 실루엣을 또렷하게 만드는 외곽선 색 (레퍼런스 픽셀아트의 다크 아웃라인).
+const OUTLINE = '#221a12';
 
 function formatEta(secs: number): string {
   const r = Math.max(10, Math.round(secs / 10) * 10);
@@ -387,8 +363,8 @@ export default function GenerationLoadingGame({
         s.elapsed += dt;
         const tt = Math.min(MAX_PLAY_SEC, s.elapsed);
         s.speed = Math.min(560, 240 + tt * 8); // 속도 점증(상한)
-        // 모션 프레임 전환은 천천히 — 조깅 케이던스(초당 약 1.4사이클, 속도 따라 소폭 증가).
-        s.runPhase += dt * (s.speed / 44);
+        // 달리기 사이클(회전) — 초당 약 1.4사이클(조깅), 속도 따라 소폭 증가.
+        s.runPhase += dt * (s.speed / 170);
         s.scroll += s.speed * dt;
 
         // 점프 물리
@@ -679,6 +655,7 @@ function drawSprite(
   x: number,
   top: number,
   pal: Record<string, string>,
+  cell: number = CELL,
 ) {
   for (let r = 0; r < rows.length; r += 1) {
     const row = rows[r];
@@ -688,23 +665,114 @@ function drawSprite(
       const color = pal[ch];
       if (!color) continue;
       ctx.fillStyle = color;
-      ctx.fillRect(x + c * CELL, top + r * CELL, CELL, CELL);
+      ctx.fillRect(x + c * cell, top + r * cell, cell, cell);
     }
   }
 }
 
+// 2px 격자 스냅 — 회전하는 관절도 픽셀아트 질감을 유지한다.
+const snap2 = (v: number) => Math.round(v / 2) * 2;
+
+// 관절 마디(팔뚝·허벅지 등)를 외곽선 포함 픽셀 사각형 체인으로 그린다.
+function limb(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  w: number,
+  color: string,
+) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 2));
+  for (const [ww, cc] of [
+    [w + 3, OUTLINE],
+    [w, color],
+  ] as const) {
+    ctx.fillStyle = cc as string;
+    for (let i = 0; i <= steps; i += 1) {
+      const x = snap2(x1 + (dx * i) / steps) - (ww as number) / 2;
+      const y = snap2(y1 + (dy * i) / steps) - (ww as number) / 2;
+      ctx.fillRect(x, y, ww as number, ww as number);
+    }
+  }
+}
+
+/**
+ * 관절 스켈레톤 러너 — 레퍼런스 런 사이클을 관절 각도로 재현한다.
+ *  - 다리: 허벅지 각도 = sin(θ) 스윙(앞뒤 ±49°), 무릎 굽힘은 다리가 앞으로
+ *    돌아오는 회수 구간에서 최대(뒤꿈치가 엉덩이까지 접힘) → 착지 직전엔 거의 펴짐.
+ *  - 팔: 다리와 반대 위상으로 스윙, 팔꿈치는 상시 ~90° 굽힘(주먹 앞).
+ *  - 몸통: 진행 방향으로 기울고, 사이클당 2회 상하 바운스.
+ */
 function drawRunner(
   ctx: CanvasRenderingContext2D,
   s: { charBottom: number; onGround: boolean; runPhase: number },
   gender: Gender,
 ) {
-  const top = s.charBottom - CHAR_H;
   const pal = PALETTE(gender);
-  const frames = FRAMES[gender];
-  const rows = s.onGround
-    ? frames.run[RUN_SEQ[Math.floor(s.runPhase) % RUN_SEQ.length]]
-    : frames.jump;
-  drawSprite(ctx, rows, CHAR_X, top, pal);
+  const th = s.runPhase * Math.PI * 2;
+  const onG = s.onGround;
+  const g = s.charBottom;
+  const bob = onG ? 2 * Math.cos(2 * th) : 0;
+  const hipX = CHAR_X + 20;
+  const hipY = g - 26 + bob;
+  const shX = hipX + 5; // 어깨가 엉덩이보다 앞 → 전방 기울기
+  const shY = hipY - 15;
+
+  const leg = (off: number, color: string, tuckA?: number) => {
+    // tuckA 지정 시 점프 자세(무릎 모음)
+    const a = tuckA ?? 0.85 * Math.sin(th + off);
+    const bend = tuckA != null ? 1.9 : 0.35 + 1.7 * Math.max(0, Math.cos(th + off));
+    const kx = hipX + 13 * Math.sin(a);
+    const ky = hipY + 13 * Math.cos(a);
+    const sa = a - bend;
+    const ax = kx + 12 * Math.sin(sa);
+    const ay = ky + 12 * Math.cos(sa);
+    limb(ctx, hipX, hipY, kx, ky, 7, color);
+    limb(ctx, kx, ky, ax, ay, 6, color);
+    // 신발(발끝 진행 방향)
+    ctx.fillStyle = OUTLINE;
+    ctx.fillRect(snap2(ax) - 3, snap2(ay) - 3, 12, 7);
+    ctx.fillStyle = pal.W;
+    ctx.fillRect(snap2(ax) - 2, snap2(ay) - 2, 10, 5);
+  };
+  const arm = (off: number, color: string, raise = false) => {
+    const aa = raise ? -1.1 : -0.95 * Math.sin(th + off); // 다리와 반대 위상, 큰 스윙
+    const ex = shX + 10 * Math.sin(aa);
+    const ey = shY + 1 + 10 * Math.cos(aa);
+    const fa = aa + 1.5; // 팔꿈치 ~90° 굽힘, 전완은 앞으로
+    const wx = ex + 9 * Math.sin(fa);
+    const wy = ey + 9 * Math.cos(fa);
+    limb(ctx, shX, shY + 1, ex, ey, 6, color);
+    limb(ctx, ex, ey, wx, wy, 5, color);
+    // 주먹
+    ctx.fillStyle = OUTLINE;
+    ctx.fillRect(snap2(wx) - 3, snap2(wy) - 3, 8, 8);
+    ctx.fillStyle = pal.S;
+    ctx.fillRect(snap2(wx) - 2, snap2(wy) - 2, 6, 6);
+  };
+
+  // 그리기 순서: 뒷팔 → 뒷다리 → 몸통 → 앞다리 → 앞팔 → 머리
+  // (뒤쪽 팔다리는 음영색 D/K 로 그려 몸통·앞쪽과 깊이가 분리돼 보인다)
+  if (onG) {
+    arm(Math.PI, pal.D);
+    leg(Math.PI, pal.K);
+  } else {
+    arm(Math.PI, pal.D, true);
+    leg(Math.PI, pal.K, -0.15);
+  }
+  limb(ctx, hipX, hipY, shX, shY, 14, pal.T); // 몸통(앞으로 기운 축)
+  if (onG) {
+    leg(0, pal.L);
+    arm(0, pal.A);
+  } else {
+    leg(0, pal.L, 0.55);
+    arm(0, pal.A, true);
+  }
+  // 머리(3/4 뷰 픽셀 스프라이트, 몸통보다 앞쪽)
+  drawSprite(ctx, HEADS[gender], shX - 14, shY - 32, pal, 3);
 }
 
 function drawHud(

@@ -862,10 +862,32 @@ export async function generatePrivateQuestionsFromUpload(
 
     // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
     // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
+    // 텍스트 캡처 검열: OCR 로 읽힌 "의미 있는 글자(문자·숫자)" 수 기준.
+    // 강의록 본문/필기 캡처가 문항 이미지로 쓰이면 이미지 안 텍스트가 정답 단서가
+    // 되므로 결정론적으로 배제한다 (vision 분류 오류에 대한 2차 방어선).
+    const meaningfulOcrLen = (t?: string) =>
+      (t ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
+    const CLINICAL_KINDS = new Set([
+      'xray', 'ct', 'mri', 'ecg', 'pathology', 'microscope', 'ultrasound',
+    ]);
+    const isTextCapture = (c: (typeof slides)[number]['croppedImages'][number]) => {
+      if (c.region.kind === 'text_slide') return true; // vision 이 텍스트 캡처로 분류
+      const len = meaningfulOcrLen(c.ocrText);
+      // 실제 임상 영상(X-ray/CT 등)에는 판독 가능한 텍스트가 거의 없다 —
+      // 글자가 많다면 "chest x-ray" 같은 단어 때문에 오분류된 텍스트 캡처다.
+      if (CLINICAL_KINDS.has(c.region.kind) && len >= 80) return true;
+      // 다이어그램류도 글자가 이 정도로 많으면 그림이 아니라 텍스트 슬라이드다
+      // (인페인팅해도 빈 이미지만 남는다).
+      if (len >= 250) return true;
+      return false;
+    };
+
     const featuredImages = slides
       .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
       // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
       .filter((x) => !x.c.ocrOnly)
+      // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
+      .filter((x) => !isTextCapture(x.c))
       .slice(0, MAX_FEATURED_IMAGES);
 
     // 선별 텍스트 인페인팅(비용 최적화): 모든 featured 를 미리 인페인팅하지 않고,
