@@ -157,10 +157,11 @@ function realStatus(total: number, attempted: number, correct: number): SetStatu
  */
 function withImageLabels(stem: string): string {
   const seen: string[] = [];
-  return stem.replace(/\[이미지\s*(\d+)\]/g, (_m, n) => {
+  // [이미지 N]/(이미지 N)/이미지 N 형태와 무관하게 번호만 등장 순서(1,2,…)로 재매김.
+  return stem.replace(/이미지\s*(\d+)/g, (_m, n) => {
     let pos = seen.indexOf(n);
     if (pos === -1) { seen.push(n); pos = seen.length - 1; }
-    return `[이미지 ${pos + 1}]`;
+    return `이미지 ${pos + 1}`;
   });
 }
 
@@ -1226,22 +1227,20 @@ function PrivateSolveCard({ q, index, onAnswered, prior, onGraded }: { q: Privat
         <span className="text-xs font-semibold text-[var(--color-muted)] tabular-nums">#{index + 1}</span>
       </div>
 
+      {/* 문제 발문을 이미지보다 먼저(위에) 배치한다. */}
+      <div className="text-[15px] leading-7 text-sage-800 font-medium mb-4">{withImageLabels(q.stem)}</div>
+
       {q.images && q.images.length > 0 && (
         <div className="mb-4 space-y-2">
           {q.images.map((img, ii) => (
             <figure key={ii}>
               <figcaption className="text-[12px] font-semibold text-sage-700 mb-1">이미지 {ii + 1}</figcaption>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={img.caption ?? `이미지 ${ii + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
-              {img.caption && (
-                <figcaption className="mt-1 text-[12px] text-[var(--color-muted)] text-center">{img.caption}</figcaption>
-              )}
+              <img src={img.url} alt={`이미지 ${ii + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
             </figure>
           ))}
         </div>
       )}
-
-      <div className="text-[15px] leading-7 text-sage-800 font-medium mb-4">{withImageLabels(q.stem)}</div>
 
       <div className="space-y-2">
         {q.choices.map((choice, ci) => {

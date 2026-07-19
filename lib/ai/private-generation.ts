@@ -860,7 +860,7 @@ export async function generatePrivateQuestionsFromUpload(
     modelUsed = MODELS.generation();
     await updateProgress('generating', 0, desiredCount);
 
-    // crop 된 의료 이미지 — Claude 에 인덱스 라벨과 함께 제시.
+    // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
     // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
     const featuredImages = slides
       .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
@@ -868,27 +868,30 @@ export async function generatePrivateQuestionsFromUpload(
       .filter((x) => !x.c.ocrOnly)
       .slice(0, MAX_FEATURED_IMAGES);
 
-    // 선별 텍스트 인페인팅: 다이어그램/일러스트 유형이면서 주석 텍스트가 감지된 이미지만
-    // gemini-3-pro-image 로 텍스트를 지운다(정답 단서 제거). 실제 임상 사진(xray/ct/mri/
-    // ecg/pathology/microscope/ultrasound)은 재생성 변형 위험이 있어 제외한다.
-    // 실패/타임아웃 시 원본 유지(파이프라인 계속). ENABLE_TEXT_INPAINT=0 으로 전체 비활성 가능.
-    if (process.env.ENABLE_TEXT_INPAINT !== '0') {
-      const inpaintKinds = new Set(['anatomy_diagram', 'chart_graph', 'other']);
-      const inpaintTargets = featuredImages.filter(
-        (x) => inpaintKinds.has(x.c.region.kind) && (x.c.ocrText?.trim().length ?? 0) >= 8,
-      );
-      if (inpaintTargets.length > 0) {
-        await mapWithConcurrency(inpaintTargets, 3, async (x) => {
-          try {
-            const cleaned = await inpaintRemoveText(x.c.png, { userId: input.userId });
-            if (cleaned) x.c.png = cleaned; // featuredImages 는 crop 객체 참조라 생성·저장에 반영됨
-          } catch {
-            /* 인페인팅 실패는 무시 — 원본 유지 */
-          }
-          return null;
-        });
+    // 선별 텍스트 인페인팅(비용 최적화): 모든 featured 를 미리 인페인팅하지 않고,
+    // 생성이 "실제 참조한" 이미지에 한해 저장 직전 1회만 인페인팅한다(캐시로 배치 간 중복 방지).
+    // 대상: 다이어그램/일러스트 유형(anatomy_diagram/chart_graph/other) + 주석 텍스트 감지.
+    // 실제 임상 사진(xray/ct/mri/ecg/pathology/microscope/ultrasound)은 재생성 위험이라 제외.
+    // 생성 모델은 원본(주석 포함)을 보고 문항을 만들고(내용 이해), 학생에게는 정제본이 저장된다.
+    const inpaintKinds = new Set(['anatomy_diagram', 'chart_graph', 'other']);
+    const inpaintEnabled = process.env.ENABLE_TEXT_INPAINT !== '0';
+    const inpaintCache = new Map<number, Promise<Uint8Array>>();
+    const getDisplayPng = (i: number): Promise<Uint8Array> => {
+      const fi = featuredImages[i];
+      const shouldInpaint =
+        inpaintEnabled &&
+        inpaintKinds.has(fi.c.region.kind) &&
+        (fi.c.ocrText?.trim().length ?? 0) >= 8;
+      if (!shouldInpaint) return Promise.resolve(fi.c.png);
+      let p = inpaintCache.get(i);
+      if (!p) {
+        p = inpaintRemoveText(fi.c.png, { userId: input.userId })
+          .then((cleaned) => cleaned ?? fi.c.png)
+          .catch(() => fi.c.png);
+        inpaintCache.set(i, p);
       }
-    }
+      return p;
+    };
 
     type GeneratedQuestion = {
       stem: string;
@@ -1069,7 +1072,7 @@ export async function generatePrivateQuestionsFromUpload(
         const imgPath = `${upload.user_id}/${upload.id}/crops/q_image_${i}.png`;
         const { error: upErr } = await admin.storage
           .from(STORAGE_BUCKET)
-          .upload(imgPath, Buffer.from(featuredImages[i].c.png), {
+          .upload(imgPath, Buffer.from(await getDisplayPng(i)), {
             contentType: 'image/png',
             upsert: true,
           });
@@ -1092,7 +1095,9 @@ export async function generatePrivateQuestionsFromUpload(
               storage_path: storagePath,
               source_page: fi.slide,
               kind: fi.c.region.kind,
-              caption: fi.c.region.caption ?? null,
+              // 캡션(이미지 하단 작은 글자 설명)은 저장하지 않는다 — OCR 로 잡힌 주석이
+              // 정답 단서로 노출되거나 UI 를 지저분하게 만들어 표시하지 않기로 함.
+              caption: null,
               sort_order: order,
             };
           })
@@ -1132,9 +1137,71 @@ export async function generatePrivateQuestionsFromUpload(
         generateAndPersistBatch(batchIndex, batchSize, batchSizes.length),
       ),
     );
-    const generatedCount = batchResults.reduce((sum, result) => sum + result.generatedCount, 0);
-    const insertedIds = batchResults.flatMap((result) => result.ids);
+    let generatedCount = batchResults.reduce((sum, result) => sum + result.generatedCount, 0);
+    let insertedIds = batchResults.flatMap((result) => result.ids);
     const unmatched = batchResults.reduce((sum, result) => sum + result.unmatched, 0);
+
+    // 동일 의료 이미지 최대 2문제: 병렬 배치라 같은 이미지가 여러 문항(2개 초과)에
+    // 연결될 수 있다. 업로드 전체를 훑어 storage_path 당 문항이 2개를 넘으면 초과분의
+    // 이미지 연결을 제거하고, 그 결과 이미지가 하나도 남지 않은(=이미지 판독 전용) 문항은
+    // 발문이 실제 이미지 없이 이미지를 참조하게 되므로 통째로 삭제한다.
+    try {
+      const MAX_QUESTIONS_PER_IMAGE = 2;
+      const [{ data: linkRows }, { data: slotRows }] = await Promise.all([
+        admin
+          .from('private_question_images')
+          .select('id, private_question_id, storage_path')
+          .eq('upload_id', upload.id),
+        admin
+          .from('private_questions')
+          .select('id, generation_slot')
+          .eq('upload_id', upload.id),
+      ]);
+      const slotOf = new Map((slotRows ?? []).map((r) => [r.id, r.generation_slot ?? 0]));
+      const byPath = new Map<string, { id: string; qid: string }[]>();
+      for (const r of linkRows ?? []) {
+        const arr = byPath.get(r.storage_path) ?? [];
+        arr.push({ id: r.id, qid: r.private_question_id });
+        byPath.set(r.storage_path, arr);
+      }
+      const removeLinkIds: string[] = [];
+      for (const [, arr] of byPath) {
+        // 오래된(먼저 생성된) 문항 우선 유지 — generation_slot 순.
+        arr.sort((a, b) => (slotOf.get(a.qid) ?? 0) - (slotOf.get(b.qid) ?? 0));
+        const keptQ = new Set<string>();
+        for (const r of arr) {
+          if (keptQ.size < MAX_QUESTIONS_PER_IMAGE || keptQ.has(r.qid)) keptQ.add(r.qid);
+          else removeLinkIds.push(r.id);
+        }
+      }
+      if (removeLinkIds.length > 0) {
+        const removedSet = new Set(removeLinkIds);
+        await admin.from('private_question_images').delete().in('id', removeLinkIds);
+        // 링크 제거 후 이미지가 하나도 남지 않은 문항 = 삭제 대상.
+        const remainingByQ = new Map<string, number>();
+        for (const r of linkRows ?? []) {
+          if (removedSet.has(r.id)) continue;
+          remainingByQ.set(
+            r.private_question_id,
+            (remainingByQ.get(r.private_question_id) ?? 0) + 1,
+          );
+        }
+        const affectedQ = new Set(
+          (linkRows ?? []).filter((r) => removedSet.has(r.id)).map((r) => r.private_question_id),
+        );
+        const orphanQ = [...affectedQ].filter((qid) => (remainingByQ.get(qid) ?? 0) === 0);
+        if (orphanQ.length > 0) {
+          await admin.from('private_questions').delete().in('id', orphanQ);
+          const orphanSet = new Set(orphanQ);
+          insertedIds = insertedIds.filter((id) => !orphanSet.has(id));
+          generatedCount = Math.max(0, generatedCount - orphanQ.length);
+        }
+      }
+    } catch (cleanupErr) {
+      warnings.push(
+        `이미지 재사용 정리 실패 — ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
+      );
+    }
     const contentSummary = batchResults.map((result) => result.contentSummary).find(Boolean) ?? '';
     const cacheReadTokens = batchResults.reduce((sum, result) => sum + result.cacheReadTokens, 0);
     const cacheCreationTokens = batchResults.reduce(

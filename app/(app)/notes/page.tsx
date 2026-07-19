@@ -145,10 +145,11 @@ const MAX_MATERIAL_FILES = 5; // 한 번에 업로드 가능한 학습자료 개
 /** 지문의 [이미지 N](배치 전체 순번)을 문항별 이미지 라벨(등장 순서 1,2,…)과 맞춘다. */
 function withImageLabels(stem: string): string {
   const seen: string[] = [];
-  return stem.replace(/\[이미지\s*(\d+)\]/g, (_m, n) => {
+  // [이미지 N]/(이미지 N)/이미지 N 형태와 무관하게 번호만 등장 순서(1,2,…)로 재매김.
+  return stem.replace(/이미지\s*(\d+)/g, (_m, n) => {
     let pos = seen.indexOf(n);
     if (pos === -1) { seen.push(n); pos = seen.length - 1; }
-    return `[이미지 ${pos + 1}]`;
+    return `이미지 ${pos + 1}`;
   });
 }
 const DIFFICULTIES = ['하', '중', '상'] as const;
@@ -1114,10 +1115,7 @@ function QuestionCard({
             <figure key={ii}>
               <figcaption className="text-[12px] font-semibold text-sage-700 mb-1">이미지 {ii + 1}</figcaption>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={img.caption ?? `이미지 ${ii + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
-              {img.caption && (
-                <figcaption className="mt-1 text-[12px] text-[var(--color-muted)] text-center">{img.caption}</figcaption>
-              )}
+              <img src={img.url} alt={`이미지 ${ii + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
             </figure>
           ))}
         </div>
