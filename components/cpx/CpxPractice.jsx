@@ -148,6 +148,7 @@ export default function CpxPractice() {
   const [revealed, setRevealed] = useState({ name: false, age: false, gender: false });
   const liveRef = useRef(null);
   const micRef = useRef(null);
+  const voiceBusyRef = useRef(false);
   const bufferRef = useRef([]);
   const startedAtRef = useRef(0);
 
@@ -327,18 +328,25 @@ export default function CpxPractice() {
   }, [transcript]);
 
   // 음성 on/off — off 면 마이크 정지 + 환자 오디오 mute(텍스트 문진만).
+  // voiceBusyRef: 토글 진행 중(특히 startMic await 중) 잠금 — 빠른 연타 레이스 방지.
   const toggleVoice = async () => {
-    const next = !voiceOn;
-    setVoiceOn(next);
-    liveRef.current?.setMuted?.(!next);
-    if (phase !== 'live') return;
-    if (next) {
-      if (!micRef.current && liveRef.current) {
-        try { micRef.current = await startMic(liveRef.current); }
-        catch { setError('마이크를 사용할 수 없습니다. 아래 입력창으로 텍스트 문진을 이어가세요.'); }
+    if (voiceBusyRef.current) return;
+    voiceBusyRef.current = true;
+    try {
+      const next = !voiceOn;
+      setVoiceOn(next);
+      liveRef.current?.setMuted?.(!next);
+      if (phase !== 'live') return;
+      if (next) {
+        if (!micRef.current && liveRef.current) {
+          try { micRef.current = await startMic(liveRef.current); }
+          catch { setError('마이크를 사용할 수 없습니다. 아래 입력창으로 텍스트 문진을 이어가세요.'); }
+        }
+      } else {
+        micRef.current?.stop?.(); micRef.current = null;
       }
-    } else {
-      micRef.current?.stop?.(); micRef.current = null;
+    } finally {
+      voiceBusyRef.current = false;
     }
   };
 
