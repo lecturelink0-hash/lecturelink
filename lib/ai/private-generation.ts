@@ -875,8 +875,26 @@ export async function generatePrivateQuestionsFromUpload(
     // 생성 모델은 원본(주석 포함)을 보고 문항을 만들고(내용 이해), 학생에게는 정제본이 저장된다.
     const inpaintKinds = new Set(['anatomy_diagram', 'chart_graph', 'other']);
     const inpaintEnabled = process.env.ENABLE_TEXT_INPAINT !== '0';
-    const inpaintCache = new Map<number, Promise<Uint8Array>>();
-    const getDisplayPng = (i: number): Promise<Uint8Array> => {
+    // 인페인팅 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
+    const RESIDUAL_TEXT_MAX = 8;
+
+    // 인페인팅된 이미지를 다시 OCR 하여 남은 "의미 있는 글자(한글·라틴·숫자)" 개수를 센다.
+    // OCR 실패 시 0 반환(판단 불가 → 과도한 제외 방지).
+    const residualTextLen = async (png: Uint8Array): Promise<number> => {
+      try {
+        const r = await runOcr({ png, userIdForLog: input.userId });
+        totalCost += r.costUsd;
+        return (r.text ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
+      } catch {
+        return 0;
+      }
+    };
+
+    // 표시용 이미지 반환. 인페인팅 대상은 (1차 인페인팅 → OCR 검증 → 필요 시 2차 인페인팅)
+    // 을 거치고, 그래도 글자가 남거나 인페인팅이 실패하면 null 을 반환한다.
+    // null = "정답 단서 텍스트를 못 지운 이미지" → 호출자는 업로드/문항 연결을 하지 않고 제외한다.
+    const inpaintCache = new Map<number, Promise<Uint8Array | null>>();
+    const getDisplayPng = (i: number): Promise<Uint8Array | null> => {
       const fi = featuredImages[i];
       const shouldInpaint =
         inpaintEnabled &&
@@ -885,9 +903,29 @@ export async function generatePrivateQuestionsFromUpload(
       if (!shouldInpaint) return Promise.resolve(fi.c.png);
       let p = inpaintCache.get(i);
       if (!p) {
-        p = inpaintRemoveText(fi.c.png, { userId: input.userId })
-          .then((cleaned) => cleaned ?? fi.c.png)
-          .catch(() => fi.c.png);
+        p = (async (): Promise<Uint8Array | null> => {
+          try {
+            let cleaned = await inpaintRemoveText(fi.c.png, { userId: input.userId });
+            if (!cleaned) {
+              // 인페인팅 자체 실패 — 원본에는 정답 단서 텍스트가 남아 있으므로 제외.
+              warnings.push(`이미지 ${i}: 텍스트 제거 실패 — 정답 단서 노출 방지를 위해 문항에서 제외`);
+              return null;
+            }
+            // 검증 1차: 글자가 남아 있으면 한 번 더 인페인팅.
+            if ((await residualTextLen(cleaned)) > RESIDUAL_TEXT_MAX) {
+              const again = await inpaintRemoveText(cleaned, { userId: input.userId });
+              if (again) cleaned = again;
+              // 검증 2차: 그래도 남으면 제외.
+              if ((await residualTextLen(cleaned)) > RESIDUAL_TEXT_MAX) {
+                warnings.push(`이미지 ${i}: 텍스트가 완전히 지워지지 않아 문항에서 제외`);
+                return null;
+              }
+            }
+            return cleaned;
+          } catch {
+            return null;
+          }
+        })();
         inpaintCache.set(i, p);
       }
       return p;
@@ -1069,10 +1107,12 @@ export async function generatePrivateQuestionsFromUpload(
       }
       const indexToPath = new Map<number, string>();
       for (const i of usedIndices) {
+        const display = await getDisplayPng(i);
+        if (!display) continue; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
         const imgPath = `${upload.user_id}/${upload.id}/crops/q_image_${i}.png`;
         const { error: upErr } = await admin.storage
           .from(STORAGE_BUCKET)
-          .upload(imgPath, Buffer.from(await getDisplayPng(i)), {
+          .upload(imgPath, Buffer.from(display), {
             contentType: 'image/png',
             upsert: true,
           });
@@ -1110,7 +1150,26 @@ export async function generatePrivateQuestionsFromUpload(
         if (imageError) warnings.push(`이미지 연결 저장 실패 — ${imageError.message}`);
       }
 
-      completedQuestions += rows.length;
+      // 텍스트 제거 실패로 이미지가 제외돼, 이미지 참조 문항인데 연결된 이미지가
+      // 하나도 없게 된 문항은 발문이 없는 그림을 가리키게 되므로 삭제한다.
+      const orphanIds: string[] = [];
+      parsed.questions.forEach((q, qi) => {
+        const idx = (q.image_indices ?? []).filter(validImageIndex);
+        if (idx.length === 0) return;
+        if (idx.some((i) => indexToPath.has(i))) return; // 살아남은 이미지가 하나라도 있으면 유지
+        const qid = inserted[qi]?.id;
+        if (qid) orphanIds.push(qid);
+      });
+      if (orphanIds.length > 0) {
+        await admin.from('private_questions').delete().in('id', orphanIds);
+      }
+      const orphanSet = new Set(orphanIds);
+      const keptIds = inserted
+        .map((row) => row.id)
+        .filter((id): id is string => !!id && !orphanSet.has(id));
+      const keptCount = Math.max(0, rows.length - orphanIds.length);
+
+      completedQuestions += keptCount;
       await updateProgress(
         completedQuestions < desiredCount ? 'partially_completed' : 'generating',
         completedQuestions,
@@ -1118,9 +1177,9 @@ export async function generatePrivateQuestionsFromUpload(
         { completed_question_count: completedQuestions },
       );
       return {
-        generatedCount: rows.length,
+        generatedCount: keptCount,
         contentSummary: parsed.content_summary,
-        ids: inserted.map((row) => row.id),
+        ids: keptIds,
         unmatched,
         cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
         cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
