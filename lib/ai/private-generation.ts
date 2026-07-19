@@ -64,9 +64,14 @@ import { runOcr } from '@/lib/ocr/engine';
 const MAX_PDF_PAGES = 100;         // 이미지 검출용 페이지 렌더 상한
 const PDF_RENDER_EDGE_PX = 1280;   // PDF 페이지 렌더 해상도 — 메모리·토큰 절감 (기본 1600 대비 하향)
 const MAX_VISION_SLIDES = 100;     // detectMedicalRegions 대상 슬라이드 수
-const MAX_FEATURED_IMAGES = 15;    // 선별 후 생성에 투입하는 이미지 상한(내용에 따라 가변, 최대 15)
+const MAX_FEATURED_IMAGES = 8;     // 문항에 투입하는 이미지 상한 — 과다·노이즈 방지(기존 15에서 하향)
 const MAX_EMBEDDED_CANDIDATES = 40; // AI 선별에 넣을 후보(추출) 상한
 const VISION_CONCURRENCY = 6;      // 페이지 vision/OCR 동시 처리 수 — 순차 대비 대용량 대폭 가속
+// 생성에 투입하는 텍스트 상한(자). 유료 티어(대컨텍스트)이므로 상향해 대용량(30~50p) 강의록의
+// 뒷부분 내용이 잘리지 않게 한다. (기존 40,000자 → 30페이지 강의록 뒷부분 누락 원인)
+const MAX_GEN_TEXT_CHARS = 150_000;
+// 한 문항에 붙는 이미지 최대 개수 — 정답 단서 노출·산만함 방지(다이어그램 비교 문항도 1장 원칙).
+const MAX_IMAGES_PER_QUESTION = 1;
 
 /**
  * items 를 최대 `limit` 개씩 동시에 처리하고, 입력 순서를 보존한 결과 배열을 반환한다.
@@ -373,7 +378,7 @@ async function extractFromBuffer(input: {
       // 본문 텍스트는 페이지 단위 분리가 어려워 첫 페이지에 부여, 이미지는 페이지별.
       slidesData = pages.map((p, i) => ({
         pageIndex: p.pageIndex,
-        text: i === 0 ? fullText.slice(0, 40_000) : '',
+        text: i === 0 ? fullText.slice(0, MAX_GEN_TEXT_CHARS) : '',
         png: p.png,
       }));
     } else {
@@ -383,7 +388,7 @@ async function extractFromBuffer(input: {
           'PDF 에서 텍스트·이미지를 모두 추출하지 못했습니다. 스캔 품질/파일 상태를 확인하세요.',
         );
       }
-      slidesData = [{ pageIndex: 1, text: fullText.slice(0, 40_000), png: new Uint8Array() }];
+      slidesData = [{ pageIndex: 1, text: fullText.slice(0, MAX_GEN_TEXT_CHARS), png: new Uint8Array() }];
     }
   } else if (fileType === PPTX_MIME) {
     const parsed = parsePptx(buffer);
@@ -513,6 +518,8 @@ async function extractFromBuffer(input: {
       const det = await detectMedicalRegions({ slidePng: s.png, userIdForLog });
       // fallback: 의료 이미지 검출 0건인 페이지는 페이지 전체를 region 으로 잡아
       // OCR/Claude 가 슬라이드 텍스트·도표를 볼 수 있게 한다.
+      // 단, 이 "페이지 전체" 크롭은 ocrOnly 로 표시해 문항 이미지로는 노출하지 않는다.
+      const isWholePageFallback = det.regions.length === 0;
       const regionsToUse =
         det.regions.length > 0
           ? det.regions
@@ -527,12 +534,12 @@ async function extractFromBuffer(input: {
             grayscale: c.region.kind === 'ecg' || c.region.kind === 'xray',
             normalizeContrast: true,
           });
-          preprocessed.push({ ...c, png });
+          preprocessed.push({ ...c, png, ocrOnly: isWholePageFallback });
         } catch (e) {
           warnings.push(
             `slide ${s.pageIndex}: 전처리 실패 — ${e instanceof Error ? e.message : String(e)}`,
           );
-          preprocessed.push(c); // 원본 그대로 진행
+          preprocessed.push({ ...c, ocrOnly: isWholePageFallback }); // 원본 그대로 진행
         }
       }
       slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: preprocessed };
@@ -740,6 +747,8 @@ export async function generatePrivateQuestionsFromUpload(
     // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
     const featuredImages = slides
       .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
+      // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
+      .filter((x) => !x.c.ocrOnly)
       .slice(0, MAX_FEATURED_IMAGES);
 
     // Claude 입력: [이미지 N] 라벨 + 이미지를 인덱스 순서로 넣고, 마지막에 텍스트 컨텍스트.
@@ -887,6 +896,13 @@ export async function generatePrivateQuestionsFromUpload(
     // 8-2) 의료 이미지 연결.
     //      inserted[idx] 는 parsed.questions[idx] 와 순서 동일 (Postgres INSERT RETURNING 보장).
     const validIndex = (i: number) => i >= 0 && i < featuredImages.length;
+
+    // 한 문항 이미지 과다 첨부 방지 — 유효 인덱스만 남기고 문항당 최대 MAX_IMAGES_PER_QUESTION 개로 제한.
+    for (const q of parsed.questions) {
+      q.image_indices = (q.image_indices ?? [])
+        .filter(validIndex)
+        .slice(0, MAX_IMAGES_PER_QUESTION);
+    }
 
     // 실제 사용된 이미지 인덱스만 모아(중복 제거) Storage 에 업로드 — 미사용 crop 은 올리지 않음.
     const usedIndices = new Set<number>();
