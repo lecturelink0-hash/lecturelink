@@ -156,6 +156,20 @@ function sanitizeErrorMessage(raw: unknown): string {
   return m;
 }
 
+/**
+ * 문두 종결어미를 국시체로 정규화(결정론적 후처리).
+ * 프롬프트가 대부분 "~것은?"으로 유도하지만, 병렬 배치에서 간혹 구어체가 새어나오므로
+ * 여기서 확실히 격식체로 변환한다. (문법이 깨지지 않는 안전한 변환만 수행.)
+ */
+function normalizeStemEnding(stem: string): string {
+  let s = String(stem ?? '').replace(/\s+$/, '');
+  // "...은/는 무엇인가요?/무엇입니까?/무엇인가?" → "...은/는?" (KMLE 표준 종결)
+  s = s.replace(/([은는])\s*무엇(?:인가요|입니까|인가)\s*\?$/u, '$1?');
+  // "...가요?"(정중 구어 의문) → "...가?"(격식 의문). 예: 인가요→인가, 하는가요→하는가
+  s = s.replace(/가요\s*\?$/u, '가?');
+  return s;
+}
+
 export interface PrivateGenerationInput {
   uploadId: string;
   userId: string;
@@ -1029,7 +1043,7 @@ export async function generatePrivateQuestionsFromUpload(
           user_id: input.userId,
           upload_id: upload.id,
           sub_topic_id: subTopicId,
-          stem: q.stem,
+          stem: normalizeStemEnding(q.stem),
           choices: q.choices,
           answer_index: q.answer_index,
           explanation: q.explanation,

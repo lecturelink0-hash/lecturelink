@@ -119,7 +119,11 @@ export const PRIVATE_GENERATION_TOOL_SCHEMA = {
         items: {
           type: 'object',
           properties: {
-            stem: { type: 'string' },
+            stem: {
+              type: 'string',
+              description:
+                '임상 vignette + 문두. 문두(질문)는 반드시 "~것은?" 형태의 국시체로 끝낸다(예: "가장 적절한 것은?", "옳지 않은 것은?"). "무엇인가요?", "인가요?", "하는가요?", "까요?" 같은 구어체 종결은 절대 쓰지 않는다.',
+            },
             choices: {
               type: 'array',
               items: { type: 'string' },
