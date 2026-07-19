@@ -61,9 +61,9 @@ import { runOcr } from '@/lib/ocr/engine';
 // 놓치는 페이지가 없게 한다. 페이지별 Vision/OCR 은 순차가 아니라 병렬(아래 VISION_CONCURRENCY)
 // 로 처리해 대용량 스캔도 현실적인 시간 안에 완료한다.
 // (텍스트 위주 자료는 앞서 text-only 경로로 빠지므로 여기 상한과 무관.)
-const MAX_PDF_PAGES = 40;          // 이미지 검출용 페이지 렌더 상한 (스캔 자료 전 페이지 커버)
+const MAX_PDF_PAGES = 100;         // 이미지 검출용 페이지 렌더 상한
 const PDF_RENDER_EDGE_PX = 1280;   // PDF 페이지 렌더 해상도 — 메모리·토큰 절감 (기본 1600 대비 하향)
-const MAX_VISION_SLIDES = 40;      // detectMedicalRegions 대상 슬라이드 수
+const MAX_VISION_SLIDES = 100;     // detectMedicalRegions 대상 슬라이드 수
 const MAX_FEATURED_IMAGES = 15;    // 선별 후 생성에 투입하는 이미지 상한(내용에 따라 가변, 최대 15)
 const MAX_EMBEDDED_CANDIDATES = 40; // AI 선별에 넣을 후보(추출) 상한
 const VISION_CONCURRENCY = 6;      // 페이지 vision/OCR 동시 처리 수 — 순차 대비 대용량 대폭 가속
@@ -117,6 +117,8 @@ export interface PrivateGenerationInput {
   questionType?: '지식형' | '임상형' | '이미지형';
   /** 사용자 지정 문제집 이름 — 세트 표시명으로 저장. */
   title?: string;
+  /** 기출 형식 참고 자료. 문항 구조만 참고하고 내용 근거로 사용하지 않는다. */
+  referenceUploadIds?: string[];
 }
 
 export interface PrivateGenerationResult {
@@ -142,6 +144,57 @@ interface ExtractedSlide {
   pageIndex: number;
   text: string;
   croppedImages: CroppedImage[];
+}
+
+const MAX_REFERENCE_IMAGES = 6;
+
+async function loadReferenceImages(input: {
+  uploadIds: string[];
+  userId: string;
+}): Promise<Uint8Array[]> {
+  if (input.uploadIds.length === 0) return [];
+
+  const admin = createAdminClient();
+  const { data: uploads, error } = await admin
+    .from('user_uploads')
+    .select('id, user_id, file_type, storage_path')
+    .in('id', input.uploadIds)
+    .eq('user_id', input.userId);
+  if (error) throw new Error(`Reference upload lookup failed: ${error.message}`);
+
+  const byId = new Map((uploads ?? []).map((upload) => [upload.id, upload]));
+  const images: Uint8Array[] = [];
+  for (const id of input.uploadIds) {
+    if (images.length >= MAX_REFERENCE_IMAGES) break;
+    const upload = byId.get(id);
+    if (!upload) continue;
+    const { data: blob, error: downloadError } = await admin.storage
+      .from(STORAGE_BUCKET)
+      .download(upload.storage_path);
+    if (downloadError || !blob) continue;
+    const buffer = await blob.arrayBuffer();
+
+    if (upload.file_type.startsWith('image/')) {
+      const png = await normalizeToPng(new Uint8Array(buffer));
+      if (png) images.push(png);
+      continue;
+    }
+    if (upload.file_type === 'application/pdf') {
+      try {
+        const pages = await renderPdfPages(buffer, {
+          maxPages: Math.min(3, MAX_REFERENCE_IMAGES - images.length),
+          maxEdgePx: PDF_RENDER_EDGE_PX,
+        });
+        images.push(...pages.map((page) => page.png));
+      } catch (error) {
+        console.warn(
+          '[private-generation] reference PDF render skipped:',
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    }
+  }
+  return images.slice(0, MAX_REFERENCE_IMAGES);
 }
 
 /**
@@ -219,6 +272,7 @@ async function extractFromBuffer(input: {
 
   // PDF 임베드 이미지(object dedup) — 있으면 Vision 검출/crop 대신 이걸 우선 사용.
   let pdfEmbeddedCrops: CroppedImage[] | null = null;
+  let allowWholePageOcrFallback = fileType.startsWith('image/');
 
   // ── 슬라이드 / 페이지 텍스트 + PNG 산출
   let slidesData: Array<{ pageIndex: number; text: string; png: Uint8Array }> = [];
@@ -248,6 +302,7 @@ async function extractFromBuffer(input: {
       const { default: pdfParse } = await import('pdf-parse');
       const result = await pdfParse(Buffer.from(pdfBuffer));
       fullText = (result.text ?? '').trim();
+      allowWholePageOcrFallback = fullText.length < 1500;
     } catch (e) {
       warnings.push(
         `PDF 본문 텍스트 추출 실패 — 페이지 이미지만 사용. ${
@@ -298,14 +353,8 @@ async function extractFromBuffer(input: {
     //   하게 되어 대용량(수십 페이지)도 빠르게 완료된다. (Vision 호출이 페이지 수만큼
     //   순차 누적돼 수 분씩 걸리던 문제 해소.)
     //   텍스트가 부족한(스캔/이미지 위주) 자료만 기존 페이지 렌더 + Vision 경로를 탄다.
-    const TEXT_ONLY_THRESHOLD = 1500; // chars — 이 이상이면 텍스트 위주로 간주
     let pages: Awaited<ReturnType<typeof renderPdfPages>> = [];
-    if (fullText.length >= TEXT_ONLY_THRESHOLD) {
-      slidesData = [
-        { pageIndex: 1, text: fullText.slice(0, 40_000), png: new Uint8Array() },
-      ];
-    } else {
-      try {
+    try {
         pages = await renderPdfPages(pdfBuffer, {
           maxPages: MAX_PDF_PAGES,
           maxEdgePx: PDF_RENDER_EDGE_PX,
@@ -316,7 +365,6 @@ async function extractFromBuffer(input: {
             e instanceof Error ? e.message : String(e)
           }`,
         );
-      }
     }
 
     if (slidesData.length > 0) {
@@ -446,7 +494,11 @@ async function extractFromBuffer(input: {
   const visionIndices: number[] = [];
   for (let i = 0; i < slidesData.length; i++) {
     const s = slidesData[i];
-    if (s.png.length > 0 && visionIndices.length < MAX_VISION_SLIDES) {
+    if (
+      !pdfEmbeddedCrops &&
+      s.png.length > 0 &&
+      visionIndices.length < MAX_VISION_SLIDES
+    ) {
       visionIndices.push(i);
     } else {
       // 텍스트만 슬라이드 또는 상한 초과 → 이미지 검출 skip(텍스트는 보존).
@@ -464,7 +516,9 @@ async function extractFromBuffer(input: {
       const regionsToUse =
         det.regions.length > 0
           ? det.regions
-          : [{ kind: 'other' as const, x: 0, y: 0, width: 1, height: 1, confidence: 1 }];
+          : allowWholePageOcrFallback
+            ? [{ kind: 'other' as const, x: 0, y: 0, width: 1, height: 1, confidence: 1 }]
+            : [];
       const cropped = await cropRegions(s.png, regionsToUse);
       const preprocessed: CroppedImage[] = [];
       for (const c of cropped) {
@@ -556,6 +610,10 @@ export async function generatePrivateQuestionsFromUpload(
       buffer: fileBuffer,
       fileType: upload.file_type,
       userIdForLog: input.userId,
+    });
+    const referenceImages = await loadReferenceImages({
+      uploadIds: input.referenceUploadIds ?? [],
+      userId: input.userId,
     });
 
     // 4) crop 이미지 OCR — 페이지 단위로 병렬 처리(대용량 스캔 가속). 순서는 보존.
@@ -687,8 +745,22 @@ export async function generatePrivateQuestionsFromUpload(
     // Claude 입력: [이미지 N] 라벨 + 이미지를 인덱스 순서로 넣고, 마지막에 텍스트 컨텍스트.
     // 라벨 덕분에 Claude 가 각 이미지를 image_indices 로 참조할 수 있다.
     const userContent: Anthropic.MessageParam['content'] = [];
+    for (let i = 0; i < referenceImages.length; i++) {
+      userContent.push({
+        type: 'text',
+        text: `[기출 형식 참고 ${i + 1}] 내용은 출제 근거로 사용하지 말고 문항의 구조, 질문 방식, 선지 구성 방식만 참고하세요.`,
+      });
+      userContent.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: 'image/png',
+          data: Buffer.from(referenceImages[i]).toString('base64'),
+        },
+      } as Anthropic.ImageBlockParam);
+    }
     for (let i = 0; i < featuredImages.length; i++) {
-      userContent.push({ type: 'text', text: `[이미지 ${i}]` });
+      userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
       userContent.push({
         type: 'image',
         source: {
@@ -701,7 +773,7 @@ export async function generatePrivateQuestionsFromUpload(
     userContent.push({
       type: 'text',
       text:
-        `다음은 강의 자료에서 추출한 컨텍스트입니다.\n\n` +
+        `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
         (compositeText || '(추출된 텍스트·이미지 없음)') +
         `\n\n${userMessage}`,
     });
