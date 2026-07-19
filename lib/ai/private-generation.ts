@@ -1049,20 +1049,41 @@ export async function generatePrivateQuestionsFromUpload(
           `\n\n${userMessage}${batchDirective}`,
       });
 
-      const response = await withRetry(() =>
-        createMessage(client, {
-          model: modelUsed,
-          max_tokens: Math.min(10000, Math.max(6000, batchSize * 1200)),
-          system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-          tools: [PRIVATE_GENERATION_TOOL_SCHEMA],
-          tool_choice: { type: 'tool', name: 'generate_private_questions' },
-          messages: [{ role: 'user', content: userContent }],
-        }),
-      );
-      const toolUseBlock = response.content.find(
+      // 한국어 국시형 문항(긴 vignette+선지 5+오답 이유 해설)은 문항당 ~1,500토큰까지
+      // 나온다. 예산이 모자라면 출력이 잘려 함수호출(functionCall)이 통째로 사라지고
+      // "tool_use 블록이 없음"으로 실패하므로 여유 있게 잡는다.
+      const genMaxTokens = Math.min(16000, Math.max(9000, batchSize * 1800));
+      const callGenerate = (maxTokens: number) =>
+        withRetry(() =>
+          createMessage(client, {
+            model: modelUsed,
+            max_tokens: maxTokens,
+            system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+            tools: [PRIVATE_GENERATION_TOOL_SCHEMA],
+            tool_choice: { type: 'tool', name: 'generate_private_questions' },
+            messages: [{ role: 'user', content: userContent }],
+          }),
+        );
+      let response = await callGenerate(genMaxTokens);
+      let toolUseBlock = response.content.find(
         (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
       );
-      if (!toolUseBlock) throw new Error('Claude 응답에 tool_use 블록이 없음');
+      if (!toolUseBlock) {
+        // 도구 호출 누락 — 대부분 출력 잘림(max_tokens) 또는 모델의 간헐적 미준수.
+        // 예산을 2배로 올려 1회 재시도한다.
+        console.warn(
+          `[private-gen] tool_use 누락 → 재시도 (batch=${batchIndex + 1}, stop=${response.stop_reason})`,
+        );
+        response = await callGenerate(Math.min(30000, genMaxTokens * 2));
+        toolUseBlock = response.content.find(
+          (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
+        );
+      }
+      if (!toolUseBlock) {
+        throw new Error(
+          `생성 응답에 도구 호출이 없습니다 (stop=${response.stop_reason ?? '?'}). 잠시 후 다시 시도해주세요.`,
+        );
+      }
       const parsed = toolUseBlock.input as {
         questions: GeneratedQuestion[];
         content_summary: string;
