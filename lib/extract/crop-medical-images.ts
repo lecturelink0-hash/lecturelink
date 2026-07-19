@@ -29,6 +29,10 @@ export type MedicalImageKind =
   | 'ultrasound'
   | 'anatomy_diagram'
   | 'chart_graph'
+  // 강의록 본문/필기 텍스트 캡처 — 의료 이미지가 아님. 문항 이미지로 절대 사용 금지
+  // (텍스트 안에 정답 단서가 그대로 들어 있음). 검출 모델이 애매한 영역을 여기로
+  // 분류하게 해서 xray/ct 등으로 오분류되는 것을 막는다.
+  | 'text_slide'
   | 'other';
 
 export interface CropRegion {
@@ -72,6 +76,7 @@ const TOOL_SCHEMA = {
                 'ultrasound',
                 'anatomy_diagram',
                 'chart_graph',
+                'text_slide',
                 'other',
               ],
             },
@@ -100,6 +105,12 @@ const SYSTEM = `너는 의대 강의 슬라이드 이미지를 분석해 의료 
 
 규칙:
 - 텍스트 설명·제목·머리글·꼬리글 영역은 보고하지 말 것
+- **텍스트가 주된 내용인 영역은 절대 의료 이미지 유형으로 분류하지 말 것.**
+  본문 문단, 형광펜/밑줄 강조된 강의 텍스트, 손필기·타이핑 주석, 표(텍스트 표),
+  bullet 목록 등은 그 안에 "X-ray", "CT", "MRI" 같은 단어가 있어도 실제 영상이
+  아니다 — 굳이 보고해야 한다면 kind='text_slide' 로 분류하라 (호출자가 제외한다).
+- xray/ct/mri/ecg/pathology/microscope/ultrasound 는 **실제 사진·영상이 픽셀로
+  보이는 경우에만** 사용한다. 내용을 설명하는 텍스트만 있는 영역은 해당되지 않는다.
 - 슬라이드 배경·로고는 보고하지 말 것
 - 의료 이미지가 없는 슬라이드면 regions=[] 로 반환
 - 좌표는 0~1 정규화 (슬라이드 좌상단=0,0 / 우하단=1,1)
