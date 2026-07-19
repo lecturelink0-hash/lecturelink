@@ -273,7 +273,14 @@ export class GeminiLivePatient {
     }
   }
 
+  // 음성 OFF(텍스트 전용) 모드: 환자 오디오 재생을 끈다. 전사(텍스트)는 계속 수신.
+  setMuted(muted) {
+    this.muted = !!muted
+    if (this.muted) this.onAudioLevel(0)
+  }
+
   playPcm24(base64, mimeType = 'audio/pcm;rate=24000') {
+    if (this.muted) return
     try {
       const sampleRate = sampleRateFromMime(mimeType) || 24000
       const bytes = base64ToBytes(base64)
