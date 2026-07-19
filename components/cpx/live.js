@@ -261,7 +261,10 @@ export class GeminiLivePatient {
       this.outputText = ''
       this.outputAudioParts = []
       this.inputText = ''
-      if (text) this.onPatientText(text)
+      if (text) {
+        const clean = sanitizePatientText(text)
+        if (clean) this.onPatientText(clean)
+      }
       if (this.pending) {
         const pending = this.pending
         this.pending = null
@@ -316,6 +319,28 @@ export function floatTo16kPcmBase64(input, inputSampleRate) {
     pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff
   }
   return bytesToBase64(new Uint8Array(pcm.buffer))
+}
+
+// 모델이 프롬프트 금지에도 붙이는 안전 면책·AI 자기지칭 문구를 자막·전사에서 제거한다.
+// 방어층 — 근본 대응은 서버 시스템 프롬프트(prompt.py). 오디오에는 남을 수 있음.
+const DISCLAIMER_PATTERNS = [
+  /[^.!?…]*(?:본 답변은|이 답변은|제 답변은)[^.!?…]*(?:의학적|의료)[^.!?…]*[.!?…]?/g,
+  /[^.!?…]*(?:의학적|의료적)\s*(?:조언|판단|진단)(?:이|을|은)?[^.!?…]*(?:아니|제공하지|드릴 수)[^.!?…]*[.!?…]?/g,
+  /[^.!?…]*의료\s*전문가(?:와|에게|께)?\s*상담[^.!?…]*[.!?…]?/g,
+  /[^.!?…]*전문의(?:와|에게|께)?\s*상담[^.!?…]*[.!?…]?/g,
+  /[^.!?…]*(?:병원|의사)(?:을|를|에)?\s*(?:방문|진료).{0,6}(?:바랍니다|권|하세요)[^.!?…]*[.!?…]?/g,
+  /[^.!?…]*저는\s*(?:AI|인공지능|언어\s*모델|챗봇|프로그램|모델)[^.!?…]*[.!?…]?/g,
+]
+
+// 환자 발화 텍스트에서 페르소나 이탈 문구(면책·상담권고·AI 자기지칭)와 제어 태그를 제거한다.
+function sanitizePatientText(text) {
+  let out = String(text || '')
+  out = out.replace(/\[SYS_EVENT[^\]]*\]/gi, '')
+  out = out.replace(/\[[^\]]{0,40}\]/g, '') // 남은 짧은 대괄호 지문 (예: [당황])
+  for (const p of DISCLAIMER_PATTERNS) out = out.replace(p, '')
+  out = out.replace(/\s{2,}/g, ' ')
+  // 가장자리 따옴표는 짝이 안 맞아도 제거(발화가 따옴표로 감싸져 오거나 문구 제거로 한쪽만 남는 경우).
+  return out.replace(/^[\s"“”']+/, '').replace(/[\s"“”']+$/, '').trim()
 }
 
 function normalizeTranscriptText(text) {

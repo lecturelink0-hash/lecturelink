@@ -136,6 +136,7 @@ export const POST = withErrorHandling(async (
   // 업로드 status 를 processing→completed/failed 로 갱신한다. 클라이언트는
   // GET /api/uploads 폴링(최대 5분)으로 완료를 감지해 결과를 조회한다.
   // quota 는 enqueue 단계에서 이미 1회 차감됨.
+  // 병합 해결: 서버리스 완주 보장(after) + 참고자료 반영(referenceUploadIds) 둘 다 유지.
   after(
     generatePrivateQuestionsFromUpload({
       uploadId: id,
