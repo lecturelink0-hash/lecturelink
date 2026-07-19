@@ -180,11 +180,18 @@ async function loadReferenceImages(input: {
       continue;
     }
     if (upload.file_type === 'application/pdf') {
-      const pages = await renderPdfPages(buffer, {
-        maxPages: Math.min(3, MAX_REFERENCE_IMAGES - images.length),
-        maxEdgePx: PDF_RENDER_EDGE_PX,
-      });
-      images.push(...pages.map((page) => page.png));
+      try {
+        const pages = await renderPdfPages(buffer, {
+          maxPages: Math.min(3, MAX_REFERENCE_IMAGES - images.length),
+          maxEdgePx: PDF_RENDER_EDGE_PX,
+        });
+        images.push(...pages.map((page) => page.png));
+      } catch (error) {
+        console.warn(
+          '[private-generation] reference PDF render skipped:',
+          error instanceof Error ? error.message : String(error),
+        );
+      }
     }
   }
   return images.slice(0, MAX_REFERENCE_IMAGES);
