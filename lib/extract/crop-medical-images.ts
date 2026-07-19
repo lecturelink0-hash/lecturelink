@@ -204,6 +204,8 @@ export interface CroppedImage {
    * (페이지 전체 크롭은 주석 텍스트·여러 그림이 섞여 정답 단서·지저분한 크롭의 원인이 됨.)
    */
   ocrOnly?: boolean;
+  /** 이 크롭에서 OCR 로 추출된 텍스트(주석 유무 판정·인페인팅 대상 선별에 사용). */
+  ocrText?: string;
 }
 
 /**

@@ -49,6 +49,7 @@ import {
 } from '@/lib/extract/crop-medical-images';
 import { extractEmbeddedPdfImages } from '@/lib/extract/pdf-embedded-images';
 import { selectExamImages } from '@/lib/extract/select-exam-images';
+import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -743,6 +744,7 @@ export async function generatePrivateQuestionsFromUpload(
             // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
             totalCost += r.costUsd;
             ocrChars += r.text.length;
+            c.ocrText = r.text; // 인페인팅 대상(주석 텍스트 유무) 선별에 사용
             if (r.text) ocrTexts.push(`[${c.region.kind}] ${r.text}`);
           } catch (e) {
             warnings.push(
@@ -848,6 +850,28 @@ export async function generatePrivateQuestionsFromUpload(
       // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
       .filter((x) => !x.c.ocrOnly)
       .slice(0, MAX_FEATURED_IMAGES);
+
+    // 선별 텍스트 인페인팅: 다이어그램/일러스트 유형이면서 주석 텍스트가 감지된 이미지만
+    // gemini-3-pro-image 로 텍스트를 지운다(정답 단서 제거). 실제 임상 사진(xray/ct/mri/
+    // ecg/pathology/microscope/ultrasound)은 재생성 변형 위험이 있어 제외한다.
+    // 실패/타임아웃 시 원본 유지(파이프라인 계속). ENABLE_TEXT_INPAINT=0 으로 전체 비활성 가능.
+    if (process.env.ENABLE_TEXT_INPAINT !== '0') {
+      const inpaintKinds = new Set(['anatomy_diagram', 'chart_graph', 'other']);
+      const inpaintTargets = featuredImages.filter(
+        (x) => inpaintKinds.has(x.c.region.kind) && (x.c.ocrText?.trim().length ?? 0) >= 8,
+      );
+      if (inpaintTargets.length > 0) {
+        await mapWithConcurrency(inpaintTargets, 3, async (x) => {
+          try {
+            const cleaned = await inpaintRemoveText(x.c.png, { userId: input.userId });
+            if (cleaned) x.c.png = cleaned; // featuredImages 는 crop 객체 참조라 생성·저장에 반영됨
+          } catch {
+            /* 인페인팅 실패는 무시 — 원본 유지 */
+          }
+          return null;
+        });
+      }
+    }
 
     type GeneratedQuestion = {
       stem: string;
