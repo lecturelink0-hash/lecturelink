@@ -73,7 +73,6 @@ const PLANS: Plan[] = [
     name: '통합형 무제한',
     price: 20_900,
     desc: '국시 직전·시험 직전 집중',
-    displayOnly: true,
     features: [
       { ok: true, text: '자료 업로드 무제한' },
       { ok: true, text: '문항 생성 무제한' },
@@ -99,6 +98,14 @@ export default function PlanPage() {
   async function handlePurchase(plan: Plan) {
     if (plan.displayOnly) {
       window.location.href = '/contact';
+      return;
+    }
+    // 통합형 무제한(unlimited)은 결제 tier enum(lite/standard/pro)에 없어 서버 결제 초기화 대상이
+    // 아니므로, 다른 유료 플랜과 동일한 결제(데모) 플로우를 직접 노출한다.
+    if (plan.tier === 'unlimited') {
+      alert(
+        `결제 초기화 완료\n플랜: 통합형 무제한\n금액: ₩${plan.price.toLocaleString()}\n\n(데모) 실제 토스 위젯 연결은 운영 단계에서 추가됩니다.`,
+      );
       return;
     }
     setLoading(plan.tier);

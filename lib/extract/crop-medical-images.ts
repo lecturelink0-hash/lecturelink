@@ -198,6 +198,12 @@ export interface CroppedImage {
   png: Uint8Array;
   widthPx: number;
   heightPx: number;
+  /**
+   * 페이지 전체를 잡은 OCR 폴백 크롭 여부. true 면 OCR(텍스트 추출)용으로만 쓰고
+   * 학생에게 보여주는 문항 이미지 후보(featured)에서는 제외한다.
+   * (페이지 전체 크롭은 주석 텍스트·여러 그림이 섞여 정답 단서·지저분한 크롭의 원인이 됨.)
+   */
+  ocrOnly?: boolean;
 }
 
 /**

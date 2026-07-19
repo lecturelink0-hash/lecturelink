@@ -46,6 +46,12 @@ interface UploadRow {
   processed_at: string | null;
   created_at: string;
   error_message: string | null;
+  processing_stage: string | null;
+  progress_current: number;
+  progress_total: number;
+  completed_question_count: number;
+  target_question_count: number | null;
+  heartbeat_at: string | null;
 }
 
 interface InitUploadRes {
@@ -186,6 +192,10 @@ export default function NotesPage() {
   const [generated, setGenerated] = useState<GeneratedResult | null>(null);
   const [showResult, setShowResult] = useState(false);
 
+  // 추천 설정(과목·주제·키워드) 직접 수정 모드
+  const [editingRec, setEditingRec] = useState(false);
+  const [keywordDraft, setKeywordDraft] = useState('');
+
   useEffect(() => {
     refresh();
     loadSubjects();
@@ -243,6 +253,12 @@ export default function NotesPage() {
       processed_at: null,
       created_at: new Date().toISOString(),
       error_message: null,
+      processing_stage: null,
+      progress_current: 0,
+      progress_total: 0,
+      completed_question_count: 0,
+      target_question_count: null,
+      heartbeat_at: null,
     };
   }
 
@@ -313,9 +329,13 @@ export default function NotesPage() {
     }
   }
 
-  async function pollUploadStatus(uploadId: string): Promise<UploadDetailRes | null> {
+  async function pollUploadStatus(
+    uploadId: string,
+    onPartial: (questions: GenQ[]) => void,
+  ): Promise<UploadDetailRes | null> {
     // 대용량 강의록은 OCR과 문항 생성에 5분 이상 걸릴 수 있다. 큐 작업은
     // 브라우저 요청과 독립적으로 진행되므로 충분히 기다리고 완료 상태를 복구한다.
+    let partialShown = false;
     for (let i = 0; i < 300; i += 1) {
       try {
         const list = await api.get<UploadRow[]>('/api/uploads');
@@ -324,6 +344,16 @@ export default function NotesPage() {
         setMaterials((prev) =>
           prev.map((m) => (m.id === uploadId ? { ...m, ...found } : m)),
         );
+        if (
+          !partialShown &&
+          found.completed_question_count >= Math.min(5, count)
+        ) {
+          const partialQuestions = await fetchGeneratedQuestions(uploadId);
+          if (partialQuestions.length > 0) {
+            partialShown = true;
+            onPartial(partialQuestions);
+          }
+        }
         if (found.status === 'completed' || found.status === 'failed') {
           return {
             id: found.id,
@@ -370,7 +400,10 @@ export default function NotesPage() {
       });
 
       if (res.status === 'queued') {
-        const final = await pollUploadStatus(uploadId);
+        const final = await pollUploadStatus(uploadId, (partialQuestions) => {
+          setGenerated({ total: partialQuestions.length, questions: partialQuestions });
+          setShowResult(true);
+        });
         if (final?.status === 'completed') {
           return await fetchGeneratedQuestions(uploadId);
         }
@@ -636,7 +669,7 @@ export default function NotesPage() {
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <Field label="난이도" hint="쉬움은 기본 개념 위주, 어려움은 지엽적·응용 내용까지 물어봐요. 난이도가 올라갈수록 문항이 까다로워져요.">
                     <Segmented
                       options={DIFFICULTIES}
@@ -732,10 +765,19 @@ export default function NotesPage() {
                 title="추천 설정"
                 description="업로드된 자료를 기반으로 AI가 생성 설정을 제안합니다."
                 action={
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)]">
-                    <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
-                    수정
-                  </span>
+                  recommendation && !analyzing ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditingRec((v) => !v)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-muted)] hover:text-sage-700 transition-colors"
+                    >
+                      {editingRec ? (
+                        <><Check className="w-3.5 h-3.5" strokeWidth={2.5} />완료</>
+                      ) : (
+                        <><Pencil className="w-3.5 h-3.5" strokeWidth={2} />수정</>
+                      )}
+                    </button>
+                  ) : undefined
                 }
               />
 
@@ -745,44 +787,100 @@ export default function NotesPage() {
                   자료를 분석하는 중...
                 </div>
               ) : recommendation ? (
-                <>
-                  <dl className="space-y-3">
-                    <div className="flex gap-4">
-                      <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
-                        과목
-                      </dt>
-                      <dd className="text-sm font-semibold text-sage-800">
-                        {recommendation.subject || '—'}
-                      </dd>
+                editingRec ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-4 items-center">
+                      <label className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">과목</label>
+                      <input
+                        value={recommendation.subject}
+                        onChange={(e) => setRecommendation({ ...recommendation, subject: e.target.value })}
+                        placeholder="과목"
+                        className="flex-1 h-9 rounded-lg border border-[var(--color-border)] px-2.5 text-sm text-sage-800 outline-none focus:border-sage-600"
+                      />
+                    </div>
+                    <div className="flex gap-4 items-center">
+                      <label className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">주제</label>
+                      <input
+                        value={recommendation.topic}
+                        onChange={(e) => { setRecommendation({ ...recommendation, topic: e.target.value }); setTopic(e.target.value); }}
+                        placeholder="주제"
+                        className="flex-1 h-9 rounded-lg border border-[var(--color-border)] px-2.5 text-sm text-sage-800 outline-none focus:border-sage-600"
+                      />
                     </div>
                     <div className="flex gap-4">
-                      <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
-                        주제
-                      </dt>
-                      <dd className="text-sm font-semibold text-sage-800">
-                        {recommendation.topic || '—'}
-                      </dd>
+                      <label className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)] pt-2">핵심 키워드</label>
+                      <div className="flex-1 min-w-0">
+                        {recommendation.keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {recommendation.keywords.map((k) => (
+                              <span key={k} className="inline-flex items-center gap-1 rounded-full bg-[var(--color-sage-100)] px-2 py-0.5 text-xs font-medium text-sage-800">
+                                {k}
+                                <button type="button" aria-label={`${k} 삭제`} onClick={() => setRecommendation({ ...recommendation, keywords: recommendation.keywords.filter((x) => x !== k) })} className="text-[var(--color-muted)] hover:text-[var(--color-warn)]">
+                                  <X className="w-3 h-3" strokeWidth={2.5} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          value={keywordDraft}
+                          onChange={(e) => setKeywordDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const v = keywordDraft.trim();
+                              if (v && !recommendation.keywords.includes(v)) {
+                                setRecommendation({ ...recommendation, keywords: [...recommendation.keywords, v] });
+                              }
+                              setKeywordDraft('');
+                            }
+                          }}
+                          placeholder="키워드 입력 후 Enter"
+                          className="w-full h-9 rounded-lg border border-[var(--color-border)] px-2.5 text-sm text-sage-800 outline-none focus:border-sage-600"
+                        />
+                      </div>
                     </div>
-                    {recommendation.keywords.length > 0 && (
+                  </div>
+                ) : (
+                  <>
+                    <dl className="space-y-3">
                       <div className="flex gap-4">
-                        <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)] pt-1">
-                          핵심 키워드
+                        <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
+                          과목
                         </dt>
-                        <dd className="flex flex-wrap gap-1.5">
-                          {recommendation.keywords.map((k) => (
-                            <Badge key={k} variant="default">
-                              {k}
-                            </Badge>
-                          ))}
+                        <dd className="text-sm font-semibold text-sage-800">
+                          {recommendation.subject || '—'}
                         </dd>
                       </div>
-                    )}
-                  </dl>
-                  <div className="flex items-center gap-1.5 mt-4 text-xs font-medium text-sage-700">
-                    <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    추천 설정이 적용되었습니다.
-                  </div>
-                </>
+                      <div className="flex gap-4">
+                        <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)]">
+                          주제
+                        </dt>
+                        <dd className="text-sm font-semibold text-sage-800">
+                          {recommendation.topic || '—'}
+                        </dd>
+                      </div>
+                      {recommendation.keywords.length > 0 && (
+                        <div className="flex gap-4">
+                          <dt className="w-16 flex-shrink-0 text-sm text-[var(--color-muted)] pt-1">
+                            핵심 키워드
+                          </dt>
+                          <dd className="flex flex-wrap gap-1.5">
+                            {recommendation.keywords.map((k) => (
+                              <Badge key={k} variant="default">
+                                {k}
+                              </Badge>
+                            ))}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                    <div className="flex items-center gap-1.5 mt-4 text-xs font-medium text-sage-700">
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      추천 설정이 적용되었습니다.
+                    </div>
+                  </>
+                )
               ) : (
                 <div className="text-sm text-[var(--color-muted)] py-1">
                   자료를 분석해 과목·주제·키워드를 제안합니다.
@@ -1099,16 +1197,14 @@ function Field({
 }) {
   return (
     <label className="field">
-      <span className="field-label">
+      {/* 라벨(난이도/문항 유형 등) 위에 마우스를 올리면 설명 툴팁이 뜬다(사용 설명서와 동일 구동). */}
+      <span
+        className={clsx('field-label', hint && 'has-hint')}
+        data-tip={hint || undefined}
+        tabIndex={hint ? 0 : undefined}
+      >
         {label}
-        {hint && (
-          <span
-            title={hint}
-            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-[var(--color-border)] text-[9px] font-bold text-[var(--color-muted)] cursor-help"
-          >
-            ?
-          </span>
-        )}
+        {hint && <span className="field-help" aria-hidden>?</span>}
       </span>
       {children}
     </label>
@@ -1270,7 +1366,7 @@ function FileRow({
         <div className="file-name">{upload.file_name}</div>
         <div className="file-meta">
           <span>{sizeMB} MB</span>
-          <StatusLabel status={upload.status} isProcessing={isProcessing} />
+          <StatusLabel upload={upload} isProcessing={isProcessing} />
         </div>
         {errMsg && (
           <div
@@ -1293,12 +1389,13 @@ function FileRow({
 }
 
 function StatusLabel({
-  status,
+  upload,
   isProcessing,
 }: {
-  status: UploadStatus;
+  upload: UploadRow;
   isProcessing: boolean;
 }) {
+  const { status } = upload;
   if (status === 'queued') {
     return (
       <span className="inline-flex items-center gap-1 text-[var(--color-beta)]">
@@ -1308,10 +1405,23 @@ function StatusLabel({
     );
   }
   if (isProcessing || status === 'processing') {
+    const stageLabel: Record<string, string> = {
+      downloading: '자료 불러오는 중',
+      extracting: '페이지 추출 중',
+      vision: '이미지 분석 중',
+      ocr: '텍스트 판독 중',
+      generating: '문항 생성 중',
+      partially_completed: '나머지 문항 생성 중',
+    };
+    const progress =
+      upload.progress_total > 0
+        ? ` ${upload.progress_current}/${upload.progress_total}`
+        : '';
     return (
       <span className="inline-flex items-center gap-1 text-[var(--color-beta)]">
         <Loader2 className="w-3 h-3 animate-spin" />
-        AI 처리 중
+        {(upload.processing_stage && stageLabel[upload.processing_stage]) || 'AI 처리 중'}
+        {progress}
       </span>
     );
   }

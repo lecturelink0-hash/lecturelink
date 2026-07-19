@@ -1,9 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 
 interface FooterLink {
   label: string;
   href: string;
   external?: boolean;
+  /** 클릭 시 이메일 앱으로 이동하기 전에 보여줄 안내 메시지 */
+  notice?: string;
 }
 
 interface FooterColumn {
@@ -27,8 +31,8 @@ const columns: FooterColumn[] = [
       // 카카오톡 문의는 전용 페이지(/contact)에서 채널로 연결 — 채널 URL은 KAKAO_CHANNEL_URL(런타임 env).
       { label: '카카오톡 문의', href: '/contact' },
       { label: '문의하기', href: '/contact' },
-      { label: '오류 신고', href: 'mailto:goodwood0202@gmail.com?subject=렉처링크 오류 신고', external: true },
-      { label: '피드백 보내기', href: 'mailto:goodwood0202@gmail.com?subject=렉처링크 피드백', external: true },
+      { label: '오류 신고', href: 'mailto:lecturelink0@gmail.com?subject=렉처링크 오류 신고', external: true, notice: '오류 신고를 위해 이메일 화면으로 이동합니다.' },
+      { label: '피드백 보내기', href: 'mailto:lecturelink0@gmail.com?subject=렉처링크 피드백', external: true, notice: '피드백을 보내기 위해 이메일 화면으로 이동합니다.' },
     ],
   },
   {
@@ -67,6 +71,13 @@ export function Footer() {
                           href={link.href}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={(e) => {
+                            if (link.notice) {
+                              e.preventDefault();
+                              window.alert(link.notice);
+                              window.location.href = link.href;
+                            }
+                          }}
                         >
                           {link.label}
                         </a>

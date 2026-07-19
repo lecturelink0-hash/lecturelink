@@ -2027,7 +2027,7 @@
     .ll-upload-page .card.pad { padding: 22px; }
     .ll-upload-page .card-head {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 16px;
@@ -2142,9 +2142,59 @@
     .ll-upload-page .field.full { grid-column: 1 / -1; }
     .ll-upload-page label span,
     .ll-upload-page .field-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       color: var(--ink-soft);
       font-size: 12px;
       font-weight: 650;
+    }
+    .ll-upload-page .field-label.has-hint { position: relative; cursor: help; }
+    /* 물음표 아이콘 — '사용 설명서' 아이콘과 동일 스타일, ? 는 완전 중앙 정렬 */
+    .ll-upload-page .field-help {
+      display: inline-grid;
+      place-items: center;
+      width: 19px;
+      height: 19px;
+      border-radius: 999px;
+      background: var(--sage);
+      border: 1px solid var(--sage-400);
+      color: var(--forest);
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+    /* 라벨 hover/focus 시 설명 툴팁 노출(사용 설명서 패널과 동일 구동) */
+    .ll-upload-page .field-label.has-hint::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      z-index: 30;
+      width: min(340px, 80vw);
+      white-space: pre-line;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink);
+      box-shadow: 0 16px 38px -24px rgba(17,24,39,.36);
+      padding: 12px 13px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      font-weight: 520;
+      text-align: left;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-3px);
+      transition: .14s ease;
+    }
+    .ll-upload-page .field-label.has-hint:hover::after,
+    .ll-upload-page .field-label.has-hint:focus-visible::after {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
     .ll-upload-page input[type="text"], .ll-upload-page select {
       width: 100%;
@@ -2192,12 +2242,14 @@
       background: white;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 9px 10px;
+      padding: 9px 8px;
       color: var(--ink-soft);
       font-size: 13px;
       font-weight: 680;
       font-family: inherit;
+      white-space: nowrap;
       cursor: pointer;
       transition: .16s ease;
     }
