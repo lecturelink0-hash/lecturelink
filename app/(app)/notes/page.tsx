@@ -636,7 +636,7 @@ export default function NotesPage() {
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <Field label="난이도" hint="쉬움은 기본 개념 위주, 어려움은 지엽적·응용 내용까지 물어봐요. 난이도가 올라갈수록 문항이 까다로워져요.">
                     <Segmented
                       options={DIFFICULTIES}
@@ -1104,7 +1104,7 @@ function Field({
         {hint && (
           <span
             title={hint}
-            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-[var(--color-border)] text-[9px] font-bold text-[var(--color-muted)] cursor-help"
+            className="field-help inline-grid place-items-center w-[19px] h-[19px] rounded-full bg-[var(--sage)] border border-[var(--sage-400)] text-[12px] font-black leading-none text-[var(--forest)] cursor-help shrink-0"
           >
             ?
           </span>

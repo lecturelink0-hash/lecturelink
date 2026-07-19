@@ -2142,6 +2142,9 @@
     .ll-upload-page .field.full { grid-column: 1 / -1; }
     .ll-upload-page label span,
     .ll-upload-page .field-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       color: var(--ink-soft);
       font-size: 12px;
       font-weight: 650;
@@ -2192,12 +2195,14 @@
       background: white;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 9px 10px;
+      padding: 9px 8px;
       color: var(--ink-soft);
       font-size: 13px;
       font-weight: 680;
       font-family: inherit;
+      white-space: nowrap;
       cursor: pointer;
       transition: .16s ease;
     }
