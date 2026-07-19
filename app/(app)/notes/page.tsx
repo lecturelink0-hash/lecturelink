@@ -490,41 +490,53 @@ export default function NotesPage() {
 
       <div
         className={clsx(
-          'layout grid grid-cols-1 gap-6 items-start',
-          hasUploaded ? 'lg:grid-cols-[1.5fr_1fr]' : 'max-w-2xl',
+          'layout grid grid-cols-1 gap-6',
+          hasUploaded
+            ? 'items-start lg:grid-cols-[1.5fr_1fr]'
+            : 'items-stretch lg:grid-cols-[minmax(0,440px)_auto_minmax(0,1fr)]',
         )}
       >
         {/* 좌측: 학습자료 · 참고 자료 · 문제 세트 정보 */}
         <div className="stack">
-          {/* 학습자료 (필수) */}
-          <Card className="pad">
-            <CardHead
-              title="학습자료"
-              description="문제 생성에 사용할 자료를 업로드하세요."
-              action={<Badge variant="default">필수</Badge>}
-            />
-
-            <DropZone
-              uploading={uploadingMaterial}
-              onFile={handleMaterialFile}
-              inputRef={materialInputRef}
-              title="파일을 끌어오거나 클릭해 업로드"
-              hint="PDF, PPTX, DOCX, 이미지 파일 지원"
-            />
-
-            {materials.length > 0 && (
-              <div className="space-y-2 mt-4">
-                {materials.map((u) => (
-                  <FileRow
-                    key={u.id}
-                    upload={u}
-                    isProcessing={processingId === u.id}
-                    onDelete={() => handleDelete('material', u.id)}
-                  />
-                ))}
-              </div>
+          {/* 학습자료 (필수) — 업로드 전에는 '1' 단계 번호를 붙여 시작점을 명확히 한다. */}
+          <div className={clsx(!hasUploaded && 'relative')}>
+            {!hasUploaded && (
+              <span
+                className="absolute -top-3 -left-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-primary)] text-base font-bold text-white shadow-[0_4px_10px_rgba(24,40,32,0.18)]"
+                aria-hidden
+              >
+                1
+              </span>
             )}
-          </Card>
+            <Card className="pad">
+              <CardHead
+                title="학습자료"
+                description="문제 생성에 사용할 자료를 업로드하세요."
+                action={<Badge variant="default">필수</Badge>}
+              />
+
+              <DropZone
+                uploading={uploadingMaterial}
+                onFile={handleMaterialFile}
+                inputRef={materialInputRef}
+                title="파일을 끌어오거나 클릭해 업로드"
+                hint="PDF, PPTX, DOCX, 이미지 파일 지원"
+              />
+
+              {materials.length > 0 && (
+                <div className="space-y-2 mt-4">
+                  {materials.map((u) => (
+                    <FileRow
+                      key={u.id}
+                      upload={u}
+                      isProcessing={processingId === u.id}
+                      onDelete={() => handleDelete('material', u.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
 
           {/* 참고 자료 (선택) — 업로드 후 노출 */}
           {hasUploaded && (
@@ -675,6 +687,41 @@ export default function NotesPage() {
             </Card>
           )}
         </div>
+
+        {/* 업로드 전: 점선 화살표 → 앞으로의 과정을 미리 보여주는 고스트 패널.
+            (오른쪽 빈 공간을 채워 사용자가 흐름을 이해하게 한다) */}
+        {!hasUploaded && (
+          <div className="hidden lg:flex items-center justify-center self-center">
+            <div className="flex items-center text-[var(--color-sage-400)]">
+              <span className="block w-12 border-t-2 border-dashed border-current" />
+              <ArrowRight className="w-6 h-6 -ml-1.5" strokeWidth={2.4} />
+            </div>
+          </div>
+        )}
+        {!hasUploaded && (
+          <div className="flex flex-col justify-center rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-sage-50)]/50 p-6">
+            <p className="text-sm font-bold text-sage-700 mb-4">업로드하면 이렇게 진행돼요</p>
+            <ol className="space-y-4">
+              <li className="flex items-start gap-3">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--color-sage-400)] text-base font-bold text-[var(--color-sage-500)]">2</span>
+                <div>
+                  <div className="text-sm font-semibold text-sage-700">자동 분석 · 설정 확인</div>
+                  <div className="text-xs text-[var(--color-muted)] mt-0.5 leading-relaxed">AI가 제목·과목·난이도를 추천해요. 참고 자료도 추가할 수 있어요.</div>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--color-sage-400)] text-base font-bold text-[var(--color-sage-500)]">3</span>
+                <div>
+                  <div className="text-sm font-semibold text-sage-700">문제 생성</div>
+                  <div className="text-xs text-[var(--color-muted)] mt-0.5 leading-relaxed">올린 자료를 바탕으로 예상 문제 세트가 자동으로 만들어져요.</div>
+                </div>
+              </li>
+            </ol>
+            <p className="mt-5 text-xs text-[var(--color-muted)] leading-relaxed">
+              먼저 왼쪽 <b className="text-sage-700">1. 학습자료</b> 칸에 파일을 올려주세요. 올리는 즉시 위 단계가 순서대로 나타납니다.
+            </p>
+          </div>
+        )}
 
         {/* 우측: 추천 설정 · 생성 요약 — 업로드 후 노출 */}
         {hasUploaded && (
@@ -1113,8 +1160,10 @@ function Segmented<T extends string>({
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
+            aria-pressed={active}
             className={`${cards ? 'check-card' : ''} ${active ? 'active' : ''}`}
           >
+            {cards && <span className="check-box" aria-hidden />}
             {opt}
           </button>
         );

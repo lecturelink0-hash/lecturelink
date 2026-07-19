@@ -213,20 +213,21 @@ export default function PlanPage() {
                       <li key={i} className={f.ok ? '' : 'no'}>
                         {f.ok ? (
                           <Check
-                            className={clsx('w-4 h-4 mt-0.5 flex-shrink-0', featured ? 'text-[var(--color-gold)]' : 'text-sage-600')}
+                            className={clsx('w-4 h-4 mt-0.5 flex-shrink-0', featured ? 'text-[#9A7B16]' : 'text-sage-600')}
                             strokeWidth={2.5}
                           />
                         ) : (
                           <X
-                            className={clsx('w-4 h-4 mt-0.5 flex-shrink-0', featured ? 'text-white/40' : 'text-[var(--color-sage-400)]')}
+                            className={clsx('w-4 h-4 mt-0.5 flex-shrink-0', featured ? 'text-[#C4AC5E]' : 'text-[var(--color-sage-400)]')}
                             strokeWidth={2.5}
                           />
                         )}
+                        {/* 통합형(featured) 카드는 밝은 골드 배경 → 흰색 대신 진한 골드-브라운으로 표기 */}
                         <span
                           className={clsx(
                             f.ok
-                              ? featured ? 'text-white/90' : 'text-sage-800'
-                              : featured ? 'text-white/50' : 'text-[var(--color-muted)]',
+                              ? featured ? 'text-[#6F5511]' : 'text-sage-800'
+                              : featured ? 'text-[#A98B2E]' : 'text-[var(--color-muted)]',
                           )}
                         >
                           {f.text}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -97,6 +97,8 @@ export default function ExamPage() {
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   const [idx, setIdx] = useState(0);
+  // 문항이 화면에 표시된 시각 — 제출 시 실제 소요시간(누적 학습시간) 측정에 사용.
+  const shownAtRef = useRef<number>(Date.now());
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AttemptResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -195,14 +197,25 @@ export default function ExamPage() {
 
   const current = questions[idx];
 
+  // 새 문항이 표시될 때마다(문항 이동 / 새 세부주제 로드) 타이머를 리셋해
+  // 실제 문항 풀이 시간을 측정한다.
+  useEffect(() => {
+    shownAtRef.current = Date.now();
+  }, [idx, active]);
+
   async function submit() {
     if (selected === null || !current) return;
     setSubmitting(true);
+    // 문항 표시 시점부터 제출까지의 실제 경과 시간(초). 1~3600초로 클램프.
+    const elapsedSeconds = Math.min(
+      3600,
+      Math.max(1, Math.round((Date.now() - shownAtRef.current) / 1000)),
+    );
     try {
       const res = await api.post<AttemptResponse>('/api/attempts', {
         question_id: current.id,
         selected_index: selected,
-        time_spent_seconds: 30,
+        time_spent_seconds: elapsedSeconds,
         track: 'smart_practice',
       });
       setResult(res);
@@ -263,6 +276,18 @@ export default function ExamPage() {
     }
   }
 
+  // 준비된(READY) 과목을 최상단에, 준비 중 과목을 아래에 배치.
+  // (Array.prototype.sort 는 안정 정렬이라 같은 그룹 내 원래 순서는 유지된다.)
+  const isSubjectReady = (s: Subject) => {
+    const c = questionCounts[s.id];
+    return c === undefined ? s.sub_topics.length > 0 : c > 0;
+  };
+  const sortedSubjects = useMemo(
+    () => [...subjects].sort((a, b) => Number(isSubjectReady(b)) - Number(isSubjectReady(a))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [subjects, questionCounts],
+  );
+
   // 과목 전체 문항에서 세부주제별 카운트 파생
   const stCount = useMemo(() => {
     const m: Record<string, number> = {};
@@ -284,7 +309,21 @@ export default function ExamPage() {
             <span className="eyebrow"><GraduationCap className="icon" />국시 대비</span>
             <h1><span className="headline-accent">임상추론</span>을<br/><span className="headline-accent">시험 톤</span>으로 연습합니다</h1>
             <p className="lead">교과서적 의학 지식과 임상 시나리오를 결합한 국가고시형 문제입니다. 과목·세부주제별로 풀고, 오답 데이터로 약한 개념을 반복 학습하세요.</p>
-          </div><div />
+          </div>
+          {/* CPX 실전 연습 — 국시 대비 우측 대표 배너(별도 진입) */}
+          <a href="/cpx" className="cpx-banner">
+            <div className="cpx-banner-top">
+              <span className="cpx-banner-icon"><Stethoscope className="w-5 h-5" strokeWidth={2} /></span>
+              <span className="cpx-banner-badge">CPX</span>
+            </div>
+            <h2 className="cpx-banner-title">CPX 실전 연습</h2>
+            <p className="cpx-banner-desc">AI 표준화 환자와 12분 진료 세션 · 음성/텍스트 문진 · 부위별 신체진찰 · 루브릭 채점</p>
+            <div className="cpx-banner-meta">
+              <span><strong>197</strong> 증례</span>
+              <span><strong>50</strong> 주호소</span>
+            </div>
+            <span className="cpx-banner-cta"><Play className="w-4 h-4" strokeWidth={2.4} /> 연습 시작</span>
+          </a>
         </section>
 
         {totalQuestions > 0 && (
@@ -301,7 +340,7 @@ export default function ExamPage() {
           </div>
         ) : (
           <><div className="grid-head"><div className="grid-note">카드를 선택하면 해당 과목의 국시형 문제 풀이로 이동합니다.</div></div><section className="grid">
-            {subjects.map((s) => {
+            {sortedSubjects.map((s) => {
               const Icon = pickIcon(s.name);
               const count = questionCounts[s.id];
               const ready = count === undefined ? s.sub_topics.length > 0 : count > 0;
@@ -372,7 +411,8 @@ export default function ExamPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6 items-start">
+      {/* 전용 클래스 사용 — 과목 카드 그리드용 `.ll-exam-page .grid`(3등분)와 충돌 방지 */}
+      <div className="exam-detail-layout items-start">
         {/* 좌측: 세부주제 */}
         <div className="ll-card p-3 md:sticky md:top-6">
           <div className="flex items-center gap-2 px-2 pb-2.5 mb-1.5 border-b border-[var(--color-border)]">

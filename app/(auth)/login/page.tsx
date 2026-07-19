@@ -61,26 +61,46 @@ export default function LoginPage() {
     const supabase = createBrowserClient();
 
     if (mode === 'signup') {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) {
+      // supabase-js 의 signUp 은 신규·중복 모두 user=null 을 반환해 중복을 구분할 수 없다.
+      // GoTrue REST 는 기가입 이메일이면 이메일 노출 방지를 위해 identities 를 빈 배열로
+      // 돌려주고 메일도 보내지 않는다 → 이 값을 직접 확인해 중복을 판별한다.
+      const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supaAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      let body: {
+        identities?: unknown[];
+        access_token?: string;
+        msg?: string;
+        error_description?: string;
+      } = {};
+      try {
+        const res = await fetch(
+          `${supaUrl}/auth/v1/signup?redirect_to=${encodeURIComponent(`${window.location.origin}/auth/callback`)}`,
+          {
+            method: 'POST',
+            headers: { apikey: supaAnon, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          },
+        );
+        body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setStatus('error');
+          setErrorMsg(body.msg || body.error_description || '회원가입에 실패했습니다.');
+          return;
+        }
+      } catch {
         setStatus('error');
-        setErrorMsg(authErrorMessage(error));
+        setErrorMsg('네트워크 오류로 회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.');
         return;
       }
-      // 이미 가입된 이메일 — 이메일 확인이 켜진 경우 Supabase 는 보안상(이메일 존재
-      // 노출 방지) 가짜 성공을 반환하되 identities 를 빈 배열로 돌려준다. 이걸로 중복 감지.
-      if (data.user && (data.user.identities?.length ?? 0) === 0) {
+
+      const identities = Array.isArray(body.identities) ? body.identities : [];
+      if (identities.length === 0) {
         setStatus('error');
         setErrorMsg('이미 가입된 이메일입니다. 로그인해 주세요.');
         return;
       }
-      // 이메일 확인이 켜져 있으면 session 이 없음 → 확인 메일 안내.
-      // 꺼져 있으면 바로 세션 생성 → 홈으로.
-      if (data.session) {
+      // 자동 확인이 꺼져 있으면(현 설정) 세션 없이 확인 메일만 발송 → 안내 화면.
+      if (body.access_token) {
         window.location.href = postAuthDest();
       } else {
         setStatus('sent');
@@ -98,25 +118,49 @@ export default function LoginPage() {
     window.location.href = postAuthDest();
   }
 
-  async function handleKakao() {
+  const [forgotState, setForgotState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  async function handleForgot() {
+    if (!email) {
+      setErrorMsg('먼저 이메일을 입력해 주세요.');
+      return;
+    }
+    setErrorMsg('');
+    setForgotState('sending');
+    try {
+      const supabase = createBrowserClient();
+      // 재설정 페이지로 직접 리다이렉트 — 클라이언트가 URL 토큰(해시/코드)을 자동 감지해 복구 세션 성립.
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+    } finally {
+      setForgotState('sent');
+    }
+  }
+
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'done'>('idle');
+  async function handleResend() {
+    if (!email || resendState === 'sending') return;
+    setResendState('sending');
+    try {
+      const supabase = createBrowserClient();
+      await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+    } finally {
+      setResendState('done');
+    }
+  }
+
+  function handleKakao() {
     setErrorMsg('');
     setStatus('sending');
-    const supabase = createBrowserClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'kakao',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        // 주의: GoTrue 가 카카오 기본 scope(account_email·profile_image·profile_nickname)를 항상
-        // 함께 요청하므로 여기서 이메일을 제거할 수 없다. KOE205 는 카카오 콘솔의 "동의항목"
-        // (닉네임 필수 + 이메일 선택 동의 등)을 설정해야 해소된다. 아래 scopes 는 보강용.
-        scopes: 'profile_nickname',
-      },
-    });
-    // 성공 시 카카오로 리다이렉트되므로 이 아래는 실행되지 않는다.
-    if (error) {
-      setStatus('error');
-      setErrorMsg(authErrorMessage(error));
-    }
+    // Supabase 내장 카카오 provider 는 account_email 을 강제 요청해 KOE205 를 유발한다(비즈앱 필요).
+    // 이메일을 요구하지 않는 커스텀 카카오 로그인(/api/auth/kakao/start)으로 개시한다.
+    const next = new URLSearchParams(window.location.search).get('next');
+    const q = next && next.startsWith('/') && !next.startsWith('/login') ? `?next=${encodeURIComponent(next)}` : '';
+    window.location.href = `/api/auth/kakao/start${q}`;
   }
 
   return (
@@ -189,12 +233,25 @@ export default function LoginPage() {
               <p className="text-base text-[var(--color-muted)] leading-relaxed">
                 인증 메일을 보냈습니다. 메일 안의 링크를 누르면 가입이 완료됩니다.
               </p>
-              <button
-                onClick={() => { switchMode('login'); setEmailOpen(false); }}
-                className="text-sm text-sage-700 mt-6 underline"
-              >
-                로그인으로 돌아가기
-              </button>
+              <div className="mt-4 rounded-lg bg-[var(--color-sage-100)] px-4 py-3 text-sm text-sage-800 leading-relaxed">
+                메일이 몇 분 내에 오지 않으면 <b>스팸함·프로모션함</b>을 확인해주세요.
+                발신: <b>렉처링크 &lt;fornerdsofficial@gmail.com&gt;</b>
+              </div>
+              <div className="mt-5 flex flex-col items-center gap-2">
+                <button
+                  onClick={handleResend}
+                  disabled={resendState === 'sending'}
+                  className="text-sm font-semibold text-sage-700 underline disabled:opacity-50"
+                >
+                  {resendState === 'sending' ? '재전송 중…' : resendState === 'done' ? '인증 메일을 다시 보냈어요' : '인증 메일 다시 보내기'}
+                </button>
+                <button
+                  onClick={() => { switchMode('login'); setEmailOpen(false); }}
+                  className="text-sm text-[var(--color-muted)] underline"
+                >
+                  로그인으로 돌아가기
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
@@ -289,6 +346,26 @@ export default function LoginPage() {
                     ? '로그인'
                     : '회원가입'}
               </Button>
+
+              {mode === 'login' && (
+                <div className="mt-3 text-center">
+                  {forgotState === 'sent' ? (
+                    <p className="text-[13px] text-[var(--color-muted)] leading-relaxed">
+                      재설정 메일을 보냈습니다. 메일의 링크로 새 비밀번호를 설정하세요.
+                      <br />안 보이면 <b>스팸함</b>도 확인해 주세요.
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleForgot}
+                      disabled={forgotState === 'sending'}
+                      className="text-[13px] text-[var(--color-muted)] underline underline-offset-2 hover:text-sage-800 disabled:opacity-50"
+                    >
+                      {forgotState === 'sending' ? '메일 보내는 중…' : '비밀번호를 잊으셨나요?'}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* 구분선 */}
               <div className="flex items-center gap-3 my-6">
