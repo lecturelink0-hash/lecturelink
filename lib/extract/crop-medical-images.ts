@@ -206,6 +206,8 @@ export interface CroppedImage {
   ocrOnly?: boolean;
   /** 이 크롭에서 OCR 로 추출된 텍스트(주석 유무 판정·인페인팅 대상 선별에 사용). */
   ocrText?: string;
+  /** OCR 전용 전처리본(대비 정규화/흑백). 표시·인페인팅은 원본 색상 png 를 쓴다. */
+  ocrPng?: Uint8Array;
 }
 
 /**

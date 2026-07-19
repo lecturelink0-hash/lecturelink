@@ -600,11 +600,14 @@ async function extractFromBuffer(input: {
       const preprocessed: CroppedImage[] = [];
       for (const c of cropped) {
         try {
-          const png = await preprocessForOcr(c.png, {
+          // OCR 용 전처리(대비 정규화/흑백)는 별도 이미지(ocrPng)로 유지하고,
+          // 표시·인페인팅에 쓰는 원본 색상 크롭(c.png)은 그대로 보존한다
+          // (전처리본을 그대로 보여주면 컬러 다이어그램이 흑백/저채도로 표시되는 문제 방지).
+          const ocrPng = await preprocessForOcr(c.png, {
             grayscale: c.region.kind === 'ecg' || c.region.kind === 'xray',
             normalizeContrast: true,
           });
-          preprocessed.push({ ...c, png, ocrOnly: isWholePageFallback });
+          preprocessed.push({ ...c, ocrPng, ocrOnly: isWholePageFallback });
         } catch (e) {
           warnings.push(
             `slide ${s.pageIndex}: 전처리 실패 — ${e instanceof Error ? e.message : String(e)}`,
@@ -737,7 +740,7 @@ export async function generatePrivateQuestionsFromUpload(
         for (const c of s.croppedImages) {
           try {
             const r = await runOcr({
-              png: c.png,
+              png: c.ocrPng ?? c.png, // OCR 은 전처리본, 표시는 원본 색상 유지
               userIdForLog: input.userId,
               context: s.text,
             });
