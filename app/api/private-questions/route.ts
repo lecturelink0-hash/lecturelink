@@ -21,6 +21,7 @@ const querySchema = z.object({
   sub_topic_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(30),
   offset: z.coerce.number().int().min(0).default(0),
+  mode: z.enum(['review', 'quiz']).default('review'),
 });
 
 export const GET = withErrorHandling(async (request: Request) => {
@@ -116,8 +117,9 @@ export const GET = withErrorHandling(async (request: Request) => {
         id: row.id,
         stem: row.stem,
         choices: row.choices,
-        answer_index: row.answer_index,
-        explanation: row.explanation,
+        ...(params.mode === 'review'
+          ? { answer_index: row.answer_index, explanation: row.explanation }
+          : {}),
         concepts: row.concepts,
         difficulty: row.difficulty,
         sub_topic_id: row.sub_topic_id,

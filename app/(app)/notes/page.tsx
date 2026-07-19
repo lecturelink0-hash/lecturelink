@@ -21,6 +21,9 @@ import {
   ChevronDown,
   Pencil,
   X,
+  CheckCircle2,
+  XCircle,
+  BookmarkPlus,
 } from 'lucide-react';
 
 type UploadStatus =
@@ -99,10 +102,20 @@ interface GenQ {
   id: string;
   stem: string;
   choices: string[];
-  answer_index: number;
-  explanation: string | null;
   difficulty: number;
+  sub_topic_id: string | null;
   images?: { url: string; kind: string | null; caption: string | null }[];
+}
+
+interface AttemptResponse {
+  attempt_id: string;
+  is_correct: boolean;
+  correct_index: number;
+  explanation: string | null;
+}
+
+interface QuestionOutcome extends AttemptResponse {
+  selected_index: number;
 }
 
 interface PrivateQuestionsRes {
@@ -301,7 +314,9 @@ export default function NotesPage() {
   }
 
   async function pollUploadStatus(uploadId: string): Promise<UploadDetailRes | null> {
-    for (let i = 0; i < 100; i += 1) {
+    // 대용량 강의록은 OCR과 문항 생성에 5분 이상 걸릴 수 있다. 큐 작업은
+    // 브라우저 요청과 독립적으로 진행되므로 충분히 기다리고 완료 상태를 복구한다.
+    for (let i = 0; i < 300; i += 1) {
       try {
         const list = await api.get<UploadRow[]>('/api/uploads');
         const found = list.find((u) => u.id === uploadId);
@@ -329,7 +344,7 @@ export default function NotesPage() {
   async function fetchGeneratedQuestions(uploadId: string): Promise<GenQ[]> {
     try {
       const res = await api.get<PrivateQuestionsRes>(
-        `/api/private-questions?upload_id=${uploadId}&limit=50`,
+        `/api/private-questions?upload_id=${uploadId}&limit=50&mode=quiz`,
       );
       return res.items;
     } catch {
@@ -351,6 +366,7 @@ export default function NotesPage() {
         difficulty,
         question_type: questionType,
         title: title.trim() || undefined,
+        reference_upload_ids: references.map((reference) => reference.id),
       });
 
       if (res.status === 'queued') {
@@ -361,7 +377,7 @@ export default function NotesPage() {
         if (final?.status === 'failed') {
           alert(`처리 실패: ${formatUploadError(final.error_message)}`);
         } else {
-          alert('처리가 5분 안에 끝나지 않았습니다. 잠시 후 새로고침 해주세요.');
+          alert('문항 생성이 계속 진행 중입니다. 잠시 후 강의노트에서 완료 상태를 확인해 주세요.');
         }
         return [];
       }
@@ -778,6 +794,36 @@ function ResultView({
   questionType: string;
   onReset: () => void;
 }) {
+  const [outcomes, setOutcomes] = useState<Record<string, QuestionOutcome>>({});
+  const [savingWrong, setSavingWrong] = useState(false);
+  const [wrongSaved, setWrongSaved] = useState(false);
+  const completedCount = Object.keys(outcomes).length;
+  const wrongQuestions = result.questions.filter(
+    (question) => outcomes[question.id] && !outcomes[question.id].is_correct,
+  );
+
+  async function saveWrongAnswers() {
+    if (wrongQuestions.length === 0) return;
+    setSavingWrong(true);
+    try {
+      await Promise.all(
+        wrongQuestions.map((question) =>
+          api.post('/api/wrong-answers', {
+            private_question_id: question.id,
+            sub_topic_id: question.sub_topic_id,
+            selected_index: outcomes[question.id].selected_index,
+            source: 'lecture_note',
+          }),
+        ),
+      );
+      setWrongSaved(true);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '오답노트 저장에 실패했습니다.');
+    } finally {
+      setSavingWrong(false);
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* 헤더 */}
@@ -813,7 +859,15 @@ function ResultView({
       {result.questions.length > 0 ? (
         <div className="space-y-4">
           {result.questions.map((q, i) => (
-            <QuestionCard key={q.id} q={q} index={i + 1} />
+            <QuestionCard
+              key={q.id}
+              q={q}
+              index={i + 1}
+              outcome={outcomes[q.id] ?? null}
+              onGraded={(outcome) =>
+                setOutcomes((current) => ({ ...current, [q.id]: outcome }))
+              }
+            />
           ))}
         </div>
       ) : (
@@ -821,6 +875,33 @@ function ResultView({
           <p className="text-sm text-[var(--color-muted)]">
             생성된 문항을 불러오지 못했습니다. 내 문제집에서 확인해주세요.
           </p>
+        </Card>
+      )}
+
+      {completedCount === result.questions.length && result.questions.length > 0 && (
+        <Card className="mt-6">
+          <div className="text-center">
+            <CheckCircle2 className="w-8 h-8 text-sage-700 mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-sage-800">풀이를 완료했습니다</h2>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">
+              정답 {completedCount - wrongQuestions.length}개 · 오답 {wrongQuestions.length}개
+            </p>
+          </div>
+          {wrongQuestions.length > 0 && (
+            <div className="mt-5 border-t border-[var(--color-border)] pt-5">
+              {wrongSaved ? (
+                <div className="flex items-center justify-center gap-2 text-sm font-semibold text-sage-700">
+                  <CheckCircle2 className="w-4 h-4" />
+                  틀린 문항을 오답노트에 담았습니다.
+                </div>
+              ) : (
+                <Button fullWidth onClick={saveWrongAnswers} loading={savingWrong}>
+                  <BookmarkPlus className="w-4 h-4" />
+                  오답 {wrongQuestions.length}문항 오답노트에 담기
+                </Button>
+              )}
+            </div>
+          )}
         </Card>
       )}
 
@@ -837,8 +918,36 @@ function ResultView({
   );
 }
 
-function QuestionCard({ q, index }: { q: GenQ; index: number }) {
-  const [showExplanation, setShowExplanation] = useState(false);
+function QuestionCard({
+  q,
+  index,
+  outcome,
+  onGraded,
+}: {
+  q: GenQ;
+  index: number;
+  outcome: QuestionOutcome | null;
+  onGraded: (outcome: QuestionOutcome) => void;
+}) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submitAnswer() {
+    if (selected === null || outcome) return;
+    setSubmitting(true);
+    try {
+      const response = await api.post<AttemptResponse>('/api/attempts', {
+        question_id: q.id,
+        selected_index: selected,
+        track: 'lecture_note',
+      });
+      onGraded({ ...response, selected_index: selected });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '채점에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <Card>
@@ -871,48 +980,59 @@ function QuestionCard({ q, index }: { q: GenQ; index: number }) {
 
       <ol className="space-y-2">
         {q.choices.map((choice, ci) => {
-          const isAnswer = ci === q.answer_index;
+          const isSelected = selected === ci;
+          const isCorrect = outcome?.correct_index === ci;
+          const isWrong = Boolean(outcome && isSelected && !outcome.is_correct);
           return (
             <li
               key={ci}
-              className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-sm ${
-                isAnswer
-                  ? 'border-sage-500 bg-[var(--color-sage-100)] text-sage-800 font-medium'
-                  : 'border-[var(--color-border)] bg-white text-sage-800'
-              }`}
+              className="list-none"
             >
-              <span
-                className={`flex-shrink-0 w-5 h-5 rounded-full text-[11px] font-semibold flex items-center justify-center ${
-                  isAnswer
-                    ? 'bg-sage-700 text-white'
-                    : 'bg-[var(--color-sage-100)] text-[var(--color-muted)]'
+              <button
+                type="button"
+                onClick={() => !outcome && setSelected(ci)}
+                disabled={outcome !== null}
+                className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-left text-sm transition-colors ${
+                  isCorrect
+                    ? 'border-sage-600 bg-[var(--color-curated-bg)] text-sage-800 font-medium'
+                    : isWrong
+                      ? 'border-[var(--color-warn)] bg-[var(--color-warn-bg)] text-sage-800'
+                      : isSelected
+                        ? 'border-sage-600 bg-[var(--color-sage-100)] text-sage-800'
+                        : 'border-[var(--color-border)] bg-white text-sage-800 hover:border-sage-400'
                 }`}
               >
-                {isAnswer ? <Check className="w-3 h-3" strokeWidth={3} /> : ci + 1}
-              </span>
-              <span className="flex-1">{choice}</span>
+                <span className="flex-shrink-0 w-5 h-5 rounded-full text-[11px] font-semibold flex items-center justify-center bg-sage-700 text-white">
+                  {ci + 1}
+                </span>
+                <span className="flex-1">{choice}</span>
+                {isCorrect && <CheckCircle2 className="w-4 h-4 text-sage-700" />}
+                {isWrong && <XCircle className="w-4 h-4 text-[var(--color-warn)]" />}
+              </button>
             </li>
           );
         })}
       </ol>
 
-      {q.explanation && (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setShowExplanation((v) => !v)}
-            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-muted)] hover:text-sage-800 transition-colors"
+      {!outcome ? (
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="accent"
+            onClick={submitAnswer}
+            disabled={selected === null}
+            loading={submitting}
           >
-            <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform ${
-                showExplanation ? 'rotate-180' : ''
-              }`}
-            />
-            해설 {showExplanation ? '접기' : '펼치기'}
-          </button>
-          {showExplanation && (
-            <p className="mt-2 text-sm text-sage-700 leading-relaxed border-t border-[var(--color-border)] pt-3">
-              {q.explanation}
+            제출하고 채점
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-sage-50)] p-4">
+          <div className={`text-sm font-bold ${outcome.is_correct ? 'text-sage-700' : 'text-[var(--color-warn)]'}`}>
+            {outcome.is_correct ? '정답입니다.' : `오답입니다. 정답은 ${outcome.correct_index + 1}번입니다.`}
+          </div>
+          {outcome.explanation && (
+            <p className="mt-2 text-sm text-sage-700 leading-relaxed whitespace-pre-line">
+              {outcome.explanation}
             </p>
           )}
         </div>
