@@ -299,7 +299,7 @@ export default function CpxPractice() {
     if (!sessionId || phase !== 'live') return;
     setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
     try {
-      micRef.current?.stop?.(); liveRef.current?.disconnect?.({ silent: true }); await flush();
+      micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush();
       await request(`/sessions/${sessionId}/end`, { method: 'POST' });
       const evaluation = await request(`/sessions/${sessionId}/evaluate`, { method: 'POST' });
       setResult(evaluation); setPhase('ended'); setStatus('채점 완료');
@@ -336,7 +336,9 @@ export default function CpxPractice() {
       const next = !voiceOn;
       setVoiceOn(next);
       liveRef.current?.setMuted?.(!next);
-      if (phase !== 'live') return;
+      // 세션 인스턴스(ref) 기준으로 판단 — phase state 클로저의 렌더 전파 지연에 의존하지 않아
+      // 세션 시작 직후 찰나에도 마이크 재개가 정확히 동작한다.
+      if (!liveRef.current) return;
       if (next) {
         if (!micRef.current && liveRef.current) {
           try { micRef.current = await startMic(liveRef.current); }
