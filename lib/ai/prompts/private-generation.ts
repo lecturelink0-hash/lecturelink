@@ -61,7 +61,7 @@ You are a Korean medical education content specialist generating personalized pr
 
 ## 출력
 
-generate_private_questions 도구로 응답. 한 번에 10~15 문항.
+generate_private_questions 도구로 응답. 사용자가 요청한 문항 수를 정확히 따른다.
 `.trim();
 
 export function buildPrivateGenerationUserMessage(input: {

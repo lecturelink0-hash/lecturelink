@@ -46,6 +46,12 @@ interface UploadRow {
   processed_at: string | null;
   created_at: string;
   error_message: string | null;
+  processing_stage: string | null;
+  progress_current: number;
+  progress_total: number;
+  completed_question_count: number;
+  target_question_count: number | null;
+  heartbeat_at: string | null;
 }
 
 interface InitUploadRes {
@@ -243,6 +249,12 @@ export default function NotesPage() {
       processed_at: null,
       created_at: new Date().toISOString(),
       error_message: null,
+      processing_stage: null,
+      progress_current: 0,
+      progress_total: 0,
+      completed_question_count: 0,
+      target_question_count: null,
+      heartbeat_at: null,
     };
   }
 
@@ -313,9 +325,13 @@ export default function NotesPage() {
     }
   }
 
-  async function pollUploadStatus(uploadId: string): Promise<UploadDetailRes | null> {
+  async function pollUploadStatus(
+    uploadId: string,
+    onPartial: (questions: GenQ[]) => void,
+  ): Promise<UploadDetailRes | null> {
     // 대용량 강의록은 OCR과 문항 생성에 5분 이상 걸릴 수 있다. 큐 작업은
     // 브라우저 요청과 독립적으로 진행되므로 충분히 기다리고 완료 상태를 복구한다.
+    let partialShown = false;
     for (let i = 0; i < 300; i += 1) {
       try {
         const list = await api.get<UploadRow[]>('/api/uploads');
@@ -324,6 +340,16 @@ export default function NotesPage() {
         setMaterials((prev) =>
           prev.map((m) => (m.id === uploadId ? { ...m, ...found } : m)),
         );
+        if (
+          !partialShown &&
+          found.completed_question_count >= Math.min(5, count)
+        ) {
+          const partialQuestions = await fetchGeneratedQuestions(uploadId);
+          if (partialQuestions.length > 0) {
+            partialShown = true;
+            onPartial(partialQuestions);
+          }
+        }
         if (found.status === 'completed' || found.status === 'failed') {
           return {
             id: found.id,
@@ -370,7 +396,10 @@ export default function NotesPage() {
       });
 
       if (res.status === 'queued') {
-        const final = await pollUploadStatus(uploadId);
+        const final = await pollUploadStatus(uploadId, (partialQuestions) => {
+          setGenerated({ total: partialQuestions.length, questions: partialQuestions });
+          setShowResult(true);
+        });
         if (final?.status === 'completed') {
           return await fetchGeneratedQuestions(uploadId);
         }
@@ -1270,7 +1299,7 @@ function FileRow({
         <div className="file-name">{upload.file_name}</div>
         <div className="file-meta">
           <span>{sizeMB} MB</span>
-          <StatusLabel status={upload.status} isProcessing={isProcessing} />
+          <StatusLabel upload={upload} isProcessing={isProcessing} />
         </div>
         {errMsg && (
           <div
@@ -1293,12 +1322,13 @@ function FileRow({
 }
 
 function StatusLabel({
-  status,
+  upload,
   isProcessing,
 }: {
-  status: UploadStatus;
+  upload: UploadRow;
   isProcessing: boolean;
 }) {
+  const { status } = upload;
   if (status === 'queued') {
     return (
       <span className="inline-flex items-center gap-1 text-[var(--color-beta)]">
@@ -1308,10 +1338,23 @@ function StatusLabel({
     );
   }
   if (isProcessing || status === 'processing') {
+    const stageLabel: Record<string, string> = {
+      downloading: '자료 불러오는 중',
+      extracting: '페이지 추출 중',
+      vision: '이미지 분석 중',
+      ocr: '텍스트 판독 중',
+      generating: '문항 생성 중',
+      partially_completed: '나머지 문항 생성 중',
+    };
+    const progress =
+      upload.progress_total > 0
+        ? ` ${upload.progress_current}/${upload.progress_total}`
+        : '';
     return (
       <span className="inline-flex items-center gap-1 text-[var(--color-beta)]">
         <Loader2 className="w-3 h-3 animate-spin" />
-        AI 처리 중
+        {(upload.processing_stage && stageLabel[upload.processing_stage]) || 'AI 처리 중'}
+        {progress}
       </span>
     );
   }

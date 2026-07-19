@@ -67,6 +67,48 @@ const MAX_VISION_SLIDES = 100;     // detectMedicalRegions 대상 슬라이드 �
 const MAX_FEATURED_IMAGES = 15;    // 선별 후 생성에 투입하는 이미지 상한(내용에 따라 가변, 최대 15)
 const MAX_EMBEDDED_CANDIDATES = 40; // AI 선별에 넣을 후보(추출) 상한
 const VISION_CONCURRENCY = 6;      // 페이지 vision/OCR 동시 처리 수 — 순차 대비 대용량 대폭 가속
+const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 저해상도
+
+async function selectLikelyImagePages(
+  pages: Array<{ pageIndex: number; png: Uint8Array }>,
+): Promise<number[]> {
+  const { createCanvas, loadImage } = await import('canvas');
+  const selected: number[] = [];
+  for (const page of pages) {
+    try {
+      const image = await loadImage(Buffer.from(page.png));
+      const width = 48;
+      const height = Math.max(24, Math.round((image.height / image.width) * width));
+      const canvas = createCanvas(width, height);
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0, width, height);
+      const pixels = context.getImageData(0, 0, width, height).data;
+      let dark = 0;
+      let colored = 0;
+      let midtone = 0;
+      const total = width * height;
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        const r = pixels[offset];
+        const g = pixels[offset + 1];
+        const b = pixels[offset + 2];
+        const average = (r + g + b) / 3;
+        if (average < 90) dark += 1;
+        if (Math.max(r, g, b) - Math.min(r, g, b) > 28 && average < 245) colored += 1;
+        if (average >= 90 && average < 220) midtone += 1;
+      }
+      // Text glyphs mostly disappear at 48px width. Medical photos, radiology,
+      // charts, and shaded diagrams retain contiguous dark/color/midtone mass.
+      if (dark / total > 0.025 || colored / total > 0.035 || midtone / total > 0.11) {
+        selected.push(page.pageIndex);
+      }
+    } catch {
+      // A page that cannot be scored is kept so local selection never becomes
+      // a silent content-loss mechanism.
+      selected.push(page.pageIndex);
+    }
+  }
+  return selected;
+}
 
 /**
  * items 를 최대 `limit` 개씩 동시에 처리하고, 입력 순서를 보존한 결과 배열을 반환한다.
@@ -77,9 +119,11 @@ async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
   fn: (item: T, index: number) => Promise<R>,
+  onProgress?: (completed: number, total: number) => Promise<void> | void,
 ): Promise<R[]> {
   const results = new Array<R>(items.length);
   let cursor = 0;
+  let completed = 0;
   const workerCount = Math.max(1, Math.min(limit, items.length));
   const workers = Array.from({ length: workerCount }, async () => {
     for (;;) {
@@ -87,6 +131,8 @@ async function mapWithConcurrency<T, R>(
       cursor += 1;
       if (i >= items.length) break;
       results[i] = await fn(items[i], i);
+      completed += 1;
+      await onProgress?.(completed, items.length);
     }
   });
   await Promise.all(workers);
@@ -266,6 +312,7 @@ async function extractFromBuffer(input: {
   buffer: ArrayBuffer;
   fileType: string;
   userIdForLog: string;
+  onVisionProgress?: (completed: number, total: number) => Promise<void> | void;
 }): Promise<{ slides: ExtractedSlide[]; warnings: string[] }> {
   const { buffer, fileType, userIdForLog } = input;
   const warnings: string[] = [];
@@ -355,10 +402,30 @@ async function extractFromBuffer(input: {
     //   텍스트가 부족한(스캔/이미지 위주) 자료만 기존 페이지 렌더 + Vision 경로를 탄다.
     let pages: Awaited<ReturnType<typeof renderPdfPages>> = [];
     try {
-        pages = await renderPdfPages(pdfBuffer, {
-          maxPages: MAX_PDF_PAGES,
-          maxEdgePx: PDF_RENDER_EDGE_PX,
-        });
+      if (!pdfEmbeddedCrops) {
+        if (allowWholePageOcrFallback) {
+          pages = await renderPdfPages(pdfBuffer, {
+            maxPages: MAX_PDF_PAGES,
+            maxEdgePx: PDF_RENDER_EDGE_PX,
+          });
+        } else {
+          const scanPages = await renderPdfPages(pdfBuffer, {
+            maxPages: MAX_PDF_PAGES,
+            maxEdgePx: PDF_SCAN_EDGE_PX,
+          });
+          const candidatePages = await selectLikelyImagePages(scanPages);
+          if (candidatePages.length > 0) {
+            pages = await renderPdfPages(pdfBuffer, {
+              pages: candidatePages,
+              maxPages: MAX_PDF_PAGES,
+              maxEdgePx: PDF_RENDER_EDGE_PX,
+            });
+          }
+          warnings.push(
+            `로컬 이미지 후보 선별: 전체 ${scanPages.length}페이지 중 ${candidatePages.length}페이지 Vision 대상.`,
+          );
+        }
+      }
       } catch (e) {
         warnings.push(
           `PDF 페이지 렌더 실패 — 텍스트만 사용. ${
@@ -507,10 +574,13 @@ async function extractFromBuffer(input: {
   }
 
   // 선정된 페이지들의 검출+crop+전처리를 병렬로 수행 (순차 대비 대용량 스캔 대폭 가속).
-  await mapWithConcurrency(visionIndices, VISION_CONCURRENCY, async (idx) => {
-    const s = slidesData[idx];
-    try {
-      const det = await detectMedicalRegions({ slidePng: s.png, userIdForLog });
+  await mapWithConcurrency(
+    visionIndices,
+    VISION_CONCURRENCY,
+    async (idx) => {
+      const s = slidesData[idx];
+      try {
+        const det = await detectMedicalRegions({ slidePng: s.png, userIdForLog });
       // fallback: 의료 이미지 검출 0건인 페이지는 페이지 전체를 region 으로 잡아
       // OCR/Claude 가 슬라이드 텍스트·도표를 볼 수 있게 한다.
       const regionsToUse =
@@ -535,15 +605,17 @@ async function extractFromBuffer(input: {
           preprocessed.push(c); // 원본 그대로 진행
         }
       }
-      slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: preprocessed };
-    } catch (e) {
-      warnings.push(
-        `slide ${s.pageIndex}: 영역 검출 실패 — ${e instanceof Error ? e.message : String(e)}`,
-      );
-      slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: [] };
-    }
-    return null;
-  });
+        slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: preprocessed };
+      } catch (e) {
+        warnings.push(
+          `slide ${s.pageIndex}: 영역 검출 실패 — ${e instanceof Error ? e.message : String(e)}`,
+        );
+        slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: [] };
+      }
+      return null;
+    },
+    input.onVisionProgress,
+  );
 
   const imagePages = slidesData.filter((s) => s.png.length > 0).length;
   if (imagePages > MAX_VISION_SLIDES) {
@@ -570,6 +642,24 @@ export async function generatePrivateQuestionsFromUpload(
   const desiredCount = input.desiredCount ?? 12;
   const style = input.style ?? 'kmle';
 
+  const updateProgress = async (
+    stage: string,
+    current = 0,
+    total = 0,
+    extra: Record<string, unknown> = {},
+  ) => {
+    await admin
+      .from('user_uploads')
+      .update({
+        processing_stage: stage,
+        progress_current: current,
+        progress_total: total,
+        heartbeat_at: new Date().toISOString(),
+        ...extra,
+      })
+      .eq('id', input.uploadId);
+  };
+
   // 1) Upload 조회
   const { data: upload, error: uploadErr } = await admin
     .from('user_uploads')
@@ -586,7 +676,16 @@ export async function generatePrivateQuestionsFromUpload(
 
   await admin
     .from('user_uploads')
-    .update({ status: 'processing' })
+    .update({
+      status: 'processing',
+      processing_stage: 'downloading',
+      progress_current: 0,
+      progress_total: 0,
+      completed_question_count: 0,
+      target_question_count: desiredCount,
+      heartbeat_at: new Date().toISOString(),
+      error_message: null,
+    })
     .eq('id', upload.id);
 
   const startTime = Date.now();
@@ -606,15 +705,19 @@ export async function generatePrivateQuestionsFromUpload(
     const fileBuffer = await fileBlob.arrayBuffer();
 
     // 3) 추출 (페이지 텍스트 + crop 이미지)
+    await updateProgress('extracting');
     const { slides, warnings } = await extractFromBuffer({
       buffer: fileBuffer,
       fileType: upload.file_type,
       userIdForLog: input.userId,
+      onVisionProgress: async (completed, total) =>
+        updateProgress('vision', completed, total),
     });
     const referenceImages = await loadReferenceImages({
       uploadIds: input.referenceUploadIds ?? [],
       userId: input.userId,
     });
+    await updateProgress('ocr', 0, slides.length, { page_count: slides.length });
 
     // 4) crop 이미지 OCR — 페이지 단위로 병렬 처리(대용량 스캔 가속). 순서는 보존.
     let ocrChars = 0;
@@ -648,6 +751,7 @@ export async function generatePrivateQuestionsFromUpload(
           cropCount: s.croppedImages.length,
         };
       },
+      async (completed, total) => updateProgress('ocr', completed, total),
     );
     totalCropped = slides.reduce((n, s) => n + s.croppedImages.length, 0);
 
@@ -727,14 +831,9 @@ export async function generatePrivateQuestionsFromUpload(
     if (diffDirective || typeDirective) {
       systemPrompt += `\n\n## 사용자 지정 출제 조건\n${[diffDirective, typeDirective].filter(Boolean).join('\n')}`;
     }
-    const userMessage = buildPrivateGenerationUserMessage({
-      subTopicCatalog: catalog,
-      desiredCount,
-      style,
-    });
-
     const client = getAnthropic();
     modelUsed = MODELS.generation();
+    await updateProgress('generating', 0, desiredCount);
 
     // crop 된 의료 이미지 — Claude 에 인덱스 라벨과 함께 제시.
     // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
@@ -742,216 +841,271 @@ export async function generatePrivateQuestionsFromUpload(
       .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
       .slice(0, MAX_FEATURED_IMAGES);
 
-    // Claude 입력: [이미지 N] 라벨 + 이미지를 인덱스 순서로 넣고, 마지막에 텍스트 컨텍스트.
-    // 라벨 덕분에 Claude 가 각 이미지를 image_indices 로 참조할 수 있다.
-    const userContent: Anthropic.MessageParam['content'] = [];
-    for (let i = 0; i < referenceImages.length; i++) {
-      userContent.push({
-        type: 'text',
-        text: `[기출 형식 참고 ${i + 1}] 내용은 출제 근거로 사용하지 말고 문항의 구조, 질문 방식, 선지 구성 방식만 참고하세요.`,
-      });
-      userContent.push({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/png',
-          data: Buffer.from(referenceImages[i]).toString('base64'),
-        },
-      } as Anthropic.ImageBlockParam);
-    }
-    for (let i = 0; i < featuredImages.length; i++) {
-      userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
-      userContent.push({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/png',
-          data: Buffer.from(featuredImages[i].c.png).toString('base64'),
-        },
-      } as Anthropic.ImageBlockParam);
-    }
-    userContent.push({
-      type: 'text',
-      text:
-        `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
-        (compositeText || '(추출된 텍스트·이미지 없음)') +
-        `\n\n${userMessage}`,
-    });
-
-    const response = await withRetry(() =>
-      createMessage(client, {
-        model: modelUsed,
-        max_tokens: 16000,
-        system: [
-          {
-            type: 'text',
-            text: systemPrompt,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        tools: [PRIVATE_GENERATION_TOOL_SCHEMA],
-        tool_choice: { type: 'tool', name: 'generate_private_questions' },
-        messages: [{ role: 'user', content: userContent }],
-      }),
-    );
-
-    const toolUseBlock = response.content.find(
-      (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
-    );
-    if (!toolUseBlock) {
-      throw new Error('Claude 응답에 tool_use 블록이 없음');
-    }
-
-    const parsed = toolUseBlock.input as {
-      questions: Array<{
-        stem: string;
-        choices: string[];
-        answer_index: number;
-        explanation: string;
-        concepts: string[];
-        difficulty: 1 | 2 | 3;
-        image_indices: number[];
-        sub_topic_code: string | null;
-      }>;
-      content_summary: string;
+    type GeneratedQuestion = {
+      stem: string;
+      choices: string[];
+      answer_index: number;
+      explanation: string;
+      concepts: string[];
+      difficulty: 1 | 2 | 3;
+      image_indices: number[];
+      sub_topic_code: string | null;
+    };
+    type BatchResult = {
+      generatedCount: number;
+      contentSummary: string;
+      ids: string[];
+      unmatched: number;
+      cacheReadTokens: number;
+      cacheCreationTokens: number;
     };
 
-    if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-      throw new Error(
-        `Claude 생성 응답 파싱 실패: questions 배열 아님 (stop_reason=${response.stop_reason}, 응답이 max_tokens 로 잘렸을 수 있음)`,
-      );
-    }
+    const validImageIndex = (i: number) => i >= 0 && i < featuredImages.length;
+    let completedQuestions = 0;
 
-    const genCost = calculateCost(
-      modelUsed,
-      response.usage.input_tokens,
-      response.usage.output_tokens,
-      response.usage.cache_read_input_tokens ?? 0,
-      response.usage.cache_creation_input_tokens ?? 0,
-    );
-    totalCost += genCost;
-    aggInputTokens += response.usage.input_tokens;
-    aggOutputTokens += response.usage.output_tokens;
-
-    await recordAiCost({
-      userId: input.userId,
-      endpoint: 'private.generate',
-      model: modelUsed,
-      costUsd: genCost,
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-      metadata: {
-        uploadId: upload.id,
-        slides: slides.length,
-        croppedImages: totalCropped,
-        ocrChars,
-      },
-    });
-
-    // 8) DB 저장
-    let unmatched = 0;
-    const rows = parsed.questions.map((q) => {
-      const subTopicId = q.sub_topic_code
-        ? codeToId.get(q.sub_topic_code) ?? null
-        : null;
-      if (!subTopicId) unmatched += 1;
-      return {
-        user_id: input.userId,
-        upload_id: upload.id,
-        sub_topic_id: subTopicId,
-        stem: q.stem,
-        choices: q.choices,
-        answer_index: q.answer_index,
-        explanation: q.explanation,
-        concepts: q.concepts ?? [],
-        difficulty: q.difficulty,
-      };
-    });
-
-    // 생성 결과가 0개면 사용자에게 의미 있는 실패 메시지를 남긴다.
-    if (rows.length === 0) {
-      throw new Error(
-        '자료에서 문항을 생성하지 못했습니다. 자료의 길이/품질을 확인하거나 다른 자료를 시도해주세요.',
-      );
-    }
-
-    const { data: inserted, error: insertErr } = await admin
-      .from('private_questions')
-      .insert(rows)
-      .select('id');
-    if (insertErr) {
-      // 내부 supabase 에러 코드는 사용자에 노출하지 않음.
-      throw new Error('생성된 문항을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
-    }
-
-    // 8-2) 의료 이미지 연결.
-    //      inserted[idx] 는 parsed.questions[idx] 와 순서 동일 (Postgres INSERT RETURNING 보장).
-    const validIndex = (i: number) => i >= 0 && i < featuredImages.length;
-
-    // 실제 사용된 이미지 인덱스만 모아(중복 제거) Storage 에 업로드 — 미사용 crop 은 올리지 않음.
-    const usedIndices = new Set<number>();
-    for (const q of parsed.questions) {
-      for (const i of q.image_indices ?? []) {
-        if (validIndex(i)) usedIndices.add(i);
-      }
-    }
-
-    const indexToPath = new Map<number, string>();
-    for (const i of usedIndices) {
-      const imgPath = `${upload.user_id}/${upload.id}/crops/q_image_${i}.png`;
-      const { error: upErr } = await admin.storage
-        .from(STORAGE_BUCKET)
-        .upload(imgPath, Buffer.from(featuredImages[i].c.png), {
-          contentType: 'image/png',
-          upsert: true,
+    const generateAndPersistBatch = async (
+      batchIndex: number,
+      batchSize: number,
+      batchCount: number,
+    ): Promise<BatchResult> => {
+      const slotOffset = batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0);
+      const slotEnd = slotOffset + batchSize - 1;
+      const { data: existingBatch, error: existingBatchError } = await admin
+        .from('private_questions')
+        .select('id, generation_slot')
+        .eq('upload_id', upload.id)
+        .gte('generation_slot', slotOffset)
+        .lte('generation_slot', slotEnd);
+      if (existingBatchError) throw existingBatchError;
+      if ((existingBatch?.length ?? 0) >= batchSize) {
+        completedQuestions += batchSize;
+        await updateProgress('partially_completed', completedQuestions, desiredCount, {
+          completed_question_count: completedQuestions,
         });
-      if (upErr) {
-        warnings.push(`이미지 ${i} Storage 저장 실패 — ${upErr.message}`);
-      } else {
-        indexToPath.set(i, imgPath);
+        return {
+          generatedCount: batchSize,
+          contentSummary: '',
+          ids: (existingBatch ?? []).map((row) => row.id),
+          unmatched: 0,
+          cacheReadTokens: 0,
+          cacheCreationTokens: 0,
+        };
       }
-    }
 
-    // 각 문항의 image_indices → private_question_images 행들 (sort_order 로 순서 보존).
-    const imageRows = parsed.questions.flatMap((q, qi) => {
-      const qId = inserted?.[qi]?.id;
-      if (!qId) return [];
-      return (q.image_indices ?? [])
-        .filter(validIndex)
-        .map((i, order) => {
-          const path = indexToPath.get(i);
-          if (!path) return null;
-          const fi = featuredImages[i];
-          return {
-            private_question_id: qId,
-            user_id: input.userId,
-            upload_id: upload.id,
-            storage_path: path,
-            source_page: fi.slide,
-            kind: fi.c.region.kind,
-            caption: fi.c.region.caption ?? null,
-            sort_order: order,
-          };
-        })
-        .filter((r): r is NonNullable<typeof r> => r !== null);
-    });
-
-    if (imageRows.length > 0) {
-      const { error: imgErr } = await admin
-        .from('private_question_images')
-        .insert(imageRows);
-      if (imgErr) {
-        warnings.push(`이미지 연결 저장 실패 — ${imgErr.message}`);
+      const userMessage = buildPrivateGenerationUserMessage({
+        subTopicCatalog: catalog,
+        desiredCount: batchSize,
+        style,
+      });
+      const userContent: Anthropic.MessageParam['content'] = [];
+      for (let i = 0; i < referenceImages.length; i++) {
+        userContent.push({
+          type: 'text',
+          text: `[기출 형식 참고 ${i + 1}] 내용은 출제 근거로 사용하지 말고 문항의 구조, 질문 방식, 선지 구성 방식만 참고하세요.`,
+        });
+        userContent.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: 'image/png',
+            data: Buffer.from(referenceImages[i]).toString('base64'),
+          },
+        } as Anthropic.ImageBlockParam);
       }
-    }
+      for (let i = 0; i < featuredImages.length; i++) {
+        userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
+        userContent.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: 'image/png',
+            data: Buffer.from(featuredImages[i].c.png).toString('base64'),
+          },
+        } as Anthropic.ImageBlockParam);
+      }
+      const batchDirective =
+        batchCount === 1
+          ? ''
+          : batchIndex === 0
+            ? '\n\n이번 묶음은 전체 출제 계획의 1차 묶음입니다. 자료 전반의 핵심·기본 개념을 우선해 정확히 지정된 수만큼 만드세요.'
+            : '\n\n이번 묶음은 전체 출제 계획의 2차 묶음입니다. 응용·감별·후반부 내용을 우선하고, 전형적인 기본 정의 문항은 피하세요.';
+      userContent.push({
+        type: 'text',
+        text:
+          `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
+          (compositeText || '(추출된 텍스트·이미지 없음)') +
+          `\n\n${userMessage}${batchDirective}`,
+      });
+
+      const response = await withRetry(() =>
+        createMessage(client, {
+          model: modelUsed,
+          max_tokens: Math.min(10000, Math.max(6000, batchSize * 1200)),
+          system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+          tools: [PRIVATE_GENERATION_TOOL_SCHEMA],
+          tool_choice: { type: 'tool', name: 'generate_private_questions' },
+          messages: [{ role: 'user', content: userContent }],
+        }),
+      );
+      const toolUseBlock = response.content.find(
+        (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
+      );
+      if (!toolUseBlock) throw new Error('Claude 응답에 tool_use 블록이 없음');
+      const parsed = toolUseBlock.input as {
+        questions: GeneratedQuestion[];
+        content_summary: string;
+      };
+      if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+        throw new Error(`Claude 생성 응답 파싱 실패 (batch=${batchIndex + 1})`);
+      }
+
+      const genCost = calculateCost(
+        modelUsed,
+        response.usage.input_tokens,
+        response.usage.output_tokens,
+        response.usage.cache_read_input_tokens ?? 0,
+        response.usage.cache_creation_input_tokens ?? 0,
+      );
+      totalCost += genCost;
+      aggInputTokens += response.usage.input_tokens;
+      aggOutputTokens += response.usage.output_tokens;
+      await recordAiCost({
+        userId: input.userId,
+        endpoint: 'private.generate',
+        model: modelUsed,
+        costUsd: genCost,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+        metadata: {
+          uploadId: upload.id,
+          batch: batchIndex + 1,
+          batchCount,
+          slides: slides.length,
+          croppedImages: totalCropped,
+          ocrChars,
+        },
+      });
+
+      let unmatched = 0;
+      const rows = parsed.questions.slice(0, batchSize).map((q, questionIndex) => {
+        const subTopicId = q.sub_topic_code ? codeToId.get(q.sub_topic_code) ?? null : null;
+        if (!subTopicId) unmatched += 1;
+        return {
+          user_id: input.userId,
+          upload_id: upload.id,
+          sub_topic_id: subTopicId,
+          stem: q.stem,
+          choices: q.choices,
+          answer_index: q.answer_index,
+          explanation: q.explanation,
+          concepts: q.concepts ?? [],
+          difficulty: q.difficulty,
+          generation_slot: slotOffset + questionIndex,
+        };
+      });
+      const { data: inserted, error: insertErr } = await admin
+        .from('private_questions')
+        .upsert(rows, { onConflict: 'upload_id,generation_slot' })
+        .select('id');
+      if (insertErr || !inserted) {
+        throw new Error('생성된 문항을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      }
+
+      const usedIndices = new Set<number>();
+      for (const q of parsed.questions) {
+        for (const i of q.image_indices ?? []) if (validImageIndex(i)) usedIndices.add(i);
+      }
+      const indexToPath = new Map<number, string>();
+      for (const i of usedIndices) {
+        const imgPath = `${upload.user_id}/${upload.id}/crops/q_image_${i}.png`;
+        const { error: upErr } = await admin.storage
+          .from(STORAGE_BUCKET)
+          .upload(imgPath, Buffer.from(featuredImages[i].c.png), {
+            contentType: 'image/png',
+            upsert: true,
+          });
+        if (upErr) warnings.push(`이미지 ${i} Storage 저장 실패 — ${upErr.message}`);
+        else indexToPath.set(i, imgPath);
+      }
+      const imageRows = parsed.questions.flatMap((q, qi) => {
+        const qId = inserted[qi]?.id;
+        if (!qId) return [];
+        return (q.image_indices ?? [])
+          .filter(validImageIndex)
+          .map((i, order) => {
+            const storagePath = indexToPath.get(i);
+            if (!storagePath) return null;
+            const fi = featuredImages[i];
+            return {
+              private_question_id: qId,
+              user_id: input.userId,
+              upload_id: upload.id,
+              storage_path: storagePath,
+              source_page: fi.slide,
+              kind: fi.c.region.kind,
+              caption: fi.c.region.caption ?? null,
+              sort_order: order,
+            };
+          })
+          .filter((row): row is NonNullable<typeof row> => row !== null);
+      });
+      if (imageRows.length > 0) {
+        const { error: imageError } = await admin
+          .from('private_question_images')
+          .upsert(imageRows, { onConflict: 'private_question_id,storage_path' });
+        if (imageError) warnings.push(`이미지 연결 저장 실패 — ${imageError.message}`);
+      }
+
+      completedQuestions += rows.length;
+      await updateProgress(
+        completedQuestions < desiredCount ? 'partially_completed' : 'generating',
+        completedQuestions,
+        desiredCount,
+        { completed_question_count: completedQuestions },
+      );
+      return {
+        generatedCount: rows.length,
+        contentSummary: parsed.content_summary,
+        ids: inserted.map((row) => row.id),
+        unmatched,
+        cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+        cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
+      };
+    };
+
+    const firstBatchSize = Math.min(5, desiredCount);
+    const batchSizes =
+      desiredCount > firstBatchSize
+        ? [firstBatchSize, desiredCount - firstBatchSize]
+        : [firstBatchSize];
+    const batchResults = await Promise.all(
+      batchSizes.map((batchSize, batchIndex) =>
+        generateAndPersistBatch(batchIndex, batchSize, batchSizes.length),
+      ),
+    );
+    const generatedCount = batchResults.reduce((sum, result) => sum + result.generatedCount, 0);
+    const insertedIds = batchResults.flatMap((result) => result.ids);
+    const unmatched = batchResults.reduce((sum, result) => sum + result.unmatched, 0);
+    const contentSummary = batchResults.map((result) => result.contentSummary).find(Boolean) ?? '';
+    const cacheReadTokens = batchResults.reduce((sum, result) => sum + result.cacheReadTokens, 0);
+    const cacheCreationTokens = batchResults.reduce(
+      (sum, result) => sum + result.cacheCreationTokens,
+      0,
+    );
 
     const titleTrim = input.title?.trim();
     await admin
       .from('user_uploads')
       .update({
         status: 'completed',
+        processing_stage: 'completed',
+        progress_current: generatedCount,
+        progress_total: desiredCount,
+        completed_question_count: generatedCount,
+        target_question_count: desiredCount,
+        heartbeat_at: new Date().toISOString(),
         processed_at: new Date().toISOString(),
-        extracted_text: parsed.content_summary.slice(0, 2000),
+        extracted_text: contentSummary.slice(0, 2000),
         error_message: null,
         // 사용자가 지정한 문제집 이름이 있으면 세트 표시명으로 저장.
         ...(titleTrim ? { file_name: titleTrim } : {}),
@@ -966,16 +1120,16 @@ export async function generatePrivateQuestionsFromUpload(
     }
 
     return {
-      generatedCount: parsed.questions.length,
-      privateQuestionIds: (inserted ?? []).map((r) => r.id),
-      contentSummary: parsed.content_summary,
+      generatedCount,
+      privateQuestionIds: insertedIds,
+      contentSummary,
       unmatched,
       usage: {
         model: modelUsed,
         inputTokens: aggInputTokens,
         outputTokens: aggOutputTokens,
-        cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
-        cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
+        cacheReadTokens,
+        cacheCreationTokens,
         costUSD: totalCost,
         durationMs: Date.now() - startTime,
       },
@@ -990,6 +1144,8 @@ export async function generatePrivateQuestionsFromUpload(
       .from('user_uploads')
       .update({
         status: 'failed',
+        processing_stage: 'failed',
+        heartbeat_at: new Date().toISOString(),
         error_message: sanitizeErrorMessage(error),
       })
       .eq('id', upload.id);
