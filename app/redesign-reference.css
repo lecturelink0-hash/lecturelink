@@ -530,8 +530,27 @@
       display: grid;
       grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
       gap: 18px;
-      align-items: start;
+      /* 두 열의 높이를 맞춰 '나의 학습분석'·'다른 학습 시작' 아래 빈 공간 제거 */
+      align-items: stretch;
       margin-bottom: 10px;
+    }
+
+    /* 각 열을 세로 플렉스로 만들어 카드가 열 높이를 꽉 채우도록 한다. */
+    .ll-dashboard-page .secondary-grid > div {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .ll-dashboard-page .secondary-grid > div > .card {
+      flex: 1;
+    }
+    /* 왼쪽 분석 카드: 내부를 세로로 펼치고 안내 박스를 하단에 붙여 여백을 메운다. */
+    .ll-dashboard-page .secondary-grid .quiet-card {
+      display: flex;
+      flex-direction: column;
+    }
+    .ll-dashboard-page .secondary-grid .analysis-action {
+      margin-top: auto;
     }
 
     .ll-dashboard-page .quiet-card {
