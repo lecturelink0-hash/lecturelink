@@ -77,23 +77,31 @@ const HEAD_FEMALE = [
   'HSSSMMMSSSSH',
   '...SSSSSS...',
 ];
-// 몸통(팔 스윙) 3프레임: 앞주먹 전진 / 양팔 중간 / 앞주먹 후퇴
+// 몸통(팔 스윙) 3프레임 — 운동선수처럼 팔을 앞뒤로 크게 흔든다.
+// A: 앞주먹 얼굴 높이까지 전진 + 뒷주먹 엉덩이 뒤로 / B: 교차(양팔 몸 옆) / C: 반대 스윙
 const BODY_FRAMES = [
-  ['..TTTTTTTT..', '..TTTTTTTSS.', '.SSTTTTTTT..', '..TTTTTTTT..'],
-  ['..TTTTTTTT..', '.SSTTTTTTSS.', '..TTTTTTTT..', '..TTTTTTTT..'],
-  ['..TTTTTTTT..', '.SSTTTTTTT..', '..TTTTTTTSS.', '..TTTTTTTT..'],
+  ['..TTTTTTTSS.', '..TTTTTTTT..', 'SSTTTTTTTT..', '..TTTTTTTT..'],
+  ['..TTTTTTTT..', '.STTTTTTTTS.', '..TTTTTTTT..', '..TTTTTTTT..'],
+  ['SSTTTTTTTT..', '..TTTTTTTT..', '..TTTTTTTTSS', '..TTTTTTTT..'],
 ];
-// 다리 3프레임: 오른발 전진 / 교차(모음) / 왼발 전진
+// 다리 3프레임 — 스프린트 자세: 앞다리 쭉 뻗고 뒷다리 뒤꿈치가 엉덩이까지 접힌다.
+// A: 오른다리 전진 착지 + 왼다리 뒤로 접어 올림
+// B: 교차(다리 모아 지나감)
+// C: 왼다리 전진(무릎 들어올림) + 오른다리 뒤로 뻗음
 const LEG_FRAMES = [
-  ['...LLLLLL...', '..LLLL.LLL..', '.LLL....LLL.', '.WW......LL.', '..........WW'],
+  ['...LLLLLL...', '..LL...LLL..', '.WLL....LLL.', '..........LL', '..........WW'],
   ['...LLLLLL...', '....LLLL....', '....LLLL....', '....LLLL....', '....WWWW....'],
-  ['...LLLLLL...', '..LLL.LLLL..', '.LLL....LLL.', '.LL......WW.', 'WW..........'],
+  ['...LLLLLL...', '..LLL.LLL...', '.LLL...LLL..', '.WW.....LL..', '........WW..'],
 ];
 // 점프(무릎 모음)
 const LEG_JUMP = ['...LLLLLL...', '..LLLLLLLL..', '..LL....LL..', '..WW....WW..', '............'];
 
+// 달릴 때 머리를 1셀(4px) 앞으로 기울여 전방 주행감을 준다.
+const leanRight = (rows: string[]): string[] => rows.map((r) => ('.' + r).slice(0, SPRITE_W));
+
 function buildFrames(head: string[]): { run: string[][]; jump: string[] } {
-  const run = BODY_FRAMES.map((body, i) => [...head, ...body, ...LEG_FRAMES[i]]);
+  const leanHead = leanRight(head);
+  const run = BODY_FRAMES.map((body, i) => [...leanHead, ...body, ...LEG_FRAMES[i]]);
   const jump = [...head, ...BODY_FRAMES[1], ...LEG_JUMP];
   return { run, jump };
 }
@@ -174,14 +182,22 @@ export default function GenerationLoadingGame({
     const tick = () => {
       const { start, p0 } = etaRef.current;
       const elapsed = (performance.now() - start) / 1000;
+      // 보통 1분 내외로 끝난다 — 사용자에게 절대 "2분 초과"로 안내하지 않는다.
+      // 남은 시간 = 기본 추정 2분에서 경과 시간만큼 감소(최소 10초 표시 유지).
+      if (elapsed > 130) {
+        setEtaText('곧 완료됩니다…');
+        return;
+      }
       const dp = progress - p0;
       let secs: number;
       if (elapsed > 8 && dp > 1.5) {
         secs = (100 - progress) * (elapsed / dp); // 실측 속도 기반
       } else {
-        secs = Math.max(120 - elapsed, 15); // 기본 추정 2분에서 감소
+        secs = 120 - elapsed;
       }
-      setEtaText(formatEta(Math.min(600, Math.max(5, secs))));
+      // 상한 2분: 어떤 경우에도 그 이상으로 안내하지 않는다.
+      secs = Math.min(120 - elapsed * 0.5, secs);
+      setEtaText(formatEta(Math.min(120, Math.max(10, secs))));
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -321,25 +337,38 @@ export default function GenerationLoadingGame({
     resize();
     window.addEventListener('resize', resize);
 
+    const pushGround = (s: typeof stateRef.current, x: number) => {
+      const h = 34 + Math.floor(Math.random() * 20); // 책상/의자 높이 (1.5배)
+      s.obstacles.push({
+        x,
+        w: 34 + Math.floor(Math.random() * 16),
+        h,
+        top: GROUND_Y - h,
+        type: 'ground',
+      });
+    };
+
     const spawn = (s: typeof stateRef.current, w: number) => {
-      const pAir = Math.min(0.42, s.elapsed / 300);
-      const isAir = s.elapsed > 12 && Math.random() < pAir;
-      if (isAir) {
-        s.obstacles.push({ x: w + 10, w: 46, h: AIR_H, top: AIR_TOP, type: 'air' });
-      } else {
-        const h = 34 + Math.floor(Math.random() * 20); // 책상/의자 높이 (1.5배)
-        s.obstacles.push({
-          x: w + 10,
-          w: 34 + Math.floor(Math.random() * 16),
-          h,
-          top: GROUND_Y - h,
-          type: 'ground',
-        });
-      }
-      // 난이도: 시간이 지날수록 간격 축소 + 무작위.
       const t = Math.min(MAX_PLAY_SEC, s.elapsed);
-      const base = Math.max(340, 640 - t * 3);
-      s.nextGap = base + Math.random() * 200;
+      // 공중 교재 빈도: 시간이 갈수록 잦아지되, 주기적 파동으로 몰렸다 뜸해졌다를 반복
+      // (배치가 단조롭게 느껴지지 않도록).
+      const wave = 0.5 + 0.5 * Math.sin(s.elapsed / 11);
+      const pAir = s.elapsed > 12 ? Math.min(0.5, (t / MAX_PLAY_SEC) * 0.6 * (0.4 + wave)) : 0;
+      const r = Math.random();
+      if (r < pAir) {
+        s.obstacles.push({ x: w + 10, w: 46, h: AIR_H, top: AIR_TOP, type: 'air' });
+      } else if (s.elapsed > 35 && r < pAir + 0.2) {
+        // 더블 의자 클러스터: 연속 점프를 요구 (35초 이후 등장)
+        pushGround(s, w + 10);
+        pushGround(s, w + 10 + 180 + Math.random() * 60);
+      } else {
+        pushGround(s, w + 10);
+      }
+      // 간격: 시간이 갈수록 평균 축소 + 큰 무작위 폭. 가끔(15%) 긴 휴식 구간을 넣어
+      // 리듬에 완급을 준다.
+      const base = Math.max(330, 660 - t * 3.2);
+      const breather = Math.random() < 0.15 ? 320 + Math.random() * 260 : 0;
+      s.nextGap = base + Math.random() * 260 + breather;
       s.distSinceSpawn = 0;
     };
 
@@ -356,7 +385,8 @@ export default function GenerationLoadingGame({
         s.elapsed += dt;
         const tt = Math.min(MAX_PLAY_SEC, s.elapsed);
         s.speed = Math.min(560, 240 + tt * 8); // 속도 점증(상한)
-        s.runPhase += dt * (s.speed / 24);
+        // 모션 프레임 전환은 천천히 — 조깅 케이던스(초당 약 1.4사이클, 속도 따라 소폭 증가).
+        s.runPhase += dt * (s.speed / 44);
         s.scroll += s.speed * dt;
 
         // 점프 물리
@@ -428,9 +458,12 @@ export default function GenerationLoadingGame({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[var(--color-bg)]">
+    // fixed 오버레이가 아니라 페이지 콘텐츠로 렌더 — 상단 헤더/메뉴 바가 그대로 보여서
+    // 대기 중에도 국시대비·내 문제집 등 다른 화면으로 자유롭게 이동할 수 있다.
+    // (생성은 서버 큐에서 계속 진행되고, 완료 결과는 강의노트/내 문제집에서 확인 가능)
+    <div className="flex flex-col min-h-[calc(100vh-160px)]">
       {/* 상단: 진척 게이지 + 남은 시간 */}
-      <div className="px-4 pt-5 pb-3 sm:px-8">
+      <div className="px-4 pt-2 pb-3 sm:px-8">
         <div className="mx-auto w-full max-w-2xl">
           <GaugeBar progress={progress} etaText={etaText} />
           <p className="mt-2 text-[11px] text-[var(--color-muted)]">
