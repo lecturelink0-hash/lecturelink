@@ -49,6 +49,7 @@ import {
 } from '@/lib/extract/crop-medical-images';
 import { extractEmbeddedPdfImages } from '@/lib/extract/pdf-embedded-images';
 import { selectExamImages } from '@/lib/extract/select-exam-images';
+import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -153,6 +154,20 @@ function sanitizeErrorMessage(raw: unknown): string {
   if (!m) return '알 수 없는 처리 오류';
   if (m.length > 200) m = m.slice(0, 197) + '...';
   return m;
+}
+
+/**
+ * 문두 종결어미를 국시체로 정규화(결정론적 후처리).
+ * 프롬프트가 대부분 "~것은?"으로 유도하지만, 병렬 배치에서 간혹 구어체가 새어나오므로
+ * 여기서 확실히 격식체로 변환한다. (문법이 깨지지 않는 안전한 변환만 수행.)
+ */
+function normalizeStemEnding(stem: string): string {
+  let s = String(stem ?? '').replace(/\s+$/, '');
+  // "...은/는 무엇인가요?/무엇입니까?/무엇인가?" → "...은/는?" (KMLE 표준 종결)
+  s = s.replace(/([은는])\s*무엇(?:인가요|입니까|인가)\s*\?$/u, '$1?');
+  // "...가요?"(정중 구어 의문) → "...가?"(격식 의문). 예: 인가요→인가, 하는가요→하는가
+  s = s.replace(/가요\s*\?$/u, '가?');
+  return s;
 }
 
 export interface PrivateGenerationInput {
@@ -599,11 +614,14 @@ async function extractFromBuffer(input: {
       const preprocessed: CroppedImage[] = [];
       for (const c of cropped) {
         try {
-          const png = await preprocessForOcr(c.png, {
+          // OCR 용 전처리(대비 정규화/흑백)는 별도 이미지(ocrPng)로 유지하고,
+          // 표시·인페인팅에 쓰는 원본 색상 크롭(c.png)은 그대로 보존한다
+          // (전처리본을 그대로 보여주면 컬러 다이어그램이 흑백/저채도로 표시되는 문제 방지).
+          const ocrPng = await preprocessForOcr(c.png, {
             grayscale: c.region.kind === 'ecg' || c.region.kind === 'xray',
             normalizeContrast: true,
           });
-          preprocessed.push({ ...c, png, ocrOnly: isWholePageFallback });
+          preprocessed.push({ ...c, ocrPng, ocrOnly: isWholePageFallback });
         } catch (e) {
           warnings.push(
             `slide ${s.pageIndex}: 전처리 실패 — ${e instanceof Error ? e.message : String(e)}`,
@@ -736,13 +754,14 @@ export async function generatePrivateQuestionsFromUpload(
         for (const c of s.croppedImages) {
           try {
             const r = await runOcr({
-              png: c.png,
+              png: c.ocrPng ?? c.png, // OCR 은 전처리본, 표시는 원본 색상 유지
               userIdForLog: input.userId,
               context: s.text,
             });
             // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
             totalCost += r.costUsd;
             ocrChars += r.text.length;
+            c.ocrText = r.text; // 인페인팅 대상(주석 텍스트 유무) 선별에 사용
             if (r.text) ocrTexts.push(`[${c.region.kind}] ${r.text}`);
           } catch (e) {
             warnings.push(
@@ -841,13 +860,76 @@ export async function generatePrivateQuestionsFromUpload(
     modelUsed = MODELS.generation();
     await updateProgress('generating', 0, desiredCount);
 
-    // crop 된 의료 이미지 — Claude 에 인덱스 라벨과 함께 제시.
+    // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
     // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
     const featuredImages = slides
       .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
       // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
       .filter((x) => !x.c.ocrOnly)
       .slice(0, MAX_FEATURED_IMAGES);
+
+    // 선별 텍스트 인페인팅(비용 최적화): 모든 featured 를 미리 인페인팅하지 않고,
+    // 생성이 "실제 참조한" 이미지에 한해 저장 직전 1회만 인페인팅한다(캐시로 배치 간 중복 방지).
+    // 대상: 다이어그램/일러스트 유형(anatomy_diagram/chart_graph/other) + 주석 텍스트 감지.
+    // 실제 임상 사진(xray/ct/mri/ecg/pathology/microscope/ultrasound)은 재생성 위험이라 제외.
+    // 생성 모델은 원본(주석 포함)을 보고 문항을 만들고(내용 이해), 학생에게는 정제본이 저장된다.
+    const inpaintKinds = new Set(['anatomy_diagram', 'chart_graph', 'other']);
+    const inpaintEnabled = process.env.ENABLE_TEXT_INPAINT !== '0';
+    // 인페인팅 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
+    const RESIDUAL_TEXT_MAX = 8;
+
+    // 인페인팅된 이미지를 다시 OCR 하여 남은 "의미 있는 글자(한글·라틴·숫자)" 개수를 센다.
+    // OCR 실패 시 0 반환(판단 불가 → 과도한 제외 방지).
+    const residualTextLen = async (png: Uint8Array): Promise<number> => {
+      try {
+        const r = await runOcr({ png, userIdForLog: input.userId });
+        totalCost += r.costUsd;
+        return (r.text ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
+      } catch {
+        return 0;
+      }
+    };
+
+    // 표시용 이미지 반환. 인페인팅 대상은 (1차 인페인팅 → OCR 검증 → 필요 시 2차 인페인팅)
+    // 을 거치고, 그래도 글자가 남거나 인페인팅이 실패하면 null 을 반환한다.
+    // null = "정답 단서 텍스트를 못 지운 이미지" → 호출자는 업로드/문항 연결을 하지 않고 제외한다.
+    const inpaintCache = new Map<number, Promise<Uint8Array | null>>();
+    const getDisplayPng = (i: number): Promise<Uint8Array | null> => {
+      const fi = featuredImages[i];
+      const shouldInpaint =
+        inpaintEnabled &&
+        inpaintKinds.has(fi.c.region.kind) &&
+        (fi.c.ocrText?.trim().length ?? 0) >= 8;
+      if (!shouldInpaint) return Promise.resolve(fi.c.png);
+      let p = inpaintCache.get(i);
+      if (!p) {
+        p = (async (): Promise<Uint8Array | null> => {
+          try {
+            let cleaned = await inpaintRemoveText(fi.c.png, { userId: input.userId });
+            if (!cleaned) {
+              // 인페인팅 자체 실패 — 원본에는 정답 단서 텍스트가 남아 있으므로 제외.
+              warnings.push(`이미지 ${i}: 텍스트 제거 실패 — 정답 단서 노출 방지를 위해 문항에서 제외`);
+              return null;
+            }
+            // 검증 1차: 글자가 남아 있으면 한 번 더 인페인팅.
+            if ((await residualTextLen(cleaned)) > RESIDUAL_TEXT_MAX) {
+              const again = await inpaintRemoveText(cleaned, { userId: input.userId });
+              if (again) cleaned = again;
+              // 검증 2차: 그래도 남으면 제외.
+              if ((await residualTextLen(cleaned)) > RESIDUAL_TEXT_MAX) {
+                warnings.push(`이미지 ${i}: 텍스트가 완전히 지워지지 않아 문항에서 제외`);
+                return null;
+              }
+            }
+            return cleaned;
+          } catch {
+            return null;
+          }
+        })();
+        inpaintCache.set(i, p);
+      }
+      return p;
+    };
 
     type GeneratedQuestion = {
       stem: string;
@@ -1002,7 +1084,7 @@ export async function generatePrivateQuestionsFromUpload(
           user_id: input.userId,
           upload_id: upload.id,
           sub_topic_id: subTopicId,
-          stem: q.stem,
+          stem: normalizeStemEnding(q.stem),
           choices: q.choices,
           answer_index: q.answer_index,
           explanation: q.explanation,
@@ -1025,10 +1107,12 @@ export async function generatePrivateQuestionsFromUpload(
       }
       const indexToPath = new Map<number, string>();
       for (const i of usedIndices) {
+        const display = await getDisplayPng(i);
+        if (!display) continue; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
         const imgPath = `${upload.user_id}/${upload.id}/crops/q_image_${i}.png`;
         const { error: upErr } = await admin.storage
           .from(STORAGE_BUCKET)
-          .upload(imgPath, Buffer.from(featuredImages[i].c.png), {
+          .upload(imgPath, Buffer.from(display), {
             contentType: 'image/png',
             upsert: true,
           });
@@ -1051,7 +1135,9 @@ export async function generatePrivateQuestionsFromUpload(
               storage_path: storagePath,
               source_page: fi.slide,
               kind: fi.c.region.kind,
-              caption: fi.c.region.caption ?? null,
+              // 캡션(이미지 하단 작은 글자 설명)은 저장하지 않는다 — OCR 로 잡힌 주석이
+              // 정답 단서로 노출되거나 UI 를 지저분하게 만들어 표시하지 않기로 함.
+              caption: null,
               sort_order: order,
             };
           })
@@ -1064,7 +1150,26 @@ export async function generatePrivateQuestionsFromUpload(
         if (imageError) warnings.push(`이미지 연결 저장 실패 — ${imageError.message}`);
       }
 
-      completedQuestions += rows.length;
+      // 텍스트 제거 실패로 이미지가 제외돼, 이미지 참조 문항인데 연결된 이미지가
+      // 하나도 없게 된 문항은 발문이 없는 그림을 가리키게 되므로 삭제한다.
+      const orphanIds: string[] = [];
+      parsed.questions.forEach((q, qi) => {
+        const idx = (q.image_indices ?? []).filter(validImageIndex);
+        if (idx.length === 0) return;
+        if (idx.some((i) => indexToPath.has(i))) return; // 살아남은 이미지가 하나라도 있으면 유지
+        const qid = inserted[qi]?.id;
+        if (qid) orphanIds.push(qid);
+      });
+      if (orphanIds.length > 0) {
+        await admin.from('private_questions').delete().in('id', orphanIds);
+      }
+      const orphanSet = new Set(orphanIds);
+      const keptIds = inserted
+        .map((row) => row.id)
+        .filter((id): id is string => !!id && !orphanSet.has(id));
+      const keptCount = Math.max(0, rows.length - orphanIds.length);
+
+      completedQuestions += keptCount;
       await updateProgress(
         completedQuestions < desiredCount ? 'partially_completed' : 'generating',
         completedQuestions,
@@ -1072,9 +1177,9 @@ export async function generatePrivateQuestionsFromUpload(
         { completed_question_count: completedQuestions },
       );
       return {
-        generatedCount: rows.length,
+        generatedCount: keptCount,
         contentSummary: parsed.content_summary,
-        ids: inserted.map((row) => row.id),
+        ids: keptIds,
         unmatched,
         cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
         cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
@@ -1091,9 +1196,71 @@ export async function generatePrivateQuestionsFromUpload(
         generateAndPersistBatch(batchIndex, batchSize, batchSizes.length),
       ),
     );
-    const generatedCount = batchResults.reduce((sum, result) => sum + result.generatedCount, 0);
-    const insertedIds = batchResults.flatMap((result) => result.ids);
+    let generatedCount = batchResults.reduce((sum, result) => sum + result.generatedCount, 0);
+    let insertedIds = batchResults.flatMap((result) => result.ids);
     const unmatched = batchResults.reduce((sum, result) => sum + result.unmatched, 0);
+
+    // 동일 의료 이미지 최대 2문제: 병렬 배치라 같은 이미지가 여러 문항(2개 초과)에
+    // 연결될 수 있다. 업로드 전체를 훑어 storage_path 당 문항이 2개를 넘으면 초과분의
+    // 이미지 연결을 제거하고, 그 결과 이미지가 하나도 남지 않은(=이미지 판독 전용) 문항은
+    // 발문이 실제 이미지 없이 이미지를 참조하게 되므로 통째로 삭제한다.
+    try {
+      const MAX_QUESTIONS_PER_IMAGE = 2;
+      const [{ data: linkRows }, { data: slotRows }] = await Promise.all([
+        admin
+          .from('private_question_images')
+          .select('id, private_question_id, storage_path')
+          .eq('upload_id', upload.id),
+        admin
+          .from('private_questions')
+          .select('id, generation_slot')
+          .eq('upload_id', upload.id),
+      ]);
+      const slotOf = new Map((slotRows ?? []).map((r) => [r.id, r.generation_slot ?? 0]));
+      const byPath = new Map<string, { id: string; qid: string }[]>();
+      for (const r of linkRows ?? []) {
+        const arr = byPath.get(r.storage_path) ?? [];
+        arr.push({ id: r.id, qid: r.private_question_id });
+        byPath.set(r.storage_path, arr);
+      }
+      const removeLinkIds: string[] = [];
+      for (const [, arr] of byPath) {
+        // 오래된(먼저 생성된) 문항 우선 유지 — generation_slot 순.
+        arr.sort((a, b) => (slotOf.get(a.qid) ?? 0) - (slotOf.get(b.qid) ?? 0));
+        const keptQ = new Set<string>();
+        for (const r of arr) {
+          if (keptQ.size < MAX_QUESTIONS_PER_IMAGE || keptQ.has(r.qid)) keptQ.add(r.qid);
+          else removeLinkIds.push(r.id);
+        }
+      }
+      if (removeLinkIds.length > 0) {
+        const removedSet = new Set(removeLinkIds);
+        await admin.from('private_question_images').delete().in('id', removeLinkIds);
+        // 링크 제거 후 이미지가 하나도 남지 않은 문항 = 삭제 대상.
+        const remainingByQ = new Map<string, number>();
+        for (const r of linkRows ?? []) {
+          if (removedSet.has(r.id)) continue;
+          remainingByQ.set(
+            r.private_question_id,
+            (remainingByQ.get(r.private_question_id) ?? 0) + 1,
+          );
+        }
+        const affectedQ = new Set(
+          (linkRows ?? []).filter((r) => removedSet.has(r.id)).map((r) => r.private_question_id),
+        );
+        const orphanQ = [...affectedQ].filter((qid) => (remainingByQ.get(qid) ?? 0) === 0);
+        if (orphanQ.length > 0) {
+          await admin.from('private_questions').delete().in('id', orphanQ);
+          const orphanSet = new Set(orphanQ);
+          insertedIds = insertedIds.filter((id) => !orphanSet.has(id));
+          generatedCount = Math.max(0, generatedCount - orphanQ.length);
+        }
+      }
+    } catch (cleanupErr) {
+      warnings.push(
+        `이미지 재사용 정리 실패 — ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
+      );
+    }
     const contentSummary = batchResults.map((result) => result.contentSummary).find(Boolean) ?? '';
     const cacheReadTokens = batchResults.reduce((sum, result) => sum + result.cacheReadTokens, 0);
     const cacheCreationTokens = batchResults.reduce(

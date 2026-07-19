@@ -204,6 +204,10 @@ export interface CroppedImage {
    * (페이지 전체 크롭은 주석 텍스트·여러 그림이 섞여 정답 단서·지저분한 크롭의 원인이 됨.)
    */
   ocrOnly?: boolean;
+  /** 이 크롭에서 OCR 로 추출된 텍스트(주석 유무 판정·인페인팅 대상 선별에 사용). */
+  ocrText?: string;
+  /** OCR 전용 전처리본(대비 정규화/흑백). 표시·인페인팅은 원본 색상 png 를 쓴다. */
+  ocrPng?: Uint8Array;
 }
 
 /**
@@ -221,18 +225,45 @@ export async function cropRegions(
   const W = img.width;
   const H = img.height;
 
+  // 박스 여백 보정용 파라미터.
+  const PAD_FRAC = 0.02; // Vision 박스가 그림 가장자리를 살짝 잘라내는 경우 대비 — 2% 확장 후 트림.
+  const sharpMod = (await import('sharp')).default;
+
   const out: CroppedImage[] = [];
   for (const r of regions) {
-    const x = Math.floor(r.x * W);
-    const y = Math.floor(r.y * H);
-    const w = Math.floor(r.width * W);
-    const h = Math.floor(r.height * H);
+    // 페이지 전체(≈full-page, OCR 폴백) 크롭은 정밀화하지 않는다 — 텍스트 전체 보존.
+    const isFullPage = r.width >= 0.98 && r.height >= 0.98;
+
+    // (1) 소량 패딩으로 확장 후 이미지 경계로 클램프 — 그림 가장자리 유실 방지.
+    const pad = isFullPage ? 0 : PAD_FRAC;
+    const x0 = Math.max(0, Math.floor((r.x - pad) * W));
+    const y0 = Math.max(0, Math.floor((r.y - pad) * H));
+    const x1 = Math.min(W, Math.ceil((r.x + r.width + pad) * W));
+    const y1 = Math.min(H, Math.ceil((r.y + r.height + pad) * H));
+    let w = x1 - x0;
+    let h = y1 - y0;
     if (w < 16 || h < 16) continue;
 
     const canvas = createCanvas(w, h);
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
-    const png = canvas.toBuffer('image/png');
+    ctx.drawImage(img, x0, y0, w, h, 0, 0, w, h);
+    let png: Buffer = canvas.toBuffer('image/png');
+
+    // (2) 콘텐츠 기반 트림 — 균일 배경 테두리(추가한 패딩 여백·기존 여백·이웃 그림과의
+    //     배경 간격)를 제거해 그림에 딱 맞게 정리한다. 전체 페이지 크롭은 트림하지 않는다.
+    if (!isFullPage) {
+      try {
+        const trimmed = await sharpMod(png).trim({ threshold: 12 }).png().toBuffer();
+        const meta = await sharpMod(trimmed).metadata();
+        if ((meta.width ?? 0) >= 16 && (meta.height ?? 0) >= 16) {
+          png = trimmed;
+          w = meta.width ?? w;
+          h = meta.height ?? h;
+        }
+      } catch {
+        // 트림 실패(단색 이미지 등) 시 패딩 크롭 원본 유지.
+      }
+    }
 
     out.push({
       region: r,

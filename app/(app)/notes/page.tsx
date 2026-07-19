@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
+import GenerationLoadingGame from '@/components/notes/GenerationLoadingGame';
 import {
   Upload,
   FileText,
@@ -145,10 +146,11 @@ const MAX_MATERIAL_FILES = 5; // 한 번에 업로드 가능한 학습자료 개
 /** 지문의 [이미지 N](배치 전체 순번)을 문항별 이미지 라벨(등장 순서 1,2,…)과 맞춘다. */
 function withImageLabels(stem: string): string {
   const seen: string[] = [];
-  return stem.replace(/\[이미지\s*(\d+)\]/g, (_m, n) => {
+  // [이미지 N]/(이미지 N)/이미지 N 형태와 무관하게 번호만 등장 순서(1,2,…)로 재매김.
+  return stem.replace(/이미지\s*(\d+)/g, (_m, n) => {
     let pos = seen.indexOf(n);
     if (pos === -1) { seen.push(n); pos = seen.length - 1; }
-    return `[이미지 ${pos + 1}]`;
+    return `이미지 ${pos + 1}`;
   });
 }
 const DIFFICULTIES = ['하', '중', '상'] as const;
@@ -173,6 +175,8 @@ export default function NotesPage() {
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const [uploadingReference, setUploadingReference] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  // 생성 세션(여러 자료를 순차 생성하는 동안 전체) — 대기 미니게임 로딩 화면 표시용.
+  const [genSession, setGenSession] = useState(false);
 
   // 문제 세트 정보 폼
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
@@ -441,9 +445,14 @@ export default function NotesPage() {
       return;
     }
     const collected: GenQ[] = [];
-    for (const m of pending) {
-      const qs = await kickoffProcessing(m.id);
-      collected.push(...qs);
+    setGenSession(true); // 대기 미니게임 로딩 화면 on
+    try {
+      for (const m of pending) {
+        const qs = await kickoffProcessing(m.id);
+        collected.push(...qs);
+      }
+    } finally {
+      setGenSession(false); // 생성 완료 → 즉시 게임 종료, 문제 화면으로 전환
     }
     // 생성된 문항이 하나라도 있으면 결과 뷰로 전환.
     if (collected.length > 0) {
@@ -485,6 +494,28 @@ export default function NotesPage() {
   }
 
   const isGenerating = processingId !== null;
+
+  // ─────────────────────────────────────────────────────────────
+  // (L) 생성 대기 로딩 화면(미니게임) — 생성 세션 동안 최상단 표시.
+  //     완료되면 genSession 이 false 가 되어 즉시 결과 뷰로 전환된다.
+  // ─────────────────────────────────────────────────────────────
+  if (genSession) {
+    const pm = materials.find((m) => m.id === processingId) ?? null;
+    let genProgress = 3;
+    if (pm) {
+      const total = pm.progress_total > 0 ? pm.progress_total : count;
+      const cur = pm.progress_current || pm.completed_question_count || 0;
+      if (total > 0 && cur > 0) {
+        genProgress = Math.min(99, (cur / total) * 100);
+      } else {
+        const stage = pm.processing_stage ?? '';
+        genProgress = stage === 'generating' ? 12 : stage && stage !== 'queued' ? 6 : 3;
+      }
+    }
+    return (
+      <GenerationLoadingGame progress={genProgress} fileName={pm?.file_name ?? undefined} />
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────
   // (B) 생성 결과 뷰
@@ -1114,10 +1145,7 @@ function QuestionCard({
             <figure key={ii}>
               <figcaption className="text-[12px] font-semibold text-sage-700 mb-1">이미지 {ii + 1}</figcaption>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={img.caption ?? `이미지 ${ii + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
-              {img.caption && (
-                <figcaption className="mt-1 text-[12px] text-[var(--color-muted)] text-center">{img.caption}</figcaption>
-              )}
+              <img src={img.url} alt={`이미지 ${ii + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
             </figure>
           ))}
         </div>
