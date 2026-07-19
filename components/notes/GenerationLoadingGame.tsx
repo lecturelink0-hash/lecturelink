@@ -4,7 +4,7 @@
  * GenerationLoadingGame
  * ---------------------------------------------------------------------------
  * 문항 생성(최대 2분+) 대기 동안 보여주는 로딩 화면.
- *  - 최상단: 생성 진척 게이지 + "문제 생성까지 N% 완료했습니다" 메시지
+ *  - 최상단: 생성 진척 게이지 + "문제 생성까지 N% 완료" + "약 몇 분/몇 초 남았습니다"
  *  - 그 아래: 크롬 공룡게임 레퍼런스의 2D 픽셀 러너 미니게임
  *
  * 게임 규칙(사용자 확정):
@@ -15,6 +15,8 @@
  *  - 충돌 시 게임 오버 → "다시 도전하시겠습니까?".
  *  - 생성 완료 시 부모가 이 컴포넌트를 언마운트 → 즉시 문제 화면으로 전환.
  *
+ * 캐릭터는 메가맨 달리기 사이클을 레퍼런스로 한 3단계 스프라이트(질주→교차→질주)로
+ * 애니메이션하고, 얼굴(머리·눈썹·눈·입)을 픽셀 단위로 모델링한다.
  * 외부 에셋/네트워크를 쓰지 않는다(모든 그래픽은 canvas 절차적 렌더, 사운드는 Web Audio).
  */
 
@@ -30,31 +32,111 @@ interface Obstacle {
   type: 'ground' | 'air';
 }
 
+// ── 스프라이트 (12×19 셀, 셀당 4px → 48×76 논리 px, 기존 대비 2배) ──
+const CELL = 4;
+const SPRITE_W = 12;
+const SPRITE_H = 19;
+const CHAR_W = SPRITE_W * CELL; // 48
+const CHAR_H = SPRITE_H * CELL; // 76
+
 // ── 게임 상수 (논리 좌표, CSS px 기준) ──────────────────────────────
-const LOGICAL_H = 240; // 캔버스 논리 높이
+const LOGICAL_H = 272; // 캔버스 논리 높이
 const GROUND_Y = LOGICAL_H - 30; // 지면 라인
-const CHAR_X = 56;
-const CHAR_W = 22;
-const CHAR_H = 38;
+const CHAR_X = 64;
 const GRAVITY = 2000; // px/s^2
-const JUMP_V0 = -680; // px/s
-const AIR_TOP = GROUND_Y - CHAR_H - 30; // 공중 장애물 상단(선 캐릭터 머리 위)
-const AIR_H = 18;
+const JUMP_V0 = -760; // px/s (점프 최고 높이 ≈ 144px — 최대 장애물 54px 여유 통과)
+const AIR_H = 28; // 날아오는 교재 높이 (1.5배)
+const AIR_TOP = GROUND_Y - CHAR_H - AIR_H - 12; // 서 있으면 머리 위 12px 여유로 통과
 const MAX_PLAY_SEC = 240; // 4분 맵: 난이도 스케일 상한
 
 const SCENES = ['도서관', '복도', '캠퍼스'] as const;
 
-function GaugeBar({ progress }: { progress: number }) {
+// ── 캐릭터 스프라이트 정의 (메가맨 런 사이클 레퍼런스: 3단계) ──────
+// 문자 → 팔레트: H머리 S피부 B눈썹 E흰자 P눈동자 M입 T상의 L하의 W신발 .투명
+const HEAD_MALE = [
+  '....HHHH....',
+  '..HHHHHHHH..',
+  '.HHHHHHHHHH.',
+  '.HHHHHHHHHH.',
+  '.HSSSSSSSSH.',
+  '.SBBSSSBBSS.',
+  '.SEPSSSEPSS.',
+  '.SSSSSSSSSS.',
+  '..SSMMMSSS..',
+  '...SSSSSS...',
+];
+const HEAD_FEMALE = [
+  '....HHHH....',
+  '..HHHHHHHH..',
+  '.HHHHHHHHHH.',
+  'HHHHHHHHHHHH',
+  'HHSSSSSSSSHH',
+  'HSBBSSSBBSSH',
+  'HSEPSSSEPSSH',
+  'HSSSSSSSSSSH',
+  'HSSSMMMSSSSH',
+  '...SSSSSS...',
+];
+// 몸통(팔 스윙) 3프레임: 앞주먹 전진 / 양팔 중간 / 앞주먹 후퇴
+const BODY_FRAMES = [
+  ['..TTTTTTTT..', '..TTTTTTTSS.', '.SSTTTTTTT..', '..TTTTTTTT..'],
+  ['..TTTTTTTT..', '.SSTTTTTTSS.', '..TTTTTTTT..', '..TTTTTTTT..'],
+  ['..TTTTTTTT..', '.SSTTTTTTT..', '..TTTTTTTSS.', '..TTTTTTTT..'],
+];
+// 다리 3프레임: 오른발 전진 / 교차(모음) / 왼발 전진
+const LEG_FRAMES = [
+  ['...LLLLLL...', '..LLLL.LLL..', '.LLL....LLL.', '.WW......LL.', '..........WW'],
+  ['...LLLLLL...', '....LLLL....', '....LLLL....', '....LLLL....', '....WWWW....'],
+  ['...LLLLLL...', '..LLL.LLLL..', '.LLL....LLL.', '.LL......WW.', 'WW..........'],
+];
+// 점프(무릎 모음)
+const LEG_JUMP = ['...LLLLLL...', '..LLLLLLLL..', '..LL....LL..', '..WW....WW..', '............'];
+
+function buildFrames(head: string[]): { run: string[][]; jump: string[] } {
+  const run = BODY_FRAMES.map((body, i) => [...head, ...body, ...LEG_FRAMES[i]]);
+  const jump = [...head, ...BODY_FRAMES[1], ...LEG_JUMP];
+  return { run, jump };
+}
+const FRAMES: Record<Gender, { run: string[][]; jump: string[] }> = {
+  male: buildFrames(HEAD_MALE),
+  female: buildFrames(HEAD_FEMALE),
+};
+// 레퍼런스 얼굴(갈색 머리·살구 피부) 기반 팔레트
+const PALETTE = (g: Gender): Record<string, string> => ({
+  H: g === 'male' ? '#4a3120' : '#7a4a28',
+  S: '#eebc93',
+  B: '#3a2a1c',
+  E: '#ffffff',
+  P: '#26190f',
+  M: '#a05a48',
+  T: g === 'male' ? '#3f74c2' : '#d1567f',
+  L: '#2f3a4a',
+  W: '#e8e8e8',
+});
+// 런 사이클: 3단계 스프라이트를 0→1→2→1 순으로 연속시켜 자연스럽게.
+const RUN_SEQ = [0, 1, 2, 1];
+
+function formatEta(secs: number): string {
+  const r = Math.max(10, Math.round(secs / 10) * 10);
+  if (r >= 60) {
+    const m = Math.floor(r / 60);
+    const s = r % 60;
+    return s > 0 ? `약 ${m}분 ${s}초 남았습니다` : `약 ${m}분 남았습니다`;
+  }
+  return `약 ${r}초 남았습니다`;
+}
+
+function GaugeBar({ progress, etaText }: { progress: number; etaText: string }) {
   const pct = Math.max(0, Math.min(100, Math.round(progress)));
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[12px] font-semibold text-white/90 tracking-tight">
+        <span className="text-[12px] font-semibold text-sage-800 tracking-tight">
           문제 생성까지 {pct}% 완료했습니다
         </span>
-        <span className="text-[11px] font-mono text-white/60 tabular-nums">{pct}%</span>
+        <span className="text-[12px] font-semibold text-sage-600 tabular-nums">{etaText}</span>
       </div>
-      <div className="h-2.5 w-full rounded-full bg-white/15 overflow-hidden">
+      <div className="h-2.5 w-full rounded-full bg-[#e9e2d2] overflow-hidden">
         <div
           className="h-full rounded-full bg-gradient-to-r from-sage-300 to-sage-500 transition-[width] duration-500 ease-out"
           style={{ width: `${Math.max(4, pct)}%` }}
@@ -76,10 +158,35 @@ export default function GenerationLoadingGame({
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
+  const [etaText, setEtaText] = useState('약 2분 남았습니다');
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
+
+  // ── 남은 시간 추정: 진행률 증가 속도 기반, 초기엔 기본 2분에서 카운트다운 ──
+  const etaRef = useRef<{ start: number; p0: number }>({ start: 0, p0: 0 });
+  useEffect(() => {
+    etaRef.current = { start: performance.now(), p0: progress };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    const tick = () => {
+      const { start, p0 } = etaRef.current;
+      const elapsed = (performance.now() - start) / 1000;
+      const dp = progress - p0;
+      let secs: number;
+      if (elapsed > 8 && dp > 1.5) {
+        secs = (100 - progress) * (elapsed / dp); // 실측 속도 기반
+      } else {
+        secs = Math.max(120 - elapsed, 15); // 기본 추정 2분에서 감소
+      }
+      setEtaText(formatEta(Math.min(600, Math.max(5, secs))));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [progress]);
 
   // 게임 상태는 리렌더를 피하려 ref 로 관리.
   const stateRef = useRef({
@@ -89,7 +196,7 @@ export default function GenerationLoadingGame({
     obstacles: [] as Obstacle[],
     elapsed: 0, // 초
     distSinceSpawn: 0,
-    nextGap: 520,
+    nextGap: 560,
     speed: 240,
     runPhase: 0,
     scroll: 0,
@@ -107,46 +214,43 @@ export default function GenerationLoadingGame({
   }, [muted]);
 
   // ── 사운드 (Web Audio, 절차 생성) ───────────────────────────────
-  const beep = useCallback(
-    (type: 'jump' | 'hit') => {
-      if (mutedRef.current) return;
-      let ctx = audioRef.current;
-      if (!ctx) {
-        try {
-          ctx = new (window.AudioContext ||
-            (window as unknown as { webkitAudioContext: typeof AudioContext })
-              .webkitAudioContext)();
-          audioRef.current = ctx;
-        } catch {
-          return;
-        }
+  const beep = useCallback((type: 'jump' | 'hit') => {
+    if (mutedRef.current) return;
+    let ctx = audioRef.current;
+    if (!ctx) {
+      try {
+        ctx = new (window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext })
+            .webkitAudioContext)();
+        audioRef.current = ctx;
+      } catch {
+        return;
       }
-      if (ctx.state === 'suspended') void ctx.resume();
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      if (type === 'jump') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(720, now + 0.09);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-        osc.start(now);
-        osc.stop(now + 0.15);
-      } else {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(320, now);
-        osc.frequency.exponentialRampToValueAtTime(60, now + 0.35);
-        gain.gain.setValueAtTime(0.16, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-        osc.start(now);
-        osc.stop(now + 0.42);
-      }
-    },
-    [],
-  );
+    }
+    if (ctx.state === 'suspended') void ctx.resume();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    if (type === 'jump') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(720, now + 0.09);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.35);
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.start(now);
+      osc.stop(now + 0.42);
+    }
+  }, []);
 
   const resetGame = useCallback(() => {
     const s = stateRef.current;
@@ -156,7 +260,7 @@ export default function GenerationLoadingGame({
     s.obstacles = [];
     s.elapsed = 0;
     s.distSinceSpawn = 0;
-    s.nextGap = 520;
+    s.nextGap = 560;
     s.speed = 240;
     s.runPhase = 0;
     s.scroll = 0;
@@ -169,11 +273,7 @@ export default function GenerationLoadingGame({
 
   const jump = useCallback(() => {
     const s = stateRef.current;
-    if (s.over) {
-      resetGame();
-      return;
-    }
-    if (!s.started) {
+    if (s.over || !s.started) {
       resetGame();
       return;
     }
@@ -225,18 +325,12 @@ export default function GenerationLoadingGame({
       const pAir = Math.min(0.42, s.elapsed / 300);
       const isAir = s.elapsed > 12 && Math.random() < pAir;
       if (isAir) {
-        s.obstacles.push({
-          x: w + 10,
-          w: 30,
-          h: AIR_H,
-          top: AIR_TOP,
-          type: 'air',
-        });
+        s.obstacles.push({ x: w + 10, w: 46, h: AIR_H, top: AIR_TOP, type: 'air' });
       } else {
-        const h = 22 + Math.floor(Math.random() * 14); // 책상/의자 높이
+        const h = 34 + Math.floor(Math.random() * 20); // 책상/의자 높이 (1.5배)
         s.obstacles.push({
           x: w + 10,
-          w: 22 + Math.floor(Math.random() * 12),
+          w: 34 + Math.floor(Math.random() * 16),
           h,
           top: GROUND_Y - h,
           type: 'ground',
@@ -244,8 +338,8 @@ export default function GenerationLoadingGame({
       }
       // 난이도: 시간이 지날수록 간격 축소 + 무작위.
       const t = Math.min(MAX_PLAY_SEC, s.elapsed);
-      const base = Math.max(300, 560 - t * 3);
-      s.nextGap = base + Math.random() * 190;
+      const base = Math.max(340, 640 - t * 3);
+      s.nextGap = base + Math.random() * 200;
       s.distSinceSpawn = 0;
     };
 
@@ -262,7 +356,7 @@ export default function GenerationLoadingGame({
         s.elapsed += dt;
         const tt = Math.min(MAX_PLAY_SEC, s.elapsed);
         s.speed = Math.min(560, 240 + tt * 8); // 속도 점증(상한)
-        s.runPhase += dt * (s.speed / 22);
+        s.runPhase += dt * (s.speed / 24);
         s.scroll += s.speed * dt;
 
         // 점프 물리
@@ -282,8 +376,8 @@ export default function GenerationLoadingGame({
 
         // 이동 + 충돌
         const charTop = s.charBottom - CHAR_H;
-        const cx0 = CHAR_X + 3;
-        const cx1 = CHAR_X + CHAR_W - 3;
+        const cx0 = CHAR_X + 6;
+        const cx1 = CHAR_X + CHAR_W - 6;
         for (const o of s.obstacles) {
           o.x -= s.speed * dt;
           const ox0 = o.x + 2;
@@ -334,12 +428,12 @@ export default function GenerationLoadingGame({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#0f1720]">
-      {/* 상단: 진척 게이지 */}
+    <div className="fixed inset-0 z-50 flex flex-col bg-[var(--color-bg)]">
+      {/* 상단: 진척 게이지 + 남은 시간 */}
       <div className="px-4 pt-5 pb-3 sm:px-8">
         <div className="mx-auto w-full max-w-2xl">
-          <GaugeBar progress={progress} />
-          <p className="mt-2 text-[11px] text-white/45">
+          <GaugeBar progress={progress} etaText={etaText} />
+          <p className="mt-2 text-[11px] text-[var(--color-muted)]">
             {fileName ? `‘${fileName}’ ` : ''}문항을 만드는 동안 잠깐 달려볼까요? — 생성이 끝나면 자동으로 문제가 열립니다.
           </p>
         </div>
@@ -350,7 +444,7 @@ export default function GenerationLoadingGame({
         <div className="w-full max-w-2xl">
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-white/50 mr-1">캐릭터</span>
+              <span className="text-[11px] text-[var(--color-muted)] mr-1">캐릭터</span>
               {(['male', 'female'] as Gender[]).map((g) => (
                 <button
                   key={g}
@@ -359,7 +453,7 @@ export default function GenerationLoadingGame({
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
                     gender === g
                       ? 'bg-sage-500 text-white'
-                      : 'bg-white/10 text-white/60 hover:bg-white/15'
+                      : 'bg-black/5 text-sage-700 hover:bg-black/10'
                   }`}
                 >
                   {g === 'male' ? '남자' : '여자'}
@@ -369,14 +463,14 @@ export default function GenerationLoadingGame({
             <button
               type="button"
               onClick={() => setMuted((m) => !m)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-white/70 hover:bg-white/15"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-black/5 text-sage-700 hover:bg-black/10"
             >
               {muted ? '🔇 음소거' : '🔊 소리'}
             </button>
           </div>
 
           <div
-            className="relative w-full overflow-hidden rounded-2xl border border-white/10 shadow-xl select-none cursor-pointer"
+            className="relative w-full overflow-hidden rounded-2xl border border-[var(--color-border)] shadow-xl select-none cursor-pointer"
             onPointerDown={(e) => {
               e.preventDefault();
               jump();
@@ -408,7 +502,7 @@ export default function GenerationLoadingGame({
             )}
           </div>
 
-          <p className="mt-2 text-center text-[11px] text-white/40">
+          <p className="mt-2 text-center text-[11px] text-[var(--color-muted)]">
             스페이스 · 위 방향키 · 화면 탭으로 점프 — 책상·의자는 뛰어넘고, 머리 위로 날아오는 교재는 점프하지 말고 지나가세요.
           </p>
         </div>
@@ -448,15 +542,15 @@ function drawScene(
 
 function drawSceneAt(ctx: CanvasRenderingContext2D, w: number, scene: number, scroll: number) {
   if (scene === 0) {
-    // 도서관: 따뜻한 배경 + 책장
-    ctx.fillStyle = '#2a2018';
+    // 도서관: 채도를 낮춘 어두운 책장 — 밝은 원목색 장애물(책상·의자)이 또렷이 구분되게.
+    ctx.fillStyle = '#221c15';
     ctx.fillRect(0, 0, w, GROUND_Y);
     const off = -(scroll * 0.4) % 90;
     for (let x = off; x < w + 90; x += 90) {
-      ctx.fillStyle = '#4a3826';
+      ctx.fillStyle = '#332a20';
       ctx.fillRect(x, 40, 70, GROUND_Y - 40);
-      // 책 스트라이프
-      const colors = ['#b5533f', '#c99a3f', '#4f7a55', '#7a6ca8', '#c07a4f'];
+      // 책 스트라이프 (저채도 통일 톤)
+      const colors = ['#4a4038', '#554a3e', '#403a32', '#4a4438', '#514438'];
       for (let sy = 48; sy < GROUND_Y - 8; sy += 22) {
         for (let bx = 0; bx < 64; bx += 8) {
           ctx.fillStyle = colors[(bx + sy) % colors.length];
@@ -475,8 +569,8 @@ function drawSceneAt(ctx: CanvasRenderingContext2D, w: number, scene: number, sc
       ctx.fillStyle = '#24323f';
       ctx.fillRect(x + 22, 60, 4, GROUND_Y - 60); // 사물함 분리선
       ctx.fillStyle = '#8fb0c9';
-      ctx.fillRect(x + 8, 92, 6, 6); // 손잡이
-      ctx.fillRect(x + 34, 92, 6, 6);
+      ctx.fillRect(x + 8, 100, 6, 6); // 손잡이
+      ctx.fillRect(x + 34, 100, 6, 6);
     }
     // 천장 조명
     const loff = -(scroll * 0.5) % 140;
@@ -519,23 +613,47 @@ function drawSceneAt(ctx: CanvasRenderingContext2D, w: number, scene: number, sc
 function drawObstacles(ctx: CanvasRenderingContext2D, obstacles: Obstacle[]) {
   for (const o of obstacles) {
     if (o.type === 'ground') {
-      // 책상/의자 (갈색 픽셀 가구)
-      ctx.fillStyle = '#8a5a2b';
-      ctx.fillRect(o.x, o.top, o.w, 6); // 상판
-      ctx.fillStyle = '#6b431f';
-      ctx.fillRect(o.x + 2, o.top + 6, 4, o.h - 6); // 다리
-      ctx.fillRect(o.x + o.w - 6, o.top + 6, 4, o.h - 6);
-      ctx.fillStyle = '#7a4e26';
-      ctx.fillRect(o.x + o.w - 8, o.top - 12, 5, 12); // 의자 등받이
+      // 책상/의자 — 밝은 원목색 + 크림색 아웃라인으로 배경과 확실히 구분.
+      ctx.fillStyle = '#f2e2c4';
+      ctx.fillRect(o.x - 1, o.top - 1, o.w + 2, 8); // 상판 아웃라인
+      ctx.fillStyle = '#c98a3f';
+      ctx.fillRect(o.x, o.top, o.w, 7); // 상판
+      ctx.fillStyle = '#a06a2c';
+      ctx.fillRect(o.x + 3, o.top + 7, 6, o.h - 7); // 다리
+      ctx.fillRect(o.x + o.w - 9, o.top + 7, 6, o.h - 7);
+      ctx.fillStyle = '#b87a35';
+      ctx.fillRect(o.x + o.w - 11, o.top - 18, 7, 18); // 의자 등받이
     } else {
-      // 전공 교재 (공중, 표지+책등)
+      // 전공 교재 (공중, 표지+책배) — 선명한 빨간 표지.
+      ctx.fillStyle = '#f2d9d2';
+      ctx.fillRect(o.x - 1, o.top - 1, o.w + 2, o.h + 2); // 아웃라인
       ctx.fillStyle = '#c2413a';
       ctx.fillRect(o.x, o.top, o.w, o.h);
       ctx.fillStyle = '#e8d7a6';
-      ctx.fillRect(o.x + o.w - 4, o.top, 4, o.h); // 책배(페이지)
+      ctx.fillRect(o.x + o.w - 6, o.top, 6, o.h); // 책배(페이지)
       ctx.fillStyle = '#f2e6c0';
-      ctx.fillRect(o.x + 4, o.top + 4, o.w - 12, 3); // 제목 띠
-      ctx.fillRect(o.x + 4, o.top + 10, o.w - 14, 2);
+      ctx.fillRect(o.x + 6, o.top + 6, o.w - 18, 4); // 제목 띠
+      ctx.fillRect(o.x + 6, o.top + 14, o.w - 20, 3);
+    }
+  }
+}
+
+function drawSprite(
+  ctx: CanvasRenderingContext2D,
+  rows: string[],
+  x: number,
+  top: number,
+  pal: Record<string, string>,
+) {
+  for (let r = 0; r < rows.length; r += 1) {
+    const row = rows[r];
+    for (let c = 0; c < row.length; c += 1) {
+      const ch = row[c];
+      if (ch === '.') continue;
+      const color = pal[ch];
+      if (!color) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(x + c * CELL, top + r * CELL, CELL, CELL);
     }
   }
 }
@@ -545,53 +663,13 @@ function drawRunner(
   s: { charBottom: number; onGround: boolean; runPhase: number },
   gender: Gender,
 ) {
-  const x = CHAR_X;
-  const bottom = s.charBottom;
-  const top = bottom - CHAR_H;
-  const skin = '#f0c39a';
-  const hair = gender === 'male' ? '#3a2a1c' : '#5a3a24';
-  const shirt = gender === 'male' ? '#3f74c2' : '#d1567f';
-  const pants = '#2f3a4a';
-
-  // 머리
-  ctx.fillStyle = skin;
-  ctx.fillRect(x + 6, top, 10, 9);
-  // 머리카락
-  ctx.fillStyle = hair;
-  ctx.fillRect(x + 5, top - 1, 12, 4);
-  ctx.fillRect(x + 5, top, 2, 6);
-  if (gender === 'female') {
-    ctx.fillRect(x + 15, top, 3, 11); // 긴 머리
-  } else {
-    ctx.fillRect(x + 15, top, 2, 4);
-  }
-  // 몸통(티셔츠)
-  ctx.fillStyle = shirt;
-  ctx.fillRect(x + 4, top + 9, 14, 13);
-  // 팔
-  ctx.fillStyle = skin;
-  const armSwing = Math.sin(s.runPhase) * 3;
-  ctx.fillRect(x + 2, top + 11 + armSwing, 3, 8);
-  ctx.fillRect(x + 17, top + 11 - armSwing, 3, 8);
-  // 다리(달리기 2프레임 / 점프 시 모음)
-  ctx.fillStyle = pants;
-  if (s.onGround) {
-    const phase = Math.floor(s.runPhase) % 2 === 0;
-    if (phase) {
-      ctx.fillRect(x + 5, top + 22, 4, 12);
-      ctx.fillRect(x + 12, top + 22, 4, 9);
-    } else {
-      ctx.fillRect(x + 5, top + 22, 4, 9);
-      ctx.fillRect(x + 12, top + 22, 4, 12);
-    }
-  } else {
-    ctx.fillRect(x + 5, top + 22, 4, 10);
-    ctx.fillRect(x + 13, top + 22, 4, 8);
-  }
-  // 신발
-  ctx.fillStyle = '#e8e8e8';
-  ctx.fillRect(x + 5, top + CHAR_H - 3, 5, 3);
-  ctx.fillRect(x + 12, top + CHAR_H - 3, 5, 3);
+  const top = s.charBottom - CHAR_H;
+  const pal = PALETTE(gender);
+  const frames = FRAMES[gender];
+  const rows = s.onGround
+    ? frames.run[RUN_SEQ[Math.floor(s.runPhase) % RUN_SEQ.length]]
+    : frames.jump;
+  drawSprite(ctx, rows, CHAR_X, top, pal);
 }
 
 function drawHud(
