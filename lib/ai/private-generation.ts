@@ -178,7 +178,7 @@ export interface PrivateGenerationInput {
   /** 사용자 지정 난이도(하/중/상) — 생성 프롬프트에 반영. */
   difficulty?: '하' | '중' | '상';
   /** 사용자 지정 문항 유형 — 생성 프롬프트에 반영. */
-  questionType?: '지식형' | '임상형' | '이미지형';
+  questionTypes?: Array<'지식형' | '임상형' | '이미지형'>;
   /** 사용자 지정 문제집 이름 — 세트 표시명으로 저장. */
   title?: string;
   /** 기출 형식 참고 자료. 문항 구조만 참고하고 내용 근거로 사용하지 않는다. */
@@ -845,14 +845,15 @@ export async function generatePrivateQuestionsFromUpload(
           : input.difficulty === '중'
             ? '전체 문항을 **표준(중간) 난이도** 위주로 생성한다(difficulty 2).'
             : '';
-    const typeDirective =
-      input.questionType === '지식형'
-        ? '**지식형**: 개념·정의·기전을 확인하는 단답/개념 확인 문항 위주로 만든다(긴 증례보다 핵심 지식).'
-        : input.questionType === '임상형'
-          ? '**임상형**: 실제 환자 증례(vignette: 나이/증상/검사)를 제시하고 진단·처치·판단을 묻는 임상 문항 위주로 만든다.'
-          : input.questionType === '이미지형'
-            ? '**이미지형**: 자료의 의료 이미지를 판독·해석해야 푸는 문항을 **가능한 한 많이** 만든다(이미지가 있으면 우선).'
-            : '';
+    const typeDirectives: Record<string, string> = {
+      '지식형': '**지식형**: 개념·정의·기전을 확인하는 단답/개념 확인 문항 위주로 만든다(긴 증례보다 핵심 지식).',
+      '임상형': '**임상형**: 실제 환자 증례(vignette: 나이/증상/검사)를 제시하고 진단·처치·판단을 묻는 임상 문항 위주로 만든다.',
+      '이미지형': '**이미지형**: 자료의 의료 이미지를 판독·해석해야 푸는 문항을 가능한 한 많이 만든다(이미지가 있으면 우선).',
+    };
+    const selectedTypes = input.questionTypes ?? [];
+    const typeDirective = selectedTypes.length
+      ? `선택된 문항 유형(${selectedTypes.join(', ')})을 전체 문항에 고르게 배분한다.\n${selectedTypes.map((type) => typeDirectives[type]).join('\n')}`
+      : '';
     if (diffDirective || typeDirective) {
       systemPrompt += `\n\n## 사용자 지정 출제 조건\n${[diffDirective, typeDirective].filter(Boolean).join('\n')}`;
     }

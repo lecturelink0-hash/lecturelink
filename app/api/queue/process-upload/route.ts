@@ -23,7 +23,7 @@ const bodySchema = z.object({
   desiredCount: z.number().int().min(5).max(20).optional(),
   style: z.enum(['kmle', 'professor', 'internal']).optional(),
   difficulty: z.enum(['하', '중', '상']).optional(),
-  questionType: z.enum(['지식형', '임상형', '이미지형']).optional(),
+  questionTypes: z.array(z.enum(['지식형', '임상형', '이미지형'])).min(1).max(3).optional(),
   title: z.string().max(100).optional(),
   referenceUploadIds: z.array(z.string().uuid()).max(10).optional(),
 });

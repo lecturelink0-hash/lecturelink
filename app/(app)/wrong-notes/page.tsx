@@ -205,19 +205,21 @@ interface SimilarPanelProps {
   state: QuestionUIState;
   isPrivate: boolean;
   subTopicId: string | null;
+  sourceQuestionId: string;
   onChange: (patch: Partial<QuestionUIState>) => void;
 }
 
-function SimilarPanel({ state, isPrivate, subTopicId, onChange }: SimilarPanelProps) {
+function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange }: SimilarPanelProps) {
   async function loadSimilar() {
     if (!subTopicId) return;
     onChange({ similarLoading: true, similarQ: null, similarSelected: null, similarSubmitted: false, similarCorrectIndex: null, similarExplanation: null });
     try {
       // 오답 기반 AI 유사문제 생성 (ai_user_triggered). 풀 재출제가 아니라 새 문항을 생성한다.
-      const q = await api.post<SimilarQuestion>('/api/questions/similar', {
-        sub_topic_id: subTopicId,
+      const result = await api.post<{ upload_id: string; question_count: number }>('/api/questions/similar', {
+        source_question_id: sourceQuestionId,
+        source_kind: isPrivate ? 'private' : 'public',
       });
-      onChange({ similarQ: q, similarLoading: false });
+      window.location.assign(`/similar-practice/${result.upload_id}`);
     } catch (e) {
       onChange({ similarLoading: false });
       alert(e instanceof ApiError ? e.message : '유사문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
@@ -486,6 +488,7 @@ export default function WrongNotesPage() {
                 state={ui}
                 isPrivate={item.isPrivate}
                 subTopicId={item.subTopicId}
+                sourceQuestionId={item.question!.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
             </div>
@@ -503,6 +506,7 @@ export default function WrongNotesPage() {
               state={ui}
               isPrivate={item.isPrivate}
               subTopicId={item.subTopicId}
+              sourceQuestionId={item.question!.id}
               onChange={(patch) => patchUI(item.id, patch)}
             />
           </div>
@@ -581,6 +585,7 @@ export default function WrongNotesPage() {
                 state={ui}
                 isPrivate={item.isPrivate}
                 subTopicId={item.subTopicId}
+                sourceQuestionId={item.question!.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
             )}
@@ -669,6 +674,7 @@ export default function WrongNotesPage() {
                     state={ui}
                     isPrivate={item.isPrivate}
                     subTopicId={item.subTopicId}
+                    sourceQuestionId={item.question!.id}
                     onChange={(patch) => patchUI(item.id, patch)}
                   />
                 </div>
@@ -681,6 +687,7 @@ export default function WrongNotesPage() {
                   state={ui}
                   isPrivate={item.isPrivate}
                   subTopicId={item.subTopicId}
+                  sourceQuestionId={item.question!.id}
                   onChange={(patch) => patchUI(item.id, patch)}
                 />
               </div>

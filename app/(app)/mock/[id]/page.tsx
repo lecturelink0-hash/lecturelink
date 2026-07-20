@@ -10,7 +10,6 @@ import {
   Clock, Check, CheckCircle2, XCircle, BookmarkPlus, X, Send, ArrowLeft,
   Pencil, Eraser, Columns2, Square,
 } from 'lucide-react';
-import { ScrollExamView } from './ScrollExamView';
 import { ExamResultView } from './ExamResultView';
 
 interface MockQuestion {
@@ -521,19 +520,8 @@ export default function MockExamPage() {
     return `${Math.floor(s / 60)}분 ${String(s % 60).padStart(2, '0')}초`;
   };
 
-  return (
-    <ScrollExamView
-      title={data.session.title}
-      questions={data.questions}
-      answers={answers}
-      flagged={flagged}
-      remaining={remaining}
-      submitting={submitting}
-      onChoose={chooseFor}
-      onFlag={toggleFlag}
-      onSubmit={confirmSubmit}
-    />
-  );
+  // 실제 CBT 화면을 기본 응시 화면으로 사용한다. ScrollExamView는 대체안으로 보존한다.
+  return renderLegacy(data, remaining ?? 0);
 
   function renderLegacy(data: SessionData, remaining: number) { return (
     <div className="ll-exam-session-page fixed inset-0 z-50 flex flex-col bg-[#fcfaf4] text-[#111827]">

@@ -30,7 +30,7 @@ const bodySchema = z.object({
   desired_count: z.number().int().min(5).max(20).default(12),
   style: z.enum(['kmle', 'professor', 'internal']).default('kmle'),
   difficulty: z.enum(['하', '중', '상']).optional(),
-  question_type: z.enum(['지식형', '임상형', '이미지형']).optional(),
+  question_types: z.array(z.enum(['지식형', '임상형', '이미지형'])).min(1).max(3).optional(),
   title: z.string().max(100).optional(),
   reference_upload_ids: z.array(z.string().uuid()).max(10).default([]),
 });
@@ -107,7 +107,7 @@ export const POST = withErrorHandling(async (
     desiredCount: body.desired_count,
     style: body.style,
     difficulty: body.difficulty,
-    questionType: body.question_type,
+    questionTypes: body.question_types,
     title: body.title,
     referenceUploadIds: body.reference_upload_ids,
   });
@@ -144,7 +144,7 @@ export const POST = withErrorHandling(async (
       desiredCount: body.desired_count,
       style: body.style,
       difficulty: body.difficulty,
-      questionType: body.question_type,
+      questionTypes: body.question_types,
       title: body.title,
       referenceUploadIds: body.reference_upload_ids,
     }).catch((e) => {
