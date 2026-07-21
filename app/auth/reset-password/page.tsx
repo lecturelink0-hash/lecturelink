@@ -75,10 +75,11 @@ export default function ResetPasswordPage() {
     <div className="ll-auth-page shell">
       <header className="header">
         <div className="header-inner">
-          <Link href="/" className="logo">
+          {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
+          <a href="/" className="logo">
             <span className="logo-mark"><BookOpen className="icon" /></span>
             <span className="logo-text">Lecturelink</span>
-          </Link>
+          </a>
           <Link href="/login" className="header-link">로그인</Link>
         </div>
       </header>
