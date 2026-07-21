@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Clock3, History, ShieldAlert, Stethoscope } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock3, History, ShieldAlert, Stethoscope } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 
@@ -73,7 +73,8 @@ export default function CpxHistory() {
     {sessions?.length === 0 && !error && <Card className="text-center"><Stethoscope className="mx-auto h-10 w-10 text-[var(--color-primary)]" /><h2 className="mt-3 font-bold text-[var(--color-text)]">아직 완료한 세션이 없습니다</h2><p className="mt-1 text-sm text-[var(--color-muted)]">첫 CPX 연습을 마치면 결과가 여기에 저장됩니다.</p><Link href="/cpx" className="mt-5 inline-flex h-11 items-center rounded-[var(--radius-md)] bg-[var(--color-accent)] px-5 text-sm font-bold text-white">첫 연습 시작</Link></Card>}
 
     {sessions?.length > 0 && <div className="grid gap-3">
-      {sessions.map((session) => <Card key={session.sessionId} hover className="p-4 sm:p-5">
+      {sessions.map((session) => <Link key={session.sessionId} href={`/cpx/history/${session.sessionId}`} className="block rounded-[var(--radius-lg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">
+        <Card hover className="p-4 sm:p-5 cursor-pointer">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="flex min-w-28 items-baseline gap-1 sm:block sm:text-center">
             <span className="tnum text-4xl font-bold text-[var(--color-primary)]">{session.totalScore ?? '-'}</span>
@@ -84,8 +85,10 @@ export default function CpxHistory() {
             {session.persona && <p className="mt-1 text-sm text-[var(--color-muted)]">{session.persona.name} · {session.persona.age}세 · {session.persona.gender}</p>}
             <p className="mt-2 flex items-center gap-1 text-xs text-[var(--color-muted)]"><Clock3 className="h-3.5 w-3.5" />{formatStartedAt(session.startedAt)}</p>
           </div>
+          <ChevronRight className="hidden h-5 w-5 shrink-0 self-center text-[var(--color-muted)] sm:block" />
         </div>
-      </Card>)}
+        </Card>
+      </Link>)}
     </div>}
   </div>;
 }
