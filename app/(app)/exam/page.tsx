@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -91,6 +91,7 @@ export default function ExamPage() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [subjectQuestions, setSubjectQuestions] = useState<QuestionForUser[]>([]);
   const [loadingSubjectQuestions, setLoadingSubjectQuestions] = useState(false);
+  const subjectRequestId = useRef(0);
 
   const [active, setActive] = useState<{ subTopicId: string; name: string; subjectName: string } | null>(null);
   const [questions, setQuestions] = useState<QuestionForUser[]>([]);
@@ -146,6 +147,7 @@ export default function ExamPage() {
 
   // 과목 카드 → 상세 뷰 진입: 과목 전체 문항 로드(그리드/카운트용)
   async function openSubject(s: Subject) {
+    const requestId = ++subjectRequestId.current;
     setSelectedSubject(s);
     setActive(null);
     setExpandedMid({});
@@ -157,16 +159,26 @@ export default function ExamPage() {
     setSubjectQuestions([]);
     setLoadingSubjectQuestions(true);
     try {
-      const qs = await api.get<QuestionForUser[]>(`/api/questions?subject_id=${s.id}&limit=50`);
-      setSubjectQuestions(qs);
+      const pageSize = 50;
+      const all: QuestionForUser[] = [];
+      for (let offset = 0; ; offset += pageSize) {
+        const page = await api.get<QuestionForUser[]>(
+          `/api/questions?subject_id=${s.id}&limit=${pageSize}&offset=${offset}`,
+        );
+        if (requestId !== subjectRequestId.current) return;
+        all.push(...page);
+        if (page.length < pageSize) break;
+      }
+      setSubjectQuestions(all);
     } catch {
-      setSubjectQuestions([]);
+      if (requestId === subjectRequestId.current) setSubjectQuestions([]);
     } finally {
-      setLoadingSubjectQuestions(false);
+      if (requestId === subjectRequestId.current) setLoadingSubjectQuestions(false);
     }
   }
 
   function backToBrowse() {
+    subjectRequestId.current += 1;
     setSelectedSubject(null);
     setActive(null);
     setSubjectQuestions([]);

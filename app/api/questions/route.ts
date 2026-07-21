@@ -10,6 +10,7 @@
  *   ?tier=curated|community|beta
  *   ?status=active            (기본 active)
  *   ?limit=20                 (기본 20, 최대 50)
+ *   ?offset=0                 (페이지 시작 위치)
  *   ?count_only=true          → { count } 만 반환
  */
 
@@ -34,6 +35,7 @@ export const GET = withErrorHandling(async (request: Request) => {
   const status = searchParams.get('status') ?? 'active';
   const countOnly = searchParams.get('count_only') === 'true';
   const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit') ?? 20)));
+  const offset = Math.max(0, Number(searchParams.get('offset') ?? 0));
 
   // subject_id 가 오면 그 과목의 sub_topic 으로 확장
   let stIds: string[] | null = null;
@@ -69,7 +71,9 @@ export const GET = withErrorHandling(async (request: Request) => {
     `,
     )
     .eq('status', status as 'active')
-    .limit(limit);
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+    .range(offset, offset + limit - 1);
   if (subTopicId) q = q.eq('sub_topic_id', subTopicId);
   else if (stIds) q = q.in('sub_topic_id', stIds);
   if (tier) q = q.eq('tier', tier as 'curated');
