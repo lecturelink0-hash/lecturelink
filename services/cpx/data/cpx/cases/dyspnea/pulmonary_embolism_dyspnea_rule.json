@@ -1,0 +1,155 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "pulmonary_embolism_dyspnea_rule",
+  "title": "호흡곤란 (폐색전증 의심 적신호)",
+  "category": "호흡곤란",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 13 '호흡곤란' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "폐색전증 의심 (Suspected pulmonary embolism)",
+  "variant": "갑작스런 호흡곤란·흉통 + 다리 부종·부동 위험 적신호형",
+  "description": "갑자기 숨이 차고 가슴이 아프며 한쪽 다리가 부은 환자의 적신호 규칙입니다.",
+  "tags": [
+    "호흡곤란",
+    "폐색전증",
+    "적신호",
+    "다리부종",
+    "흉통"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "40~70세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "갑자기 숨이 차고 심장이 빨리 뛰며, 숨을 들이쉴 때 한쪽 가슴이 아프다. 며칠 전 장거리 비행/오랜 침상안정/수술이 있었고, 한쪽 종아리가 붓고 아프다.",
+    "mustInclude": [
+      "갑작스런 호흡곤란·빈맥",
+      "흡기 시 악화되는 흉막성 흉통",
+      "최근 부동(장거리 이동·수술·침상안정) 등 위험인자",
+      "편측 종아리 부종·압통(심부정맥혈전 시사)",
+      "산소포화도 저하 가능"
+    ],
+    "preferredVariants": [
+      "기침·객혈 소량",
+      "실신할 뻔함"
+    ],
+    "mustAbsent": [
+      "점진적 노작성 호흡곤란(심부전/COPD)",
+      "천명·삽화성(천식)",
+      "발열·화농성 가래(폐렴)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "만성 폐질환만"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "혈전 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 부동/수술 가능"
+    ],
+    "recommended": [
+      "경구피임약 복용 가능"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "생체징후",
+      "method": "생체징후 확인",
+      "expectedFinding": "생체징후 빈맥·빈호흡·산소포화도 저하 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "흉부",
+      "method": "흉부 확인",
+      "expectedFinding": "흉부 청진 대체로 깨끗(국소 이상 적음)"
+    },
+    {
+      "item": "결막",
+      "method": "결막 확인",
+      "expectedFinding": "결막 정상"
+    },
+    {
+      "item": "경부",
+      "method": "경부 확인",
+      "expectedFinding": "경부 경정맥 확장 가능"
+    },
+    {
+      "item": "사지",
+      "method": "사지 확인",
+      "expectedFinding": "편측 하지 부종·압통",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학",
+      "method": "신경학 확인",
+      "expectedFinding": "신경학적 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "갑작스런 호흡곤란·흉막통·다리 부종의 환자. '갑자기 숨참·두근','숨쉴 때 가슴 아픔','최근 오래 앉음/수술','한쪽 종아리 붓고 아픔'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "갑작스런 호흡곤란·빈맥",
+      "흉막성 흉통",
+      "부동 위험인자",
+      "편측 종아리 부종"
+    ],
+    "negativeClues": [
+      "점진적 아님",
+      "발열·가래 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "호흡곤란 발생 속도(갑작스러움)",
+      "흉통 양상(흡기 악화)",
+      "부동·수술·이동 등 위험인자",
+      "다리 부종·통증",
+      "심부전/폐렴/천식 배제",
+      "실신·객혈"
+    ],
+    "positiveClues": [
+      "갑작스런 호흡곤란 + 흉막통 + 부동 위험 + 다리 부종"
+    ],
+    "negativeClues": [
+      "점진적 아님"
+    ],
+    "educationTopics": [
+      "폐혈관이 막히는 폐색전증 가능성으로 응급임을 설명",
+      "D-이합체·CT 폐혈관조영 등 즉각 검사",
+      "항응고 등 치료와 위험인자 관리"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 숨차고 불안하다. 응급 검사·산소 공급을 우선하며 병력을 확인한다."
+  ],
+  "ruleText": "# 증례명 : 호흡곤란(폐색전증 적신호)\n- 인적사항 - 성별 랜덤, 40~70세, 응급실\n- 사례 요약 - 갑작스런 호흡곤란·흉막통 + 부동 위험 + 편측 다리 부종.\n",
+  "rawRuleText": "호흡곤란 — 폐색전증 의심. 갑작스런 호흡곤란·흉막통 + 부동 위험 + 편측 다리 부종."
+}

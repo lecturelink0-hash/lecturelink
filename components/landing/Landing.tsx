@@ -306,10 +306,11 @@ export function Landing() {
       {/* ── 네비바 ── */}
       <header className="sticky top-0 z-50 bg-[var(--color-bg)]">
         <div className="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between border-b border-[var(--color-border)]">
-          <Link href="/" className="flex items-center gap-2 text-sage-700 font-bold text-xl">
+          {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
+          <a href="/" className="flex items-center gap-2 text-sage-700 font-bold text-xl">
             <Stethoscope className="w-6 h-6" strokeWidth={2.2} />
             렉처링크
-          </Link>
+          </a>
           <div className="flex items-center gap-2">
             <Link href="/login">
               <Button variant="ghost" size="sm">

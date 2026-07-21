@@ -59,6 +59,23 @@ function requiresOnboarding(pathname: string): boolean {
   return ONBOARDING_REQUIRED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+// 브라우저 주소창/새로고침 등 문서 내비게이션 여부.
+// Next 는 미들웨어 진입 전에 RSC 헤더·_rsc 파라미터를 제거하므로, 브라우저가
+// 직접 붙이는 Sec-Fetch-Dest 로 구분한다(미지원 구형 브라우저는 문서로 취급).
+function isDocumentRequest(request: NextRequest): boolean {
+  const dest = request.headers.get('sec-fetch-dest');
+  return dest === null || dest === 'document' || dest === 'iframe';
+}
+
+// 미인증 루트(/) → 정적 랜딩. 문서 요청은 rewrite 로 URL 을 유지하고,
+// 클라이언트 라우터의 RSC fetch 는 rewrite 시 flight payload 가 없어 Vercel 에서
+// 404 가 나므로(죽은 프리페치 → 내비게이션 오류) redirect 로 문서 내비게이션을 유도한다.
+function toLanding(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  url.pathname = '/landing.html';
+  return isDocumentRequest(request) ? NextResponse.rewrite(url) : NextResponse.redirect(url);
+}
+
 export async function middleware(request: NextRequest) {
   const isRoot = request.nextUrl.pathname === '/';
 
@@ -69,9 +86,7 @@ export async function middleware(request: NextRequest) {
       .getAll()
       .some((c) => /^sb-.*-auth-token(\.\d+)?$/.test(c.name) && c.value);
     if (!hasAuthCookie) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/landing.html';
-      return NextResponse.rewrite(url);
+      return toLanding(request);
     }
   }
 
@@ -113,18 +128,17 @@ export async function middleware(request: NextRequest) {
   //   - 로그인됨(기 사용자) → 바로 홈(/dashboard)
   //   - 아니면(만료 등)     → 랜딩
   if (isRoot) {
-    const url = request.nextUrl.clone();
-    let isProfessor = false;
-    if (user) {
-      const { data: profile } = await supabase
-        .from('users')
-        .select('account_type')
-        .eq('id', user.id)
-        .maybeSingle();
-      isProfessor = profile?.account_type === 'professor';
+    if (!user) {
+      return toLanding(request);
     }
-    url.pathname = isProfessor ? '/professor' : user ? '/dashboard' : '/landing.html';
-    return user ? NextResponse.redirect(url) : NextResponse.rewrite(url);
+    const { data: profile } = await supabase
+      .from('users')
+      .select('account_type')
+      .eq('id', user.id)
+      .maybeSingle();
+    const url = request.nextUrl.clone();
+    url.pathname = profile?.account_type === 'professor' ? '/professor' : '/dashboard';
+    return NextResponse.redirect(url);
   }
 
   // 공개 경로는 그대로
