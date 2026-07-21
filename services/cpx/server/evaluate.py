@@ -29,6 +29,7 @@ RUBRIC_BY_CATEGORY = {
     '콧물/코막힘': 'canonical_rubric.rhinorrhea.json',
     '목 통증': 'canonical_rubric.neck_pain.json',
     '배뇨 이상': 'canonical_rubric.urinary_symptom.json',
+    '붉은색 소변': 'canonical_rubric.red_urine.json',
     '불안': 'canonical_rubric.anxiety.json',
     '음주 문제': 'canonical_rubric.alcohol.json',
     '기분 변화': 'canonical_rubric.mood.json',
