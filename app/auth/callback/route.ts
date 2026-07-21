@@ -8,6 +8,7 @@
 import { NextResponse } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createServerClient } from '@/lib/db/server';
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   const { searchParams, origin: reqOrigin } = new URL(request.url);
@@ -30,6 +31,18 @@ export async function GET(request: Request) {
 
   const supabase = await createServerClient();
 
+  async function accountDestination(fallback: string) {
+    const cookieStore = await cookies();
+    const pending = cookieStore.get('lecturelink_account_type')?.value;
+    if (pending === 'professor' || pending === 'student') {
+      await supabase.auth.updateUser({ data: { requested_account_type: pending } });
+      cookieStore.delete('lecturelink_account_type');
+      return fallback;
+    }
+    const { data } = await supabase.auth.getUser();
+    return data.user ? '/' : fallback;
+  }
+
   // (A) 이메일 확인 링크(token_hash + type) — verifyOtp 로 검증.
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
@@ -37,7 +50,7 @@ export async function GET(request: Request) {
       type: type as EmailOtpType,
     });
     if (!error) {
-      return NextResponse.redirect(`${base}${next}`);
+      return NextResponse.redirect(`${base}${await accountDestination(next)}`);
     }
   }
 
@@ -45,7 +58,7 @@ export async function GET(request: Request) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${base}${next}`);
+      return NextResponse.redirect(`${base}${await accountDestination(next)}`);
     }
   }
 

@@ -1,0 +1,1 @@
+import {ArtifactEditor} from '@/components/professor/ArtifactEditor';export default async function Page({params}:{params:Promise<{artifactId:string}>}){return <ArtifactEditor artifactId={(await params).artifactId}/>}

@@ -31,7 +31,7 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
     return null;
   }
 
-  const { data: profile, error: profileError } = await supabase
+  let { data: profile, error: profileError } = await supabase
     .from('users')
     .select(
       `
@@ -43,6 +43,8 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
       plan_tier,
       onboarded_at,
       role,
+      account_type,
+      faculty_status,
       school:schools (
         id,
         name,
@@ -52,6 +54,36 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
     )
     .eq('id', user.id)
     .maybeSingle();
+
+  // Keep authentication working while the account_type migration is being
+  // rolled out. Once the column exists, the database value remains the source
+  // of truth; older schemas fall back to the auth metadata set at signup.
+  if (profileError?.code === '42703' && profileError.message.includes('account_type')) {
+    const fallback = await supabase
+      .from('users')
+      .select(
+        `
+        id,
+        display_name,
+        grade,
+        current_semester,
+        current_year,
+        plan_tier,
+        onboarded_at,
+        role,
+        school:schools (
+          id,
+          name,
+          short_name
+        )
+      `,
+      )
+      .eq('id', user.id)
+      .maybeSingle();
+
+    profile = fallback.data as typeof profile;
+    profileError = fallback.error;
+  }
 
   if (profileError) {
     console.error('[auth] profile fetch error:', profileError);
@@ -83,6 +115,16 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
         currentYear: profile.current_year,
         planTier: profile.plan_tier as PlanTier,
         onboardedAt: profile.onboarded_at,
+        accountType:
+          profile.account_type === 'professor' ||
+          (!('account_type' in profile) && user.user_metadata?.account_type === 'professor')
+            ? 'professor'
+            : 'student',
+        facultyStatus: ('faculty_status' in profile && profile.faculty_status
+          ? profile.faculty_status
+          : profile.account_type === 'professor'
+            ? 'approved'
+            : 'not_requested') as UserProfile['facultyStatus'],
       }
     : {
         id: user.id,
@@ -93,6 +135,8 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
         currentYear: null,
         planTier: 'free',
         onboardedAt: null,
+        accountType: user.user_metadata?.account_type === 'professor' ? 'professor' : 'student',
+        facultyStatus: user.user_metadata?.account_type === 'professor' ? 'approved' : 'not_requested',
       };
 
   const role: 'user' | 'admin' =
@@ -127,6 +171,24 @@ export async function requireAdmin(): Promise<AuthSession> {
   if (session.role !== 'admin') {
     const { ForbiddenException } = await import('@/lib/utils/api');
     throw new ForbiddenException('관리자 권한이 필요합니다.');
+  }
+  return session;
+}
+
+export async function requireProfessor(): Promise<AuthSession> {
+  const session = await requireSession();
+  if (session.role !== 'admin' && session.profile.accountType !== 'professor') {
+    const { ForbiddenException } = await import('@/lib/utils/api');
+    throw new ForbiddenException('교수 계정에서만 사용할 수 있습니다.');
+  }
+  return session;
+}
+
+export async function requireStudent(): Promise<AuthSession> {
+  const session = await requireSession();
+  if (session.role !== 'admin' && session.profile.accountType !== 'student') {
+    const { ForbiddenException } = await import('@/lib/utils/api');
+    throw new ForbiddenException('학생 계정에서만 사용할 수 있습니다.');
   }
   return session;
 }

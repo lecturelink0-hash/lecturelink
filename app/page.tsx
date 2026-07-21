@@ -6,6 +6,9 @@ export default async function HomePage() {
   const session = await getCurrentSession();
 
   if (session) {
+    if (session.profile.accountType === 'professor') {
+      redirect('/professor');
+    }
     if (!session.profile.onboardedAt) {
       redirect('/onboarding');
     }
