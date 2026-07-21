@@ -5,13 +5,18 @@
   "provenance": {
     "content": "불면장애 CPX AI 종합 채점 루브릭 (최종 완성본).txt + 반영된 예외 규칙 가이드라인 (최최최종 수정본).txt",
     "structure": "034_sleep_disorder.json userEvaluationRubric/evaluationOutputContract",
-    "decisions": "결합안(§4.0) + 이중 표기(§4.8) — 사용자 승인 2026-07-07"
+    "decisions": "결합안(§4.0) + 이중 표기(§4.8) — 사용자 승인 2026-07-07",
+    "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 02 '수면장애' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 재작성했으며 교재 문장을 직접 인용하지 않음."
   },
   "totalScore": 100,
   "scoringPolicy": {
     "mode": "dual",
     "note": "점수는 부분점수(충족 항목 비례)로 연속 계산, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
-    "gradeLabels": { "2": "우수", "1": "보통", "0": "미흡" }
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
   },
   "sections": [
     {
@@ -19,20 +24,60 @@
       "name": "병력청취",
       "type": "checklist",
       "weightPercent": 35,
-      "gradeCutoffs": { "excellent": 9, "fairMin": 5 },
+      "gradeCutoffs": {
+        "excellent": 9,
+        "fairMin": 5
+      },
       "items": [
-        { "id": "ht01", "text": "질환 시작 시점(언제부터 잠을 못 잤는지) 질문" },
-        { "id": "ht02", "text": "평소 수면 시간(몇 시간 자는지, 몇 시에 눕는지 등) 질문" },
-        { "id": "ht03", "text": "불면 유형(입면 장애 vs 수면 유지 장애) 구체적 질문" },
-        { "id": "ht04", "text": "수면 위생 환경(잠자리 환경, 잠 안 올 때 대처법 등) 질문" },
-        { "id": "ht05", "text": "우울, 스트레스 등 동반 정신과적 증상 확인" },
-        { "id": "ht06", "text": "야뇨, 폐경, 통증, 코골이 등 동반 신체 증상 확인" },
-        { "id": "ht07", "text": "복용 중인 약물 및 수면제 복용 경험 질문" },
-        { "id": "ht08", "text": "기저 신체 질환 여부 질문" },
-        { "id": "ht09", "text": "과거 정신건강의학과 진료력 질문", "contextHint": "'정신과 다닌 적 있으세요?' 같은 표현도 인정 (예외 규칙 1)" },
-        { "id": "ht10", "text": "음주력(술을 마시고 자는지 등) 질문" },
-        { "id": "ht11", "text": "가족력(수면 장애 또는 정신 질환) 질문" },
-        { "id": "ht12", "text": "최근 우울감이나 식욕 저하 여부 추가 확인" }
+        {
+          "id": "ht01",
+          "text": "질환 시작 시점(언제부터 잠을 못 잤는지) 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "평소 수면 시간(몇 시간 자는지, 몇 시에 눕는지 등) 질문"
+        },
+        {
+          "id": "ht03",
+          "text": "불면 유형(입면 장애 vs 수면 유지 장애) 구체적 질문"
+        },
+        {
+          "id": "ht04",
+          "text": "수면 위생 환경(잠자리 환경, 잠 안 올 때 대처법 등) 질문"
+        },
+        {
+          "id": "ht05",
+          "text": "우울, 스트레스 등 동반 정신과적 증상 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "야뇨, 폐경, 통증, 코골이 등 동반 신체 증상 확인"
+        },
+        {
+          "id": "ht07",
+          "text": "복용 중인 약물 및 수면제 복용 경험 질문"
+        },
+        {
+          "id": "ht08",
+          "text": "기저 신체 질환 여부 질문"
+        },
+        {
+          "id": "ht09",
+          "text": "과거 정신건강의학과 진료력 질문",
+          "contextHint": "'정신과 다닌 적 있으세요?' 같은 표현도 인정 (예외 규칙 1)"
+        },
+        {
+          "id": "ht10",
+          "text": "음주력(술을 마시고 자는지 등) 질문"
+        },
+        {
+          "id": "ht11",
+          "text": "가족력(수면 장애 또는 정신 질환) 질문"
+        },
+        {
+          "id": "ht12",
+          "text": "최근 우울감이나 식욕 저하 여부 추가 확인"
+        }
       ]
     },
     {
@@ -40,15 +85,38 @@
       "name": "신체진찰",
       "type": "checklist",
       "weightPercent": 15,
-      "gradeCutoffs": { "excellent": 4, "fairMin": 2 },
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
       "declarationCountsAsPerformance": true,
       "items": [
-        { "id": "pe01", "text": "키, 체중을 통해 비만 여부를 확인 (말로 언급)", "contextHint": "'체중 변화가 있나요?', 'BMI를 확인하겠습니다'도 인정 (예외 규칙 1)" },
-        { "id": "pe02", "text": "호흡음 및 심음 청진을 시행 (말로 언급)", "contextHint": "'청진을 해보겠습니다' 선언 시 시행 인정 (예외 규칙 2)" },
-        { "id": "pe03", "text": "구강, 갑상샘, 전립선 등 기타 관련 신체 진찰을 제안하거나 시행" },
-        { "id": "pe04", "text": "Mood, Affect, Suicidal ideation 등 정신상태검사(MSE) 평가" },
-        { "id": "pe05", "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현" },
-        { "id": "pe06", "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검" }
+        {
+          "id": "pe01",
+          "text": "키, 체중을 통해 비만 여부를 확인 (말로 언급)",
+          "contextHint": "'체중 변화가 있나요?', 'BMI를 확인하겠습니다'도 인정 (예외 규칙 1)"
+        },
+        {
+          "id": "pe02",
+          "text": "호흡음 및 심음 청진을 시행 (말로 언급)",
+          "contextHint": "'청진을 해보겠습니다' 선언 시 시행 인정 (예외 규칙 2)"
+        },
+        {
+          "id": "pe03",
+          "text": "구강, 갑상샘, 전립선 등 기타 관련 신체 진찰을 제안하거나 시행"
+        },
+        {
+          "id": "pe04",
+          "text": "Mood, Affect, Suicidal ideation 등 정신상태검사(MSE) 평가"
+        },
+        {
+          "id": "pe05",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
+        },
+        {
+          "id": "pe06",
+          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+        }
       ]
     },
     {
@@ -56,19 +124,44 @@
       "name": "환자교육",
       "type": "checklist",
       "weightPercent": 15,
-      "gradeCutoffs": { "excellent": 4, "fairMin": 2 },
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
       "conditionalGradeCutoffs": {
         "when": "not depressionRelated (5항목 기준)",
         "excellent": 3,
         "fairMin": 2
       },
       "items": [
-        { "id": "ed01", "text": "환자를 안심시키고 긴장을 완화하는 지지적 설명 제시" },
-        { "id": "ed02", "text": "현재 의심되는 추정 진단(불면장애, 우울증 등)에 대해 설명" },
-        { "id": "ed03", "text": "원인 감별을 위한 검사(예: 수면다원검사 등)의 필요성 설명" },
-        { "id": "ed04", "text": "올바른 수면 위생 교육(스마트폰 금지, 규칙적 기상 등) 시행" },
-        { "id": "ed05", "text": "정신질환(우울증 등) 의심 시 추가적인 평가/상담 필요성 설명", "conditional": { "flag": "depressionRelated", "note": "우울장애 연관 증례일 때만 평가 항목에 포함 (예외 규칙 — 조건부 적용)" } },
-        { "id": "ed06", "text": "향후 약물 치료 또는 인지행동치료 등 치료 계획에 대한 교육 시행" }
+        {
+          "id": "ed01",
+          "text": "환자를 안심시키고 긴장을 완화하는 지지적 설명 제시"
+        },
+        {
+          "id": "ed02",
+          "text": "현재 의심되는 추정 진단(불면장애, 우울증 등)에 대해 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "원인 감별을 위한 검사(예: 수면다원검사 등)의 필요성 설명"
+        },
+        {
+          "id": "ed04",
+          "text": "올바른 수면 위생 교육(스마트폰 금지, 규칙적 기상 등) 시행"
+        },
+        {
+          "id": "ed05",
+          "text": "정신질환(우울증 등) 의심 시 추가적인 평가/상담 필요성 설명",
+          "conditional": {
+            "flag": "depressionRelated",
+            "note": "우울장애 연관 증례일 때만 평가 항목에 포함 (예외 규칙 — 조건부 적용)"
+          }
+        },
+        {
+          "id": "ed06",
+          "text": "향후 약물 치료 또는 인지행동치료 등 치료 계획에 대한 교육 시행"
+        }
       ]
     },
     {
@@ -76,13 +169,31 @@
       "name": "PPI (환자의사관계)",
       "type": "passfail",
       "weightPercent": 25,
-      "gradeCutoffs": { "excellent": 4, "fairMin": 2 },
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
       "items": [
-        { "id": "ppi01", "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가" },
-        { "id": "ppi02", "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가" },
-        { "id": "ppi03", "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가" },
-        { "id": "ppi04", "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가" },
-        { "id": "ppi05", "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가" }
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
       ]
     },
     {
@@ -93,11 +204,25 @@
       "baseScore": 10,
       "deductionPerViolation": 2,
       "floor": 0,
-      "gradeCutoffs": { "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡", "excellentMaxViolations": 0, "fairMaxViolations": 2 },
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
       "violationTypes": [
-        { "id": "et01", "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문", "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)" },
-        { "id": "et02", "text": "반말 사용 또는 부적절한 비속어·은어 사용" },
-        { "id": "et03", "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황" }
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
       ]
     }
   ],
@@ -111,8 +236,21 @@
     "target": "user_only",
     "llmRole": "extract_evidence_only",
     "ruleEngineRole": "calculate_score",
-    "requiredOutputFields": ["totalScore", "sectionScores", "metItems", "missedItems", "penalties", "evidenceQuotes", "correctionFeedback"],
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
     "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
-    "forbiddenEvaluationTargets": ["ai_patient", "patient_response_quality", "patient_personality", "patient_prompt_following"]
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
   }
 }

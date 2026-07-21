@@ -4,6 +4,7 @@
   "id": "gerd_cough_rule",
   "title": "만성 기침 (역류성 의심)",
   "category": "기침",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 12 '기침' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "위식도역류에 의한 만성 기침 의심 (Suspected GERD-related chronic cough)",
   "variant": "식후·눕기 유발 + 목 이물감형",
   "description": "식사 후와 누웠을 때 심해지는 기침이 두 달째, 목에 뭐가 걸린 듯하고 아침에 목이 쉬는 규칙입니다.",

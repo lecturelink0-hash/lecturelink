@@ -4,40 +4,153 @@
   "id": "routine_second_trimester_antenatal_rule",
   "title": "산전 진찰 (정기 24주 진료)",
   "category": "산전 진찰",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 41 '산전 진찰' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "정상 임신 정기 산전 진찰 (Routine antenatal care)",
   "variant": "저위험 초임신 24주 추적형",
   "description": "정기 산전 진찰에서 산과력·고위험 적신호·생활 노출을 확인하고 임신 주수에 맞는 진찰·검사·안전 교육을 제공하는 규칙입니다.",
-  "tags": ["산전 진찰", "임신 24주", "태아 심음", "자궁저부", "임신중독증 적신호"],
+  "tags": [
+    "산전 진찰",
+    "임신 24주",
+    "태아 심음",
+    "자궁저부",
+    "임신중독증 적신호"
+  ],
   "sourceTextFile": "045_antenatal_care.json·045_antenatal_care_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"gender": "여성", "age": 30}, "recommended": {"occupation": "교사"}, "randomizable": ["이름", "키", "몸무게"], "mustAbsent": []},
+  "demographicsRule": {
+    "fixed": {
+      "gender": "여성",
+      "age": 30
+    },
+    "recommended": {
+      "occupation": "교사"
+    },
+    "randomizable": [
+      "이름",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
   "scenarioRule": {
     "caseSummary": "30세 초임부가 임신 24주 정기 산전 진찰을 위해 왔다. LMP와 초기 초음파에 따른 예정일은 일치하며, 태동을 느낀다. 질출혈·양수 의심·규칙적 수축·발열·두통·시야 변화·명치 통증은 없다.",
-    "mustInclude": ["임신 24주 초임부", "태동 인지", "질출혈·양수 의심·규칙적 수축 없음", "두통·시야 변화·명치 통증 없음", "정기 산전 진찰 목적"],
-    "preferredVariants": ["엽산을 포함한 산전 비타민 복용", "비흡연·비음주", "최근 예방접종과 당검사 일정 문의"],
-    "mustAbsent": ["고혈압", "단백뇨", "태동 감소", "중증 부종", "감염 의심 발열"]
+    "mustInclude": [
+      "임신 24주 초임부",
+      "태동 인지",
+      "질출혈·양수 의심·규칙적 수축 없음",
+      "두통·시야 변화·명치 통증 없음",
+      "정기 산전 진찰 목적"
+    ],
+    "preferredVariants": [
+      "엽산을 포함한 산전 비타민 복용",
+      "비흡연·비음주",
+      "최근 예방접종과 당검사 일정 문의"
+    ],
+    "mustAbsent": [
+      "고혈압",
+      "단백뇨",
+      "태동 감소",
+      "중증 부종",
+      "감염 의심 발열"
+    ]
   },
-  "pastHistoryRule": {"mustInclude": ["특이 내과·산과 질환 없음"], "mustAbsent": ["고혈압", "당뇨병", "반복 유산"]},
-  "familyHistoryRule": {"recommended": ["유전질환 가족력 없음"], "mustAbsent": []},
-  "socialHistoryRule": {"fixed": ["비흡연", "비음주", "불법 약물 사용 없음"], "recommended": ["배우자 지지 있음"]},
+  "pastHistoryRule": {
+    "mustInclude": [
+      "특이 내과·산과 질환 없음"
+    ],
+    "mustAbsent": [
+      "고혈압",
+      "당뇨병",
+      "반복 유산"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "유전질환 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연",
+      "비음주",
+      "불법 약물 사용 없음"
+    ],
+    "recommended": [
+      "배우자 지지 있음"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "혈압·체중·부종", "method": "혈압·체중 측정과 부종 확인", "expectedFinding": "혈압 112/70 mmHg, 급격한 체중 증가·함요부종 없음", "examConceptId": "vital_signs"},
-    {"item": "자궁저부 높이", "method": "자궁저부 높이 측정", "expectedFinding": "자궁저부 높이 24 cm로 임신 주수에 부합", "examConceptId": "uterine_fundal_height"},
-    {"item": "Leopold 촉진", "method": "복부 촉진으로 태위·태향 확인", "expectedFinding": "태위·태향에서 특이소견 없음", "examConceptId": "leopold_maneuver"},
-    {"item": "태아 심음", "method": "도플러로 태아 심박동 확인", "expectedFinding": "태아 심박동 148회/분, 규칙적", "examConceptId": "fetal_heart_sound"},
-    {"item": "소변검사", "method": "소변 딥스틱으로 단백·당 확인", "expectedFinding": "소변 단백·당 음성", "examConceptId": "urinalysis"}
+    {
+      "item": "혈압·체중·부종",
+      "method": "혈압·체중 측정과 부종 확인",
+      "expectedFinding": "혈압 112/70 mmHg, 급격한 체중 증가·함요부종 없음",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "자궁저부 높이",
+      "method": "자궁저부 높이 측정",
+      "expectedFinding": "자궁저부 높이 24 cm로 임신 주수에 부합",
+      "examConceptId": "uterine_fundal_height"
+    },
+    {
+      "item": "Leopold 촉진",
+      "method": "복부 촉진으로 태위·태향 확인",
+      "expectedFinding": "태위·태향에서 특이소견 없음",
+      "examConceptId": "leopold_maneuver"
+    },
+    {
+      "item": "태아 심음",
+      "method": "도플러로 태아 심박동 확인",
+      "expectedFinding": "태아 심박동 148회/분, 규칙적",
+      "examConceptId": "fetal_heart_sound"
+    },
+    {
+      "item": "소변검사",
+      "method": "소변 딥스틱으로 단백·당 확인",
+      "expectedFinding": "소변 단백·당 음성",
+      "examConceptId": "urinalysis"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "환자는 첫 임신이라 검사 일정과 태아 상태가 궁금하지만, 적신호·생활 노출·과거력은 질문할 때만 제공한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "질출혈·양수 의심·수축·태동 감소·두통/시야 변화 질문에는 현재 없다고 명확히 답한다.", "음주·흡연·약물·정신건강 질문에는 비판단적 설명 뒤에 답한다."],
-    "positiveClues": ["임신 24주", "태동 인지", "정기 산전 관리 의지"],
-    "negativeClues": ["고혈압성 질환·조산·감염·태동 감소 적신호 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질출혈·양수 의심·수축·태동 감소·두통/시야 변화 질문에는 현재 없다고 명확히 답한다.",
+      "음주·흡연·약물·정신건강 질문에는 비판단적 설명 뒤에 답한다."
+    ],
+    "positiveClues": [
+      "임신 24주",
+      "태동 인지",
+      "정기 산전 관리 의지"
+    ],
+    "negativeClues": [
+      "고혈압성 질환·조산·감염·태동 감소 적신호 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["임신 주수·LMP·예정일·산과력", "질출혈·양수·수축·발열·배뇨증상·태동", "두통·시야 변화·명치 통증·부종", "기저질환·약물·감염·유전 가족력", "흡연·음주·약물·영양·직업 노출·지지체계", "혈압·부종·자궁저부·태위·태아 심음·소변 검사", "산전 검사·예방접종·응급 적신호·추적 방문"],
-    "positiveClues": ["임신 24주", "태동", "정상 진찰"],
-    "negativeClues": ["조산·임신중독증·감염 적신호 없음"],
-    "educationTopics": ["정기 산전 검사", "출혈·양수·수축·태동 감소·고혈압 증상 응급 기준", "엽산·금주금연·안전한 약물과 추적"]
+    "mustAsk": [
+      "임신 주수·LMP·예정일·산과력",
+      "질출혈·양수·수축·발열·배뇨증상·태동",
+      "두통·시야 변화·명치 통증·부종",
+      "기저질환·약물·감염·유전 가족력",
+      "흡연·음주·약물·영양·직업 노출·지지체계",
+      "혈압·부종·자궁저부·태위·태아 심음·소변 검사",
+      "산전 검사·예방접종·응급 적신호·추적 방문"
+    ],
+    "positiveClues": [
+      "임신 24주",
+      "태동",
+      "정상 진찰"
+    ],
+    "negativeClues": [
+      "조산·임신중독증·감염 적신호 없음"
+    ],
+    "educationTopics": [
+      "정기 산전 검사",
+      "출혈·양수·수축·태동 감소·고혈압 증상 응급 기준",
+      "엽산·금주금연·안전한 약물과 추적"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 산전 진찰 (정기 24주 진료)\n- 30세 초임부, 임신 24주 정기 방문. 태동을 느끼며 질출혈·양수·수축·두통·시야 변화 없음.\n- 검사 일정과 태아 상태를 궁금해함.\n\n추가 질문: \"어떤 증상이 있으면 바로 병원에 와야 하나요?\"",

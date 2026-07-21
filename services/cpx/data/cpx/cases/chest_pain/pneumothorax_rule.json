@@ -4,6 +4,7 @@
   "id": "pneumothorax_rule",
   "title": "가슴 통증 (자연기흉 의심)",
   "category": "가슴 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 08 '가슴 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "자연기흉 의심 (Suspected spontaneous pneumothorax)",
   "variant": "마른 체형 청년의 급성 편측 흉통·호흡곤란형",
   "description": "마르고 키 큰 청년이 갑자기 오른쪽 가슴이 찢어질 듯 아프고 숨이 차서 온 규칙입니다.",

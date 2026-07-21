@@ -4,6 +4,7 @@
   "id": "acute_cystitis_rule",
   "title": "배뇨 이상 (급성 방광염 의심)",
   "category": "배뇨 이상",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 33 '배뇨 이상' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "급성 단순 방광염 의심 (Suspected acute uncomplicated cystitis)",
   "variant": "배뇨통·빈뇨·급박뇨의 젊은 여성형",
   "description": "어제부터 소변볼 때 찌릿하게 아프고, 화장실을 들락거리는데 시원하지 않은 규칙입니다.",

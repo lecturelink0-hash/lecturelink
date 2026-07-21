@@ -4,6 +4,7 @@
   "id": "pseudodementia_rule",
   "title": "기억력 저하 (우울증 관련 인지저하 의심)",
   "category": "기억력 저하",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 50 '기억력 저하' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "노년기 우울증 관련 인지저하 의심 (Suspected depression-related cognitive impairment)",
   "variant": "아급성 경과·우울 동반·\"모르겠다\" 답변형",
   "description": "배우자와 사별한 뒤 몇 달 만에 기억력이 뚝 떨어졌다며 무기력하게 호소하는 규칙입니다.",

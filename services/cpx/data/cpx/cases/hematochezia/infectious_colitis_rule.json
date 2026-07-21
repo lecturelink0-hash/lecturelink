@@ -4,27 +4,164 @@
   "id": "infectious_colitis_rule",
   "title": "혈변 (감염성 대장염 의심)",
   "category": "혈변",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 19 '혈변' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "급성 감염성 대장염 의심 (Suspected acute infectious colitis)",
   "variant": "급성 설사·발열·복통·점액혈변형",
   "description": "여행 뒤 급성 설사와 발열, 쥐어짜는 복통 및 점액이 섞인 혈변을 호소하는 규칙입니다.",
-  "tags": ["혈변", "감염성대장염", "설사", "발열", "탈수"],
+  "tags": [
+    "혈변",
+    "감염성대장염",
+    "설사",
+    "발열",
+    "탈수"
+  ],
   "sourceTextFile": "004_hematochezia.json·004_hematochezia_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (NIDDK GI bleeding·diarrhea 자료로 임상 단서 교차 확인, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"location": "응급실"}, "recommended": {"gender": "무관", "age": "20~50세"}, "randomizable": ["성별", "이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
-  "scenarioRule": {"caseSummary": "이틀 전 여행지에서 덜 익힌 음식을 먹은 뒤 물설사를 하루 여덟 번 이상 하고 열과 쥐어짜는 아랫배 통증이 생겼으며, 오늘은 점액과 선홍색 피가 섞인 변을 봤다.", "mustInclude": ["급성 물설사 하루 8회 이상", "발열 38.4와 하복부 경련성 통증", "점액과 선홍색 피가 섞인 변", "여행 중 덜 익힌 음식 섭취", "입이 마르고 소변량 감소"], "preferredVariants": ["동행인 한 명도 설사", "혈변 이야기를 민망해함"], "mustAbsent": ["만성 체중감소", "수개월 배변 습관 변화", "항문 덩이·치열 통증", "토혈"]},
-  "pastHistoryRule": {"mustInclude": ["특별한 만성질환 없음"], "mustAbsent": ["염증성 장질환", "대장암 가족력"]},
-  "familyHistoryRule": {"recommended": ["특이 가족력 없음"], "mustAbsent": []},
-  "socialHistoryRule": {"fixed": ["최근 국내외 여행"], "recommended": ["평소 흡연 없음"]},
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "학력",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "이틀 전 여행지에서 덜 익힌 음식을 먹은 뒤 물설사를 하루 여덟 번 이상 하고 열과 쥐어짜는 아랫배 통증이 생겼으며, 오늘은 점액과 선홍색 피가 섞인 변을 봤다.",
+    "mustInclude": [
+      "급성 물설사 하루 8회 이상",
+      "발열 38.4와 하복부 경련성 통증",
+      "점액과 선홍색 피가 섞인 변",
+      "여행 중 덜 익힌 음식 섭취",
+      "입이 마르고 소변량 감소"
+    ],
+    "preferredVariants": [
+      "동행인 한 명도 설사",
+      "혈변 이야기를 민망해함"
+    ],
+    "mustAbsent": [
+      "만성 체중감소",
+      "수개월 배변 습관 변화",
+      "항문 덩이·치열 통증",
+      "토혈"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "특별한 만성질환 없음"
+    ],
+    "mustAbsent": [
+      "염증성 장질환",
+      "대장암 가족력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 국내외 여행"
+    ],
+    "recommended": [
+      "평소 흡연 없음"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후", "method": "활력징후·탈수 평가", "expectedFinding": "체온 38.4, 맥박 106회, 구강 점막 건조", "polarity": "positive"},
-    {"item": "전반적 외견", "method": "전신 상태·결막 확인", "expectedFinding": "피곤해 보이나 의식 명료, 결막 창백 없음"},
-    {"item": "복부 시진", "method": "복부 시진·장음 청진", "expectedFinding": "팽만 없고 장음이 다소 증가", "polarity": "positive"},
-    {"item": "복부 촉진", "method": "복부 촉진", "expectedFinding": "하복부 전반 경미한 압통, 반발통·강직 없음", "polarity": "positive"},
-    {"item": "항문 주위", "method": "항문 주위 시진", "expectedFinding": "설명과 동의 후 시행하면 외치핵·치열 소견 없음"},
-    {"item": "직장수지검사", "method": "직장수지검사", "expectedFinding": "설명과 동의 후 시행하면 점액이 섞인 선홍색 혈액이 소량 묻어남", "polarity": "positive"}
+    {
+      "item": "활력징후",
+      "method": "활력징후·탈수 평가",
+      "expectedFinding": "체온 38.4, 맥박 106회, 구강 점막 건조",
+      "polarity": "positive"
+    },
+    {
+      "item": "전반적 외견",
+      "method": "전신 상태·결막 확인",
+      "expectedFinding": "피곤해 보이나 의식 명료, 결막 창백 없음"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진·장음 청진",
+      "expectedFinding": "팽만 없고 장음이 다소 증가",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진",
+      "expectedFinding": "하복부 전반 경미한 압통, 반발통·강직 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "항문 주위",
+      "method": "항문 주위 시진",
+      "expectedFinding": "설명과 동의 후 시행하면 외치핵·치열 소견 없음"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "직장수지검사",
+      "expectedFinding": "설명과 동의 후 시행하면 점액이 섞인 선홍색 혈액이 소량 묻어남",
+      "polarity": "positive"
+    }
   ],
-  "liveApiContext": {"patientContextFocus": "급성 장염성 혈변이 의심되는 환자이다. 여행·음식 노출, 설사 횟수, 발열과 점액혈변은 해당 질문을 받을 때만 말한다.", "answerPolicy": ["진단명을 먼저 말하지 않는다.", "질문받은 항목에만 짧게 답한다.", "대변검사·수액·응급 평가의 설명을 들으면 걱정을 표현하되 판단을 대신하지 않는다."], "positiveClues": ["급성 빈번한 설사", "발열·복부 경련", "점액 혈변", "음식·여행 노출", "탈수"], "negativeClues": ["만성 체중감소·배변변화 없음", "항문 통증·덩이 없음", "토혈 없음"]},
-  "evaluationUse": {"mustAsk": ["출혈의 색·양과 변에 섞이는 양상", "설사 횟수·점액·고름·급박변", "복통 위치·강도와 발열·오한", "어지럼·실신감·탈수·소변량", "여행·음식·주변 유사 증상·항생제", "복용약과 NSAIDs·항응고제", "염증성 장질환·이전 대장내시경", "항문 통증·치핵·치열 및 가족력"], "positiveClues": ["급성 설사·발열", "점액 혈변", "여행·음식 노출", "탈수"], "negativeClues": ["만성 적신호 없음", "항문 원인 단서 없음"], "educationTopics": ["혈변·발열 동반 설사는 원인 확인과 탈수 평가가 필요함을 설명", "수액·혈액 및 대변검사, 중증도에 따른 추가 검사 가능성 설명", "수분 섭취와 손 위생을 안내하되 약물은 임의 복용하지 않도록 설명", "심한 복통·고열·어지럼·소변 감소가 악화되면 즉시 알리거나 응급진료를 받도록 안내"]},
+  "liveApiContext": {
+    "patientContextFocus": "급성 장염성 혈변이 의심되는 환자이다. 여행·음식 노출, 설사 횟수, 발열과 점액혈변은 해당 질문을 받을 때만 말한다.",
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 항목에만 짧게 답한다.",
+      "대변검사·수액·응급 평가의 설명을 들으면 걱정을 표현하되 판단을 대신하지 않는다."
+    ],
+    "positiveClues": [
+      "급성 빈번한 설사",
+      "발열·복부 경련",
+      "점액 혈변",
+      "음식·여행 노출",
+      "탈수"
+    ],
+    "negativeClues": [
+      "만성 체중감소·배변변화 없음",
+      "항문 통증·덩이 없음",
+      "토혈 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "출혈의 색·양과 변에 섞이는 양상",
+      "설사 횟수·점액·고름·급박변",
+      "복통 위치·강도와 발열·오한",
+      "어지럼·실신감·탈수·소변량",
+      "여행·음식·주변 유사 증상·항생제",
+      "복용약과 NSAIDs·항응고제",
+      "염증성 장질환·이전 대장내시경",
+      "항문 통증·치핵·치열 및 가족력"
+    ],
+    "positiveClues": [
+      "급성 설사·발열",
+      "점액 혈변",
+      "여행·음식 노출",
+      "탈수"
+    ],
+    "negativeClues": [
+      "만성 적신호 없음",
+      "항문 원인 단서 없음"
+    ],
+    "educationTopics": [
+      "혈변·발열 동반 설사는 원인 확인과 탈수 평가가 필요함을 설명",
+      "수액·혈액 및 대변검사, 중증도에 따른 추가 검사 가능성 설명",
+      "수분 섭취와 손 위생을 안내하되 약물은 임의 복용하지 않도록 설명",
+      "심한 복통·고열·어지럼·소변 감소가 악화되면 즉시 알리거나 응급진료를 받도록 안내"
+    ]
+  },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 혈변 (감염성 대장염 의심)\n\n- 장소: 응급실\n- 요약: 여행 후 급성 설사·발열·하복부 경련, 점액 섞인 선홍색 혈변.\n- 동반: 하루 8회 설사, 38.4도, 입마름·소변량 감소.\n- 신체진찰: 빈맥·탈수, 장음 증가, 하복부 경미 압통, 복막자극징후 없음.\n\n추가 질문: \"같이 여행 간 사람도 설사하는데 옮는 건가요?\"",
   "rawRuleText": "# 증례명 : 혈변 (감염성 대장염 의심)\n\n- 장소: 응급실\n- 요약: 여행 후 급성 설사·발열·하복부 경련, 점액 섞인 선홍색 혈변.\n- 동반: 하루 8회 설사, 38.4도, 입마름·소변량 감소.\n- 신체진찰: 빈맥·탈수, 장음 증가, 하복부 경미 압통, 복막자극징후 없음.\n\n추가 질문: \"같이 여행 간 사람도 설사하는데 옮는 건가요?\""

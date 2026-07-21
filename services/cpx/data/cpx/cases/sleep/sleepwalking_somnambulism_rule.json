@@ -4,6 +4,7 @@
   "id": "sleepwalking_somnambulism_rule",
   "title": "몽유병/수면보행증",
   "category": "수면장애",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 02 '수면장애' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "몽유병(수면보행증)",
   "variant": "NREM 수면 전반부 보행형",
   "description": "잠든 지 1~3시간 이내 눈을 뜨고 돌아다니지만 아침에 기억하지 못하는 몽유병 규칙입니다.",

@@ -436,6 +436,19 @@ URINARY_BUTTONS = [
      'declaration': '소변검사를 해보겠습니다.', 'defaultFinding': '요검사 정상.'},
 ]
 
+RED_URINE_BUTTONS = [
+    {'id': 'bp', 'label': '혈압/활력징후', 'keywords': ['활력징후'],
+     'declaration': '활력징후를 확인하겠습니다.', 'defaultFinding': '활력징후 정상.'},
+    {'id': 'flank', 'label': '옆구리 (CVA) 확인', 'keywords': ['옆구리', 'CVA'],
+     'declaration': '옆구리를 가볍게 두드려 확인하겠습니다.', 'defaultFinding': 'CVA 압통 없음.'},
+    {'id': 'lower_abdomen', 'label': '하복부·방광 촉진', 'keywords': ['하복부', '방광'],
+     'declaration': '아랫배와 방광 부위를 눌러 확인하겠습니다.', 'defaultFinding': '하복부 압통·팽만 없음.'},
+    {'id': 'edema', 'label': '부종·혈압 (신염 징후)', 'keywords': ['부종', '신염', '눈꺼풀'],
+     'declaration': '눈꺼풀·다리 부종과 혈압을 확인하겠습니다.', 'defaultFinding': '부종 없음, 혈압 정상.'},
+    {'id': 'urinalysis', 'label': '소변검사 (딥스틱+현미경)', 'keywords': ['소변검사', '요검사', '현미경'],
+     'declaration': '소변검사를 해보겠습니다.', 'defaultFinding': '요검사 정상.'},
+]
+
 INCONTINENCE_BUTTONS = [
     {'id': 'bp', 'label': '혈압/활력징후', 'keywords': ['활력징후'],
      'declaration': '활력징후를 확인하겠습니다.', 'defaultFinding': '활력징후 정상.'},
@@ -884,6 +897,7 @@ BUTTON_SETS = {
     '콧물/코막힘': RHINORRHEA_BUTTONS,
     '목 통증': NECK_BUTTONS,
     '배뇨 이상': URINARY_BUTTONS,
+    '붉은색 소변': RED_URINE_BUTTONS,
     '불안': ANXIETY_BUTTONS,
     '음주 문제': ALCOHOL_BUTTONS,
     '기분 변화': MOOD_BUTTONS,
@@ -1040,7 +1054,7 @@ def _body_region_for_button(case: dict | None, button: dict) -> tuple[str, str, 
     if category == '혈변' and button_id in {'perianal', 'dre'}:
         return 'abdomen', '복부·항문', 'pelvis'
 
-    digestive_categories = {'급성 복통', '소화불량/만성복통', '변비', '설사', '배뇨 이상', '혈변', '황달'}
+    digestive_categories = {'급성 복통', '소화불량/만성복통', '변비', '설사', '배뇨 이상', '붉은색 소변', '혈변', '황달'}
     if category in digestive_categories or button_id in {'abdomen', 'lower_abdomen', 'abdomen_liver', 'abdomen_bruit', 'abdomen_inspect', 'abdomen_palp', 'dre', 'position', 'inspect', 'auscult', 'palp', 'percuss', 'special'}:
         return 'abdomen', '복부', 'abdomen'
     if category in {'관절 통증'} or button_id in {'gait', 'edema', 'limbs'}:

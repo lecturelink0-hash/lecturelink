@@ -4,6 +4,7 @@
   "id": "copd_exacerbation_rule",
   "title": "호흡곤란 (COPD 악화 의심)",
   "category": "호흡곤란",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 13 '호흡곤란' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "만성폐쇄성폐질환 급성 악화 의심 (Suspected COPD exacerbation)",
   "variant": "장기 흡연자의 만성 진행 + 감기 후 악화형",
   "description": "담배를 45년 피운 환자가 수년째 계단이 힘들더니, 감기 후 가래가 늘고 숨이 더 차진 규칙입니다.",

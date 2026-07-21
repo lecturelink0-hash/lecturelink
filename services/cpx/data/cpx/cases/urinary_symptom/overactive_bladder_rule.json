@@ -4,6 +4,7 @@
   "id": "overactive_bladder_rule",
   "title": "배뇨 이상 (과민성 방광 의심)",
   "category": "배뇨 이상",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 33 '배뇨 이상' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "과민성 방광 의심 (Suspected overactive bladder)",
   "variant": "절박뇨·빈뇨 — 감염 음성 여성형",
   "description": "소변이 마려우면 참을 수 없이 급하고, 화장실 지도를 그리고 다니는 규칙입니다.",

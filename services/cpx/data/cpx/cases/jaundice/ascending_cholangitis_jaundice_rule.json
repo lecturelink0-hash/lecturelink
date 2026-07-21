@@ -1,1 +1,158 @@
-{"version":2,"type":"rule","id":"ascending_cholangitis_jaundice_rule","title":"황달 (담관염 적신호)","category":"황달","targetDiagnosis":"급성 담관염 의심 (Suspected acute cholangitis)","variant":"발열·오한·우상복부 통증·황달 동반형","description":"발열과 우상복부 통증을 동반한 황달 환자의 패혈증 및 긴급 담도 평가 필요성을 연습하는 규칙입니다.","tags":["황달","급성담관염","발열","우상복부통증","응급평가"],"sourceTextFile":"008_jaundice.json·008_jaundice_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (Merck jaundice 자료로 임상 단서 교차 확인, 2026-07-17)","contentStatus":"needs_clinical_review","demographicsRule":{"fixed":{"location":"응급실"},"recommended":{"gender":"무관","age":"45~80세"},"randomizable":["성별","이름","직업","학력","키","몸무게"],"mustAbsent":[]},"scenarioRule":{"caseSummary":"어젯밤부터 열과 오한이 나고 오른쪽 윗배가 아프더니 오늘 눈이 노래지고 소변이 진해진 환자. 과거 담석을 들은 적이 있다.","mustInclude":["발열·오한","우상복부 지속 통증","공막 황달·진한 소변","담석 병력","오심·구토"],"preferredVariants":["몸이 떨릴 정도로 춥다고 표현"],"mustAbsent":["의식 저하","토혈·흑색변","만성 체중 감소","최근 간독성 약물"]},"pastHistoryRule":{"mustInclude":["이전 담석 진단"],"mustAbsent":["간경변","췌장암 진단력"]},"familyHistoryRule":{"recommended":["특이 가족력 없음"],"mustAbsent":[]},"socialHistoryRule":{"fixed":["최근 과음 없음"],"recommended":[]},"physicalExamRule":[{"item":"활력징후","method":"활력징후·전반적 외견","expectedFinding":"체온 39.1, 맥박 112회, 혈압 104/66으로 빈맥","polarity":"positive"},{"item":"공막","method":"공막·결막 시진","expectedFinding":"공막 황달이 뚜렷함","polarity":"positive"},{"item":"피부","method":"피부·손바닥 시진","expectedFinding":"피부 황달 있으나 출혈 반점 없음","polarity":"positive"},{"item":"복부 시진","method":"복부 시진·장음 청진","expectedFinding":"복부 팽만 없고 장음 정상"},{"item":"복부 촉진","method":"간·우상복부 촉진","expectedFinding":"우상복부 압통과 Murphy 징후 양성, 반발통·강직 없음","polarity":"positive"},{"item":"신경학적 상태","method":"의식·flapping tremor 확인","expectedFinding":"의식 명료, flapping tremor 없음"}],"liveApiContext":{"patientContextFocus":"급성 담도 감염을 시사하는 황달 환자이다. 열·오한·통증·담석력은 직접 질문을 받을 때만 답한다.","answerPolicy":["진단명을 먼저 말하지 않는다.","질문받은 항목에만 답한다.","응급 검사·항생제·담도 시술 가능성 설명에는 불안을 표현하되 판단을 대신하지 않는다."],"positiveClues":["발열·오한","우상복부 통증","황달·진한 소변","담석력"],"negativeClues":["의식 저하·쇼크 없음","출혈 없음","만성 체중감소 없음"]},"evaluationUse":{"mustAsk":["황달·소변·대변색 변화","발열·오한·우상복부 통증·구토","의식 변화·저혈압·실신 등 패혈증 단서","담석·간담도 질환·시술 병력","약물·음주·간염 노출","출혈·체중감소·가려움"],"positiveClues":["발열·오한·우상복부 통증·황달","담석력"],"negativeClues":["현재 의식 저하·쇼크 없음"],"educationTopics":["응급 감염·폐색 평가","혈액검사·초음파·CT와 항생제·담도 배액 가능성","의식 변화·저혈압 시 즉시 알리기"]},"additionalPromptRule":[],"ruleText":"# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통·Murphy 양성.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\"","rawRuleText":"# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통·Murphy 양성.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\""}
+{
+  "version": 2,
+  "type": "rule",
+  "id": "ascending_cholangitis_jaundice_rule",
+  "title": "황달 (담관염 적신호)",
+  "category": "황달",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 23 '황달' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "급성 담관염 의심 (Suspected acute cholangitis)",
+  "variant": "발열·오한·우상복부 통증·황달 동반형",
+  "description": "발열과 우상복부 통증을 동반한 황달 환자의 패혈증 및 긴급 담도 평가 필요성을 연습하는 규칙입니다.",
+  "tags": [
+    "황달",
+    "급성담관염",
+    "발열",
+    "우상복부통증",
+    "응급평가"
+  ],
+  "sourceTextFile": "008_jaundice.json·008_jaundice_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (Merck jaundice 자료로 임상 단서 교차 확인, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "45~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "학력",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "어젯밤부터 열과 오한이 나고 오른쪽 윗배가 아프더니 오늘 눈이 노래지고 소변이 진해진 환자. 과거 담석을 들은 적이 있다.",
+    "mustInclude": [
+      "발열·오한",
+      "우상복부 지속 통증",
+      "공막 황달·진한 소변",
+      "담석 병력",
+      "오심·구토"
+    ],
+    "preferredVariants": [
+      "몸이 떨릴 정도로 춥다고 표현"
+    ],
+    "mustAbsent": [
+      "의식 저하",
+      "토혈·흑색변",
+      "만성 체중 감소",
+      "최근 간독성 약물"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "이전 담석 진단"
+    ],
+    "mustAbsent": [
+      "간경변",
+      "췌장암 진단력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 과음 없음"
+    ],
+    "recommended": []
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후·전반적 외견",
+      "expectedFinding": "체온 39.1, 맥박 112회, 혈압 104/66으로 빈맥",
+      "polarity": "positive"
+    },
+    {
+      "item": "공막",
+      "method": "공막·결막 시진",
+      "expectedFinding": "공막 황달이 뚜렷함",
+      "polarity": "positive"
+    },
+    {
+      "item": "피부",
+      "method": "피부·손바닥 시진",
+      "expectedFinding": "피부 황달 있으나 출혈 반점 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진·장음 청진",
+      "expectedFinding": "복부 팽만 없고 장음 정상"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "간·우상복부 촉진",
+      "expectedFinding": "우상복부 압통과 Murphy 징후 양성, 반발통·강직 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 상태",
+      "method": "의식·flapping tremor 확인",
+      "expectedFinding": "의식 명료, flapping tremor 없음"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "급성 담도 감염을 시사하는 황달 환자이다. 열·오한·통증·담석력은 직접 질문을 받을 때만 답한다.",
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 항목에만 답한다.",
+      "응급 검사·항생제·담도 시술 가능성 설명에는 불안을 표현하되 판단을 대신하지 않는다."
+    ],
+    "positiveClues": [
+      "발열·오한",
+      "우상복부 통증",
+      "황달·진한 소변",
+      "담석력"
+    ],
+    "negativeClues": [
+      "의식 저하·쇼크 없음",
+      "출혈 없음",
+      "만성 체중감소 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "황달·소변·대변색 변화",
+      "발열·오한·우상복부 통증·구토",
+      "의식 변화·저혈압·실신 등 패혈증 단서",
+      "담석·간담도 질환·시술 병력",
+      "약물·음주·간염 노출",
+      "출혈·체중감소·가려움"
+    ],
+    "positiveClues": [
+      "발열·오한·우상복부 통증·황달",
+      "담석력"
+    ],
+    "negativeClues": [
+      "현재 의식 저하·쇼크 없음"
+    ],
+    "educationTopics": [
+      "응급 감염·폐색 평가",
+      "혈액검사·초음파·CT와 항생제·담도 배액 가능성",
+      "의식 변화·저혈압 시 즉시 알리기"
+    ]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통·Murphy 양성.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\"",
+  "rawRuleText": "# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통·Murphy 양성.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\""
+}

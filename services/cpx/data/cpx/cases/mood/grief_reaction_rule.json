@@ -4,6 +4,7 @@
   "id": "grief_reaction_rule",
   "title": "기분 변화 (사별 애도 반응)",
   "category": "기분 변화",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 05 '기분 변화' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "정상 애도 반응 — 우울증 감별 (Grief reaction vs major depression)",
   "variant": "사별 5주, 파도형 슬픔·기능 유지형",
   "description": "어머니를 여읜 지 다섯 주, 문득문득 눈물이 쏟아지지만 일상을 이어가고 있는 규칙입니다.",

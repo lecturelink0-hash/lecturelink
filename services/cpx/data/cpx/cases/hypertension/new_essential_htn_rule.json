@@ -4,6 +4,7 @@
   "id": "new_essential_htn_rule",
   "title": "고혈압 (본태성 신규 진단)",
   "category": "고혈압",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 11 '고혈압' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "본태성 고혈압 (Essential hypertension, 신규 진단)",
   "variant": "검진 발견 무증상 생활습관형",
   "description": "회사 검진에서 혈압이 높다고 두 번 통보받고 확인차 내원한 규칙입니다.",

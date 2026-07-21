@@ -4,6 +4,7 @@
   "id": "physiologic_fatigue_rule",
   "title": "피로 (일과성·생리적)",
   "category": "피로",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 37 '피로' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "일과성(생리적) 피로 (Physiologic fatigue due to overwork)",
   "variant": "과로·수면 부족 — 안심·생활처방형",
   "description": "두 달째 야근과 육아를 병행하다 지쳐, 큰 병일까 걱정되어 온 규칙입니다.",

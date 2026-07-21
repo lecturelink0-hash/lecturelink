@@ -4,15 +4,33 @@
   "id": "hypothyroidism_fatigue_rule",
   "title": "만성 피로 (갑상샘저하증)",
   "category": "피로",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 37 '피로' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "갑상샘기능저하증 (Hypothyroidism)",
   "variant": "중년 여성의 서서히 진행한 만성 피로 + 저하증 증상군형",
   "description": "1년 가까이 하루 종일 피곤하고, 추위를 못 견디고 살이 찌며 변비가 생긴 규칙입니다.",
-  "tags": ["피로", "갑상샘저하증", "만성피로", "내분비"],
+  "tags": [
+    "피로",
+    "갑상샘저하증",
+    "만성피로",
+    "내분비"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 37 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래", "gender": "여성" },
-    "recommended": { "age": "50~60세" },
-    "randomizable": ["이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "age": "50~60세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -38,24 +56,66 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["특별한 질환 없음", "갑상선 검사 받은 적 없음"],
-    "mustAbsent": ["당뇨", "간질환", "결핵", "수술력"]
+    "mustInclude": [
+      "특별한 질환 없음",
+      "갑상선 검사 받은 적 없음"
+    ],
+    "mustAbsent": [
+      "당뇨",
+      "간질환",
+      "결핵",
+      "수술력"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["어머니 갑상선 질환(정확한 병명은 모름)"],
+    "recommended": [
+      "어머니 갑상선 질환(정확한 병명은 모름)"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["흡연 없음"],
-    "recommended": ["음주 거의 없음", "커피 하루 1잔"]
+    "fixed": [
+      "흡연 없음"
+    ],
+    "recommended": [
+      "음주 거의 없음",
+      "커피 하루 1잔"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후·외양", "method": "활력징후 측정과 전반 외양 관찰", "expectedFinding": "맥박 다소 느림(56회), 체온 정상 하한, 얼굴이 다소 부어 보임", "polarity": "positive" },
-    { "item": "두경부", "method": "결막·공막·경부 림프절 확인", "expectedFinding": "빈혈·황달 없음, 림프절 정상" },
-    { "item": "갑상샘", "method": "갑상샘 촉진", "expectedFinding": "대칭적으로 커져 있음, 압통 없음, 침 삼킬 때 함께 움직임", "polarity": "positive" },
-    { "item": "심폐", "method": "심장·호흡음 청진", "expectedFinding": "정상" },
-    { "item": "복부", "method": "복부 촉진(간·비장)", "expectedFinding": "종대 없음 (정상)" },
-    { "item": "하지 부종", "method": "함요부종 확인", "expectedFinding": "함요를 남기지 않는 경미한 부종", "polarity": "positive" }
+    {
+      "item": "활력징후·외양",
+      "method": "활력징후 측정과 전반 외양 관찰",
+      "expectedFinding": "맥박 다소 느림(56회), 체온 정상 하한, 얼굴이 다소 부어 보임",
+      "polarity": "positive"
+    },
+    {
+      "item": "두경부",
+      "method": "결막·공막·경부 림프절 확인",
+      "expectedFinding": "빈혈·황달 없음, 림프절 정상"
+    },
+    {
+      "item": "갑상샘",
+      "method": "갑상샘 촉진",
+      "expectedFinding": "대칭적으로 커져 있음, 압통 없음, 침 삼킬 때 함께 움직임",
+      "polarity": "positive"
+    },
+    {
+      "item": "심폐",
+      "method": "심장·호흡음 청진",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "복부",
+      "method": "복부 촉진(간·비장)",
+      "expectedFinding": "종대 없음 (정상)"
+    },
+    {
+      "item": "하지 부종",
+      "method": "함요부종 확인",
+      "expectedFinding": "함요를 남기지 않는 경미한 부종",
+      "polarity": "positive"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "서서히 진행된 만성 피로의 환자. '추위 못 견딤', '변비', '체중 증가', '피부·머리카락 변화', '어머니 갑상선 질환'은 해당 주제를 질문받았을 때 공개한다. 스스로는 나이·폐경 탓이라 여긴다.",
@@ -92,8 +152,18 @@
       "가족력",
       "복용 약물"
     ],
-    "positiveClues": ["추위 못 견딤", "변비", "체중 증가", "모발·피부 변화", "가족력"],
-    "negativeClues": ["발열 없음", "우울감 없음", "코골이 없음"],
+    "positiveClues": [
+      "추위 못 견딤",
+      "변비",
+      "체중 증가",
+      "모발·피부 변화",
+      "가족력"
+    ],
+    "negativeClues": [
+      "발열 없음",
+      "우울감 없음",
+      "코골이 없음"
+    ],
     "educationTopics": [
       "갑상샘기능저하증 의심 설명",
       "TSH와 free T4를 포함한 갑상샘기능검사 필요성",

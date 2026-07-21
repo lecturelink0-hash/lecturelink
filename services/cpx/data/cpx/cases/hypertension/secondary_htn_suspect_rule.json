@@ -4,6 +4,7 @@
   "id": "secondary_htn_suspect_rule",
   "title": "고혈압 (이차성 의심)",
   "category": "고혈압",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 11 '고혈압' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "이차성 고혈압 의심 — 신혈관성 (Suspected secondary hypertension)",
   "variant": "젊은 나이 중증 고혈압형",
   "description": "28세에 혈압이 170/110까지 나와 원인 확인이 필요한 규칙입니다.",

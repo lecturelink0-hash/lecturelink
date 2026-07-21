@@ -4,6 +4,7 @@
   "id": "rotator_cuff_rule",
   "title": "어깨 통증 (회전근개 증후군 의심)",
   "category": "관절 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 30 '관절 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "회전근개 증후군 의심 (Suspected rotator cuff syndrome)",
   "variant": "머리 위 동작 악화·야간통 어깨형",
   "description": "선반 위 물건을 꺼낼 때마다 어깨가 결리고, 아픈 쪽으로 누우면 밤에 깨는 규칙입니다.",

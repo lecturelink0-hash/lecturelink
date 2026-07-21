@@ -1,10 +1,152 @@
 {
-  "version":2,"type":"rule","id":"acute_bronchitis_mild_hemoptysis_rule","title":"객혈 (급성 기관지염 연관 소량 객혈 의심)","category":"객혈","targetDiagnosis":"급성 기관지염 연관 소량 객혈 의심 (Suspected mild hemoptysis with acute bronchitis)","variant":"감염 후 기침·가래에 소량 선홍색 혈흔형","description":"심한 기침 뒤 소량 혈흔이 섞인 가래에서 대량 출혈과 중증 호흡기 위험 신호를 우선 배제하는 규칙입니다.","tags":["객혈","급성기관지염","기침","소량객혈"],"sourceTextFile":"016_hemoptysis.json·016_hemoptysis_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)","contentStatus":"needs_clinical_review",
-  "demographicsRule":{"fixed":{"location":"외래"},"recommended":{"gender":"무관","age":"20~50세"},"randomizable":["성별","이름","직업","키","몸무게"],"mustAbsent":[]},
-  "scenarioRule":{"caseSummary":"감기 증상 뒤 닷새째 기침과 누런 가래가 있고 오늘 두 차례 가래에 실처럼 선홍색 피가 묻어 나온 환자. 한 숟갈 미만이며 숨참·흉통·어지럼은 없다.","mustInclude":["기침 후 소량 선홍색 혈흔","하루 두 차례·한 숟갈 미만","가래·미열 동반","호흡곤란·흉통·어지럼 없음","항응고제 복용 없음"],"preferredVariants":["폐암이나 결핵일까 걱정함"],"mustAbsent":["대량 객혈","야간발한·체중감소","결핵 병력","최근 수술·장거리 이동"]},
-  "pastHistoryRule":{"mustInclude":["천식·결핵·폐질환 없음","항응고제·항혈소판제 복용 없음"],"mustAbsent":["출혈질환","심부전"]},"familyHistoryRule":{"recommended":["특이 폐질환 가족력 없음"],"mustAbsent":[]},"socialHistoryRule":{"fixed":["비흡연"],"recommended":["음주 거의 없음"]},
-  "physicalExamRule":[{"item":"활력징후·산소포화도·의식","method":"혈압·맥박·체온·산소포화도와 의식 확인","expectedFinding":"체온 37.8, 맥박 88회, 산소포화도 98%, 의식 명료","examConceptId":"vital_signs"},{"item":"비강·구강·인두·결막","method":"코피·잇몸 출혈과 인두, 결막 확인","expectedFinding":"비강·구강 출혈 없고 결막 창백 없음","examConceptId":"oral_cavity_inspection"},{"item":"경부 림프절·피부 출혈","method":"경부 림프절·점상출혈·멍 확인","expectedFinding":"경부 림프절 종대·점상출혈·멍 없음","examConceptId":"neck_lymph_node"},{"item":"흉부 진찰","method":"흉부 시진·타진과 양측 호흡음 청진","expectedFinding":"양측에 드문 거친 호흡음이나 국소 수포음·천명·호흡음 감소 없음","examConceptId":"lung_auscultation"},{"item":"복부·하지","method":"간비장 비대·하지 부종·곤봉지·청색증 확인","expectedFinding":"간비장 비대·부종·곤봉지·청색증 없음","examConceptId":"peripheral_edema"}],
-  "liveApiContext":{"patientContextFocus":"기침 뒤 가래에 아주 소량 피가 묻어 불안한 환자다. 양·색·기침과의 관계, 흡연·약물력은 질문할 때만 답한다.","answerPolicy":["진단명을 먼저 말하지 않는다.","질문받은 항목에만 짧게 답한다.","출혈량과 호흡 상태 질문에는 구체적으로 답한다."],"positiveClues":["기침 뒤 소량 선홍색 혈흔","가래·미열"],"negativeClues":["대량 출혈·호흡곤란·흉통 없음","결핵·흡연·항응고제 단서 없음"]},
-  "evaluationUse":{"mustAsk":["기침/구토/코피와의 관계 및 시작·빈도","양·색·거품·음식물 동반","호흡곤란·흉통·어지럼과 대량 출혈","발열·가래·체중감소·야간발한","흡연·결핵·폐질환·약물·출혈 경향","필요한 영상·응급 재내원 기준"],"positiveClues":["감염 후 기침·가래","소량 혈흔"],"negativeClues":["대량 객혈과 중증 위험 신호 없음"],"educationTopics":["객혈 원인 평가","증가한 출혈·숨참 시 즉시 진료","금연·처방약 정보 공유"]},"additionalPromptRule":[],
-  "ruleText":"# 증례명 : 객혈 (급성 기관지염 연관 소량 객혈 의심)\n- 기침 뒤 가래에 선홍색 혈흔이 하루 두 번, 한 숟갈 미만.\n- 가래·미열은 있으나 숨참·흉통·어지럼·결핵 위험은 없음.\n\n추가 질문: \"피가 조금 묻었는데 큰 병일까요?\"","rawRuleText":"# 증례명 : 객혈 (급성 기관지염 연관 소량 객혈 의심)\n- 기침 뒤 가래에 선홍색 혈흔이 하루 두 번, 한 숟갈 미만.\n- 가래·미열은 있으나 숨참·흉통·어지럼·결핵 위험은 없음.\n\n추가 질문: \"피가 조금 묻었는데 큰 병일까요?\""
+  "version": 2,
+  "type": "rule",
+  "id": "acute_bronchitis_mild_hemoptysis_rule",
+  "title": "객혈 (급성 기관지염 연관 소량 객혈 의심)",
+  "category": "객혈",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 14 '객혈' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "급성 기관지염 연관 소량 객혈 의심 (Suspected mild hemoptysis with acute bronchitis)",
+  "variant": "감염 후 기침·가래에 소량 선홍색 혈흔형",
+  "description": "심한 기침 뒤 소량 혈흔이 섞인 가래에서 대량 출혈과 중증 호흡기 위험 신호를 우선 배제하는 규칙입니다.",
+  "tags": [
+    "객혈",
+    "급성기관지염",
+    "기침",
+    "소량객혈"
+  ],
+  "sourceTextFile": "016_hemoptysis.json·016_hemoptysis_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "감기 증상 뒤 닷새째 기침과 누런 가래가 있고 오늘 두 차례 가래에 실처럼 선홍색 피가 묻어 나온 환자. 한 숟갈 미만이며 숨참·흉통·어지럼은 없다.",
+    "mustInclude": [
+      "기침 후 소량 선홍색 혈흔",
+      "하루 두 차례·한 숟갈 미만",
+      "가래·미열 동반",
+      "호흡곤란·흉통·어지럼 없음",
+      "항응고제 복용 없음"
+    ],
+    "preferredVariants": [
+      "폐암이나 결핵일까 걱정함"
+    ],
+    "mustAbsent": [
+      "대량 객혈",
+      "야간발한·체중감소",
+      "결핵 병력",
+      "최근 수술·장거리 이동"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "천식·결핵·폐질환 없음",
+      "항응고제·항혈소판제 복용 없음"
+    ],
+    "mustAbsent": [
+      "출혈질환",
+      "심부전"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 폐질환 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연"
+    ],
+    "recommended": [
+      "음주 거의 없음"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·산소포화도·의식",
+      "method": "혈압·맥박·체온·산소포화도와 의식 확인",
+      "expectedFinding": "체온 37.8, 맥박 88회, 산소포화도 98%, 의식 명료",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "비강·구강·인두·결막",
+      "method": "코피·잇몸 출혈과 인두, 결막 확인",
+      "expectedFinding": "비강·구강 출혈 없고 결막 창백 없음",
+      "examConceptId": "oral_cavity_inspection"
+    },
+    {
+      "item": "경부 림프절·피부 출혈",
+      "method": "경부 림프절·점상출혈·멍 확인",
+      "expectedFinding": "경부 림프절 종대·점상출혈·멍 없음",
+      "examConceptId": "neck_lymph_node"
+    },
+    {
+      "item": "흉부 진찰",
+      "method": "흉부 시진·타진과 양측 호흡음 청진",
+      "expectedFinding": "양측에 드문 거친 호흡음이나 국소 수포음·천명·호흡음 감소 없음",
+      "examConceptId": "lung_auscultation"
+    },
+    {
+      "item": "복부·하지",
+      "method": "간비장 비대·하지 부종·곤봉지·청색증 확인",
+      "expectedFinding": "간비장 비대·부종·곤봉지·청색증 없음",
+      "examConceptId": "peripheral_edema"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "기침 뒤 가래에 아주 소량 피가 묻어 불안한 환자다. 양·색·기침과의 관계, 흡연·약물력은 질문할 때만 답한다.",
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 항목에만 짧게 답한다.",
+      "출혈량과 호흡 상태 질문에는 구체적으로 답한다."
+    ],
+    "positiveClues": [
+      "기침 뒤 소량 선홍색 혈흔",
+      "가래·미열"
+    ],
+    "negativeClues": [
+      "대량 출혈·호흡곤란·흉통 없음",
+      "결핵·흡연·항응고제 단서 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "기침/구토/코피와의 관계 및 시작·빈도",
+      "양·색·거품·음식물 동반",
+      "호흡곤란·흉통·어지럼과 대량 출혈",
+      "발열·가래·체중감소·야간발한",
+      "흡연·결핵·폐질환·약물·출혈 경향",
+      "필요한 영상·응급 재내원 기준"
+    ],
+    "positiveClues": [
+      "감염 후 기침·가래",
+      "소량 혈흔"
+    ],
+    "negativeClues": [
+      "대량 객혈과 중증 위험 신호 없음"
+    ],
+    "educationTopics": [
+      "객혈 원인 평가",
+      "증가한 출혈·숨참 시 즉시 진료",
+      "금연·처방약 정보 공유"
+    ]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 객혈 (급성 기관지염 연관 소량 객혈 의심)\n- 기침 뒤 가래에 선홍색 혈흔이 하루 두 번, 한 숟갈 미만.\n- 가래·미열은 있으나 숨참·흉통·어지럼·결핵 위험은 없음.\n\n추가 질문: \"피가 조금 묻었는데 큰 병일까요?\"",
+  "rawRuleText": "# 증례명 : 객혈 (급성 기관지염 연관 소량 객혈 의심)\n- 기침 뒤 가래에 선홍색 혈흔이 하루 두 번, 한 숟갈 미만.\n- 가래·미열은 있으나 숨참·흉통·어지럼·결핵 위험은 없음.\n\n추가 질문: \"피가 조금 묻었는데 큰 병일까요?\""
 }

@@ -4,6 +4,7 @@
   "id": "ocd_anxiety_rule",
   "title": "불안 (강박장애 의심)",
   "category": "불안",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 03 '불안' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "강박장애 의심 (Suspected obsessive-compulsive disorder)",
   "variant": "오염 강박사고 + 확인·세척 강박행동형",
   "description": "손이 오염됐다는 생각을 떨칠 수 없어 하루 수십 번 씻고, 문단속을 반복 확인하는 규칙입니다.",

@@ -4,15 +4,34 @@
   "id": "functional_dyspepsia_rule",
   "title": "기능성 소화불량",
   "category": "소화불량/만성복통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 18 '소화 불량/만성 복통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "기능성 소화불량 (Functional dyspepsia)",
   "variant": "스트레스·불규칙 식사의 식후 더부룩·조기포만형",
   "description": "8개월 전 시작되어 최근 3개월간 지속된 식후 더부룩함과 조기 포만감이 있는 규칙입니다.",
-  "tags": ["소화불량", "기능성", "조기포만감", "스트레스"],
+  "tags": [
+    "소화불량",
+    "기능성",
+    "조기포만감",
+    "스트레스"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 18 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "남녀 무관", "age": "35~50세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남녀 무관",
+      "age": "35~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -39,24 +58,61 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["특별한 질환 없음", "현재 증상 발생 후 4개월 전 시행한 위내시경 정상"],
-    "mustAbsent": ["위궤양 진단력", "수술력", "당뇨"]
+    "mustInclude": [
+      "특별한 질환 없음",
+      "현재 증상 발생 후 4개월 전 시행한 위내시경 정상"
+    ],
+    "mustAbsent": [
+      "위궤양 진단력",
+      "수술력",
+      "당뇨"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["특이 가족력 없음 (위장관 암 없음)"],
+    "recommended": [
+      "특이 가족력 없음 (위장관 암 없음)"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
     "fixed": [],
-    "recommended": ["음주 사회적, 흡연 랜덤", "커피 하루 2~3잔", "불규칙한 식사·야식"]
+    "recommended": [
+      "음주 사회적, 흡연 랜덤",
+      "커피 하루 2~3잔",
+      "불규칙한 식사·야식"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "활력징후 측정", "expectedFinding": "정상 범위" },
-    { "item": "눈", "method": "결막·공막 확인", "expectedFinding": "빈혈·황달 없음 (정상)" },
-    { "item": "장음", "method": "복부 청진", "expectedFinding": "정상 장음" },
-    { "item": "복부 촉진", "method": "4분면 촉진(압통·종괴)", "expectedFinding": "명치 부위 경미한 압통 외 특이소견 없음, 종괴 없음" },
-    { "item": "타진·간비장", "method": "복부 타진, 간·비장 종대 확인", "expectedFinding": "종대 없음 (정상)" },
-    { "item": "직장수지검사", "method": "DRE", "expectedFinding": "정상 소견 (요청 시 결과지 제시)" }
+    {
+      "item": "활력징후",
+      "method": "활력징후 측정",
+      "expectedFinding": "정상 범위"
+    },
+    {
+      "item": "눈",
+      "method": "결막·공막 확인",
+      "expectedFinding": "빈혈·황달 없음 (정상)"
+    },
+    {
+      "item": "장음",
+      "method": "복부 청진",
+      "expectedFinding": "정상 장음"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "4분면 촉진(압통·종괴)",
+      "expectedFinding": "명치 부위 경미한 압통 외 특이소견 없음, 종괴 없음"
+    },
+    {
+      "item": "타진·간비장",
+      "method": "복부 타진, 간·비장 종대 확인",
+      "expectedFinding": "종대 없음 (정상)"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "DRE",
+      "expectedFinding": "정상 소견 (요청 시 결과지 제시)"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "8개월 전 시작되어 최근 3개월간 지속된 식후 불편감의 환자. 개방형 질문에는 '그냥 소화가 안 되고 불편하다'고만 하며, 학생이 부위·양상·식사 관련성을 좁혀 물으면 구체적으로 답한다. 조기포만감·스트레스·증상 발생 후 내시경 정상 이력은 해당 주제를 질문받았을 때 공개한다.",
@@ -93,8 +149,17 @@
       "내시경 이력",
       "스트레스·생활습관"
     ],
-    "positiveClues": ["식후 더부룩", "조기 포만감", "스트레스", "내시경 정상"],
-    "negativeClues": ["체중 감소 없음", "적신호 없음", "NSAIDs 복용 없음"],
+    "positiveClues": [
+      "식후 더부룩",
+      "조기 포만감",
+      "스트레스",
+      "내시경 정상"
+    ],
+    "negativeClues": [
+      "체중 감소 없음",
+      "적신호 없음",
+      "NSAIDs 복용 없음"
+    ],
     "educationTopics": [
       "기능성 소화불량 추정 설명과 안심시키기",
       "규칙적 식사·야식과 기름진 음식 줄이기",

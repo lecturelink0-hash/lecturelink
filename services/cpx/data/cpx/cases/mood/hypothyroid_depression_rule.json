@@ -4,6 +4,7 @@
   "id": "hypothyroid_depression_rule",
   "title": "기분 변화 (기질성 우울 의심)",
   "category": "기분 변화",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 05 '기분 변화' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "갑상샘기능저하증에 의한 우울 증상 의심 (Depression due to hypothyroidism)",
   "variant": "우울 주소 뒤 내분비 원인형",
   "description": "우울하고 처진다며 왔지만, 추위를 타고 살이 찌고 변비가 생긴 — 몸의 병이 숨어 있는 규칙입니다.",

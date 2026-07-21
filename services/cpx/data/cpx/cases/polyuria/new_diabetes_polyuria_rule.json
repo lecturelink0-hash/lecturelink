@@ -1,6 +1,154 @@
 {
-  "version":2,"type":"rule","id":"new_diabetes_polyuria_rule","title":"다뇨 (당뇨병 의심)","category":"다뇨","targetDiagnosis":"새로 발견된 당뇨병 의심 (Suspected new-onset diabetes mellitus)","variant":"다음·다뇨·체중감소·야간뇨형","description":"실제 소변량 증가와 빈뇨를 구분하고, 고혈당·탈수와 응급 위험 신호를 평가하는 규칙입니다.","tags":["다뇨","다음","당뇨병","체중감소","야간뇨"],"sourceTextFile":"018_polyuria.json·018_polyuria_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)","contentStatus":"needs_clinical_review",
-  "demographicsRule":{"fixed":{"location":"외래"},"recommended":{"gender":"무관","age":"30~60세"},"randomizable":["성별","이름","직업","키","몸무게"],"mustAbsent":[]},"scenarioRule":{"caseSummary":"두 달 전부터 물을 계속 찾고 하루 열두 번 이상 많은 양의 맑은 소변을 보며 밤에도 세 번 깨는 환자. 체중이 5kg 줄고 피곤하지만 복통·구토·의식 변화는 없다.","mustInclude":["2개월 다뇨·다갈","하루 12회 이상·실제 소변량 증가","야간뇨 3회","5kg 체중감소·피로","복통·구토·의식 변화 없음"],"preferredVariants":["단 음료를 많이 마시게 됨","당뇨 가족력이 있음"],"mustAbsent":["이뇨제·리튬 복용","뇌수술·두부외상","발열·옆구리 통증"]},"pastHistoryRule":{"mustInclude":["고혈압·신장질환 없음","최근 약물 변화 없음"],"mustAbsent":["정신과 리튬 복용","요로감염 병력"]},"familyHistoryRule":{"recommended":["어머니 당뇨병"],"mustAbsent":[]},"socialHistoryRule":{"fixed":["당분 음료를 자주 마심"],"recommended":["비흡연","음주 가끔"]},
-  "physicalExamRule":[{"item":"활력징후·탈수·구강 점막","method":"혈압·맥박·기립 증상과 구강 점막 확인","expectedFinding":"혈압 112/70, 맥박 96회, 구강 점막이 약간 건조함","polarity":"positive","examConceptId":"hydration_status_general"},{"item":"결막·피부·하지 부종","method":"결막 창백·피부 상태·하지 부종 확인","expectedFinding":"결막 창백·하지 부종 없음, 피부가 약간 건조함","examConceptId":"peripheral_edema"},{"item":"복부·방광·CVA 압통","method":"복부 종괴·방광 팽만과 늑골척추각 압통 확인","expectedFinding":"복부 종괴·방광 팽만·CVA 압통 없음","examConceptId":"cva_tenderness"},{"item":"시야·신경학적 상태","method":"시야 변화와 간단한 신경학적 상태 확인","expectedFinding":"의식 명료, 국소 신경학적 이상·시야장애 없음","examConceptId":"neurologic_screening"}],
-  "liveApiContext":{"patientContextFocus":"갈증과 실제 소변량 증가, 체중감소 때문에 내원한 환자다. 배뇨량·갈증·체중 변화·가족력은 질문할 때만 답하며 병명을 스스로 말하지 않는다.","answerPolicy":["진단명을 먼저 말하지 않는다.","질문받은 항목만 짧게 답한다.","탈수·의식 변화 질문에는 현재 없다고 명확히 답한다."],"positiveClues":["다음·다뇨","야간뇨","체중감소·피로","당뇨 가족력"],"negativeClues":["복통·구토·의식 변화 없음","이뇨제·리튬·두부외상 없음","감염·신장 통증 없음"]},"evaluationUse":{"mustAsk":["실제 소변량과 빈뇨·야간뇨 구분","갈증·수분·당분 음료·체중 변화","소변 양상·배뇨통·혈뇨·부종","복통·구토·어지럼·의식 변화","당뇨·신장·뇌 병력·약물·가족력","소변검사·혈당·전해질과 응급 기준"],"positiveClues":["실제 다뇨·다갈","체중감소","당뇨 가족력"],"negativeClues":["케톤산증 의심 증상 없음","요로감염·약물 유발 단서 없음"],"educationTopics":["혈당·소변·전해질 검사","탈수·의식 변화 시 즉시 진료","수분·당분 음료·배뇨일지 관리"]},"additionalPromptRule":[],"ruleText":"# 증례명 : 다뇨 (당뇨병 의심)\n- 두 달간 다음·실제 다뇨·야간뇨, 5kg 체중감소와 피로.\n- 구강이 약간 마르고 맥박 96회이나 복통·구토·의식 변화는 없음.\n\n추가 질문: \"물을 마셔도 계속 목이 말라요. 큰일인가요?\"","rawRuleText":"# 증례명 : 다뇨 (당뇨병 의심)\n- 두 달간 다음·실제 다뇨·야간뇨, 5kg 체중감소와 피로.\n- 구강이 약간 마르고 맥박 96회이나 복통·구토·의식 변화는 없음.\n\n추가 질문: \"물을 마셔도 계속 목이 말라요. 큰일인가요?\""
+  "version": 2,
+  "type": "rule",
+  "id": "new_diabetes_polyuria_rule",
+  "title": "다뇨 (당뇨병 의심)",
+  "category": "다뇨",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 27 '다뇨증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "새로 발견된 당뇨병 의심 (Suspected new-onset diabetes mellitus)",
+  "variant": "다음·다뇨·체중감소·야간뇨형",
+  "description": "실제 소변량 증가와 빈뇨를 구분하고, 고혈당·탈수와 응급 위험 신호를 평가하는 규칙입니다.",
+  "tags": [
+    "다뇨",
+    "다음",
+    "당뇨병",
+    "체중감소",
+    "야간뇨"
+  ],
+  "sourceTextFile": "018_polyuria.json·018_polyuria_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "30~60세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "두 달 전부터 물을 계속 찾고 하루 열두 번 이상 많은 양의 맑은 소변을 보며 밤에도 세 번 깨는 환자. 체중이 5kg 줄고 피곤하지만 복통·구토·의식 변화는 없다.",
+    "mustInclude": [
+      "2개월 다뇨·다갈",
+      "하루 12회 이상·실제 소변량 증가",
+      "야간뇨 3회",
+      "5kg 체중감소·피로",
+      "복통·구토·의식 변화 없음"
+    ],
+    "preferredVariants": [
+      "단 음료를 많이 마시게 됨",
+      "당뇨 가족력이 있음"
+    ],
+    "mustAbsent": [
+      "이뇨제·리튬 복용",
+      "뇌수술·두부외상",
+      "발열·옆구리 통증"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "고혈압·신장질환 없음",
+      "최근 약물 변화 없음"
+    ],
+    "mustAbsent": [
+      "정신과 리튬 복용",
+      "요로감염 병력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "어머니 당뇨병"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "당분 음료를 자주 마심"
+    ],
+    "recommended": [
+      "비흡연",
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·탈수·구강 점막",
+      "method": "혈압·맥박·기립 증상과 구강 점막 확인",
+      "expectedFinding": "혈압 112/70, 맥박 96회, 구강 점막이 약간 건조함",
+      "polarity": "positive",
+      "examConceptId": "hydration_status_general"
+    },
+    {
+      "item": "결막·피부·하지 부종",
+      "method": "결막 창백·피부 상태·하지 부종 확인",
+      "expectedFinding": "결막 창백·하지 부종 없음, 피부가 약간 건조함",
+      "examConceptId": "peripheral_edema"
+    },
+    {
+      "item": "복부·방광·CVA 압통",
+      "method": "복부 종괴·방광 팽만과 늑골척추각 압통 확인",
+      "expectedFinding": "복부 종괴·방광 팽만·CVA 압통 없음",
+      "examConceptId": "cva_tenderness"
+    },
+    {
+      "item": "시야·신경학적 상태",
+      "method": "시야 변화와 간단한 신경학적 상태 확인",
+      "expectedFinding": "의식 명료, 국소 신경학적 이상·시야장애 없음",
+      "examConceptId": "neurologic_screening"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "갈증과 실제 소변량 증가, 체중감소 때문에 내원한 환자다. 배뇨량·갈증·체중 변화·가족력은 질문할 때만 답하며 병명을 스스로 말하지 않는다.",
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 항목만 짧게 답한다.",
+      "탈수·의식 변화 질문에는 현재 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "다음·다뇨",
+      "야간뇨",
+      "체중감소·피로",
+      "당뇨 가족력"
+    ],
+    "negativeClues": [
+      "복통·구토·의식 변화 없음",
+      "이뇨제·리튬·두부외상 없음",
+      "감염·신장 통증 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "실제 소변량과 빈뇨·야간뇨 구분",
+      "갈증·수분·당분 음료·체중 변화",
+      "소변 양상·배뇨통·혈뇨·부종",
+      "복통·구토·어지럼·의식 변화",
+      "당뇨·신장·뇌 병력·약물·가족력",
+      "소변검사·혈당·전해질과 응급 기준"
+    ],
+    "positiveClues": [
+      "실제 다뇨·다갈",
+      "체중감소",
+      "당뇨 가족력"
+    ],
+    "negativeClues": [
+      "케톤산증 의심 증상 없음",
+      "요로감염·약물 유발 단서 없음"
+    ],
+    "educationTopics": [
+      "혈당·소변·전해질 검사",
+      "탈수·의식 변화 시 즉시 진료",
+      "수분·당분 음료·배뇨일지 관리"
+    ]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 다뇨 (당뇨병 의심)\n- 두 달간 다음·실제 다뇨·야간뇨, 5kg 체중감소와 피로.\n- 구강이 약간 마르고 맥박 96회이나 복통·구토·의식 변화는 없음.\n\n추가 질문: \"물을 마셔도 계속 목이 말라요. 큰일인가요?\"",
+  "rawRuleText": "# 증례명 : 다뇨 (당뇨병 의심)\n- 두 달간 다음·실제 다뇨·야간뇨, 5kg 체중감소와 피로.\n- 구강이 약간 마르고 맥박 96회이나 복통·구토·의식 변화는 없음.\n\n추가 질문: \"물을 마셔도 계속 목이 말라요. 큰일인가요?\""
 }

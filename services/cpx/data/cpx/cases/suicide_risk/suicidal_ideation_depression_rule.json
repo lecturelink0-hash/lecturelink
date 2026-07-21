@@ -4,6 +4,7 @@
   "id": "suicidal_ideation_depression_rule",
   "title": "자살 위험 평가 (우울 동반)",
   "category": "자살",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 53 '자살' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "자살 사고 동반 주요우울장애 (MDD with suicidal ideation)",
   "variant": "구체적 계획 직전 단계의 중년 위험 평가형",
   "description": "사업 실패 후 깊은 우울에 빠져 죽음을 자주 생각하게 된 환자의 위험 평가 규칙입니다.",

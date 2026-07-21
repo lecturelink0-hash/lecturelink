@@ -4,6 +4,7 @@
   "id": "situational_syncope_rule",
   "title": "실신 (상황성)",
   "category": "실신",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 09 '실신' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "상황성 실신 — 배뇨 실신 (Situational micturition syncope)",
   "variant": "새벽 배뇨 직후 실신 고령형",
   "description": "새벽에 소변을 보다 정신을 잃고 쓰러졌던 고령 환자의 규칙입니다.",

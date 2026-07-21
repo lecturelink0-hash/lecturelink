@@ -4,54 +4,153 @@
   "id": "stress_urinary_incontinence_rule",
   "title": "요실금 (복압성 요실금 의심)",
   "category": "요실금",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 35 '소변 찔끔증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "복압성 요실금 의심 (Suspected stress urinary incontinence)",
   "variant": "다산 후 기침·웃음·운동 시 누출형",
   "description": "복압성·절박성·범람성 요실금을 구분하고 감염·혈뇨·신경학적 적신호를 선별하는 규칙입니다.",
-  "tags": ["요실금", "복압성", "골반저", "배뇨일지"],
+  "tags": [
+    "요실금",
+    "복압성",
+    "골반저",
+    "배뇨일지"
+  ],
   "sourceTextFile": "022_urinary_incontinence.json·022_urinary_incontinence_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
   "demographicsRule": {
-    "fixed": {"location": "외래", "gender": "여"},
-    "recommended": {"age": "40~60세"},
-    "randomizable": ["이름", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래",
+      "gender": "여"
+    },
+    "recommended": {
+      "age": "40~60세"
+    },
+    "randomizable": [
+      "이름",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
     "caseSummary": "48세 여성이 약 1년 전부터 기침·웃음·계단 운동 때 소변이 새어 하루 패드 두 장을 사용하는 문제로 내원했다. 갑작스러운 절박감 뒤 누출, 배뇨통, 혈뇨, 발열, 배뇨 곤란과 신경학적 증상은 없다.",
-    "mustInclude": ["1년간 기침·웃음·운동 시 소변 누출", "하루 패드 2장 사용·일상 불편", "절박감 전 누출 없음", "배뇨통·혈뇨·발열 없음", "배뇨 곤란·하지 마비·대변실금 없음"],
-    "preferredVariants": ["질식 분만 3회", "커피를 하루 3잔 정도 마심"],
-    "mustAbsent": ["최근 골반 수술", "당뇨 신경병증", "이뇨제 복용", "요폐"]
+    "mustInclude": [
+      "1년간 기침·웃음·운동 시 소변 누출",
+      "하루 패드 2장 사용·일상 불편",
+      "절박감 전 누출 없음",
+      "배뇨통·혈뇨·발열 없음",
+      "배뇨 곤란·하지 마비·대변실금 없음"
+    ],
+    "preferredVariants": [
+      "질식 분만 3회",
+      "커피를 하루 3잔 정도 마심"
+    ],
+    "mustAbsent": [
+      "최근 골반 수술",
+      "당뇨 신경병증",
+      "이뇨제 복용",
+      "요폐"
+    ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["알려진 신경질환·당뇨 없음", "최근 요로감염 치료 없음"],
-    "mustAbsent": ["척수 손상", "전립선 질환"]
+    "mustInclude": [
+      "알려진 신경질환·당뇨 없음",
+      "최근 요로감염 치료 없음"
+    ],
+    "mustAbsent": [
+      "척수 손상",
+      "전립선 질환"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["특이 비뇨기 질환 가족력 없음"],
+    "recommended": [
+      "특이 비뇨기 질환 가족력 없음"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["커피 하루 3잔", "비흡연"],
-    "recommended": ["음주 드묾"]
+    "fixed": [
+      "커피 하루 3잔",
+      "비흡연"
+    ],
+    "recommended": [
+      "음주 드묾"
+    ]
   },
   "physicalExamRule": [
-    {"item": "활력징후", "method": "혈압·맥박·체중 확인", "expectedFinding": "혈압 122/76, 맥박 72회, 발열 없음", "examConceptId": "vital_signs"},
-    {"item": "하복부·방광", "method": "하복부 촉진과 방광 팽만 확인", "expectedFinding": "하복부 압통·방광 팽만 없음", "examConceptId": "abdominal_palpation"},
-    {"item": "하지 신경학적 검사", "method": "하지 근력·감각·심부건반사와 보행 확인", "expectedFinding": "하지 근력·감각·반사와 보행 정상", "examConceptId": "neurologic_screening"},
-    {"item": "골반저·기침 유발 검사", "method": "목적 설명과 동의 후 골반저를 평가하고 기침 유발 검사 시행", "expectedFinding": "기침 유발 시 소량의 요 누출이 재현되고 골반저 수축이 약함", "polarity": "positive", "examConceptId": "pelvic_exam"},
-    {"item": "소변검사", "method": "소변검사·딥스틱 확인", "expectedFinding": "백혈구·아질산염·혈뇨·당·단백 음성", "examConceptId": "urinalysis"}
+    {
+      "item": "활력징후",
+      "method": "혈압·맥박·체중 확인",
+      "expectedFinding": "혈압 122/76, 맥박 72회, 발열 없음",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "하복부·방광",
+      "method": "하복부 촉진과 방광 팽만 확인",
+      "expectedFinding": "하복부 압통·방광 팽만 없음",
+      "examConceptId": "abdominal_palpation"
+    },
+    {
+      "item": "하지 신경학적 검사",
+      "method": "하지 근력·감각·심부건반사와 보행 확인",
+      "expectedFinding": "하지 근력·감각·반사와 보행 정상",
+      "examConceptId": "neurologic_screening"
+    },
+    {
+      "item": "골반저·기침 유발 검사",
+      "method": "목적 설명과 동의 후 골반저를 평가하고 기침 유발 검사 시행",
+      "expectedFinding": "기침 유발 시 소량의 요 누출이 재현되고 골반저 수축이 약함",
+      "polarity": "positive",
+      "examConceptId": "pelvic_exam"
+    },
+    {
+      "item": "소변검사",
+      "method": "소변검사·딥스틱 확인",
+      "expectedFinding": "백혈구·아질산염·혈뇨·당·단백 음성",
+      "examConceptId": "urinalysis"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "기침이나 웃을 때만 소변이 새는 문제를 수치스럽게 여기지만 치료를 원한다. 누출 상황·절박감·배뇨 증상·산과력은 정중히 질문할 때만 답한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "민감한 산과·골반 문진에는 이유를 설명하면 짧게 답한다.", "발열·혈뇨·요폐·신경학적 증상 질문에는 없다고 명확히 답한다."],
-    "positiveClues": ["기침·웃음·운동 시 누출", "패드 사용·일상 불편", "질식 분만 3회", "골반저 수축 약화"],
-    "negativeClues": ["절박성 누출·배뇨통·혈뇨·발열 없음", "요폐·신경학적 증상·대변실금 없음", "소변검사 감염 소견 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "민감한 산과·골반 문진에는 이유를 설명하면 짧게 답한다.",
+      "발열·혈뇨·요폐·신경학적 증상 질문에는 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "기침·웃음·운동 시 누출",
+      "패드 사용·일상 불편",
+      "질식 분만 3회",
+      "골반저 수축 약화"
+    ],
+    "negativeClues": [
+      "절박성 누출·배뇨통·혈뇨·발열 없음",
+      "요폐·신경학적 증상·대변실금 없음",
+      "소변검사 감염 소견 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["누출 시작·상황·빈도·패드 사용과 일상 영향", "기침·운동 시 누출과 절박감 뒤 누출의 구분", "빈뇨·야간뇨·배뇨통·혈뇨·잔뇨감·약한 줄기", "발열·요폐·대변실금·하지 감각 또는 근력 변화", "산과력·골반 수술·신경질환·약물·카페인", "소변검사·배뇨일지·골반저근 운동과 악화 시 진료 기준"],
-    "positiveClues": ["복압 시 요 누출", "다산", "골반저 수축 약화"],
-    "negativeClues": ["요로감염·혈뇨·신경인성 방광 단서 없음"],
-    "educationTopics": ["배뇨일지와 소변검사", "골반저근 운동·생활 조절", "발열·혈뇨·요폐·신경 증상 시 신속한 진료"]
+    "mustAsk": [
+      "누출 시작·상황·빈도·패드 사용과 일상 영향",
+      "기침·운동 시 누출과 절박감 뒤 누출의 구분",
+      "빈뇨·야간뇨·배뇨통·혈뇨·잔뇨감·약한 줄기",
+      "발열·요폐·대변실금·하지 감각 또는 근력 변화",
+      "산과력·골반 수술·신경질환·약물·카페인",
+      "소변검사·배뇨일지·골반저근 운동과 악화 시 진료 기준"
+    ],
+    "positiveClues": [
+      "복압 시 요 누출",
+      "다산",
+      "골반저 수축 약화"
+    ],
+    "negativeClues": [
+      "요로감염·혈뇨·신경인성 방광 단서 없음"
+    ],
+    "educationTopics": [
+      "배뇨일지와 소변검사",
+      "골반저근 운동·생활 조절",
+      "발열·혈뇨·요폐·신경 증상 시 신속한 진료"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 요실금 (복압성 요실금 의심)\n- 1년간 기침·웃음·계단 운동 시 소변 누출, 하루 패드 2장 사용.\n- 절박감 전 누출, 배뇨통, 혈뇨, 발열, 요폐와 신경학적 증상은 없음.\n\n추가 질문: \"운동을 피하게 되는데, 나아질 수 있나요?\"",

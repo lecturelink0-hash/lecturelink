@@ -4,48 +4,157 @@
   "id": "acute_stroke_weakness_rule",
   "title": "팔다리 근력 약화 및 감각 이상 (급성 뇌졸중 의심)",
   "category": "팔다리 근력 약화 및 감각 이상",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 48 '팔다리 근력 약화·감각 이상' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "급성 허혈성 뇌졸중 의심 (Suspected acute ischemic stroke)",
   "variant": "갑작스러운 편측 약화·안면마비·구음장애형",
   "description": "갑작스러운 편측 약화에서 발병 시각과 FAST 징후를 확인해 뇌졸중 평가를 지연시키지 않도록 하는 규칙입니다.",
-  "tags": ["근력 약화", "감각 이상", "뇌졸중", "편측 마비", "구음장애"],
+  "tags": [
+    "근력 약화",
+    "감각 이상",
+    "뇌졸중",
+    "편측 마비",
+    "구음장애"
+  ],
   "sourceTextFile": "039_weakness_paresthesia.json·039_weakness_paresthesia_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
   "demographicsRule": {
-    "fixed": {"location": "응급실"},
-    "recommended": {"gender": "무관", "age": "50~80세"},
-    "randomizable": ["성별", "이름", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "50~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
     "caseSummary": "67세 환자가 70분 전 식사 도중 갑자기 오른쪽 팔과 다리에 힘이 빠지고 말이 어눌해져 가족과 내원했다. 오른쪽 입꼬리가 처진 것이 보이며, 심한 두통·경련·의식 소실·외상은 없다. 고혈압과 심방세동 병력이 있다.",
-    "mustInclude": ["70분 전 갑작스러운 오른쪽 팔·다리 약화", "구음장애·오른쪽 안면마비", "발병 시각을 가족이 목격", "고혈압·심방세동 병력", "심한 두통·경련·의식 소실·외상 없음"],
-    "preferredVariants": ["오른쪽 감각도 둔한 느낌", "보행이 불안정해 혼자 걷기 어려움"],
-    "mustAbsent": ["점진적 수주 경과", "발열·경부강직", "상행성 양측 마비", "배뇨·배변 장애"]
+    "mustInclude": [
+      "70분 전 갑작스러운 오른쪽 팔·다리 약화",
+      "구음장애·오른쪽 안면마비",
+      "발병 시각을 가족이 목격",
+      "고혈압·심방세동 병력",
+      "심한 두통·경련·의식 소실·외상 없음"
+    ],
+    "preferredVariants": [
+      "오른쪽 감각도 둔한 느낌",
+      "보행이 불안정해 혼자 걷기 어려움"
+    ],
+    "mustAbsent": [
+      "점진적 수주 경과",
+      "발열·경부강직",
+      "상행성 양측 마비",
+      "배뇨·배변 장애"
+    ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["고혈압·심방세동", "이전 뇌졸중 없음"],
-    "mustAbsent": ["최근 두부 수술", "중증 출혈 병력"]
+    "mustInclude": [
+      "고혈압·심방세동",
+      "이전 뇌졸중 없음"
+    ],
+    "mustAbsent": [
+      "최근 두부 수술",
+      "중증 출혈 병력"
+    ]
   },
-  "familyHistoryRule": {"recommended": ["가족의 조기 뇌졸중력 없음"], "mustAbsent": []},
-  "socialHistoryRule": {"fixed": ["과거 흡연", "음주 드묾"], "recommended": ["항응고제 복용 순응도 불확실"]},
+  "familyHistoryRule": {
+    "recommended": [
+      "가족의 조기 뇌졸중력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "과거 흡연",
+      "음주 드묾"
+    ],
+    "recommended": [
+      "항응고제 복용 순응도 불확실"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후·의식·언어", "method": "혈압·맥박·산소포화도와 의식·지남력·구음 확인", "expectedFinding": "혈압 172/96, 맥박 불규칙 96회, 산소포화도 97%, 의식 명료하나 구음이 어눌함", "polarity": "positive", "examConceptId": "mental_status_general"},
-    {"item": "뇌신경·동공", "method": "동공·시야·안구운동과 얼굴 감각·표정 확인", "expectedFinding": "동공·안구운동은 정상이나 오른쪽 하안면 마비와 비대칭 미소가 보임", "polarity": "positive", "examConceptId": "pupil_light_reflex"},
-    {"item": "사지 근력·감각·반사", "method": "양측 상지·하지 근력·감각·심부건반사와 Babinski 확인", "expectedFinding": "오른쪽 상지·하지 근력 4/5, 오른쪽 감각 저하, 우측 Babinski 양성", "polarity": "positive", "examConceptId": "motor_strength"},
-    {"item": "소뇌기능·보행", "method": "손가락코검사·협응과 보행 안정성 확인", "expectedFinding": "오른쪽 약화로 보행이 불안정하며 독립 보행이 어려움", "polarity": "positive", "examConceptId": "gait_observation"},
-    {"item": "혈당", "method": "손끝 혈당 측정", "expectedFinding": "혈당 118 mg/dL", "examConceptId": "blood_glucose"}
+    {
+      "item": "활력징후·의식·언어",
+      "method": "혈압·맥박·산소포화도와 의식·지남력·구음 확인",
+      "expectedFinding": "혈압 172/96, 맥박 불규칙 96회, 산소포화도 97%, 의식 명료하나 구음이 어눌함",
+      "polarity": "positive",
+      "examConceptId": "mental_status_general"
+    },
+    {
+      "item": "뇌신경·동공",
+      "method": "동공·시야·안구운동과 얼굴 감각·표정 확인",
+      "expectedFinding": "동공·안구운동은 정상이나 오른쪽 하안면 마비와 비대칭 미소가 보임",
+      "polarity": "positive",
+      "examConceptId": "pupil_light_reflex"
+    },
+    {
+      "item": "사지 근력·감각·반사",
+      "method": "양측 상지·하지 근력·감각·심부건반사와 Babinski 확인",
+      "expectedFinding": "오른쪽 상지·하지 근력 4/5, 오른쪽 감각 저하, 우측 Babinski 양성",
+      "polarity": "positive",
+      "examConceptId": "motor_strength"
+    },
+    {
+      "item": "소뇌기능·보행",
+      "method": "손가락코검사·협응과 보행 안정성 확인",
+      "expectedFinding": "오른쪽 약화로 보행이 불안정하며 독립 보행이 어려움",
+      "polarity": "positive",
+      "examConceptId": "gait_observation"
+    },
+    {
+      "item": "혈당",
+      "method": "손끝 혈당 측정",
+      "expectedFinding": "혈당 118 mg/dL",
+      "examConceptId": "blood_glucose"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "갑자기 오른쪽 팔다리 힘이 빠지고 말이 어눌해진 환자다. 발병 시각과 당시 상황은 가족이 목격한 내용으로 질문할 때만 답한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "환자가 말하기 어려워 가족이 발병 시각과 경과를 보충할 수 있다.", "심한 두통·경련·의식 소실·외상 질문에는 현재 없다고 명확히 답한다."],
-    "positiveClues": ["70분 전 갑작스러운 편측 약화", "안면마비·구음장애", "고혈압·심방세동"],
-    "negativeClues": ["외상·발열·경부강직·의식 소실 없음", "저혈당·상행성 마비·척수 압박 단서 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "환자가 말하기 어려워 가족이 발병 시각과 경과를 보충할 수 있다.",
+      "심한 두통·경련·의식 소실·외상 질문에는 현재 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "70분 전 갑작스러운 편측 약화",
+      "안면마비·구음장애",
+      "고혈압·심방세동"
+    ],
+    "negativeClues": [
+      "외상·발열·경부강직·의식 소실 없음",
+      "저혈당·상행성 마비·척수 압박 단서 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["정확한 마지막 정상 시각·갑작스러움·목격자", "약화 위치·편측/양측·기능·감각 이상", "얼굴마비·말·시야·두통·의식·경련·보행 변화", "호흡·삼킴·진행성 마비·배뇨배변 장애·목허리 통증", "고혈압·당뇨·부정맥·고지혈증·뇌졸중·최근 감염/외상·약물", "항응고제·출혈 위험과 안전한 이동·운전 여부", "응급 뇌영상·혈당·심전도 평가와 즉시 이송 필요성"],
-    "positiveClues": ["발병 70분", "우측 약화·안면마비·구음장애", "심방세동"],
-    "negativeClues": ["심한 두통·경련·외상·저혈당 없음"],
-    "educationTopics": ["시간 의존적 뇌졸중 평가", "새 신경증상 즉시 응급 도움", "원인 확인 전 낙상·운전 위험 회피"]
+    "mustAsk": [
+      "정확한 마지막 정상 시각·갑작스러움·목격자",
+      "약화 위치·편측/양측·기능·감각 이상",
+      "얼굴마비·말·시야·두통·의식·경련·보행 변화",
+      "호흡·삼킴·진행성 마비·배뇨배변 장애·목허리 통증",
+      "고혈압·당뇨·부정맥·고지혈증·뇌졸중·최근 감염/외상·약물",
+      "항응고제·출혈 위험과 안전한 이동·운전 여부",
+      "응급 뇌영상·혈당·심전도 평가와 즉시 이송 필요성"
+    ],
+    "positiveClues": [
+      "발병 70분",
+      "우측 약화·안면마비·구음장애",
+      "심방세동"
+    ],
+    "negativeClues": [
+      "심한 두통·경련·외상·저혈당 없음"
+    ],
+    "educationTopics": [
+      "시간 의존적 뇌졸중 평가",
+      "새 신경증상 즉시 응급 도움",
+      "원인 확인 전 낙상·운전 위험 회피"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 팔다리 근력 약화 및 감각 이상 (급성 뇌졸중 의심)\n- 70분 전 갑작스러운 오른쪽 팔다리 약화·안면마비·구음장애, 가족이 발병 시각 목격.\n- 고혈압·심방세동 병력이 있고 심한 두통·경련·의식 소실·외상은 없음.\n\n추가 질문: \"아버지가 갑자기 말을 잘 못 하는데, 얼마나 급한가요?\"",

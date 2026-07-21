@@ -4,15 +4,34 @@
   "id": "bppv_rule",
   "title": "양성 발작성 체위성 현훈 (BPPV)",
   "category": "어지럼",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 52 '어지럼' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "양성 발작성 체위성 현훈 (Benign paroxysmal positional vertigo)",
   "variant": "기상·두위 변화 시 단발 회전성 반복형",
   "description": "아침에 일어나거나 머리 위치를 바꿀 때마다 세상이 빙글 도는 짧은 어지럼이 반복되는 규칙입니다.",
-  "tags": ["어지럼", "현훈", "BPPV", "말초성"],
+  "tags": [
+    "어지럼",
+    "현훈",
+    "BPPV",
+    "말초성"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 52 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "여성 우세", "age": "50~65세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "여성 우세",
+      "age": "50~65세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -37,25 +56,70 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["특별한 질환 없음", "복용 약물 없음"],
-    "mustAbsent": ["고혈압", "당뇨", "두부 외상", "귀 수술력"]
+    "mustInclude": [
+      "특별한 질환 없음",
+      "복용 약물 없음"
+    ],
+    "mustAbsent": [
+      "고혈압",
+      "당뇨",
+      "두부 외상",
+      "귀 수술력"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["특이 가족력 없음"],
+    "recommended": [
+      "특이 가족력 없음"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["흡연 없음"],
-    "recommended": ["음주 가끔", "커피 랜덤"]
+    "fixed": [
+      "흡연 없음"
+    ],
+    "recommended": [
+      "음주 가끔",
+      "커피 랜덤"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "혈압·맥박 측정(기립 포함)", "expectedFinding": "정상, 기립 시 혈압 변화 없음" },
-    { "item": "안진", "method": "자발·주시 안진 확인", "expectedFinding": "자발 안진 없음" },
-    { "item": "두위검사", "method": "Dix-Hallpike test", "expectedFinding": "우측에서 잠복기 후 일과성 회선성 상향 안진과 어지럼 유발 (+)", "polarity": "positive", "examConceptId": "dix_hallpike" },
-    { "item": "평형·보행", "method": "Romberg·Tandem gait 검사", "expectedFinding": "정상" },
-    { "item": "신경학적 이상", "method": "뇌신경·소뇌기능(finger-to-nose) 검사", "expectedFinding": "정상" },
-    { "item": "빈혈", "method": "결막 확인", "expectedFinding": "창백 없음 (정상)" },
-    { "item": "청력", "method": "Weber/Rinne 등 청력 검사", "expectedFinding": "정상" }
+    {
+      "item": "활력징후",
+      "method": "혈압·맥박 측정(기립 포함)",
+      "expectedFinding": "정상, 기립 시 혈압 변화 없음"
+    },
+    {
+      "item": "안진",
+      "method": "자발·주시 안진 확인",
+      "expectedFinding": "자발 안진 없음"
+    },
+    {
+      "item": "두위검사",
+      "method": "Dix-Hallpike test",
+      "expectedFinding": "우측에서 잠복기 후 일과성 회선성 상향 안진과 어지럼 유발 (+)",
+      "polarity": "positive",
+      "examConceptId": "dix_hallpike"
+    },
+    {
+      "item": "평형·보행",
+      "method": "Romberg·Tandem gait 검사",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "신경학적 이상",
+      "method": "뇌신경·소뇌기능(finger-to-nose) 검사",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "빈혈",
+      "method": "결막 확인",
+      "expectedFinding": "창백 없음 (정상)"
+    },
+    {
+      "item": "청력",
+      "method": "Weber/Rinne 등 청력 검사",
+      "expectedFinding": "정상"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "머리 위치를 바꿀 때마다 수초~1분 이내의 짧은 회전성 어지럼이 반복되어 겁먹은 환자. '눕거나 고개 돌릴 때 유발', '금방 가라앉지만 메스꺼움이 남음' 같은 핵심 단서는 해당 주제를 질문받았을 때 공개한다.",
@@ -89,8 +153,17 @@
       "의식 소실 여부",
       "기저질환·약물"
     ],
-    "positiveClues": ["회전성", "두위 변화 유발", "수초~1분 지속 반복", "오심·구토"],
-    "negativeClues": ["이명·난청 없음", "신경학적 증상 없음", "의식 소실 없음"],
+    "positiveClues": [
+      "회전성",
+      "두위 변화 유발",
+      "수초~1분 지속 반복",
+      "오심·구토"
+    ],
+    "negativeClues": [
+      "이명·난청 없음",
+      "신경학적 증상 없음",
+      "의식 소실 없음"
+    ],
     "educationTopics": [
       "이석증(BPPV) 추정 설명과 안심시키기",
       "이석정복술(Epley 등) 치료 가능성",

@@ -4,6 +4,7 @@
   "id": "scrub_typhus_fever_rule",
   "title": "발열 (쯔쯔가무시병 의심)",
   "category": "발열",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 38 '발열' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "쯔쯔가무시병 의심 (Suspected scrub typhus)",
   "variant": "가을 야외활동 후 고열 + 가피 동반형",
   "description": "추석 벌초를 다녀오고 일주일 뒤부터 고열과 심한 두통, 몸살이 나는 가을철 규칙입니다.",

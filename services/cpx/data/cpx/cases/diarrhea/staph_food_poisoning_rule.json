@@ -4,6 +4,7 @@
   "id": "staph_food_poisoning_rule",
   "title": "급성 구토·설사 (독소형 식중독 의심)",
   "category": "설사",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 21 '설사' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "포도알균 독소형 식중독 의심 (Suspected staphylococcal food poisoning)",
   "variant": "섭취 2~4시간 잠복 후 구토 우세형",
   "description": "김밥을 먹고 세 시간 만에 심한 구토부터 시작된, 잠복기 짧은 식중독 규칙입니다.",

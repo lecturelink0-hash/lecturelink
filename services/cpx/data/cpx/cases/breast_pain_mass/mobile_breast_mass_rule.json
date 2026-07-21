@@ -4,40 +4,155 @@
   "id": "mobile_breast_mass_rule",
   "title": "유방통·유방덩이 (양성 병변 의심)",
   "category": "유방통/유방덩이",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 25 '유방통/유방덩이' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "양성 유방 종괴 의심 (Suspected benign breast mass)",
   "variant": "가동성 종괴·비주기성 불안형",
   "description": "유방 덩이를 발견한 환자에게 민감 진찰의 동의·배려를 지키며 악성·감염 적신호와 여성력·가족력을 확인하고 적절한 영상 평가를 설명하는 규칙입니다.",
-  "tags": ["유방덩이", "유방통", "민감 진찰", "유방 초음파", "액와 림프절"],
+  "tags": [
+    "유방덩이",
+    "유방통",
+    "민감 진찰",
+    "유방 초음파",
+    "액와 림프절"
+  ],
   "sourceTextFile": "042_breast_pain_mass.json·042_breast_pain_mass_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"gender": "여성", "age": 32}, "recommended": {"occupation": "사무직"}, "randomizable": ["이름", "키", "몸무게"], "mustAbsent": []},
+  "demographicsRule": {
+    "fixed": {
+      "gender": "여성",
+      "age": 32
+    },
+    "recommended": {
+      "occupation": "사무직"
+    },
+    "randomizable": [
+      "이름",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
   "scenarioRule": {
     "caseSummary": "32세 여성이 샤워 중 왼쪽 유방 바깥쪽에서 작은 덩이를 만져 내원했다. 2개월 전 발견했고 크기 변화나 심한 통증은 없으나 암이 아닐지 불안해한다. 월경 전 약간 뻐근할 때가 있지만 피부·유두 변화와 분비물, 발열은 없다.",
-    "mustInclude": ["2개월 전 발견한 왼쪽 유방 상외측 덩이", "크기 변화 없는 약 2 cm 가동성 덩이", "월경 전 경미한 뻐근함", "피부·유두 변화·분비물·발열 없음", "암에 대한 불안"],
-    "preferredVariants": ["월경은 규칙적", "출산력 없고 현재 임신 가능성 낮음", "어머니의 유방암 가족력 없음"],
-    "mustAbsent": ["혈성 유두 분비물", "피부 함몰·오렌지껍질 피부", "액와 덩이", "급격한 성장", "고열·심한 통증"]
+    "mustInclude": [
+      "2개월 전 발견한 왼쪽 유방 상외측 덩이",
+      "크기 변화 없는 약 2 cm 가동성 덩이",
+      "월경 전 경미한 뻐근함",
+      "피부·유두 변화·분비물·발열 없음",
+      "암에 대한 불안"
+    ],
+    "preferredVariants": [
+      "월경은 규칙적",
+      "출산력 없고 현재 임신 가능성 낮음",
+      "어머니의 유방암 가족력 없음"
+    ],
+    "mustAbsent": [
+      "혈성 유두 분비물",
+      "피부 함몰·오렌지껍질 피부",
+      "액와 덩이",
+      "급격한 성장",
+      "고열·심한 통증"
+    ]
   },
-  "pastHistoryRule": {"mustInclude": ["특이 유방질환·수술력 없음"], "mustAbsent": ["유방암 과거력", "흉부 방사선 치료력"]},
-  "familyHistoryRule": {"recommended": ["직계 가족 유방·난소암 없음"], "mustAbsent": ["확인된 BRCA 변이"]},
-  "socialHistoryRule": {"fixed": ["비흡연", "음주 드묾"], "recommended": ["카페인 커피 하루 2잔"]},
+  "pastHistoryRule": {
+    "mustInclude": [
+      "특이 유방질환·수술력 없음"
+    ],
+    "mustAbsent": [
+      "유방암 과거력",
+      "흉부 방사선 치료력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "직계 가족 유방·난소암 없음"
+    ],
+    "mustAbsent": [
+      "확인된 BRCA 변이"
+    ]
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연",
+      "음주 드묾"
+    ],
+    "recommended": [
+      "카페인 커피 하루 2잔"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후·전신 상태", "method": "혈압·맥박·체온과 전신 상태 확인", "expectedFinding": "혈압 118/74 mmHg, 맥박 72회/분, 체온 36.7°C, 전신 상태 안정", "examConceptId": "vital_signs"},
-    {"item": "유방 시진", "method": "설명·동의 후 앉은 자세에서 양측 대칭, 피부·유두·함몰 확인", "expectedFinding": "양측 대칭, 피부 발적·함몰·오렌지껍질 변화·유두 함몰 없음", "examConceptId": "breast_inspection"},
-    {"item": "유방 촉진", "method": "설명·동의 후 누운 자세에서 체계적 촉진", "expectedFinding": "왼쪽 유방 상외측에 약 2 cm, 경계가 비교적 분명하고 잘 움직이는 고무 같은 덩이가 촉지되며 압통 없음", "polarity": "positive", "examConceptId": "breast_palpation"},
-    {"item": "액와 림프절", "method": "설명·동의 후 액와·쇄골상부 림프절 촉진", "expectedFinding": "액와·쇄골상부 림프절 종대 없음", "examConceptId": "axillary_lymph_node_palpation"},
-    {"item": "유두 분비물", "method": "설명·동의 후 자발적 분비물 여부 확인", "expectedFinding": "자발적 유두 분비물 없음", "examConceptId": "breast_inspection"}
+    {
+      "item": "활력징후·전신 상태",
+      "method": "혈압·맥박·체온과 전신 상태 확인",
+      "expectedFinding": "혈압 118/74 mmHg, 맥박 72회/분, 체온 36.7°C, 전신 상태 안정",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "유방 시진",
+      "method": "설명·동의 후 앉은 자세에서 양측 대칭, 피부·유두·함몰 확인",
+      "expectedFinding": "양측 대칭, 피부 발적·함몰·오렌지껍질 변화·유두 함몰 없음",
+      "examConceptId": "breast_inspection"
+    },
+    {
+      "item": "유방 촉진",
+      "method": "설명·동의 후 누운 자세에서 체계적 촉진",
+      "expectedFinding": "왼쪽 유방 상외측에 약 2 cm, 경계가 비교적 분명하고 잘 움직이는 고무 같은 덩이가 촉지되며 압통 없음",
+      "polarity": "positive",
+      "examConceptId": "breast_palpation"
+    },
+    {
+      "item": "액와 림프절",
+      "method": "설명·동의 후 액와·쇄골상부 림프절 촉진",
+      "expectedFinding": "액와·쇄골상부 림프절 종대 없음",
+      "examConceptId": "axillary_lymph_node_palpation"
+    },
+    {
+      "item": "유두 분비물",
+      "method": "설명·동의 후 자발적 분비물 여부 확인",
+      "expectedFinding": "자발적 유두 분비물 없음",
+      "examConceptId": "breast_inspection"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "환자는 암일까 봐 불안하지만, 덩이의 위치·가동성·월경 관련성·가족력·유두 분비물은 관련 질문과 충분한 설명 뒤에만 제공한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "민감한 여성력·수유력·가족력과 유방 진찰에는 목적 설명과 동의를 들은 뒤 협조한다.", "피부 변화·혈성 분비물·액와 덩이·발열 질문에는 없다고 명확히 답한다."],
-    "positiveClues": ["가동성·경계 비교적 명확한 단일 덩이", "서서히 발견", "경미한 주기성 불편"],
-    "negativeClues": ["피부·유두 변화·분비물·림프절·전신 증상 없음", "급격한 성장·감염 단서 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "민감한 여성력·수유력·가족력과 유방 진찰에는 목적 설명과 동의를 들은 뒤 협조한다.",
+      "피부 변화·혈성 분비물·액와 덩이·발열 질문에는 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "가동성·경계 비교적 명확한 단일 덩이",
+      "서서히 발견",
+      "경미한 주기성 불편"
+    ],
+    "negativeClues": [
+      "피부·유두 변화·분비물·림프절·전신 증상 없음",
+      "급격한 성장·감염 단서 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["덩이/통증의 시작·위치·크기·개수·성장·가동성·압통·월경 관련성", "피부·유두 변화·분비물·액와 덩이와 발열·체중감소", "임신 가능성·월경·출산/수유력·이전 검진·외상", "호르몬·약물·유방질환·수술·가족력·생활습관", "설명·동의·샤프론 선택을 포함한 유방/액와 진찰", "유방 초음파/유방촬영과 필요 시 조직검사·추적", "고위험 변화의 신속 진료 및 불안 지지"],
-    "positiveClues": ["가동성 유방 덩이", "월경 전 경미한 불편", "불안"],
-    "negativeClues": ["악성·감염 적신호 없음"],
-    "educationTopics": ["영상 검사와 필요 시 조직검사", "피부/유두/분비물·크기 변화의 재진 기준", "증상 기록과 개인별 검진 계획"]
+    "mustAsk": [
+      "덩이/통증의 시작·위치·크기·개수·성장·가동성·압통·월경 관련성",
+      "피부·유두 변화·분비물·액와 덩이와 발열·체중감소",
+      "임신 가능성·월경·출산/수유력·이전 검진·외상",
+      "호르몬·약물·유방질환·수술·가족력·생활습관",
+      "설명·동의·샤프론 선택을 포함한 유방/액와 진찰",
+      "유방 초음파/유방촬영과 필요 시 조직검사·추적",
+      "고위험 변화의 신속 진료 및 불안 지지"
+    ],
+    "positiveClues": [
+      "가동성 유방 덩이",
+      "월경 전 경미한 불편",
+      "불안"
+    ],
+    "negativeClues": [
+      "악성·감염 적신호 없음"
+    ],
+    "educationTopics": [
+      "영상 검사와 필요 시 조직검사",
+      "피부/유두/분비물·크기 변화의 재진 기준",
+      "증상 기록과 개인별 검진 계획"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 유방통·유방덩이 (양성 병변 의심)\n- 32세 여성, 2개월 전부터 왼쪽 상외측 유방에 가동성 덩이를 만짐. 월경 전 약간 뻐근하나 크기 변화·피부/유두 변화·분비물·발열은 없음.\n- 유방암이 아닐지 불안해함.\n\n추가 질문: \"검사에서 혹시 나쁜 게 나오면 어떡하죠?\"",

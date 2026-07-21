@@ -4,26 +4,164 @@
   "id": "metabolic_dyslipidemia_rule",
   "title": "이상지질혈증 (복부비만·고중성지방혈증 의심)",
   "category": "이상지질혈증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 26 '이상지질혈증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "대사성 이상지질혈증 의심 (Suspected metabolic dyslipidemia)",
   "variant": "검진 발견 고중성지방·낮은 HDL 생활습관형",
   "description": "건강검진에서 중성지방 상승과 낮은 HDL을 들은 복부비만 환자의 심혈관 위험과 이차성 원인을 확인하는 규칙입니다.",
-  "tags": ["이상지질혈증", "고중성지방혈증", "복부비만", "대사위험", "생활습관"],
+  "tags": [
+    "이상지질혈증",
+    "고중성지방혈증",
+    "복부비만",
+    "대사위험",
+    "생활습관"
+  ],
   "sourceTextFile": "013_dyslipidemia.json·013_dyslipidemia_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"location": "외래"}, "recommended": {"gender": "무관", "age": "40~58세"}, "randomizable": ["성별", "이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
-  "scenarioRule": {"caseSummary": "회사 검진에서 중성지방 318, HDL 34, LDL 156이라는 결과를 받고 내원한 환자. 허리둘레가 늘고 야식·회식·운동 부족이 지속됐지만 흉통이나 호흡곤란은 없다.", "mustInclude": ["검진 2주 전 공복 채혈", "중성지방 318·HDL 34·LDL 156", "BMI 28.2·허리둘레 99cm", "야식·회식·단 음료와 운동 부족", "흉통·호흡곤란 없음"], "preferredVariants": ["약을 바로 시작해야 하는지 걱정함", "검사 전날 술자리는 없었으나 평소 음주가 잦음"], "mustAbsent": ["급성 흉통", "호흡곤란", "황색종·각막환", "거품뇨·부종"]},
-  "pastHistoryRule": {"mustInclude": ["고혈압·당뇨 진단 없음", "최근 처방약·스테로이드·호르몬 복용 없음"], "mustAbsent": ["관상동맥질환", "신장질환", "갑상샘질환"]},
-  "familyHistoryRule": {"recommended": ["부모에게 알려진 조기 심근경색 없음"], "mustAbsent": ["가족성 황색종"]},
-  "socialHistoryRule": {"fixed": ["주 3회 회식과 야식", "운동 거의 하지 않음"], "recommended": ["음주 주 3회", "현재 흡연 없음"]},
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "40~58세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "학력",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "회사 검진에서 중성지방 318, HDL 34, LDL 156이라는 결과를 받고 내원한 환자. 허리둘레가 늘고 야식·회식·운동 부족이 지속됐지만 흉통이나 호흡곤란은 없다.",
+    "mustInclude": [
+      "검진 2주 전 공복 채혈",
+      "중성지방 318·HDL 34·LDL 156",
+      "BMI 28.2·허리둘레 99cm",
+      "야식·회식·단 음료와 운동 부족",
+      "흉통·호흡곤란 없음"
+    ],
+    "preferredVariants": [
+      "약을 바로 시작해야 하는지 걱정함",
+      "검사 전날 술자리는 없었으나 평소 음주가 잦음"
+    ],
+    "mustAbsent": [
+      "급성 흉통",
+      "호흡곤란",
+      "황색종·각막환",
+      "거품뇨·부종"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "고혈압·당뇨 진단 없음",
+      "최근 처방약·스테로이드·호르몬 복용 없음"
+    ],
+    "mustAbsent": [
+      "관상동맥질환",
+      "신장질환",
+      "갑상샘질환"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "부모에게 알려진 조기 심근경색 없음"
+    ],
+    "mustAbsent": [
+      "가족성 황색종"
+    ]
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "주 3회 회식과 야식",
+      "운동 거의 하지 않음"
+    ],
+    "recommended": [
+      "음주 주 3회",
+      "현재 흡연 없음"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후·체형·허리둘레", "method": "혈압·맥박 측정과 BMI·허리둘레 확인", "expectedFinding": "혈압 136/84, 맥박 78회, BMI 28.2, 허리둘레 99cm", "polarity": "positive", "examConceptId": "body_habitus_assessment"},
-    {"item": "눈·피부 황색종", "method": "눈 주위·각막환과 손바닥 황색종 관찰", "expectedFinding": "황색판종·각막환·손바닥 황색종 없음", "examConceptId": "xanthoma_xanthelasma_inspection"},
-    {"item": "갑상샘·피부", "method": "갑상샘 촉진과 피부 건조 확인", "expectedFinding": "갑상샘 비대와 피부 건조 소견 없음", "examConceptId": "thyroid_palpation"},
-    {"item": "경동맥·심음·말초 맥박", "method": "경동맥 잡음과 심음, 말초 맥박 확인", "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 말초 맥박 대칭", "examConceptId": "carotid_bruit"},
-    {"item": "복부·하지 부종", "method": "간비대·복수와 하지 함요부종 확인", "expectedFinding": "간비대·복수·하지 함요부종 없음", "examConceptId": "pretibial_pitting_edema"}
+    {
+      "item": "활력징후·체형·허리둘레",
+      "method": "혈압·맥박 측정과 BMI·허리둘레 확인",
+      "expectedFinding": "혈압 136/84, 맥박 78회, BMI 28.2, 허리둘레 99cm",
+      "polarity": "positive",
+      "examConceptId": "body_habitus_assessment"
+    },
+    {
+      "item": "눈·피부 황색종",
+      "method": "눈 주위·각막환과 손바닥 황색종 관찰",
+      "expectedFinding": "황색판종·각막환·손바닥 황색종 없음",
+      "examConceptId": "xanthoma_xanthelasma_inspection"
+    },
+    {
+      "item": "갑상샘·피부",
+      "method": "갑상샘 촉진과 피부 건조 확인",
+      "expectedFinding": "갑상샘 비대와 피부 건조 소견 없음",
+      "examConceptId": "thyroid_palpation"
+    },
+    {
+      "item": "경동맥·심음·말초 맥박",
+      "method": "경동맥 잡음과 심음, 말초 맥박 확인",
+      "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 말초 맥박 대칭",
+      "examConceptId": "carotid_bruit"
+    },
+    {
+      "item": "복부·하지 부종",
+      "method": "간비대·복수와 하지 함요부종 확인",
+      "expectedFinding": "간비대·복수·하지 함요부종 없음",
+      "examConceptId": "pretibial_pitting_edema"
+    }
   ],
-  "liveApiContext": {"patientContextFocus": "검진에서 지질 수치가 높아 걱정하는 환자다. 구체 수치, 공복 여부, 허리둘레와 식사·음주 습관은 해당 질문을 받을 때만 답한다.", "answerPolicy": ["병명을 먼저 말하지 않는다.", "학생이 묻는 항목에만 환자 관점에서 짧게 답한다.", "체중·식습관 질문에는 이유를 설명하면 협조적으로 답한다."], "positiveClues": ["중성지방 318·HDL 34·LDL 156", "복부비만", "야식·음주·운동 부족"], "negativeClues": ["심혈관 증상 없음", "황색종 없음", "부종·거품뇨 없음", "갑상샘저하 증상 없음"]},
-  "evaluationUse": {"mustAsk": ["검사 시점·공복 여부·총콜레스테롤/LDL/HDL/중성지방", "키·체중·허리둘레와 최근 변화", "흉통·호흡곤란·운동 시 불편", "고혈압·당뇨·흡연·심혈관 가족력", "식사·야식·음주·운동", "약물·스테로이드·건강보조제", "갑상샘저하·부종·거품뇨·다뇨 단서"], "positiveClues": ["복부비만", "고중성지방·낮은 HDL", "생활습관 위험"], "negativeClues": ["증상성 심혈관질환 없음", "이차성 신장·갑상샘 단서 없음"], "educationTopics": ["공복 지질 재검과 심혈관 위험 평가", "포화지방·단 음료·과음 줄이기", "규칙 운동·체중·허리둘레 관리", "흉통·호흡곤란 발생 시 신속 진료"]},
+  "liveApiContext": {
+    "patientContextFocus": "검진에서 지질 수치가 높아 걱정하는 환자다. 구체 수치, 공복 여부, 허리둘레와 식사·음주 습관은 해당 질문을 받을 때만 답한다.",
+    "answerPolicy": [
+      "병명을 먼저 말하지 않는다.",
+      "학생이 묻는 항목에만 환자 관점에서 짧게 답한다.",
+      "체중·식습관 질문에는 이유를 설명하면 협조적으로 답한다."
+    ],
+    "positiveClues": [
+      "중성지방 318·HDL 34·LDL 156",
+      "복부비만",
+      "야식·음주·운동 부족"
+    ],
+    "negativeClues": [
+      "심혈관 증상 없음",
+      "황색종 없음",
+      "부종·거품뇨 없음",
+      "갑상샘저하 증상 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "검사 시점·공복 여부·총콜레스테롤/LDL/HDL/중성지방",
+      "키·체중·허리둘레와 최근 변화",
+      "흉통·호흡곤란·운동 시 불편",
+      "고혈압·당뇨·흡연·심혈관 가족력",
+      "식사·야식·음주·운동",
+      "약물·스테로이드·건강보조제",
+      "갑상샘저하·부종·거품뇨·다뇨 단서"
+    ],
+    "positiveClues": [
+      "복부비만",
+      "고중성지방·낮은 HDL",
+      "생활습관 위험"
+    ],
+    "negativeClues": [
+      "증상성 심혈관질환 없음",
+      "이차성 신장·갑상샘 단서 없음"
+    ],
+    "educationTopics": [
+      "공복 지질 재검과 심혈관 위험 평가",
+      "포화지방·단 음료·과음 줄이기",
+      "규칙 운동·체중·허리둘레 관리",
+      "흉통·호흡곤란 발생 시 신속 진료"
+    ]
+  },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 이상지질혈증 (복부비만·고중성지방혈증 의심)\n\n- 요약: 검진에서 중성지방 318, HDL 34, LDL 156. BMI 28.2, 허리둘레 99cm.\n- 단서: 야식·회식·운동 부족이 지속되나 흉통·호흡곤란은 없음.\n- 진찰: 복부비만 외 황색종·각막환·부종·경동맥 잡음 없음.\n\n추가 질문: \"약을 바로 시작해야 하나요? 식사만 바꾸면 될까요?\"",
   "rawRuleText": "# 증례명 : 이상지질혈증 (복부비만·고중성지방혈증 의심)\n\n- 요약: 검진에서 중성지방 318, HDL 34, LDL 156. BMI 28.2, 허리둘레 99cm.\n- 단서: 야식·회식·운동 부족이 지속되나 흉통·호흡곤란은 없음.\n- 진찰: 복부비만 외 황색종·각막환·부종·경동맥 잡음 없음.\n\n추가 질문: \"약을 바로 시작해야 하나요? 식사만 바꾸면 될까요?\""

@@ -4,15 +4,35 @@
   "id": "vestibular_neuritis_rule",
   "title": "전정신경염",
   "category": "어지럼",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 52 '어지럼' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "전정신경염 (Vestibular neuritis)",
   "variant": "감기 선행 후 지속성 회전성 어지럼형",
   "description": "감기를 앓은 뒤부터 하루 종일 지속되는 회전성 어지럼과 구역감으로 걷기도 힘들어진 규칙입니다.",
-  "tags": ["어지럼", "현훈", "전정신경염", "말초성", "선행감염"],
+  "tags": [
+    "어지럼",
+    "현훈",
+    "전정신경염",
+    "말초성",
+    "선행감염"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 52 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "남녀 무관", "age": "30~45세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남녀 무관",
+      "age": "30~45세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -37,25 +57,69 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["열흘 전 목감기(동네 의원에서 감기약 복용)", "그 외 질환 없음"],
-    "mustAbsent": ["고혈압", "당뇨", "귀 질환", "두부 외상"]
+    "mustInclude": [
+      "열흘 전 목감기(동네 의원에서 감기약 복용)",
+      "그 외 질환 없음"
+    ],
+    "mustAbsent": [
+      "고혈압",
+      "당뇨",
+      "귀 질환",
+      "두부 외상"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["특이 가족력 없음"],
+    "recommended": [
+      "특이 가족력 없음"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
     "fixed": [],
-    "recommended": ["음주·흡연 랜덤", "커피 랜덤"]
+    "recommended": [
+      "음주·흡연 랜덤",
+      "커피 랜덤"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "혈압·맥박 측정(기립 포함)", "expectedFinding": "정상" },
-    { "item": "안진", "method": "자발·주시 안진 확인", "expectedFinding": "한 방향으로 유지되는 수평-회선성 자발안진 (+), 시고정 시 감소하고 주시 방향에 따라 바뀌지 않음", "polarity": "positive" },
-    { "item": "두위검사", "method": "Dix-Hallpike test", "expectedFinding": "음성 (특정 두위 유발 없음)", "examConceptId": "dix_hallpike" },
-    { "item": "평형·보행", "method": "Romberg·Tandem gait 검사", "expectedFinding": "한쪽으로 기울어지는 편위 (+)", "polarity": "positive" },
-    { "item": "신경학적 이상", "method": "뇌신경·소뇌기능(finger-to-nose) 검사", "expectedFinding": "정상" },
-    { "item": "빈혈", "method": "결막 확인", "expectedFinding": "창백 없음 (정상)" },
-    { "item": "청력", "method": "Weber/Rinne 등 청력 검사", "expectedFinding": "정상 (난청 없음)" }
+    {
+      "item": "활력징후",
+      "method": "혈압·맥박 측정(기립 포함)",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "안진",
+      "method": "자발·주시 안진 확인",
+      "expectedFinding": "한 방향으로 유지되는 수평-회선성 자발안진 (+), 시고정 시 감소하고 주시 방향에 따라 바뀌지 않음",
+      "polarity": "positive"
+    },
+    {
+      "item": "두위검사",
+      "method": "Dix-Hallpike test",
+      "expectedFinding": "음성 (특정 두위 유발 없음)",
+      "examConceptId": "dix_hallpike"
+    },
+    {
+      "item": "평형·보행",
+      "method": "Romberg·Tandem gait 검사",
+      "expectedFinding": "한쪽으로 기울어지는 편위 (+)",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 이상",
+      "method": "뇌신경·소뇌기능(finger-to-nose) 검사",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "빈혈",
+      "method": "결막 확인",
+      "expectedFinding": "창백 없음 (정상)"
+    },
+    {
+      "item": "청력",
+      "method": "Weber/Rinne 등 청력 검사",
+      "expectedFinding": "정상 (난청 없음)"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "감기 후 시작되어 이틀째 지속되는 회전 어지럼으로 지친 환자. '감기를 앓았다', '하루 이상 계속된다', '걸으면 쏠린다'는 단서는 해당 주제를 질문받았을 때 공개한다.",
@@ -90,8 +154,17 @@
       "유발·악화 요인",
       "기저질환·약물"
     ],
-    "positiveClues": ["지속성 회전성", "감기 선행", "오심·구토", "보행 쏠림"],
-    "negativeClues": ["이명·난청 없음", "신경학적 증상 없음", "기저질환 없음"],
+    "positiveClues": [
+      "지속성 회전성",
+      "감기 선행",
+      "오심·구토",
+      "보행 쏠림"
+    ],
+    "negativeClues": [
+      "이명·난청 없음",
+      "신경학적 증상 없음",
+      "기저질환 없음"
+    ],
     "educationTopics": [
       "전정신경염 추정 설명 (바이러스 감염 연관, 대개 수 주~수개월 내 호전)",
       "감별 검사(전정기능검사·청력검사) 필요성",

@@ -4,6 +4,7 @@
   "id": "bladder_cancer_hematuria_rule",
   "title": "배뇨 이상 (무통성 혈뇨 적신호)",
   "category": "배뇨 이상",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 33 '배뇨 이상' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "방광암 의심 (Suspected bladder cancer)",
   "variant": "장기 흡연자의 무통성 육안 혈뇨 적신호형",
   "description": "아프지는 않은데 소변이 벌겋게 나온 적이 두 번 있는, 담배를 오래 피운 환자의 적신호 규칙입니다.",

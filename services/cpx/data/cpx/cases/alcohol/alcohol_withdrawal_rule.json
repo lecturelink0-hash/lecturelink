@@ -4,6 +4,7 @@
   "id": "alcohol_withdrawal_rule",
   "title": "음주 문제 (알코올 금단 의심)",
   "category": "음주 문제",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 04 '음주 문제' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "알코올 금단 증후군 의심 (Suspected alcohol withdrawal)",
   "variant": "갑작스러운 단주 후 떨림·발한·초조 응급형",
   "description": "매일 마시던 술을 이틀 전 갑자기 끊은 뒤 손이 떨리고 식은땀이 나며 잠을 못 자는 규칙입니다.",

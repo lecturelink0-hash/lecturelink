@@ -4,6 +4,7 @@
   "id": "ureter_stone_rule",
   "title": "급성 복통 (요로결석 의심)",
   "category": "급성 복통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 17 '급성 복통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "요관결석 의심 (Suspected ureteral stone)",
   "variant": "측복부 산통·혈뇨 동반형",
   "description": "새벽에 옆구리가 쥐어짜듯 아파 데굴데굴 굴렀고, 소변이 불그스름한 규칙입니다.",

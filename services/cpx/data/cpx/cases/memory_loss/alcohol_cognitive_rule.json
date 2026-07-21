@@ -4,6 +4,7 @@
   "id": "alcohol_cognitive_rule",
   "title": "기억력 저하 (알코올 연관 의심)",
   "category": "기억력 저하",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 50 '기억력 저하' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "알코올 연관 인지장애 의심 (Suspected alcohol-related cognitive impairment)",
   "variant": "장기 음주 + 최근 기억 장애·작화 경향형",
   "description": "수십 년 반주가 늘어 최근 일을 통째로 잊고, 빈칸을 지어낸 이야기로 메우는 규칙입니다.",

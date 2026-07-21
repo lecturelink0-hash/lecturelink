@@ -4,39 +4,145 @@
   "id": "expressive_language_delay_rule",
   "title": "발달 지연 (표현 언어 지연 의심)",
   "category": "발달 지연",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 44 '성장/발달 지연' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "표현 언어 발달 지연 의심 (Suspected expressive language delay)",
   "variant": "2세 반 언어 표현 지연·기능 보존형",
   "description": "언어 지연을 호소하는 보호자에게 전반 발달·퇴행·청력·신경학적 적신호를 체계적으로 확인하고, 비난 없는 조기 평가·중재 계획을 설명하는 규칙입니다.",
-  "tags": ["발달 지연", "언어 지연", "소아", "청력 평가", "조기 중재"],
+  "tags": [
+    "발달 지연",
+    "언어 지연",
+    "소아",
+    "청력 평가",
+    "조기 중재"
+  ],
   "sourceTextFile": "046_developmental_delay.json·046_developmental_delay_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"gender": "남성", "age": 2}, "recommended": {"ageDetail": "30개월"}, "randomizable": ["이름", "키", "몸무게"], "mustAbsent": []},
+  "demographicsRule": {
+    "fixed": {
+      "gender": "남성",
+      "age": 2
+    },
+    "recommended": {
+      "ageDetail": "30개월"
+    },
+    "randomizable": [
+      "이름",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
   "scenarioRule": {
     "caseSummary": "30개월 남아의 보호자가 또래보다 말이 적다고 내원했다. 단어는 약 15개 말하고 두 단계 지시는 이해하지만 두 단어 조합은 드물다. 걷기·손 사용·눈맞춤·놀이와 이름 부를 때 반응은 대체로 적절하며, 이전에 하던 말을 잃거나 경련을 한 적은 없다.",
-    "mustInclude": ["30개월·표현 단어 약 15개", "두 단계 지시 이해", "두 단어 조합 드묾", "운동·놀이·눈맞춤 대체로 적절", "퇴행·경련 없음"],
-    "preferredVariants": ["가족 중 말이 늦었던 친척 있음", "어린이집에서 또래와 놀기는 함"],
-    "mustAbsent": ["기술 상실", "경련", "급성 약화", "섭식·호흡 곤란", "심한 청각 반응 저하"]
+    "mustInclude": [
+      "30개월·표현 단어 약 15개",
+      "두 단계 지시 이해",
+      "두 단어 조합 드묾",
+      "운동·놀이·눈맞춤 대체로 적절",
+      "퇴행·경련 없음"
+    ],
+    "preferredVariants": [
+      "가족 중 말이 늦었던 친척 있음",
+      "어린이집에서 또래와 놀기는 함"
+    ],
+    "mustAbsent": [
+      "기술 상실",
+      "경련",
+      "급성 약화",
+      "섭식·호흡 곤란",
+      "심한 청각 반응 저하"
+    ]
   },
-  "pastHistoryRule": {"mustInclude": ["만삭 자연분만, 신생아 중환자실 입원 없음"], "mustAbsent": ["중증 두부외상", "중추신경계 감염"]},
-  "familyHistoryRule": {"recommended": ["가족의 말 늦음 병력"], "mustAbsent": ["확진 유전질환"]},
-  "socialHistoryRule": {"fixed": ["주 양육자와 한국어로 상호작용"], "recommended": ["화면 노출 시간 확인 필요"]},
+  "pastHistoryRule": {
+    "mustInclude": [
+      "만삭 자연분만, 신생아 중환자실 입원 없음"
+    ],
+    "mustAbsent": [
+      "중증 두부외상",
+      "중추신경계 감염"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "가족의 말 늦음 병력"
+    ],
+    "mustAbsent": [
+      "확진 유전질환"
+    ]
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "주 양육자와 한국어로 상호작용"
+    ],
+    "recommended": [
+      "화면 노출 시간 확인 필요"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "성장 측정", "method": "키·체중·두위 측정과 성장곡선 확인", "expectedFinding": "키·체중·두위가 성장곡선 추적 범위 안에 있음", "examConceptId": "pediatric_growth_measurement"},
-    {"item": "발달 관찰", "method": "놀이·눈맞춤·이해와 표현 언어 관찰", "expectedFinding": "두 단계 지시는 이해하나 자발적 두 단어 조합 표현이 적음", "polarity": "positive", "examConceptId": "developmental_observation"},
-    {"item": "신경학적 진찰", "method": "근력·근긴장·반사·뇌신경 확인", "expectedFinding": "근력·근긴장·반사·뇌신경 특이소견 없음", "examConceptId": "neurologic_screening"},
-    {"item": "보행 관찰", "method": "연령 적합 보행과 균형 관찰", "expectedFinding": "보행·균형에서 뚜렷한 이상 없음", "examConceptId": "gait_observation"}
+    {
+      "item": "성장 측정",
+      "method": "키·체중·두위 측정과 성장곡선 확인",
+      "expectedFinding": "키·체중·두위가 성장곡선 추적 범위 안에 있음",
+      "examConceptId": "pediatric_growth_measurement"
+    },
+    {
+      "item": "발달 관찰",
+      "method": "놀이·눈맞춤·이해와 표현 언어 관찰",
+      "expectedFinding": "두 단계 지시는 이해하나 자발적 두 단어 조합 표현이 적음",
+      "polarity": "positive",
+      "examConceptId": "developmental_observation"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "근력·근긴장·반사·뇌신경 확인",
+      "expectedFinding": "근력·근긴장·반사·뇌신경 특이소견 없음",
+      "examConceptId": "neurologic_screening"
+    },
+    {
+      "item": "보행 관찰",
+      "method": "연령 적합 보행과 균형 관찰",
+      "expectedFinding": "보행·균형에서 뚜렷한 이상 없음",
+      "examConceptId": "gait_observation"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "보호자는 자신이 말을 충분히 못 시켜준 것은 아닌지 걱정하며, 각 영역의 발달·출산력·가족력은 질문할 때만 답한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "자폐·지적장애 같은 특정 진단 질문에는 확정하지 않고 평가가 필요하다는 불안을 표현한다.", "기술 상실·경련·시청각 반응·운동 기능 질문에는 현재 상태를 분명히 답한다."],
-    "positiveClues": ["표현 단어 수 적음", "두 단어 조합 드묾", "이해·운동·상호작용 보존"],
-    "negativeClues": ["퇴행·경련·신경학적 이상·심한 청각 저하 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "자폐·지적장애 같은 특정 진단 질문에는 확정하지 않고 평가가 필요하다는 불안을 표현한다.",
+      "기술 상실·경련·시청각 반응·운동 기능 질문에는 현재 상태를 분명히 답한다."
+    ],
+    "positiveClues": [
+      "표현 단어 수 적음",
+      "두 단어 조합 드묾",
+      "이해·운동·상호작용 보존"
+    ],
+    "negativeClues": [
+      "퇴행·경련·신경학적 이상·심한 청각 저하 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["대근육·소근육·언어·사회성·인지 영역과 퇴행", "임신·출산·신생아기·성장·영양·수면·시청각", "경련·급성 약화·섭식/호흡 적신호", "가족력·유전·예방접종·질환·독성", "어린이집/학교 기능·가정 환경·안전", "성장·발달 관찰·신경/보행·청력/시력 평가", "조기중재·전문 의뢰·추적과 보호자 지지"],
-    "positiveClues": ["표현 언어 지연", "이해·운동 보존"],
-    "negativeClues": ["퇴행·발작·신경 적신호 없음"],
-    "educationTopics": ["청력·발달 평가", "기술 상실·경련·섭식/호흡 문제 응급 평가", "가정 언어·놀이와 조기중재"]
+    "mustAsk": [
+      "대근육·소근육·언어·사회성·인지 영역과 퇴행",
+      "임신·출산·신생아기·성장·영양·수면·시청각",
+      "경련·급성 약화·섭식/호흡 적신호",
+      "가족력·유전·예방접종·질환·독성",
+      "어린이집/학교 기능·가정 환경·안전",
+      "성장·발달 관찰·신경/보행·청력/시력 평가",
+      "조기중재·전문 의뢰·추적과 보호자 지지"
+    ],
+    "positiveClues": [
+      "표현 언어 지연",
+      "이해·운동 보존"
+    ],
+    "negativeClues": [
+      "퇴행·발작·신경 적신호 없음"
+    ],
+    "educationTopics": [
+      "청력·발달 평가",
+      "기술 상실·경련·섭식/호흡 문제 응급 평가",
+      "가정 언어·놀이와 조기중재"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 발달 지연 (표현 언어 지연 의심)\n- 30개월 남아, 표현 단어 약 15개이고 두 단어 조합이 드묾. 두 단계 지시는 이해하며 운동·놀이·눈맞춤은 대체로 적절.\n- 퇴행·경련·급성 약화 없음.\n\n추가 질문: \"제가 뭘 잘못해서 아이가 말을 늦게 하는 걸까요?\"",

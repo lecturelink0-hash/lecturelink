@@ -4,6 +4,7 @@
   "id": "anorexia_nervosa_rule",
   "title": "체중 감소 (신경성 식욕부진 의심)",
   "category": "체중 감소",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 39 '체중 감소' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "신경성 식욕부진증 의심 (Suspected anorexia nervosa)",
   "variant": "의도적 제한 + 신체상 왜곡 청년 여성형",
   "description": "저체중인데도 살쪘다고 믿으며 극단적으로 식사를 줄여온, 생리가 끊긴 규칙입니다.",

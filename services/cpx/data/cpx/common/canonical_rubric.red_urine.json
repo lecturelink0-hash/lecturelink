@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "id": "canonical_rubric_red_urine_v1",
+  "title": "붉은색 소변(혈뇨) CPX 종합 채점 루브릭 (정본)",
+  "provenance": {
+    "content": "국시원 공개 CPX 34 붉은색 소변 항목 + 표준 혈뇨 감별 임상지식(사구체성/비사구체성/가성혈뇨, 무통성 육안혈뇨 악성 배제) 기반 자체 작성 (교재 문장 직접 인용 없음, 페이지 미실측, 2026-07-20; 임상 최종 검수 필요)",
+    "structure": "canonical_rubric.sleep.json v1 스키마 준수 (tools/gen_rubric.py로 생성)",
+    "decisions": [
+      "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
+      "영역 가중치 35/15/15/25/10 — 도메인 공통",
+      "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)"
+    ],
+    "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 34 '붉은색 소변' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 작성했으며 교재 문장을 직접 인용하지 않음."
+  },
+  "totalScore": 100,
+  "scoringPolicy": {
+    "mode": "dual",
+    "note": "점수는 met=1·partial=0.5·not_met=0의 부분점수로 연속 계산하며, 원 루브릭 0/1/2 컷오프는 영역 등급(우수/보통/미흡) 표시로 병기",
+    "gradeLabels": {
+      "2": "우수",
+      "1": "보통",
+      "0": "미흡"
+    }
+  },
+  "sections": [
+    {
+      "id": "history_taking",
+      "name": "병력청취",
+      "type": "checklist",
+      "weightPercent": 35,
+      "gradeCutoffs": {
+        "excellent": 8,
+        "fairMin": 5
+      },
+      "items": [
+        {
+          "id": "ht01",
+          "text": "붉은 소변이 언제부터 시작됐고 지속되는지 간헐적인지 질문"
+        },
+        {
+          "id": "ht02",
+          "text": "소변의 색(선홍색·분홍색·콜라색·간장색)과 핏덩이(혈괴) 동반 여부 질문",
+          "contextHint": "콜라·간장색은 사구체성, 선홍색·혈괴 동반은 비사구체성(요로계) 단서"
+        },
+        {
+          "id": "ht03",
+          "text": "배뇨 중 어느 시점에 붉은지(처음/전 과정/끝) 질문",
+          "contextHint": "배뇨 초기 혈뇨=요도, 종말 혈뇨=방광경부·전립선, 전 과정=상부요로·신장 국소화 단서"
+        },
+        {
+          "id": "ht04",
+          "text": "통증 동반 여부와 부위(배뇨통, 옆구리 산통, 무통) 질문",
+          "contextHint": "무통성 육안 혈뇨는 악성 적신호, 옆구리 산통 방사통은 요로결석 단서"
+        },
+        {
+          "id": "ht05",
+          "text": "동반 배뇨 증상(빈뇨·급박뇨·잔뇨감·배뇨곤란) 확인"
+        },
+        {
+          "id": "ht06",
+          "text": "발열·오한 등 감염 증상 확인 — 요로감염·신우신염 감별"
+        },
+        {
+          "id": "ht07",
+          "text": "최근 과격한 운동이나 외상 여부 확인",
+          "contextHint": "운동성 혈뇨·횡문근융해에 의한 가성 혈뇨 감별 단서"
+        },
+        {
+          "id": "ht08",
+          "text": "선행 상기도감염·인후염 여부와 그 시점(혈뇨와 동시 vs 1~3주 후) 확인",
+          "contextHint": "감염과 거의 동시 발생은 IgA 신병증, 2~3주 후는 감염후 사구체신염 단서"
+        },
+        {
+          "id": "ht09",
+          "text": "복용 약물(항응고제·항혈소판제, 결핵약 리팜핀, 페나조피리딘 등)과 건강보조식품 질문",
+          "contextHint": "약물에 의한 출혈 경향·소변 착색 감별"
+        },
+        {
+          "id": "ht10",
+          "text": "붉은 색소 음식(비트·붉은 식품 색소 등) 섭취 여부 확인 — 가성 혈뇨 감별"
+        },
+        {
+          "id": "ht11",
+          "text": "흡연력과 직업적 발암물질(방향족 아민 등) 노출, 체중 감소 여부 확인 — 요로상피암 위험 인자"
+        },
+        {
+          "id": "ht12",
+          "text": "과거력(요로결석·신질환·출혈 경향)과 가족력(다낭성 신질환·유전성 신염·혈뇨) 질문"
+        },
+        {
+          "id": "ht13",
+          "text": "월경혈 오염 가능성 확인",
+          "conditional": {
+            "flag": "femalePatient",
+            "note": "여성 케이스일 때만 평가 항목에 포함"
+          }
+        }
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "name": "신체진찰",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "pe01",
+          "text": "활력징후 확인 — 발열·혈압 포함 (말로 언급)"
+        },
+        {
+          "id": "pe02",
+          "text": "옆구리 CVA 압통 확인 — 신우신염·요로결석 감별"
+        },
+        {
+          "id": "pe03",
+          "text": "하복부·치골상부 촉진 — 방광 팽만·압통·종괴 확인"
+        },
+        {
+          "id": "pe04",
+          "text": "부종(눈꺼풀·하지)과 혈압 상승 등 신염 징후 확인 — 사구체질환 감별"
+        },
+        {
+          "id": "pe05",
+          "text": "소변검사(딥스틱+현미경) 시행 또는 선언 — 적혈구 vs 헤모글로빈/미오글로빈 구분, 이형적혈구·단백뇨 확인",
+          "contextHint": "'소변을 받아 현미경으로 보겠습니다'도 인정"
+        },
+        {
+          "id": "pe06",
+          "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현하고, 진찰 중/후 배려"
+        }
+      ],
+      "declarationCountsAsPerformance": true
+    },
+    {
+      "id": "patient_education",
+      "name": "환자교육",
+      "type": "checklist",
+      "weightPercent": 15,
+      "gradeCutoffs": {
+        "excellent": 3,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ed01",
+          "text": "붉은 소변의 다양한 원인(진짜 혈뇨 vs 가성 혈뇨, 사구체성 vs 비사구체성)을 설명"
+        },
+        {
+          "id": "ed02",
+          "text": "필요한 검사(요검사·요세포검사·요배양, 초음파/CT 요로조영, 필요 시 방광내시경) 계획 설명"
+        },
+        {
+          "id": "ed03",
+          "text": "무통성 육안 혈뇨·고령·흡연 등 위험인자가 있으면 악성 배제가 중요함을 설명(겁주기보다 조기 발견 이점 중심)"
+        },
+        {
+          "id": "ed04",
+          "text": "추적의 중요성과 악화 신호(발열, 소변량 감소, 심한 통증, 혈뇨 지속) 시 재내원 교육"
+        }
+      ]
+    },
+    {
+      "id": "ppi",
+      "name": "PPI (환자의사관계)",
+      "type": "passfail",
+      "weightPercent": 25,
+      "gradeCutoffs": {
+        "excellent": 4,
+        "fairMin": 2
+      },
+      "items": [
+        {
+          "id": "ppi01",
+          "text": "경청과 존중: 환자 말을 성급하게 끊지 않고 끝까지 들었는가"
+        },
+        {
+          "id": "ppi02",
+          "text": "눈높이 설명: 전문 용어 남발 없이 일상 언어로 설명했는가"
+        },
+        {
+          "id": "ppi03",
+          "text": "정서적 공감: '많이 힘드셨겠네요' 같은 명시적 언어적 공감 표현을 사용했는가"
+        },
+        {
+          "id": "ppi04",
+          "text": "참여 유도: '더 궁금한 점 있으신가요?'라며 질문 기회를 주었는가"
+        },
+        {
+          "id": "ppi05",
+          "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
+        }
+      ]
+    },
+    {
+      "id": "etiquette",
+      "name": "임상예의",
+      "type": "deduction",
+      "weightPercent": 10,
+      "baseScore": 10,
+      "deductionPerViolation": 2,
+      "floor": 0,
+      "gradeCutoffs": {
+        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
+        "excellentMaxViolations": 0,
+        "fairMaxViolations": 2
+      },
+      "violationTypes": [
+        {
+          "id": "et01",
+          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
+          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
+        },
+        {
+          "id": "et02",
+          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
+        },
+        {
+          "id": "et03",
+          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
+        }
+      ]
+    }
+  ],
+  "evaluationRules": {
+    "contextOverKeyword": "완벽한 단어 일치가 아니어도 문맥상 의미가 같으면 인정 (예외 규칙 1)",
+    "declarationCountsAsPerformance": "말로 선언하면 시행으로 간주 (예외 규칙 2)",
+    "evidenceRequired": "모든 판정에 대화 로그 근거 인용 필수 (예외 규칙 3)",
+    "sttTolerance": "학생 발화 전사에 음성 인식 오류가 있을 수 있음 — 발음이 유사한 오인식은 문맥으로 원래 의도를 복원해 판정"
+  },
+  "evaluationOutputContract": {
+    "target": "user_only",
+    "llmRole": "extract_evidence_only",
+    "ruleEngineRole": "calculate_score",
+    "requiredOutputFields": [
+      "totalScore",
+      "sectionScores",
+      "metItems",
+      "missedItems",
+      "penalties",
+      "evidenceQuotes",
+      "correctionFeedback"
+    ],
+    "feedbackPrinciple": "사용자가 무엇을 잘했고, 무엇을 놓쳤고, 다음 문진에서 어떻게 고쳐야 하는지 구체적으로 피드백한다.",
+    "forbiddenEvaluationTargets": [
+      "ai_patient",
+      "patient_response_quality",
+      "patient_personality",
+      "patient_prompt_following"
+    ]
+  }
+}

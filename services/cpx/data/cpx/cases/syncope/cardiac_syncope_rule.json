@@ -4,6 +4,7 @@
   "id": "cardiac_syncope_rule",
   "title": "실신 (심장성 고위험)",
   "category": "실신",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 09 '실신' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "심장성 실신 고위험 — 비대성 심근병증·부정맥 긴급 감별 필요 (High-risk cardiac syncope)",
   "variant": "운동 중·전구증상 없는 실신 + 급사 가족력 긴급평가형",
   "description": "운동 중 전조 없이 실신하고 급사 가족력이 있어 즉시 심장 평가가 필요한 고위험 규칙입니다.",
@@ -17,7 +18,7 @@
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 09 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
     "fixed": {
-        "location": "응급실"
+      "location": "응급실"
     },
     "recommended": {
       "gender": "남성 우세",

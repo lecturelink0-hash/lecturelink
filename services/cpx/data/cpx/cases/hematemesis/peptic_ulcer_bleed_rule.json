@@ -4,41 +4,167 @@
   "id": "peptic_ulcer_bleed_rule",
   "title": "토혈 (소화성궤양 출혈 의심)",
   "category": "토혈",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 22 '토혈' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "소화성궤양에 의한 상부위장관 출혈 의심 (Suspected peptic-ulcer upper GI bleeding)",
   "variant": "NSAIDs 복용·커피색 구토·흑색변형",
   "description": "진통소염제를 복용하던 환자가 커피 찌꺼기 같은 구토와 검고 끈적한 변을 호소하는 응급 평가 규칙입니다.",
-  "tags": ["토혈", "상부위장관출혈", "소화성궤양", "NSAIDs", "응급"],
+  "tags": [
+    "토혈",
+    "상부위장관출혈",
+    "소화성궤양",
+    "NSAIDs",
+    "응급"
+  ],
   "sourceTextFile": "003_hematemesis.json·003_hematemesis_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (NIDDK GI bleeding 자료로 임상 단서 교차 확인, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"location": "응급실"}, "recommended": {"gender": "남성 우세", "age": "55~70세"}, "randomizable": ["성별", "이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "55~70세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "학력",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
   "scenarioRule": {
     "caseSummary": "무릎 통증으로 이부프로펜을 자주 복용하던 환자가 오늘 새벽 커피 찌꺼기 같은 검붉은 구토를 두 번 했고, 어제부터 검고 끈적한 변을 보아 어지러운 상태로 내원했다.",
-    "mustInclude": ["오늘 새벽 커피 찌꺼기 같은 검붉은 구토 2회", "어제부터 검고 끈적한 변", "일어설 때 어지럽고 기운 없음", "무릎 통증으로 NSAIDs를 위장보호제 없이 자주 복용", "최근 수주간 명치 쓰림"],
-    "preferredVariants": ["구토량은 종이컵 반 컵 정도로 표현", "내시경이 걱정된다고 말함"],
-    "mustAbsent": ["기침하며 피가 나온 적", "코피·잇몸 출혈", "간경변·식도정맥류 병력", "반복 구토가 먼저 있었음"]
+    "mustInclude": [
+      "오늘 새벽 커피 찌꺼기 같은 검붉은 구토 2회",
+      "어제부터 검고 끈적한 변",
+      "일어설 때 어지럽고 기운 없음",
+      "무릎 통증으로 NSAIDs를 위장보호제 없이 자주 복용",
+      "최근 수주간 명치 쓰림"
+    ],
+    "preferredVariants": [
+      "구토량은 종이컵 반 컵 정도로 표현",
+      "내시경이 걱정된다고 말함"
+    ],
+    "mustAbsent": [
+      "기침하며 피가 나온 적",
+      "코피·잇몸 출혈",
+      "간경변·식도정맥류 병력",
+      "반복 구토가 먼저 있었음"
+    ]
   },
-  "pastHistoryRule": {"mustInclude": ["고혈압 외 특이 질환 없음", "소화성궤양 진단력 없음"], "mustAbsent": ["간경변", "이전 위장관 출혈"]},
-  "familyHistoryRule": {"recommended": ["위암 가족력 없음"], "mustAbsent": []},
-  "socialHistoryRule": {"fixed": ["음주 주 1회 이하", "흡연 없음"], "recommended": ["처방 없이 진통소염제 간헐 복용"]},
+  "pastHistoryRule": {
+    "mustInclude": [
+      "고혈압 외 특이 질환 없음",
+      "소화성궤양 진단력 없음"
+    ],
+    "mustAbsent": [
+      "간경변",
+      "이전 위장관 출혈"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "위암 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "음주 주 1회 이하",
+      "흡연 없음"
+    ],
+    "recommended": [
+      "처방 없이 진통소염제 간헐 복용"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후", "method": "활력징후·기립 시 증상 확인", "expectedFinding": "누워서 혈압 112/72, 맥박 102회; 일어서면 어지럼을 호소", "polarity": "positive"},
-    {"item": "전반적 외견", "method": "전반 신체 상태 확인", "expectedFinding": "창백하고 다소 기운 없어 보이나 의식은 명료", "polarity": "positive"},
-    {"item": "결막", "method": "결막 창백 확인", "expectedFinding": "결막이 약간 창백함", "polarity": "positive"},
-    {"item": "복부 시진", "method": "복부 시진·장음 청진", "expectedFinding": "팽만·수술흉터 없음, 장음은 들림"},
-    {"item": "복부 촉진", "method": "복부 촉진", "expectedFinding": "명치 부위 경미한 압통, 반발통·강직 없음", "polarity": "positive"},
-    {"item": "직장수지검사", "method": "직장수지검사", "expectedFinding": "설명과 동의 후 시행하면 검고 끈적한 변이 묻어남", "polarity": "positive"}
+    {
+      "item": "활력징후",
+      "method": "활력징후·기립 시 증상 확인",
+      "expectedFinding": "누워서 혈압 112/72, 맥박 102회; 일어서면 어지럼을 호소",
+      "polarity": "positive"
+    },
+    {
+      "item": "전반적 외견",
+      "method": "전반 신체 상태 확인",
+      "expectedFinding": "창백하고 다소 기운 없어 보이나 의식은 명료",
+      "polarity": "positive"
+    },
+    {
+      "item": "결막",
+      "method": "결막 창백 확인",
+      "expectedFinding": "결막이 약간 창백함",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진·장음 청진",
+      "expectedFinding": "팽만·수술흉터 없음, 장음은 들림"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진",
+      "expectedFinding": "명치 부위 경미한 압통, 반발통·강직 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "직장수지검사",
+      "expectedFinding": "설명과 동의 후 시행하면 검고 끈적한 변이 묻어남",
+      "polarity": "positive"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "상부위장관 출혈이 의심되는 환자이다. 토혈의 양상·양, 흑색변, 어지럼, NSAIDs 복용과 명치 증상은 질문받을 때만 순서대로 말한다.",
-    "answerPolicy": ["진단명이나 출혈 원인을 먼저 말하지 않는다.", "질문받은 항목에 환자 관점에서 1~3문장으로 답한다.", "응급 처치·수혈·내시경의 필요성은 학생이 설명할 때 불안을 표현하되 판단을 대신하지 않는다."],
-    "positiveClues": ["커피 찌꺼기 같은 구토", "흑색변", "기립 시 어지럼", "NSAIDs 복용", "명치 압통·결막 창백"],
-    "negativeClues": ["객혈 아님", "코피·구강 출혈 없음", "간질환 병력 없음", "반복 구토 선행 없음"]
+    "answerPolicy": [
+      "진단명이나 출혈 원인을 먼저 말하지 않는다.",
+      "질문받은 항목에 환자 관점에서 1~3문장으로 답한다.",
+      "응급 처치·수혈·내시경의 필요성은 학생이 설명할 때 불안을 표현하되 판단을 대신하지 않는다."
+    ],
+    "positiveClues": [
+      "커피 찌꺼기 같은 구토",
+      "흑색변",
+      "기립 시 어지럼",
+      "NSAIDs 복용",
+      "명치 압통·결막 창백"
+    ],
+    "negativeClues": [
+      "객혈 아님",
+      "코피·구강 출혈 없음",
+      "간질환 병력 없음",
+      "반복 구토 선행 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["피를 토한 것이 맞는지와 객혈·코피·음식물 색 변화 감별", "발생 시점·횟수·양·색과 커피색 여부", "흑색변·혈변 여부", "어지럼·실신감·두근거림·호흡곤란", "명치 통증·속쓰림·구토 선행 여부", "NSAIDs·아스피린·항응고·항혈소판제 복용", "위궤양·이전 출혈·내시경 병력", "음주와 간질환·정맥류 위험"],
-    "positiveClues": ["커피색 토혈", "흑색변", "NSAIDs 복용", "기립 시 어지럼"],
-    "negativeClues": ["간경변 없음", "객혈·코피 아님"],
-    "educationTopics": ["토혈은 응급 평가가 필요한 소견임을 설명", "활력 모니터링·혈액검사·혈액형/교차시험 및 상부내시경 가능성 설명", "금식과 출혈 악화·실신 시 즉시 알리기", "복용한 모든 약을 의료진에게 알리도록 안내"]
+    "mustAsk": [
+      "피를 토한 것이 맞는지와 객혈·코피·음식물 색 변화 감별",
+      "발생 시점·횟수·양·색과 커피색 여부",
+      "흑색변·혈변 여부",
+      "어지럼·실신감·두근거림·호흡곤란",
+      "명치 통증·속쓰림·구토 선행 여부",
+      "NSAIDs·아스피린·항응고·항혈소판제 복용",
+      "위궤양·이전 출혈·내시경 병력",
+      "음주와 간질환·정맥류 위험"
+    ],
+    "positiveClues": [
+      "커피색 토혈",
+      "흑색변",
+      "NSAIDs 복용",
+      "기립 시 어지럼"
+    ],
+    "negativeClues": [
+      "간경변 없음",
+      "객혈·코피 아님"
+    ],
+    "educationTopics": [
+      "토혈은 응급 평가가 필요한 소견임을 설명",
+      "활력 모니터링·혈액검사·혈액형/교차시험 및 상부내시경 가능성 설명",
+      "금식과 출혈 악화·실신 시 즉시 알리기",
+      "복용한 모든 약을 의료진에게 알리도록 안내"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 토혈 (소화성궤양 출혈 의심)\n\n- 장소: 응급실\n- 요약: NSAIDs를 자주 복용하던 환자가 커피 찌꺼기 같은 구토 2회와 흑색변, 기립 시 어지럼으로 내원.\n- 현 병력: 오늘 새벽 검붉고 커피색인 토 2회. 어제부터 검고 끈적한 변. 최근 명치 쓰림. 기침·코피·반복 구토는 없음.\n- 과거력/약물: 고혈압. 무릎 통증으로 이부프로펜을 위장보호제 없이 자주 복용. 간질환·이전 출혈 없음.\n- 신체진찰: 맥박 102회, 기립 시 어지럼, 창백·결막 창백, 명치 경미 압통, 동의 후 DRE에서 흑색변.\n\n추가 질문: \"내시경을 꼭 지금 해야 하나요?\"",
