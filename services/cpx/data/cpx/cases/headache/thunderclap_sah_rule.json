@@ -4,15 +4,35 @@
   "id": "thunderclap_sah_rule",
   "title": "벼락 두통 (이차성 의심)",
   "category": "두통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 46 '두통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "거미막하출혈 의심 (Suspected subarachnoid hemorrhage)",
   "variant": "고혈압 방치 중년의 급성 벼락 두통 적신호형",
   "description": "한 시간 전 갑자기 시작된, 태어나서 처음 겪는 극심한 두통과 구토로 급히 내원한 적신호 규칙입니다.",
-  "tags": ["두통", "벼락두통", "적신호", "이차성두통", "응급"],
+  "tags": [
+    "두통",
+    "벼락두통",
+    "적신호",
+    "이차성두통",
+    "응급"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 46 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "응급실" },
-    "recommended": { "gender": "남성 우세", "age": "45~60대" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "45~60대"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -37,24 +57,67 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["고혈압 진단 (수년 전), 최근 복약 불규칙", "이번 같은 두통은 처음"],
-    "mustAbsent": ["알레르기", "수술력", "머리 외상", "당뇨"]
+    "mustInclude": [
+      "고혈압 진단 (수년 전), 최근 복약 불규칙",
+      "이번 같은 두통은 처음"
+    ],
+    "mustAbsent": [
+      "알레르기",
+      "수술력",
+      "머리 외상",
+      "당뇨"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["아버지 고혈압"],
+    "recommended": [
+      "아버지 고혈압"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["음주 있음", "흡연 있음"],
-    "recommended": ["커피 랜덤"]
+    "fixed": [
+      "음주 있음",
+      "흡연 있음"
+    ],
+    "recommended": [
+      "커피 랜덤"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "혈압·체온·맥박 측정", "expectedFinding": "혈압 매우 높음(수축기 200 내외), 발열 없음", "polarity": "positive" },
-    { "item": "뇌막자극징후", "method": "경부 강직·Kernig sign 확인", "expectedFinding": "경부 강직 (+), Kernig sign (+)", "polarity": "positive" },
-    { "item": "신경학적 이상", "method": "팔다리 근력·감각 검사", "expectedFinding": "뚜렷한 마비 없음 (현재까지 국소 결손 없음)" },
-    { "item": "뇌압 상승", "method": "안저검사", "expectedFinding": "유두부종 의심 소견", "polarity": "positive" },
-    { "item": "병적 반사", "method": "Babinski sign 확인", "expectedFinding": "양성 의심", "polarity": "positive" },
-    { "item": "부비동염", "method": "부비동 압통 확인", "expectedFinding": "압통 없음" }
+    {
+      "item": "활력징후",
+      "method": "혈압·체온·맥박 측정",
+      "expectedFinding": "혈압 매우 높음(수축기 200 내외), 발열 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "뇌막자극징후",
+      "method": "경부 강직·Kernig sign 확인",
+      "expectedFinding": "경부 강직 (+), Kernig sign (+)",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 이상",
+      "method": "팔다리 근력·감각 검사",
+      "expectedFinding": "뚜렷한 마비 없음 (현재까지 국소 결손 없음)"
+    },
+    {
+      "item": "뇌압 상승",
+      "method": "안저검사",
+      "expectedFinding": "유두부종 의심 소견",
+      "polarity": "positive"
+    },
+    {
+      "item": "병적 반사",
+      "method": "Babinski sign 확인",
+      "expectedFinding": "양성 의심",
+      "polarity": "positive"
+    },
+    {
+      "item": "부비동염",
+      "method": "부비동 압통 확인",
+      "expectedFinding": "압통 없음"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "생애 최악의 벼락 두통으로 겁에 질려 있으나 검사는 부담스러워하는 환자. '갑자기 수 분 만에 최고로 아팠다', '이런 두통은 처음', '목덜미가 뻣뻣하다', '혈압약을 요즘 잘 안 먹었다'는 적신호 단서는 해당 주제를 질문받았을 때 공개한다.",

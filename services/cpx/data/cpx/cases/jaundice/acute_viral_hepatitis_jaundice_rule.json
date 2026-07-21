@@ -1,1 +1,159 @@
-{"version":2,"type":"rule","id":"acute_viral_hepatitis_jaundice_rule","title":"황달 (급성 간염 의심)","category":"황달","targetDiagnosis":"급성 바이러스성 간염 의심 (Suspected acute viral hepatitis)","variant":"전구 증상·진한 소변·피로 동반형","description":"피로와 식욕 저하 뒤 눈과 피부가 노래진 환자에서 간염 위험 노출과 간부전 적신호를 평가하는 규칙입니다.","tags":["황달","급성간염","진한소변","피로","감염노출"],"sourceTextFile":"008_jaundice.json·008_jaundice_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (Merck jaundice 자료로 임상 단서 교차 확인, 2026-07-17)","contentStatus":"needs_clinical_review","demographicsRule":{"fixed":{"location":"외래"},"recommended":{"gender":"무관","age":"20~50세"},"randomizable":["성별","이름","직업","학력","키","몸무게"],"mustAbsent":[]},"scenarioRule":{"caseSummary":"일주일 전부터 피곤하고 입맛이 없더니 사흘 전부터 소변이 진해지고 눈 흰자가 노래 보여 내원한 환자. 미열과 근육통이 먼저 있었다.","mustInclude":["미열·피로·근육통 뒤 황달","진한 갈색 소변","식욕 저하와 오심","최근 날음식·여행 노출 질문에 답함","의식 변화·출혈 없음"],"preferredVariants":["간이 나빠진 건 아닌지 불안해함"],"mustAbsent":["심한 우상복부 통증·오한","창백한 변과 심한 가려움","체중 감소","만성 과음"]},"pastHistoryRule":{"mustInclude":["특별한 간질환 병력 없음"],"mustAbsent":["간경변","담석 질환","만성 신부전"]},"familyHistoryRule":{"recommended":["특이 가족력 없음"],"mustAbsent":[]},"socialHistoryRule":{"fixed":["최근 음주 증가 없음"],"recommended":["최근 여행·음식·접촉 노출은 질문 시 공개"]},"physicalExamRule":[{"item":"활력징후","method":"활력징후·전반적 외견","expectedFinding":"체온 37.8, 맥박 92회, 의식 명료"},{"item":"공막","method":"공막·결막 시진","expectedFinding":"공막 황달이 뚜렷하고 결막 창백 없음","polarity":"positive"},{"item":"피부","method":"피부·손바닥 시진","expectedFinding":"피부 황달은 경미하고 출혈 반점·긁힌 자국 없음"},{"item":"복부 시진","method":"복부 시진·장음 청진","expectedFinding":"팽만·복수 없고 장음 정상"},{"item":"복부 촉진","method":"간·우상복부 촉진","expectedFinding":"간이 약간 만져지나 우상복부 압통·Murphy 징후 없음","polarity":"positive"},{"item":"신경학적 상태","method":"의식·flapping tremor 확인","expectedFinding":"의식 명료, flapping tremor 없음"}],"liveApiContext":{"patientContextFocus":"급성 간염성 황달이 의심되는 환자이다. 전구 증상·소변색·음식 및 여행 노출은 직접 질문을 받을 때만 답한다.","answerPolicy":["진단명을 먼저 말하지 않는다.","질문받은 항목에만 환자 말투로 답한다.","검사와 금주·약물 주의 설명에는 걱정을 표현하되 판단을 대신하지 않는다."],"positiveClues":["전구 증상 뒤 황달","진한 소변","피로·식욕 저하"],"negativeClues":["의식 변화·출혈 없음","심한 담도성 통증·오한 없음","만성 음주력 없음"]},"evaluationUse":{"mustAsk":["황달 시작·진행과 소변·대변색","발열·피로·식욕 저하·가려움·복통","의식 변화·출혈·검은 변·토혈","여행·음식·성접촉·수혈 등 간염 위험 노출","음주·약물·한약·건강보조제","간담도 질환·가족력·예방접종"],"positiveClues":["전구 증상","진한 소변","피로·식욕 저하"],"negativeClues":["간부전·담관염 적신호 없음"],"educationTopics":["간기능·바이러스 검사","수분과 간독성 물질 회피","의식 변화·출혈 시 즉시 진료"]},"additionalPromptRule":[],"ruleText":"# 증례명 : 황달 (급성 간염 의심)\n\n- 요약: 미열·피로 뒤 진한 소변과 공막 황달.\n- 단서: 식욕 저하·오심, 의식 변화·출혈·심한 복통 없음.\n- 진찰: 공막 황달, 경미한 간비대, 복수·flapping tremor 없음.\n\n추가 질문: \"간이 많이 나빠진 건 아닌가요?\"","rawRuleText":"# 증례명 : 황달 (급성 간염 의심)\n\n- 요약: 미열·피로 뒤 진한 소변과 공막 황달.\n- 단서: 식욕 저하·오심, 의식 변화·출혈·심한 복통 없음.\n- 진찰: 공막 황달, 경미한 간비대, 복수·flapping tremor 없음.\n\n추가 질문: \"간이 많이 나빠진 건 아닌가요?\""}
+{
+  "version": 2,
+  "type": "rule",
+  "id": "acute_viral_hepatitis_jaundice_rule",
+  "title": "황달 (급성 간염 의심)",
+  "category": "황달",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 23 '황달' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "급성 바이러스성 간염 의심 (Suspected acute viral hepatitis)",
+  "variant": "전구 증상·진한 소변·피로 동반형",
+  "description": "피로와 식욕 저하 뒤 눈과 피부가 노래진 환자에서 간염 위험 노출과 간부전 적신호를 평가하는 규칙입니다.",
+  "tags": [
+    "황달",
+    "급성간염",
+    "진한소변",
+    "피로",
+    "감염노출"
+  ],
+  "sourceTextFile": "008_jaundice.json·008_jaundice_prompt.md의 문진·진찰 계약을 바탕으로 한 Codex 초안 (Merck jaundice 자료로 임상 단서 교차 확인, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "학력",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "일주일 전부터 피곤하고 입맛이 없더니 사흘 전부터 소변이 진해지고 눈 흰자가 노래 보여 내원한 환자. 미열과 근육통이 먼저 있었다.",
+    "mustInclude": [
+      "미열·피로·근육통 뒤 황달",
+      "진한 갈색 소변",
+      "식욕 저하와 오심",
+      "최근 날음식·여행 노출 질문에 답함",
+      "의식 변화·출혈 없음"
+    ],
+    "preferredVariants": [
+      "간이 나빠진 건 아닌지 불안해함"
+    ],
+    "mustAbsent": [
+      "심한 우상복부 통증·오한",
+      "창백한 변과 심한 가려움",
+      "체중 감소",
+      "만성 과음"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "특별한 간질환 병력 없음"
+    ],
+    "mustAbsent": [
+      "간경변",
+      "담석 질환",
+      "만성 신부전"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 음주 증가 없음"
+    ],
+    "recommended": [
+      "최근 여행·음식·접촉 노출은 질문 시 공개"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후·전반적 외견",
+      "expectedFinding": "체온 37.8, 맥박 92회, 의식 명료"
+    },
+    {
+      "item": "공막",
+      "method": "공막·결막 시진",
+      "expectedFinding": "공막 황달이 뚜렷하고 결막 창백 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "피부",
+      "method": "피부·손바닥 시진",
+      "expectedFinding": "피부 황달은 경미하고 출혈 반점·긁힌 자국 없음"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진·장음 청진",
+      "expectedFinding": "팽만·복수 없고 장음 정상"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "간·우상복부 촉진",
+      "expectedFinding": "간이 약간 만져지나 우상복부 압통·Murphy 징후 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 상태",
+      "method": "의식·flapping tremor 확인",
+      "expectedFinding": "의식 명료, flapping tremor 없음"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "급성 간염성 황달이 의심되는 환자이다. 전구 증상·소변색·음식 및 여행 노출은 직접 질문을 받을 때만 답한다.",
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 항목에만 환자 말투로 답한다.",
+      "검사와 금주·약물 주의 설명에는 걱정을 표현하되 판단을 대신하지 않는다."
+    ],
+    "positiveClues": [
+      "전구 증상 뒤 황달",
+      "진한 소변",
+      "피로·식욕 저하"
+    ],
+    "negativeClues": [
+      "의식 변화·출혈 없음",
+      "심한 담도성 통증·오한 없음",
+      "만성 음주력 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "황달 시작·진행과 소변·대변색",
+      "발열·피로·식욕 저하·가려움·복통",
+      "의식 변화·출혈·검은 변·토혈",
+      "여행·음식·성접촉·수혈 등 간염 위험 노출",
+      "음주·약물·한약·건강보조제",
+      "간담도 질환·가족력·예방접종"
+    ],
+    "positiveClues": [
+      "전구 증상",
+      "진한 소변",
+      "피로·식욕 저하"
+    ],
+    "negativeClues": [
+      "간부전·담관염 적신호 없음"
+    ],
+    "educationTopics": [
+      "간기능·바이러스 검사",
+      "수분과 간독성 물질 회피",
+      "의식 변화·출혈 시 즉시 진료"
+    ]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 황달 (급성 간염 의심)\n\n- 요약: 미열·피로 뒤 진한 소변과 공막 황달.\n- 단서: 식욕 저하·오심, 의식 변화·출혈·심한 복통 없음.\n- 진찰: 공막 황달, 경미한 간비대, 복수·flapping tremor 없음.\n\n추가 질문: \"간이 많이 나빠진 건 아닌가요?\"",
+  "rawRuleText": "# 증례명 : 황달 (급성 간염 의심)\n\n- 요약: 미열·피로 뒤 진한 소변과 공막 황달.\n- 단서: 식욕 저하·오심, 의식 변화·출혈·심한 복통 없음.\n- 진찰: 공막 황달, 경미한 간비대, 복수·flapping tremor 없음.\n\n추가 질문: \"간이 많이 나빠진 건 아닌가요?\""
+}

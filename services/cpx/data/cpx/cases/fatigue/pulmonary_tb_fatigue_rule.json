@@ -4,15 +4,35 @@
   "id": "pulmonary_tb_fatigue_rule",
   "title": "피로 (기질적 원인 의심)",
   "category": "피로",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 37 '피로' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "폐결핵 의심 (Suspected pulmonary tuberculosis)",
   "variant": "청년의 아급성 피로 + 야간 발한·체중 감소·기침 적신호형",
   "description": "두 달째 기운이 없고, 밤에 식은땀이 나며 기침과 체중 감소가 함께 나타난 규칙입니다.",
-  "tags": ["피로", "결핵", "적신호", "감염", "체중감소"],
+  "tags": [
+    "피로",
+    "결핵",
+    "적신호",
+    "감염",
+    "체중감소"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 37 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "남성 우세", "age": "20~30세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "20~30세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -37,24 +57,66 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["특별한 질환 없음", "복용 약물 없음"],
-    "mustAbsent": ["당뇨", "간질환", "HIV 위험 요인", "수술력"]
+    "mustInclude": [
+      "특별한 질환 없음",
+      "복용 약물 없음"
+    ],
+    "mustAbsent": [
+      "당뇨",
+      "간질환",
+      "HIV 위험 요인",
+      "수술력"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["아버지가 15년 전 폐결핵 치료(현재 활동성·동거 노출 없음)"],
+    "recommended": [
+      "아버지가 15년 전 폐결핵 치료(현재 활동성·동거 노출 없음)"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["흡연 없음"],
-    "recommended": ["음주 주 1회 이하", "고시원 거주(밀집 환경)"]
+    "fixed": [
+      "흡연 없음"
+    ],
+    "recommended": [
+      "음주 주 1회 이하",
+      "고시원 거주(밀집 환경)"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후·외양", "method": "활력징후 측정과 전반 외양 관찰", "expectedFinding": "체온 37.6도 미열, 다소 마르고 지쳐 보임", "polarity": "positive" },
-    { "item": "두경부", "method": "결막·공막·경부 림프절 확인", "expectedFinding": "경부 림프절이 작게 만져짐, 빈혈·황달 없음", "polarity": "positive" },
-    { "item": "갑상샘", "method": "갑상샘 촉진", "expectedFinding": "비대 없음 (정상)" },
-    { "item": "심폐", "method": "심장·호흡음 청진", "expectedFinding": "우측 상부에서 미세한 수포음 의심", "polarity": "positive" },
-    { "item": "복부", "method": "복부 촉진(간·비장)", "expectedFinding": "종대 없음 (정상)" },
-    { "item": "하지 부종", "method": "함요부종 확인", "expectedFinding": "부종 없음 (정상)" }
+    {
+      "item": "활력징후·외양",
+      "method": "활력징후 측정과 전반 외양 관찰",
+      "expectedFinding": "체온 37.6도 미열, 다소 마르고 지쳐 보임",
+      "polarity": "positive"
+    },
+    {
+      "item": "두경부",
+      "method": "결막·공막·경부 림프절 확인",
+      "expectedFinding": "경부 림프절이 작게 만져짐, 빈혈·황달 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "갑상샘",
+      "method": "갑상샘 촉진",
+      "expectedFinding": "비대 없음 (정상)"
+    },
+    {
+      "item": "심폐",
+      "method": "심장·호흡음 청진",
+      "expectedFinding": "우측 상부에서 미세한 수포음 의심",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부",
+      "method": "복부 촉진(간·비장)",
+      "expectedFinding": "종대 없음 (정상)"
+    },
+    {
+      "item": "하지 부종",
+      "method": "함요부종 확인",
+      "expectedFinding": "부종 없음 (정상)"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "피로를 주소로 왔지만 실은 결핵 적신호(야간 발한, 만성 기침·혈담, 체중 감소, 가족력)를 가진 환자. 이 단서들은 해당 주제를 질문받았을 때 공개한다. 스스로는 '공부 스트레스 때문'이라 생각한다.",
@@ -88,8 +150,16 @@
       "우울감 선별",
       "복용 약물"
     ],
-    "positiveClues": ["야간 발한", "만성 기침·혈담", "체중 감소", "결핵 가족력"],
-    "negativeClues": ["갑상샘저하 단서 없음", "우울감 없음"],
+    "positiveClues": [
+      "야간 발한",
+      "만성 기침·혈담",
+      "체중 감소",
+      "결핵 가족력"
+    ],
+    "negativeClues": [
+      "갑상샘저하 단서 없음",
+      "우울감 없음"
+    ],
     "educationTopics": [
       "피로의 기질적 원인(감염 등) 의심 설명",
       "흉부 X선·객담 검사 등 확진 검사 필요성",

@@ -4,6 +4,7 @@
   "id": "early_alzheimer_rule",
   "title": "기억력 저하 (초기 치매 의심)",
   "category": "기억력 저하",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 50 '기억력 저하' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "초기 알츠하이머형 치매 의심 (Suspected early Alzheimer dementia)",
   "variant": "서서히 진행하는 최근 기억 장애형",
   "description": "2년에 걸쳐 서서히 심해진 건망증으로 약속을 잊고 같은 질문을 반복하게 된 규칙입니다.",

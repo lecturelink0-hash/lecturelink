@@ -4,15 +4,35 @@
   "id": "chronic_fatigue_rule",
   "title": "만성 피로 (기질적 원인 배제형)",
   "category": "피로",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 37 '피로' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "근육통성 뇌척수염/만성피로증후군(ME/CFS) 의심 (Suspected ME/CFS)",
   "variant": "휴식 무회복·운동 후 악화의 1년 지속 피로형",
   "description": "1년 넘게 쉬어도 풀리지 않는 피로와 근육통, 집중력 저하가 계속되는 규칙입니다.",
-  "tags": ["피로", "ME/CFS", "만성피로증후군", "PEM", "휴식무회복"],
+  "tags": [
+    "피로",
+    "ME/CFS",
+    "만성피로증후군",
+    "PEM",
+    "휴식무회복"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 37 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "남녀 무관", "age": "30~40세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남녀 무관",
+      "age": "30~40세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -38,24 +58,63 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["특별한 질환 없음", "최근 건강검진에서 혈액검사 정상이었다고 함"],
-    "mustAbsent": ["갑상선 질환", "간질환", "당뇨", "정신과 진료력"]
+    "mustInclude": [
+      "특별한 질환 없음",
+      "최근 건강검진에서 혈액검사 정상이었다고 함"
+    ],
+    "mustAbsent": [
+      "갑상선 질환",
+      "간질환",
+      "당뇨",
+      "정신과 진료력"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["특이 가족력 없음"],
+    "recommended": [
+      "특이 가족력 없음"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["흡연 없음"],
-    "recommended": ["음주 거의 없음", "사무직, 커피 하루 2잔"]
+    "fixed": [
+      "흡연 없음"
+    ],
+    "recommended": [
+      "음주 거의 없음",
+      "사무직, 커피 하루 2잔"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후·외양", "method": "활력징후 측정과 전반 외양 관찰", "expectedFinding": "정상, 지쳐 보이나 급성 병색 없음" },
-    { "item": "두경부", "method": "결막·공막·경부 림프절 확인", "expectedFinding": "정상 (빈혈·황달·림프절 종대 없음)" },
-    { "item": "갑상샘", "method": "갑상샘 촉진", "expectedFinding": "비대 없음 (정상)" },
-    { "item": "심폐", "method": "심장·호흡음 청진", "expectedFinding": "정상" },
-    { "item": "복부", "method": "복부 촉진(간·비장)", "expectedFinding": "종대 없음 (정상)" },
-    { "item": "하지 부종", "method": "함요부종 확인", "expectedFinding": "부종 없음 (정상)" }
+    {
+      "item": "활력징후·외양",
+      "method": "활력징후 측정과 전반 외양 관찰",
+      "expectedFinding": "정상, 지쳐 보이나 급성 병색 없음"
+    },
+    {
+      "item": "두경부",
+      "method": "결막·공막·경부 림프절 확인",
+      "expectedFinding": "정상 (빈혈·황달·림프절 종대 없음)"
+    },
+    {
+      "item": "갑상샘",
+      "method": "갑상샘 촉진",
+      "expectedFinding": "비대 없음 (정상)"
+    },
+    {
+      "item": "심폐",
+      "method": "심장·호흡음 청진",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "복부",
+      "method": "복부 촉진(간·비장)",
+      "expectedFinding": "종대 없음 (정상)"
+    },
+    {
+      "item": "하지 부종",
+      "method": "함요부종 확인",
+      "expectedFinding": "부종 없음 (정상)"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "기질적 이상이 반복 검사에서 확인되지 않은 1년+ 피로 환자. '휴식으로 회복 안 됨', '운동 후 악화', '근육통·집중력 저하'는 해당 주제를 질문받았을 때 공개한다. '이상 없다'는 말에 지쳐 있어 공감 없는 태도에 민감하다.",
@@ -92,8 +151,18 @@
       "기저질환·검사 이력",
       "빈혈·갑상샘질환·감염·수면장애·약물·정신건강 문제 등 다른 원인 평가"
     ],
-    "positiveClues": ["휴식 무회복", "운동 후 악화", "근육통", "집중력 저하"],
-    "negativeClues": ["발열 없음", "체중 변화 없음", "우울감 없음", "검사 정상"],
+    "positiveClues": [
+      "휴식 무회복",
+      "운동 후 악화",
+      "근육통",
+      "집중력 저하"
+    ],
+    "negativeClues": [
+      "발열 없음",
+      "체중 변화 없음",
+      "우울감 없음",
+      "검사 정상"
+    ],
     "educationTopics": [
       "빈혈·갑상샘질환·감염·수면장애·약물·정신건강 문제 등 다른 원인을 먼저 평가할 필요성",
       "ME/CFS 가능성과 운동 후 권태 악화(PEM) 설명",

@@ -4,6 +4,7 @@
   "id": "myofascial_neck_rule",
   "title": "목 통증 (근막통증증후군 의심)",
   "category": "목 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 32 '목 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "근막통증증후군 의심 (Suspected myofascial pain syndrome)",
   "variant": "압통점·연관통 동반 만성 뒷목·어깨 통증형",
   "description": "뒷목과 어깨가 늘 뭉치고, 특정 지점을 누르면 머리 뒤까지 뻗치는 통증이 있는 규칙입니다.",

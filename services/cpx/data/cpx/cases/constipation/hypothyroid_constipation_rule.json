@@ -4,6 +4,7 @@
   "id": "hypothyroid_constipation_rule",
   "title": "변비 (이차성 — 갑상샘저하 의심)",
   "category": "변비",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 20 '변비' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "갑상샘기능저하증에 의한 이차성 변비 (Secondary constipation due to hypothyroidism)",
   "variant": "새로 생긴 변비 + 저하증 증상 동반형",
   "description": "평생 쾌변이던 사람이 반년 새 변비가 생기고, 춥고 붓고 살이 찐 규칙입니다.",

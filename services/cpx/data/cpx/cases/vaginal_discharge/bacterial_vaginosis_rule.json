@@ -4,39 +4,146 @@
   "id": "bacterial_vaginosis_rule",
   "title": "질 분비물 (세균성 질증 의심)",
   "category": "질 분비물",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 42 '질 분비물' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "세균성 질증 의심 (Suspected bacterial vaginosis)",
   "variant": "회백색 분비물·냄새 변화형",
   "description": "질 분비물 변화 환자에서 민감 문진과 진찰의 동의·비밀보장을 지키며 성매개감염·골반염·임신 관련 적신호를 확인하고 검사 기반 치료를 설명하는 규칙입니다.",
-  "tags": ["질 분비물", "세균성 질증", "민감 문진", "질경 진찰", "성매개감염 감별"],
+  "tags": [
+    "질 분비물",
+    "세균성 질증",
+    "민감 문진",
+    "질경 진찰",
+    "성매개감염 감별"
+  ],
   "sourceTextFile": "043_vaginal_discharge.json·043_vaginal_discharge_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"gender": "여성", "age": 27}, "recommended": {"occupation": "디자이너"}, "randomizable": ["이름", "키", "몸무게"], "mustAbsent": []},
+  "demographicsRule": {
+    "fixed": {
+      "gender": "여성",
+      "age": 27
+    },
+    "recommended": {
+      "occupation": "디자이너"
+    },
+    "randomizable": [
+      "이름",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
   "scenarioRule": {
     "caseSummary": "27세 여성이 1주 전부터 평소보다 많은 회백색 질 분비물과 성관계 뒤 심해지는 냄새 때문에 내원했다. 가려움은 경미하고 발열·하복부 통증·구토·부정출혈은 없다. 임신 가능성은 낮고 최근 항생제 사용은 없다.",
-    "mustInclude": ["1주간 증가한 묽은 회백색 분비물", "성관계 뒤 두드러지는 냄새", "경미한 가려움", "발열·골반통·구토·부정출혈 없음", "임신 가능성 낮음"],
-    "preferredVariants": ["새로운 성 파트너는 없으나 콘돔 사용은 일관되지 않음", "질세정제를 가끔 사용"],
-    "mustAbsent": ["고열", "심한 하복부 통증", "성교 후 출혈", "임신 중 출혈", "생식기 궤양"]
+    "mustInclude": [
+      "1주간 증가한 묽은 회백색 분비물",
+      "성관계 뒤 두드러지는 냄새",
+      "경미한 가려움",
+      "발열·골반통·구토·부정출혈 없음",
+      "임신 가능성 낮음"
+    ],
+    "preferredVariants": [
+      "새로운 성 파트너는 없으나 콘돔 사용은 일관되지 않음",
+      "질세정제를 가끔 사용"
+    ],
+    "mustAbsent": [
+      "고열",
+      "심한 하복부 통증",
+      "성교 후 출혈",
+      "임신 중 출혈",
+      "생식기 궤양"
+    ]
   },
-  "pastHistoryRule": {"mustInclude": ["특이 산부인과 질환 없음"], "mustAbsent": ["골반염", "면역저하 질환"]},
-  "familyHistoryRule": {"recommended": ["특이사항 없음"], "mustAbsent": []},
-  "socialHistoryRule": {"fixed": ["비흡연", "음주 드묾"], "recommended": ["질세정제 간헐 사용"]},
+  "pastHistoryRule": {
+    "mustInclude": [
+      "특이 산부인과 질환 없음"
+    ],
+    "mustAbsent": [
+      "골반염",
+      "면역저하 질환"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이사항 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연",
+      "음주 드묾"
+    ],
+    "recommended": [
+      "질세정제 간헐 사용"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후·하복부", "method": "활력징후와 하복부 촉진", "expectedFinding": "혈압 112/70 mmHg, 맥박 74회/분, 체온 36.6°C, 하복부 압통·반발통 없음", "examConceptId": "vital_signs"},
-    {"item": "외음부 시진", "method": "설명·동의 후 외음부 피부와 궤양·발적·부종 확인", "expectedFinding": "외음부 궤양·심한 발적·부종 없음", "examConceptId": "pelvic_speculum_exam"},
-    {"item": "질경 진찰", "method": "설명·동의 후 질벽·자궁경부·분비물 관찰과 검체 채취", "expectedFinding": "묽고 균질한 회백색 질 분비물이 보이며 자궁경부 출혈·화농성 분비물 없음", "polarity": "positive", "examConceptId": "pelvic_speculum_exam"},
-    {"item": "양손 골반진찰", "method": "설명·동의 후 자궁·부속기·경부 이동 압통 확인", "expectedFinding": "자궁·부속기·경부 이동 압통 없음", "examConceptId": "bimanual_pelvic_exam"}
+    {
+      "item": "활력징후·하복부",
+      "method": "활력징후와 하복부 촉진",
+      "expectedFinding": "혈압 112/70 mmHg, 맥박 74회/분, 체온 36.6°C, 하복부 압통·반발통 없음",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "외음부 시진",
+      "method": "설명·동의 후 외음부 피부와 궤양·발적·부종 확인",
+      "expectedFinding": "외음부 궤양·심한 발적·부종 없음",
+      "examConceptId": "pelvic_speculum_exam"
+    },
+    {
+      "item": "질경 진찰",
+      "method": "설명·동의 후 질벽·자궁경부·분비물 관찰과 검체 채취",
+      "expectedFinding": "묽고 균질한 회백색 질 분비물이 보이며 자궁경부 출혈·화농성 분비물 없음",
+      "polarity": "positive",
+      "examConceptId": "pelvic_speculum_exam"
+    },
+    {
+      "item": "양손 골반진찰",
+      "method": "설명·동의 후 자궁·부속기·경부 이동 압통 확인",
+      "expectedFinding": "자궁·부속기·경부 이동 압통 없음",
+      "examConceptId": "bimanual_pelvic_exam"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "환자는 냄새와 분비물 때문에 민망하고 걱정하지만, 성생활·피임·질세정 습관과 임신 가능성은 비판단적 설명 뒤에만 답한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "성 파트너·콘돔·성매개감염 위험 문진에는 이유를 설명하면 협조한다.", "발열·골반통·구토·출혈·궤양 질문에는 없다고 명확히 답한다."],
-    "positiveClues": ["묽은 회백색 분비물", "냄새 변화", "질세정 습관"],
-    "negativeClues": ["골반염·임신 관련 적신호 없음", "심한 가려움·치즈양 분비물·궤양 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "성 파트너·콘돔·성매개감염 위험 문진에는 이유를 설명하면 협조한다.",
+      "발열·골반통·구토·출혈·궤양 질문에는 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "묽은 회백색 분비물",
+      "냄새 변화",
+      "질세정 습관"
+    ],
+    "negativeClues": [
+      "골반염·임신 관련 적신호 없음",
+      "심한 가려움·치즈양 분비물·궤양 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["분비물의 시작·양·색·냄새·점도·혈액·재발과 일상 영향", "가려움·작열감·배뇨/성교통·하복부 통증·발열·구토·출혈", "월경·임신 가능성·산과력", "성 파트너·피임·콘돔·성매개감염 위험을 비판단적으로 문진", "항생제·당뇨·면역·질세정·제품·이전 치료", "동의·샤프론·중단 선택을 포함한 골반 진찰과 pH/현미경·NAAT 검사", "치료 순응·질세정 회피·적신호 및 필요 시 파트너 평가"],
-    "positiveClues": ["회백색 묽은 분비물", "냄새", "질세정 습관"],
-    "negativeClues": ["골반염·임신·중증 성매개감염 적신호 없음"],
-    "educationTopics": ["검체 검사 기반 원인 감별", "고열·골반통·출혈의 신속 진료", "질세정 회피와 성건강·추적 계획"]
+    "mustAsk": [
+      "분비물의 시작·양·색·냄새·점도·혈액·재발과 일상 영향",
+      "가려움·작열감·배뇨/성교통·하복부 통증·발열·구토·출혈",
+      "월경·임신 가능성·산과력",
+      "성 파트너·피임·콘돔·성매개감염 위험을 비판단적으로 문진",
+      "항생제·당뇨·면역·질세정·제품·이전 치료",
+      "동의·샤프론·중단 선택을 포함한 골반 진찰과 pH/현미경·NAAT 검사",
+      "치료 순응·질세정 회피·적신호 및 필요 시 파트너 평가"
+    ],
+    "positiveClues": [
+      "회백색 묽은 분비물",
+      "냄새",
+      "질세정 습관"
+    ],
+    "negativeClues": [
+      "골반염·임신·중증 성매개감염 적신호 없음"
+    ],
+    "educationTopics": [
+      "검체 검사 기반 원인 감별",
+      "고열·골반통·출혈의 신속 진료",
+      "질세정 회피와 성건강·추적 계획"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 질 분비물 (세균성 질증 의심)\n- 27세 여성, 1주간 묽은 회백색 분비물과 성관계 뒤 심해지는 냄새. 발열·골반통·구토·출혈 없음.\n- 민감한 문진과 골반 진찰에는 목적 설명·동의가 필요함.\n\n추가 질문: \"이게 성병일 수도 있나요? 파트너에게 말해야 하나요?\"",

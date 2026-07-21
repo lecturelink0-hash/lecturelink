@@ -4,6 +4,7 @@
   "id": "bn_hiv_disclosure_rule",
   "title": "나쁜소식 전하기 (HIV 확진 통보)",
   "category": "나쁜소식 전하기",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 06 '나쁜 소식 전하기' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "HIV 감염 확진 통보",
   "variant": "기밀 보장 + 만성질환 관점 교육형",
   "description": "보건소 확진검사에서 HIV 양성이 확인된 32세 환자에게 결과를 설명하는 스테이션입니다.",

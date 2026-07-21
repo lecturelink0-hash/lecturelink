@@ -4,15 +4,34 @@
   "id": "gastric_alarm_rule",
   "title": "소화불량 (적신호 동반)",
   "category": "소화불량/만성복통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 18 '소화 불량/만성 복통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "위암 의심 — 기질성 소화불량 (Suspected gastric malignancy)",
   "variant": "체중 감소·위암 가족력 동반 중년의 만성 소화불량 적신호형",
   "description": "석 달째 소화가 안 되고 밥량이 줄면서 몸무게가 5kg 빠진, 위암 가족력이 있는 규칙입니다.",
-  "tags": ["소화불량", "적신호", "체중감소", "위암가족력"],
+  "tags": [
+    "소화불량",
+    "적신호",
+    "체중감소",
+    "위암가족력"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 18 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "여성 우세", "age": "55~65세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "여성 우세",
+      "age": "55~65세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -37,24 +56,63 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["3년 전 검진 내시경에서 만성 위염 (치료 안 함)", "그 외 질환 없음"],
-    "mustAbsent": ["수술력", "당뇨", "간질환"]
+    "mustInclude": [
+      "3년 전 검진 내시경에서 만성 위염 (치료 안 함)",
+      "그 외 질환 없음"
+    ],
+    "mustAbsent": [
+      "수술력",
+      "당뇨",
+      "간질환"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["아버지 위암으로 사망", "할아버지도 위장 관련 암(정확히 모름)"],
+    "recommended": [
+      "아버지 위암으로 사망",
+      "할아버지도 위장 관련 암(정확히 모름)"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
     "fixed": [],
-    "recommended": ["음주 사회적, 흡연 없음", "보험설계사 — 최근 업무량 증가, 식사 불규칙"]
+    "recommended": [
+      "음주 사회적, 흡연 없음",
+      "보험설계사 — 최근 업무량 증가, 식사 불규칙"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "활력징후 측정", "expectedFinding": "정상 범위" },
-    { "item": "눈", "method": "결막·공막 확인", "expectedFinding": "결막이 다소 창백함 (빈혈 의심), 황달 없음", "polarity": "positive" },
-    { "item": "장음", "method": "복부 청진", "expectedFinding": "정상 장음" },
-    { "item": "복부 촉진", "method": "4분면 촉진(압통·종괴)", "expectedFinding": "상복부 경미한 압통, 뚜렷한 종괴는 만져지지 않음" },
-    { "item": "타진·간비장", "method": "복부 타진, 간·비장 종대 확인", "expectedFinding": "종대 없음 (정상)" },
-    { "item": "직장수지검사", "method": "DRE", "expectedFinding": "검고 끈적한 변 소량 묻어남 (흑색변 의심); 대변잠혈은 별도 검체검사로 확인 필요", "polarity": "positive" }
+    {
+      "item": "활력징후",
+      "method": "활력징후 측정",
+      "expectedFinding": "정상 범위"
+    },
+    {
+      "item": "눈",
+      "method": "결막·공막 확인",
+      "expectedFinding": "결막이 다소 창백함 (빈혈 의심), 황달 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "장음",
+      "method": "복부 청진",
+      "expectedFinding": "정상 장음"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "4분면 촉진(압통·종괴)",
+      "expectedFinding": "상복부 경미한 압통, 뚜렷한 종괴는 만져지지 않음"
+    },
+    {
+      "item": "타진·간비장",
+      "method": "복부 타진, 간·비장 종대 확인",
+      "expectedFinding": "종대 없음 (정상)"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "DRE",
+      "expectedFinding": "검고 끈적한 변 소량 묻어남 (흑색변 의심); 대변잠혈은 별도 검체검사로 확인 필요",
+      "polarity": "positive"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "만성 소화불량에 체중 감소·가족력·미치료 위염이라는 적신호가 겹친 환자. '체중이 빠졌다', '아버지가 위암', '3년 전 위염 진단 후 방치', '변이 검어진 것 같기도'는 해당 주제를 질문받았을 때 공개한다. 스스로는 스트레스 탓으로 돌린다.",
@@ -91,8 +149,18 @@
       "복용 약물",
       "동반 증상(피로 등)"
     ],
-    "positiveClues": ["진행성 경과", "체중 감소", "위암 가족력", "만성 위염 방치", "흑색변 의심"],
-    "negativeClues": ["토혈 없음", "삼킴 곤란 없음", "NSAIDs 복용 없음"],
+    "positiveClues": [
+      "진행성 경과",
+      "체중 감소",
+      "위암 가족력",
+      "만성 위염 방치",
+      "흑색변 의심"
+    ],
+    "negativeClues": [
+      "토혈 없음",
+      "삼킴 곤란 없음",
+      "NSAIDs 복용 없음"
+    ],
     "educationTopics": [
       "기질적 질환(위암 포함) 감별이 필요한 상황임을 설명",
       "위내시경 검사를 미루지 말아야 하는 이유 설명",

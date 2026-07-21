@@ -4,6 +4,7 @@
   "id": "meningitis_headache_rule",
   "title": "두통 (수막염 의심)",
   "category": "두통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 46 '두통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "급성 수막염 의심 (Suspected acute meningitis)",
   "variant": "발열 + 두통·경부 강직 응급형",
   "description": "이틀 전부터 열과 함께 머리 전체가 아프고, 목이 뻣뻣하며 빛이 눈부신 응급 규칙입니다.",

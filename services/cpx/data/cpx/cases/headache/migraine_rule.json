@@ -4,15 +4,34 @@
   "id": "migraine_rule",
   "title": "편두통",
   "category": "두통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 46 '두통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "무전조 편두통 (Migraine without aura)",
   "variant": "월경 연관 반복성 일측 박동성 두통형",
   "description": "수년 전부터 한 달에 몇 차례, 한쪽 관자놀이가 욱신거리며 속이 메스껍고 빛이 거슬리는 두통이 반복되는 규칙입니다.",
-  "tags": ["두통", "편두통", "박동성", "일차성두통", "가족력"],
+  "tags": [
+    "두통",
+    "편두통",
+    "박동성",
+    "일차성두통",
+    "가족력"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 46 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래", "gender": "여성" },
-    "recommended": { "age": "20~30대" },
-    "randomizable": ["이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "age": "20~30대"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -39,24 +58,67 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["특별한 질환 없음", "경구피임약 복용 없음", "두통 시 시판 진통제 복용"],
-    "mustAbsent": ["고혈압", "알레르기", "수술력", "입원력", "머리 외상"]
+    "mustInclude": [
+      "특별한 질환 없음",
+      "경구피임약 복용 없음",
+      "두통 시 시판 진통제 복용"
+    ],
+    "mustAbsent": [
+      "고혈압",
+      "알레르기",
+      "수술력",
+      "입원력",
+      "머리 외상"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["어머니가 젊을 때 비슷한 두통 (+)"],
+    "recommended": [
+      "어머니가 젊을 때 비슷한 두통 (+)"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["흡연 없음"],
-    "recommended": ["음주 가끔(와인 후 두통 경험)", "커피 하루 1~2잔", "불규칙한 수면"]
+    "fixed": [
+      "흡연 없음"
+    ],
+    "recommended": [
+      "음주 가끔(와인 후 두통 경험)",
+      "커피 하루 1~2잔",
+      "불규칙한 수면"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "혈압·체온·맥박 측정", "expectedFinding": "정상 범위" },
-    { "item": "뇌막자극징후", "method": "경부 강직·Kernig sign 확인", "expectedFinding": "음성 (이상 없음)" },
-    { "item": "신경학적 이상", "method": "팔다리 근력·감각 검사", "expectedFinding": "정상" },
-    { "item": "뇌압 상승", "method": "안저검사", "expectedFinding": "유두부종 없음 (정상)" },
-    { "item": "눈 이상", "method": "눈 시진(충혈·눈물 확인)", "expectedFinding": "정상 (충혈·눈물 없음)", "examConceptId": "eye_external_inspection" },
-    { "item": "부비동염", "method": "부비동 압통 확인", "expectedFinding": "압통 없음" }
+    {
+      "item": "활력징후",
+      "method": "혈압·체온·맥박 측정",
+      "expectedFinding": "정상 범위"
+    },
+    {
+      "item": "뇌막자극징후",
+      "method": "경부 강직·Kernig sign 확인",
+      "expectedFinding": "음성 (이상 없음)"
+    },
+    {
+      "item": "신경학적 이상",
+      "method": "팔다리 근력·감각 검사",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "뇌압 상승",
+      "method": "안저검사",
+      "expectedFinding": "유두부종 없음 (정상)"
+    },
+    {
+      "item": "눈 이상",
+      "method": "눈 시진(충혈·눈물 확인)",
+      "expectedFinding": "정상 (충혈·눈물 없음)",
+      "examConceptId": "eye_external_inspection"
+    },
+    {
+      "item": "부비동염",
+      "method": "부비동 압통 확인",
+      "expectedFinding": "압통 없음"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "반복되는 일측 박동성 두통으로 일상이 흔들리는 환자. 월경 연관성·가족력·빛 과민은 그 주제를 직접 물었을 때만 이야기한다. 전조(눈앞 번쩍임)는 없어서, 물으면 없다고 답한다.",

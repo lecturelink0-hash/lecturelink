@@ -4,6 +4,7 @@
   "id": "ibd_weight_loss_rule",
   "title": "체중 감소 (염증성 장질환 의심)",
   "category": "체중 감소",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 39 '체중 감소' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "궤양성 대장염 의심 (Suspected ulcerative colitis)",
   "variant": "만성 혈성 설사 동반 청년 체중 감소형",
   "description": "석 달째 하루 네댓 번 설사가 이어지고 변에 피가 섞이며 살이 빠지는 규칙입니다.",

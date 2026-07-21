@@ -4,6 +4,7 @@
   "id": "orthostatic_gi_bleed_syncope_rule",
   "title": "실신 (상부위장관 출혈 의심)",
   "category": "실신",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 09 '실신' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "상부위장관 출혈에 의한 저혈량성 실신 의심 (Suspected hypovolemic syncope due to upper GI bleeding)",
   "variant": "흑색변·저혈압·빈맥 동반 중년의 저혈량성 실신 적신호형",
   "description": "회사에서 일어서다 쓰러진 중년 환자가 저혈압·빈맥과 흑색변을 보이는 상부위장관 출혈 적신호 규칙입니다.",

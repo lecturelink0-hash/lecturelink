@@ -4,26 +4,164 @@
   "id": "hypothyroid_secondary_dyslipidemia_rule",
   "title": "이상지질혈증 (갑상샘저하 연관 이차성 원인 의심)",
   "category": "이상지질혈증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 26 '이상지질혈증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "갑상샘저하증 연관 이차성 이상지질혈증 의심 (Suspected hypothyroidism-associated secondary dyslipidemia)",
   "variant": "체중 증가·추위불내성·변비 동반 LDL·중성지방 상승형",
   "description": "피로와 체중 증가를 동반한 지질 이상에서 단순 생활습관으로 성급히 결론내리지 않고 갑상샘 등 이차성 원인을 확인하는 규칙입니다.",
-  "tags": ["이상지질혈증", "갑상샘저하증", "이차성이상지질혈증", "체중증가", "피로"],
+  "tags": [
+    "이상지질혈증",
+    "갑상샘저하증",
+    "이차성이상지질혈증",
+    "체중증가",
+    "피로"
+  ],
   "sourceTextFile": "013_dyslipidemia.json·013_dyslipidemia_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"location": "외래"}, "recommended": {"gender": "여성 우세", "age": "38~55세"}, "randomizable": ["성별", "이름", "직업", "학력", "키", "몸무게"], "mustAbsent": []},
-  "scenarioRule": {"caseSummary": "1년 전보다 체중이 7kg 늘고 쉽게 피곤하며 추위를 많이 타는 환자가 검진에서 LDL 184와 중성지방 246을 듣고 내원했다. 식사는 크게 달라지지 않았고 최근 변비와 건조한 피부를 느낀다.", "mustInclude": ["LDL 184·중성지방 246", "1년간 체중 7kg 증가", "추위불내성·피로·변비·피부 건조", "공복 채혈", "흉통·호흡곤란 없음"], "preferredVariants": ["운동을 덜해서 그런 줄 알았다고 말함", "갑상샘 검사를 받은 기억이 없음"], "mustAbsent": ["당뇨의 다음·다뇨", "거품뇨", "심한 음주", "스테로이드·호르몬 복용"]},
-  "pastHistoryRule": {"mustInclude": ["고혈압·당뇨·신장·간질환 진단 없음", "현재 지질저하제 복용 없음"], "mustAbsent": ["심혈관질환", "신증후군", "임신"]},
-  "familyHistoryRule": {"recommended": ["어머니가 갑상샘약을 먹는다는 말을 들음"], "mustAbsent": ["조기 심근경색 가족력"]},
-  "socialHistoryRule": {"fixed": ["비흡연", "음주 거의 없음"], "recommended": ["최근 운동량이 줄었지만 과식·야식은 뚜렷하지 않음"]},
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "여성 우세",
+      "age": "38~55세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "학력",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "1년 전보다 체중이 7kg 늘고 쉽게 피곤하며 추위를 많이 타는 환자가 검진에서 LDL 184와 중성지방 246을 듣고 내원했다. 식사는 크게 달라지지 않았고 최근 변비와 건조한 피부를 느낀다.",
+    "mustInclude": [
+      "LDL 184·중성지방 246",
+      "1년간 체중 7kg 증가",
+      "추위불내성·피로·변비·피부 건조",
+      "공복 채혈",
+      "흉통·호흡곤란 없음"
+    ],
+    "preferredVariants": [
+      "운동을 덜해서 그런 줄 알았다고 말함",
+      "갑상샘 검사를 받은 기억이 없음"
+    ],
+    "mustAbsent": [
+      "당뇨의 다음·다뇨",
+      "거품뇨",
+      "심한 음주",
+      "스테로이드·호르몬 복용"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "고혈압·당뇨·신장·간질환 진단 없음",
+      "현재 지질저하제 복용 없음"
+    ],
+    "mustAbsent": [
+      "심혈관질환",
+      "신증후군",
+      "임신"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "어머니가 갑상샘약을 먹는다는 말을 들음"
+    ],
+    "mustAbsent": [
+      "조기 심근경색 가족력"
+    ]
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연",
+      "음주 거의 없음"
+    ],
+    "recommended": [
+      "최근 운동량이 줄었지만 과식·야식은 뚜렷하지 않음"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후·체형·허리둘레", "method": "혈압·맥박 측정과 BMI·허리둘레 확인", "expectedFinding": "혈압 122/78, 맥박 56회, BMI 27.1, 허리둘레 증가", "polarity": "positive", "examConceptId": "vital_signs"},
-    {"item": "눈·피부 황색종", "method": "눈 주위·각막환과 손바닥 황색종 관찰", "expectedFinding": "황색판종·각막환·손바닥 황색종 없음", "examConceptId": "xanthoma_xanthelasma_inspection"},
-    {"item": "갑상샘·피부", "method": "갑상샘 촉진과 피부 건조 확인", "expectedFinding": "갑상샘은 뚜렷이 커지지 않았고 피부가 건조하며 손발이 차갑게 느껴짐", "polarity": "positive", "examConceptId": "thyroid_palpation"},
-    {"item": "경동맥·심음·말초 맥박", "method": "경동맥 잡음과 심음, 말초 맥박 확인", "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 맥박은 느린 편", "examConceptId": "heart_rhythm_auscultation"},
-    {"item": "복부·하지 부종", "method": "간비대·복수와 하지 함요부종 확인", "expectedFinding": "간비대·복수·하지 함요부종 없음", "examConceptId": "pretibial_pitting_edema"}
+    {
+      "item": "활력징후·체형·허리둘레",
+      "method": "혈압·맥박 측정과 BMI·허리둘레 확인",
+      "expectedFinding": "혈압 122/78, 맥박 56회, BMI 27.1, 허리둘레 증가",
+      "polarity": "positive",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "눈·피부 황색종",
+      "method": "눈 주위·각막환과 손바닥 황색종 관찰",
+      "expectedFinding": "황색판종·각막환·손바닥 황색종 없음",
+      "examConceptId": "xanthoma_xanthelasma_inspection"
+    },
+    {
+      "item": "갑상샘·피부",
+      "method": "갑상샘 촉진과 피부 건조 확인",
+      "expectedFinding": "갑상샘은 뚜렷이 커지지 않았고 피부가 건조하며 손발이 차갑게 느껴짐",
+      "polarity": "positive",
+      "examConceptId": "thyroid_palpation"
+    },
+    {
+      "item": "경동맥·심음·말초 맥박",
+      "method": "경동맥 잡음과 심음, 말초 맥박 확인",
+      "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 맥박은 느린 편",
+      "examConceptId": "heart_rhythm_auscultation"
+    },
+    {
+      "item": "복부·하지 부종",
+      "method": "간비대·복수와 하지 함요부종 확인",
+      "expectedFinding": "간비대·복수·하지 함요부종 없음",
+      "examConceptId": "pretibial_pitting_edema"
+    }
   ],
-  "liveApiContext": {"patientContextFocus": "검진에서 콜레스테롤 수치가 높다고 들은 환자다. 피로·추위·변비·체중 증가는 물어봐야 말하며, 원인 질환을 스스로 추정하지 않는다.", "answerPolicy": ["진단명을 먼저 말하지 않는다.", "질문받은 정보만 짧게 답한다.", "체중·피로 질문에 다소 민망하지만 이유를 들으면 협조한다."], "positiveClues": ["LDL 184·중성지방 246", "체중 증가", "추위불내성·변비·건조 피부", "서맥 경향"], "negativeClues": ["심혈관 증상 없음", "당뇨·신장질환 단서 없음", "약물·과음 유발 가능성 없음"]},
-  "evaluationUse": {"mustAsk": ["공복 지질검사 수치와 이전 검사", "체중 변화·식사·운동·음주", "추위불내성·피로·변비·피부·모발 변화", "다음·다뇨·거품뇨·부종과 간·신장 병력", "흉통·호흡곤란·운동 시 증상", "약물·호르몬·스테로이드·건강보조제", "갑상샘·심혈관 가족력과 필요한 혈액검사 설명"], "positiveClues": ["갑상샘저하 의심 증상", "LDL·중성지방 상승", "서맥·피부 건조"], "negativeClues": ["현재 심혈관 응급 증상 없음", "신증후군·당뇨 단서 없음"], "educationTopics": ["갑상샘 기능 포함 이차성 원인 평가", "공복 지질 재검·혈당·간신장 검사", "생활습관 개선과 원인 평가 후 치료 결정", "흉통·호흡곤란 발생 시 신속 진료"]},
+  "liveApiContext": {
+    "patientContextFocus": "검진에서 콜레스테롤 수치가 높다고 들은 환자다. 피로·추위·변비·체중 증가는 물어봐야 말하며, 원인 질환을 스스로 추정하지 않는다.",
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 정보만 짧게 답한다.",
+      "체중·피로 질문에 다소 민망하지만 이유를 들으면 협조한다."
+    ],
+    "positiveClues": [
+      "LDL 184·중성지방 246",
+      "체중 증가",
+      "추위불내성·변비·건조 피부",
+      "서맥 경향"
+    ],
+    "negativeClues": [
+      "심혈관 증상 없음",
+      "당뇨·신장질환 단서 없음",
+      "약물·과음 유발 가능성 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "공복 지질검사 수치와 이전 검사",
+      "체중 변화·식사·운동·음주",
+      "추위불내성·피로·변비·피부·모발 변화",
+      "다음·다뇨·거품뇨·부종과 간·신장 병력",
+      "흉통·호흡곤란·운동 시 증상",
+      "약물·호르몬·스테로이드·건강보조제",
+      "갑상샘·심혈관 가족력과 필요한 혈액검사 설명"
+    ],
+    "positiveClues": [
+      "갑상샘저하 의심 증상",
+      "LDL·중성지방 상승",
+      "서맥·피부 건조"
+    ],
+    "negativeClues": [
+      "현재 심혈관 응급 증상 없음",
+      "신증후군·당뇨 단서 없음"
+    ],
+    "educationTopics": [
+      "갑상샘 기능 포함 이차성 원인 평가",
+      "공복 지질 재검·혈당·간신장 검사",
+      "생활습관 개선과 원인 평가 후 치료 결정",
+      "흉통·호흡곤란 발생 시 신속 진료"
+    ]
+  },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 이상지질혈증 (갑상샘저하 연관 이차성 원인 의심)\n\n- 요약: LDL 184, 중성지방 246. 1년간 7kg 체중 증가와 피로·추위불내성·변비·건조 피부.\n- 단서: 공복 검사였고 과음·당뇨·신장질환·관련 약물은 없음.\n- 진찰: 맥박 56회, 피부 건조, 갑상샘 비대·부종·경동맥 잡음 없음.\n\n추가 질문: \"그냥 살이 쪄서 콜레스테롤이 오른 거 아닌가요?\"",
   "rawRuleText": "# 증례명 : 이상지질혈증 (갑상샘저하 연관 이차성 원인 의심)\n\n- 요약: LDL 184, 중성지방 246. 1년간 7kg 체중 증가와 피로·추위불내성·변비·건조 피부.\n- 단서: 공복 검사였고 과음·당뇨·신장질환·관련 약물은 없음.\n- 진찰: 맥박 56회, 피부 건조, 갑상샘 비대·부종·경동맥 잡음 없음.\n\n추가 질문: \"그냥 살이 쪄서 콜레스테롤이 오른 거 아닌가요?\""

@@ -4,6 +4,7 @@
   "id": "anal_fissure_constipation_rule",
   "title": "변비 (항문 통증 회피형)",
   "category": "변비",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 20 '변비' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "항문열상 동반 변비 (Constipation with anal fissure)",
   "variant": "배변 통증 → 참기 → 악화 악순환형",
   "description": "변볼 때 찢어질 듯 아파 참다 보니 변이 더 굳어지는 악순환의 규칙입니다.",

@@ -4,6 +4,7 @@
   "id": "fibromyalgia_rule",
   "title": "전신 통증 (섬유근통 의심)",
   "category": "관절 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 30 '관절 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "섬유근통증후군 의심 (Suspected fibromyalgia)",
   "variant": "만성 전신 통증 + 피로·수면장애·압통점형",
   "description": "온몸 여기저기가 3개월 넘게 아프고, 자고 나도 개운치 않으며 검사는 늘 정상인 규칙입니다.",

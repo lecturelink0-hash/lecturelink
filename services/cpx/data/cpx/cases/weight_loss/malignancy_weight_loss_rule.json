@@ -4,6 +4,7 @@
   "id": "malignancy_weight_loss_rule",
   "title": "체중 감소 (악성 종양 의심)",
   "category": "체중 감소",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 39 '체중 감소' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "악성 종양 의심 — 원발 미상 (Suspected malignancy)",
   "variant": "고령 흡연자의 식욕부진 동반 진행성 감소 적신호형",
   "description": "입맛이 없어 먹는 게 줄고 반년 새 9kg이 빠진, 오래 흡연한 고령 환자의 적신호 규칙입니다.",

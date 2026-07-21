@@ -4,6 +4,7 @@
   "id": "seizure_vs_syncope_rule",
   "title": "의식소실 (경련 발작 의심)",
   "category": "실신",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 09 '실신' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "전신 강직간대발작 의심 — 실신 감별 (Suspected generalized seizure)",
   "variant": "목격자 진술상 경련·혀 깨묾·발작 후 혼돈형",
   "description": "쓰러지며 몸을 떨고 혀를 깨물었으며, 깨어난 뒤 한동안 멍했던 — 실신이 아닌 발작 의심 규칙입니다.",

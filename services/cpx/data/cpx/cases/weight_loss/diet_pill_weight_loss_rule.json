@@ -4,6 +4,7 @@
   "id": "diet_pill_weight_loss_rule",
   "title": "체중 감소 (다이어트 약물 유발)",
   "category": "체중 감소",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 39 '체중 감소' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "다이어트 약물(식욕억제제) 유발 체중 감소 (Weight loss due to diet pills)",
   "variant": "인터넷 구매 약물 + 두근거림·불면형",
   "description": "석 달 새 8kg 빠지고 가슴이 두근거리는데, 알고 보니 해외직구 다이어트약을 먹고 있던 규칙입니다.",

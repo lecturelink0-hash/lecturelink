@@ -4,6 +4,7 @@
   "id": "post_attempt_assessment_rule",
   "title": "자살 시도 후 평가",
   "category": "자살",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 53 '자살' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "자살 시도 후 재시도 위험 평가 (Post-suicide attempt risk assessment)",
   "variant": "응급 처치 후 의식 명료한 젊은 환자 평가형",
   "description": "약물 과량 복용 후 응급 처치를 받고 안정된 환자의 재시도 위험을 평가하는 규칙입니다.",

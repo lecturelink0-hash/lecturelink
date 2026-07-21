@@ -4,6 +4,7 @@
   "id": "acute_sinusitis_rule",
   "title": "콧물/코막힘 (급성 부비동염 의심)",
   "category": "콧물/코막힘",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 15 '콧물/코막힘' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "급성 세균성 부비동염 의심 (Suspected acute bacterial rhinosinusitis)",
   "variant": "감기 후 화농성 콧물 + 안면 압통형",
   "description": "감기가 나을 듯하다가 다시 심해지며 누런 콧물과 광대뼈 부위 통증이 생긴 규칙입니다.",

@@ -4,15 +4,34 @@
   "id": "peptic_ulcer_rule",
   "title": "소화성궤양 의심",
   "category": "소화불량/만성복통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 18 '소화 불량/만성 복통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "소화성궤양 의심 (Suspected peptic ulcer disease)",
   "variant": "진통소염제 장기 복용자의 공복·야간 명치 통증형",
   "description": "무릎 관절염 약을 오래 먹는 환자가 두 달째 배가 고플 때와 새벽에 명치가 쓰려 잠을 깨는 규칙입니다.",
-  "tags": ["소화불량", "소화성궤양", "NSAIDs", "공복통"],
+  "tags": [
+    "소화불량",
+    "소화성궤양",
+    "NSAIDs",
+    "공복통"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 18 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "남성 우세", "age": "50~65세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "50~65세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -38,24 +57,65 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["무릎 골관절염(1년 전 진단), 진통소염제 복용 중", "위내시경 받은 적 없음"],
-    "mustAbsent": ["위궤양 진단력", "간질환", "당뇨"]
+    "mustInclude": [
+      "무릎 골관절염(1년 전 진단), 진통소염제 복용 중",
+      "위내시경 받은 적 없음"
+    ],
+    "mustAbsent": [
+      "위궤양 진단력",
+      "간질환",
+      "당뇨"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["특이 가족력 없음"],
-    "mustAbsent": ["위암"]
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": [
+      "위암"
+    ]
   },
   "socialHistoryRule": {
-    "fixed": ["흡연 있음"],
-    "recommended": ["음주 주 1~2회", "커피 하루 2잔"]
+    "fixed": [
+      "흡연 있음"
+    ],
+    "recommended": [
+      "음주 주 1~2회",
+      "커피 하루 2잔"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "활력징후 측정", "expectedFinding": "정상 범위" },
-    { "item": "눈", "method": "결막·공막 확인", "expectedFinding": "빈혈·황달 없음 (정상)" },
-    { "item": "장음", "method": "복부 청진", "expectedFinding": "정상 장음" },
-    { "item": "복부 촉진", "method": "4분면 촉진(압통·종괴)", "expectedFinding": "명치 부위 압통 (+), 반발통 없음, 종괴 없음", "polarity": "positive" },
-    { "item": "타진·간비장", "method": "복부 타진, 간·비장 종대 확인", "expectedFinding": "종대 없음 (정상)" },
-    { "item": "직장수지검사", "method": "DRE", "expectedFinding": "흑색변 없음, 정상 소견 (요청 시 결과지 제시)" }
+    {
+      "item": "활력징후",
+      "method": "활력징후 측정",
+      "expectedFinding": "정상 범위"
+    },
+    {
+      "item": "눈",
+      "method": "결막·공막 확인",
+      "expectedFinding": "빈혈·황달 없음 (정상)"
+    },
+    {
+      "item": "장음",
+      "method": "복부 청진",
+      "expectedFinding": "정상 장음"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "4분면 촉진(압통·종괴)",
+      "expectedFinding": "명치 부위 압통 (+), 반발통 없음, 종괴 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "타진·간비장",
+      "method": "복부 타진, 간·비장 종대 확인",
+      "expectedFinding": "종대 없음 (정상)"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "DRE",
+      "expectedFinding": "흑색변 없음, 정상 소견 (요청 시 결과지 제시)"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "NSAIDs 장기 복용 중 생긴 공복·야간 명치 통증의 환자. '관절염 약을 오래 먹는다', '배고플 때·새벽에 아프다', '먹으면 낫는다'는 단서는 해당 주제를 질문받았을 때 공개한다. 약 이름은 정확히 모르고 '무릎 아플 때 먹는 소염진통제'라고 표현한다.",
@@ -89,8 +149,17 @@
       "흡연·음주",
       "내시경 이력"
     ],
-    "positiveClues": ["공복통·야간통", "식후 호전", "NSAIDs 장기 복용", "흡연"],
-    "negativeClues": ["흑색변 없음", "체중 감소 없음", "가족력 없음"],
+    "positiveClues": [
+      "공복통·야간통",
+      "식후 호전",
+      "NSAIDs 장기 복용",
+      "흡연"
+    ],
+    "negativeClues": [
+      "흑색변 없음",
+      "체중 감소 없음",
+      "가족력 없음"
+    ],
     "educationTopics": [
       "소화성궤양 의심 설명 (진통소염제 연관)",
       "위내시경 검사 필요성",

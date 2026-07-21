@@ -4,15 +4,35 @@
   "id": "cerebellar_stroke_dizziness_rule",
   "title": "지속 어지럼 (중추성 의심)",
   "category": "어지럼",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 52 '어지럼' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "소뇌경색 의심 (Suspected cerebellar infarction)",
   "variant": "혈관 위험인자 보유 고령의 급성 지속 회전성 어지럼 적신호형",
   "description": "고혈압·당뇨약을 먹는 환자가 반나절째 계속되는 어지럼과 한쪽으로 쏠리는 증상으로 내원한 적신호 규칙입니다.",
-  "tags": ["어지럼", "현훈", "중추성", "적신호", "소뇌"],
+  "tags": [
+    "어지럼",
+    "현훈",
+    "중추성",
+    "적신호",
+    "소뇌"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 52 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "응급실" },
-    "recommended": { "gender": "남성 우세", "age": "60~75세" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "60~75세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -37,25 +57,72 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["고혈압(7년 전 진단)·당뇨(5년 전 진단), 약 복용 중", "이번 같은 어지럼은 처음"],
-    "mustAbsent": ["귀 질환", "두부 외상", "알레르기"]
+    "mustInclude": [
+      "고혈압(7년 전 진단)·당뇨(5년 전 진단), 약 복용 중",
+      "이번 같은 어지럼은 처음"
+    ],
+    "mustAbsent": [
+      "귀 질환",
+      "두부 외상",
+      "알레르기"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["형제 중 뇌졸중 1명"],
+    "recommended": [
+      "형제 중 뇌졸중 1명"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["흡연 있음", "음주 있음"],
-    "recommended": ["커피 랜덤"]
+    "fixed": [
+      "흡연 있음",
+      "음주 있음"
+    ],
+    "recommended": [
+      "커피 랜덤"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "혈압·맥박 측정(기립 포함)", "expectedFinding": "혈압 높음(수축기 170 내외)", "polarity": "positive" },
-    { "item": "안진", "method": "자발·주시 안진 확인", "expectedFinding": "주시 방향이 바뀌면 방향이 바뀌는 안진 (+)", "polarity": "positive" },
-    { "item": "두위검사", "method": "Dix-Hallpike test", "expectedFinding": "음성 (특정 두위 유발 없음)", "examConceptId": "dix_hallpike" },
-    { "item": "평형·보행", "method": "Romberg·Tandem gait 검사", "expectedFinding": "우측으로 쓰러지려 하며 일자 보행 불가", "polarity": "positive" },
-    { "item": "신경학적 이상", "method": "뇌신경·소뇌기능(finger-to-nose) 검사", "expectedFinding": "우측 상지 finger-to-nose에서 목표를 지나침 (limb ataxia)", "polarity": "positive" },
-    { "item": "빈혈", "method": "결막 확인", "expectedFinding": "창백 없음 (정상)" },
-    { "item": "청력", "method": "Weber/Rinne 등 청력 검사", "expectedFinding": "정상 (난청 없음)" }
+    {
+      "item": "활력징후",
+      "method": "혈압·맥박 측정(기립 포함)",
+      "expectedFinding": "혈압 높음(수축기 170 내외)",
+      "polarity": "positive"
+    },
+    {
+      "item": "안진",
+      "method": "자발·주시 안진 확인",
+      "expectedFinding": "주시 방향이 바뀌면 방향이 바뀌는 안진 (+)",
+      "polarity": "positive"
+    },
+    {
+      "item": "두위검사",
+      "method": "Dix-Hallpike test",
+      "expectedFinding": "음성 (특정 두위 유발 없음)",
+      "examConceptId": "dix_hallpike"
+    },
+    {
+      "item": "평형·보행",
+      "method": "Romberg·Tandem gait 검사",
+      "expectedFinding": "우측으로 쓰러지려 하며 일자 보행 불가",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 이상",
+      "method": "뇌신경·소뇌기능(finger-to-nose) 검사",
+      "expectedFinding": "우측 상지 finger-to-nose에서 목표를 지나침 (limb ataxia)",
+      "polarity": "positive"
+    },
+    {
+      "item": "빈혈",
+      "method": "결막 확인",
+      "expectedFinding": "창백 없음 (정상)"
+    },
+    {
+      "item": "청력",
+      "method": "Weber/Rinne 등 청력 검사",
+      "expectedFinding": "정상 (난청 없음)"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "혈관 위험인자를 가진 고령 환자의 급성 지속성 어지럼. '한쪽으로 쓰러지려 한다', '손이 빗나간다', '고혈압·당뇨약을 먹는다'는 적신호 단서는 해당 주제를 질문받았을 때 공개한다. 스스로는 '체한 것 같다'고 대수롭지 않게 말하는 경향.",
@@ -89,8 +156,17 @@
       "흡연·음주",
       "의식 소실 여부"
     ],
-    "positiveClues": ["급성 지속성", "보행 실조", "limb ataxia", "혈관 위험인자"],
-    "negativeClues": ["청각 증상 없음", "두위 유발 아님", "외상 없음"],
+    "positiveClues": [
+      "급성 지속성",
+      "보행 실조",
+      "limb ataxia",
+      "혈관 위험인자"
+    ],
+    "negativeClues": [
+      "청각 증상 없음",
+      "두위 유발 아님",
+      "외상 없음"
+    ],
     "educationTopics": [
       "중추성(뇌) 원인이 의심됨을 설명",
       "즉시 뇌 영상검사(MRI 등)가 필요한 이유 설명",

@@ -4,6 +4,7 @@
   "id": "acute_mi_rule",
   "title": "가슴 통증 (급성 심근경색 의심)",
   "category": "가슴 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 08 '가슴 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "급성 심근경색 의심 (Suspected acute myocardial infarction)",
   "variant": "30분+ 압박 흉통·좌완 방사·발한 응급형",
   "description": "한 시간 전부터 가슴 한가운데를 짓누르는 통증이 왼팔까지 뻗치고 식은땀이 나는 적신호 규칙입니다.",

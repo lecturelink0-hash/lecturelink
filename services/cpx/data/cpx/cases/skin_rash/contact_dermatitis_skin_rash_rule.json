@@ -4,54 +4,153 @@
   "id": "contact_dermatitis_skin_rash_rule",
   "title": "피부 발진 (접촉피부염 의심)",
   "category": "피부 발진",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 51 '피부 발진' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "접촉피부염 의심 (Suspected contact dermatitis)",
   "variant": "새 향수·로션 노출 뒤 가려운 국소 습진형",
   "description": "새 피부 접촉 물질 뒤 생긴 가려운 발진에서 약진·감염·중증 알레르기·점막 침범 적신호를 구분하는 규칙입니다.",
-  "tags": ["피부 발진", "접촉피부염", "가려움", "알레르기"],
+  "tags": [
+    "피부 발진",
+    "접촉피부염",
+    "가려움",
+    "알레르기"
+  ],
   "sourceTextFile": "031_skin_rash.json·031_skin_rash_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
   "demographicsRule": {
-    "fixed": {"location": "외래"},
-    "recommended": {"gender": "무관", "age": "18~60세"},
-    "randomizable": ["성별", "이름", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "18~60세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
     "caseSummary": "28세 환자가 5일 전 새 향수와 바디로션을 사용한 뒤 목과 손목 안쪽에 붉고 가려운 발진이 생겨 내원했다. 물집·고열·입안 병변·입술 부종·호흡곤란은 없고 최근 새로 먹은 약도 없다.",
-    "mustInclude": ["새 향수·바디로션 사용 뒤 5일간 발진", "목·손목 안쪽의 붉은 가려운 발진", "물집·고열·구강 병변 없음", "입술 부종·호흡곤란 없음", "최근 새 약·보조제 복용 없음"],
-    "preferredVariants": ["땀을 흘리면 더 가려움", "접촉한 부위 밖으로 뚜렷이 퍼지지 않음"],
-    "mustAbsent": ["피부 벗겨짐", "눈 통증·충혈", "성기 궤양", "최근 해외여행"]
+    "mustInclude": [
+      "새 향수·바디로션 사용 뒤 5일간 발진",
+      "목·손목 안쪽의 붉은 가려운 발진",
+      "물집·고열·구강 병변 없음",
+      "입술 부종·호흡곤란 없음",
+      "최근 새 약·보조제 복용 없음"
+    ],
+    "preferredVariants": [
+      "땀을 흘리면 더 가려움",
+      "접촉한 부위 밖으로 뚜렷이 퍼지지 않음"
+    ],
+    "mustAbsent": [
+      "피부 벗겨짐",
+      "눈 통증·충혈",
+      "성기 궤양",
+      "최근 해외여행"
+    ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["경미한 계절성 비염 외 만성 피부질환 없음"],
-    "mustAbsent": ["면역억제 치료", "과거 중증 약물 알레르기"]
+    "mustInclude": [
+      "경미한 계절성 비염 외 만성 피부질환 없음"
+    ],
+    "mustAbsent": [
+      "면역억제 치료",
+      "과거 중증 약물 알레르기"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["가족의 아토피 피부염 없음"],
+    "recommended": [
+      "가족의 아토피 피부염 없음"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["최근 향수·바디로션 교체", "비흡연"],
-    "recommended": ["음주 드묾"]
+    "fixed": [
+      "최근 향수·바디로션 교체",
+      "비흡연"
+    ],
+    "recommended": [
+      "음주 드묾"
+    ]
   },
   "physicalExamRule": [
-    {"item": "활력징후·전신 상태", "method": "혈압·맥박·체온과 전신 상태 확인", "expectedFinding": "체온 36.7, 혈압 116/74, 맥박 76회, 전신 상태 안정", "examConceptId": "vital_signs"},
-    {"item": "피부 발진", "method": "목·손목의 발진 분포·색·경계·인설·물집·가피·삼출 시진", "expectedFinding": "향수·로션 접촉 부위에 경계가 비교적 뚜렷한 홍반성 구진과 가는 인설이 있으며 물집·가피·고름은 없음", "polarity": "positive", "examConceptId": "skin_rash_inspection"},
-    {"item": "발진 촉진·눌림 반응", "method": "열감·압통·부종과 눌렀을 때 변화 확인", "expectedFinding": "국소 열감·압통·부종 없고 눌렀을 때 옅어짐", "examConceptId": "skin_rash_inspection"},
-    {"item": "눈·구강 점막", "method": "결막·눈꺼풀과 구강 점막 병변 확인", "expectedFinding": "결막 충혈·눈 통증·구강 궤양·점막 미란 없음", "examConceptId": "oral_ulcer_or_lesion"},
-    {"item": "경부 림프절", "method": "경부 림프절 촉진", "expectedFinding": "경부 림프절 종대 없음", "examConceptId": "neck_lymph_node"}
+    {
+      "item": "활력징후·전신 상태",
+      "method": "혈압·맥박·체온과 전신 상태 확인",
+      "expectedFinding": "체온 36.7, 혈압 116/74, 맥박 76회, 전신 상태 안정",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "피부 발진",
+      "method": "목·손목의 발진 분포·색·경계·인설·물집·가피·삼출 시진",
+      "expectedFinding": "향수·로션 접촉 부위에 경계가 비교적 뚜렷한 홍반성 구진과 가는 인설이 있으며 물집·가피·고름은 없음",
+      "polarity": "positive",
+      "examConceptId": "skin_rash_inspection"
+    },
+    {
+      "item": "발진 촉진·눌림 반응",
+      "method": "열감·압통·부종과 눌렀을 때 변화 확인",
+      "expectedFinding": "국소 열감·압통·부종 없고 눌렀을 때 옅어짐",
+      "examConceptId": "skin_rash_inspection"
+    },
+    {
+      "item": "눈·구강 점막",
+      "method": "결막·눈꺼풀과 구강 점막 병변 확인",
+      "expectedFinding": "결막 충혈·눈 통증·구강 궤양·점막 미란 없음",
+      "examConceptId": "oral_ulcer_or_lesion"
+    },
+    {
+      "item": "경부 림프절",
+      "method": "경부 림프절 촉진",
+      "expectedFinding": "경부 림프절 종대 없음",
+      "examConceptId": "neck_lymph_node"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "새 향수와 바디로션을 쓴 뒤 목과 손목이 가렵고 붉어져 걱정하는 환자다. 노출·발진 양상·약물·중증 알레르기 증상은 질문할 때만 답한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "질문받은 항목에만 짧게 답한다.", "호흡곤란·입술 부종·점막 병변·고열 질문에는 현재 없다고 명확히 답한다."],
-    "positiveClues": ["새 향수·바디로션 노출", "접촉 부위의 홍반성 가려운 발진", "땀에 악화"],
-    "negativeClues": ["새 약 복용 없음", "전신 감염·아나필락시스·점막 침범 없음", "피부 벗겨짐·고름 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 항목에만 짧게 답한다.",
+      "호흡곤란·입술 부종·점막 병변·고열 질문에는 현재 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "새 향수·바디로션 노출",
+      "접촉 부위의 홍반성 가려운 발진",
+      "땀에 악화"
+    ],
+    "negativeClues": [
+      "새 약 복용 없음",
+      "전신 감염·아나필락시스·점막 침범 없음",
+      "피부 벗겨짐·고름 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["발진 시작·최초 위치·퍼짐·지속·악화 경과", "모양·크기·색·물집·인설·가피·진물·고름", "가려움·통증·열감·일상 불편", "발열·호흡곤란·입술/입안 부종·눈·점막 침범", "새 약·보조제·화장품·세제·의복·음식·여행·벌레·햇빛·땀", "알레르기·아토피·면역질환·관절통·구강/성기 병변과 필요한 민감 문진", "원인 회피·보습·긁지 않기와 응급 악화 기준"],
-    "positiveClues": ["새 피부 제품 노출", "접촉 부위 국한 가려운 홍반성 발진", "땀에 악화"],
-    "negativeClues": ["약진·전신 감염·중증 알레르기·점막 침범 단서 없음"],
-    "educationTopics": ["원인 접촉물 회피와 사진 기록", "보습·자극 회피·치료 계획", "호흡곤란·점막 침범·고열·피부 벗겨짐 시 즉시 진료"]
+    "mustAsk": [
+      "발진 시작·최초 위치·퍼짐·지속·악화 경과",
+      "모양·크기·색·물집·인설·가피·진물·고름",
+      "가려움·통증·열감·일상 불편",
+      "발열·호흡곤란·입술/입안 부종·눈·점막 침범",
+      "새 약·보조제·화장품·세제·의복·음식·여행·벌레·햇빛·땀",
+      "알레르기·아토피·면역질환·관절통·구강/성기 병변과 필요한 민감 문진",
+      "원인 회피·보습·긁지 않기와 응급 악화 기준"
+    ],
+    "positiveClues": [
+      "새 피부 제품 노출",
+      "접촉 부위 국한 가려운 홍반성 발진",
+      "땀에 악화"
+    ],
+    "negativeClues": [
+      "약진·전신 감염·중증 알레르기·점막 침범 단서 없음"
+    ],
+    "educationTopics": [
+      "원인 접촉물 회피와 사진 기록",
+      "보습·자극 회피·치료 계획",
+      "호흡곤란·점막 침범·고열·피부 벗겨짐 시 즉시 진료"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 피부 발진 (접촉피부염 의심)\n- 새 향수·바디로션 사용 뒤 5일간 목·손목 안쪽에 가려운 홍반성 발진.\n- 물집·고열·입안 병변·입술 부종·호흡곤란은 없고 새 약을 복용하지 않음.\n\n추가 질문: \"이게 전염되거나 큰 알레르기일까요?\"",

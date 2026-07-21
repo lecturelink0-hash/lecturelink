@@ -4,6 +4,7 @@
   "id": "hyperthyroid_htn_rule",
   "title": "고혈압 (갑상선기능항진 연관 의심)",
   "category": "고혈압",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 11 '고혈압' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "갑상선기능항진증 연관 고혈압 의심 (Hypertension due to hyperthyroidism)",
   "variant": "수축기 고혈압 + 항진 증상 동반형",
   "description": "혈압이 높다고 왔는데, 두근거림·더위·체중 감소가 함께 있는 이차성 규칙입니다.",

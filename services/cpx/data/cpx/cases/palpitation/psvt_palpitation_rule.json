@@ -4,6 +4,7 @@
   "id": "psvt_palpitation_rule",
   "title": "발작성 두근거림 (PSVT 의심)",
   "category": "두근거림",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 10 '두근거림' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "발작성 상심실성 빈맥 의심 (Suspected paroxysmal supraventricular tachycardia)",
   "variant": "갑자기 시작·갑자기 끝나는 반복 발작형",
   "description": "몇 달 전부터 심장이 스위치 켜듯 갑자기 빠르게 뛰다가 뚝 멈추는 발작이 반복되는 규칙입니다.",

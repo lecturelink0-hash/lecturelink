@@ -4,6 +4,7 @@
   "id": "alcohol_dependence_rule",
   "title": "음주 문제 (알코올 의존 의심)",
   "category": "음주 문제",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 04 '음주 문제' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "알코올 사용장애(중증) 의심 (Suspected severe alcohol use disorder)",
   "variant": "금단 증상·해장술 동반 의존형",
   "description": "아침에 손이 떨려 해장술을 마시고, 줄이려 해도 번번이 실패하는 규칙입니다.",

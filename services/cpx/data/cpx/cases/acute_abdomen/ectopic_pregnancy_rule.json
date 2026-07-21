@@ -4,6 +4,7 @@
   "id": "ectopic_pregnancy_rule",
   "title": "급성 복통 (자궁외임신 파열 의심)",
   "category": "급성 복통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 17 '급성 복통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "자궁외임신 파열 의심 (Suspected ruptured ectopic pregnancy)",
   "variant": "가임기 여성 급성 하복통·무월경 적신호형",
   "description": "갑자기 왼쪽 아랫배가 심하게 아프고 어지러운 가임기 여성 — 생리가 6주째 없는 응급 규칙입니다.",

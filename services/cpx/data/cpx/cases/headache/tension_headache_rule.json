@@ -4,15 +4,34 @@
   "id": "tension_headache_rule",
   "title": "긴장형 두통",
   "category": "두통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 46 '두통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "긴장형 두통 (Tension-type headache)",
   "variant": "만성 스트레스 유발 양측성 조이는 두통형",
   "description": "업무 스트레스 이후 시작된, 머리 양쪽을 띠로 조이는 듯한 둔한 두통이 지속되는 규칙입니다.",
-  "tags": ["두통", "긴장형", "스트레스", "일차성두통"],
+  "tags": [
+    "두통",
+    "긴장형",
+    "스트레스",
+    "일차성두통"
+  ],
   "sourceTextFile": "(자체 제작 — Guide to Real CPX 5판 CPX 46 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
-    "fixed": { "location": "외래" },
-    "recommended": { "gender": "남녀 무관", "age": "30~50대 직장인 연령대" },
-    "randomizable": ["성별", "이름", "경제적 수준", "학력 수준", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남녀 무관",
+      "age": "30~50대 직장인 연령대"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
@@ -38,24 +57,66 @@
     ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["특별한 질환 없음", "정기 복용 약물 없음(시판 진통제 간헐 복용 제외)"],
-    "mustAbsent": ["고혈압", "알레르기", "수술력", "입원력", "머리 외상"]
+    "mustInclude": [
+      "특별한 질환 없음",
+      "정기 복용 약물 없음(시판 진통제 간헐 복용 제외)"
+    ],
+    "mustAbsent": [
+      "고혈압",
+      "알레르기",
+      "수술력",
+      "입원력",
+      "머리 외상"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["특이 가족력 없음 (비슷한 두통 가족 없음)"],
+    "recommended": [
+      "특이 가족력 없음 (비슷한 두통 가족 없음)"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["커피 하루 3잔 이상"],
-    "recommended": ["술·담배 랜덤", "야근 잦고 수면 6시간 이하"]
+    "fixed": [
+      "커피 하루 3잔 이상"
+    ],
+    "recommended": [
+      "술·담배 랜덤",
+      "야근 잦고 수면 6시간 이하"
+    ]
   },
   "physicalExamRule": [
-    { "item": "활력징후", "method": "혈압·체온·맥박 측정", "expectedFinding": "정상 범위" },
-    { "item": "뇌막자극징후", "method": "경부 강직·Kernig sign 확인", "expectedFinding": "음성 (이상 없음)" },
-    { "item": "신경학적 이상", "method": "팔다리 근력·감각 검사", "expectedFinding": "정상" },
-    { "item": "뇌압 상승", "method": "안저검사", "expectedFinding": "유두부종 없음 (정상)" },
-    { "item": "머리·목 근육", "method": "두피·뒷목 촉진", "expectedFinding": "뒷목과 어깨 근육의 긴장·압통", "polarity": "positive", "examConceptId": "head_neck_muscle_palpation" },
-    { "item": "부비동염", "method": "부비동 압통 확인", "expectedFinding": "압통 없음" }
+    {
+      "item": "활력징후",
+      "method": "혈압·체온·맥박 측정",
+      "expectedFinding": "정상 범위"
+    },
+    {
+      "item": "뇌막자극징후",
+      "method": "경부 강직·Kernig sign 확인",
+      "expectedFinding": "음성 (이상 없음)"
+    },
+    {
+      "item": "신경학적 이상",
+      "method": "팔다리 근력·감각 검사",
+      "expectedFinding": "정상"
+    },
+    {
+      "item": "뇌압 상승",
+      "method": "안저검사",
+      "expectedFinding": "유두부종 없음 (정상)"
+    },
+    {
+      "item": "머리·목 근육",
+      "method": "두피·뒷목 촉진",
+      "expectedFinding": "뒷목과 어깨 근육의 긴장·압통",
+      "polarity": "positive",
+      "examConceptId": "head_neck_muscle_palpation"
+    },
+    {
+      "item": "부비동염",
+      "method": "부비동 압통 확인",
+      "expectedFinding": "압통 없음"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "스트레스와 함께 시작된 조이는 양측성 두통이 계속되는 환자. 큰 병이 아닐까 내심 걱정하지만, 두통 외의 이상 증상(구토, 전조, 마비 등)은 전혀 없다.",

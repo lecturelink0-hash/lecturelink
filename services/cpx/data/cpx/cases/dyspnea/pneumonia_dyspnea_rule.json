@@ -4,6 +4,7 @@
   "id": "pneumonia_dyspnea_rule",
   "title": "호흡곤란 (폐렴 의심)",
   "category": "호흡곤란",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 13 '호흡곤란' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "지역사회획득 폐렴 의심 (Suspected community-acquired pneumonia)",
   "variant": "발열·화농성 객담·흉막통 동반형",
   "description": "사흘 전부터 열이 나고 누런 가래 기침에, 숨 쉴 때 한쪽 가슴이 결리며 숨이 찬 규칙입니다.",

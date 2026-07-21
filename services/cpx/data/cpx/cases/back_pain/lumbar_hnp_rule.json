@@ -4,6 +4,7 @@
   "id": "lumbar_hnp_rule",
   "title": "허리 통증 (추간판탈출 의심)",
   "category": "허리 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 31 '허리 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "요추 추간판탈출증 의심 (Suspected lumbar disc herniation)",
   "variant": "하지 방사통·SLR 양성 동반형",
   "description": "허리 통증과 함께 한쪽 엉덩이부터 종아리까지 전기가 오듯 저리고 당기는 규칙입니다.",

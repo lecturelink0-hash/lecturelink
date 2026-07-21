@@ -4,39 +4,143 @@
   "id": "primary_dysmenorrhea_rule",
   "title": "월경 이상·월경통 (원발성 월경통 의심)",
   "category": "월경 이상/월경통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 43 '월경이상/월경통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "원발성 월경통 의심 (Suspected primary dysmenorrhea)",
   "variant": "월경 시작 직후 경련성 하복부 통증형",
   "description": "월경통 환자에서 임신·감염·이차성 원인을 놓치지 않고 민감 문진과 동의 기반 골반 진찰, 통증 관리·추적 교육을 연습하는 규칙입니다.",
-  "tags": ["월경통", "월경 이상", "임신 감별", "골반 진찰", "민감 문진"],
+  "tags": [
+    "월경통",
+    "월경 이상",
+    "임신 감별",
+    "골반 진찰",
+    "민감 문진"
+  ],
   "sourceTextFile": "044_menstrual_disorder_dysmenorrhea.json·044_menstrual_disorder_dysmenorrhea_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
-  "demographicsRule": {"fixed": {"gender": "여성", "age": 21}, "recommended": {"occupation": "대학생"}, "randomizable": ["이름", "키", "몸무게"], "mustAbsent": []},
+  "demographicsRule": {
+    "fixed": {
+      "gender": "여성",
+      "age": 21
+    },
+    "recommended": {
+      "occupation": "대학생"
+    },
+    "randomizable": [
+      "이름",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
   "scenarioRule": {
     "caseSummary": "21세 여성이 월경 시작 첫날마다 반복되는 경련성 하복부 통증으로 내원했다. 초경 뒤 1년부터 비슷했고 2~3일 지속되며 진통제로 일부 호전된다. 주기는 규칙적이고 최근 월경량 변화·성교 후 출혈·발열·분비물·실신은 없다.",
-    "mustInclude": ["초경 뒤부터 반복된 월경 시작 첫날의 경련성 하복부 통증", "2~3일 지속·진통제 일부 호전", "규칙적 주기", "월경량 변화·발열·분비물·실신 없음", "임신 가능성 낮음"],
-    "preferredVariants": ["시험 기간에는 통증이 더 불편함", "진통제는 증상 시작 후 늦게 복용함"],
-    "mustAbsent": ["갑작스러운 일측 골반통", "대량 출혈", "성교 후 출혈", "고열·구토", "임신 양성"]
+    "mustInclude": [
+      "초경 뒤부터 반복된 월경 시작 첫날의 경련성 하복부 통증",
+      "2~3일 지속·진통제 일부 호전",
+      "규칙적 주기",
+      "월경량 변화·발열·분비물·실신 없음",
+      "임신 가능성 낮음"
+    ],
+    "preferredVariants": [
+      "시험 기간에는 통증이 더 불편함",
+      "진통제는 증상 시작 후 늦게 복용함"
+    ],
+    "mustAbsent": [
+      "갑작스러운 일측 골반통",
+      "대량 출혈",
+      "성교 후 출혈",
+      "고열·구토",
+      "임신 양성"
+    ]
   },
-  "pastHistoryRule": {"mustInclude": ["특이 부인과 질환 없음"], "mustAbsent": ["자궁내막증 진단", "골반염"]},
-  "familyHistoryRule": {"recommended": ["특이사항 없음"], "mustAbsent": []},
-  "socialHistoryRule": {"fixed": ["비흡연", "음주 드묾"], "recommended": ["최근 수면 부족과 학업 스트레스"]},
+  "pastHistoryRule": {
+    "mustInclude": [
+      "특이 부인과 질환 없음"
+    ],
+    "mustAbsent": [
+      "자궁내막증 진단",
+      "골반염"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이사항 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연",
+      "음주 드묾"
+    ],
+    "recommended": [
+      "최근 수면 부족과 학업 스트레스"
+    ]
+  },
   "physicalExamRule": [
-    {"item": "활력징후·결막·하복부", "method": "활력징후·결막 시진과 하복부 촉진", "expectedFinding": "혈압 110/68 mmHg, 맥박 70회/분, 체온 36.5°C, 결막 창백·하복부 압통·반발통 없음", "examConceptId": "vital_signs"},
-    {"item": "임신검사", "method": "설명·동의 후 소변 임신검사", "expectedFinding": "소변 임신검사 음성", "examConceptId": "urine_pregnancy_test"},
-    {"item": "질경 진찰", "method": "설명·동의 후 질·자궁경부 출혈과 분비물 확인", "expectedFinding": "활동성 출혈·자궁경부 병변·비정상 분비물 없음", "examConceptId": "pelvic_speculum_exam"},
-    {"item": "양손 골반진찰", "method": "설명·동의 후 자궁·부속기 종괴와 압통 확인", "expectedFinding": "자궁·부속기 종괴·압통·경부 이동 압통 없음", "examConceptId": "bimanual_pelvic_exam"}
+    {
+      "item": "활력징후·결막·하복부",
+      "method": "활력징후·결막 시진과 하복부 촉진",
+      "expectedFinding": "혈압 110/68 mmHg, 맥박 70회/분, 체온 36.5°C, 결막 창백·하복부 압통·반발통 없음",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "임신검사",
+      "method": "설명·동의 후 소변 임신검사",
+      "expectedFinding": "소변 임신검사 음성",
+      "examConceptId": "urine_pregnancy_test"
+    },
+    {
+      "item": "질경 진찰",
+      "method": "설명·동의 후 질·자궁경부 출혈과 분비물 확인",
+      "expectedFinding": "활동성 출혈·자궁경부 병변·비정상 분비물 없음",
+      "examConceptId": "pelvic_speculum_exam"
+    },
+    {
+      "item": "양손 골반진찰",
+      "method": "설명·동의 후 자궁·부속기 종괴와 압통 확인",
+      "expectedFinding": "자궁·부속기 종괴·압통·경부 이동 압통 없음",
+      "examConceptId": "bimanual_pelvic_exam"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "환자는 월경통이 심해 수업에 지장이 있지만, 성생활·피임·임신 가능성과 골반 진찰에는 목적 설명과 동의를 들은 뒤 협조한다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "임신 가능성·월경력·성생활은 비판단적 질문에만 답한다.", "대량 출혈·고열·분비물·성교 후 출혈·갑작스런 일측 통증에는 없다고 명확히 답한다."],
-    "positiveClues": ["월경 시작 직후 반복되는 경련성 통증", "규칙적 주기", "진통제 일부 호전"],
-    "negativeClues": ["임신·감염·이차성 월경통 적신호 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "임신 가능성·월경력·성생활은 비판단적 질문에만 답한다.",
+      "대량 출혈·고열·분비물·성교 후 출혈·갑작스런 일측 통증에는 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "월경 시작 직후 반복되는 경련성 통증",
+      "규칙적 주기",
+      "진통제 일부 호전"
+    ],
+    "negativeClues": [
+      "임신·감염·이차성 월경통 적신호 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["주기·기간·양·LMP·월경통 시작과 경과", "통증 양상·강도·기능 저하·진통제 반응", "출혈·발열·분비물·골반통·실신과 임신 가능성", "성생활·피임·산과력·부인과 병력", "내분비·빈혈·출혈경향 증상과 약물", "활력징후·임신검사와 동의 기반 골반 진찰", "응급 적신호·통증 기록·검사/추적 계획"],
-    "positiveClues": ["월경 연관 경련성 통증", "진통제 반응"],
-    "negativeClues": ["임신·감염·대량 출혈 적신호 없음"],
-    "educationTopics": ["임신·이차성 원인 감별", "대량 출혈·실신·고열·심한 통증의 응급 평가", "통증/월경 기록과 추적"]
+    "mustAsk": [
+      "주기·기간·양·LMP·월경통 시작과 경과",
+      "통증 양상·강도·기능 저하·진통제 반응",
+      "출혈·발열·분비물·골반통·실신과 임신 가능성",
+      "성생활·피임·산과력·부인과 병력",
+      "내분비·빈혈·출혈경향 증상과 약물",
+      "활력징후·임신검사와 동의 기반 골반 진찰",
+      "응급 적신호·통증 기록·검사/추적 계획"
+    ],
+    "positiveClues": [
+      "월경 연관 경련성 통증",
+      "진통제 반응"
+    ],
+    "negativeClues": [
+      "임신·감염·대량 출혈 적신호 없음"
+    ],
+    "educationTopics": [
+      "임신·이차성 원인 감별",
+      "대량 출혈·실신·고열·심한 통증의 응급 평가",
+      "통증/월경 기록과 추적"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 월경 이상·월경통 (원발성 월경통 의심)\n- 21세 여성, 초경 뒤부터 월경 시작 첫날 경련성 하복부 통증이 2~3일 반복됨. 진통제 일부 호전, 주기 규칙적.\n- 대량 출혈·발열·분비물·실신·임신 가능성은 없음.\n\n추가 질문: \"매번 너무 아픈데 검사까지 꼭 받아야 하나요?\"",

@@ -4,54 +4,158 @@
   "id": "first_generalized_convulsion_rule",
   "title": "경련 (첫 전신 강직간대발작 의심)",
   "category": "경련",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 45 '경련' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "첫 전신 강직간대발작 의심 (Suspected first generalized tonic-clonic seizure)",
   "variant": "수면 부족 뒤 목격된 전신 경련·발작 후 혼돈형",
   "description": "첫 경련 사건에서 실신과 감별하고, 지속 발작·감염·뇌졸중·대사 원인 적신호와 즉시 안전조치를 평가하는 규칙입니다.",
-  "tags": ["경련", "첫 발작", "전신 강직간대", "발작 후 혼돈"],
+  "tags": [
+    "경련",
+    "첫 발작",
+    "전신 강직간대",
+    "발작 후 혼돈"
+  ],
   "sourceTextFile": "038_convulsion.json·038_convulsion_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
   "contentStatus": "needs_clinical_review",
   "demographicsRule": {
-    "fixed": {"location": "응급실"},
-    "recommended": {"gender": "무관", "age": "18~45세"},
-    "randomizable": ["성별", "이름", "직업", "키", "몸무게"],
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "18~45세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "키",
+      "몸무게"
+    ],
     "mustAbsent": []
   },
   "scenarioRule": {
     "caseSummary": "24세 환자가 이틀간 잠을 거의 못 잔 뒤 직장에서 갑자기 쓰러져 약 90초간 양팔·다리가 뻣뻣해진 뒤 떨리는 모습을 동료가 목격했다. 혀 옆을 깨물었고 약 20분간 혼돈과 졸림이 있었으나 현재 의식은 명료하다. 발열·두통·경부강직·국소 마비·두부 외상은 없다.",
-    "mustInclude": ["목격된 90초 전신 강직·간대 운동", "의식 소실과 혀 옆 깨물림", "약 20분 발작 후 혼돈·졸림", "수면 부족", "현재 발열·두통·경부강직·국소 마비 없음"],
-    "preferredVariants": ["대소변 실금은 없었음", "이전 발작·가족력 없음"],
-    "mustAbsent": ["반복 발작", "5분 이상 지속", "임신", "최근 음주 금단", "새 약물·독성 노출"]
+    "mustInclude": [
+      "목격된 90초 전신 강직·간대 운동",
+      "의식 소실과 혀 옆 깨물림",
+      "약 20분 발작 후 혼돈·졸림",
+      "수면 부족",
+      "현재 발열·두통·경부강직·국소 마비 없음"
+    ],
+    "preferredVariants": [
+      "대소변 실금은 없었음",
+      "이전 발작·가족력 없음"
+    ],
+    "mustAbsent": [
+      "반복 발작",
+      "5분 이상 지속",
+      "임신",
+      "최근 음주 금단",
+      "새 약물·독성 노출"
+    ]
   },
   "pastHistoryRule": {
-    "mustInclude": ["이전 경련·뇌졸중·당뇨·부정맥 없음", "뇌수술·중대한 두부 외상 없음"],
-    "mustAbsent": ["항경련제 복용", "중추신경계 감염 병력"]
+    "mustInclude": [
+      "이전 경련·뇌졸중·당뇨·부정맥 없음",
+      "뇌수술·중대한 두부 외상 없음"
+    ],
+    "mustAbsent": [
+      "항경련제 복용",
+      "중추신경계 감염 병력"
+    ]
   },
   "familyHistoryRule": {
-    "recommended": ["가족의 발작 질환 없음"],
+    "recommended": [
+      "가족의 발작 질환 없음"
+    ],
     "mustAbsent": []
   },
   "socialHistoryRule": {
-    "fixed": ["최근 시험 준비로 이틀간 수면 부족", "음주 드묾"],
-    "recommended": ["비흡연", "불법 약물 사용 없음"]
+    "fixed": [
+      "최근 시험 준비로 이틀간 수면 부족",
+      "음주 드묾"
+    ],
+    "recommended": [
+      "비흡연",
+      "불법 약물 사용 없음"
+    ]
   },
   "physicalExamRule": [
-    {"item": "활력징후·산소포화도·의식·지남력", "method": "혈압·맥박·체온·산소포화도와 의식·지남력 확인", "expectedFinding": "혈압 122/76, 맥박 88회, 체온 36.8, 산소포화도 98%, 의식·지남력 명료", "examConceptId": "mental_status_general"},
-    {"item": "동공·안구·구강·혀·두부 외상", "method": "동공 빛반사·안구운동, 구강·혀 깨물림과 두부 외상 확인", "expectedFinding": "동공 빛반사·안구운동 정상, 혀 오른쪽 가장자리에 작은 깨물린 자국, 두부 외상 없음", "polarity": "positive", "examConceptId": "pupil_light_reflex"},
-    {"item": "수막자극징후", "method": "경부 강직·Kernig·Brudzinski 징후 확인", "expectedFinding": "경부 강직 없고 Kernig·Brudzinski sign 음성", "examConceptId": "meningeal_signs"},
-    {"item": "신경학적 진찰", "method": "뇌신경·근력·감각·반사·소뇌기능·보행 확인", "expectedFinding": "국소 신경학적 이상·Todd 마비 없고 근력·감각·반사·보행 정상", "examConceptId": "neurologic_screening"},
-    {"item": "혈당", "method": "손끝 혈당 측정", "expectedFinding": "혈당 102 mg/dL", "examConceptId": "blood_glucose"}
+    {
+      "item": "활력징후·산소포화도·의식·지남력",
+      "method": "혈압·맥박·체온·산소포화도와 의식·지남력 확인",
+      "expectedFinding": "혈압 122/76, 맥박 88회, 체온 36.8, 산소포화도 98%, 의식·지남력 명료",
+      "examConceptId": "mental_status_general"
+    },
+    {
+      "item": "동공·안구·구강·혀·두부 외상",
+      "method": "동공 빛반사·안구운동, 구강·혀 깨물림과 두부 외상 확인",
+      "expectedFinding": "동공 빛반사·안구운동 정상, 혀 오른쪽 가장자리에 작은 깨물린 자국, 두부 외상 없음",
+      "polarity": "positive",
+      "examConceptId": "pupil_light_reflex"
+    },
+    {
+      "item": "수막자극징후",
+      "method": "경부 강직·Kernig·Brudzinski 징후 확인",
+      "expectedFinding": "경부 강직 없고 Kernig·Brudzinski sign 음성",
+      "examConceptId": "meningeal_signs"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "뇌신경·근력·감각·반사·소뇌기능·보행 확인",
+      "expectedFinding": "국소 신경학적 이상·Todd 마비 없고 근력·감각·반사·보행 정상",
+      "examConceptId": "neurologic_screening"
+    },
+    {
+      "item": "혈당",
+      "method": "손끝 혈당 측정",
+      "expectedFinding": "혈당 102 mg/dL",
+      "examConceptId": "blood_glucose"
+    }
   ],
   "liveApiContext": {
     "patientContextFocus": "처음 쓰러진 뒤 동료가 전신 경련을 봤다고 해서 불안한 환자다. 당시 의식 소실과 양상은 목격자 정보를 통해 질문할 때만 답하며, 현재는 약간 피곤하지만 명료하다.",
-    "answerPolicy": ["진단명을 먼저 말하지 않는다.", "사건 당시 기억나지 않는 부분은 목격자가 알려준 범위에서만 답한다.", "지속 발작·반복 발작·발열·두통·국소 마비 질문에는 현재 없다고 명확히 답한다."],
-    "positiveClues": ["목격된 전신 강직·간대 운동", "혀 옆 깨물림", "발작 후 혼돈", "수면 부족"],
-    "negativeClues": ["반복·지속 발작 없음", "수막염·뇌졸중·두부 외상 단서 없음", "저혈당·약물·음주 금단 단서 없음"]
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "사건 당시 기억나지 않는 부분은 목격자가 알려준 범위에서만 답한다.",
+      "지속 발작·반복 발작·발열·두통·국소 마비 질문에는 현재 없다고 명확히 답한다."
+    ],
+    "positiveClues": [
+      "목격된 전신 강직·간대 운동",
+      "혀 옆 깨물림",
+      "발작 후 혼돈",
+      "수면 부족"
+    ],
+    "negativeClues": [
+      "반복·지속 발작 없음",
+      "수막염·뇌졸중·두부 외상 단서 없음",
+      "저혈당·약물·음주 금단 단서 없음"
+    ]
   },
   "evaluationUse": {
-    "mustAsk": ["사건 시작·상황·목격자·의식 소실·지속·회복 시간", "전조와 눈·머리 편위·양측/편측 운동·강직·간대·자동증·청색증", "혀 깨물림·외상·실금·발작 후 혼돈·국소 약화", "발열·두통·구토·경부강직·시야·말·보행 변화와 반복/지속 발작", "수면 부족·음주·약물·독성·저혈당과 두부 외상·뇌졸중·감염 병력", "과거 발작·가족력과 운전·물가·높은 곳 안전", "응급 평가·뇌영상·뇌파와 발작 응급처치·119 기준"],
-    "positiveClues": ["전신 강직간대 운동", "혀 깨물림", "발작 후 혼돈"],
-    "negativeClues": ["지속·반복 발작과 수막염·뇌졸중 적신호 없음", "대사·약물 유발 단서 없음"],
-    "educationTopics": ["첫 발작 원인 평가", "발작 중 안전조치와 금기", "반복·5분 이상·회복 지연·호흡 문제 시 즉시 응급 도움"]
+    "mustAsk": [
+      "사건 시작·상황·목격자·의식 소실·지속·회복 시간",
+      "전조와 눈·머리 편위·양측/편측 운동·강직·간대·자동증·청색증",
+      "혀 깨물림·외상·실금·발작 후 혼돈·국소 약화",
+      "발열·두통·구토·경부강직·시야·말·보행 변화와 반복/지속 발작",
+      "수면 부족·음주·약물·독성·저혈당과 두부 외상·뇌졸중·감염 병력",
+      "과거 발작·가족력과 운전·물가·높은 곳 안전",
+      "응급 평가·뇌영상·뇌파와 발작 응급처치·119 기준"
+    ],
+    "positiveClues": [
+      "전신 강직간대 운동",
+      "혀 깨물림",
+      "발작 후 혼돈"
+    ],
+    "negativeClues": [
+      "지속·반복 발작과 수막염·뇌졸중 적신호 없음",
+      "대사·약물 유발 단서 없음"
+    ],
+    "educationTopics": [
+      "첫 발작 원인 평가",
+      "발작 중 안전조치와 금기",
+      "반복·5분 이상·회복 지연·호흡 문제 시 즉시 응급 도움"
+    ]
   },
   "additionalPromptRule": [],
   "ruleText": "# 증례명 : 경련 (첫 전신 강직간대발작 의심)\n- 수면 부족 뒤 직장에서 쓰러져 약 90초 전신 경련, 혀 깨물림과 20분간 혼돈·졸림.\n- 현재 의식은 명료하며 발열·두통·경부강직·국소 마비·외상은 없음.\n\n추가 질문: \"다시 발작하면 어떻게 해야 하나요?\"",

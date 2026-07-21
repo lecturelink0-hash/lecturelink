@@ -1,10 +1,158 @@
 {
-  "version":2,"type":"rule","id":"tuberculosis_hemoptysis_rule","title":"객혈 (폐결핵 의심)","category":"객혈","targetDiagnosis":"폐결핵 의심 (Suspected pulmonary tuberculosis)","variant":"아급성 기침·야간발한·체중감소·반복 소량 객혈형","description":"결핵 가능성이 있는 객혈에서 감염 노출·격리·신속한 검사 및 응급 악화 기준을 평가하는 규칙입니다.","tags":["객혈","폐결핵","야간발한","체중감소","감염관리"],"sourceTextFile":"016_hemoptysis.json·016_hemoptysis_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)","contentStatus":"needs_clinical_review",
-  "demographicsRule":{"fixed":{"location":"외래"},"recommended":{"gender":"무관","age":"20~60세"},"randomizable":["성별","이름","직업","키","몸무게"],"mustAbsent":[]},
-  "scenarioRule":{"caseSummary":"한 달 넘게 기침이 지속되고 최근 새벽에 땀을 흘리며 4kg이 빠진 환자. 지난 사흘간 기침할 때 가래에 선홍색 피가 반복되며, 동료가 최근 결핵 치료를 시작했다.","mustInclude":["4주 이상 기침","야간발한·4kg 체중감소","반복 소량 선홍색 객혈","결핵 환자 접촉","대량 출혈·휴식 시 호흡곤란 없음"],"preferredVariants":["가족에게 옮길까 걱정함"],"mustAbsent":["항응고제 복용","심한 흉통","대량 객혈"]},
-  "pastHistoryRule":{"mustInclude":["이전 결핵 치료력 없음"],"mustAbsent":["혈액응고질환","폐암 진단"]},"familyHistoryRule":{"recommended":["가족 결핵력 없음"],"mustAbsent":[]},"socialHistoryRule":{"fixed":["동료 결핵 치료 시작"],"recommended":["비흡연 또는 경미한 과거 흡연"]},
-  "physicalExamRule":[{"item":"활력징후·산소포화도·의식","method":"혈압·맥박·체온·산소포화도와 의식 확인","expectedFinding":"체온 37.9, 맥박 94회, 산소포화도 96%, 의식 명료","polarity":"positive","examConceptId":"vital_signs"},{"item":"비강·구강·인두·결막","method":"코피·잇몸 출혈과 인두, 결막 확인","expectedFinding":"비강·구강 출혈 없고 결막이 약간 창백해 보임","polarity":"positive","examConceptId":"conjunctival_pallor"},{"item":"경부 림프절·피부 출혈","method":"경부 림프절·점상출혈·멍 확인","expectedFinding":"경부 림프절 뚜렷한 종대 없고 피부 출혈 소견 없음","examConceptId":"neck_lymph_node"},{"item":"흉부 진찰","method":"흉부 시진·타진과 양측 호흡음 청진","expectedFinding":"오른쪽 윗폐야에서 약한 수포음이 들리며 나머지 호흡음은 유지됨","polarity":"positive","examConceptId":"crackles_auscultation"},{"item":"복부·하지","method":"간비장 비대·하지 부종·곤봉지·청색증 확인","expectedFinding":"간비장 비대·부종·곤봉지·청색증 없음","examConceptId":"peripheral_edema"}],
-  "liveApiContext":{"patientContextFocus":"오래된 기침과 야간발한, 체중감소 뒤 반복 소량 객혈이 있는 환자다. 결핵 접촉력은 질문해야 말하며, 스스로 병명을 말하지 않는다.","answerPolicy":["진단명을 먼저 말하지 않는다.","질문받은 항목에만 짧게 답한다.","가족 전파·격리 설명에는 걱정을 표현할 수 있다."],"positiveClues":["4주 기침","야간발한·체중감소","결핵 접촉","반복 소량 객혈"],"negativeClues":["대량 출혈 없음","항응고제·출혈 경향 없음","휴식 시 호흡곤란 없음"]},
-  "evaluationUse":{"mustAsk":["객혈의 양·색·기침과의 관계","기침 기간·발열·야간발한·체중감소","결핵 접촉·이전 치료·여행","호흡곤란·흉통·대량 출혈","흡연·항응고제·출혈 경향","필요한 감염관리·영상·객담검사·응급 기준"],"positiveClues":["결핵 접촉","전신 증상","상엽 수포음"],"negativeClues":["대량 객혈·기도 위협 없음"],"educationTopics":["신속한 객담·영상 평가","감염관리·마스크·격리 가능성","대량 출혈·호흡곤란 시 즉시 응급진료"]},"additionalPromptRule":[],
-  "ruleText":"# 증례명 : 객혈 (폐결핵 의심)\n- 한 달 기침, 야간발한·4kg 체중감소, 반복 소량 선홍색 객혈.\n- 결핵 치료 시작한 동료와 접촉, 대량 출혈과 휴식 시 호흡곤란 없음.\n\n추가 질문: \"가족에게 옮길까 봐 걱정돼요.\"","rawRuleText":"# 증례명 : 객혈 (폐결핵 의심)\n- 한 달 기침, 야간발한·4kg 체중감소, 반복 소량 선홍색 객혈.\n- 결핵 치료 시작한 동료와 접촉, 대량 출혈과 휴식 시 호흡곤란 없음.\n\n추가 질문: \"가족에게 옮길까 봐 걱정돼요.\""
+  "version": 2,
+  "type": "rule",
+  "id": "tuberculosis_hemoptysis_rule",
+  "title": "객혈 (폐결핵 의심)",
+  "category": "객혈",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 14 '객혈' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "폐결핵 의심 (Suspected pulmonary tuberculosis)",
+  "variant": "아급성 기침·야간발한·체중감소·반복 소량 객혈형",
+  "description": "결핵 가능성이 있는 객혈에서 감염 노출·격리·신속한 검사 및 응급 악화 기준을 평가하는 규칙입니다.",
+  "tags": [
+    "객혈",
+    "폐결핵",
+    "야간발한",
+    "체중감소",
+    "감염관리"
+  ],
+  "sourceTextFile": "016_hemoptysis.json·016_hemoptysis_prompt.md의 문진·진찰 계약을 바탕으로 한 Fable 초안 (서사·인물 창작, 2026-07-17)",
+  "contentStatus": "needs_clinical_review",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "무관",
+      "age": "20~60세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "한 달 넘게 기침이 지속되고 최근 새벽에 땀을 흘리며 4kg이 빠진 환자. 지난 사흘간 기침할 때 가래에 선홍색 피가 반복되며, 동료가 최근 결핵 치료를 시작했다.",
+    "mustInclude": [
+      "4주 이상 기침",
+      "야간발한·4kg 체중감소",
+      "반복 소량 선홍색 객혈",
+      "결핵 환자 접촉",
+      "대량 출혈·휴식 시 호흡곤란 없음"
+    ],
+    "preferredVariants": [
+      "가족에게 옮길까 걱정함"
+    ],
+    "mustAbsent": [
+      "항응고제 복용",
+      "심한 흉통",
+      "대량 객혈"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "이전 결핵 치료력 없음"
+    ],
+    "mustAbsent": [
+      "혈액응고질환",
+      "폐암 진단"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "가족 결핵력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "동료 결핵 치료 시작"
+    ],
+    "recommended": [
+      "비흡연 또는 경미한 과거 흡연"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·산소포화도·의식",
+      "method": "혈압·맥박·체온·산소포화도와 의식 확인",
+      "expectedFinding": "체온 37.9, 맥박 94회, 산소포화도 96%, 의식 명료",
+      "polarity": "positive",
+      "examConceptId": "vital_signs"
+    },
+    {
+      "item": "비강·구강·인두·결막",
+      "method": "코피·잇몸 출혈과 인두, 결막 확인",
+      "expectedFinding": "비강·구강 출혈 없고 결막이 약간 창백해 보임",
+      "polarity": "positive",
+      "examConceptId": "conjunctival_pallor"
+    },
+    {
+      "item": "경부 림프절·피부 출혈",
+      "method": "경부 림프절·점상출혈·멍 확인",
+      "expectedFinding": "경부 림프절 뚜렷한 종대 없고 피부 출혈 소견 없음",
+      "examConceptId": "neck_lymph_node"
+    },
+    {
+      "item": "흉부 진찰",
+      "method": "흉부 시진·타진과 양측 호흡음 청진",
+      "expectedFinding": "오른쪽 윗폐야에서 약한 수포음이 들리며 나머지 호흡음은 유지됨",
+      "polarity": "positive",
+      "examConceptId": "crackles_auscultation"
+    },
+    {
+      "item": "복부·하지",
+      "method": "간비장 비대·하지 부종·곤봉지·청색증 확인",
+      "expectedFinding": "간비장 비대·부종·곤봉지·청색증 없음",
+      "examConceptId": "peripheral_edema"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "오래된 기침과 야간발한, 체중감소 뒤 반복 소량 객혈이 있는 환자다. 결핵 접촉력은 질문해야 말하며, 스스로 병명을 말하지 않는다.",
+    "answerPolicy": [
+      "진단명을 먼저 말하지 않는다.",
+      "질문받은 항목에만 짧게 답한다.",
+      "가족 전파·격리 설명에는 걱정을 표현할 수 있다."
+    ],
+    "positiveClues": [
+      "4주 기침",
+      "야간발한·체중감소",
+      "결핵 접촉",
+      "반복 소량 객혈"
+    ],
+    "negativeClues": [
+      "대량 출혈 없음",
+      "항응고제·출혈 경향 없음",
+      "휴식 시 호흡곤란 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "객혈의 양·색·기침과의 관계",
+      "기침 기간·발열·야간발한·체중감소",
+      "결핵 접촉·이전 치료·여행",
+      "호흡곤란·흉통·대량 출혈",
+      "흡연·항응고제·출혈 경향",
+      "필요한 감염관리·영상·객담검사·응급 기준"
+    ],
+    "positiveClues": [
+      "결핵 접촉",
+      "전신 증상",
+      "상엽 수포음"
+    ],
+    "negativeClues": [
+      "대량 객혈·기도 위협 없음"
+    ],
+    "educationTopics": [
+      "신속한 객담·영상 평가",
+      "감염관리·마스크·격리 가능성",
+      "대량 출혈·호흡곤란 시 즉시 응급진료"
+    ]
+  },
+  "additionalPromptRule": [],
+  "ruleText": "# 증례명 : 객혈 (폐결핵 의심)\n- 한 달 기침, 야간발한·4kg 체중감소, 반복 소량 선홍색 객혈.\n- 결핵 치료 시작한 동료와 접촉, 대량 출혈과 휴식 시 호흡곤란 없음.\n\n추가 질문: \"가족에게 옮길까 봐 걱정돼요.\"",
+  "rawRuleText": "# 증례명 : 객혈 (폐결핵 의심)\n- 한 달 기침, 야간발한·4kg 체중감소, 반복 소량 선홍색 객혈.\n- 결핵 치료 시작한 동료와 접촉, 대량 출혈과 휴식 시 호흡곤란 없음.\n\n추가 질문: \"가족에게 옮길까 봐 걱정돼요.\""
 }

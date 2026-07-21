@@ -4,6 +4,7 @@
   "id": "allergic_rhinitis_rule",
   "title": "콧물/코막힘 (알레르기 비염 의심)",
   "category": "콧물/코막힘",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 15 '콧물/코막힘' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "알레르기 비염 의심 (Suspected allergic rhinitis)",
   "variant": "계절성 맑은 콧물 + 가려움·재채기형",
   "description": "봄만 되면 맑은 콧물이 줄줄 나고 재채기가 연달아 터지며 눈까지 가려운 규칙입니다.",

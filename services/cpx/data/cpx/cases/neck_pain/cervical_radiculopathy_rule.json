@@ -4,6 +4,7 @@
   "id": "cervical_radiculopathy_rule",
   "title": "목 통증 (신경근병증 의심)",
   "category": "목 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 32 '목 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "경추 신경근병증 의심 (Suspected cervical radiculopathy)",
   "variant": "상지 방사통·저림 동반형",
   "description": "목 통증과 함께 한쪽 팔을 타고 손가락까지 전기처럼 저린 규칙입니다.",

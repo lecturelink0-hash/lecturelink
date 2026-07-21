@@ -4,6 +4,7 @@
   "id": "nph_memory_rule",
   "title": "기억력 저하 (정상압수두증 의심)",
   "category": "기억력 저하",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 50 '기억력 저하' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "정상압수두증 의심 (Suspected normal pressure hydrocephalus)",
   "variant": "보행장애 + 인지 저하 + 요실금 삼합형",
   "description": "종종걸음으로 발이 붙은 듯 걷고, 깜빡하며, 소변을 지리는 — 치료 가능한 치매 규칙입니다.",
