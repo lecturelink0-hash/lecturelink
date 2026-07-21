@@ -103,6 +103,7 @@ export default function CpxPractice() {
   // 파트(대분류) → 주호소(카테고리) → 증례 3단계. 세션 진입 전(phase==='ready')에만 노출.
   const [selectedPart, setSelectedPart] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [query, setQuery] = useState(''); // 주호소·시나리오 통합 검색어
   const casesByCategory = useMemo(() => {
     const grouped = {};
     for (const item of caseCatalog.cases) {
@@ -127,6 +128,28 @@ export default function CpxPractice() {
   }, [caseCatalog]);
   const activePart = useMemo(() => partGroups.find((g) => g.id === selectedPart) ?? null, [partGroups, selectedPart]);
   const partCaseCount = (g) => g.cats.reduce((sum, c) => sum + (casesByCategory[c]?.length ?? 0), 0);
+  // 주호소(카테고리) → 소속 파트 id. 검색 결과에서 주호소를 누르면 해당 파트로 점프.
+  const categoryToPart = useMemo(() => {
+    const map = {};
+    for (const g of partGroups) for (const c of g.cats) if (!(c in map)) map[c] = g.id;
+    return map;
+  }, [partGroups]);
+  // 통합 검색 결과 — 공백 제거·소문자 정규화 후 부분일치.
+  const norm = (s) => (s || '').toString().replace(/\s+/g, '').toLowerCase();
+  const searchResults = useMemo(() => {
+    const q = norm(query);
+    if (!q) return null;
+    const cats = (caseCatalog.categories || []).filter((c) => norm(c).includes(q));
+    const cases = (caseCatalog.cases || []).filter((it) =>
+      norm(`${it.title}${it.description || ''}${it.variant || ''}${it.category || ''}`).includes(q),
+    );
+    return { cats, cases };
+  }, [query, caseCatalog]);
+  const openCategory = (cat) => {
+    setSelectedPart(categoryToPart[cat] ?? '');
+    setSelectedCategory(cat);
+    setQuery('');
+  };
   const [phase, setPhase] = useState('ready');
   const [status, setStatus] = useState('증례를 선택하고 진료를 시작하세요.');
   const [error, setError] = useState('');
@@ -373,9 +396,66 @@ export default function CpxPractice() {
     {phase === 'ready' && (
       catalogLoading ? (
         <div className="ll-card py-20 text-center text-[var(--color-muted)]">승인 증례를 불러오는 중…</div>
-      ) : !activePart ? (
+      ) : (
+      <div className="space-y-4">
+        {/* 통합 검색창 (우측 상단) — 주호소·시나리오 키워드로 바로 찾기 */}
+        <div className="flex justify-end">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="주호소·시나리오 검색 (예: 두통, 흉통, 통풍)"
+              className="h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white pl-9 pr-9 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            />
+            {query && <button type="button" onClick={() => setQuery('')} aria-label="검색어 지우기" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-muted)] transition hover:text-[var(--color-text)]"><XCircle className="h-4 w-4" /></button>}
+          </div>
+        </div>
+
+        {searchResults ? (
+          /* 검색 결과: 주호소(클릭 → 시나리오 선택으로 이동) + 시나리오(바로 연습) */
+          <div className="space-y-4">
+            {searchResults.cats.length === 0 && searchResults.cases.length === 0 ? (
+              <div className="cpx-empty">‘{query}’에 해당하는 주호소·시나리오가 없습니다.</div>
+            ) : (<>
+              {searchResults.cats.length > 0 && (
+                <div className="cpx-cat-list">
+                  <div className="cpx-col-head">주호소 · {searchResults.cats.length}</div>
+                  {searchResults.cats.map((cat) => {
+                    const CatIcon = catIcon(cat);
+                    return (
+                      <button key={cat} type="button" onClick={() => openCategory(cat)} className="cpx-cat-row">
+                        <span className="cpx-cat-icon"><CatIcon className="w-[18px] h-[18px]" strokeWidth={1.9} /></span>
+                        <span className="cpx-cat-name">{cat}</span>
+                        <span className="cpx-cat-count">{casesByCategory[cat]?.length ?? 0}</span>
+                        <ChevronRight className="w-4 h-4 shrink-0 text-[var(--color-muted)]" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {searchResults.cases.length > 0 && (
+                <div className="cpx-case-list">
+                  <div className="cpx-col-head">시나리오 · {searchResults.cases.length}</div>
+                  {searchResults.cases.slice(0, 40).map((item) => (
+                    <div key={item.id} className="cpx-case-row">
+                      <div className="min-w-0">
+                        <div className="cpx-case-title">{item.title}</div>
+                        <div className="cpx-case-desc"><span className="font-semibold text-[var(--color-primary)]">{item.category}</span> · {item.description || item.variant || '표준화 환자와 12분 진료 세션을 진행합니다.'}</div>
+                      </div>
+                      <Button variant="accent" size="sm" onClick={() => start(item)} loading={phase === 'starting' && caseId === item.id}>
+                        <Mic className="h-4 w-4" /> 바로 연습
+                      </Button>
+                    </div>
+                  ))}
+                  {searchResults.cases.length > 40 && <div className="cpx-empty">상위 40개만 표시됩니다. 검색어를 더 구체적으로 입력해보세요.</div>}
+                </div>
+              )}
+            </>)}
+          </div>
+        ) : !activePart ? (
         <section className="cpx-parts space-y-4">
-          <div className="grid-note text-right">먼저 연습할 파트를 선택하세요. 파트 안에서 주호소와 시나리오를 고릅니다.</div>
+          <div className="grid-note text-right">먼저 연습할 파트를 선택하거나, 위에서 주호소·시나리오를 검색하세요.</div>
           <section className="cpx-part-grid">
             {partGroups.map((g) => (
               <button
@@ -458,6 +538,8 @@ export default function CpxPractice() {
           </div>
           {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
         </section>
+        )}
+      </div>
       )
     )}
 
