@@ -158,6 +158,10 @@ export type UserRow = {
   current_year: number | null;
   plan_tier: PlanTier;
   role: UserRole;
+  account_type: 'student' | 'professor';
+  faculty_status: 'not_requested' | 'pending' | 'approved' | 'rejected';
+  faculty_approved_at: string | null;
+  faculty_approved_by: string | null;
   study_purpose: StudyPurpose | null;
   referral_code: string | null;
   acquisition_channel: string | null;

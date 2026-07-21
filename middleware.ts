@@ -113,7 +113,16 @@ export async function middleware(request: NextRequest) {
   //   - 아니면(만료 등)     → 랜딩
   if (isRoot) {
     const url = request.nextUrl.clone();
-    url.pathname = user ? '/dashboard' : '/landing.html';
+    let isProfessor = false;
+    if (user) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('account_type')
+        .eq('id', user.id)
+        .maybeSingle();
+      isProfessor = profile?.account_type === 'professor';
+    }
+    url.pathname = isProfessor ? '/professor' : user ? '/dashboard' : '/landing.html';
     return user ? NextResponse.redirect(url) : NextResponse.rewrite(url);
   }
 
