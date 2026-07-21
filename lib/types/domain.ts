@@ -107,6 +107,8 @@ export interface UserProfile {
   currentYear: number | null;
   planTier: PlanTier;
   onboardedAt: string | null;
+  accountType: 'student' | 'professor';
+  facultyStatus: 'not_requested' | 'pending' | 'approved' | 'rejected';
 }
 
 // ───────────── 풀이 세션 ─────────────

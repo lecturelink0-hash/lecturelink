@@ -1,0 +1,1 @@
+import {CourseDetail} from '@/components/professor/CourseWorkspace';export default async function Page({params}:{params:Promise<{courseId:string}>}){return <CourseDetail courseId={(await params).courseId}/>}

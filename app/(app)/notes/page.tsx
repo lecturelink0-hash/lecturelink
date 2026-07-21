@@ -184,8 +184,8 @@ export default function NotesPage() {
   const [topic, setTopic] = useState('');
   const [folder, setFolder] = useState('');
   const [difficulty, setDifficulty] = useState<(typeof DIFFICULTIES)[number]>('중');
-  const [questionType, setQuestionType] =
-    useState<(typeof QUESTION_TYPES)[number]>('지식형');
+  const [questionTypes, setQuestionTypes] =
+    useState<Array<(typeof QUESTION_TYPES)[number]>>(['지식형']);
   const [count, setCount] = useState(10);
 
   // AI 자동 분석 추천 설정
@@ -318,7 +318,7 @@ export default function NotesPage() {
       setTitle((cur) => cur || res.title);
       setTopic((cur) => cur || res.topic);
       if (res.difficulty) setDifficulty(res.difficulty);
-      if (res.question_type) setQuestionType(res.question_type);
+      if (res.question_type) setQuestionTypes([res.question_type]);
       // 저장 폴더도 AI 추천 과목명으로 자동 지정(사용자 수정 가능).
       if (res.subject) {
         const match = subjects.find(
@@ -398,7 +398,7 @@ export default function NotesPage() {
         desired_count: count,
         style: 'professor',
         difficulty,
-        question_type: questionType,
+        question_types: questionTypes,
         title: title.trim() || undefined,
         reference_upload_ids: references.map((reference) => reference.id),
       });
@@ -489,7 +489,7 @@ export default function NotesPage() {
     setTopic('');
     setFolder('');
     setDifficulty('중');
-    setQuestionType('지식형');
+    setQuestionTypes(['지식형']);
     setCount(10);
   }
 
@@ -526,7 +526,7 @@ export default function NotesPage() {
         result={generated}
         title={title}
         difficulty={difficulty}
-        questionType={questionType}
+        questionType={questionTypes.join(' · ')}
         onReset={resetForNew}
       />
     );
@@ -712,11 +712,10 @@ export default function NotesPage() {
                     label="문항 유형"
                     hint="지식형: 개념·정의를 확인하는 문항 / 임상형: 환자 증례로 진단·처치를 묻는 문항 / 이미지형: 자료의 의료 이미지를 판독해 푸는 문항"
                   >
-                    <Segmented
+                    <MultiSegmented
                       options={QUESTION_TYPES}
-                      value={questionType}
-                      onChange={setQuestionType}
-                      cards
+                      values={questionTypes}
+                      onChange={setQuestionTypes}
                     />
                   </Field>
                 </div>
@@ -1289,6 +1288,39 @@ function Segmented<T extends string>({
           >
             {cards && <span className="check-box" aria-hidden />}
             {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MultiSegmented<T extends string>({
+  options,
+  values,
+  onChange,
+}: {
+  options: readonly T[];
+  values: T[];
+  onChange: (values: T[]) => void;
+}) {
+  return (
+    <div className="checkset" role="group" aria-label="문항 유형 복수 선택">
+      {options.map((option) => {
+        const active = values.includes(option);
+        return (
+          <button
+            key={option}
+            type="button"
+            className={`check-card ${active ? 'active' : ''}`}
+            aria-pressed={active}
+            onClick={() => {
+              if (active && values.length === 1) return;
+              onChange(active ? values.filter((value) => value !== option) : [...values, option]);
+            }}
+          >
+            <span className="check-box" aria-hidden />
+            {option}
           </button>
         );
       })}

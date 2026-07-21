@@ -307,7 +307,7 @@ export default function ExamPage() {
         <section className="page-head">
           <div>
             <span className="eyebrow"><GraduationCap className="icon" />국시 대비</span>
-            <h1><span className="headline-accent">임상추론</span>을<br/><span className="headline-accent">시험 톤</span>으로 연습합니다</h1>
+            <h1><span className="headline-accent">예상문제</span>를 통해<br/><span className="headline-accent">국가고시</span>를 대비해보세요</h1>
             <p className="lead">교과서적 의학 지식과 임상 시나리오를 결합한 국가고시형 문제입니다. 과목·세부주제별로 풀고, 오답 데이터로 약한 개념을 반복 학습하세요.</p>
           </div>
           {/* CPX 실전 연습 — 국시 대비 우측 대표 배너(별도 진입) */}

@@ -8,6 +8,7 @@ import { authErrorMessage } from '@/lib/auth/auth-error-message';
 import { Button } from '@/components/ui/Button';
 
 type Mode = 'login' | 'signup';
+type AccountType = 'student' | 'professor';
 
 /** 인증 성공 후 이동할 경로 — 보호 경로에서 왔으면 next, 아니면 앱 홈(/dashboard). (/ 는 이제 랜딩) */
 function postAuthDest(): string {
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [accountType, setAccountType] = useState<AccountType>('student');
   const [emailOpen, setEmailOpen] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -78,7 +80,7 @@ export default function LoginPage() {
           {
             method: 'POST',
             headers: { apikey: supaAnon, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, data: { requested_account_type: accountType } }),
           },
         );
         body = await res.json().catch(() => ({}));
@@ -109,13 +111,13 @@ export default function LoginPage() {
     }
 
     // 로그인
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setStatus('error');
       setErrorMsg(authErrorMessage(error));
       return;
     }
-    window.location.href = postAuthDest();
+    window.location.href = '/';
   }
 
   const [forgotState, setForgotState] = useState<'idle' | 'sending' | 'sent'>('idle');
@@ -156,6 +158,9 @@ export default function LoginPage() {
   function handleKakao() {
     setErrorMsg('');
     setStatus('sending');
+    if (mode === 'signup') {
+      document.cookie = `lecturelink_account_type=${accountType}; Path=/; Max-Age=600; SameSite=Lax`;
+    }
     // Supabase 내장 카카오 provider 는 account_email 을 강제 요청해 KOE205 를 유발한다(비즈앱 필요).
     // 이메일을 요구하지 않는 커스텀 카카오 로그인(/api/auth/kakao/start)으로 개시한다.
     const next = new URLSearchParams(window.location.search).get('next');
@@ -316,6 +321,17 @@ export default function LoginPage() {
 
               {mode === 'signup' && (
                 <>
+                  <fieldset className="mb-5">
+                    <legend className="block text-sm font-semibold text-sage-800 mb-2">가입 유형</legend>
+                    <div className="grid grid-cols-2 gap-2" role="group" aria-label="가입 유형">
+                      {([['student', '학생', '문제풀이와 복습'], ['professor', '교수', '수업과 형성평가']] as const).map(([value, label, description]) => (
+                        <button key={value} type="button" onClick={() => setAccountType(value)} aria-pressed={accountType === value} className={`min-h-16 rounded-lg border px-3 py-2 text-left transition-colors ${accountType === value ? 'border-sage-600 bg-[var(--color-sage-100)] text-sage-800' : 'border-[var(--color-border)] bg-white text-[var(--color-muted)]'}`}>
+                          <strong className="block text-sm">{label}</strong>
+                          <span className="block mt-0.5 text-xs">{description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
                   <label className="block text-sm font-semibold text-sage-800 mb-2">비밀번호 확인</label>
                   <div className="relative mb-5">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-muted)]" />

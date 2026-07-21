@@ -29,7 +29,7 @@ export interface EnqueueInput {
   desiredCount?: number;
   style?: 'kmle' | 'professor' | 'internal';
   difficulty?: '하' | '중' | '상';
-  questionType?: '지식형' | '임상형' | '이미지형';
+  questionTypes?: Array<'지식형' | '임상형' | '이미지형'>;
   title?: string;
   referenceUploadIds?: string[];
 }
@@ -283,7 +283,7 @@ export async function executeProcessUpload(
       desiredCount: input.desiredCount,
       style: input.style,
       difficulty: input.difficulty,
-      questionType: input.questionType,
+      questionTypes: input.questionTypes,
       title: input.title,
       referenceUploadIds: input.referenceUploadIds,
     });
