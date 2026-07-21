@@ -148,9 +148,67 @@ function applyGlbColorFix(root) {
   })
 }
 
+// ── 주호소별 증상 모션 프로파일 ──────────────────────────────────
+// 3D 모델은 LLM이 못 움직이므로, 케이스 category에 따라 절차적으로 몸짓을 얹는다.
+// 필드: tremor(떨림 진폭) / hunch(앞으로 숙임 rad) / slump(축 처짐 rad) /
+//       wobble(어지러운 흔들림) / fidget(안절부절 좌우) / cough(기침 반동 세기, 음성 연동) /
+//       breath({rate,amp} 가쁜 호흡)
+const MOTION_PROFILE_BY_CATEGORY = {
+  '경련': { tremor: 0.020 },                 // 전신 발작성 떨림(강)
+  '손떨림': { tremor: 0.006 },               // 미세 떨림
+  '의식장애': { slump: 0.12, tremor: 0.003 },// 축 처지고 멍한 미동
+  '발열': { slump: 0.05, tremor: 0.004 },    // 오한성 미세 떨림
+  '급성 복통': { hunch: 0.17 },              // 배 움켜쥔 듯 상체 숙임(강)
+  '소화불량/만성복통': { hunch: 0.10 },
+  '구토': { hunch: 0.11 },
+  '허리 통증': { hunch: 0.12 },
+  '관절 통증': { hunch: 0.06 },
+  '두통': { hunch: 0.05 },
+  '가슴 통증': { hunch: 0.07 },
+  '토혈': { hunch: 0.07 },
+  '붉은색 소변': { hunch: 0.05 },
+  '기침': { cough: 0.22 },                   // 기침 시 상체 반동(음성 연동)
+  '객혈': { cough: 0.18 },
+  '호흡곤란': { breath: { rate: 3.4, amp: 0.020 } }, // 가쁘고 큰 호흡
+  '어지럼': { wobble: 0.05 },                // 좌우로 흔들림
+  '불안': { fidget: 0.030 },                 // 안절부절 좌우 미동
+  '기분 변화': { slump: 0.10 },
+  '자살': { slump: 0.12 },
+  '피로': { slump: 0.08 },
+  '수면장애': { slump: 0.05 },
+  '설사': { slump: 0.06 },
+}
+
+// 기저(호흡·idle) 변환이 매 프레임 절대값으로 세팅된 뒤, 그 위에 증상 몸짓을 가산한다.
+function applySymptomMotion(g, p, t, { speaking, audioLevel, lying }) {
+  if (!g || !p) return
+  const lyingK = lying ? 0.4 : 1 // 누운 진찰 자세에서는 과한 몸짓을 줄여 프레이밍을 보존
+  if (p.tremor) {
+    const a = p.tremor * lyingK
+    g.position.x += Math.sin(t * 47) * a
+    g.position.y += Math.sin(t * 41 + 1.3) * a * 0.6
+    g.rotation.z += Math.sin(t * 53) * a * 0.5
+  }
+  if (!lying && p.hunch) g.rotation.x += p.hunch + Math.sin(t * 1.2) * p.hunch * 0.15
+  if (!lying && p.slump) { g.rotation.x += p.slump; g.position.y -= p.slump * 0.15 }
+  if (!lying && p.wobble) { g.rotation.z += Math.sin(t * 1.7) * p.wobble; g.rotation.x += Math.sin(t * 1.1) * p.wobble * 0.7 }
+  if (!lying && p.fidget) g.rotation.y += Math.sin(t * 3.2) * p.fidget
+  if (p.cough && speaking) {
+    // 큰 발화(기침음) 순간에 상체가 앞으로 툭 반동 — 음성 진폭에 비례
+    const impulse = Math.max(0, audioLevel - 0.4) * p.cough * lyingK
+    if (lying) g.position.x -= impulse * 0.5
+    else { g.rotation.x += impulse; g.position.y -= impulse * 0.06 }
+  }
+  if (p.breath) {
+    const b = Math.sin(t * p.breath.rate) * p.breath.amp
+    g.scale.multiplyScalar(1 + b)
+    if (!lying) g.position.y += Math.abs(b) * 0.4
+  }
+}
+
 // ── 공용 애니메이션 훅: 호흡 + idle 흔들림 + 발화 반응 ──────────────
 // hasIdleClip이면 모델 내장 Idle 애니메이션이 호흡을 담당하므로 스케일 호흡은 생략.
-function useIdleMotion(ref, { speaking, audioLevel, pose, hasIdleClip = false, bodyH = 1.8, bodyMinZ = -0.2 }) {
+function useIdleMotion(ref, { speaking, audioLevel, pose, hasIdleClip = false, bodyH = 1.8, bodyMinZ = -0.2, motionProfile = null }) {
   const t = useRef(0)
   useFrame((_, delta) => {
     t.current += delta
@@ -169,6 +227,7 @@ function useIdleMotion(ref, { speaking, audioLevel, pose, hasIdleClip = false, b
       g.rotation.set(0, Math.sin(t.current * 0.5) * 0.05, 0)
       g.position.set(0, bob, 0)
     }
+    applySymptomMotion(g, motionProfile, t.current, { speaking, audioLevel, lying })
   })
 }
 
@@ -379,18 +438,24 @@ function GlbPatient({ url, ...motion }) {
 }
 
 // ── 절차적 폴백 아바타 ────────────────────────────────────────
-function ProceduralPatient({ gender, speaking, audioLevel, pose }) {
+function ProceduralPatient({ gender, speaking, audioLevel, pose, motionProfile = null }) {
   const group = useRef()
   const head = useRef()
   const jaw = useRef()
   const t = useRef(0)
   const isMale = gender === '남성'
   const hair = isMale ? HAIR_M : HAIR_F
+  const lying = pose === 'lying'
 
   useFrame((_, delta) => {
     t.current += delta
     const breathe = Math.sin(t.current * 1.6) * 0.015
-    if (group.current) group.current.scale.setScalar(1 + breathe)
+    if (group.current) {
+      group.current.scale.setScalar(1 + breathe)
+      group.current.rotation.set(lying ? -Math.PI / 2 : 0, 0, lying ? Math.PI / 2 : 0)
+      group.current.position.set(0, 0, 0)
+      applySymptomMotion(group.current, motionProfile, t.current, { speaking, audioLevel, lying })
+    }
     if (head.current) {
       head.current.rotation.y = Math.sin(t.current * 0.6) * 0.06
       head.current.rotation.x = speaking ? Math.sin(t.current * 8) * 0.03 * (0.4 + audioLevel) : Math.sin(t.current * 0.4) * 0.02
@@ -402,7 +467,6 @@ function ProceduralPatient({ gender, speaking, audioLevel, pose }) {
     }
   })
 
-  const lying = pose === 'lying'
   return (
     <group
       ref={group}
@@ -508,9 +572,9 @@ function useResolvedModel(gender, age) {
   return url
 }
 
-function PatientAvatar({ gender, age, speaking, audioLevel, pose }) {
+function PatientAvatar({ gender, age, speaking, audioLevel, pose, motionProfile }) {
   const url = useResolvedModel(gender, age)
-  const procedural = <ProceduralPatient gender={gender} speaking={speaking} audioLevel={audioLevel} pose={pose} />
+  const procedural = <ProceduralPatient gender={gender} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
 
   // 확인 중이거나 GLB 없음 → 절차적
   if (!url) return procedural
@@ -518,14 +582,15 @@ function PatientAvatar({ gender, age, speaking, audioLevel, pose }) {
   return (
     <AvatarErrorBoundary url={url} fallback={procedural}>
       <Suspense fallback={procedural}>
-        <GlbPatient url={url} speaking={speaking} audioLevel={audioLevel} pose={pose} />
+        <GlbPatient url={url} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
       </Suspense>
     </AvatarErrorBoundary>
   )
 }
 
 // examTarget: 누운 상태가 필수인 신체진찰 시 카메라·조명이 향할 부위 키 (EXAM_REGION_FRAC 참조)
-export default function Avatar3D({ gender = '남성', age, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null }) {
+export default function Avatar3D({ gender = '남성', age, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null, category = '' }) {
+  const motionProfile = MOTION_PROFILE_BY_CATEGORY[category] || null
   return (
     <Canvas
       key={`${gender}-${age}`}
@@ -541,7 +606,7 @@ export default function Avatar3D({ gender = '남성', age, speaking = false, aud
       <CameraRig pose={pose} examTarget={examTarget} />
       {pose === 'lying' && <ExamBed />}
       {pose === 'lying' && examTarget && <ExamSpotlight examTarget={examTarget} />}
-      <PatientAvatar gender={gender} age={age} speaking={speaking} audioLevel={audioLevel} pose={pose} />
+      <PatientAvatar gender={gender} age={age} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
       {typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debugaxes') && (
         <axesHelper args={[1.5]} />
       )}
