@@ -1,0 +1,145 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "postrenal_obstruction_oliguria_rule",
+  "title": "핍뇨 (신후성 요폐 의심)",
+  "category": "핍뇨",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 28 '핍뇨' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "신후성 급성 요저류(요폐)에 의한 핍뇨 의심 (Suspected postrenal obstruction / urinary retention)",
+  "variant": "전립선비대 등 하부요로 폐쇄 + 방광 팽만형",
+  "description": "소변이 안 나오고 아랫배가 빵빵하게 부른 고령 남성의 규칙입니다.",
+  "tags": [
+    "핍뇨",
+    "요폐",
+    "신후성",
+    "전립선비대"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "60~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "하루 이상 소변을 거의 못 보고 아랫배가 빵빵하며 아프다. 몇 달 전부터 소변 줄기가 약하고 자주 마려웠다. 최근 감기약(항히스타민)을 먹었다.",
+    "mustInclude": [
+      "소변량 급감·거의 못 봄",
+      "방광 팽만감·하복부 통증",
+      "선행 배뇨증상(약한 줄기·잔뇨·빈뇨)",
+      "유발(항콜린성 약물 등) 가능",
+      "전신 부종은 뚜렷치 않음"
+    ],
+    "preferredVariants": [
+      "소변을 보려 해도 나오지 않고 찔끔거림",
+      "이전 전립선 문제 이야기 들음"
+    ],
+    "mustAbsent": [
+      "선행 인후염 후 부종·혈뇨(사구체신염형)",
+      "심한 탈수·설사만",
+      "양측 하지 심한 부종"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "전립선비대 하부요로증상 가능"
+    ],
+    "mustAbsent": [
+      "최근 심한 설사·탈수만"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 항히스타민 복용 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·탈수·구강 점막",
+      "method": "활력징후·탈수·구강 점막 확인",
+      "expectedFinding": "활력징후 대체로 정상, 구강 점막 촉촉"
+    },
+    {
+      "item": "결막·피부·하지 부종",
+      "method": "결막·피부·하지 부종 확인",
+      "expectedFinding": "부종 없음"
+    },
+    {
+      "item": "심음·호흡음·경정맥",
+      "method": "심음·호흡음·경정맥 확인",
+      "expectedFinding": "심음·호흡음 정상"
+    },
+    {
+      "item": "복부·방광·CVA 압통",
+      "method": "복부·방광·CVA 압통 확인",
+      "expectedFinding": "치골 위 방광 팽만·압통(방광 촉지)",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "소변을 못 보고 방광이 팽만한 고령 남성. '하루 넘게 소변 못 봄','아랫배 빵빵·아픔','전에 줄기 약함','감기약 먹음'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "요저류·방광 팽만",
+      "선행 배뇨증상",
+      "약물 유발"
+    ],
+    "negativeClues": [
+      "선행 인후염·부종 없음",
+      "심한 탈수 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "소변량·마지막 배뇨",
+      "방광 팽만·하복부 통증",
+      "선행 배뇨증상(줄기·잔뇨)",
+      "약물력",
+      "부종·탈수 배제",
+      "전립선 증상"
+    ],
+    "positiveClues": [
+      "요저류 + 방광 팽만 + 배뇨증상"
+    ],
+    "negativeClues": [
+      "사구체신염 아님",
+      "단순 탈수 아님"
+    ],
+    "educationTopics": [
+      "소변 배출 통로 막힘(요폐) 가능성을 설명",
+      "도뇨로 즉시 감압하고 신장기능 확인의 중요성",
+      "전립선 등 원인 평가 계획"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 통증이 심해 빨리 소변을 빼길 원한다. 도뇨와 원인 검사를 설명한다."
+  ],
+  "ruleText": "# 증례명 : 핍뇨(신후성 요폐)\n- 인적사항 - 남성 우세, 60~80세, 응급실\n- 사례 요약 - 요저류·방광 팽만·하복부 통증, 선행 배뇨증상, 약물 유발.\n",
+  "rawRuleText": "핍뇨 — 신후성 요폐 의심. 요저류 + 방광 팽만 + 선행 배뇨증상."
+}

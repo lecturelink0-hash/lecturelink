@@ -1,0 +1,156 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "colorectal_cancer_hematochezia_rule",
+  "title": "혈변 (대장암 의심 적신호)",
+  "category": "혈변",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 19 '혈변' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "대장암 의심 (Suspected colorectal cancer)",
+  "variant": "배변습관 변화 + 간헐 혈변·체중감소·빈혈 적신호형",
+  "description": "배변 습관이 변하고 간간이 피가 섞이며 살이 빠지고 기운 없는 고령 환자의 적신호 규칙입니다.",
+  "tags": [
+    "혈변",
+    "대장암",
+    "적신호",
+    "체중감소",
+    "빈혈"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "55~75세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "두세 달 전부터 변이 가늘어지고 변비·설사가 번갈아 나며 대변에 검붉은 피가 섞여 나온다. 잔변감이 있고 체중이 4kg 빠졌으며 기운이 없다.",
+    "mustInclude": [
+      "최근 배변 습관 변화(변 굵기·빈도)",
+      "대변에 섞인 혈변(선홍~검붉은)",
+      "잔변감·후중감",
+      "체중 감소·피로(빈혈 시사)",
+      "서서히 진행"
+    ],
+    "preferredVariants": [
+      "대장암·용종 가족력",
+      "이전 대장내시경 안 받음"
+    ],
+    "mustAbsent": [
+      "항문 통증+선혈이 변 표면에만(치핵 전형)",
+      "급성 발열·집단 설사(감염성)",
+      "갑작스런 좌하복부 통증 후 혈변(허혈성)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "치핵으로 진단받은 반복 출혈만"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "대장암 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "붉은 고기·음주 잦음 가능"
+    ],
+    "recommended": [
+      "운동 부족"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 대체로 정상, 빈맥 가능"
+    },
+    {
+      "item": "전반적 외견",
+      "method": "전반적 외견 확인",
+      "expectedFinding": "결막 창백(빈혈)",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진 확인",
+      "expectedFinding": "복부 팽만 없음"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진 확인",
+      "expectedFinding": "좌하복부 종괴·압통 가능"
+    },
+    {
+      "item": "항문 주위",
+      "method": "항문 주위 확인",
+      "expectedFinding": "항문 주위 정상"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "직장수지검사 확인",
+      "expectedFinding": "직장수지검사에서 종괴·혈액 가능",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "배변습관 변화·간헐 혈변·체중감소의 고령 환자. '변이 가늘어짐','변에 피 섞임','잔변감','살 빠짐'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "배변습관 변화",
+      "섞인 혈변",
+      "잔변감",
+      "체중감소·피로"
+    ],
+    "negativeClues": [
+      "항문 통증형 아님",
+      "급성 감염 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "배변습관 변화(굵기·빈도)",
+      "혈변 양상(섞임)",
+      "잔변감·후중감",
+      "체중·피로",
+      "가족력",
+      "치핵/감염/허혈 배제"
+    ],
+    "positiveClues": [
+      "배변습관 변화 + 혈변 + 체중감소"
+    ],
+    "negativeClues": [
+      "치핵 전형 아님",
+      "급성 감염 아님"
+    ],
+    "educationTopics": [
+      "대장 악성 배제를 위해 대장내시경이 필요함을 설명",
+      "빈혈·종양표지자 등 검사 계획",
+      "조기 발견의 이점 중심으로 안내"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 대수롭지 않게 여기나, 배변습관 변화·체중감소의 의미를 설명하면 검사에 동의한다."
+  ],
+  "ruleText": "# 증례명 : 혈변(대장암 적신호)\n- 인적사항 - 성별 랜덤, 55~75세, 외래\n- 사례 요약 - 배변습관 변화 + 섞인 혈변 + 잔변감 + 체중감소·빈혈.\n- 현 병력 - 두세 달 변 가늘어짐, 혈변, -4kg.",
+  "rawRuleText": "혈변 — 대장암 의심. 배변습관 변화 + 섞인 혈변 + 체중감소·빈혈."
+}

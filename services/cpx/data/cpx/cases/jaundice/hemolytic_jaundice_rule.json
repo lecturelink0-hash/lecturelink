@@ -1,0 +1,156 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "hemolytic_jaundice_rule",
+  "title": "황달 (용혈성 황달 의심)",
+  "category": "황달",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 23 '황달' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "용혈성 빈혈에 의한 황달 의심 (Suspected hemolytic jaundice)",
+  "variant": "빈혈·피로 + 황달 + 진한 소변·비장비대형",
+  "description": "피곤하고 어지러우면서 눈이 노래지고 소변이 진해진 환자의 규칙입니다.",
+  "tags": [
+    "황달",
+    "용혈성",
+    "빈혈",
+    "비장비대"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "며칠 전부터 유난히 피곤하고 어지럽고 숨이 차며, 눈이 노래지고 소변이 콜라색으로 진해졌다. 대변 색은 정상이다.",
+    "mustInclude": [
+      "황달과 함께 빈혈 증상(피로·어지럼·숨참·창백)",
+      "진한(콜라색) 소변, 대변 색은 정상",
+      "최근 갑자기 발생",
+      "약물·감염 등 유발 가능",
+      "가려움은 심하지 않음"
+    ],
+    "preferredVariants": [
+      "예전에도 비슷한 적·가족 중 빈혈",
+      "최근 새 약을 먹기 시작"
+    ],
+    "mustAbsent": [
+      "회색(옅은) 대변",
+      "심한 우상복부 산통·발열",
+      "다량 음주력"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "담석 진단력",
+      "만성 간질환"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "빈혈·용혈 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "최근 약물 복용 가능"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 빈맥 가능, 창백"
+    },
+    {
+      "item": "공막",
+      "method": "공막 확인",
+      "expectedFinding": "공막 황달",
+      "polarity": "positive"
+    },
+    {
+      "item": "피부",
+      "method": "피부 확인",
+      "expectedFinding": "피부 창백·경도 황달"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진 확인",
+      "expectedFinding": "복부 시진 정상"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진 확인",
+      "expectedFinding": "비장 촉지 가능, 우상복부 압통 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 상태",
+      "method": "신경학적 상태 확인",
+      "expectedFinding": "의식 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "빈혈 증상 동반 황달·진한 소변(정상 대변색) 환자. '피곤·어지럼·숨참','콜라색 소변','대변색은 정상'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "빈혈 증상 + 황달",
+      "콜라색 소변·정상 대변",
+      "비장비대"
+    ],
+    "negativeClues": [
+      "회색변 없음",
+      "산통·발열 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "황달·빈혈 증상 동반",
+      "소변·대변 색(진한 소변/정상 대변)",
+      "발생 속도·유발(약물·감염)",
+      "가족력",
+      "산통·발열 부재",
+      "음주력"
+    ],
+    "positiveClues": [
+      "빈혈 + 황달",
+      "콜라색 소변/정상 대변"
+    ],
+    "negativeClues": [
+      "회색변 없음",
+      "산통 없음"
+    ],
+    "educationTopics": [
+      "적혈구가 깨지는 용혈이 원인일 수 있음을 설명",
+      "빈혈·용혈 검사(빌리루빈·망상적혈구 등) 계획",
+      "유발 약물·원인 확인의 중요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 피곤함과 소변 색이 걱정된다. 빈혈 검사 필요성을 설명하면 수긍한다."
+  ],
+  "ruleText": "# 증례명 : 황달(용혈성)\n- 인적사항 - 성별 랜덤, 20~50세, 외래\n- 사례 요약 - 빈혈 증상 + 황달, 콜라색 소변·정상 대변, 비장비대 가능.\n- 현 병력 - 며칠간 피로·어지럼·황달, 진한 소변.",
+  "rawRuleText": "황달 — 용혈성 황달 의심. 빈혈 증상 + 황달 + 콜라색 소변(정상 대변색)."
+}

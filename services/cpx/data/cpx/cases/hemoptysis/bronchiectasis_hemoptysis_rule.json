@@ -1,0 +1,147 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "bronchiectasis_hemoptysis_rule",
+  "title": "객혈 (기관지확장증 의심)",
+  "category": "객혈",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 14 '객혈' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "기관지확장증 의심 (Suspected bronchiectasis)",
+  "variant": "만성 다량 화농성 가래 + 반복 객혈·폐렴력형",
+  "description": "오래 전부터 가래가 많고 반복해서 폐렴을 앓으며 가끔 피를 뱉는 환자의 규칙입니다.",
+  "tags": [
+    "객혈",
+    "기관지확장증",
+    "만성기침",
+    "반복폐렴"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "40~65세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "수년 전부터 매일 화농성 가래가 많이 나오고, 반복해서 폐렴·기관지염으로 치료받았으며, 가끔 가래에 피가 섞이거나 붉은 피를 뱉는다.",
+    "mustInclude": [
+      "만성적 다량 화농성 가래",
+      "반복되는 하기도 감염·폐렴력",
+      "간헐적 객혈(소량~중등량)",
+      "오래된 경과",
+      "어릴 때 심한 폐 감염·결핵 등 과거력 가능"
+    ],
+    "preferredVariants": [
+      "아침에 가래가 특히 많음",
+      "특정 자세에서 가래가 잘 나옴"
+    ],
+    "mustAbsent": [
+      "단기 기침 변화+체중감소(폐암형)",
+      "급성 단발 발열성 폐렴만",
+      "코피·잇몸출혈 등 상기도 출혈원"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "반복 폐렴·기관지염 치료력"
+    ],
+    "mustAbsent": []
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 또는 흡연"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·산소포화도·의식",
+      "method": "활력징후·산소포화도·의식 확인",
+      "expectedFinding": "활력징후·산소포화도 대체로 정상, 의식 명료"
+    },
+    {
+      "item": "비강·구강·인두·결막",
+      "method": "비강·구강·인두·결막 확인",
+      "expectedFinding": "비강·인두 출혈원 없음"
+    },
+    {
+      "item": "경부 림프절·피부 출혈",
+      "method": "경부 림프절·피부 출혈 확인",
+      "expectedFinding": "경부 림프절 정상"
+    },
+    {
+      "item": "흉부 진찰",
+      "method": "흉부 진찰 확인",
+      "expectedFinding": "흉부 국소 수포음·거친 호흡음",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부·하지",
+      "method": "복부·하지 확인",
+      "expectedFinding": "복부·하지 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "만성 화농성 가래·반복 폐렴·간헐 객혈 환자. '수년간 가래 많음','폐렴 반복','가끔 피 섞임'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "만성 다량 화농성 가래",
+      "반복 감염",
+      "간헐 객혈"
+    ],
+    "negativeClues": [
+      "단기 기침 변화 아님",
+      "상기도 출혈 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "가래 양·양상·기간",
+      "반복 폐렴·감염력",
+      "객혈 빈도·양",
+      "어릴 때 폐 감염",
+      "폐암/상기도 출혈 배제",
+      "자세·아침 가래"
+    ],
+    "positiveClues": [
+      "만성 화농성 가래 + 반복 감염 + 객혈"
+    ],
+    "negativeClues": [
+      "단기 변화 아님"
+    ],
+    "educationTopics": [
+      "기관지가 늘어난 상태(기관지확장증) 가능성을 설명",
+      "흉부 CT·객담검사 등 계획",
+      "기도 청결·감염 예방·백신의 중요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 반복되는 가래·객혈에 지쳐 있다. 검사와 관리 계획을 설명하면 수긍한다."
+  ],
+  "ruleText": "# 증례명 : 객혈(기관지확장증)\n- 인적사항 - 성별 랜덤, 40~65세, 외래\n- 사례 요약 - 만성 다량 화농성 가래 + 반복 폐렴 + 간헐 객혈.\n- 현 병력 - 수년 가래 많음, 폐렴 반복, 가끔 객혈.",
+  "rawRuleText": "객혈 — 기관지확장증 의심. 만성 화농성 가래 + 반복 감염 + 간헐 객혈."
+}

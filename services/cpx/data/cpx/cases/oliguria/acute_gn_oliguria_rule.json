@@ -1,0 +1,145 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "acute_gn_oliguria_rule",
+  "title": "핍뇨 (급성 사구체신염 의심)",
+  "category": "핍뇨",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 28 '핍뇨' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "급성 사구체신염(신염증후군)에 의한 핍뇨 의심 (Suspected acute glomerulonephritis)",
+  "variant": "선행 감염 후 소변량 감소 + 부종·고혈압·혈뇨형",
+  "description": "소변량이 줄고 얼굴·다리가 붓고 소변이 콜라색인 환자의 규칙입니다.",
+  "tags": [
+    "핍뇨",
+    "사구체신염",
+    "신염증후군",
+    "부종"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "15~40세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "1~2주 전 목감기(또는 피부 감염)를 앓았고, 며칠 전부터 소변량이 줄며 아침에 눈두덩·다리가 붓고 소변이 콜라색으로 진해졌다. 머리가 아프고 혈압이 높다.",
+    "mustInclude": [
+      "소변량 감소",
+      "선행 감염(인후염/피부) 1~2주 전",
+      "부종(눈두덩·하지)",
+      "콜라색(혈뇨)·거품뇨",
+      "혈압 상승"
+    ],
+    "preferredVariants": [
+      "예전에도 감기 뒤 소변이 붉었던 적",
+      "몸이 무겁고 얼굴이 부음"
+    ],
+    "mustAbsent": [
+      "방광 팽만·요저류(신후성)",
+      "심한 탈수·설사만",
+      "무통성 진행 황달"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "전립선 요저류",
+      "요로결석 산통"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "신질환 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·탈수·구강 점막",
+      "method": "활력징후·탈수·구강 점막 확인",
+      "expectedFinding": "활력징후 혈압 상승, 구강 점막 촉촉",
+      "polarity": "positive"
+    },
+    {
+      "item": "결막·피부·하지 부종",
+      "method": "결막·피부·하지 부종 확인",
+      "expectedFinding": "눈꺼풀·하지 부종",
+      "polarity": "positive"
+    },
+    {
+      "item": "심음·호흡음·경정맥",
+      "method": "심음·호흡음·경정맥 확인",
+      "expectedFinding": "심음·호흡음 정상(체액과다 시 수포음 가능)"
+    },
+    {
+      "item": "복부·방광·CVA 압통",
+      "method": "복부·방광·CVA 압통 확인",
+      "expectedFinding": "방광 팽만 없음, CVA 압통 뚜렷치 않음"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "선행 감염 후 소변량 감소·부종·콜라색 소변의 환자. '목감기/피부 감염 앓음','소변 줄고 붓고 진해짐'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "소변량 감소",
+      "선행 감염",
+      "부종·고혈압",
+      "콜라색뇨"
+    ],
+    "negativeClues": [
+      "요저류 아님",
+      "단순 탈수 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "소변량·색 변화",
+      "선행 감염과 시점",
+      "부종 부위",
+      "혈압·두통",
+      "요저류/결석 배제",
+      "거품뇨"
+    ],
+    "positiveClues": [
+      "소변량 감소 + 부종 + 콜라색뇨 + 고혈압"
+    ],
+    "negativeClues": [
+      "요저류 아님"
+    ],
+    "educationTopics": [
+      "신장(사구체) 염증 가능성을 설명",
+      "소변·신장기능·보체 등 검사와 혈압·염분 관리",
+      "추적의 중요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 붓고 소변이 진해 걱정한다. 신장 검사 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 핍뇨(급성 사구체신염)\n- 인적사항 - 성별 랜덤, 15~40세, 외래\n- 사례 요약 - 선행 감염 후 소변량 감소·부종·고혈압·콜라색뇨.\n",
+  "rawRuleText": "핍뇨 — 급성 사구체신염 의심. 선행 감염 후 소변량 감소 + 부종·고혈압·혈뇨."
+}

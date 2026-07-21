@@ -1,0 +1,155 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "sepsis_encephalopathy_rule",
+  "title": "의식장애 (패혈증 동반 적신호)",
+  "category": "의식장애",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 47 '의식장애' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "패혈증에 의한 의식저하 의심 (Suspected sepsis-associated encephalopathy)",
+  "variant": "고령의 감염 + 발열·저혈압·의식저하형",
+  "description": "며칠 전부터 열이 나고 처지더니 정신이 흐려진 고령 환자의 적신호 규칙입니다.",
+  "tags": [
+    "의식장애",
+    "패혈증",
+    "감염",
+    "적신호",
+    "고령"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "65~85세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "2~3일 전부터 소변 볼 때 아프고 옆구리가 아프며 열이 났는데, 오늘부터 축 처지고 정신이 오락가락한다. 잘 먹지 못했다. 환자는 느리고 혼란스럽게 답한다.",
+    "mustInclude": [
+      "선행 감염 증상(배뇨통·옆구리 통증 등 요로감염 시사)",
+      "발열·오한",
+      "급격한 의식 변화·혼돈",
+      "식사·수분 섭취 저하",
+      "고령"
+    ],
+    "preferredVariants": [
+      "소변량이 줄었다",
+      "말이 앞뒤가 안 맞는다"
+    ],
+    "mustAbsent": [
+      "갑작스런 편마비(뇌졸중형)",
+      "저혈당(정상)",
+      "머리 외상"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "당뇨 또는 만성질환 가능"
+    ],
+    "mustAbsent": [
+      "최근 외상"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "독거 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "ABC·활력징후·산소포화도",
+      "method": "ABC·활력징후·산소포화도 확인",
+      "expectedFinding": "발열·빈맥·저혈압 경향, 산소포화도 저하 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "GCS·의식·지남력",
+      "method": "GCS·의식·지남력 확인",
+      "expectedFinding": "의식 혼돈·지남력 저하",
+      "polarity": "positive"
+    },
+    {
+      "item": "동공·구강·외상",
+      "method": "동공·구강·외상 확인",
+      "expectedFinding": "동공 정상, 외상 없음"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "신경학적 진찰 확인",
+      "expectedFinding": "국소 마비 없음(전반적 처짐)"
+    },
+    {
+      "item": "혈당",
+      "method": "혈당 확인",
+      "expectedFinding": "혈당 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "감염 후 의식이 흐려진 고령 환자. 혼란스럽게 느리게 답한다. '소변 볼 때 아픔','옆구리 아픔','열','잘 못 먹음'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "선행 요로감염 증상",
+      "발열·오한",
+      "급성 혼돈",
+      "섭취 저하"
+    ],
+    "negativeClues": [
+      "편마비 없음",
+      "저혈당 아님",
+      "외상 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "감염 증상(배뇨통·발열 등)",
+      "의식 변화 시점·양상",
+      "섭취·소변량",
+      "기저질환",
+      "편마비·외상 부재",
+      "저혈당 배제"
+    ],
+    "positiveClues": [
+      "선행 감염·발열",
+      "급성 혼돈"
+    ],
+    "negativeClues": [
+      "편마비 없음",
+      "저혈당 아님"
+    ],
+    "educationTopics": [
+      "감염이 전신에 퍼진 패혈증 가능성을 설명",
+      "혈액·소변 배양과 조기 항생제·수액의 중요성",
+      "활력징후 감시와 입원 필요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 혼란스러워 답이 일관되지 않다. 보호자·활력징후로 보완하도록 유도한다."
+  ],
+  "ruleText": "# 증례명 : 의식장애(패혈증 적신호)\n- 인적사항 - 성별 랜덤, 65~85세, 응급실\n- 사례 요약 - 선행 요로감염·발열 후 급성 의식 혼돈, 섭취 저하.\n- 현 병력 - 2~3일 감염 증상, 오늘 의식저하.",
+  "rawRuleText": "의식장애 — 패혈증 동반 의심. 선행 감염·발열 + 급성 혼돈 + 저혈압 경향."
+}

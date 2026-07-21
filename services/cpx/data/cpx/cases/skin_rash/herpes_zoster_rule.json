@@ -1,0 +1,146 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "herpes_zoster_rule",
+  "title": "피부 발진 (대상포진 의심)",
+  "category": "피부 발진",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 51 '피부 발진' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "대상포진 의심 (Suspected herpes zoster)",
+  "variant": "한쪽 피부분절 띠모양 수포 + 선행 통증형",
+  "description": "한쪽 몸에 띠 모양으로 물집이 잡히고 그 부위가 따갑게 아픈 환자의 규칙입니다.",
+  "tags": [
+    "피부발진",
+    "대상포진",
+    "수포",
+    "신경통"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "50~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "2~3일 전부터 한쪽 옆구리(또는 얼굴)가 따갑고 아프더니, 그 자리에 붉은 바탕에 물집이 띠 모양으로 잡혔다. 몸의 정중선을 넘지 않고 한쪽에만 있다. 통증이 콕콕 쑤신다.",
+    "mustInclude": [
+      "편측·피부분절을 따라 띠 모양으로 무리진 수포",
+      "발진 전 그 부위의 통증·따가움(선행 통증)",
+      "정중선을 넘지 않음",
+      "통증이 신경통 양상",
+      "고령·면역저하 등 위험"
+    ],
+    "preferredVariants": [
+      "수두 앓은 적 있음",
+      "최근 스트레스·피곤"
+    ],
+    "mustAbsent": [
+      "양쪽으로 퍼지는 이동성 팽진(두드러기)",
+      "약물 후 대칭성 발진(약물발진)",
+      "전신 대칭 인설성 판(건선)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": []
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "피로·스트레스 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·전신 상태",
+      "method": "활력징후·전신 상태 확인",
+      "expectedFinding": "활력징후 대체로 정상"
+    },
+    {
+      "item": "피부 발진",
+      "method": "피부 발진 확인",
+      "expectedFinding": "편측 피부분절 홍반 위 군집 수포",
+      "polarity": "positive"
+    },
+    {
+      "item": "발진 촉진·눌림 반응",
+      "method": "발진 촉진·눌림 반응 확인",
+      "expectedFinding": "수포 압통·감각 이상"
+    },
+    {
+      "item": "눈·구강 점막",
+      "method": "눈·구강 점막 확인",
+      "expectedFinding": "눈 주위 침범 시 각막 침범 주의(안구 확인)"
+    },
+    {
+      "item": "경부 림프절",
+      "method": "경부 림프절 확인",
+      "expectedFinding": "해당 부위 림프절 압통 가능"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "한쪽 띠모양 수포·선행 통증의 환자. '한쪽만 아픔·따가움','띠 모양 물집','정중선 안 넘음','콕콕 쑤심'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "편측 피부분절 띠모양 수포",
+      "선행 통증",
+      "정중선 안 넘음"
+    ],
+    "negativeClues": [
+      "양측 이동성 아님",
+      "약물 대칭 발진 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "발진 분포(편측·분절·띠)",
+      "선행 통증 유무",
+      "정중선 침범 여부",
+      "통증 양상",
+      "눈/귀 침범 확인",
+      "면역저하 위험"
+    ],
+    "positiveClues": [
+      "편측 분절성 띠모양 수포 + 선행 통증"
+    ],
+    "negativeClues": [
+      "두드러기 아님",
+      "약물발진 아님"
+    ],
+    "educationTopics": [
+      "대상포진 가능성을 설명",
+      "가능한 빨리(72시간 내) 항바이러스제 시작의 이점",
+      "통증 관리와 신경통 후유증·눈 침범 시 주의 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 통증과 물집이 걱정된다. 조기 항바이러스 치료 이점을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 피부 발진(대상포진)\n- 인적사항 - 성별 랜덤, 50~80세, 외래\n- 사례 요약 - 편측 분절성 띠모양 수포 + 선행 통증, 정중선 안 넘음.\n",
+  "rawRuleText": "피부 발진 — 대상포진 의심. 편측 피부분절 띠모양 수포 + 선행 통증."
+}

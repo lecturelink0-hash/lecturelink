@@ -1,0 +1,156 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "alcoholic_hepatitis_rule",
+  "title": "황달 (알코올성 간염 의심)",
+  "category": "황달",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 23 '황달' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "알코올성 간염 의심 (Suspected alcoholic hepatitis)",
+  "variant": "다량 음주력 + 황달·우상복부 불편·간비대형",
+  "description": "술을 많이 마시다 눈이 노래지고 오른쪽 윗배가 더부룩한 환자의 규칙입니다.",
+  "tags": [
+    "황달",
+    "알코올성간염",
+    "음주",
+    "간비대"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "40~60세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "오랫동안 술을 많이 마셔왔고 최근 폭음 후 눈이 노래지고 입맛이 없으며 오른쪽 윗배가 더부룩하고 미열이 난다. 몸이 붓는 느낌도 있다.",
+    "mustInclude": [
+      "장기 다량 음주력·최근 폭음",
+      "황달·식욕부진·오심",
+      "우상복부 불편·간비대",
+      "미열·전신 쇠약",
+      "황달이 서서히 나타남"
+    ],
+    "preferredVariants": [
+      "복수·다리 부종 느낌",
+      "예전에 간수치가 높다고 들음"
+    ],
+    "mustAbsent": [
+      "무통성 진행 황달·회색변(폐쇄성)",
+      "콜라색 소변+정상 대변(용혈성)",
+      "담석 산통"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "만성 음주"
+    ],
+    "mustAbsent": [
+      "담석 진단력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "만성 다량 음주"
+    ],
+    "recommended": [
+      "영양 불량 가능"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "미열 가능, 활력징후 대체로 정상"
+    },
+    {
+      "item": "공막",
+      "method": "공막 확인",
+      "expectedFinding": "공막 황달",
+      "polarity": "positive"
+    },
+    {
+      "item": "피부",
+      "method": "피부 확인",
+      "expectedFinding": "피부 황달·거미혈관종 가능"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진 확인",
+      "expectedFinding": "복부 팽만 가능"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진 확인",
+      "expectedFinding": "간 비대·우상복부 압통",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 상태",
+      "method": "신경학적 상태 확인",
+      "expectedFinding": "의식 정상(중증 시 간성뇌증 주의)"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "장기 음주자의 황달·우상복부 불편 환자. '술 오래·많이 마심','최근 폭음','입맛 없음','윗배 더부룩'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "만성 음주·최근 폭음",
+      "황달·식욕부진",
+      "우상복부 불편·간비대"
+    ],
+    "negativeClues": [
+      "회색변 없음",
+      "산통 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "음주량·기간·최근 폭음",
+      "황달·식욕·오심",
+      "우상복부 불편",
+      "부종·복수",
+      "폐쇄성/용혈성 배제",
+      "간질환 병력"
+    ],
+    "positiveClues": [
+      "만성 음주 + 황달·간비대"
+    ],
+    "negativeClues": [
+      "회색변 없음",
+      "산통 없음"
+    ],
+    "educationTopics": [
+      "음주에 의한 간 손상 가능성을 설명",
+      "간기능·영양 검사와 금주의 중요성",
+      "비판단적으로 절주·치료 프로그램 안내"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 다소 방어적이나, 비판단적으로 접근하면 음주력을 인정하고 금주에 동의한다."
+  ],
+  "ruleText": "# 증례명 : 황달(알코올성 간염)\n- 인적사항 - 남성 우세, 40~60세, 외래\n- 사례 요약 - 만성 음주·폭음 후 황달·식욕부진·우상복부 불편·미열·간비대.\n- 현 병력 - 폭음 후 서서히 황달, 우상복부 더부룩.",
+  "rawRuleText": "황달 — 알코올성 간염 의심. 만성 음주·폭음 + 황달 + 우상복부 불편·간비대."
+}

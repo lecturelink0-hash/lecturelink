@@ -1,0 +1,147 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "urge_incontinence_rule",
+  "title": "요실금 (절박성 요실금 의심)",
+  "category": "요실금",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 35 '요실금' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "절박성 요실금(과민성 방광)에 의한 요실금 의심 (Suspected urge incontinence)",
+  "variant": "갑작스런 강한 요의 + 참지 못한 누출형",
+  "description": "갑자기 소변이 마려우면 참지 못하고 지리는 환자의 규칙입니다.",
+  "tags": [
+    "요실금",
+    "절박성",
+    "과민성방광",
+    "빈뇨"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "gender": "여성 고정",
+      "age": "40~70세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 달 전부터 갑자기 소변이 마려우면 화장실 가기 전에 새어 나온다. 하루에도 여러 번 급하게 마렵고 밤에도 자주 깬다. 물소리만 들어도 마렵다.",
+    "mustInclude": [
+      "갑작스런 강한 요의(절박뇨)",
+      "참지 못하고 누출",
+      "빈뇨·야간뇨",
+      "특정 자극(물소리 등)에 유발",
+      "기침·재채기 때보다 절박할 때 샘"
+    ],
+    "preferredVariants": [
+      "화장실 위치를 늘 확인",
+      "커피·차를 자주 마심"
+    ],
+    "mustAbsent": [
+      "기침·재채기 시 소량 누출이 주(복압성)",
+      "잔뇨·약한 줄기+넘침(범람성)",
+      "선행 신경학적 위약"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "요로감염 급성 증상만"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "카페인 섭취 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 정상"
+    },
+    {
+      "item": "하복부·방광",
+      "method": "하복부·방광 확인",
+      "expectedFinding": "하복부·방광 팽만 없음"
+    },
+    {
+      "item": "하지 신경학적 검사",
+      "method": "하지 신경학적 검사 확인",
+      "expectedFinding": "하지 신경학적 정상"
+    },
+    {
+      "item": "골반저·기침 유발 검사",
+      "method": "골반저·기침 유발 검사 확인",
+      "expectedFinding": "기침 유발 시 즉각 누출은 뚜렷치 않음(절박 시 누출)"
+    },
+    {
+      "item": "소변검사",
+      "method": "소변검사 확인",
+      "expectedFinding": "요검사 대체로 정상(감염 음성)"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "갑작스런 요의로 참지 못해 새는 환자. '갑자기 마려움','참기 전에 샘','자주·밤에도 마려움','물소리에 마려움'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "절박뇨·절박성 누출",
+      "빈뇨·야간뇨",
+      "자극 유발"
+    ],
+    "negativeClues": [
+      "기침 시 누출 주 아님",
+      "잔뇨·넘침 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "누출 상황(절박 vs 복압)",
+      "요의 급박성",
+      "빈뇨·야간뇨",
+      "유발 자극",
+      "감염·신경증상 배제",
+      "카페인 등 유발"
+    ],
+    "positiveClues": [
+      "절박뇨 + 참지 못한 누출 + 빈뇨"
+    ],
+    "negativeClues": [
+      "복압성 아님",
+      "범람성 아님"
+    ],
+    "educationTopics": [
+      "방광이 예민한 절박성 요실금 가능성을 설명",
+      "방광 훈련·카페인 조절 등 생활요법",
+      "약물치료 등 치료 계획과 요검사"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 새는 것이 민망하다. 흔하고 치료되는 문제임을 설명하면 안심한다."
+  ],
+  "ruleText": "# 증례명 : 요실금(절박성)\n- 인적사항 - 여성 고정, 40~70세, 외래\n- 사례 요약 - 절박뇨·참지 못한 누출·빈뇨·야간뇨, 자극 유발.\n",
+  "rawRuleText": "요실금 — 절박성 요실금 의심. 절박뇨 + 참지 못한 누출 + 빈뇨."
+}

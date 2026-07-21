@@ -1,0 +1,157 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "ischemic_colitis_rule",
+  "title": "혈변 (허혈성 대장염 의심)",
+  "category": "혈변",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 19 '혈변' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "허혈성 대장염 의심 (Suspected ischemic colitis)",
+  "variant": "고령·혈관질환 + 갑작스런 좌하복부 통증 후 선혈변형",
+  "description": "갑자기 왼쪽 아랫배가 아프더니 곧 피가 섞인 설사가 나온 고령 환자의 규칙입니다.",
+  "tags": [
+    "혈변",
+    "허혈성대장염",
+    "좌하복부",
+    "고령"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "60~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 시간 전 갑자기 왼쪽 아랫배가 쥐어짜듯 아프더니, 곧이어 피가 섞인 무른 변을 보았다. 고혈압·심방세동·이상지질혈증이 있다.",
+    "mustInclude": [
+      "갑작스런 좌하복부(대장) 복통",
+      "통증 뒤 이어지는 선혈성 설사",
+      "고령 + 심혈관 위험인자(고혈압·부정맥·동맥경화)",
+      "비교적 급성 경과",
+      "대량 출혈보다 소량~중등량"
+    ],
+    "preferredVariants": [
+      "최근 탈수·저혈압 삽화",
+      "혈관질환·수술력"
+    ],
+    "mustAbsent": [
+      "만성 배변습관 변화·체중감소(대장암형)",
+      "집단 발병·발열(감염성)",
+      "항문 통증+표면 선혈(치핵형)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "고혈압",
+      "심방세동 또는 동맥경화"
+    ],
+    "mustAbsent": [
+      "치핵 반복 출혈만"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "심혈관 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "흡연력 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 대체로 정상, 빈맥 가능"
+    },
+    {
+      "item": "전반적 외견",
+      "method": "전반적 외견 확인",
+      "expectedFinding": "전반적 외견 대체로 양호"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진 확인",
+      "expectedFinding": "복부 시진 정상"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진 확인",
+      "expectedFinding": "좌하복부 압통",
+      "polarity": "positive"
+    },
+    {
+      "item": "항문 주위",
+      "method": "항문 주위 확인",
+      "expectedFinding": "항문 주위 정상"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "직장수지검사 확인",
+      "expectedFinding": "직장수지검사에서 혈액 가능"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "갑작스런 좌하복부 통증 후 선혈변의 고령·혈관질환 환자. '갑자기 왼쪽 아랫배 아픔','곧 피 섞인 변','고혈압·부정맥'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "급성 좌하복부 통증",
+      "통증 후 선혈변",
+      "심혈관 위험인자"
+    ],
+    "negativeClues": [
+      "만성 습관변화 아님",
+      "발열·집단발병 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "복통 발생·부위(좌하복부)",
+      "통증과 혈변의 선후 관계",
+      "심혈관 위험인자",
+      "급성 경과",
+      "대장암/감염 배제",
+      "탈수·저혈압 삽화"
+    ],
+    "positiveClues": [
+      "급성 좌하복부 통증 후 선혈변",
+      "심혈관 위험"
+    ],
+    "negativeClues": [
+      "만성 아님",
+      "발열 없음"
+    ],
+    "educationTopics": [
+      "장으로 가는 혈류 문제(허혈)를 의심함을 설명",
+      "대장내시경·영상 등 검사와 수액·감시 계획",
+      "혈관 위험인자 관리의 중요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 복통과 혈변에 놀란다. 검사·입원 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 혈변(허혈성 대장염)\n- 인적사항 - 성별 랜덤, 60~80세, 응급실\n- 사례 요약 - 급성 좌하복부 통증 후 선혈성 설사, 심혈관 위험인자.\n- 현 병력 - 몇 시간 전 좌하복부 통증, 곧 혈변.",
+  "rawRuleText": "혈변 — 허혈성 대장염 의심. 급성 좌하복부 통증 후 선혈변 + 심혈관 위험인자."
+}

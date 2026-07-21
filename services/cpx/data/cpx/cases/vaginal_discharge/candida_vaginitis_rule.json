@@ -1,0 +1,144 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "candida_vaginitis_rule",
+  "title": "질 분비물 (칸디다 질염 의심)",
+  "category": "질 분비물",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 42 '질 분비물' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "칸디다 외음질염 의심 (Suspected vulvovaginal candidiasis)",
+  "variant": "치즈양 하얀 분비물 + 심한 가려움형",
+  "description": "희고 되직한 분비물과 심한 외음부 가려움이 있는 환자의 규칙입니다.",
+  "tags": [
+    "질분비물",
+    "칸디다",
+    "가려움",
+    "질염"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "gender": "여성 고정",
+      "age": "20~45세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "며칠 전부터 외음부가 몹시 가렵고 화끈거리며, 희고 되직한(치즈 같은) 분비물이 나온다. 냄새는 심하지 않다. 최근 항생제를 먹었거나 당뇨가 있다.",
+    "mustInclude": [
+      "희고 되직한(치즈양) 질 분비물",
+      "심한 외음부 가려움·작열감",
+      "성교통·배뇨통 가능",
+      "최근 항생제 복용·당뇨 등 유발",
+      "악취는 뚜렷치 않음"
+    ],
+    "preferredVariants": [
+      "외음부 발적·부종",
+      "전에도 비슷한 적"
+    ],
+    "mustAbsent": [
+      "회색·비린내 나는 얇은 분비물(세균성 질증)",
+      "화농성 분비물+성접촉·골반통(자궁경부염/STI)",
+      "발열 동반 골반통"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "급성 골반염 증상"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 항생제 또는 당뇨 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·하복부",
+      "method": "활력징후·하복부 확인",
+      "expectedFinding": "활력징후 정상, 하복부 압통 없음"
+    },
+    {
+      "item": "외음부 시진",
+      "method": "외음부 시진 확인",
+      "expectedFinding": "외음부 발적·부종",
+      "polarity": "positive"
+    },
+    {
+      "item": "질경 진찰",
+      "method": "질경 진찰 확인",
+      "expectedFinding": "질경상 희고 되직한 분비물·질벽 발적",
+      "polarity": "positive"
+    },
+    {
+      "item": "양손 골반진찰",
+      "method": "양손 골반진찰 확인",
+      "expectedFinding": "양손 골반진찰 자궁경부 운동통 없음"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "치즈양 분비물·심한 가려움의 환자. '희고 되직한 분비물','심한 가려움','항생제/당뇨'는 물으면 공개. 민망해 목소리가 작다.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "치즈양 분비물",
+      "심한 가려움",
+      "유발(항생제/당뇨)"
+    ],
+    "negativeClues": [
+      "악취 뚜렷치 않음",
+      "골반통·발열 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "분비물 양상(색·점도)",
+      "가려움·작열감",
+      "성교통·배뇨통",
+      "유발(항생제·당뇨)",
+      "STI·골반염 배제",
+      "성 접촉력"
+    ],
+    "positiveClues": [
+      "치즈양 분비물 + 심한 가려움"
+    ],
+    "negativeClues": [
+      "세균성 질증 아님",
+      "STI 골반염 아님"
+    ],
+    "educationTopics": [
+      "칸디다 질염 가능성을 설명",
+      "항진균 치료와 유발요인(혈당·항생제) 관리",
+      "증상 지속·재발 시 재평가"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 민망해한다. 흔하고 잘 치료되는 문제임을 설명하며 배려 있게 진행한다."
+  ],
+  "ruleText": "# 증례명 : 질 분비물(칸디다 질염)\n- 인적사항 - 여성 고정, 20~45세, 외래\n- 사례 요약 - 치즈양 분비물 + 심한 가려움, 항생제/당뇨 유발.\n",
+  "rawRuleText": "질 분비물 — 칸디다 질염 의심. 치즈양 분비물 + 심한 외음부 가려움."
+}

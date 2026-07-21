@@ -1,0 +1,156 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "hyperthyroid_tremor_rule",
+  "title": "손떨림 (갑상샘기능항진증 의심)",
+  "category": "손떨림",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 49 '손떨림' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "갑상샘기능항진증 의심 (Suspected hyperthyroidism)",
+  "variant": "양손 미세 자세떨림 + 더위·체중감소·두근거림형",
+  "description": "양손이 잘게 떨리고 더위를 못 참으며 체중이 빠진 환자의 규칙입니다.",
+  "tags": [
+    "손떨림",
+    "갑상샘항진",
+    "자세떨림",
+    "체중감소"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "여성 우세",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 주 전부터 양손이 잘게 떨리고, 더위를 못 참고 땀이 많아졌으며, 잘 먹는데도 체중이 빠지고 가슴이 두근거린다. 예민해지고 잠도 잘 안 온다.",
+    "mustInclude": [
+      "양손 대칭 미세 자세떨림(팔을 뻗을 때)",
+      "더위 못 견딤·발한 증가",
+      "식욕 있는데 체중 감소",
+      "두근거림·빈맥",
+      "예민·불면"
+    ],
+    "preferredVariants": [
+      "눈이 좀 튀어나온 느낌·목이 부은 느낌",
+      "대변을 자주 본다"
+    ],
+    "mustAbsent": [
+      "편측 안정떨림(파킨슨형)",
+      "서동·강직",
+      "급성 발작"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "파킨슨 진단력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "갑상선질환 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "카페인 섭취 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·결막",
+      "method": "활력징후·결막 확인",
+      "expectedFinding": "활력징후 빈맥 가능, 결막 정상"
+    },
+    {
+      "item": "갑상샘",
+      "method": "갑상샘 확인",
+      "expectedFinding": "갑상샘 미만성 비대 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "안정떨림",
+      "method": "안정떨림 확인",
+      "expectedFinding": "안정 시 떨림 없음"
+    },
+    {
+      "item": "자세·동작 떨림",
+      "method": "자세·동작 떨림 확인",
+      "expectedFinding": "팔 뻗을 때 양손 미세 자세떨림",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "신경학적 진찰 확인",
+      "expectedFinding": "신경학적 진찰 정상"
+    },
+    {
+      "item": "협응·보행",
+      "method": "협응·보행 확인",
+      "expectedFinding": "협응·보행 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "양손 미세떨림·더위·체중감소·두근거림의 환자. '양손 잘게 떨림','더위 못참음','잘 먹는데 체중 감소','두근거림'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "양손 대칭 자세떨림",
+      "더위·발한",
+      "체중감소",
+      "두근거림·예민"
+    ],
+    "negativeClues": [
+      "편측 안정떨림 아님",
+      "서동 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "떨림 양상(양손·자세)",
+      "더위·발한",
+      "식욕 대비 체중 변화",
+      "두근거림·불면",
+      "갑상선 종대·안구 증상",
+      "안정떨림·서동 부재"
+    ],
+    "positiveClues": [
+      "양손 자세떨림",
+      "더위·체중감소·두근거림"
+    ],
+    "negativeClues": [
+      "편측 안정떨림 아님",
+      "서동 없음"
+    ],
+    "educationTopics": [
+      "갑상샘기능항진 가능성을 설명",
+      "갑상선기능검사(TSH·유리 T4) 계획",
+      "치료로 떨림·증상이 호전됨을 설명"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 예민하고 말이 빠르다. 갑상선 검사 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 손떨림(갑상샘기능항진증)\n- 인적사항 - 여성 우세, 20~50세, 외래\n- 사례 요약 - 양손 미세 자세떨림, 더위 못참음, 체중감소, 두근거림, 불면.\n- 현 병력 - 몇 주간 양손 떨림 + 갑상선항진 전신증상.",
+  "rawRuleText": "손떨림 — 갑상샘기능항진증 의심. 양손 자세떨림 + 더위·체중감소·두근거림."
+}

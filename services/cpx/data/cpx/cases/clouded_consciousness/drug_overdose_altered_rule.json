@@ -1,0 +1,154 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "drug_overdose_altered_rule",
+  "title": "의식장애 (약물·물질 중독 의심)",
+  "category": "의식장애",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 47 '의식장애' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "진정제/알코올 중독에 의한 의식저하 의심 (Suspected drug/alcohol intoxication)",
+  "variant": "진정제·음주 후 의식저하·호흡저하형",
+  "description": "약(수면제)과 술을 먹고 축 처져 발견된 환자의 규칙입니다.",
+  "tags": [
+    "의식장애",
+    "약물중독",
+    "진정제",
+    "응급"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "보호자가 발견했을 때 불러도 잘 못 깨고 숨을 얕게 쉬고 있었다. 평소 수면제를 복용하며 어제 술을 많이 마셨다. 곁에 약통이 있었다. 환자는 겨우 반응하며 발음이 뭉개진다.",
+    "mustInclude": [
+      "진정제(수면제·항불안제) 복용력",
+      "음주 병용",
+      "의식저하·졸림",
+      "호흡 얕음·느림 가능",
+      "동공 축소 가능"
+    ],
+    "preferredVariants": [
+      "빈 약통·약 봉투가 있었다",
+      "우울감·스트레스 정황(자해 위험 확인 필요)"
+    ],
+    "mustAbsent": [
+      "편마비(뇌졸중형)",
+      "발열(감염형)",
+      "저혈당(정상)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "불면·불안으로 약물 복용"
+    ],
+    "mustAbsent": [
+      "최근 외상"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 음주"
+    ],
+    "recommended": [
+      "스트레스 상황"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "ABC·활력징후·산소포화도",
+      "method": "ABC·활력징후·산소포화도 확인",
+      "expectedFinding": "활력징후 호흡수 감소 가능, 산소포화도 저하 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "GCS·의식·지남력",
+      "method": "GCS·의식·지남력 확인",
+      "expectedFinding": "의식 처짐·졸림"
+    },
+    {
+      "item": "동공·구강·외상",
+      "method": "동공·구강·외상 확인",
+      "expectedFinding": "동공 축소, 외상 없음",
+      "polarity": "positive"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "신경학적 진찰 확인",
+      "expectedFinding": "국소 마비 없음"
+    },
+    {
+      "item": "혈당",
+      "method": "혈당 확인",
+      "expectedFinding": "혈당 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "진정제와 음주 후 의식저하로 온 환자. 겨우 반응하고 발음이 뭉개진다. '수면제 먹음','술 많이 마심','약통'은 물으면 공개. 자해 의도 여부는 직접 물으면 조심스럽게 답한다.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "진정제 복용",
+      "음주 병용",
+      "의식저하·졸림",
+      "호흡 저하"
+    ],
+    "negativeClues": [
+      "편마비 없음",
+      "발열 없음",
+      "저혈당 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "복용 약물·양·시각",
+      "음주 병용",
+      "의식·호흡 상태",
+      "자해 의도 확인",
+      "편마비·발열 부재",
+      "저혈당 배제"
+    ],
+    "positiveClues": [
+      "진정제+음주",
+      "의식·호흡 저하"
+    ],
+    "negativeClues": [
+      "편마비 없음",
+      "발열 없음"
+    ],
+    "educationTopics": [
+      "약물·알코올에 의한 의식저하 가능성을 설명",
+      "기도·호흡 유지와 해독·감시의 중요성",
+      "자해 위험 평가와 정신건강 연계의 필요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 졸리고 발음이 뭉개진다. 기도·호흡 안전을 우선하고 자해 위험을 배려 있게 확인한다."
+  ],
+  "ruleText": "# 증례명 : 의식장애(약물·물질 중독)\n- 인적사항 - 성별 랜덤, 20~50세, 응급실\n- 사례 요약 - 수면제+음주 후 의식저하·호흡저하, 곁에 약통.\n- 현 병력 - 발견 시 각성 저하, 발음 뭉개짐.",
+  "rawRuleText": "의식장애 — 진정제/알코올 중독 의심. 약물+음주 후 의식·호흡 저하, 동공 축소."
+}

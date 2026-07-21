@@ -1,0 +1,163 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "brain_tumor_headache_rule",
+  "title": "두통 (뇌종양 의심 적신호)",
+  "category": "두통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 46 '두통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "뇌종양(종괴성 병변) 의심 (Suspected intracranial mass/brain tumor)",
+  "variant": "점점 심해지는 아침 두통 + 구토·국소 신경증상 적신호형",
+  "description": "몇 주에 걸쳐 점점 심해지는 아침 두통과 구토, 한쪽 팔 힘 빠짐이 있는 환자의 적신호 규칙입니다.",
+  "tags": [
+    "두통",
+    "뇌종양",
+    "두개내압",
+    "적신호",
+    "신경학적"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "40~65세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "두 달 전부터 두통이 점점 심해지고, 특히 새벽·아침에 심하며 그때 구역·구토가 난다. 기침하거나 힘을 주면 더 아프다. 최근 한쪽 손이 서툴러지고 성격이 변한 것 같다는 말을 들었다.",
+    "mustInclude": [
+      "몇 주~몇 달에 걸쳐 점진적으로 악화되는 두통",
+      "새벽·아침에 심하고 구토 동반",
+      "기침·배변·자세 변화 시 악화(두개내압 상승)",
+      "최근 편측 위약·서툶 등 국소 신경증상",
+      "성격·인지 변화 또는 발작 가능"
+    ],
+    "preferredVariants": [
+      "진통제가 잘 안 듣는다",
+      "시야가 가끔 이상하다"
+    ],
+    "mustAbsent": [
+      "벼락두통",
+      "발열·경부 강직"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "편두통 병력",
+      "머리 외상"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 또는 흡연"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 대체로 정상"
+    },
+    {
+      "item": "뇌막자극",
+      "method": "뇌막자극 확인",
+      "expectedFinding": "뇌막자극징후 음성"
+    },
+    {
+      "item": "신경학적 검사",
+      "method": "신경학적 검사 확인",
+      "expectedFinding": "국소 위약·심부건반사 비대칭 등 신경학적 이상",
+      "polarity": "positive"
+    },
+    {
+      "item": "안저",
+      "method": "안저 확인",
+      "expectedFinding": "안저 유두부종 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "두부 촉진",
+      "method": "두부 촉진 확인",
+      "expectedFinding": "두부 압통 없음"
+    },
+    {
+      "item": "부비동",
+      "method": "부비동 확인",
+      "expectedFinding": "부비동 압통 없음"
+    },
+    {
+      "item": "눈",
+      "method": "눈 확인",
+      "expectedFinding": "시야 결손 가능"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "점진적 아침 두통·구토·국소 신경증상 환자. '점점 심해짐','아침에 심함','구토','한쪽 손 서툶'은 질문받으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "점진적 악화 두통",
+      "아침 두통·구토",
+      "자세·기침 시 악화",
+      "편측 위약"
+    ],
+    "negativeClues": [
+      "벼락두통 아님",
+      "발열 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "두통 경과(점진적 악화)",
+      "시간대(아침)·구토 동반",
+      "기침·자세 시 악화",
+      "국소 신경증상(위약·시야)",
+      "성격·인지 변화",
+      "발열·외상 부재"
+    ],
+    "positiveClues": [
+      "점진적 악화",
+      "아침 두통·구토",
+      "편측 위약"
+    ],
+    "negativeClues": [
+      "벼락두통 아님",
+      "발열 없음"
+    ],
+    "educationTopics": [
+      "두개내 종괴 가능성으로 뇌 영상(MRI)이 필요함을 설명",
+      "신경외과 협진 계획",
+      "악화(구토 심화·의식저하) 시 즉시 응급실 내원"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 두통이 낫지 않아 불안하다. 영상검사 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 두통(뇌종양 적신호)\n- 인적사항 - 성별 랜덤, 40~65세, 외래\n- 사례 요약 - 점진적 악화 두통, 아침 두통·구토, 기침·자세 시 악화, 편측 위약·성격변화.\n- 현 병력 - 두 달 점진 악화, 새벽 두통·구토, 국소 신경증상.",
+  "rawRuleText": "두통 — 뇌종양 의심. 점진적 아침 두통 + 구토 + 두개내압 악화 + 편측 신경증상."
+}
