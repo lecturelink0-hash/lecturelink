@@ -41,19 +41,22 @@ export default function CpxResultDetail({ sessionId }) {
 
   useEffect(() => {
     let active = true;
-    // 이미 채점된 세션은 evaluate 가 캐시 결과를 즉시 반환한다(재-LLM·비용 없음).
+    // 저장된 세션 결과를 먼저 조회(persist 모드: Supabase에 미러링된 전체 결과).
+    // 실패 시(비-persist 모드) evaluate 로 폴백 — 이미 채점된 세션은 캐시 결과를 즉시 반환.
+    const loadResult = () =>
+      request(`/history/${sessionId}`).catch(() =>
+        request(`/sessions/${sessionId}/evaluate`, { method: 'POST' }),
+      );
     Promise.all([
-      request(`/sessions/${sessionId}/evaluate`, { method: 'POST' }),
+      loadResult(),
       request('/cases').catch(() => ({ cases: [] })),
-      request('/history').catch(() => ({ sessions: [] })),
     ])
-      .then(([evaluation, caseData, historyData]) => {
+      .then(([evaluation, caseData]) => {
         if (!active) return;
         setResult(evaluation);
         const titles = new Map((caseData.cases || []).map((c) => [c.id, c.title]));
         setTitle(titles.get(evaluation.caseId) || evaluation.caseId || '');
-        const row = (historyData.sessions || []).find((s) => s.sessionId === sessionId);
-        setStartedAt(row ? row.startedAt : null);
+        setStartedAt(evaluation.startedAt ?? null);
         // 모든 영역을 기본 펼침 — 세부 채점표는 전체를 보여준다.
         const open = {};
         (evaluation.sections || []).forEach((s) => { open[s.id] = true; });

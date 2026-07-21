@@ -39,6 +39,38 @@ async function persistedHistory(userId: string) {
   }, { headers: { 'cache-control': 'no-store' } });
 }
 
+// 저장된 세션의 전체 채점 결과(sections·judgments·feedback·itemTexts 등)를 Supabase에서 조회.
+// evaluate 응답 전체가 cpx_sessions.result 에 미러링돼 있으므로 Fly 백엔드를 거치지 않는다.
+// (persist 모드에서는 과거 세션이 Fly SQLite에 없어 evaluate가 404가 되므로 이 경로가 필요.)
+async function persistedSessionResult(userId: string, sessionId: string) {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from('cpx_sessions')
+    .select('external_session_id, case_id, persona, result, started_at')
+    .eq('user_id', userId)
+    .eq('external_session_id', sessionId)
+    .maybeSingle();
+  if (error) {
+    console.error('[cpx session detail] load failed:', error);
+    return NextResponse.json({ detail: 'CPX 채점 기록을 불러오지 못했습니다.' }, { status: 503 });
+  }
+  const result = data?.result && typeof data.result === 'object' && !Array.isArray(data.result)
+    ? (data.result as Record<string, unknown>)
+    : null;
+  if (!result) {
+    return NextResponse.json({ detail: '세션 없음' }, { status: 404 });
+  }
+  return NextResponse.json(
+    {
+      ...result,
+      caseId: result.caseId ?? data?.case_id,
+      persona: result.persona ?? data?.persona,
+      startedAt: data?.started_at,
+    },
+    { headers: { 'cache-control': 'no-store' } },
+  );
+}
+
 async function forward(request: Request, context: { params: Promise<{ path: string[] }> }) {
   const session = await requireSession();
   const { path } = await context.params;
@@ -47,6 +79,12 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   if (request.method === 'GET' && path.length === 1 && path[0] === 'history'
       && process.env.CPX_PERSIST_TO_SUPABASE === 'true') {
     return persistedHistory(session.userId);
+  }
+
+  // GET /history/{sessionId} → 저장된 세션의 전체 채점 결과 (세부 채점표 화면용)
+  if (request.method === 'GET' && path.length === 2 && path[0] === 'history'
+      && process.env.CPX_PERSIST_TO_SUPABASE === 'true') {
+    return persistedSessionResult(session.userId, path[1]);
   }
 
   const base = process.env.CPX_BACKEND_URL;
