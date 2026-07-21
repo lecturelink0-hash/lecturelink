@@ -1,0 +1,154 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "raised_icp_vomiting_rule",
+  "title": "구토 (두개내압 상승 의심 적신호)",
+  "category": "구토",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 24 '구토' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "두개내압 상승에 의한 구토 의심 (Suspected raised intracranial pressure)",
+  "variant": "아침 분출성 구토 + 두통·신경증상 적신호형",
+  "description": "아침마다 갑자기 왈칵 토하고 머리가 아프며 자세를 바꾸면 심해지는 환자의 적신호 규칙입니다.",
+  "tags": [
+    "구토",
+    "두개내압",
+    "중추성구토",
+    "적신호"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "30~60세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 주 전부터 특히 아침에 갑자기 왈칵 토하고, 그때 머리가 아프다. 기침하거나 힘을 주면 더 아프고, 최근 시야가 흐릿하고 한쪽 손이 서툴다. 구역 없이 갑자기 토할 때가 있다.",
+    "mustInclude": [
+      "아침에 심한 분출성 구토",
+      "두통 동반(자세·기침 시 악화)",
+      "점진적 악화",
+      "시야 이상·편측 위약 등 신경증상",
+      "구역이 뚜렷하지 않은 갑작스런 구토"
+    ],
+    "preferredVariants": [
+      "진통제가 잘 안 듣는 두통",
+      "최근 성격·집중력 변화"
+    ],
+    "mustAbsent": [
+      "설사 동반(위장염형)",
+      "선혈 구토(상부출혈)",
+      "음식과 명확히 연관된 구토"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "소화성궤양 병력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 대체로 정상"
+    },
+    {
+      "item": "전반적 외견",
+      "method": "전반적 외견 확인",
+      "expectedFinding": "전반적 외견 정상"
+    },
+    {
+      "item": "구강",
+      "method": "구강 확인",
+      "expectedFinding": "구강 정상"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진 확인",
+      "expectedFinding": "복부 시진 정상"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진 확인",
+      "expectedFinding": "복부 압통 없음"
+    },
+    {
+      "item": "신경학적 상태",
+      "method": "신경학적 상태 확인",
+      "expectedFinding": "신경학적 이상(국소 위약·유두부종 가능)",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "아침 분출성 구토+두통+신경증상 환자. '아침에 왈칵 토함','머리 아픔','기침 시 악화','시야 흐림·손 서툶'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "아침 분출성 구토",
+      "두통·자세 악화",
+      "편측 신경증상"
+    ],
+    "negativeClues": [
+      "설사 없음",
+      "선혈 구토 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "구토 시간대·양상(분출성)",
+      "두통 동반·자세 악화",
+      "신경증상(시야·위약)",
+      "설사·선혈 부재",
+      "음식 연관 부재",
+      "경과(점진 악화)"
+    ],
+    "positiveClues": [
+      "아침 분출성 구토 + 두통",
+      "편측 신경증상"
+    ],
+    "negativeClues": [
+      "설사 없음",
+      "선혈 없음"
+    ],
+    "educationTopics": [
+      "뇌압 상승(종괴 등) 가능성으로 뇌 영상이 필요함을 설명",
+      "신경과·신경외과 협진 계획",
+      "의식저하·심한 두통 시 즉시 응급실 내원"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 반복 구토와 두통이 걱정된다. 뇌 검사 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 구토(두개내압 상승 적신호)\n- 인적사항 - 성별 랜덤, 30~60세, 외래\n- 사례 요약 - 아침 분출성 구토 + 두통(자세 악화) + 편측 신경증상.\n- 현 병력 - 몇 주간 아침 구토·두통, 점진 악화.",
+  "rawRuleText": "구토 — 두개내압 상승 의심. 아침 분출성 구토 + 두통·자세 악화 + 편측 신경증상."
+}

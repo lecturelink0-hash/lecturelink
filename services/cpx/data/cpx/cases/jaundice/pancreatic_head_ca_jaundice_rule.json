@@ -1,0 +1,159 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "pancreatic_head_ca_jaundice_rule",
+  "title": "황달 (췌장 두부암 — 무통성 폐쇄성 황달 적신호)",
+  "category": "황달",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 23 '황달' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "췌장 두부암에 의한 폐쇄성 황달 의심 (Suspected pancreatic head cancer, obstructive jaundice)",
+  "variant": "무통성 진행성 황달 + 회색변·체중감소 적신호형",
+  "description": "아프지 않게 눈과 몸이 노래지고 소변이 진해지며 살이 빠진 고령 환자의 적신호 규칙입니다.",
+  "tags": [
+    "황달",
+    "췌장암",
+    "폐쇄성황달",
+    "적신호",
+    "체중감소"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "55~75세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 주 사이 눈과 몸이 점점 노래지고 소변이 진한 갈색, 대변은 회색으로 변했다. 아프지는 않았고 온몸이 가렵다. 두 달 새 체중이 4~5kg 빠지고 입맛이 없다.",
+    "mustInclude": [
+      "무통성으로 진행하는 황달",
+      "진한 갈색 소변·회색(옅은) 대변",
+      "전신 가려움",
+      "최근 체중 감소·식욕 저하",
+      "우상복부 통증이 뚜렷하지 않음"
+    ],
+    "preferredVariants": [
+      "새로 진단된 당뇨(최근)",
+      "담배를 오래 피움"
+    ],
+    "mustAbsent": [
+      "심한 우상복부 산통·발열·오한(담관염형)",
+      "다량 음주력",
+      "수혈·빈혈 병력"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "담석 산통 반복",
+      "최근 간염 노출"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "흡연력 있음"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 대체로 정상, 발열 없음"
+    },
+    {
+      "item": "공막",
+      "method": "공막 확인",
+      "expectedFinding": "공막 황달 뚜렷",
+      "polarity": "positive"
+    },
+    {
+      "item": "피부",
+      "method": "피부 확인",
+      "expectedFinding": "피부 황달·긁은 자국",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진 확인",
+      "expectedFinding": "복부 팽만 없음, 만져지는 무통성 담낭 가능(Courvoisier)",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진 확인",
+      "expectedFinding": "우상복부 압통 뚜렷하지 않음"
+    },
+    {
+      "item": "신경학적 상태",
+      "method": "신경학적 상태 확인",
+      "expectedFinding": "의식 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "무통성 진행성 황달·회색변·체중감소의 고령 환자. '아프지 않게 노래짐','소변 진함·대변 회색','가려움','살 빠짐'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "무통성 황달",
+      "진한 소변·회색변",
+      "가려움",
+      "체중감소"
+    ],
+    "negativeClues": [
+      "산통·발열 없음",
+      "음주 다량 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "황달 발생·경과(무통성)",
+      "소변·대변 색 변화",
+      "가려움",
+      "체중·식욕 변화",
+      "산통·발열 부재",
+      "음주력"
+    ],
+    "positiveClues": [
+      "무통성 폐쇄성 황달",
+      "회색변·체중감소"
+    ],
+    "negativeClues": [
+      "산통·발열 없음",
+      "다량 음주 아님"
+    ],
+    "educationTopics": [
+      "무통성 폐쇄성 황달은 악성(췌장·담도) 배제가 중요함을 설명",
+      "복부 초음파/CT·종양표지자 등 검사 계획",
+      "조기 진단의 이점 중심으로 안내"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 아프지 않아 대수롭지 않게 여기나, 검사 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 황달(췌장두부암 폐쇄성 적신호)\n- 인적사항 - 성별 랜덤, 55~75세, 외래\n- 사례 요약 - 무통성 진행 황달, 진한 소변·회색변, 가려움, 체중감소.\n- 현 병력 - 몇 주 무통성 황달, 회색변, -4~5kg.",
+  "rawRuleText": "황달 — 췌장 두부암 폐쇄성 황달 의심. 무통성 진행 황달 + 회색변·진한 소변 + 체중감소."
+}

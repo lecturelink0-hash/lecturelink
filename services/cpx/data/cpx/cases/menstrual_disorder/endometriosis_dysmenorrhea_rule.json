@@ -1,0 +1,140 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "endometriosis_dysmenorrhea_rule",
+  "title": "월경 이상/월경통 (자궁내막증 의심)",
+  "category": "월경 이상/월경통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 43 '월경 이상/월경통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "자궁내막증에 의한 이차성 월경통 의심 (Suspected endometriosis)",
+  "variant": "점점 심해지는 월경통 + 성교통·만성 골반통형",
+  "description": "나이 들수록 월경통이 심해지고 성교통·만성 골반통이 있는 환자의 규칙입니다.",
+  "tags": [
+    "월경통",
+    "자궁내막증",
+    "이차성월경통",
+    "성교통"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "gender": "여성 고정",
+      "age": "25~40세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "예전엔 괜찮았는데 몇 년 사이 월경통이 점점 심해져 진통제로도 잘 안 듣는다. 월경과 무관하게도 아랫배가 아프고, 성관계 시 깊은 통증이 있으며 임신이 잘 안 된다.",
+    "mustInclude": [
+      "초경 후 한참 뒤 시작된(이차성) 점점 심해지는 월경통",
+      "진통제 반응 저하",
+      "만성 골반통(월경 외에도)",
+      "깊은 성교통",
+      "난임 가능"
+    ],
+    "preferredVariants": [
+      "월경 시 배변통·배뇨통",
+      "가족 중 자궁내막증"
+    ],
+    "mustAbsent": [
+      "초경 무렵부터 있던 전형적 월경통이 큰 변화 없음(원발성)",
+      "월경량 과다·불규칙 출혈이 주(이상자궁출혈)",
+      "발열+화농성 분비물(감염)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": []
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "자궁내막증 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·결막·하복부",
+      "method": "활력징후·결막·하복부 확인",
+      "expectedFinding": "활력징후 정상, 하복부 압통 가능, 결막 정상"
+    },
+    {
+      "item": "임신검사",
+      "method": "임신검사 확인",
+      "expectedFinding": "임신검사 음성"
+    },
+    {
+      "item": "질경 진찰",
+      "method": "질경 진찰 확인",
+      "expectedFinding": "질경 진찰 대체로 정상"
+    },
+    {
+      "item": "양손 골반진찰",
+      "method": "양손 골반진찰 확인",
+      "expectedFinding": "양손 골반진찰에서 자궁천골인대 압통·부속기 압통 가능",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "점점 심해지는 월경통·성교통·만성 골반통의 환자. '월경통 점점 심해짐','진통제 안 들음','성관계 시 깊은 통증','아랫배 자주 아픔'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "진행성 이차성 월경통",
+      "만성 골반통",
+      "깊은 성교통"
+    ],
+    "negativeClues": [
+      "원발성 전형 아님",
+      "이상자궁출혈 주 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "월경통 발생·경과(진행성)",
+      "진통제 반응",
+      "월경 외 골반통",
+      "성교통·난임",
+      "출혈 이상 배제",
+      "가족력"
+    ],
+    "positiveClues": [
+      "진행성 월경통 + 성교통 + 만성 골반통"
+    ],
+    "negativeClues": [
+      "원발성 아님"
+    ],
+    "educationTopics": [
+      "자궁내막증에 의한 이차성 월경통 가능성을 설명",
+      "초음파·부인과 진찰 등 평가 계획",
+      "통증·호르몬 치료 옵션과 난임 상담"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 통증과 임신 걱정을 한다. 검사·치료 계획을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 월경통(자궁내막증)\n- 인적사항 - 여성 고정, 25~40세, 외래\n- 사례 요약 - 진행성 이차성 월경통 + 성교통 + 만성 골반통.\n",
+  "rawRuleText": "월경 — 자궁내막증 의심. 진행성 이차성 월경통 + 성교통 + 만성 골반통."
+}

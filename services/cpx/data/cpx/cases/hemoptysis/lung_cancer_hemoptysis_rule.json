@@ -1,0 +1,148 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "lung_cancer_hemoptysis_rule",
+  "title": "객혈 (폐암 의심 적신호)",
+  "category": "객혈",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 14 '객혈' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "폐암 의심 (Suspected lung cancer)",
+  "variant": "장기 흡연 + 만성 기침·혈담·체중감소 적신호형",
+  "description": "오래 담배를 피운 사람이 기침이 변하고 피 섞인 가래가 나오며 살이 빠진 적신호 규칙입니다.",
+  "tags": [
+    "객혈",
+    "폐암",
+    "적신호",
+    "흡연",
+    "체중감소"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "55~75세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 주 전부터 기침 양상이 달라지고 가래에 피가 섞여 나온다. 두 달 새 체중이 4~5kg 빠지고 기운이 없으며 30갑년 이상 흡연했다.",
+    "mustInclude": [
+      "장기 다량 흡연력",
+      "기침 양상 변화·지속",
+      "혈담·소량 반복 객혈",
+      "체중 감소·피로",
+      "서서히 진행"
+    ],
+    "preferredVariants": [
+      "쉰 목소리·어깨/가슴 통증",
+      "직업적 분진·석면 노출 가능"
+    ],
+    "mustAbsent": [
+      "급성 발열·다량 화농성 가래(감염)",
+      "대량 선홍 객혈+반복 폐렴력(기관지확장증 전형)",
+      "최근 결핵 접촉·야간 발한 우선"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "기관지확장증 진단력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "폐암 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "흡연 30갑년 이상"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·산소포화도·의식",
+      "method": "활력징후·산소포화도·의식 확인",
+      "expectedFinding": "활력징후·산소포화도 대체로 정상, 의식 명료"
+    },
+    {
+      "item": "비강·구강·인두·결막",
+      "method": "비강·구강·인두·결막 확인",
+      "expectedFinding": "비강·인두 출혈원 없음, 결막 창백 가능"
+    },
+    {
+      "item": "경부 림프절·피부 출혈",
+      "method": "경부 림프절·피부 출혈 확인",
+      "expectedFinding": "경부 쇄골상 림프절 촉지 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "흉부 진찰",
+      "method": "흉부 진찰 확인",
+      "expectedFinding": "흉부 국소 이상음 가능"
+    },
+    {
+      "item": "복부·하지",
+      "method": "복부·하지 확인",
+      "expectedFinding": "복부·하지 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "장기 흡연자의 기침 변화·혈담·체중감소 환자. '담배 오래 피움','기침 달라짐','가래에 피','살 빠짐'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "장기 흡연",
+      "기침 변화·혈담",
+      "체중감소"
+    ],
+    "negativeClues": [
+      "급성 발열 없음",
+      "다량 화농성 가래 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "흡연력",
+      "기침·객혈 양상·기간",
+      "체중·전신증상",
+      "쉰 목소리·통증",
+      "감염/기관지확장증 배제",
+      "직업 노출"
+    ],
+    "positiveClues": [
+      "장기 흡연 + 기침 변화·혈담 + 체중감소"
+    ],
+    "negativeClues": [
+      "급성 감염 아님"
+    ],
+    "educationTopics": [
+      "흡연 관련 폐 악성 배제가 중요함을 설명",
+      "흉부 영상(X선/CT)·객담·기관지내시경 등 계획",
+      "금연의 중요성과 조기 발견 이점"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 피 섞인 가래가 걱정된다. 흉부 검사와 금연을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 객혈(폐암 적신호)\n- 인적사항 - 남성 우세, 55~75세, 외래\n- 사례 요약 - 장기 흡연 + 기침 변화·혈담 + 체중감소.\n- 현 병력 - 몇 주 기침 변화·혈담, -4~5kg, 30갑년+ 흡연.",
+  "rawRuleText": "객혈 — 폐암 의심. 장기 흡연 + 기침 변화·혈담 + 체중감소."
+}

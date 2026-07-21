@@ -1,0 +1,148 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "edema_heart_failure_rule",
+  "title": "체중 증가 (부종성 — 심부전 의심)",
+  "category": "체중 증가",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 29 '체중 증가' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "심부전에 의한 체액 저류·부종성 체중 증가 의심 (Suspected fluid retention due to heart failure)",
+  "variant": "다리 부종·호흡곤란·기좌호흡으로 인한 체중 증가형",
+  "description": "짧은 기간에 다리가 붓고 숨이 차며 몸무게가 늘어난 환자의 규칙입니다.",
+  "tags": [
+    "체중증가",
+    "부종",
+    "심부전",
+    "호흡곤란"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "55~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "최근 1~2주 사이 양쪽 다리가 붓고 몸무게가 며칠 만에 몇 킬로 늘었다. 조금만 걸어도 숨이 차고, 밤에 누우면 숨이 차서 베개를 여러 개 받치고 잔다. 새벽에 숨차서 깬다.",
+    "mustInclude": [
+      "단기간(며칠~2주)의 체중 증가가 체액 저류에 의함",
+      "양측 하지 오목 부종",
+      "노작성 호흡곤란",
+      "기좌호흡·야간 발작성 호흡곤란",
+      "심장질환 위험인자(고혈압·관상동맥·부정맥)"
+    ],
+    "preferredVariants": [
+      "소변량 감소",
+      "이전 심장·신장 문제"
+    ],
+    "mustAbsent": [
+      "중심성 비만·자색선조(쿠싱)",
+      "서서히 전신 고르게 증가(과식)",
+      "갑상선저하(추위·서맥)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "고혈압 또는 심장질환 가능"
+    ],
+    "mustAbsent": []
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "심혈관 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "흡연력 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·체형·허리둘레",
+      "method": "활력징후·체형·허리둘레 확인",
+      "expectedFinding": "활력징후 대체로 정상~빈맥, 체형은 부종성"
+    },
+    {
+      "item": "결막·공막·피부·모발",
+      "method": "결막·공막·피부·모발 확인",
+      "expectedFinding": "결막·피부 대체로 정상"
+    },
+    {
+      "item": "갑상샘·쿠싱 양상",
+      "method": "갑상샘·쿠싱 양상 확인",
+      "expectedFinding": "갑상샘·쿠싱 양상 없음"
+    },
+    {
+      "item": "심음·호흡음·경정맥",
+      "method": "심음·호흡음·경정맥 확인",
+      "expectedFinding": "심음 이상음·양측 폐저부 수포음·경정맥 확장",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부·간비장·하지 부종",
+      "method": "복부·간비장·하지 부종 확인",
+      "expectedFinding": "복부·간 울혈 가능, 양측 하지 오목 부종",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "단기 다리 부종·호흡곤란·기좌호흡으로 체중 증가한 환자. '다리 붓고 며칠 새 체중 늘음','걸으면 숨참','누우면 숨차 베개 여러 개'는 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "단기 체액성 체중 증가",
+      "양측 하지 부종",
+      "기좌호흡·야간 호흡곤란"
+    ],
+    "negativeClues": [
+      "중심성 비만 아님",
+      "단순 과식 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "체중 증가 속도(단기)·부종",
+      "호흡곤란(노작·기좌)",
+      "야간 발작성 호흡곤란",
+      "심장 위험인자",
+      "소변량",
+      "쿠싱/단순비만 배제"
+    ],
+    "positiveClues": [
+      "단기 부종성 체중 증가 + 기좌호흡"
+    ],
+    "negativeClues": [
+      "중심성 비만 아님"
+    ],
+    "educationTopics": [
+      "심장 기능 저하로 체액이 고이는 상태 가능성을 설명",
+      "심전도·흉부영상·심초음파·BNP 등 계획",
+      "염분·수분 조절과 즉시 내원 기준 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 붓고 숨찬 것이 걱정된다. 심장 검사 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 체중 증가(부종성 심부전)\n- 인적사항 - 성별 랜덤, 55~80세, 외래\n- 사례 요약 - 단기 부종성 체중 증가 + 기좌호흡·야간 호흡곤란.\n",
+  "rawRuleText": "체중 증가 — 심부전 부종성 의심. 단기 하지 부종 + 기좌호흡 + 체액성 체중 증가."
+}

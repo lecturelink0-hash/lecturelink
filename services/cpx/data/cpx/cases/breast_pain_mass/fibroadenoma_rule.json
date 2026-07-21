@@ -1,0 +1,147 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "fibroadenoma_rule",
+  "title": "유방통/유방덩이 (섬유선종 의심)",
+  "category": "유방통/유방덩이",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 25 '유방통/유방덩이' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "섬유선종 의심 (Suspected fibroadenoma)",
+  "variant": "젊은 여성의 잘 움직이는 매끈한 무통성 종괴형",
+  "description": "젊은 여성이 잘 만져지는 동글동글 매끈한 멍울을 발견한 규칙입니다.",
+  "tags": [
+    "유방",
+    "섬유선종",
+    "양성종괴",
+    "젊은여성"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "gender": "여성 고정",
+      "age": "18~35세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "우연히 한쪽 가슴에 동글동글하고 매끈하며 잘 움직이는 멍울을 만졌다. 아프지 않고 크기 변화가 거의 없거나 월경 전 약간 커지는 느낌이다. 피부·유두 변화는 없다.",
+    "mustInclude": [
+      "경계가 분명하고 매끈하며 잘 움직이는 무통성 종괴",
+      "젊은 나이",
+      "크기 변화 적음(월경 전후 약간)",
+      "피부·유두 변화 없음",
+      "전신증상 없음"
+    ],
+    "preferredVariants": [
+      "비슷한 멍울이 여러 개일 수 있음",
+      "가족 중 양성 유방 결절"
+    ],
+    "mustAbsent": [
+      "단단하고 고정된 무통 종괴+피부/유두 변화(악성)",
+      "수유 중 발적·발열(유방염)",
+      "혈성 유두 분비"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "수유 중 급성 감염"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·전신 상태",
+      "method": "활력징후·전신 상태 확인",
+      "expectedFinding": "활력징후·전신 상태 양호"
+    },
+    {
+      "item": "유방 시진",
+      "method": "유방 시진 확인",
+      "expectedFinding": "유방 피부·유두 정상"
+    },
+    {
+      "item": "유방 촉진",
+      "method": "유방 촉진 확인",
+      "expectedFinding": "경계 분명·가동성 좋은 매끈한 무통 종괴",
+      "polarity": "positive"
+    },
+    {
+      "item": "액와 림프절",
+      "method": "액와 림프절 확인",
+      "expectedFinding": "액와 림프절 없음"
+    },
+    {
+      "item": "유두 분비물",
+      "method": "유두 분비물 확인",
+      "expectedFinding": "유두 분비 없음"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "젊은 여성의 매끈·가동성 좋은 무통 종괴. '동글동글·매끈·잘 움직임','아프지 않음','피부 변화 없음'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "가동성 좋은 매끈한 무통 종괴",
+      "젊은 나이",
+      "피부·유두 정상"
+    ],
+    "negativeClues": [
+      "고정·피부변화 아님",
+      "감염 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "종괴 양상(매끈·가동성·무통)",
+      "나이·월경 연관",
+      "피부·유두 변화 유무",
+      "크기 변화",
+      "악성/감염 징후 배제",
+      "가족력"
+    ],
+    "positiveClues": [
+      "가동성 좋은 매끈한 무통 종괴(양성 시사)"
+    ],
+    "negativeClues": [
+      "악성 징후 없음"
+    ],
+    "educationTopics": [
+      "대개 양성인 섬유선종 가능성을 설명(그래도 확인 필요)",
+      "초음파·필요 시 조직검사로 확인 계획",
+      "자가 관찰과 정기 추적의 중요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 암일까 걱정한다. 대개 양성이나 확인이 필요함을 설명하면 안심하고 검사에 동의한다."
+  ],
+  "ruleText": "# 증례명 : 유방통/유방덩이(섬유선종)\n- 인적사항 - 여성 고정, 18~35세, 외래\n- 사례 요약 - 매끈·가동성 좋은 무통 종괴, 피부/유두 정상.\n",
+  "rawRuleText": "유방 — 섬유선종 의심. 젊은 여성의 가동성 좋은 매끈한 무통 종괴."
+}

@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "lactational_mastitis_rule",
+  "title": "유방통/유방덩이 (수유기 유방염 의심)",
+  "category": "유방통/유방덩이",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 25 '유방통/유방덩이' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "수유기 유방염/농양 의심 (Suspected lactational mastitis)",
+  "variant": "수유부 한쪽 유방 발적·열감·통증 + 발열형",
+  "description": "아기에게 젖을 먹이는데 한쪽 가슴이 빨갛게 붓고 아프며 열이 나는 환자의 규칙입니다.",
+  "tags": [
+    "유방",
+    "유방염",
+    "수유",
+    "발열"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "gender": "여성 고정",
+      "age": "25~40세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "2주 전 출산해 모유수유 중인데, 며칠 전부터 한쪽 가슴 특정 부위가 빨갛게 붓고 단단하며 아프고 열이 난다. 몸살처럼 오슬오슬하다. 젖 물리기가 힘들다.",
+    "mustInclude": [
+      "수유 중 편측 유방의 국소 발적·열감·통증·경결",
+      "발열·오한·몸살",
+      "수유 곤란·젖 정체",
+      "급성 경과",
+      "전신 상태는 감염 양상"
+    ],
+    "preferredVariants": [
+      "젖꼭지에 상처가 있었음",
+      "수유 간격이 벌어졌음"
+    ],
+    "mustAbsent": [
+      "무통성 단단한 고정 종괴+피부 함몰(악성)",
+      "월경 주기 연관 압통 결절",
+      "비수유기·고령 무통 종괴"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "최근 출산·모유수유"
+    ],
+    "mustAbsent": []
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "모유수유 중"
+    ],
+    "recommended": [
+      "수면 부족"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·전신 상태",
+      "method": "활력징후·전신 상태 확인",
+      "expectedFinding": "발열·빈맥 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "유방 시진",
+      "method": "유방 시진 확인",
+      "expectedFinding": "편측 유방 국소 발적·부종",
+      "polarity": "positive"
+    },
+    {
+      "item": "유방 촉진",
+      "method": "유방 촉진 확인",
+      "expectedFinding": "압통성 경결(농양 시 파동)",
+      "polarity": "positive"
+    },
+    {
+      "item": "액와 림프절",
+      "method": "액와 림프절 확인",
+      "expectedFinding": "동측 액와 림프절 압통 가능"
+    },
+    {
+      "item": "유두 분비물",
+      "method": "유두 분비물 확인",
+      "expectedFinding": "유두 상처 가능"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "수유 중 편측 유방 발적·통증·발열의 환자. '수유 중','한쪽 가슴 빨갛게 붓고 아픔','열·몸살','젖 물리기 힘듦'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "수유 중 편측 유방 감염 징후",
+      "발열·오한",
+      "젖 정체"
+    ],
+    "negativeClues": [
+      "무통성 고정 종괴 아님",
+      "비수유기 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "수유 여부·기간",
+      "유방 증상(발적·통증·경결)",
+      "발열·전신증상",
+      "젖 정체·젖꼭지 상처",
+      "악성 징후 배제",
+      "수유 습관"
+    ],
+    "positiveClues": [
+      "수유 중 편측 유방염 징후 + 발열"
+    ],
+    "negativeClues": [
+      "악성 종괴 아님"
+    ],
+    "educationTopics": [
+      "수유기 유방염 가능성을 설명",
+      "수유·배유 지속과 항생제·해열의 필요성",
+      "농양 시 배농 가능성과 재발 예방 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 통증과 수유 걱정을 한다. 수유 지속과 치료를 설명하면 안심한다."
+  ],
+  "ruleText": "# 증례명 : 유방통/유방덩이(수유기 유방염)\n- 인적사항 - 여성 고정, 25~40세, 외래\n- 사례 요약 - 수유 중 편측 유방 발적·통증·경결 + 발열.\n",
+  "rawRuleText": "유방 — 수유기 유방염 의심. 수유 중 편측 유방 발적·통증·경결 + 발열."
+}

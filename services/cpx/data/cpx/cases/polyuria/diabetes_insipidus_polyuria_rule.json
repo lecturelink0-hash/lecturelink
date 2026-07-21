@@ -1,0 +1,142 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "diabetes_insipidus_polyuria_rule",
+  "title": "다뇨 (요붕증 의심)",
+  "category": "다뇨",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 27 '다뇨' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "요붕증 의심 (Suspected diabetes insipidus)",
+  "variant": "다량 묽은 소변 + 심한 갈증(야간 포함)형",
+  "description": "물을 아무리 마셔도 목이 마르고 맑은 소변을 엄청 많이 보는 환자의 규칙입니다.",
+  "tags": [
+    "다뇨",
+    "요붕증",
+    "다갈",
+    "야간뇨"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 주 전부터 소변을 하루 종일, 밤에도 여러 번 아주 많이 보고, 색이 맑고 묽다. 목이 계속 말라 물을 끊임없이 마신다. 최근 머리를 다치거나 뇌 수술을 받은 적이 있다(또는 약물 복용).",
+    "mustInclude": [
+      "다량의 묽고 맑은 소변",
+      "심한 갈증·과도한 물 섭취",
+      "야간에도 소변 많음",
+      "최근 두부 손상/뇌수술 또는 약물(리튬 등) 가능",
+      "체중은 크게 안 늘거나 오히려 감소"
+    ],
+    "preferredVariants": [
+      "찬물을 특히 많이 찾음",
+      "밤에 소변 때문에 여러 번 깸"
+    ],
+    "mustAbsent": [
+      "다음다뇨+체중감소+과일냄새(당뇨/DKA)",
+      "강박적 물 섭취가 갈증보다 앞섬(심인성)만",
+      "부종·소변량 감소"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "당뇨병 진단(고혈당)"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 두부 손상 또는 약물"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·탈수·구강 점막",
+      "method": "활력징후·탈수·구강 점막 확인",
+      "expectedFinding": "활력징후 대체로 정상, 탈수 시 구강 건조"
+    },
+    {
+      "item": "결막·피부·하지 부종",
+      "method": "결막·피부·하지 부종 확인",
+      "expectedFinding": "부종 없음"
+    },
+    {
+      "item": "복부·방광·CVA 압통",
+      "method": "복부·방광·CVA 압통 확인",
+      "expectedFinding": "방광 팽만 없음"
+    },
+    {
+      "item": "시야·신경학적 상태",
+      "method": "시야·신경학적 상태 확인",
+      "expectedFinding": "시야·신경학적 상태 대체로 정상(뇌하수체 병변 시 시야 이상 가능)"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "다량 묽은 소변·심한 갈증의 환자. '소변 아주 많음·맑음','밤에도 많음','목 계속 마름','머리 다침/약물'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "다량 묽은 소변",
+      "심한 갈증",
+      "야간뇨",
+      "두부 손상/약물"
+    ],
+    "negativeClues": [
+      "고혈당 증상 없음",
+      "심인성 우선 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "소변량·색(묽음)",
+      "갈증·물 섭취량",
+      "야간뇨",
+      "두부 손상·약물",
+      "당뇨 증상 배제",
+      "체중 변화"
+    ],
+    "positiveClues": [
+      "다량 묽은 소변 + 심한 갈증 + 야간뇨"
+    ],
+    "negativeClues": [
+      "당뇨 아님"
+    ],
+    "educationTopics": [
+      "소변 농축이 안 되는 요붕증 가능성을 설명",
+      "수분제한검사·혈액/소변 삼투압 등 계획",
+      "원인(뇌하수체·신장·약물) 평가"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 갈증과 잦은 소변으로 불편하다. 검사 계획을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 다뇨(요붕증)\n- 인적사항 - 성별 랜덤, 20~50세, 외래\n- 사례 요약 - 다량 묽은 소변·심한 갈증·야간뇨, 두부 손상/약물.\n",
+  "rawRuleText": "다뇨 — 요붕증 의심. 다량 묽은 소변 + 심한 갈증 + 야간뇨."
+}

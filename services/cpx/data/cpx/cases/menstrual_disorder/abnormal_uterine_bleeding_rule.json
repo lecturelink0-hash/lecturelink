@@ -1,0 +1,141 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "abnormal_uterine_bleeding_rule",
+  "title": "월경 이상/월경통 (이상자궁출혈 의심)",
+  "category": "월경 이상/월경통",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 43 '월경 이상/월경통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "이상자궁출혈(자궁근종 등) 의심 (Suspected abnormal uterine bleeding)",
+  "variant": "과다·불규칙 월경 출혈 + 빈혈형",
+  "description": "월경량이 지나치게 많고 불규칙하며 어지러운 환자의 규칙입니다.",
+  "tags": [
+    "월경이상",
+    "이상자궁출혈",
+    "자궁근종",
+    "빈혈"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "gender": "여성 고정",
+      "age": "35~50세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 달 전부터 월경량이 지나치게 많아 큰 패드를 자주 갈고 덩어리가 나오며, 월경이 아닌 때도 출혈이 있다. 어지럽고 숨이 차며 얼굴이 창백해졌다.",
+    "mustInclude": [
+      "과다 월경(대형 패드 잦은 교체·혈괴)",
+      "불규칙한 출혈(월경 외 출혈)",
+      "빈혈 증상(어지럼·피로·창백·숨참)",
+      "기간 연장",
+      "골반 압박감·덩이감 가능"
+    ],
+    "preferredVariants": [
+      "아랫배가 묵직하거나 만져지는 덩이",
+      "이전에 근종 진단"
+    ],
+    "mustAbsent": [
+      "임신 관련 출혈",
+      "진행성 심한 월경통이 주(자궁내막증)",
+      "화농성 분비물+발열(감염)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": []
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·결막·하복부",
+      "method": "활력징후·결막·하복부 확인",
+      "expectedFinding": "활력징후 빈맥 가능, 결막 창백, 하복부 덩이감 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "임신검사",
+      "method": "임신검사 확인",
+      "expectedFinding": "임신검사 음성"
+    },
+    {
+      "item": "질경 진찰",
+      "method": "질경 진찰 확인",
+      "expectedFinding": "질경 진찰 출혈원 확인"
+    },
+    {
+      "item": "양손 골반진찰",
+      "method": "양손 골반진찰 확인",
+      "expectedFinding": "양손 골반진찰에서 자궁 커짐·불규칙(근종) 가능",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "과다·불규칙 월경 출혈과 빈혈 증상의 환자. '월경량 매우 많음·덩어리','월경 아닌 때도 출혈','어지럼·창백'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "과다·불규칙 출혈",
+      "빈혈 증상",
+      "골반 덩이감"
+    ],
+    "negativeClues": [
+      "임신 출혈 아님",
+      "감염 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "출혈 양·양상(과다·불규칙)",
+      "월경 외 출혈",
+      "빈혈 증상",
+      "골반 압박·덩이",
+      "임신·감염 배제",
+      "근종 병력"
+    ],
+    "positiveClues": [
+      "과다·불규칙 출혈 + 빈혈"
+    ],
+    "negativeClues": [
+      "임신 출혈 아님"
+    ],
+    "educationTopics": [
+      "자궁근종 등에 의한 이상자궁출혈 가능성을 설명",
+      "빈혈·초음파·필요 시 내막검사 계획",
+      "치료(호르몬·시술) 옵션과 철분 보충"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 출혈과 어지럼이 걱정된다. 빈혈·초음파 검사를 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 월경이상(이상자궁출혈)\n- 인적사항 - 여성 고정, 35~50세, 외래\n- 사례 요약 - 과다·불규칙 출혈 + 빈혈 증상 + 골반 덩이감.\n",
+  "rawRuleText": "월경 — 이상자궁출혈 의심. 과다·불규칙 출혈 + 빈혈."
+}

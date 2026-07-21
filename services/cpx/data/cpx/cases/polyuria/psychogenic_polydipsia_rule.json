@@ -1,0 +1,144 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "psychogenic_polydipsia_rule",
+  "title": "다뇨 (심인성 다음 의심)",
+  "category": "다뇨",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 27 '다뇨' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "심인성 다음(강박적 물 섭취)에 의한 다뇨 의심 (Suspected psychogenic polydipsia)",
+  "variant": "과도한 물 섭취가 앞서는 다뇨형",
+  "description": "습관적으로 물을 아주 많이 마시고 그만큼 소변을 자주 보는 환자의 규칙입니다.",
+  "tags": [
+    "다뇨",
+    "심인성다음",
+    "물섭취",
+    "정신과"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "평소 물을 습관적으로 아주 많이 마시고, 그만큼 소변을 자주 본다. 갈증보다 '물을 마셔야 할 것 같은' 느낌이 앞선다. 불안·스트레스가 많고 정신과 약을 먹기도 한다.",
+    "mustInclude": [
+      "과도한 물 섭취가 갈증보다 앞섬",
+      "섭취량에 비례한 다뇨",
+      "낮에 주로 많고 밤 수면 중엔 상대적으로 덜함",
+      "불안·정신과적 배경",
+      "체중·전신상태는 대체로 안정"
+    ],
+    "preferredVariants": [
+      "물병을 늘 들고 다님",
+      "심심하거나 불안할 때 물을 더 마심"
+    ],
+    "mustAbsent": [
+      "다량 묽은 소변이 갈증에 선행(요붕증)",
+      "다음다뇨+체중감소(당뇨)",
+      "부종·소변량 감소"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "불안·정신과적 병력 가능"
+    ],
+    "mustAbsent": [
+      "당뇨병 진단"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "정신과 약물 복용 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·탈수·구강 점막",
+      "method": "활력징후·탈수·구강 점막 확인",
+      "expectedFinding": "활력징후 정상, 구강 점막 촉촉(탈수 없음)"
+    },
+    {
+      "item": "결막·피부·하지 부종",
+      "method": "결막·피부·하지 부종 확인",
+      "expectedFinding": "부종 없음"
+    },
+    {
+      "item": "복부·방광·CVA 압통",
+      "method": "복부·방광·CVA 압통 확인",
+      "expectedFinding": "방광 팽만 없음"
+    },
+    {
+      "item": "시야·신경학적 상태",
+      "method": "시야·신경학적 상태 확인",
+      "expectedFinding": "시야·신경학적 상태 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "습관적 과다 물 섭취·다뇨의 환자. '물을 습관적으로 많이 마심','불안할 때 더 마심','밤엔 덜함'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "과도한 물 섭취 선행",
+      "섭취 비례 다뇨",
+      "불안 배경"
+    ],
+    "negativeClues": [
+      "갈증 선행 아님",
+      "당뇨 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "물 섭취 습관·양",
+      "갈증 vs 습관 선후",
+      "야간 다뇨 여부",
+      "정신과적 배경",
+      "당뇨/요붕증 배제",
+      "스트레스"
+    ],
+    "positiveClues": [
+      "과도한 물 섭취 선행 + 다뇨"
+    ],
+    "negativeClues": [
+      "요붕증 아님",
+      "당뇨 아님"
+    ],
+    "educationTopics": [
+      "습관적 과다 수분 섭취가 원인일 수 있음을 설명",
+      "혈액/소변 삼투압으로 요붕증·당뇨와 구별 계획",
+      "수분 섭취 조절과 정신건강 지지"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 물 마시는 습관을 대수롭지 않게 여긴다. 검사로 원인을 구별하자고 설명한다."
+  ],
+  "ruleText": "# 증례명 : 다뇨(심인성 다음)\n- 인적사항 - 성별 랜덤, 20~50세, 외래\n- 사례 요약 - 과도한 물 섭취 선행·다뇨, 불안 배경, 야간엔 덜함.\n",
+  "rawRuleText": "다뇨 — 심인성 다음 의심. 과도한 물 섭취 선행 + 섭취 비례 다뇨."
+}

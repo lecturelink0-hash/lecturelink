@@ -1,0 +1,159 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "dka_vomiting_rule",
+  "title": "구토 (당뇨병성 케톤산증 의심 적신호)",
+  "category": "구토",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 24 '구토' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "당뇨병성 케톤산증 의심 (Suspected diabetic ketoacidosis)",
+  "variant": "다음다뇨 + 구토·복통·과호흡 적신호형",
+  "description": "물을 많이 마시고 소변을 자주 보며 구토·복통과 함께 숨을 가쁘게 쉬는 환자의 적신호 규칙입니다.",
+  "tags": [
+    "구토",
+    "DKA",
+    "당뇨",
+    "과호흡",
+    "적신호"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "15~45세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "며칠 전부터 물을 계속 마시고 소변을 자주 보며 기운이 없더니, 오늘 구역·구토가 심하고 배가 아프며 숨을 깊고 가쁘게 쉰다. 당뇨가 있는데 인슐린을 며칠 걸렀다(또는 최근 진단).",
+    "mustInclude": [
+      "선행 다음·다뇨·다갈",
+      "심한 구토·복통",
+      "깊고 빠른 호흡(쿠스마울 호흡)",
+      "전신 쇠약·탈수",
+      "당뇨·인슐린 중단 또는 감염 등 유발"
+    ],
+    "preferredVariants": [
+      "입에서 과일 냄새(아세톤)",
+      "최근 감기·요로감염 등 유발 요인"
+    ],
+    "mustAbsent": [
+      "선혈성 구토(상부출혈)",
+      "임신 관련 구토",
+      "만성적·간헐 구토"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "당뇨병(제1형/제2형)"
+    ],
+    "mustAbsent": [
+      "소화성궤양 병력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "당뇨 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 인슐린 중단 또는 감염"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "빈맥·저혈압 경향·탈수, 깊고 빠른 호흡",
+      "polarity": "positive"
+    },
+    {
+      "item": "전반적 외견",
+      "method": "전반적 외견 확인",
+      "expectedFinding": "전반적 쇠약·탈수 외견",
+      "polarity": "positive"
+    },
+    {
+      "item": "구강",
+      "method": "구강 확인",
+      "expectedFinding": "구강 건조",
+      "polarity": "positive"
+    },
+    {
+      "item": "복부 시진",
+      "method": "복부 시진 확인",
+      "expectedFinding": "복부 팽만 없음, 경도 압통 가능"
+    },
+    {
+      "item": "복부 촉진",
+      "method": "복부 촉진 확인",
+      "expectedFinding": "전반적 경도 압통(국소 반발통 뚜렷치 않음)"
+    },
+    {
+      "item": "신경학적 상태",
+      "method": "신경학적 상태 확인",
+      "expectedFinding": "의식 처짐 가능"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "다음다뇨 후 구토·복통·과호흡의 당뇨 환자. '물 많이 마심·소변 자주','인슐린 걸렀음','숨 가쁨'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "다음·다뇨 선행",
+      "구토·복통",
+      "과호흡·탈수",
+      "당뇨·인슐린 중단"
+    ],
+    "negativeClues": [
+      "선혈 구토 없음",
+      "임신 관련 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "다음·다뇨·다갈 선행",
+      "구토·복통 양상",
+      "호흡 양상(과호흡)",
+      "당뇨·인슐린 중단·감염",
+      "선혈/임신 구토 배제",
+      "탈수 정도"
+    ],
+    "positiveClues": [
+      "다음다뇨 + 구토 + 과호흡",
+      "인슐린 중단"
+    ],
+    "negativeClues": [
+      "선혈 구토 없음"
+    ],
+    "educationTopics": [
+      "당뇨 응급(케톤산증) 가능성을 설명",
+      "혈당·케톤·전해질 검사와 즉각 수액·인슐린 치료의 중요성",
+      "인슐린 중단 위험과 재발 예방 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 지쳐 짧게 답한다. 응급 처치(수액·검사)를 우선하며 병력을 확인한다."
+  ],
+  "ruleText": "# 증례명 : 구토(당뇨병성 케톤산증 적신호)\n- 인적사항 - 성별 랜덤, 15~45세, 응급실\n- 사례 요약 - 다음다뇨 후 구토·복통·과호흡·탈수, 당뇨·인슐린 중단.\n- 현 병력 - 며칠 다음다뇨, 오늘 심한 구토·과호흡.",
+  "rawRuleText": "구토 — 당뇨병성 케톤산증 의심. 다음다뇨 선행 + 구토·복통 + 과호흡·탈수."
+}

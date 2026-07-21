@@ -1,0 +1,140 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "cervicitis_sti_rule",
+  "title": "질 분비물 (자궁경부염/성매개감염 의심)",
+  "category": "질 분비물",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 42 '질 분비물' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "자궁경부염(임질/클라미디아 등) 의심 (Suspected cervicitis/STI)",
+  "variant": "화농성 분비물 + 성접촉력·골반 불편형",
+  "description": "성접촉 후 화농성 분비물과 아랫배 불편이 생긴 환자의 규칙입니다.",
+  "tags": [
+    "질분비물",
+    "자궁경부염",
+    "STI",
+    "성접촉"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래",
+      "gender": "여성"
+    },
+    "recommended": {
+      "gender": "여성 고정",
+      "age": "18~35세"
+    },
+    "randomizable": [
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "새로운 파트너와 성관계 후 며칠~2주 뒤부터 누렇고 고름 같은 분비물이 늘고, 아랫배가 묵직하며 성교 후 출혈이 있었다. 배뇨 시 따끔거리기도 한다.",
+    "mustInclude": [
+      "화농성(누런) 질 분비물 증가",
+      "최근 성접촉·새 파트너",
+      "성교 후 출혈·하복부 불편",
+      "배뇨통 가능",
+      "파트너 증상 가능"
+    ],
+    "preferredVariants": [
+      "콘돔 미사용",
+      "이전 성매개감염력"
+    ],
+    "mustAbsent": [
+      "치즈양 분비물+심한 가려움(칸디다)",
+      "회색 비린내 분비물(세균성 질증)",
+      "발열+심한 골반통(골반염 진행)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": []
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 성접촉"
+    ],
+    "recommended": [
+      "콘돔 미사용 가능"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·하복부",
+      "method": "활력징후·하복부 확인",
+      "expectedFinding": "활력징후 정상, 하복부 경도 압통 가능"
+    },
+    {
+      "item": "외음부 시진",
+      "method": "외음부 시진 확인",
+      "expectedFinding": "외음부 대체로 정상"
+    },
+    {
+      "item": "질경 진찰",
+      "method": "질경 진찰 확인",
+      "expectedFinding": "질경상 자궁경부 화농성 분비·접촉출혈",
+      "polarity": "positive"
+    },
+    {
+      "item": "양손 골반진찰",
+      "method": "양손 골반진찰 확인",
+      "expectedFinding": "양손 골반진찰 자궁경부 운동통 가능(골반염 시)"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "성접촉 후 화농성 분비물·하복부 불편의 환자. '새 파트너와 관계','누런 분비물','성교 후 출혈','배뇨 따끔'은 물으면 공개. 민망해 조심스럽다.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "화농성 분비물",
+      "최근 성접촉",
+      "성교 후 출혈·하복부 불편"
+    ],
+    "negativeClues": [
+      "치즈양 가려움 아님",
+      "세균성 질증 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "분비물 양상(화농성)",
+      "성접촉·파트너력",
+      "성교 후 출혈·하복부 통증",
+      "배뇨통",
+      "칸디다/세균성 배제",
+      "골반염 위험 평가"
+    ],
+    "positiveClues": [
+      "화농성 분비물 + 성접촉력 + 하복부 불편"
+    ],
+    "negativeClues": [
+      "칸디다 아님"
+    ],
+    "educationTopics": [
+      "성매개감염(자궁경부염) 가능성을 설명",
+      "분비물 검사·STI 검사와 파트너 동시 치료의 중요성",
+      "콘돔 등 예방과 재검 안내"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 민망하고 걱정한다. 비판단적으로 검사·파트너 치료를 설명한다."
+  ],
+  "ruleText": "# 증례명 : 질 분비물(자궁경부염/STI)\n- 인적사항 - 여성 고정, 18~35세, 외래\n- 사례 요약 - 성접촉 후 화농성 분비물 + 성교 후 출혈 + 하복부 불편.\n",
+  "rawRuleText": "질 분비물 — 자궁경부염/STI 의심. 화농성 분비물 + 성접촉력 + 하복부 불편."
+}

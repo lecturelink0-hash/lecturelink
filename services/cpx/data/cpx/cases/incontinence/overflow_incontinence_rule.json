@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "overflow_incontinence_rule",
+  "title": "요실금 (범람성 요실금 의심)",
+  "category": "요실금",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 35 '요실금' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "범람성 요실금(만성 요저류)에 의한 요실금 의심 (Suspected overflow incontinence)",
+  "variant": "잔뇨·약한 줄기 + 조금씩 넘쳐 새는 누출형",
+  "description": "소변 줄기가 약하고 잔뇨가 남으며 자기도 모르게 조금씩 새는 환자의 규칙입니다.",
+  "tags": [
+    "요실금",
+    "범람성",
+    "요저류",
+    "전립선비대"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "60~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "소변 줄기가 약하고 다 본 뒤에도 남은 느낌이며, 자기도 모르게 소변이 조금씩 계속 새어 속옷이 젖는다. 아랫배가 묵직하다. 당뇨가 오래됐거나 전립선이 크다고 들었다.",
+    "mustInclude": [
+      "약한 소변 줄기·잔뇨감·주저뇨",
+      "자신도 모르게 조금씩 지속적으로 새는 누출",
+      "방광이 묵직·팽만감",
+      "선행 폐쇄(전립선비대) 또는 신경인성(당뇨) 배경",
+      "급박한 요의는 뚜렷치 않음"
+    ],
+    "preferredVariants": [
+      "밤에 자주 깨서 조금씩 봄",
+      "소변을 봐도 시원하지 않음"
+    ],
+    "mustAbsent": [
+      "갑작스런 절박뇨로 왈칵 샘(절박성)",
+      "기침 시 소량 누출(복압성)",
+      "급성 완전 요폐만"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "전립선비대 또는 당뇨병 가능"
+    ],
+    "mustAbsent": [
+      "급성 요로감염만"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "장기 당뇨 또는 전립선비대 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 정상"
+    },
+    {
+      "item": "하복부·방광",
+      "method": "하복부·방광 확인",
+      "expectedFinding": "하복부 방광 팽만·잔뇨감",
+      "polarity": "positive"
+    },
+    {
+      "item": "하지 신경학적 검사",
+      "method": "하지 신경학적 검사 확인",
+      "expectedFinding": "하지 감각 저하 가능(신경인성)"
+    },
+    {
+      "item": "골반저·기침 유발 검사",
+      "method": "골반저·기침 유발 검사 확인",
+      "expectedFinding": "기침 유발 검사 음성"
+    },
+    {
+      "item": "소변검사",
+      "method": "소변검사 확인",
+      "expectedFinding": "요검사 대체로 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "약한 줄기·잔뇨·지속 누출의 고령 남성. '줄기 약함','잔뇨감','모르게 조금씩 샘','아랫배 묵직'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "잔뇨·약한 줄기",
+      "지속적 소량 누출",
+      "방광 팽만",
+      "폐쇄/신경인성 배경"
+    ],
+    "negativeClues": [
+      "절박뇨 아님",
+      "복압성 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "배뇨 증상(줄기·잔뇨·주저)",
+      "누출 양상(지속·소량)",
+      "방광 팽만감",
+      "전립선·당뇨 배경",
+      "절박/복압성 배제",
+      "야간뇨"
+    ],
+    "positiveClues": [
+      "잔뇨·약한 줄기 + 지속 누출 + 방광 팽만"
+    ],
+    "negativeClues": [
+      "절박성 아님"
+    ],
+    "educationTopics": [
+      "소변이 다 비워지지 않아 넘쳐 새는 범람성 가능성을 설명",
+      "잔뇨 측정·요류검사·전립선/신경 평가 계획",
+      "도뇨 등 처치와 원인 치료"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 새는 것이 불편하다. 잔뇨·원인 검사를 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 요실금(범람성)\n- 인적사항 - 남성 우세, 60~80세, 외래\n- 사례 요약 - 잔뇨·약한 줄기 + 지속적 소량 누출 + 방광 팽만, 전립선/당뇨 배경.\n",
+  "rawRuleText": "요실금 — 범람성 요실금 의심. 잔뇨·약한 줄기 + 지속 소량 누출 + 방광 팽만."
+}
