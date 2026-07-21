@@ -1,0 +1,149 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "drug_induced_bruising_rule",
+  "title": "쉽게 멍이 듦 (약물유발 출혈경향 의심)",
+  "category": "쉽게 멍이 듦",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 1 '쉽게 멍이 듦' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "약물(항혈소판/항응고제) 유발 출혈경향 의심 (Suspected drug-induced bruising)",
+  "variant": "항혈전제 복용 고령 + 멍·잇몸출혈형",
+  "description": "피 묽게 하는 약을 먹은 뒤 멍이 잘 들고 잇몸에서 피가 나는 고령 환자의 규칙입니다.",
+  "tags": [
+    "쉽게멍",
+    "약물",
+    "항응고제",
+    "출혈경향"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "60~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 주 전부터 부딪힌 기억도 없는데 팔다리에 멍이 잘 들고, 양치할 때 잇몸에서 피가 난다. 심장·뇌혈관 때문에 아스피린이나 와파린 같은 약을 먹고 있다.",
+    "mustInclude": [
+      "최근 항혈소판제/항응고제 복용",
+      "경미한 자극에도 잘 드는 멍·반상출혈",
+      "잇몸출혈·코피 등 점막출혈",
+      "약 복용과 시간적 연관",
+      "발열·감염 반복은 없음"
+    ],
+    "preferredVariants": [
+      "최근 약 용량이 바뀜",
+      "진통소염제(NSAID)도 함께 복용"
+    ],
+    "mustAbsent": [
+      "발열·피로·감염 반복(백혈병형)",
+      "가족성 출혈 병력(선천성)",
+      "간질환 황달"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "심혈관질환으로 항혈전제 복용"
+    ],
+    "mustAbsent": [
+      "선천성 출혈질환"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "출혈 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "고령"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·결막",
+      "method": "활력징후·결막 확인",
+      "expectedFinding": "활력징후 정상, 결막 창백은 경미"
+    },
+    {
+      "item": "피부 멍·점상출혈",
+      "method": "피부 멍·점상출혈 확인",
+      "expectedFinding": "팔다리 반상출혈·멍",
+      "polarity": "positive"
+    },
+    {
+      "item": "구강·잇몸",
+      "method": "구강·잇몸 확인",
+      "expectedFinding": "잇몸 출혈 흔적 가능"
+    },
+    {
+      "item": "경부 림프절",
+      "method": "경부 림프절 확인",
+      "expectedFinding": "경부 림프절 없음"
+    },
+    {
+      "item": "복부·간비장",
+      "method": "복부·간비장 확인",
+      "expectedFinding": "간·비장 비대 없음"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "항혈전제 복용 후 멍·잇몸출혈의 고령 환자. '피 묽게 하는 약 먹음','멍 잘 듦','잇몸 피'는 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "항혈전제 복용",
+      "쉽게 드는 멍",
+      "점막출혈"
+    ],
+    "negativeClues": [
+      "발열·감염 반복 없음",
+      "선천성 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "복용 약물(항혈소판/항응고)",
+      "멍·출혈 양상·유발",
+      "점막출혈",
+      "약 변경·병용(NSAID)",
+      "백혈병/선천성 배제",
+      "간질환 배제"
+    ],
+    "positiveClues": [
+      "항혈전제 + 쉽게 드는 멍·점막출혈"
+    ],
+    "negativeClues": [
+      "백혈병 아님"
+    ],
+    "educationTopics": [
+      "복용 약이 출혈 경향을 키울 수 있음을 설명",
+      "응고·혈소판 검사와 약 용량 조정 필요성",
+      "출혈 심할 때 대처와 임의 중단 주의 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 멍이 걱정된다. 약과의 연관·검사를 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 쉽게 멍이 듦(약물유발 출혈경향)\n- 인적사항 - 성별 랜덤, 60~80세, 외래\n- 사례 요약 - 항혈전제 복용 후 쉽게 드는 멍·잇몸출혈.\n",
+  "rawRuleText": "쉽게 멍이 듦 — 약물유발 출혈경향 의심. 항혈전제 복용 + 쉽게 드는 멍·점막출혈."
+}

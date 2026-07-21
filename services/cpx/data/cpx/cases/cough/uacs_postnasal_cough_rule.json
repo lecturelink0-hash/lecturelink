@@ -1,0 +1,157 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "uacs_postnasal_cough_rule",
+  "title": "기침 (상기도기침증후군 의심)",
+  "category": "기침",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 12 '기침' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "상기도기침증후군(후비루)에 의한 만성 기침 의심 (Suspected upper airway cough syndrome / postnasal drip)",
+  "variant": "목 뒤로 넘어가는 콧물·헛기침 중심형",
+  "description": "콧물이 목 뒤로 넘어가 자꾸 헛기침을 하고 목이 간질거리는 만성 기침 환자의 규칙입니다.",
+  "tags": [
+    "기침",
+    "후비루",
+    "상기도기침증후군",
+    "만성기침"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "20~55세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 주째 기침이 낫지 않는데, 목 뒤로 콧물이 넘어가는 느낌이 있어 자꾸 헛기침을 하고 목을 가다듬는다. 코막힘·콧물이 있고 아침에 특히 심하다. 눕거나 아침에 기침이 잦다.",
+    "mustInclude": [
+      "목 뒤로 넘어가는 분비물감(후비루)",
+      "잦은 헛기침·목 가다듬기",
+      "코막힘·콧물 등 비증상 동반",
+      "아침·누울 때 악화",
+      "만성(3~8주 이상) 지속"
+    ],
+    "preferredVariants": [
+      "알레르기 비염·부비동염 병력",
+      "목 간질거림"
+    ],
+    "mustAbsent": [
+      "장기 흡연+기침 변화·혈담(폐암)",
+      "삽화성 천명·야간 발작(천식)",
+      "약물(ACEi) 시작과 연관"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "비염·부비동염 병력 가능"
+    ],
+    "mustAbsent": [
+      "ACE억제제 복용"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "알레르기 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 정상"
+    },
+    {
+      "item": "인후",
+      "method": "인후 확인",
+      "expectedFinding": "인후 후벽 점액·조약돌 모양(cobblestone) 가능",
+      "polarity": "positive"
+    },
+    {
+      "item": "림프절",
+      "method": "림프절 확인",
+      "expectedFinding": "경부 림프절 없음"
+    },
+    {
+      "item": "호흡음",
+      "method": "호흡음 확인",
+      "expectedFinding": "호흡음 정상"
+    },
+    {
+      "item": "심음",
+      "method": "심음 확인",
+      "expectedFinding": "심음 정상"
+    },
+    {
+      "item": "코·부비동",
+      "method": "코·부비동 확인",
+      "expectedFinding": "코점막 부종·분비물, 부비동 압통 가능",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "후비루·헛기침 중심의 만성 기침 환자. '목 뒤로 콧물 넘어감','자꾸 헛기침','코막힘','아침에 심함'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "후비루감",
+      "잦은 헛기침",
+      "비증상 동반",
+      "아침 악화"
+    ],
+    "negativeClues": [
+      "흡연 기침 변화 아님",
+      "ACEi 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "기침 기간·양상",
+      "후비루감·목 가다듬기",
+      "코막힘·콧물",
+      "악화 시간(아침/누울 때)",
+      "폐암/천식/ACEi 배제",
+      "알레르기 병력"
+    ],
+    "positiveClues": [
+      "후비루 + 잦은 헛기침 + 비증상"
+    ],
+    "negativeClues": [
+      "폐암 아님",
+      "ACEi 아님"
+    ],
+    "educationTopics": [
+      "콧물이 목 뒤로 넘어가 생기는 기침 가능성을 설명",
+      "비염·부비동 치료로 기침이 좋아질 수 있음",
+      "유발 회피·비강 치료 계획"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 기침이 안 나아 답답하다. 후비루 치료 방향을 설명하면 수긍한다."
+  ],
+  "ruleText": "# 증례명 : 기침(상기도기침증후군)\n- 인적사항 - 성별 랜덤, 20~55세, 외래\n- 사례 요약 - 후비루감 + 잦은 헛기침 + 비증상, 아침 악화.\n",
+  "rawRuleText": "기침 — 상기도기침증후군(후비루) 의심. 후비루감 + 잦은 헛기침 + 비증상."
+}

@@ -1,0 +1,148 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "cervical_myelopathy_rule",
+  "title": "목 통증 (경추 척수증 의심 적신호)",
+  "category": "목 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 32 '목 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "경추 척수증 의심 (Suspected cervical myelopathy)",
+  "variant": "목 통증 + 양손 서툶·보행 불안정·배뇨 이상 적신호형",
+  "description": "목 통증과 함께 손이 서툴러지고 걸음이 불안정하며 소변이 이상한 환자의 적신호 규칙입니다.",
+  "tags": [
+    "목통증",
+    "경추척수증",
+    "척수병증",
+    "적신호"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "50~75세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "목이 뻐근한 지 오래됐는데, 최근 양손이 서툴러 단추 끼우기·젓가락질이 힘들고, 걸을 때 휘청거리며 균형이 안 잡힌다. 소변이 급하거나 잘 안 나오기도 한다.",
+    "mustInclude": [
+      "만성 목 통증·경직 배경",
+      "양손의 미세운동 장애(단추·젓가락)",
+      "보행 불안정·균형장애",
+      "배뇨 이상(절박/주저)",
+      "증상이 양측·서서히 진행"
+    ],
+    "preferredVariants": [
+      "다리도 뻣뻣해지는 느낌",
+      "목을 굽힐 때 등·팔로 전기 흐르는 느낌"
+    ],
+    "mustAbsent": [
+      "편측 상지 방사통만(신경근병증)",
+      "갑작스런 편마비(뇌졸중)",
+      "외상 직후 국소 통증만"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "급성 외상 골절"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "장시간 컴퓨터 작업 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 정상"
+    },
+    {
+      "item": "압통점",
+      "method": "압통점 확인",
+      "expectedFinding": "경부 압통·경직"
+    },
+    {
+      "item": "운동범위",
+      "method": "운동범위 확인",
+      "expectedFinding": "목 운동범위 제한"
+    },
+    {
+      "item": "Spurling",
+      "method": "Spurling 확인",
+      "expectedFinding": "Spurling에서 국소 방사통 뚜렷치 않을 수 있음"
+    },
+    {
+      "item": "상지 신경",
+      "method": "상지 신경 확인",
+      "expectedFinding": "상지·하지 반사 항진·병적반사 등 척수증 소견",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "목 통증 + 양손 서툶·보행 불안정·배뇨 이상의 환자. '손이 서툴러짐','걸음 휘청','소변 이상'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "양손 미세운동 장애",
+      "보행 불안정",
+      "배뇨 이상",
+      "양측·진행성"
+    ],
+    "negativeClues": [
+      "편측 방사통만 아님",
+      "급성 편마비 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "목 통증 경과",
+      "손 미세운동·서툶",
+      "보행·균형",
+      "배뇨 이상",
+      "신경근병증/뇌졸중 배제",
+      "외상 부재"
+    ],
+    "positiveClues": [
+      "목 통증 + 양손 서툶 + 보행 불안정 + 배뇨 이상"
+    ],
+    "negativeClues": [
+      "신경근병증만 아님"
+    ],
+    "educationTopics": [
+      "척수가 눌리는 경추 척수증 가능성으로 정밀검사가 필요함을 설명",
+      "경추 MRI·신경외과 협진 계획",
+      "증상 급격 악화 시 즉시 내원 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 손·다리 이상이 걱정된다. 척수 검사 필요성을 설명하면 동의한다."
+  ],
+  "ruleText": "# 증례명 : 목 통증(경추 척수증 적신호)\n- 인적사항 - 성별 랜덤, 50~75세, 외래\n- 사례 요약 - 목 통증 + 양손 서툶 + 보행 불안정 + 배뇨 이상(척수증).\n",
+  "rawRuleText": "목 통증 — 경추 척수증 의심. 목 통증 + 양손 서툶 + 보행 불안정 + 배뇨 이상."
+}

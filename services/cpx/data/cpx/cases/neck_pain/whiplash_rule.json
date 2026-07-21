@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "whiplash_rule",
+  "title": "목 통증 (편타손상 의심)",
+  "category": "목 통증",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 32 '목 통증' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "편타손상(경추 염좌) 의심 (Suspected whiplash injury)",
+  "variant": "후방 추돌 후 지연성 목 통증·경직형",
+  "description": "교통사고(후방 추돌) 며칠 뒤부터 목이 아프고 뻣뻣한 환자의 규칙입니다.",
+  "tags": [
+    "목통증",
+    "편타손상",
+    "교통사고",
+    "경추염좌"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "20~50세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "며칠 전 차가 뒤에서 부딪히는 사고가 있었고, 사고 직후엔 괜찮았는데 다음 날부터 목이 아프고 뻣뻣하며 뒤통수·어깨까지 뻐근하다. 목을 돌리기 힘들고 가끔 머리가 아프다.",
+    "mustInclude": [
+      "최근 후방 추돌 등 가감속 손상",
+      "사고 후 수 시간~하루 뒤 지연 발생",
+      "목 통증·경직·운동범위 감소",
+      "후두부·어깨로 뻗치는 근육통·두통",
+      "팔로 뻗치는 뚜렷한 신경증상은 없음"
+    ],
+    "preferredVariants": [
+      "잠을 잘못 자면 더 심함",
+      "불안·수면장애 동반"
+    ],
+    "mustAbsent": [
+      "양손 서툶·보행 이상(척수증)",
+      "편측 분절 방사통·위약(신경근병증)",
+      "외상 없이 서서히 발생"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "최근 교통사고"
+    ],
+    "mustAbsent": [
+      "의식소실·골절 의심 외상"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "최근 교통사고"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후",
+      "method": "활력징후 확인",
+      "expectedFinding": "활력징후 정상"
+    },
+    {
+      "item": "압통점",
+      "method": "압통점 확인",
+      "expectedFinding": "경부 근육 압통(뒤·옆목)",
+      "polarity": "positive"
+    },
+    {
+      "item": "운동범위",
+      "method": "운동범위 확인",
+      "expectedFinding": "목 운동범위 제한(통증성)",
+      "polarity": "positive"
+    },
+    {
+      "item": "Spurling",
+      "method": "Spurling 확인",
+      "expectedFinding": "Spurling 음성(방사통 없음)"
+    },
+    {
+      "item": "상지 신경",
+      "method": "상지 신경 확인",
+      "expectedFinding": "상지 근력·감각·반사 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "후방 추돌 후 지연성 목 통증·경직의 환자. '차 뒤에서 부딪힘','다음날부터 아픔','목 뻣뻣·돌리기 힘듦'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "최근 후방 추돌",
+      "지연성 목 통증·경직",
+      "운동범위 감소"
+    ],
+    "negativeClues": [
+      "신경증상 없음",
+      "척수증 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "사고 기전(후방 추돌)",
+      "증상 발생 시점(지연)",
+      "목 통증·경직·운동제한",
+      "신경증상(방사통·위약) 유무",
+      "척수증/골절 적신호 배제",
+      "수면·불안"
+    ],
+    "positiveClues": [
+      "교통사고 후 지연성 목 통증·경직"
+    ],
+    "negativeClues": [
+      "신경증상 없음"
+    ],
+    "educationTopics": [
+      "편타손상(경추 염좌) 가능성을 설명",
+      "대개 보존적으로 호전됨과 자세·스트레칭·물리치료",
+      "팔 저림·힘 빠짐 등 신경증상 시 재평가 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 사고 후 통증이 걱정된다. 대개 호전됨과 관리 방법을 설명하면 안심한다."
+  ],
+  "ruleText": "# 증례명 : 목 통증(편타손상)\n- 인적사항 - 성별 랜덤, 20~50세, 외래\n- 사례 요약 - 후방 추돌 후 지연성 목 통증·경직·운동제한, 신경증상 없음.\n",
+  "rawRuleText": "목 통증 — 편타손상 의심. 후방 추돌 후 지연성 목 통증·경직."
+}
