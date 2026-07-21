@@ -69,10 +69,15 @@ export default function CpxResultDetail({ sessionId }) {
     return () => { active = false; };
   }, [sessionId]);
 
-  const judgmentMap = useMemo(
-    () => new Map((result?.judgments || []).map((j) => [j.id, j])),
-    [result],
-  );
+  // judgments는 두 가지 형태로 올 수 있다:
+  //  - 배열 [{ id, status, evidence }]           (Fly evaluate 실시간 응답)
+  //  - 객체 { ht01: { status, evidence }, ... }  (Supabase 미러링 저장본, item id 키)
+  const judgmentMap = useMemo(() => {
+    const j = result?.judgments;
+    if (Array.isArray(j)) return new Map(j.map((x) => [x.id, x]));
+    if (j && typeof j === 'object') return new Map(Object.entries(j));
+    return new Map();
+  }, [result]);
 
   const toggle = (id) => setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -154,7 +159,8 @@ export default function CpxResultDetail({ sessionId }) {
             ) : (
               <ul className="space-y-3">{rows.map((r) => {
                 const j = judgmentMap.get(r.id);
-                const quotes = j && Array.isArray(j.evidence) ? j.evidence : [];
+                const quotes = (j && Array.isArray(j.evidence) ? j.evidence : [])
+                  .map((q) => (typeof q === 'string' ? q : JSON.stringify(q)));
                 return <li key={r.id} className="flex items-start gap-2 text-sm">
                   {r.kind === 'met' ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]" />
                     : r.kind === 'partial' ? <MinusCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warn)]" />
