@@ -1,0 +1,153 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "alcohol_withdrawal_seizure_rule",
+  "title": "경련 (알코올 금단 발작 의심)",
+  "category": "경련",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 45 '경련' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "알코올 금단 발작 의심 (Suspected alcohol withdrawal seizure)",
+  "variant": "만성 음주 중단 후 발작 + 진전·발한형",
+  "description": "평소 술을 많이 마시다가 며칠 끊은 뒤 손이 떨리고 발작을 한 환자의 규칙입니다.",
+  "tags": [
+    "경련",
+    "알코올금단",
+    "발작",
+    "진전"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "남성 우세",
+      "age": "40~60세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "평소 매일 술을 많이 마시다가 2~3일 전부터 사정상 못 마셨는데, 손이 떨리고 식은땀이 나며 잠을 못 자다가 오늘 전신 발작을 한 번 했다.",
+    "mustInclude": [
+      "만성 다량 음주력",
+      "최근 2~3일 음주 중단",
+      "금단 증상(손 떨림·발한·불면·불안)",
+      "전신 강직간대발작",
+      "발작 후 회복되며 열은 없음"
+    ],
+    "preferredVariants": [
+      "예전에도 술 끊었을 때 비슷했던 적",
+      "안 보이는 게 보이는 것 같다(환시 가능)"
+    ],
+    "mustAbsent": [
+      "발열·경부강직(수막염형)",
+      "머리 외상",
+      "저혈당(정상)"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "간질(뇌전증) 진단력",
+      "최근 두부 외상"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "특이 가족력 없음"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "만성 다량 음주"
+    ],
+    "recommended": [
+      "영양 불량 가능"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·산소포화도·의식·지남력",
+      "method": "활력징후·산소포화도·의식·지남력 확인",
+      "expectedFinding": "활력징후 빈맥·혈압 상승·발한, 산소포화도 정상, 의식 회복",
+      "polarity": "positive"
+    },
+    {
+      "item": "동공·안구·구강·혀·두부 외상",
+      "method": "동공·안구·구강·혀·두부 외상 확인",
+      "expectedFinding": "동공 정상, 혀 깨문 흔적 가능, 두부 외상 없음"
+    },
+    {
+      "item": "수막자극징후",
+      "method": "수막자극징후 확인",
+      "expectedFinding": "수막자극징후 음성"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "신경학적 진찰 확인",
+      "expectedFinding": "진전·발한 등 자율신경 항진 소견",
+      "polarity": "positive"
+    },
+    {
+      "item": "혈당",
+      "method": "혈당 확인",
+      "expectedFinding": "혈당 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "만성 음주자가 술을 끊은 뒤 발작한 환자. '술 매일 마심','2~3일 끊음','손 떨림·식은땀','발작'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "만성 음주",
+      "최근 금주",
+      "금단 증상(진전·발한)",
+      "전신 발작"
+    ],
+    "negativeClues": [
+      "발열 없음",
+      "외상 없음",
+      "저혈당 아님"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "음주량·기간",
+      "최근 중단 여부·시점",
+      "금단 증상",
+      "발작 양상·횟수",
+      "발열·외상 부재",
+      "저혈당 배제"
+    ],
+    "positiveClues": [
+      "만성 음주 + 금주 후 발작",
+      "진전·발한"
+    ],
+    "negativeClues": [
+      "발열 없음",
+      "저혈당 아님"
+    ],
+    "educationTopics": [
+      "금단에 의한 발작 가능성을 설명",
+      "안전한 금단 관리(수액·비타민·약물)의 필요성",
+      "절주·금주 지원과 재발 예방 교육"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 손이 떨리고 불안하다. 비판단적으로 음주력을 확인하고 금단 관리를 설명한다."
+  ],
+  "ruleText": "# 증례명 : 경련(알코올 금단 발작)\n- 인적사항 - 남성 우세, 40~60세, 응급실\n- 사례 요약 - 만성 음주 후 2~3일 금주, 진전·발한·불면 뒤 전신 발작.\n- 현 병력 - 금단 증상 후 발작 1회, 회복됨.",
+  "rawRuleText": "경련 — 알코올 금단 발작 의심. 만성 음주 + 금주 2~3일 후 진전·발한·전신 발작."
+}

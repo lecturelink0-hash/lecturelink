@@ -1,0 +1,156 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "stroke_altered_consciousness_rule",
+  "title": "의식장애 (급성 뇌졸중 적신호)",
+  "category": "의식장애",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 47 '의식장애' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "급성 뇌졸중 의심 (Suspected acute stroke)",
+  "variant": "갑작스런 의식저하 + 편마비·언어장애형",
+  "description": "갑자기 의식이 처지고 한쪽 팔다리에 힘이 빠지며 말이 어눌해진 고령 환자의 적신호 규칙입니다.",
+  "tags": [
+    "의식장애",
+    "뇌졸중",
+    "편마비",
+    "적신호",
+    "응급"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "응급실"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "60~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "한 시간 전 갑자기 의식이 처지고 한쪽 팔다리에 힘이 빠지며 말이 어눌해져 보호자가 데려왔다. 고혈압·심방세동이 있다. 환자는 질문에 느리고 짧게만 답한다.",
+    "mustInclude": [
+      "갑작스런 발병(정확한 시각 확인 가능)",
+      "편측 위약·안면 마비",
+      "말이 어눌함(구음/실어)",
+      "의식 처짐",
+      "고혈압·심방세동 등 뇌졸중 위험인자"
+    ],
+    "preferredVariants": [
+      "한쪽 입꼬리가 처짐",
+      "증상 시작 시각을 보호자가 안다(치료 시간창)"
+    ],
+    "mustAbsent": [
+      "발열·경부강직",
+      "저혈당(측정 시 정상)",
+      "약물 과다복용"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [
+      "고혈압",
+      "심방세동 또는 부정맥"
+    ],
+    "mustAbsent": [
+      "최근 외상"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "뇌졸중 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "흡연력 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "ABC·활력징후·산소포화도",
+      "method": "ABC·활력징후·산소포화도 확인",
+      "expectedFinding": "활력징후 혈압 상승 가능, 산소포화도 정상"
+    },
+    {
+      "item": "GCS·의식·지남력",
+      "method": "GCS·의식·지남력 확인",
+      "expectedFinding": "GCS 저하·지남력 저하",
+      "polarity": "positive"
+    },
+    {
+      "item": "동공·구강·외상",
+      "method": "동공·구강·외상 확인",
+      "expectedFinding": "동공 정상, 외상 없음"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "신경학적 진찰 확인",
+      "expectedFinding": "편측 근력 저하·안면 비대칭",
+      "polarity": "positive"
+    },
+    {
+      "item": "혈당",
+      "method": "혈당 확인",
+      "expectedFinding": "혈당 정상"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "갑작스런 의식저하·편마비·어눌한 말의 고령 환자. 의식이 처져 느리고 짧게 답한다. 보호자가 발병 시각·위험인자를 안다. '한쪽 힘 빠짐','말 어눌','고혈압/부정맥'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "갑작스런 발병",
+      "편측 위약·안면마비",
+      "구음장애",
+      "고혈압·심방세동"
+    ],
+    "negativeClues": [
+      "발열 없음",
+      "저혈당 아님",
+      "약물과다 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "발병 시각·양상(갑작스러움)",
+      "편측 위약·안면마비",
+      "언어장애",
+      "위험인자(고혈압·부정맥)",
+      "외상·약물 부재",
+      "저혈당 배제"
+    ],
+    "positiveClues": [
+      "갑작스런 편마비·구음장애",
+      "심방세동"
+    ],
+    "negativeClues": [
+      "발열 없음",
+      "저혈당 아님"
+    ],
+    "educationTopics": [
+      "급성 뇌졸중 가능성으로 즉시 뇌 영상(CT)이 필요함을 설명",
+      "혈전용해 등 치료는 시간이 관건임을 설명",
+      "기도·혈압 관리와 신경과 협진"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 의식이 처져 짧게만 답한다. 세부 병력은 보호자를 통해 확인하도록 유도한다."
+  ],
+  "ruleText": "# 증례명 : 의식장애(뇌졸중 적신호)\n- 인적사항 - 성별 랜덤, 60~80세, 응급실\n- 사례 요약 - 갑작스런 의식저하·편마비·구음장애, 고혈압·심방세동.\n- 현 병력 - 1시간 전 급성 발병, 편측 위약, 어눌한 말.",
+  "rawRuleText": "의식장애 — 급성 뇌졸중 의심. 갑작스런 편마비·구음장애·의식저하, 심방세동."
+}

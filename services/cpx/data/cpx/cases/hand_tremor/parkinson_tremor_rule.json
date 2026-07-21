@@ -1,0 +1,157 @@
+{
+  "version": 2,
+  "type": "rule",
+  "id": "parkinson_tremor_rule",
+  "title": "손떨림 (파킨슨병 의심)",
+  "category": "손떨림",
+  "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 49 '손떨림' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
+  "targetDiagnosis": "파킨슨병 의심 (Suspected Parkinson disease)",
+  "variant": "한쪽 손 안정떨림 + 서동·강직형",
+  "description": "가만히 있을 때 한쪽 손이 떨리고 움직임이 느려진 고령 환자의 규칙입니다.",
+  "tags": [
+    "손떨림",
+    "파킨슨",
+    "안정떨림",
+    "서동"
+  ],
+  "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
+  "demographicsRule": {
+    "fixed": {
+      "location": "외래"
+    },
+    "recommended": {
+      "gender": "성별 랜덤",
+      "age": "60~80세"
+    },
+    "randomizable": [
+      "성별",
+      "이름",
+      "경제적 수준",
+      "학력 수준",
+      "직업",
+      "키",
+      "몸무게"
+    ],
+    "mustAbsent": []
+  },
+  "scenarioRule": {
+    "caseSummary": "몇 달 전부터 가만히 있을 때 한쪽 손이 알약을 비비듯 떨리고, 움직임이 굼떠지고 걸을 때 발이 잘 안 떨어진다. 글씨가 점점 작아진다.",
+    "mustInclude": [
+      "편측 우세 안정떨림(가만히 있을 때, pill-rolling)",
+      "움직이면 떨림이 줄어듦",
+      "서동(동작 느려짐)·강직",
+      "보행 장애(잔걸음·팔 흔들림 감소)",
+      "서서히 진행"
+    ],
+    "preferredVariants": [
+      "글씨가 작아짐(소자증)",
+      "표정이 없어졌다는 말을 들음"
+    ],
+    "mustAbsent": [
+      "양손 대칭 자세떨림(본태·갑상선형)",
+      "더위 못 견딤·체중감소(갑상선항진형)",
+      "급성 발생"
+    ]
+  },
+  "pastHistoryRule": {
+    "mustInclude": [],
+    "mustAbsent": [
+      "갑상선질환 진단력"
+    ]
+  },
+  "familyHistoryRule": {
+    "recommended": [
+      "파킨슨 가족력 가능"
+    ],
+    "mustAbsent": []
+  },
+  "socialHistoryRule": {
+    "fixed": [
+      "비흡연 가능"
+    ],
+    "recommended": [
+      "음주 가끔"
+    ]
+  },
+  "physicalExamRule": [
+    {
+      "item": "활력징후·결막",
+      "method": "활력징후·결막 확인",
+      "expectedFinding": "활력징후 정상, 결막 정상"
+    },
+    {
+      "item": "갑상샘",
+      "method": "갑상샘 확인",
+      "expectedFinding": "갑상샘 정상"
+    },
+    {
+      "item": "안정떨림",
+      "method": "안정떨림 확인",
+      "expectedFinding": "안정 시 편측 손 떨림 뚜렷",
+      "polarity": "positive"
+    },
+    {
+      "item": "자세·동작 떨림",
+      "method": "자세·동작 떨림 확인",
+      "expectedFinding": "자세·동작 시 떨림 감소"
+    },
+    {
+      "item": "신경학적 진찰",
+      "method": "신경학적 진찰 확인",
+      "expectedFinding": "서동·톱니바퀴 강직",
+      "polarity": "positive"
+    },
+    {
+      "item": "협응·보행",
+      "method": "협응·보행 확인",
+      "expectedFinding": "보행 잔걸음·팔 흔들림 감소",
+      "polarity": "positive"
+    }
+  ],
+  "liveApiContext": {
+    "patientContextFocus": "가만히 있을 때 한쪽 손이 떨리고 느려진 고령 환자. '가만히 있을 때 떨림','움직이면 덜함','걸음이 굼뜸','글씨 작아짐'은 물으면 공개.",
+    "answerPolicy": [
+      "먼저 병명을 말하지 않는다.",
+      "학생이 묻는 항목에 대해서만 환자 관점에서 짧게 답한다.",
+      "고정-부재 단서는 질문받으면 없다고 답한다."
+    ],
+    "positiveClues": [
+      "편측 안정떨림",
+      "움직이면 감소",
+      "서동·강직",
+      "잔걸음 보행"
+    ],
+    "negativeClues": [
+      "대칭 자세떨림 아님",
+      "더위·체중감소 없음"
+    ]
+  },
+  "evaluationUse": {
+    "mustAsk": [
+      "떨림 시점(안정 vs 동작)",
+      "편측성",
+      "서동·강직 동반",
+      "보행 변화·소자증",
+      "갑상선 증상 부재",
+      "진행 양상"
+    ],
+    "positiveClues": [
+      "편측 안정떨림",
+      "서동·강직"
+    ],
+    "negativeClues": [
+      "대칭 자세떨림 아님",
+      "갑상선 증상 없음"
+    ],
+    "educationTopics": [
+      "파킨슨병 가능성을 설명",
+      "신경과 진료와 약물치료로 증상이 호전될 수 있음을 설명",
+      "낙상 예방과 운동의 중요성"
+    ]
+  },
+  "additionalPromptRule": [
+    "환자는 떨림과 굼뜬 움직임이 걱정된다. 치료 가능성을 설명하면 신경과 의뢰에 동의한다."
+  ],
+  "ruleText": "# 증례명 : 손떨림(파킨슨병)\n- 인적사항 - 성별 랜덤, 60~80세, 외래\n- 사례 요약 - 편측 안정떨림, 서동·강직, 잔걸음 보행, 소자증.\n- 현 병력 - 몇 달간 안정 시 한쪽 손 떨림, 동작 느려짐.",
+  "rawRuleText": "손떨림 — 파킨슨병 의심. 편측 안정떨림 + 서동·강직 + 보행 장애."
+}
