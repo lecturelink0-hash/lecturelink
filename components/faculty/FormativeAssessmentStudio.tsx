@@ -254,7 +254,7 @@ export function FormativeAssessmentStudio() {
         <aside className="studio-summary">
           <div className="summary-title"><Sparkles size={18} /><h2>형성평가 초안</h2></div>
           <dl>
-            <div><dt>저장할 강의</dt><dd><select value={courseId} onChange={(event) => setCourseId(event.target.value)}><option value="">강의 선택</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}</select></dd></div>
+            <div><dt>저장할 차시</dt><dd><select value={courseId} onChange={(event) => setCourseId(event.target.value)}><option value="">차시 선택</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}</select></dd></div>
             <div><dt>자료</dt><dd>{file?.name ?? '선택 전'}</dd></div>
             <div><dt>범위</dt><dd>{range}</dd></div>
             <div><dt>구성</dt><dd>{count}문항 · {difficulty}</dd></div>
@@ -265,7 +265,7 @@ export function FormativeAssessmentStudio() {
               {loading ? <><Loader2 className="spin" size={17} /> 자료 분석 중</> : <><Sparkles size={17} /> 초안 생성</>}
             </button>
           ) : (
-            savedId ? <a className="generate-button" href={`/professor/artifacts/${savedId}`}>저장됨 · 문항 검토하기</a> : <button className="generate-button" type="button" disabled={!courseId || loading} onClick={saveToCourse}>강의에 저장하고 검토하기</button>
+            savedId ? <a className="generate-button" href={`/professor/artifacts/${savedId}`}>차시에 저장됨 · 문항 검토하기</a> : <button className="generate-button" type="button" disabled={!courseId || loading} onClick={saveToCourse}>차시에 저장하고 검토하기</button>
           )}
           <p className="summary-note">AI가 만든 초안입니다. 학생 공개 전 교수의 내용 검수가 필요합니다.</p>
         </aside>

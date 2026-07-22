@@ -9,7 +9,7 @@ import './professor.css';
 
 const NAV = [
   { href: '/professor', label: '교수 홈' },
-  { href: '/professor/courses', label: '강의 관리' },
+  { href: '/professor/courses', label: '내 강의실' },
   { href: '/professor/formative', label: '형성평가' },
   { href: '/professor/materials', label: '강의자료' },
   { href: '/professor/bridge', label: '선수지식' },

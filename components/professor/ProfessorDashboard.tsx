@@ -16,7 +16,7 @@ export function ProfessorDashboard(){return <div className="professor-dashboard"
       <span className="professor-badge"><Sparkles size={13}/> 의학 교육 및 평가 지원</span>
       <h1>수업의 완성은,<br/><em>학생의 이해 확인</em>에서 시작됩니다.</h1>
       <p>강의자료를 올리면 형성평가와 예습자료를 만들고, 교수 검수부터 학생 배포·이해도 분석까지 한 흐름으로 연결합니다.</p>
-      <div className="professor-hero-actions"><Link href="/professor/formative" className="professor-primary"><Plus size={17}/> 새 형성평가 만들기</Link><Link href="/professor/courses" className="professor-secondary">강의 작업공간 <ArrowRight size={16}/></Link></div>
+      <div className="professor-hero-actions"><Link href="/professor/formative" className="professor-primary"><Plus size={17}/> 새 형성평가 만들기</Link><Link href="/professor/courses" className="professor-secondary">내 강의실 <ArrowRight size={16}/></Link></div>
       <div className="professor-proof"><span><Check size={14}/> 강의자료 근거 표시</span><span><Check size={14}/> 교수 승인 후 배포</span><span><Check size={14}/> 학생 이해도 분석</span></div>
     </div>
     <div className="professor-hero-visual" aria-label="교수 워크플로 미리보기">

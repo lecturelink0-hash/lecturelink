@@ -5,6 +5,7 @@ import { getAnthropic, MODELS, createMessage, withRetry } from '@/lib/ai/client'
 import { requireDailyCostCap } from '@/lib/ai/cost-cap';
 import { parsePptx } from '@/lib/extract/pptx';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
+import { createServerClient } from '@/lib/db/server';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
@@ -82,7 +83,9 @@ export const POST = withErrorHandling(async (request: Request) => {
   await requireDailyCostCap();
   const form = await request.formData();
   const file = form.get('file');
+  const courseId = String(form.get('courseId') ?? '');
   if (!(file instanceof File)) throw new ApiException('file_required', '강의자료를 선택해주세요.', 400);
+  if (!z.string().uuid().safeParse(courseId).success) throw new ApiException('course_required', '저장할 차시를 선택해주세요.', 400);
   if (file.size > MAX_FILE_BYTES) throw new ApiException('file_too_large', '파일은 25MB 이하만 업로드할 수 있습니다.', 400);
   const settings = requestSchema.parse({
     courseTopic: form.get('courseTopic'),
@@ -101,5 +104,11 @@ export const POST = withErrorHandling(async (request: Request) => {
   }), { maxAttempts: 3 });
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
   if (!block) throw new ApiException('generation_failed', '선수지식 복습자료 초안을 만들지 못했습니다.', 502);
-  return ok(resultSchema.parse(block.input));
+  const result = resultSchema.parse(block.input);
+  const db = await createServerClient() as any;
+  const { data: course } = await db.from('courses').select('id').eq('id', courseId).eq('professor_id', session.userId).maybeSingle();
+  if (!course) throw new ApiException('course_not_found', '선택한 차시를 찾을 수 없습니다.', 404);
+  const { data: artifact, error } = await db.from('learning_artifacts').insert({ course_id: courseId, created_by: session.userId, type: 'preview', title: result.title, status: 'review', source_name: file.name, summary: result.courseConnection, content: result }).select('id').single();
+  if (error) throw new ApiException('artifact_save_failed', '예습자료를 차시에 저장하지 못했습니다.', 500);
+  return ok({ ...result, artifactId: artifact.id });
 });
