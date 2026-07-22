@@ -6,3 +6,107 @@
 @media(max-width:780px){.professor-topnav,.professor-top-account{display:none}.professor-menu-trigger{display:grid;place-items:center;margin-left:auto}.professor-content{padding:0 18px 52px}.professor-hero{grid-template-columns:1fr;padding:44px 0}.professor-hero-visual{max-width:540px;width:100%;margin:auto}.professor-insight-card{right:10px}.professor-quick{grid-template-columns:1fr;margin-top:24px;padding:22px}.professor-quick ol{grid-column:1;grid-row:auto;flex-wrap:wrap}.professor-quick>a{grid-column:1;grid-row:auto;justify-self:start}.professor-section-head{display:block}.professor-section-head>p{margin-top:9px;text-align:left}.professor-welcome{grid-template-columns:1fr}.professor-next{grid-template-columns:1fr}.professor-next>a{justify-self:start}.professor-next ol{grid-template-columns:1fr}}
 @media(max-width:520px){.professor-topbar-inner{padding:0 15px}.professor-content{padding:0 14px 40px}.professor-top-logo>small{display:none}.professor-hero h1{font-size:34px}.professor-hero-actions>a{width:100%}.professor-proof{display:grid;gap:8px}.professor-insight-card{position:relative;right:auto;margin:-18px 12px 0}.professor-tool-list{grid-template-columns:1fr}.professor-tool{min-height:205px}.professor-section-head h2{font-size:23px}.analytics-grid{grid-template-columns:1fr}.editor-actions{flex-direction:column}.course-create{align-items:stretch;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.professor-app *{scroll-behavior:auto!important;transition-duration:1ms!important}}
+
+/* Faculty UI unification --------------------------------------------------
+ * The tool studios were originally designed against the editorial design
+ * tokens used elsewhere in the product. Keep their component structure, but
+ * translate those tokens and surfaces to the calmer Professor Home system.
+ */
+.professor-app{
+ --color-text:var(--p-ink);
+ --color-ink-soft:#38423d;
+ --color-muted:var(--p-muted);
+ --color-primary:var(--p-forest);
+ --color-primary-strong:var(--p-forest-dark);
+ --color-primary-soft:var(--p-sage);
+ --color-surface:#fff;
+ --color-surface-muted:var(--p-cream-deep);
+ --color-border:var(--p-line);
+ --color-line-strong:#a6c7b0;
+ --color-warn:#a65f22;
+ --color-warn-bg:#fff5e8;
+ --font-body:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+ --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;
+ --space-6:24px;--space-8:32px;--space-10:40px;
+ --radius-sm:9px;--radius-md:13px;--radius-pill:999px;
+ --rule-hairline:1px;
+ --shadow-card:0 1px 3px rgba(17,24,39,.035),0 12px 30px -26px rgba(17,24,39,.22);
+ --dur-short:160ms;--ease-out:ease-out;
+}
+
+.professor-app :is(.faculty-studio,.material-studio,.quality-studio,.bridge-studio){
+ width:100%;max-width:1140px;color:var(--p-ink);font-family:inherit;
+}
+.professor-app :is(.studio-heading,.material-heading,.quality-heading,.bridge-heading){
+ min-height:auto;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+ gap:30px;padding:52px 0 32px;border-bottom:1px solid var(--p-line);
+}
+.professor-app :is(.studio-context,.material-heading p,.quality-heading p,.bridge-heading p){
+ margin:0 0 8px;color:var(--p-forest);font-size:12px;font-weight:700;letter-spacing:0;
+}
+.professor-app :is(.studio-heading h1,.material-heading h1,.quality-heading h1,.bridge-heading h1){
+ max-width:760px;margin:0;color:var(--p-ink);font-size:clamp(30px,4vw,44px);
+ font-weight:800;line-height:1.2;letter-spacing:-.04em;
+}
+.professor-app :is(.studio-lead,.material-heading>div>span,.quality-heading>div>span,.bridge-heading>div>span){
+ display:block;max-width:680px;margin:12px 0 0;color:var(--p-muted);font-size:13px;line-height:1.7;
+}
+.professor-app :is(.studio-steps,.material-safety,.quality-boundary,.bridge-principle){
+ padding:14px 16px;border:1px solid var(--p-line);border-radius:12px;background:#fff;
+ box-shadow:0 1px 3px rgba(17,24,39,.03);
+}
+.professor-app :is(.material-safety,.quality-boundary,.bridge-principle){border-top:1px solid var(--p-line)}
+
+.professor-app :is(.studio-workbench,.material-layout,.quality-layout,.bridge-layout){
+ grid-template-columns:minmax(0,1fr) 286px;gap:28px;padding-top:28px;
+}
+.professor-app :is(.studio-section,.material-panel,.quality-input,.quality-context,.bridge-section){
+ margin:0 0 14px;padding:20px;border:1px solid var(--p-line);border-radius:15px;background:#fff;
+ box-shadow:0 1px 3px rgba(17,24,39,.025);
+}
+.professor-app :is(.studio-section+.studio-section,.bridge-section+.bridge-section){
+ padding-top:20px;border-top:1px solid var(--p-line);
+}
+.professor-app :is(.section-heading,.material-panel-head,.quality-section-head,.bridge-section-head){margin-bottom:16px}
+.professor-app :is(.section-heading h2,.material-panel-head h2,.quality-section-head h2,.bridge-section-head h2){
+ margin:0;font-size:16px;font-weight:800;letter-spacing:-.02em;
+}
+.professor-app :is(.section-heading p,.material-panel-head span,.quality-section-head span,.bridge-section-head>span){
+ color:var(--p-muted);font-size:11px;
+}
+
+.professor-app :is(.studio-summary,.material-run,.quality-run,.bridge-run){
+ top:84px;padding:20px;border:1px solid var(--p-line);border-top:3px solid var(--p-forest);
+ border-radius:15px;background:#fff;box-shadow:var(--shadow-card);
+}
+.professor-app :is(.studio-summary,.material-run,.quality-run,.bridge-run) h2{font-size:16px}
+.professor-app :is(.generate-button,.approve-button,.material-run button,.quality-run button,.bridge-run button){
+ min-height:44px;border-radius:11px;background:var(--p-forest);color:#fff;font-weight:700;
+}
+.professor-app :is(.generate-button,.approve-button,.material-run button,.quality-run button,.bridge-run button):hover:not(:disabled){background:#194b37}
+
+.professor-app :is(.material-drop,.material-file,.material-upload,.material-selected,.bridge-upload,.bridge-file){
+ border-radius:11px;background:var(--p-cream);box-shadow:none;
+}
+.professor-app :is(input,textarea,select):focus-visible{outline:2px solid rgba(31,92,67,.3);outline-offset:1px}
+.professor-app :is(.form-grid input,.form-grid select,.material-controls select,.quality-input textarea,.quality-context textarea,.bridge-topic input,.bridge-controls select,.bridge-controls textarea){
+ border-radius:9px;background:#fff;
+}
+
+.professor-app :is(.question,.material-results,.quality-results,.bridge-result){
+ border:1px solid var(--p-line);border-radius:15px;background:#fff;box-shadow:var(--shadow-card);
+}
+.professor-app :is(.question,.quality-ledger article,.slide-review-list article){border-radius:13px}
+.professor-app :is(.objective-strip span,.safe-actions span,.quality-verdict){border-radius:6px;background:var(--p-sage);color:var(--p-forest)}
+.professor-app :is(.studio-error,.material-error,.quality-error,.bridge-error,.quality-flags){border-radius:9px}
+
+@media(max-width:900px){
+ .professor-app :is(.studio-heading,.material-heading,.quality-heading,.bridge-heading){grid-template-columns:1fr;align-items:start}
+ .professor-app :is(.studio-workbench,.material-layout,.quality-layout,.bridge-layout){grid-template-columns:1fr}
+ .professor-app :is(.studio-summary,.material-run,.quality-run,.bridge-run){position:static;order:-1}
+}
+@media(max-width:560px){
+ .professor-app :is(.studio-heading,.material-heading,.quality-heading,.bridge-heading){padding:34px 0 24px;gap:18px}
+ .professor-app :is(.studio-heading h1,.material-heading h1,.quality-heading h1,.bridge-heading h1){font-size:30px}
+ .professor-app :is(.studio-section,.material-panel,.quality-input,.quality-context,.bridge-section){padding:16px}
+}
