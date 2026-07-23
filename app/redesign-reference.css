@@ -382,7 +382,7 @@
 
     .ll-dashboard-page .stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       margin-top: 18px;
     }
@@ -408,7 +408,7 @@
       color: var(--ink-soft);
       font-size: 12px;
       font-weight: 560;
-      white-space: nowrap;
+      word-break: keep-all;
     }
 
     .ll-dashboard-page .week {
@@ -560,7 +560,7 @@
 
     .ll-dashboard-page .analysis {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       border-bottom: 0;
       margin: 0;
       padding-bottom: 0;
