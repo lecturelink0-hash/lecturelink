@@ -30,6 +30,7 @@ const PUBLIC_PREFIXES = [
   '/privacy',
   '/faq',
   '/contact', // 문의하기 (비로그인도 접근 가능)
+  '/faculty', // 교수용 공개 서비스 소개
   '/landing.html', // 정적 랜딩 (루트 rewrite 대상 · 직접 접근 허용)
 ];
 
