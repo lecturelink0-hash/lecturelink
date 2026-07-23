@@ -1,4 +1,4 @@
-/* Hallmark · design-system: LectureLink · genre: modern-minimal · tone: calm clinical · anchor: pine */
+/* LectureLink shared design tokens */
 :root {
   --color-paper: oklch(97.8% 0.012 92);
   --color-paper-raised: oklch(99.2% 0.006 92);
