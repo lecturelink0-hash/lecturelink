@@ -7,12 +7,99 @@ type Course={id:string;title:string;code:string;term:string|null;status:string;c
 type Artifact={id:string;type:string;title:string;status:string;source_name:string|null;summary?:string|null;created_at:string};
 const TYPES={formative:{label:'형성평가',icon:ClipboardCheck},preview:{label:'예습자료',icon:BookOpen},material_review:{label:'개선한 강의자료',icon:FileCheck2}} as const;
 
-export function CourseList(){
- const[courses,setCourses]=useState<Course[]>([]);const[title,setTitle]=useState('');const[term,setTerm]=useState('');const[busy,setBusy]=useState(false);
- async function load(){const r=await fetch('/api/professor/courses');const p=await r.json();if(p.ok)setCourses(p.data)}
- useEffect(()=>{void load()},[]);
- async function create(){if(!title.trim())return;setBusy(true);await fetch('/api/professor/courses',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title,term})});setTitle('');setTerm('');await load();setBusy(false)}
- return <div className="professor-dashboard"><header className="professor-welcome"><div><p>내 강의실</p><h1>차시별 수업 준비와 결과를<br/>한곳에서 관리하세요.</h1><span>‘부정맥 약물 차시’처럼 수업 한 회를 만들고, 관련 자료와 평가를 그 안에 모읍니다.</span></div></header><section className="professor-next"><div className="professor-next-copy"><span>새 차시</span><h2>차시 만들기</h2><p>이번 수업의 주제와 학기를 입력하세요.</p></div><div className="course-create"><input aria-label="차시명" placeholder="예: 부정맥 약물 차시" value={title} onChange={e=>setTitle(e.target.value)}/><input aria-label="학기" placeholder="예: 2026년 2학기" value={term} onChange={e=>setTerm(e.target.value)}/><button className="professor-primary" disabled={busy||!title.trim()} onClick={create}><Plus size={16}/> 차시 만들기</button></div></section><section className="professor-tools"><div className="professor-section-head"><div><span>MY CLASSES</span><h2>내 차시</h2></div><p>{courses.length}개의 차시</p></div><div className="professor-tool-list">{courses.map(c=><Link className="professor-tool" href={`/professor/courses/${c.id}`} key={c.id}><span className="professor-tool-icon"><BookOpen size={18}/></span><small>{c.term||'학기 미지정'}</small><h3>{c.title}</h3><p>형성평가·예습자료·강의자료·분석 리포트</p><span>차시 열기 <ArrowRight size={14}/></span></Link>)}{!courses.length&&<div className="professor-empty">아직 만든 차시가 없습니다. 첫 차시를 만들어 수업 준비를 시작해보세요.</div>}</div></section></div>
+export function CourseList() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [title, setTitle] = useState('');
+  const [term, setTerm] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    const response = await fetch('/api/professor/courses');
+    const payload = await response.json();
+    if (payload.ok) setCourses(payload.data);
+  }
+
+  useEffect(() => { void load(); }, []);
+
+  async function create() {
+    if (!title.trim()) return;
+    setBusy(true);
+    await fetch('/api/professor/courses', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title, term }),
+    });
+    setTitle('');
+    setTerm('');
+    await load();
+    setBusy(false);
+  }
+
+  return (
+    <div className="professor-dashboard course-library">
+      <header className="course-library-hero">
+        <div>
+          <span className="course-library-kicker">COURSE WORKSPACE</span>
+          <h1>차시별 수업 준비를<br /><em>하나의 흐름</em>으로 관리하세요.</h1>
+          <p>수업 한 회를 작업공간으로 만들고, 형성평가·예습자료·강의자료와 학생 이해도를 함께 관리합니다.</p>
+        </div>
+        <div className="course-library-mark" aria-hidden="true">
+          <BookOpen size={28} />
+          <span />
+          <span />
+          <span />
+        </div>
+      </header>
+
+      <section className="course-create-panel">
+        <div className="course-create-copy">
+          <span>새 차시</span>
+          <h2>이번 수업의 작업공간 만들기</h2>
+          <p>수업 주제와 학기를 입력하면 바로 자료 제작을 시작할 수 있습니다.</p>
+        </div>
+        <div className="course-create">
+          <label>
+            <span>차시명</span>
+            <input aria-label="차시명" placeholder="예: 부정맥 약물 차시" value={title} onChange={event => setTitle(event.target.value)} />
+          </label>
+          <label>
+            <span>학기</span>
+            <input aria-label="학기" placeholder="예: 2026년 2학기" value={term} onChange={event => setTerm(event.target.value)} />
+          </label>
+          <button className="course-create-button" disabled={busy || !title.trim()} onClick={create}>
+            <Plus size={16} /> {busy ? '만드는 중' : '차시 만들기'}
+          </button>
+        </div>
+      </section>
+
+      <section className="course-library-list">
+        <div className="professor-section-head">
+          <div>
+            <span>MY CLASSES</span>
+            <h2>내 차시</h2>
+          </div>
+          <p>{courses.length > 0 ? `${courses.length}개의 작업공간` : '첫 작업공간을 만들어보세요'}</p>
+        </div>
+        <div className="course-card-grid">
+          {courses.map((course, index) => (
+            <Link className="course-card" href={`/professor/courses/${course.id}`} key={course.id}>
+              <div className="course-card-top">
+                <span className="course-card-icon"><BookOpen size={19} /></span>
+                <small>{course.term || '학기 미지정'}</small>
+                <b>{String(index + 1).padStart(2, '0')}</b>
+              </div>
+              <h3>{course.title}</h3>
+              <p>형성평가 · 예습자료 · 강의자료 · 분석 리포트</p>
+              <span className="course-card-link">작업공간 열기 <ArrowRight size={15} /></span>
+            </Link>
+          ))}
+          {!courses.length && (
+            <div className="professor-empty">아직 만든 차시가 없습니다. 위에서 첫 차시를 만들어 수업 준비를 시작해보세요.</div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
 }
 
 export function CourseDetail({courseId}:{courseId:string}){
