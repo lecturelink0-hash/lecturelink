@@ -131,10 +131,10 @@
 
 /* Shared LectureLink brand foundation */
 .professor-app{
- --p-cream:var(--color-bg);--p-cream-deep:var(--color-surface-muted);
- --p-forest:var(--color-primary);--p-forest-dark:var(--color-primary-strong);
- --p-sage:var(--color-primary-soft);--p-gold:var(--color-gold);
- --p-ink:var(--color-text);--p-muted:var(--color-muted);--p-line:var(--color-border);
+ --p-cream:var(--color-paper);--p-cream-deep:var(--color-paper-muted);
+ --p-forest:var(--color-accent-pine);--p-forest-dark:var(--color-accent-pine-strong);
+ --p-sage:var(--color-accent-pine-soft);--p-gold:var(--color-accent-gold);
+ --p-ink:var(--color-ink);--p-muted:var(--color-ink-soft);--p-line:var(--color-line);
  font-family:var(--font-body);
 }
 .professor-topbar{background:color-mix(in srgb,var(--color-bg) 92%,transparent)}
