@@ -7,6 +7,7 @@ import { parsePptx } from '@/lib/extract/pptx';
 import { extractEmbeddedPdfImages } from '@/lib/extract/pdf-embedded-images';
 import { normalizeToPng } from '@/lib/extract/preprocess';
 import { renderPdfPages } from '@/lib/extract/render-slides';
+import { cropRegions, detectMedicalRegions } from '@/lib/extract/crop-medical-images';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -36,6 +37,7 @@ async function prepareVisionImage(bytes: Uint8Array): Promise<Uint8Array | null>
 
 async function selectVisualPdfPages(
   pdfBuffer: ArrayBuffer,
+  userId: string,
 ): Promise<MaterialImage[]> {
   const previews = await renderPdfPages(pdfBuffer, {
     maxPages: 60,
@@ -81,7 +83,27 @@ async function selectVisualPdfPages(
     maxPages: MAX_VISION_IMAGES,
     maxEdgePx: 1024,
   });
-  return rendered.map((page) => ({ page: page.pageIndex, png: page.png }));
+  const crops: MaterialImage[] = [];
+  for (const page of rendered) {
+    if (crops.length >= MAX_VISION_IMAGES) break;
+    try {
+      const detection = await detectMedicalRegions({
+        slidePng: page.png,
+        userIdForLog: userId,
+      });
+      const regions = detection.regions.filter(
+        (region) => region.kind !== 'text_slide' && region.confidence >= 0.65,
+      );
+      const cropped = await cropRegions(page.png, regions);
+      for (const image of cropped) {
+        if (crops.length >= MAX_VISION_IMAGES) break;
+        crops.push({ page: page.pageIndex, png: image.png });
+      }
+    } catch {
+      // 영역 검출 실패 시 페이지 전체를 문항 이미지로 노출하지 않고 제외한다.
+    }
+  }
+  return crops;
 }
 
 const settingsSchema = z.object({
@@ -153,7 +175,11 @@ const outputSchema = {
   },
 } as const;
 
-async function extractMaterial(file: File, useImages: boolean): Promise<{ text: string; images: MaterialImage[] }> {
+async function extractMaterial(
+  file: File,
+  useImages: boolean,
+  userId: string,
+): Promise<{ text: string; images: MaterialImage[] }> {
   const buffer = await file.arrayBuffer();
   if (file.type === PPTX || file.name.toLowerCase().endsWith('.pptx')) {
     const parsed = parsePptx(buffer);
@@ -188,7 +214,7 @@ async function extractMaterial(file: File, useImages: boolean): Promise<{ text: 
     const images = embedded.length > 0
       ? embedded.map((image) => ({ page: null, png: image.png }))
       : useImages
-        ? await selectVisualPdfPages(buffer)
+        ? await selectVisualPdfPages(buffer, userId)
         : [];
     return {
       text: pages.slice(0, 120_000),
@@ -198,7 +224,7 @@ async function extractMaterial(file: File, useImages: boolean): Promise<{ text: 
   throw new ApiException('unsupported_file', 'PPTX 또는 PDF 파일만 지원합니다.', 400);
 }
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export const POST = withErrorHandling(async (request: Request) => {
   const session = await requireSession();
@@ -216,7 +242,7 @@ export const POST = withErrorHandling(async (request: Request) => {
     difficulty: form.get('difficulty'), excluded: form.get('excluded'),
     additionalPrompt: form.get('additionalPrompt'), useImages: form.get('useImages'),
   });
-  const material = await extractMaterial(file, settings.useImages);
+  const material = await extractMaterial(file, settings.useImages, session.userId);
   const client = getAnthropic();
   const userText = `파일명: ${file.name}\n출제 범위: ${settings.range}\n꼭 포함할 내용: ${settings.objective || '자료에서 추출'}\n문항 수: ${settings.count}\n난이도: ${settings.difficulty}\n제외 내용: ${settings.excluded || '없음'}\n추가 요청: ${settings.additionalPrompt || '없음'}\n이미지 사용: ${settings.useImages ? '사용' : '사용 안 함'}\n\n강의자료:\n${material.text}\n\n제공된 이미지가 문항 풀이에 실제로 필요한 경우에만 imageIndex를 지정한다. 로고, 아이콘, 장식 이미지는 사용하지 않는다.`;
   const messageContent: Anthropic.MessageCreateParams['messages'][number]['content'] = [
