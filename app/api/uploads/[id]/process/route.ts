@@ -27,7 +27,8 @@ interface RouteContext {
 }
 
 const bodySchema = z.object({
-  desired_count: z.number().int().min(5).max(20).default(12),
+  // 업로드 화면 슬라이더가 1~20 문항을 허용하므로 하한을 UI 와 일치시킨다.
+  desired_count: z.number().int().min(1).max(20).default(12),
   style: z.enum(['kmle', 'professor', 'internal']).default('kmle'),
   difficulty: z.enum(['하', '중', '상']).optional(),
   question_types: z.array(z.enum(['지식형', '임상형', '이미지형'])).min(1).max(3).optional(),
