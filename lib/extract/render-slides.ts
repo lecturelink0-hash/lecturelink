@@ -44,6 +44,48 @@ export interface RenderOptions {
   maxPages?: number;
 }
 
+export interface ExtractedPdfTextPage {
+  pageIndex: number;
+  text: string;
+}
+
+/** PDF 텍스트를 실제 페이지 경계대로 추출한다. */
+export async function extractPdfTextPages(
+  pdfBuffer: ArrayBuffer,
+  maxPages = 200,
+): Promise<ExtractedPdfTextPage[]> {
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(pdfBuffer),
+    cMapUrl: resolve(process.cwd(), 'node_modules/pdfjs-dist/cmaps') + '/',
+    cMapPacked: true,
+    standardFontDataUrl:
+      resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts') + '/',
+    disableFontFace: true,
+    useSystemFonts: false,
+    isEvalSupported: false,
+    isOffscreenCanvasSupported: false,
+  });
+  const doc = await loadingTask.promise;
+  const pages: ExtractedPdfTextPage[] = [];
+  try {
+    const count = Math.min(doc.numPages, maxPages);
+    for (let pageIndex = 1; pageIndex <= count; pageIndex += 1) {
+      const page = await doc.getPage(pageIndex);
+      const content = await page.getTextContent();
+      const text = content.items
+        .map((item) => ('str' in item ? item.str : ''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      pages.push({ pageIndex, text });
+      page.cleanup();
+    }
+  } finally {
+    await doc.destroy();
+  }
+  return pages;
+}
+
 const DEFAULT_MAX_EDGE = 1600;
 const DEFAULT_MAX_PAGES = 50;
 

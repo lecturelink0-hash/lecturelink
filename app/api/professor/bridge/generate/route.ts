@@ -6,14 +6,15 @@ import { requireDailyCostCap } from '@/lib/ai/cost-cap';
 import { parsePptx } from '@/lib/extract/pptx';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import { createServerClient } from '@/lib/db/server';
+import { getOwnedTeachingMaterial, loadTeachingMaterialFile } from '@/lib/teaching/materials';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
 const requestSchema = z.object({
-  courseTopic: z.string().trim().min(2).max(160),
-  learnerLevel: z.enum(['의예과 2학년', '의학과 1학년', '의학과 2학년', '의학과 3학년', '의학과 4학년']),
+  learnerLevel: z.string().trim().min(2).max(100),
   reviewLength: z.enum(['5분', '10분', '15분']),
   emphasis: z.string().trim().max(300).default(''),
+  includeReadiness: z.enum(['true', 'false']).transform((value) => value === 'true'),
 });
 
 const resultSchema = z.object({
@@ -34,7 +35,7 @@ const resultSchema = z.object({
   readinessCheck: z.array(z.object({
     question: z.string().min(1),
     answer: z.string().min(1),
-  })).min(2).max(5),
+  })).max(2),
 });
 
 const outputTool = {
@@ -50,7 +51,7 @@ const outputTool = {
       prerequisiteConcepts: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['name', 'whyNeeded', 'quickReview', 'sourcePages'], properties: { name: { type: 'string' }, whyNeeded: { type: 'string' }, quickReview: { type: 'string' }, sourcePages: { type: 'array', items: { type: 'integer', minimum: 1 }, maxItems: 4 } } } },
       coreFlow: { type: 'array', minItems: 2, maxItems: 6, items: { type: 'string' } },
       commonConfusions: { type: 'array', maxItems: 4, items: { type: 'object', required: ['confusion', 'correction'], properties: { confusion: { type: 'string' }, correction: { type: 'string' } } } },
-      readinessCheck: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['question', 'answer'], properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
+      readinessCheck: { type: 'array', maxItems: 2, items: { type: 'object', required: ['question', 'answer'], properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
     },
   },
 } as const;
@@ -82,25 +83,31 @@ export const POST = withErrorHandling(async (request: Request) => {
   }
   await requireDailyCostCap();
   const form = await request.formData();
-  const file = form.get('file');
+  const submittedFile = form.get('file');
+  const materialId = String(form.get('materialId') ?? '');
   const courseId = String(form.get('courseId') ?? '');
+  const cached = z.string().uuid().safeParse(materialId).success
+    ? await getOwnedTeachingMaterial(materialId, session.userId)
+    : null;
+  const loaded = cached ? await loadTeachingMaterialFile(materialId, session.userId) : null;
+  const file = loaded?.file ?? submittedFile;
   if (!(file instanceof File)) throw new ApiException('file_required', '강의자료를 선택해주세요.', 400);
   if (!z.string().uuid().safeParse(courseId).success) throw new ApiException('course_required', '저장할 차시를 선택해주세요.', 400);
   if (file.size > MAX_FILE_BYTES) throw new ApiException('file_too_large', '파일은 25MB 이하만 업로드할 수 있습니다.', 400);
   const settings = requestSchema.parse({
-    courseTopic: form.get('courseTopic'),
     learnerLevel: form.get('learnerLevel'),
     reviewLength: form.get('reviewLength'),
     emphasis: form.get('emphasis'),
+    includeReadiness: form.get('includeReadiness') ?? 'true',
   });
-  const material = await extractMaterial(file);
+  const material = cached?.extracted_text || await extractMaterial(file);
   const response = await withRetry(() => createMessage(getAnthropic(), {
     model: MODELS.generation(),
     max_tokens: 6000,
-    system: `당신은 의과대학 수업의 선수지식 복습자료를 설계하는 교육 조교다. 제공된 강의자료에서 이번 수업을 이해하는 데 실제로 필요한 기초의학 개념만 선별한다. 학생이 이미 배웠지만 잊었을 가능성이 높은 내용을 짧게 회복시키는 것이 목적이다. 새로운 강의를 만들거나 불필요한 범위를 넓히지 않는다. 모든 의학적 설명은 자료에 근거하고, 근거 슬라이드 또는 페이지를 표시한다. 결과는 수업 전 1페이지 복습자료로 읽을 수 있는 간결한 한국어로 작성한다.`,
+    system: `당신은 의과대학 수업의 예습자료를 설계하는 교육 조교다. 제공된 강의자료에서 이번 수업의 주제를 먼저 파악하고, 이를 이해하는 데 실제로 필요한 기초의학 개념만 선별한다. 학생이 이미 배웠지만 잊었을 가능성이 높은 내용을 짧게 회복시키는 것이 목적이다. 새로운 강의를 만들거나 불필요한 범위를 넓히지 않는다. 모든 의학적 설명은 자료에 근거하고, 근거 슬라이드 또는 페이지를 표시한다. 결과는 수업 전 1페이지 예습자료로 읽을 수 있는 간결한 한국어로 작성한다.`,
     tools: [outputTool],
     tool_choice: { type: 'tool', name: 'create_prerequisite_bridge' },
-    messages: [{ role: 'user', content: `이번 수업 주제: ${settings.courseTopic}\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n교수 강조사항: ${settings.emphasis || '없음'}\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
+    messages: [{ role: 'user', content: `수업 주제: 강의자료에서 자동 추출\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n교수 강조사항: ${settings.emphasis || '없음'}\n예습 확인 문항: ${settings.includeReadiness ? '자료 내용에 근거한 짧은 확인 문항을 정확히 2개 생성' : '생성하지 말고 readinessCheck를 빈 배열로 반환'}\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
   }), { maxAttempts: 3 });
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
   if (!block) throw new ApiException('generation_failed', '선수지식 복습자료 초안을 만들지 못했습니다.', 502);
@@ -108,7 +115,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   const db = await createServerClient() as any;
   const { data: course } = await db.from('courses').select('id').eq('id', courseId).eq('professor_id', session.userId).maybeSingle();
   if (!course) throw new ApiException('course_not_found', '선택한 차시를 찾을 수 없습니다.', 404);
-  const { data: artifact, error } = await db.from('learning_artifacts').insert({ course_id: courseId, created_by: session.userId, type: 'preview', title: result.title, status: 'review', source_name: file.name, summary: result.courseConnection, content: result }).select('id').single();
+  const { data: artifact, error } = await db.from('learning_artifacts').insert({ course_id: courseId, created_by: session.userId, material_id: cached?.id ?? null, type: 'preview', title: result.title, status: 'review', source_name: file.name, summary: result.courseConnection, content: result }).select('id').single();
   if (error) throw new ApiException('artifact_save_failed', '예습자료를 차시에 저장하지 못했습니다.', 500);
   return ok({ ...result, artifactId: artifact.id });
 });

@@ -8,7 +8,7 @@ const schema = z.object({ title:z.string().min(1).optional(), items:z.array(item
 
 export const GET = withErrorHandling(async (_request:Request, context:{params:Promise<{artifactId:string}>})=>{
   await requireProfessor(); const {artifactId}=await context.params; const db=await createServerClient() as any;
-  const {data,error}=await db.from('learning_artifacts').select('id,course_id,title,status,summary,objectives,formative_items(id,position,stem,choices,answer_index,explanation,objective,source_pages,cognitive_level,quality_flags,approved)').eq('id',artifactId).single();
+  const {data,error}=await db.from('learning_artifacts').select('id,course_id,title,status,summary,objectives,formative_items(id,position,stem,choices,answer_index,explanation,objective,source_pages,cognitive_level,quality_flags,image_data_url,approved)').eq('id',artifactId).single();
   if(error||!data)throw new ApiException('artifact_not_found','결과를 찾을 수 없습니다.',404); return ok(data);
 });
 

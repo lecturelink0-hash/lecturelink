@@ -80,6 +80,14 @@ function toLanding(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const isRoot = request.nextUrl.pathname === '/';
 
+  if (
+    process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_FACULTY_UI_PREVIEW === 'true' &&
+    request.nextUrl.pathname.startsWith('/professor')
+  ) {
+    return NextResponse.next({ request });
+  }
+
   // 홈(/): 세션 쿠키가 아예 없는 익명 방문은 인증 조회 없이 바로 랜딩(빠른 경로).
   // 세션 쿠키가 있으면 아래에서 getUser 로 검증 후 로그인 사용자는 /dashboard 로 보낸다(기획서: 기 사용자 바로 홈).
   if (isRoot) {

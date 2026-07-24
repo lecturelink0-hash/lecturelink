@@ -1,0 +1,358 @@
+.course-workspace-page {
+  font-family: inherit;
+}
+
+.course-workspace-page .page-head {
+  grid-template-columns: minmax(0, 1fr) 286px;
+  align-items: end;
+}
+
+.course-head-status {
+  display: grid;
+  gap: 8px;
+}
+
+.course-head-status > span {
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.course-head-status > strong {
+  color: var(--forest);
+  font-size: 20px;
+  font-weight: 820;
+  letter-spacing: 0.12em;
+}
+
+.course-head-status > button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--forest);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.course-head-status > button:hover {
+  border-color: var(--sage-400);
+  background: var(--sage);
+}
+
+.course-workbench {
+  grid-template-columns: minmax(0, 1.5fr) minmax(286px, 1fr);
+}
+
+.course-upload-button {
+  display: inline-flex;
+  width: auto;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  white-space: nowrap;
+}
+
+.course-material-list,
+.course-tool-list,
+.course-output-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.course-material-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.course-row-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--sage);
+  color: var(--forest);
+}
+
+.course-row-copy {
+  min-width: 0;
+}
+
+.course-row-copy b,
+.course-row-copy small {
+  display: block;
+}
+
+.course-row-copy b {
+  overflow: hidden;
+  color: var(--forest-800);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-row-copy small {
+  margin-top: 4px;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+}
+
+.course-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.course-row-actions a {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--forest);
+  font-size: 11.5px;
+  font-weight: 680;
+  white-space: nowrap;
+}
+
+.course-row-actions a:hover {
+  border-color: var(--sage-400);
+  background: var(--sage);
+}
+
+.course-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed var(--sage-400);
+  border-radius: 13px;
+  background: var(--sage-50, #f6faf7);
+  color: var(--forest);
+}
+
+.course-empty > span {
+  display: grid;
+  gap: 3px;
+}
+
+.course-empty b {
+  font-size: 13px;
+}
+
+.course-empty small {
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.course-tool-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.course-tool-list > a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+  color: var(--forest-800);
+}
+
+.course-tool-list > a:hover {
+  border-color: var(--sage-400);
+  background: var(--sage-50, #f6faf7);
+}
+
+.course-tool-list > a > svg:first-child {
+  color: var(--forest);
+}
+
+.course-tool-list > a > svg:last-child {
+  color: var(--ink-faint);
+}
+
+.course-tool-list span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.course-tool-list b {
+  font-size: 13.5px;
+  font-weight: 720;
+}
+
+.course-tool-list small {
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.course-output-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.course-output-group > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--sage-50, #f6faf7);
+}
+
+.course-output-group > header > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--sage);
+  color: var(--forest);
+}
+
+.course-output-group h3 {
+  margin: 0;
+  color: var(--forest-800);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.course-output-group header p {
+  margin: 2px 0 0;
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.course-output-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--forest-800);
+}
+
+.course-output-row:last-child {
+  border-bottom: 0;
+}
+
+.course-output-row:hover {
+  background: var(--sage-50, #f6faf7);
+}
+
+.course-output-row > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.course-output-row b {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 680;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-output-row small {
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.course-output-row > span {
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: var(--sage);
+  color: var(--forest);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.course-output-empty {
+  margin: 0;
+  padding: 18px 14px;
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.course-summary {
+  position: sticky;
+  top: 84px;
+}
+
+.course-summary .generate-button {
+  width: 100%;
+  margin-top: 16px;
+}
+
+@media (max-width: 920px) {
+  .course-workspace-page .page-head {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .course-head-status {
+    max-width: 360px;
+  }
+
+  .course-workbench {
+    grid-template-columns: 1fr;
+  }
+
+  .course-summary {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .course-tool-list {
+    grid-template-columns: 1fr;
+  }
+
+  .course-material-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .course-row-actions {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    padding-left: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  .course-row-actions {
+    padding-left: 0;
+  }
+
+  .course-row-actions a {
+    flex: 1;
+    text-align: center;
+  }
+}

@@ -43,21 +43,21 @@ const TOOLS: Array<{
   },
   {
     label: 'MATERIAL',
-    title: '강의자료 개선',
+    title: '자료 개선',
     description: '원문을 보존하며 슬라이드 밀도와 가독성을 정리합니다.',
     href: '/professor/materials',
     icon: FileText,
   },
   {
     label: 'PREVIEW',
-    title: '선수지식 브리지',
+    title: '예습자료 제작',
     description: '임상 수업에 필요한 기초의학을 한 장으로 연결합니다.',
     href: '/professor/bridge',
     icon: Layers3,
   },
   {
     label: 'QUALITY',
-    title: '문항 품질 검사',
+    title: '문항 검토',
     description: '모호한 표현과 정답 단서, 목표 정렬을 점검합니다.',
     href: '/professor/quality',
     icon: ClipboardCheck,
@@ -67,7 +67,7 @@ const TOOLS: Array<{
 const TYPE_LABEL: Record<string, string> = {
   formative: '형성평가',
   preview: '예습자료',
-  material_review: '강의자료 개선',
+  material_review: '자료 개선',
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -87,6 +87,7 @@ export function ProfessorHome({
   recentArtifacts: Artifact[];
 }) {
   const courseNames = new Map(courses.map((course) => [course.id, course.title]));
+  const professorName = displayName.replace(/\s*교수(?:님)?$/, '').trim() || displayName;
 
   return (
     <div className="professor-home">
@@ -94,7 +95,7 @@ export function ProfessorHome({
         <div>
           <span className="professor-badge">LECTURELINK FACULTY</span>
           <h1>
-            안녕하세요, <em>{displayName}</em>님.
+            안녕하세요, <em>{professorName}</em> 교수님.
             <br />
             오늘 수업 준비를 시작해볼까요?
           </h1>
@@ -171,7 +172,7 @@ export function ProfessorHome({
           <div className="professor-section-head">
             <div>
               <span>COURSE WORKSPACE</span>
-              <h2 id="course-workspace-title">강의별 작업공간</h2>
+              <h2 id="course-workspace-title">최근 강의 작업공간</h2>
             </div>
             <Link href="/professor/courses" className="professor-text-link">전체 보기 <ArrowRight size={15} /></Link>
           </div>

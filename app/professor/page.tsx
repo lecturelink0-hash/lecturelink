@@ -4,6 +4,23 @@ import { createServerClient } from '@/lib/db/server';
 
 export default async function ProfessorHomePage() {
   const session = await requireProfessor();
+  const localPreview =
+    process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_FACULTY_UI_PREVIEW === 'true';
+
+  if (localPreview) {
+    return (
+      <ProfessorHome
+        displayName={session.profile.displayName ?? '교수'}
+        courses={[
+          { id: 'preview-cardiology', title: '순환기학', term: '2026년 2학기', created_at: '2026-07-20T00:00:00.000Z' },
+          { id: 'preview-arrhythmia', title: '부정맥 약물', term: '임상약리학', created_at: '2026-07-18T00:00:00.000Z' },
+        ]}
+        recentArtifacts={[]}
+      />
+    );
+  }
+
   const db = await createServerClient() as any;
   const { data: courses } = await db
     .from('courses')
