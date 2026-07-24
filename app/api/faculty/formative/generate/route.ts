@@ -4,10 +4,34 @@ import { requireSession } from '@/lib/auth/session';
 import { getAnthropic, MODELS, createMessage, withRetry } from '@/lib/ai/client';
 import { requireDailyCostCap } from '@/lib/ai/cost-cap';
 import { parsePptx } from '@/lib/extract/pptx';
+import { extractEmbeddedPdfImages } from '@/lib/extract/pdf-embedded-images';
+import { normalizeToPng } from '@/lib/extract/preprocess';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const MAX_VISION_IMAGES = 4;
+
+type MaterialImage = { page: number | null; png: Uint8Array };
+
+async function prepareVisionImage(bytes: Uint8Array): Promise<Uint8Array | null> {
+  const normalized = await normalizeToPng(bytes);
+  if (!normalized) return null;
+  try {
+    const { createCanvas, loadImage } = await import('canvas');
+    const image = await loadImage(Buffer.from(normalized));
+    if (image.width < 240 || image.height < 180) return null;
+    const scale = Math.min(1, 1024 / Math.max(image.width, image.height));
+    const canvas = createCanvas(
+      Math.max(1, Math.round(image.width * scale)),
+      Math.max(1, Math.round(image.height * scale)),
+    );
+    canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+    return new Uint8Array(canvas.toBuffer('image/png'));
+  } catch {
+    return null;
+  }
+}
 
 const settingsSchema = z.object({
   range: z.string().max(120).default('전체 자료'),
@@ -16,6 +40,7 @@ const settingsSchema = z.object({
   difficulty: z.enum(['하', '중', '상']),
   excluded: z.string().max(300).default(''),
   additionalPrompt: z.string().max(500).default(''),
+  useImages: z.enum(['true', 'false']).transform((value) => value === 'true').default('false'),
 });
 
 const generatedQuestionSchema = z.object({
@@ -27,6 +52,7 @@ const generatedQuestionSchema = z.object({
   sourcePages: z.array(z.number().int().min(1)).max(4),
   cognitiveLevel: z.enum(['회상', '이해', '적용']),
   qualityFlags: z.array(z.string()).max(3),
+  imageIndex: z.number().int().min(0).max(MAX_VISION_IMAGES - 1).nullable().default(null),
 });
 
 const generatedAssessmentSchema = z.object({
@@ -52,7 +78,7 @@ const outputSchema = {
         maxItems: 10,
         items: {
           type: 'object',
-          required: ['stem', 'choices', 'answerIndex', 'explanation', 'objective', 'sourcePages', 'cognitiveLevel', 'qualityFlags'],
+          required: ['stem', 'choices', 'answerIndex', 'explanation', 'objective', 'sourcePages', 'cognitiveLevel', 'qualityFlags', 'imageIndex'],
           properties: {
             stem: { type: 'string' },
             choices: { type: 'array', items: { type: 'string' }, minItems: 5, maxItems: 5 },
@@ -62,6 +88,13 @@ const outputSchema = {
             sourcePages: { type: 'array', items: { type: 'integer', minimum: 1 }, maxItems: 4 },
             cognitiveLevel: { type: 'string', enum: ['회상', '이해', '적용'] },
             qualityFlags: { type: 'array', items: { type: 'string' }, maxItems: 3 },
+            imageIndex: {
+              anyOf: [
+                { type: 'integer', minimum: 0, maximum: MAX_VISION_IMAGES - 1 },
+                { type: 'null' },
+              ],
+              description: '풀이에 이미지가 꼭 필요한 경우에만 제공된 이미지의 0부터 시작하는 번호를 지정한다.',
+            },
           },
         },
       },
@@ -69,20 +102,42 @@ const outputSchema = {
   },
 } as const;
 
-async function extractMaterial(file: File): Promise<string> {
+async function extractMaterial(file: File, useImages: boolean): Promise<{ text: string; images: MaterialImage[] }> {
   const buffer = await file.arrayBuffer();
   if (file.type === PPTX || file.name.toLowerCase().endsWith('.pptx')) {
     const parsed = parsePptx(buffer);
     const content = parsed.slides.map((slide) => `[슬라이드 ${slide.index}] ${slide.text}`).filter((line) => line.trim()).join('\n');
     if (!content) throw new ApiException('empty_material', 'PPT에서 읽을 수 있는 텍스트를 찾지 못했습니다.', 400);
-    return content.slice(0, 120_000);
+    const images: MaterialImage[] = [];
+    if (useImages) {
+      for (const slide of parsed.slides) {
+        for (const ref of slide.imageRefs) {
+          if (images.length >= MAX_VISION_IMAGES) break;
+          const bytes = parsed.media.get(ref);
+          if (!bytes) continue;
+          const png = await prepareVisionImage(bytes);
+          if (png) images.push({ page: slide.index, png });
+        }
+        if (images.length >= MAX_VISION_IMAGES) break;
+      }
+    }
+    return { text: content.slice(0, 120_000), images };
   }
   if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
     const { default: pdfParse } = await import('pdf-parse');
     const parsed = await pdfParse(Buffer.from(buffer));
     const pages = parsed.text.split(/\f+/).map((text, index) => `[페이지 ${index + 1}] ${text.trim()}`).join('\n');
     if (!pages.trim()) throw new ApiException('empty_material', 'PDF에서 읽을 수 있는 텍스트를 찾지 못했습니다.', 400);
-    return pages.slice(0, 120_000);
+    const embedded = useImages
+      ? await extractEmbeddedPdfImages(Buffer.from(buffer), {
+          maxImages: MAX_VISION_IMAGES,
+          maxOutEdgePx: 1024,
+        })
+      : [];
+    return {
+      text: pages.slice(0, 120_000),
+      images: embedded.map((image) => ({ page: null, png: image.png })),
+    };
   }
   throw new ApiException('unsupported_file', 'PPTX 또는 PDF 파일만 지원합니다.', 400);
 }
@@ -103,21 +158,48 @@ export const POST = withErrorHandling(async (request: Request) => {
   const settings = settingsSchema.parse({
     range: form.get('range'), objective: form.get('objective'), count: form.get('count'),
     difficulty: form.get('difficulty'), excluded: form.get('excluded'),
-    additionalPrompt: form.get('additionalPrompt'),
+    additionalPrompt: form.get('additionalPrompt'), useImages: form.get('useImages'),
   });
-  const material = await extractMaterial(file);
+  const material = await extractMaterial(file, settings.useImages);
   const client = getAnthropic();
+  const userText = `파일명: ${file.name}\n출제 범위: ${settings.range}\n꼭 포함할 내용: ${settings.objective || '자료에서 추출'}\n문항 수: ${settings.count}\n난이도: ${settings.difficulty}\n제외 내용: ${settings.excluded || '없음'}\n추가 요청: ${settings.additionalPrompt || '없음'}\n이미지 사용: ${settings.useImages ? '사용' : '사용 안 함'}\n\n강의자료:\n${material.text}\n\n제공된 이미지가 문항 풀이에 실제로 필요한 경우에만 imageIndex를 지정한다. 로고, 아이콘, 장식 이미지는 사용하지 않는다.`;
+  const messageContent: Anthropic.MessageCreateParams['messages'][number]['content'] = [
+    { type: 'text', text: userText },
+    ...material.images.flatMap((image, index) => [
+      { type: 'text' as const, text: `이미지 ${index}${image.page ? ` (슬라이드 ${image.page})` : ''}` },
+      {
+        type: 'image' as const,
+        source: {
+          type: 'base64' as const,
+          media_type: 'image/png' as const,
+          data: Buffer.from(image.png).toString('base64'),
+        },
+      },
+    ]),
+  ];
   const response = await withRetry(() => createMessage(client, {
     model: MODELS.generation(),
     max_tokens: 7000,
     system: `당신은 의과대학 교수의 형성평가 제작을 돕는 교육설계 조교다. 반드시 제공된 강의자료만을 정답 근거로 사용한다. 고부담 시험문제가 아니라 수업 전후 복습용 5지선다 단일정답 문항을 만든다. 자료에서 확정할 수 없는 내용은 만들지 않는다. 모호성, 복수정답 가능성, 정답 단서가 남으면 qualityFlags에 짧게 알린다. 문항마다 근거 페이지/슬라이드와 학습목표를 남긴다. 학생에게 제공 가능한 정확하고 교육적인 한국어를 쓴다.`,
     tools: [outputSchema],
     tool_choice: { type: 'tool', name: 'create_formative_assessment' },
-    messages: [{ role: 'user', content: `파일명: ${file.name}\n출제 범위: ${settings.range}\n꼭 포함할 내용: ${settings.objective || '자료에서 추출'}\n문항 수: ${settings.count}\n난이도: ${settings.difficulty}\n제외 내용: ${settings.excluded || '없음'}\n추가 요청: ${settings.additionalPrompt || '없음'}\n\n강의자료:\n${material}` }],
+    messages: [{ role: 'user', content: messageContent }],
   }), { maxAttempts: 3 });
 
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
   if (!block) throw new ApiException('generation_failed', '구조화된 문항 초안을 만들지 못했습니다.', 502);
   const result = generatedAssessmentSchema.parse(block.input);
-  return ok({ ...result, questions: result.questions.slice(0, settings.count).map((question, index) => ({ ...question, id: `draft-${index + 1}` })) });
+  return ok({
+    ...result,
+    questions: result.questions.slice(0, settings.count).map((question, index) => {
+      const selectedImage = question.imageIndex === null ? null : material.images[question.imageIndex];
+      return {
+        ...question,
+        id: `draft-${index + 1}`,
+        imageDataUrl: selectedImage
+          ? `data:image/png;base64,${Buffer.from(selectedImage.png).toString('base64')}`
+          : null,
+      };
+    }),
+  });
 });

@@ -31,6 +31,7 @@ type Question = {
   sourcePages: number[];
   cognitiveLevel: '회상' | '이해' | '적용';
   qualityFlags: string[];
+  imageDataUrl: string | null;
 };
 
 type GenerateResponse = {
@@ -53,6 +54,7 @@ export function FormativeAssessmentStudio() {
   const [difficulty, setDifficulty] = useState('중');
   const [excluded, setExcluded] = useState('');
   const [additionalPrompt, setAdditionalPrompt] = useState('');
+  const [useImages, setUseImages] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<GenerateResponse | null>(null);
@@ -88,6 +90,7 @@ export function FormativeAssessmentStudio() {
       form.append('difficulty', difficulty);
       form.append('excluded', excluded);
       form.append('additionalPrompt', additionalPrompt);
+      form.append('useImages', String(useImages));
 
       const response = await fetch('/api/faculty/formative/generate', {
         method: 'POST',
@@ -226,6 +229,22 @@ export function FormativeAssessmentStudio() {
                     <span className="field-label">난이도</span>
                     <Segmented options={['하', '중', '상'] as const} value={difficulty} onChange={setDifficulty} ariaLabel="난이도" />
                   </div>
+                  <label className="field full image-option">
+                    <span className="image-option-control">
+                      <input
+                        type="checkbox"
+                        checked={useImages}
+                        onChange={(event) => setUseImages(event.target.checked)}
+                      />
+                      <span>
+                        <b>강의자료 이미지 사용</b>
+                        <small>자료 속 X-ray, CT, ECG, 병리 이미지 등을 분석해 이미지 문항에 활용합니다.</small>
+                      </span>
+                    </span>
+                    <span className="image-option-note">
+                      이미지를 사용하면 생성 시간이 조금 더 오래 걸릴 수 있지만, 시각 자료의 임상 맥락을 반영해 문항의 퀄리티를 높일 수 있습니다.
+                    </span>
+                  </label>
                 </div>
               </div>
 
@@ -278,6 +297,11 @@ export function FormativeAssessmentStudio() {
                       <button type="button" className="edit-button" disabled title="MVP 다음 단계에서 문항 직접 편집을 지원합니다"><Pencil size={15} /> 편집</button>
                     </div>
                     <h3>{question.stem}</h3>
+                    {question.imageDataUrl && (
+                      <div className="formative-question-image">
+                        <img src={question.imageDataUrl} alt={`문항 ${index + 1} 참고 이미지`} />
+                      </div>
+                    )}
                     <ol>
                       {question.choices.map((choice, choiceIndex) => (
                         <li className={choiceIndex === question.answerIndex ? 'is-answer' : ''} key={choice}>
@@ -334,10 +358,11 @@ export function FormativeAssessmentStudio() {
             <div className="summary-item"><span>자료</span><strong>{file?.name ?? '선택 전'}</strong></div>
             <div className="summary-item"><span>범위</span><strong>{rangeMode === '전체 자료' ? '전체 자료' : pageRange || '페이지 미입력'}</strong></div>
             <div className="summary-item"><span>구성</span><strong>{count}문항 · {difficulty}</strong></div>
+            <div className="summary-item"><span>이미지</span><strong>{useImages ? '사용' : '사용 안 함'}</strong></div>
           </dl>
           {!result ? (
             <button className="generate-button primary-btn" type="button" disabled={!file || loading || (rangeMode === '페이지 선택' && !pageRange.trim())} onClick={generate}>
-              {loading ? <><Loader2 className="spin" size={17} /> 자료 분석 중</> : <>초안 생성 <ArrowRight size={17} /></>}
+              {loading ? <><Loader2 className="spin" size={17} /> {useImages ? '텍스트와 이미지 분석 중' : '자료 분석 중'}</> : <>초안 생성 <ArrowRight size={17} /></>}
             </button>
           ) : (
             savedId ? <a className="generate-button primary-btn" href={`/professor/artifacts/${savedId}`}>차시에 저장됨 · 문항 검토하기</a> : <button className="generate-button primary-btn" type="button" disabled={!courseId || loading} onClick={saveToCourse}>차시에 저장하고 검토하기</button>
