@@ -11,9 +11,7 @@ import {
   FileCheck2,
   FileText,
   Plus,
-  Sparkles,
   Upload,
-  Users,
 } from "lucide-react";
 import "@/components/faculty/formative-studio.css";
 import { uploadTeachingMaterial } from "./CourseMaterialSelector";
@@ -45,6 +43,12 @@ type Material = {
   status: string;
   created_at: string;
 };
+type CourseDetailData = {
+  course: Course;
+  artifacts: Artifact[];
+  materials: Material[];
+  studentCount: number;
+};
 const TYPES = {
   formative: { label: "형성평가", icon: ClipboardCheck },
   preview: { label: "예습자료", icon: BookOpen },
@@ -68,6 +72,56 @@ const LOCAL_PREVIEW_COURSES: Course[] = [
     created_at: "2026-07-18T00:00:00.000Z",
   },
 ];
+const LOCAL_PREVIEW_DETAIL: CourseDetailData = {
+  course: LOCAL_PREVIEW_COURSES[0],
+  studentCount: 42,
+  materials: [
+    {
+      id: "preview-material-1",
+      file_name: "순환기학_부정맥_강의자료.pdf",
+      file_type: "pdf",
+      file_size_bytes: 6920000,
+      page_count: 38,
+      status: "ready",
+      created_at: "2026-07-23T00:00:00.000Z",
+    },
+    {
+      id: "preview-material-2",
+      file_name: "심전도_핵심정리.pptx",
+      file_type: "pptx",
+      file_size_bytes: 12400000,
+      page_count: 24,
+      status: "ready",
+      created_at: "2026-07-22T00:00:00.000Z",
+    },
+  ],
+  artifacts: [
+    {
+      id: "preview-artifact-1",
+      type: "formative",
+      title: "부정맥 감별 형성평가",
+      status: "review",
+      source_name: "순환기학_부정맥_강의자료.pdf",
+      created_at: "2026-07-23T00:00:00.000Z",
+    },
+    {
+      id: "preview-artifact-2",
+      type: "preview",
+      title: "심전도 판독 선수지식",
+      status: "approved",
+      source_name: "심전도_핵심정리.pptx",
+      created_at: "2026-07-22T00:00:00.000Z",
+    },
+    {
+      id: "preview-artifact-3",
+      type: "material_review",
+      title: "순환기학 강의자료 개선안",
+      status: "review",
+      source_name: "순환기학_부정맥_강의자료.pdf",
+      created_at: "2026-07-21T00:00:00.000Z",
+    },
+  ],
+};
 
 export function CourseList() {
   const localPreview =
@@ -276,19 +330,26 @@ export function CourseList() {
 }
 
 export function CourseDetail({ courseId }: { courseId: string }) {
-  const [data, setData] = useState<{
-    course: Course;
-    artifacts: Artifact[];
-    materials: Material[];
-    studentCount: number;
-  } | null>(null);
+  const localPreview =
+    process.env.NEXT_PUBLIC_LOCAL_FACULTY_UI_PREVIEW === "true";
+  const [data, setData] = useState<CourseDetailData | null>(
+    localPreview
+      ? {
+          ...LOCAL_PREVIEW_DETAIL,
+          course:
+            LOCAL_PREVIEW_COURSES.find((course) => course.id === courseId) ??
+            LOCAL_PREVIEW_DETAIL.course,
+        }
+      : null,
+  );
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
+    if (localPreview) return;
     fetch(`/api/professor/courses/${courseId}`)
       .then((r) => r.json())
       .then((p) => p.ok && setData(p.data));
-  }, [courseId]);
+  }, [courseId, localPreview]);
   const groups = useMemo(
     () => ({
       formative: data?.artifacts.filter((a) => a.type === "formative") ?? [],
@@ -313,226 +374,264 @@ export function CourseDetail({ courseId }: { courseId: string }) {
   if (!data)
     return <div className="professor-empty">차시를 불러오는 중입니다.</div>;
   return (
-    <div className="faculty-studio ll-upload-page professor-dashboard session-detail course-detail-page">
+    <div className="faculty-studio ll-upload-page course-workspace-page">
       <Link href="/professor/courses" className="back">
         <ArrowLeft size={16} />내 강의실로
       </Link>
-      <header className="course-detail-hero">
+      <header className="page-head">
         <div>
-          <p className="eyebrow">{data.course.term || "수업 차시"}</p>
-          <h1>{data.course.title}</h1>
-          <p className="lead">
-            이 차시에서 사용하는 강의자료와 생성한 수업 결과물을 한곳에서
-            관리합니다.
+          <p className="eyebrow">
+            내 강의실 · {data.course.term || "수업 차시"}
           </p>
-          <div className="course-code">
-            학생 참여 코드 <b>{data.course.code}</b>
-            <button
-              onClick={() => navigator.clipboard.writeText(data.course.code)}
-            >
-              <Copy size={14} />
-              복사
-            </button>
-          </div>
+          <h1>
+            <span className="headline-accent">{data.course.title}</span>
+            <br />
+            수업 준비를 이어가세요
+          </h1>
+          <p className="lead">
+            강의자료를 한 번 저장하고 형성평가, 예습자료, 자료 개선에 반복해서
+            활용할 수 있습니다.
+          </p>
+        </div>
+        <div className="course-head-status card pad">
+          <span>학생 참여 코드</span>
+          <strong>{data.course.code}</strong>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard.writeText(data.course.code)}
+          >
+            <Copy size={14} />
+            코드 복사
+          </button>
         </div>
       </header>
-      <section className="course-detail-stats" aria-label="차시 현황">
-        <div>
-          <Users size={18} />
-          <span>
-            <small>참여 학생</small>
-            <b>{data.studentCount}명</b>
-          </span>
-        </div>
-        <div>
-          <FileText size={18} />
-          <span>
-            <small>강의자료</small>
-            <b>{data.materials.length}개</b>
-          </span>
-        </div>
-        <div>
-          <Sparkles size={18} />
-          <span>
-            <small>생성 결과물</small>
-            <b>{data.artifacts.length}개</b>
-          </span>
-        </div>
-        <Link href={`/professor/courses/${courseId}/analytics`}>
-          <BarChart3 size={18} />
-          <span>
-            <small>학습 결과</small>
-            <b>분석 리포트</b>
-          </span>
-        </Link>
-      </section>
-      <section className="course-detail-section course-material-library">
-        <div className="card-head">
-          <div>
-            <span className="section-kicker">MATERIAL LIBRARY</span>
-            <h2>강의자료</h2>
-            <p>
-              한 번 저장한 자료를 형성평가·예습자료·자료 개선에서 다시
-              사용합니다.
-            </p>
-          </div>
-          <button
-            className="primary-btn material-upload-button"
-            disabled={uploading}
-            onClick={() => inputRef.current?.click()}
-          >
-            <Upload size={16} />
-            {uploading ? "저장 중" : "강의자료 업로드"}
-          </button>
-          <input
-            ref={inputRef}
-            hidden
-            type="file"
-            accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-            onChange={(event) => void upload(event.target.files?.[0])}
-          />
-        </div>
-        <div className="course-material-grid">
-          {data.materials.map((material) => (
-            <article key={material.id}>
-              <span>
-                <FileText size={18} />
-              </span>
+
+      <div className="studio-workbench course-workbench">
+        <main className="studio-main">
+          <section className="studio-section card pad">
+            <span className="studio-step-number" aria-hidden="true">
+              1
+            </span>
+            <div className="card-head">
               <div>
-                <b>{material.file_name}</b>
-                <small>
-                  {material.file_type.toUpperCase()}
-                  {material.page_count ? ` · ${material.page_count}쪽` : ""}
-                  {` · ${(material.file_size_bytes / 1024 / 1024).toFixed(1)} MB`}
-                </small>
+                <h2>강의자료</h2>
+                <p>
+                  차시에 저장하고 여러 교수 도구에서 반복해 사용할 자료입니다.
+                </p>
               </div>
-              <div className="material-tool-links">
-                <Link
-                  href={`/professor/formative?course=${courseId}&material=${material.id}`}
-                >
-                  형성평가
-                </Link>
-                <Link
-                  href={`/professor/bridge?course=${courseId}&material=${material.id}`}
-                >
-                  예습자료
-                </Link>
-                <Link
-                  href={`/professor/materials?course=${courseId}&material=${material.id}`}
-                >
-                  자료 개선
-                </Link>
-              </div>
-            </article>
-          ))}
-          {!data.materials.length && (
-            <p className="artifact-empty">
-              <Upload size={16} />
-              아직 저장한 강의자료가 없습니다.
-            </p>
-          )}
-        </div>
-      </section>
-      <section className="course-detail-section course-action-section">
-        <div className="course-section-heading">
-          <div>
-            <span className="section-kicker">CREATE</span>
-            <h2>이 차시에서 만들기</h2>
-          </div>
-          <p>등록한 자료를 선택하거나 새 자료를 올려 수업 준비를 이어가세요.</p>
-        </div>
-        <div className="session-actions">
-          <Link href={`/professor/formative?course=${courseId}`}>
-            <ClipboardCheck size={18} />
-            <span>
-              <b>형성평가 만들기</b>
-              <small>수업 후 이해도 확인</small>
-            </span>
-          </Link>
-          <Link href={`/professor/bridge?course=${courseId}`}>
-            <BookOpen size={18} />
-            <span>
-              <b>예습자료 만들기</b>
-              <small>수업 전 선수지식 복습</small>
-            </span>
-          </Link>
-          <Link href={`/professor/materials?course=${courseId}`}>
-            <FileCheck2 size={18} />
-            <span>
-              <b>자료 개선</b>
-              <small>PPT 가독성 검수</small>
-            </span>
-          </Link>
-          <Link href={`/professor/courses/${courseId}/analytics`}>
-            <BarChart3 size={18} />
-            <span>
-              <b>분석 리포트</b>
-              <small>학생 응답과 취약 문항</small>
-            </span>
-          </Link>
-        </div>
-      </section>
-      <section className="course-detail-section course-results-section">
-        <div className="course-section-heading">
-          <div>
-            <span className="section-kicker">OUTPUTS</span>
-            <h2>생성한 결과물</h2>
-          </div>
-          <p>검토 상태와 사용한 자료를 유형별로 확인할 수 있습니다.</p>
-        </div>
-        <div className="session-artifact-groups">
-          {(
-            Object.entries(groups) as Array<[keyof typeof TYPES, Artifact[]]>
-          ).map(([type, items]) => {
-            const meta = TYPES[type];
-            const Icon = meta.icon;
-            return (
-              <section className="artifact-group" key={type}>
-                <header>
-                  <span>
-                    <Icon size={18} />
+              <button
+                className="primary-btn course-upload-button"
+                disabled={uploading}
+                onClick={() => inputRef.current?.click()}
+              >
+                <Upload size={16} />
+                {uploading ? "저장 중" : "새 자료 업로드"}
+              </button>
+              <input
+                ref={inputRef}
+                hidden
+                type="file"
+                accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                onChange={(event) => void upload(event.target.files?.[0])}
+              />
+            </div>
+            <div className="course-material-list">
+              {data.materials.map((material) => (
+                <article className="course-material-row" key={material.id}>
+                  <span className="course-row-icon">
+                    <FileText size={18} />
                   </span>
-                  <div>
-                    <h2>{meta.label}</h2>
-                    <p>{items.length}개의 결과물</p>
+                  <div className="course-row-copy">
+                    <b>{material.file_name}</b>
+                    <small>
+                      {material.file_type.toUpperCase()}
+                      {material.page_count ? ` · ${material.page_count}쪽` : ""}
+                      {` · ${(material.file_size_bytes / 1024 / 1024).toFixed(1)} MB`}
+                    </small>
                   </div>
-                </header>
-                <div>
-                  {items.map((item) => (
+                  <div className="course-row-actions">
                     <Link
-                      href={
-                        type === "formative"
-                          ? `/professor/artifacts/${item.id}`
-                          : "#"
-                      }
-                      className="artifact-row"
-                      key={item.id}
+                      href={`/professor/formative?course=${courseId}&material=${material.id}`}
                     >
-                      <div>
-                        <b>{item.title}</b>
-                        <small>
-                          {item.source_name || "직접 생성"} ·{" "}
-                          {new Date(item.created_at).toLocaleDateString(
-                            "ko-KR",
-                          )}
-                        </small>
-                      </div>
-                      <span>{statusLabel(item.status)}</span>
-                      <ArrowRight size={15} />
+                      형성평가
                     </Link>
-                  ))}
-                  {!items.length && (
-                    <p className="artifact-empty">
-                      <Sparkles size={16} />
-                      아직 만든 {meta.label}가 없습니다.
-                    </p>
-                  )}
+                    <Link
+                      href={`/professor/bridge?course=${courseId}&material=${material.id}`}
+                    >
+                      예습자료
+                    </Link>
+                    <Link
+                      href={`/professor/materials?course=${courseId}&material=${material.id}`}
+                    >
+                      자료 개선
+                    </Link>
+                  </div>
+                </article>
+              ))}
+              {!data.materials.length && (
+                <div className="course-empty">
+                  <Upload size={17} />
+                  <span>
+                    <b>저장된 강의자료가 없습니다.</b>
+                    <small>
+                      새 자료를 업로드하면 이 차시의 자료 보관함에 저장됩니다.
+                    </small>
+                  </span>
                 </div>
-              </section>
-            );
-          })}
-        </div>
-      </section>
+              )}
+            </div>
+          </section>
+
+          <section className="studio-section card pad">
+            <span className="studio-step-number" aria-hidden="true">
+              2
+            </span>
+            <div className="card-head">
+              <div>
+                <h2>수업 자료 만들기</h2>
+                <p>현재 차시와 자료를 연결한 상태로 교수 도구를 시작합니다.</p>
+              </div>
+            </div>
+            <div className="course-tool-list">
+              <Link href={`/professor/formative?course=${courseId}`}>
+                <ClipboardCheck size={18} />
+                <span>
+                  <b>형성평가</b>
+                  <small>수업 후 이해도 확인 문항</small>
+                </span>
+                <ArrowRight size={16} />
+              </Link>
+              <Link href={`/professor/bridge?course=${courseId}`}>
+                <BookOpen size={18} />
+                <span>
+                  <b>예습자료</b>
+                  <small>수업 전 선수지식 복습</small>
+                </span>
+                <ArrowRight size={16} />
+              </Link>
+              <Link href={`/professor/materials?course=${courseId}`}>
+                <FileCheck2 size={18} />
+                <span>
+                  <b>자료 개선</b>
+                  <small>강의자료의 가독성과 흐름 검토</small>
+                </span>
+                <ArrowRight size={16} />
+              </Link>
+              <Link href={`/professor/courses/${courseId}/analytics`}>
+                <BarChart3 size={18} />
+                <span>
+                  <b>학습 결과</b>
+                  <small>학생 응답과 취약 문항 분석</small>
+                </span>
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </section>
+
+          <section className="studio-section card pad">
+            <div className="card-head">
+              <div>
+                <h2>생성한 결과물</h2>
+                <p>유형별 결과물과 검토 상태를 확인합니다.</p>
+              </div>
+            </div>
+            <div className="course-output-groups">
+              {(
+                Object.entries(groups) as Array<
+                  [keyof typeof TYPES, Artifact[]]
+                >
+              ).map(([type, items]) => {
+                const meta = TYPES[type];
+                const Icon = meta.icon;
+                return (
+                  <section className="course-output-group" key={type}>
+                    <header>
+                      <span>
+                        <Icon size={17} />
+                      </span>
+                      <div>
+                        <h3>{meta.label}</h3>
+                        <p>{items.length}개의 결과물</p>
+                      </div>
+                    </header>
+                    <div>
+                      {items.map((item) => (
+                        <Link
+                          href={
+                            type === "formative"
+                              ? `/professor/artifacts/${item.id}`
+                              : "#"
+                          }
+                          className="course-output-row"
+                          key={item.id}
+                        >
+                          <div>
+                            <b>{item.title}</b>
+                            <small>
+                              {item.source_name || "직접 생성"} ·{" "}
+                              {new Date(item.created_at).toLocaleDateString(
+                                "ko-KR",
+                              )}
+                            </small>
+                          </div>
+                          <span>{statusLabel(item.status)}</span>
+                          <ArrowRight size={15} />
+                        </Link>
+                      ))}
+                      {!items.length && (
+                        <p className="course-output-empty">
+                          아직 만든 {meta.label}가 없습니다.
+                        </p>
+                      )}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          </section>
+        </main>
+
+        <aside className="faculty-summary summary summary-hero card pad course-summary">
+          <div className="card-head">
+            <div>
+              <h2>차시 현황</h2>
+              <p>현재 차시의 자료와 활동을 확인하세요.</p>
+            </div>
+          </div>
+          <dl className="summary-list">
+            <div className="summary-item">
+              <span>차시</span>
+              <strong>{data.course.title}</strong>
+            </div>
+            <div className="summary-item">
+              <span>학기</span>
+              <strong>{data.course.term || "미설정"}</strong>
+            </div>
+            <div className="summary-item">
+              <span>강의자료</span>
+              <strong>{data.materials.length}개</strong>
+            </div>
+            <div className="summary-item">
+              <span>생성 결과물</span>
+              <strong>{data.artifacts.length}개</strong>
+            </div>
+            <div className="summary-item">
+              <span>참여 학생</span>
+              <strong>{data.studentCount}명</strong>
+            </div>
+          </dl>
+          <Link
+            className="generate-button primary-btn"
+            href={`/professor/courses/${courseId}/analytics`}
+          >
+            학습 결과 보기 <ArrowRight size={17} />
+          </Link>
+          <p className="summary-note note">
+            강의자료와 생성 결과물은 이 차시에 저장되며 교수 검토 전에는
+            학생에게 공개되지 않습니다.
+          </p>
+        </aside>
+      </div>
     </div>
   );
 }
