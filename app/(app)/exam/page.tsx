@@ -85,12 +85,11 @@ export default function ExamPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [expandedMid, setExpandedMid] = useState<Record<string, boolean>>({});
   const [loadingSubjects, setLoadingSubjects] = useState(true);
-  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
+  // 전 세부주제별 실제 문항 수(전역 1회 로드) — 과목 카드·상세 사이드바 카운트가 모두 여기서 파생
+  const [stCounts, setStCounts] = useState<Record<string, number> | null>(null);
 
-  // 브라우즈 → 상세: 선택된 과목 + 세부주제별 실제 문항 수(사이드바 카운트용)
+  // 브라우즈 → 상세: 선택된 과목
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [subjectCounts, setSubjectCounts] = useState<{ total: number; counts: Record<string, number> } | null>(null);
-  const [loadingSubjectCounts, setLoadingSubjectCounts] = useState(false);
 
   const [active, setActive] = useState<{ subTopicId: string; name: string; subjectName: string } | null>(null);
   const [questions, setQuestions] = useState<QuestionForUser[]>([]);
@@ -113,28 +112,24 @@ export default function ExamPage() {
       .then(setSubjects)
       .catch(() => {})
       .finally(() => setLoadingSubjects(false));
+    // 전 세부주제 문항 수를 요청 1회로 로드 — 과목 목록과 병렬.
+    // (과목당 count_only 요청 N개를 병렬 발사하던 방식을 대체)
+    api
+      .get<{ total: number; counts: Record<string, number> }>('/api/questions?count_by=sub_topic')
+      .then((r) => setStCounts(r.counts))
+      .catch(() => setStCounts({}));
   }, []);
 
-  // 과목별 문항 수(READY/준비중 · 문항 카운트) — 기존 count_only 엔드포인트에서 파생.
-  useEffect(() => {
-    if (subjects.length === 0) return;
-    let cancelled = false;
-    Promise.all(
-      subjects.map(async (s) => {
-        try {
-          const r = await api.get<{ count: number }>(`/api/questions?subject_id=${s.id}&count_only=true`);
-          return [s.id, r.count] as const;
-        } catch {
-          return [s.id, 0] as const;
-        }
-      }),
-    ).then((pairs) => {
-      if (!cancelled) setQuestionCounts(Object.fromEntries(pairs));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [subjects]);
+  // 과목별 문항 수 — 전역 세부주제 카운트에서 파생 (READY/준비중 · 카드 문항 수)
+  const questionCounts = useMemo<Record<string, number>>(() => {
+    if (!stCounts) return {};
+    return Object.fromEntries(
+      subjects.map((s) => [
+        s.id,
+        s.sub_topics.reduce((sum, t) => sum + (stCounts[t.id] ?? 0), 0),
+      ]),
+    );
+  }, [subjects, stCounts]);
 
   function toggle(subjectId: string) {
     setExpanded((e) => ({ ...e, [subjectId]: !e[subjectId] }));
@@ -146,8 +141,8 @@ export default function ExamPage() {
   const leavesOf = (s: Subject, midId: string) =>
     s.sub_topics.filter((t) => t.level === 2 && t.parent_id === midId);
 
-  // 과목 카드 → 상세 뷰 진입: 세부주제별 실제 문항 수 로드(사이드바 카운트용)
-  async function openSubject(s: Subject) {
+  // 과목 카드 → 상세 뷰 진입. 카운트는 브라우즈에서 이미 로드한 전역 집계를 재사용(추가 요청 없음 — 즉시 표시).
+  function openSubject(s: Subject) {
     setSelectedSubject(s);
     setActive(null);
     setExpandedMid({});
@@ -156,25 +151,11 @@ export default function ExamPage() {
     setFinished(false);
     setChecked(new Set());
     setSavedNote(false);
-    setSubjectCounts(null);
-    setLoadingSubjectCounts(true);
-    try {
-      const c = await api.get<{ total: number; counts: Record<string, number> }>(
-        `/api/questions?subject_id=${s.id}&count_by=sub_topic`,
-      );
-      setSubjectCounts(c);
-    } catch {
-      // 집계 실패 시 과목 카드에 표시하던 총 문항 수라도 유지
-      setSubjectCounts({ total: questionCounts[s.id] ?? 0, counts: {} });
-    } finally {
-      setLoadingSubjectCounts(false);
-    }
   }
 
   function backToBrowse() {
     setSelectedSubject(null);
     setActive(null);
-    setSubjectCounts(null);
   }
 
   async function openSubTopic(st: SubTopic, subjectName: string) {
@@ -292,9 +273,9 @@ export default function ExamPage() {
     [subjects, questionCounts],
   );
 
-  // 세부주제별 실제 문항 수(DB 집계). 로딩 중에는 0 대신 자리 표시자를 렌더링한다.
-  const stCount = subjectCounts?.counts ?? {};
-  const countOrDots = (n: number) => (loadingSubjectCounts ? '…' : n);
+  // 세부주제별 실제 문항 수(DB 집계, 전역 1회 로드). 로딩 중에는 0 대신 자리 표시자를 렌더링한다.
+  const stCount = stCounts ?? {};
+  const countOrDots = (n: number) => (stCounts === null ? '…' : n);
 
   // ============================================================
   // 브라우즈 뷰 — 과목 카드 그리드
@@ -357,7 +338,7 @@ export default function ExamPage() {
                   </div>
                   <p className="subject-desc">{s.sub_topics.slice(0, 4).map((topic) => topic.name).join(' · ') || '세부 주제를 준비하고 있습니다.'}</p>
                   <div className="metrics">
-                    <div className="metric"><span>문항</span><strong>{count ?? 0}</strong></div>
+                    <div className="metric"><span>문항</span><strong>{countOrDots(count ?? 0)}</strong></div>
                     <div className="metric"><span>주제</span><strong>{s.sub_topics.length}</strong></div>
                   </div>
 
@@ -428,7 +409,7 @@ export default function ExamPage() {
             >
               <span>전체</span>
               <span className={`text-[11px] tnum ${active === null ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
-                {countOrDots(subjectCounts?.total ?? 0)}
+                {countOrDots(questionCounts[selectedSubject.id] ?? 0)}
               </span>
             </button>
 

@@ -14,7 +14,7 @@
  *   ?count_by=sub_topic       → { total, counts: { [subTopicId]: n } } 반환
  */
 
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling } from '@/lib/utils/api';
 
@@ -25,7 +25,8 @@ const TIER_BADGE: Record<string, { label: string; color: 'curated' | 'community'
 };
 
 export const GET = withErrorHandling(async (request: Request) => {
-  await requireSession();
+  // 프로필 정보가 불필요한 읽기 전용 조회 — 경량 인증 체크로 DB 왕복 절감
+  await requireAuthUser();
   const { searchParams } = new URL(request.url);
   const supabase = await createServerClient();
 
