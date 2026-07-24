@@ -87,10 +87,10 @@ export default function ExamPage() {
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
 
-  // 브라우즈 → 상세: 선택된 과목 + 과목 전체 문항(사이드바 카운트/문제 카드 그리드용)
+  // 브라우즈 → 상세: 선택된 과목 + 세부주제별 실제 문항 수(사이드바 카운트용)
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [subjectQuestions, setSubjectQuestions] = useState<QuestionForUser[]>([]);
-  const [loadingSubjectQuestions, setLoadingSubjectQuestions] = useState(false);
+  const [subjectCounts, setSubjectCounts] = useState<{ total: number; counts: Record<string, number> } | null>(null);
+  const [loadingSubjectCounts, setLoadingSubjectCounts] = useState(false);
 
   const [active, setActive] = useState<{ subTopicId: string; name: string; subjectName: string } | null>(null);
   const [questions, setQuestions] = useState<QuestionForUser[]>([]);
@@ -146,7 +146,7 @@ export default function ExamPage() {
   const leavesOf = (s: Subject, midId: string) =>
     s.sub_topics.filter((t) => t.level === 2 && t.parent_id === midId);
 
-  // 과목 카드 → 상세 뷰 진입: 과목 전체 문항 로드(그리드/카운트용)
+  // 과목 카드 → 상세 뷰 진입: 세부주제별 실제 문항 수 로드(사이드바 카운트용)
   async function openSubject(s: Subject) {
     setSelectedSubject(s);
     setActive(null);
@@ -156,22 +156,25 @@ export default function ExamPage() {
     setFinished(false);
     setChecked(new Set());
     setSavedNote(false);
-    setSubjectQuestions([]);
-    setLoadingSubjectQuestions(true);
+    setSubjectCounts(null);
+    setLoadingSubjectCounts(true);
     try {
-      const qs = await api.get<QuestionForUser[]>(`/api/questions?subject_id=${s.id}&limit=50`);
-      setSubjectQuestions(qs);
+      const c = await api.get<{ total: number; counts: Record<string, number> }>(
+        `/api/questions?subject_id=${s.id}&count_by=sub_topic`,
+      );
+      setSubjectCounts(c);
     } catch {
-      setSubjectQuestions([]);
+      // 집계 실패 시 과목 카드에 표시하던 총 문항 수라도 유지
+      setSubjectCounts({ total: questionCounts[s.id] ?? 0, counts: {} });
     } finally {
-      setLoadingSubjectQuestions(false);
+      setLoadingSubjectCounts(false);
     }
   }
 
   function backToBrowse() {
     setSelectedSubject(null);
     setActive(null);
-    setSubjectQuestions([]);
+    setSubjectCounts(null);
   }
 
   async function openSubTopic(st: SubTopic, subjectName: string) {
@@ -186,7 +189,8 @@ export default function ExamPage() {
     setChecked(new Set());
     setSavedNote(false);
     try {
-      const qs = await api.get<QuestionForUser[]>(`/api/questions?sub_topic_id=${st.id}&limit=10`);
+      // 사이드바에 표시된 문항 수와 실제 풀 수 있는 문항 수가 일치하도록 API 최대치(50)까지 로드
+      const qs = await api.get<QuestionForUser[]>(`/api/questions?sub_topic_id=${st.id}&limit=50`);
       setQuestions(qs);
     } catch (e) {
       alert(e instanceof ApiError ? e.message : '문항을 불러오지 못했습니다.');
@@ -288,14 +292,9 @@ export default function ExamPage() {
     [subjects, questionCounts],
   );
 
-  // 과목 전체 문항에서 세부주제별 카운트 파생
-  const stCount = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const q of subjectQuestions) {
-      if (q.subTopicId) m[q.subTopicId] = (m[q.subTopicId] ?? 0) + 1;
-    }
-    return m;
-  }, [subjectQuestions]);
+  // 세부주제별 실제 문항 수(DB 집계). 로딩 중에는 0 대신 자리 표시자를 렌더링한다.
+  const stCount = subjectCounts?.counts ?? {};
+  const countOrDots = (n: number) => (loadingSubjectCounts ? '…' : n);
 
   // ============================================================
   // 브라우즈 뷰 — 과목 카드 그리드
@@ -429,7 +428,7 @@ export default function ExamPage() {
             >
               <span>전체</span>
               <span className={`text-[11px] tnum ${active === null ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
-                {subjectQuestions.length}
+                {countOrDots(subjectCounts?.total ?? 0)}
               </span>
             </button>
 
@@ -457,7 +456,7 @@ export default function ExamPage() {
                       )}
                       <span className="flex-1 truncate">{mid.name}</span>
                       <span className={`text-[11px] tnum ${isActive ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
-                        {midCount}
+                        {countOrDots(midCount)}
                       </span>
                       {leaves.length > 0 &&
                         (midOpen ? (
@@ -485,7 +484,7 @@ export default function ExamPage() {
                               )}
                               <span className="flex-1 truncate">{leaf.name}</span>
                               <span className={`text-[11px] tnum ${leafActive ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
-                                {stCount[leaf.id] ?? 0}
+                                {countOrDots(stCount[leaf.id] ?? 0)}
                               </span>
                             </button>
                           );

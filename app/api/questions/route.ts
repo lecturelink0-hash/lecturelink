@@ -11,6 +11,7 @@
  *   ?status=active            (기본 active)
  *   ?limit=20                 (기본 20, 최대 50)
  *   ?count_only=true          → { count } 만 반환
+ *   ?count_by=sub_topic       → { total, counts: { [subTopicId]: n } } 반환
  */
 
 import { requireSession } from '@/lib/auth/session';
@@ -33,6 +34,7 @@ export const GET = withErrorHandling(async (request: Request) => {
   const tier = searchParams.get('tier');
   const status = searchParams.get('status') ?? 'active';
   const countOnly = searchParams.get('count_only') === 'true';
+  const countBySubTopic = searchParams.get('count_by') === 'sub_topic';
   const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit') ?? 20)));
 
   // subject_id 가 오면 그 과목의 sub_topic 으로 확장
@@ -44,7 +46,38 @@ export const GET = withErrorHandling(async (request: Request) => {
       .eq('subject_id', subjectId);
     if (error) throw error;
     stIds = (sts ?? []).map((s) => s.id);
-    if (stIds.length === 0) return ok(countOnly ? { count: 0 } : []);
+    if (stIds.length === 0) {
+      if (countOnly) return ok({ count: 0 });
+      if (countBySubTopic) return ok({ total: 0, counts: {} });
+      return ok([]);
+    }
+  }
+
+  // 세부주제별 문항 수 집계 — 문항 본문 없이 sub_topic_id 만 페이지 단위로 읽어 합산.
+  // (국시 대비 상세 사이드바 카운트용. limit 50 문항 샘플로 세던 방식의 오차 제거)
+  if (countBySubTopic) {
+    const counts: Record<string, number> = {};
+    let total = 0;
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      let q = supabase
+        .from('questions')
+        .select('sub_topic_id')
+        .eq('status', status as 'active')
+        .range(from, from + PAGE - 1);
+      if (subTopicId) q = q.eq('sub_topic_id', subTopicId);
+      else if (stIds) q = q.in('sub_topic_id', stIds);
+      if (tier) q = q.eq('tier', tier as 'curated');
+      const { data, error } = await q;
+      if (error) throw error;
+      for (const row of data ?? []) {
+        const id = (row as { sub_topic_id: string | null }).sub_topic_id;
+        if (id) counts[id] = (counts[id] ?? 0) + 1;
+        total += 1;
+      }
+      if (!data || data.length < PAGE) break;
+    }
+    return ok({ total, counts });
   }
 
   if (countOnly) {
