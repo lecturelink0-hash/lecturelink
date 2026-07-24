@@ -6,6 +6,7 @@ import { requireDailyCostCap } from '@/lib/ai/cost-cap';
 import { parsePptx } from '@/lib/extract/pptx';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import { createServerClient } from '@/lib/db/server';
+import { getOwnedTeachingMaterial, loadTeachingMaterialFile } from '@/lib/teaching/materials';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const PPTX_MIME = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -116,7 +117,8 @@ export const POST = withErrorHandling(async (request: Request) => {
 
   await requireDailyCostCap();
   const form = await request.formData();
-  const file = form.get('file');
+  const submittedFile = form.get('file');
+  const materialId = String(form.get('materialId') ?? '');
   const courseId = String(form.get('courseId') ?? '');
   const settings = settingsSchema.parse({
     purpose: form.get('purpose') || '의과대학 정규 강의',
@@ -125,6 +127,11 @@ export const POST = withErrorHandling(async (request: Request) => {
     additionalPrompt: form.get('additionalPrompt') || '',
   });
 
+  const cached = z.string().uuid().safeParse(materialId).success
+    ? await getOwnedTeachingMaterial(materialId, session.userId)
+    : null;
+  const loaded = cached ? await loadTeachingMaterialFile(materialId, session.userId) : null;
+  const file = loaded?.file ?? submittedFile;
   if (!(file instanceof File)) {
     throw new ApiException('file_required', 'PPTX 또는 PDF 파일을 선택해주세요.', 400);
   }
@@ -135,7 +142,13 @@ export const POST = withErrorHandling(async (request: Request) => {
     throw new ApiException('file_too_large', '파일은 25MB 이하만 지원합니다.', 400);
   }
 
-  const material = await extractPages(file);
+  const material = cached?.extracted_pages?.length
+    ? {
+        content: cached.extracted_pages.map((page) => `[${cached.file_type === 'pptx' ? '슬라이드' : '페이지'} ${page.pageIndex}] 글자수=${page.text.length}\n${page.text}`).join('\n').slice(0, 120_000),
+        unit: cached.file_type === 'pptx' ? '슬라이드' : '페이지',
+        format: cached.file_type.toUpperCase(),
+      }
+    : await extractPages(file);
   const response = await withRetry(() => createMessage(getAnthropic(), {
     model: MODELS.generation(),
     max_tokens: 7000,
@@ -168,6 +181,7 @@ ${material.content}`,
   const { data: artifact, error } = await db.from('learning_artifacts').insert({
     course_id: courseId,
     created_by: session.userId,
+    material_id: cached?.id ?? null,
     type: 'material_review',
     title: result.deckTitle,
     status: 'review',

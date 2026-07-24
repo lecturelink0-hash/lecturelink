@@ -7,6 +7,7 @@ import { parsePptx } from '@/lib/extract/pptx';
 import { normalizeToPng } from '@/lib/extract/preprocess';
 import { extractPdfTextPages, renderPdfPages } from '@/lib/extract/render-slides';
 import { cropRegions, detectMedicalRegions } from '@/lib/extract/crop-medical-images';
+import { loadTeachingMaterialFile } from '@/lib/teaching/materials';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -407,7 +408,12 @@ export const POST = withErrorHandling(async (request: Request) => {
   }
   await requireDailyCostCap();
   const form = await request.formData();
-  const file = form.get('file');
+  const materialId = String(form.get('materialId') ?? '');
+  const submittedFile = form.get('file');
+  const loaded = z.string().uuid().safeParse(materialId).success
+    ? await loadTeachingMaterialFile(materialId, session.userId)
+    : null;
+  const file = loaded?.file ?? submittedFile;
   if (!(file instanceof File)) throw new ApiException('file_required', '강의자료를 선택해주세요.', 400);
   if (file.size > MAX_FILE_BYTES) throw new ApiException('file_too_large', '파일은 25MB 이하만 업로드할 수 있습니다.', 400);
 
