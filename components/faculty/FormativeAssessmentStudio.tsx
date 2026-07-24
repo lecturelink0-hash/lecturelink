@@ -261,8 +261,9 @@ export function FormativeAssessmentStudio() {
                 </div>
                 <div className="optional-settings-grid">
                   <label className="field">
-                    <span className="field-label">꼭 포함할 내용</span>
-                    <textarea maxLength={300} value={include} onChange={(event) => setInclude(event.target.value)} placeholder="예: 항부정맥 약물의 작용 기전을 꼭 포함해 주세요." />
+                    <span className="field-label">강조할 내용 <small>(1~2문항)</small></span>
+                    <textarea maxLength={300} value={include} onChange={(event) => setInclude(event.target.value)} placeholder="예: 항부정맥 약물의 작용 기전" />
+                    <small className="field-help">입력한 내용은 전체 문항에 반복하지 않고 1~2문항에서만 핵심 주제로 다룹니다.</small>
                     <small className="field-counter">{include.length}/300</small>
                   </label>
                   <label className="field">
@@ -375,7 +376,10 @@ export function FormativeAssessmentStudio() {
           </div>
           <dl className="summary-list">
             <div className="summary-item"><span>저장할 차시</span><strong><select value={courseId} onChange={(event) => setCourseId(event.target.value)}><option value="">차시 선택</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}</select></strong></div>
-            <div className="summary-item"><span>자료</span><strong>{file?.name ?? '선택 전'}</strong></div>
+            <div className="summary-item summary-material">
+              <span className="summary-material-label">자료</span>
+              <strong className="summary-material-name" title={file?.name ?? '선택 전'}>{file?.name ?? '선택 전'}</strong>
+            </div>
             <div className="summary-item"><span>범위</span><strong>{rangeMode === '전체 자료' ? '전체 자료' : pageRange || '페이지 미입력'}</strong></div>
             <div className="summary-item"><span>구성</span><strong>{count}문항 · {difficulty}</strong></div>
             <div className="summary-item"><span>이미지</span><strong>{useImages ? '사용' : '사용 안 함'}</strong></div>

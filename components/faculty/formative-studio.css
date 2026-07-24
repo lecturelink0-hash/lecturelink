@@ -82,13 +82,15 @@
   flex: 0 0 auto;
 }
 
-.studio-design-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+.form-grid.studio-design-grid {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 
 .design-group {
+  width: 100%;
+  min-width: 0;
   display: grid;
   gap: 14px;
 }
@@ -420,11 +422,42 @@
   opacity: .45;
 }
 
+.ll-upload-page .summary-material {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+}
+
+.ll-upload-page .summary-material-label {
+  display: inline-flex;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.ll-upload-page .summary-material-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
 .field-counter {
   align-self: flex-end;
   color: var(--ink-faint);
   font-size: 11px;
   line-height: 1;
+}
+
+.studio-design-grid .field-label small,
+.studio-design-grid .field-help {
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.studio-design-grid .field-help {
+  line-height: 1.45;
 }
 
 .image-option {
