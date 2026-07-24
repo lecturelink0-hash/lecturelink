@@ -185,6 +185,34 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
  * 인증된 세션을 강제. null이면 UnauthorizedException throw.
  * withErrorHandling 과 함께 사용하면 401 응답으로 자동 변환된다.
  */
+/**
+ * 인증 여부만 확인하는 경량 세션 체크.
+ * users 프로필 조회(학교 조인 포함)를 생략해 DB 왕복 1회를 줄인다.
+ * 프로필/플랜 정보가 필요 없는 읽기 전용 엔드포인트(문항 목록·카운트 등)용.
+ */
+export async function requireAuthUser(): Promise<{ userId: string; email: string }> {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_FACULTY_UI_PREVIEW === 'true'
+  ) {
+    return {
+      userId: '00000000-0000-4000-8000-000000000001',
+      email: 'professor.preview@lecturelink.local',
+    };
+  }
+
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) {
+    const { UnauthorizedException } = await import('@/lib/utils/api');
+    throw new UnauthorizedException();
+  }
+  return { userId: user.id, email: user.email ?? '' };
+}
+
 export async function requireSession(): Promise<AuthSession> {
   const session = await getCurrentSession();
   if (!session) {

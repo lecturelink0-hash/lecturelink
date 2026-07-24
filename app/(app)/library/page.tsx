@@ -193,9 +193,8 @@ export default function LibraryPage() {
   // 과목 키: 'subject_<id>'
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  // 과목별 세부주제 count 캐시 { subTopicId -> count }
-  const [subTopicCounts, setSubTopicCounts] = useState<Record<string, number>>({});
-  const [loadingCounts, setLoadingCounts] = useState<Record<string, boolean>>({});
+  // 세부주제별 문항 수 { subTopicId -> count } — 마운트 시 전역 1회 로드 (null = 로딩 중)
+  const [subTopicCounts, setSubTopicCounts] = useState<Record<string, number> | null>(null);
 
   // 선택된 항목 및 우측 콘텐츠
   const [active, setActive] = useState<ActiveItem | null>(null);
@@ -230,6 +229,11 @@ export default function LibraryPage() {
         setUploads(ups);
       })
       .finally(() => setLoadingTree(false));
+    // 세부주제별 문항 수 — 요청 1회로 전체 로드(펼칠 때마다 leaf당 count 요청을 발사하던 방식 대체)
+    api
+      .get<{ total: number; counts: Record<string, number> }>('/api/questions?count_by=sub_topic')
+      .then((r) => setSubTopicCounts(r.counts))
+      .catch(() => setSubTopicCounts({}));
   }, []);
 
   // private-questions 를 한 번만 전체 로드해 upload_id 기준으로 필터링
@@ -271,48 +275,6 @@ export default function LibraryPage() {
     setExpanded((e) => ({ ...e, [key]: !e[key] }));
   }
 
-  // ── 과목 펼칠 때 count lazy 로드 ──────────────────────────────────────────
-
-  const loadCountsForLeaves = useCallback(
-    (leaves: SubTopic[]) => {
-      const needsFetch = leaves.filter(
-        (st) => subTopicCounts[st.id] === undefined && !loadingCounts[st.id],
-      );
-      if (needsFetch.length === 0) return;
-
-      setLoadingCounts((prev) => {
-        const next = { ...prev };
-        needsFetch.forEach((st) => { next[st.id] = true; });
-        return next;
-      });
-
-      Promise.all(
-        needsFetch.map(async (st) => {
-          try {
-            const res = await api.get<{ count: number }>(
-              `/api/questions?sub_topic_id=${st.id}&count_only=true`,
-            );
-            return { id: st.id, count: res.count };
-          } catch {
-            return { id: st.id, count: 0 };
-          }
-        }),
-      ).then((results) => {
-        setSubTopicCounts((prev) => {
-          const next = { ...prev };
-          results.forEach(({ id, count }) => { next[id] = count; });
-          return next;
-        });
-        setLoadingCounts((prev) => {
-          const next = { ...prev };
-          needsFetch.forEach((st) => { next[st.id] = false; });
-          return next;
-        });
-      });
-    },
-    [subTopicCounts, loadingCounts],
-  );
-
   const midsOf = (s: Subject) => s.sub_topics.filter((t) => t.level === 1);
   const leavesOf = (s: Subject, midId: string) =>
     s.sub_topics.filter((t) => t.level === 2 && t.parent_id === midId);
@@ -321,11 +283,8 @@ export default function LibraryPage() {
     toggle(`subject_${subject.id}`);
   }
 
-  function toggleMid(mid: SubTopic, subject: Subject) {
-    const key = `mid_${mid.id}`;
-    const willOpen = !expanded[key];
-    toggle(key);
-    if (willOpen) loadCountsForLeaves(leavesOf(subject, mid.id));
+  function toggleMid(mid: SubTopic) {
+    toggle(`mid_${mid.id}`);
   }
 
   // ── 우측 콘텐츠 로드 ──────────────────────────────────────────────────────
@@ -543,7 +502,7 @@ export default function LibraryPage() {
                                         <button
                                           onClick={() =>
                                             leaves.length > 0
-                                              ? toggleMid(mid, subject)
+                                              ? toggleMid(mid)
                                               : openSubTopic(mid, subject.name)
                                           }
                                           className={`w-full flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left text-[12px] transition-colors ${
@@ -569,8 +528,8 @@ export default function LibraryPage() {
                                               const isActive =
                                                 active?.kind === 'subTopic' &&
                                                 active.subTopicId === leaf.id;
-                                              const count = subTopicCounts[leaf.id];
-                                              const counting = loadingCounts[leaf.id];
+                                              const count = subTopicCounts ? (subTopicCounts[leaf.id] ?? 0) : undefined;
+                                              const counting = subTopicCounts === null;
                                               return (
                                                 <button
                                                   key={leaf.id}
