@@ -263,7 +263,7 @@ export function FormativeAssessmentStudio() {
                   <label className="field">
                     <span className="field-label">강조할 내용 <small>(1~2문항)</small></span>
                     <textarea maxLength={300} value={include} onChange={(event) => setInclude(event.target.value)} placeholder="예: 항부정맥 약물의 작용 기전" />
-                    <small className="field-help">입력한 내용은 전체 문항에 반복하지 않고 1~2문항에서만 핵심 주제로 다룹니다.</small>
+                    <small className="formative-field-help">입력한 내용은 전체 문항에 반복하지 않고 1~2문항에서만 핵심 주제로 다룹니다.</small>
                     <small className="field-counter">{include.length}/300</small>
                   </label>
                   <label className="field">
