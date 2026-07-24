@@ -39,6 +39,12 @@ type GenerateResponse = {
   materialSummary: string;
   objectives: string[];
   questions: Question[];
+  reviewSummary: string;
+  imageAnalysis: {
+    requested: boolean;
+    candidateCount: number;
+    warnings: string[];
+  };
 };
 
 const ACCEPT = '.pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -285,6 +291,17 @@ export function FormativeAssessmentStudio() {
               <div className="objective-strip">
                 {result.objectives.map((item) => <span key={item}>{item}</span>)}
               </div>
+              <div className="verification-summary">
+                <ShieldCheck size={16} />
+                <span><b>자동 검증 완료</b>{result.reviewSummary}</span>
+              </div>
+              {result.imageAnalysis.requested && (
+                <div className={result.imageAnalysis.candidateCount > 0 ? 'image-analysis-status' : 'image-analysis-status is-warning'}>
+                  {result.imageAnalysis.candidateCount > 0
+                    ? `크롭된 이미지 후보 ${result.imageAnalysis.candidateCount}개를 분석했습니다.`
+                    : result.imageAnalysis.warnings.join(' ') || '사용 가능한 이미지 후보를 찾지 못했습니다.'}
+                </div>
+              )}
               <div className="question-list">
                 {result.questions.map((question, index) => (
                   <article className={approved.has(question.id) ? 'question is-approved' : 'question'} key={question.id}>

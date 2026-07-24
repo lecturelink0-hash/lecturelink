@@ -474,6 +474,30 @@
   object-fit: contain;
 }
 
+.verification-summary,
+.image-analysis-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 0;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--sage-50, #f6faf7);
+  color: var(--forest);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.verification-summary span {
+  display: grid;
+  gap: 2px;
+}
+
+.image-analysis-status.is-warning {
+  background: #fff8eb;
+  color: #8a5a11;
+}
+
 .spin {
   animation: studio-spin 900ms linear infinite;
 }
