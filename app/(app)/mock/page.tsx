@@ -32,14 +32,44 @@ interface MockSession {
   created_at: string;
 }
 
-const COUNT_OPTIONS = [10, 20, 40];
+const COUNT_OPTIONS = [10, 15, 20, 25, 30, 35, 40, 45, 50];
+const TIME_LIMIT_STEP = 5;
+const TIME_LIMIT_MIN = 5;
+const TIME_LIMIT_MAX = 150;
+
+// 과목 특성에 맞는 이모지. code 우선, 이름 키워드 보조, 그 외엔 풀에서 안정적으로 배정.
+const SUBJECT_EMOJI: Record<string, string> = {
+  respiratory: '🫁',
+  cardiology: '🫀',
+  gastroenterology: '🍽️',
+  nephrology: '🫘',
+  biochemistry: '🧪',
+  pathology: '🔬',
+  anatomy: '🦴',
+  pharmacology: '💊',
+};
+const SUBJECT_EMOJI_BY_KEYWORD: [string, string][] = [
+  ['호흡', '🫁'], ['순환', '🫀'], ['심장', '🫀'], ['소화', '🍽️'], ['신장', '🫘'],
+  ['생화학', '🧪'], ['병리', '🔬'], ['해부', '🦴'], ['약리', '💊'], ['약물', '💊'],
+  ['간호', '🩺'], ['신경', '🧠'], ['감염', '🦠'], ['미생물', '🦠'], ['법규', '⚖️'],
+];
+const SUBJECT_EMOJI_POOL = ['📗', '📘', '📙', '🧬', '🩻', '⚕️', '🩹', '🧫'];
+
+function subjectEmoji(s: Subject): string {
+  if (SUBJECT_EMOJI[s.code]) return SUBJECT_EMOJI[s.code];
+  const hit = SUBJECT_EMOJI_BY_KEYWORD.find(([kw]) => s.name.includes(kw));
+  if (hit) return hit[1];
+  let hash = 0;
+  for (let i = 0; i < s.code.length; i++) hash = (hash * 31 + s.code.charCodeAt(i)) >>> 0;
+  return SUBJECT_EMOJI_POOL[hash % SUBJECT_EMOJI_POOL.length];
+}
 
 export default function MockHomePage() {
   const router = useRouter();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [count, setCount] = useState(20);
-  const [timed, setTimed] = useState(false);
+  const [timeLimit, setTimeLimit] = useState(20);
   const [sessions, setSessions] = useState<MockSession[]>([]);
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -76,6 +106,20 @@ export default function MockHomePage() {
     });
   }
 
+  const allSelected = subjects.length > 0 && selected.size === subjects.length;
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(subjects.map((s) => s.id)));
+  }
+
+  // 문항 수를 바꾸면 시간 제한도 문항당 1분 기준으로 따라간다(이후 수동 조절 가능).
+  function pickCount(c: number) {
+    setCount(c);
+    setTimeLimit(c);
+  }
+  function nudgeTimeLimit(delta: number) {
+    setTimeLimit((t) => Math.min(TIME_LIMIT_MAX, Math.max(TIME_LIMIT_MIN, t + delta)));
+  }
+
   // subjectIds 를 주면 그 과목만 바로 시작(칸의 '바로 풀기'), 없으면 현재 선택된 과목으로 통합 시작.
   async function start(subjectIds?: string[]) {
     if (locked) {
@@ -92,7 +136,7 @@ export default function MockHomePage() {
       const res = await api.post<{ id: string }>('/api/mock-exams', {
         subject_ids: subs,
         count,
-        duration_seconds: timed ? count * 60 : null,
+        duration_seconds: timeLimit * 60,
       });
       router.push(`/mock/${res.id}`);
     } catch (e) {
@@ -145,7 +189,7 @@ export default function MockHomePage() {
       <div className="layout">
         {/* 과목 선택 */}
         <section className="card panel">
-          <div className="panel-head"><div className="title-row"><span className="chip"><BookOpen className="icon" /></span><div><h2>과목 선택</h2><p className="section-copy">여러 과목을 선택하면 통합 모의고사가 구성됩니다.</p></div></div><span className="hint">복수 선택 가능</span></div>
+          <div className="panel-head"><div className="title-row"><span className="chip"><BookOpen className="icon" /></span><div><h2>과목 선택</h2><p className="section-copy">여러 과목을 선택하면 통합 모의고사가 구성됩니다.</p></div></div><div className="flex items-center gap-2.5"><span className="hint">복수 선택 가능</span><button type="button" className="select-all" onClick={toggleAll} disabled={subjects.length === 0}>{allSelected ? '전체 해제' : '전체 선택'}</button></div></div>
           {loading ? (
             <div className="text-sm text-[var(--color-muted)] py-10 text-center">불러오는 중...</div>
           ) : subjects.length === 0 ? (
@@ -158,7 +202,7 @@ export default function MockHomePage() {
                 const on = selected.has(s.id);
                 return (
                   <button key={s.id} type="button" onClick={() => toggle(s.id)} onDoubleClick={() => start([s.id])} className={clsx('subject-btn', on && 'selected')} aria-pressed={on}>
-                    <span className="subject-name"><span className="subject-mini"><BookOpen className="icon" /></span><span className="subject-text">{s.name}</span></span>
+                    <span className="subject-name"><span className="subject-mini">{subjectEmoji(s)}</span><span className="subject-text">{s.name}</span></span>
                     <span className="check">✓</span>
                   </button>
                 );
@@ -180,7 +224,7 @@ export default function MockHomePage() {
                 {COUNT_OPTIONS.map((c) => (
                   <button
                     key={c}
-                    onClick={() => setCount(c)}
+                    onClick={() => pickCount(c)}
                     className={clsx(count === c && 'active')}
                   >
                     {c}문항
@@ -189,23 +233,20 @@ export default function MockHomePage() {
               </div>
             </div>
 
-            <label className="toggle-row">
-              <span className="toggle-copy">
+            <div>
+              <div className="field-label">
                 <Timer className="icon" />
                 시간 제한
-                <span className="font-medium text-[var(--color-muted)]">({count}분)</span>
-              </span>
-              <span className={clsx('switch', timed && 'on')}>
-                <input
-                  type="checkbox"
-                  checked={timed}
-                  onChange={(e) => setTimed(e.target.checked)}
-                  className="peer sr-only"
-                />
-              </span>
-            </label>
+              </div>
+              <div className="stepper">
+                <button type="button" aria-label="시간 제한 5분 줄이기" onClick={() => nudgeTimeLimit(-TIME_LIMIT_STEP)} disabled={timeLimit <= TIME_LIMIT_MIN}>−</button>
+                <span className="stepper-value">{timeLimit}분</span>
+                <button type="button" aria-label="시간 제한 5분 늘리기" onClick={() => nudgeTimeLimit(TIME_LIMIT_STEP)} disabled={timeLimit >= TIME_LIMIT_MAX}>+</button>
+              </div>
+              <p className="stepper-note">문항 수에 맞춰 자동 설정되며, 5분 단위로 조절할 수 있어요. 시간이 다 지나면 자동으로 채점됩니다.</p>
+            </div>
 
-            <div className="summary-box"><dl><div><dt>시험 범위</dt><dd>{selected.size ? `${selected.size}과목` : '과목 미선택'}</dd></div><div><dt>문항 구성</dt><dd>{count}문항</dd></div><div><dt>응시 방식</dt><dd>CBT형</dd></div></dl></div>
+            <div className="summary-box"><dl><div><dt>시험 범위</dt><dd>{selected.size ? `${selected.size}과목` : '과목 미선택'}</dd></div><div><dt>문항 구성</dt><dd>{count}문항</dd></div><div><dt>시간 제한</dt><dd>{timeLimit}분</dd></div><div><dt>응시 방식</dt><dd>CBT형</dd></div></dl></div>
             <div>
               {locked ? (
                 <Link href="/plan" className="block">
