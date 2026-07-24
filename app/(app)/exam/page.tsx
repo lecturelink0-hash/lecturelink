@@ -6,11 +6,10 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SubjectIcon } from '@/components/SubjectIcon';
 import {
-  Heart, Wind, Utensils, Droplet, Droplets, Bug, Activity, Flower2,
-  Ribbon, Bone, Scissors, Baby, Brain, Ear, Eye, Fingerprint, Shield, Scale,
   Stethoscope, ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
-  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, Play, type LucideIcon,
+  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, Play,
 } from 'lucide-react';
 
 interface SubTopic {
@@ -54,30 +53,6 @@ interface SetResult {
   correctIndex: number;
   isCorrect: boolean;
   stem: string;
-}
-
-function pickIcon(name: string): LucideIcon {
-  const n = name;
-  if (/외과/.test(n)) return Scissors;
-  if (/순환|심/.test(n)) return Heart;
-  if (/호흡|폐/.test(n)) return Wind;
-  if (/소화|위장|간담췌/.test(n)) return Utensils;
-  if (/비뇨/.test(n)) return Droplets;
-  if (/신장|콩팥/.test(n)) return Droplet;
-  if (/감염/.test(n)) return Bug;
-  if (/내분비/.test(n)) return Activity;
-  if (/알레르기|알러지/.test(n)) return Flower2;
-  if (/혈액/.test(n)) return Droplets;
-  if (/종양|암/.test(n)) return Ribbon;
-  if (/류마티스|정형|골/.test(n)) return Bone;
-  if (/부인|산과|소아/.test(n)) return Baby;
-  if (/정신|신경/.test(n)) return Brain;
-  if (/이비인후/.test(n)) return Ear;
-  if (/안과/.test(n)) return Eye;
-  if (/피부/.test(n)) return Fingerprint;
-  if (/예방/.test(n)) return Shield;
-  if (/법규|법/.test(n)) return Scale;
-  return Stethoscope;
 }
 
 export default function ExamPage() {
@@ -321,7 +296,6 @@ export default function ExamPage() {
         ) : (
           <><div className="grid-head"><div className="grid-note">카드를 선택하면 해당 과목의 국시형 문제 풀이로 이동합니다.</div></div><section className="grid">
             {sortedSubjects.map((s) => {
-              const Icon = pickIcon(s.name);
               const count = questionCounts[s.id];
               const ready = count === undefined ? s.sub_topics.length > 0 : count > 0;
               return (
@@ -331,7 +305,7 @@ export default function ExamPage() {
                 >
                   <div className="card-top w-full">
                     <div className="subject-title">
-                      <span className="subject-icon"><Icon className="w-6 h-6" strokeWidth={1.9} /></span>
+                      <span className="subject-icon"><SubjectIcon name={s.name} className="w-6 h-6" strokeWidth={1.9} /></span>
                       <h3>{s.name}</h3>
                     </div>
                     <span className={`status ${ready ? 'ready' : 'locked'}`}>{ready ? 'READY' : '준비 중'}</span>

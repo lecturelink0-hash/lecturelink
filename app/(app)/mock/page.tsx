@@ -5,13 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import clsx from 'clsx';
 import { api, ApiError } from '@/lib/api/client';
-import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { SectionHeader } from '@/components/ui/SectionHeader';
+import { SubjectIcon } from '@/components/SubjectIcon';
 import {
-  Timer, Check, ChevronRight, FileCheck2, Play, BookOpen, SlidersHorizontal, ListChecks, Lock, GraduationCap,
+  Timer, ChevronRight, FileCheck2, Play, BookOpen, SlidersHorizontal, ListChecks, Lock, GraduationCap,
 } from 'lucide-react';
 
 interface Subject {
@@ -32,44 +30,20 @@ interface MockSession {
   created_at: string;
 }
 
-const COUNT_OPTIONS = [10, 15, 20, 25, 30, 35, 40, 45, 50];
+const COUNT_OPTIONS = [10, 30, 50];
+const COUNT_STEP = 5;
+const COUNT_MIN = 10;
+const COUNT_MAX = 50;
 const TIME_LIMIT_STEP = 5;
 const TIME_LIMIT_MIN = 5;
 const TIME_LIMIT_MAX = 150;
-
-// 과목 특성에 맞는 이모지. code 우선, 이름 키워드 보조, 그 외엔 풀에서 안정적으로 배정.
-const SUBJECT_EMOJI: Record<string, string> = {
-  respiratory: '🫁',
-  cardiology: '🫀',
-  gastroenterology: '🍽️',
-  nephrology: '🫘',
-  biochemistry: '🧪',
-  pathology: '🔬',
-  anatomy: '🦴',
-  pharmacology: '💊',
-};
-const SUBJECT_EMOJI_BY_KEYWORD: [string, string][] = [
-  ['호흡', '🫁'], ['순환', '🫀'], ['심장', '🫀'], ['소화', '🍽️'], ['신장', '🫘'],
-  ['생화학', '🧪'], ['병리', '🔬'], ['해부', '🦴'], ['약리', '💊'], ['약물', '💊'],
-  ['간호', '🩺'], ['신경', '🧠'], ['감염', '🦠'], ['미생물', '🦠'], ['법규', '⚖️'],
-];
-const SUBJECT_EMOJI_POOL = ['📗', '📘', '📙', '🧬', '🩻', '⚕️', '🩹', '🧫'];
-
-function subjectEmoji(s: Subject): string {
-  if (SUBJECT_EMOJI[s.code]) return SUBJECT_EMOJI[s.code];
-  const hit = SUBJECT_EMOJI_BY_KEYWORD.find(([kw]) => s.name.includes(kw));
-  if (hit) return hit[1];
-  let hash = 0;
-  for (let i = 0; i < s.code.length; i++) hash = (hash * 31 + s.code.charCodeAt(i)) >>> 0;
-  return SUBJECT_EMOJI_POOL[hash % SUBJECT_EMOJI_POOL.length];
-}
 
 export default function MockHomePage() {
   const router = useRouter();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [count, setCount] = useState(20);
-  const [timeLimit, setTimeLimit] = useState(20);
+  const [count, setCount] = useState(30);
+  const [timeLimit, setTimeLimit] = useState(30);
   const [sessions, setSessions] = useState<MockSession[]>([]);
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -115,6 +89,9 @@ export default function MockHomePage() {
   function pickCount(c: number) {
     setCount(c);
     setTimeLimit(c);
+  }
+  function nudgeCount(delta: number) {
+    pickCount(Math.min(COUNT_MAX, Math.max(COUNT_MIN, count + delta)));
   }
   function nudgeTimeLimit(delta: number) {
     setTimeLimit((t) => Math.min(TIME_LIMIT_MAX, Math.max(TIME_LIMIT_MIN, t + delta)));
@@ -202,7 +179,7 @@ export default function MockHomePage() {
                 const on = selected.has(s.id);
                 return (
                   <button key={s.id} type="button" onClick={() => toggle(s.id)} onDoubleClick={() => start([s.id])} className={clsx('subject-btn', on && 'selected')} aria-pressed={on}>
-                    <span className="subject-name"><span className="subject-mini">{subjectEmoji(s)}</span><span className="subject-text">{s.name}</span></span>
+                    <span className="subject-name"><span className="subject-mini"><SubjectIcon name={s.name} className="w-4 h-4" strokeWidth={1.9} /></span><span className="subject-text">{s.name}</span></span>
                     <span className="check">✓</span>
                   </button>
                 );
@@ -224,13 +201,46 @@ export default function MockHomePage() {
                 {COUNT_OPTIONS.map((c) => (
                   <button
                     key={c}
+                    type="button"
                     onClick={() => pickCount(c)}
                     className={clsx(count === c && 'active')}
+                    aria-pressed={count === c}
                   >
                     {c}문항
                   </button>
                 ))}
               </div>
+              <div className="question-count-range">
+                <button
+                  type="button"
+                  aria-label="문항 수 5개 줄이기"
+                  onClick={() => nudgeCount(-COUNT_STEP)}
+                  disabled={count <= COUNT_MIN}
+                >
+                  −
+                </button>
+                <div className="range-track">
+                  <div className="range-value"><span>직접 조절</span><output>{count}문항</output></div>
+                  <input
+                    type="range"
+                    aria-label="문항 수 직접 조절"
+                    min={COUNT_MIN}
+                    max={COUNT_MAX}
+                    step={COUNT_STEP}
+                    value={count}
+                    onChange={(event) => pickCount(Number(event.target.value))}
+                  />
+                </div>
+                <button
+                  type="button"
+                  aria-label="문항 수 5개 늘리기"
+                  onClick={() => nudgeCount(COUNT_STEP)}
+                  disabled={count >= COUNT_MAX}
+                >
+                  +
+                </button>
+              </div>
+              <p className="question-count-note">10~50문항 범위에서 5문항 단위로 조절할 수 있어요.</p>
             </div>
 
             <div>

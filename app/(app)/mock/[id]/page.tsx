@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import {
   Calculator as CalcIcon, ChevronLeft, ChevronRight,
-  Clock, Check, CheckCircle2, XCircle, BookmarkPlus, X, Send, ArrowLeft,
+  Clock, CheckCircle2, XCircle, BookmarkPlus, X, Send, ArrowLeft,
   Pencil, Eraser, Columns2, Square,
 } from 'lucide-react';
 import { ExamResultView } from './ExamResultView';
@@ -165,6 +165,11 @@ export default function MockExamPage() {
 
   function chooseFor(qi: number, ci: number) {
     if (submitted) return;
+    setEliminated((prev) => {
+      const current = prev[qi] ?? [];
+      if (!current.includes(ci)) return prev;
+      return { ...prev, [qi]: current.filter((choice) => choice !== ci) };
+    });
     const next = [...answers];
     next[qi] = ci;
     setAnswers(next);
@@ -179,6 +184,12 @@ export default function MockExamPage() {
 
   function toggleEliminate(qi: number, ci: number) {
     if (submitted) return;
+    if (answers[qi] === ci) {
+      const nextAnswers = [...answers];
+      nextAnswers[qi] = -1;
+      setAnswers(nextAnswers);
+      scheduleSave(nextAnswers, flagged, memos);
+    }
     setEliminated((prev) => {
       const cur = new Set(prev[qi] ?? []);
       if (cur.has(ci)) cur.delete(ci);
@@ -414,12 +425,14 @@ export default function MockExamPage() {
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
+            type="button"
             onClick={() => toggleFlag()}
-            className={`flex h-9 min-w-[3.75rem] flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded border px-1.5 text-[10px] leading-none ${
+            aria-pressed={flagged.includes(idx)}
+            className={`flex h-9 min-w-[3.75rem] items-center justify-center whitespace-nowrap rounded border px-2 text-[11px] font-medium leading-none ${
               flagged.includes(idx) ? 'border-[#e0743a] bg-[#fbeee4] text-[#c9622e]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#5a6172] hover:bg-[#eef0f4]'
             }`}
           >
-            <Check className="w-3 h-3" strokeWidth={2.5} />체크문제
+            체크문제
           </button>
           <button
             onClick={() => setOverlay('memo')}
@@ -485,9 +498,6 @@ export default function MockExamPage() {
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="text-[#143c2c] font-bold" style={{ fontSize: fs + 3 }}>[문항 {idx + 1}]</div>
-          <div className="text-[#7c8496] mt-0.5" style={{ fontSize: fs - 3 }}>
-            {q.subjectName} · {q.subTopicName}
-          </div>
         </div>
         <div className="flex flex-col gap-1">
           <button
@@ -547,13 +557,20 @@ export default function MockExamPage() {
         <div className="hidden md:flex items-center gap-2">
           <span className="text-[11px] leading-tight text-white/80 text-center">글자<br />크기</span>
           <div className="flex items-stretch overflow-hidden rounded-md">
-            {([[0.9, 12], [1, 16], [1.25, 21]] as const).map(([sc, px]) => (
+            {([
+              [0.9, 13, '글자 크기 작게'],
+              [1, 16, '글자 크기 기본'],
+              [1.18, 19, '글자 크기 크게'],
+            ] as const).map(([sc, px, label]) => (
               <button
                 key={sc}
+                type="button"
                 onClick={() => setFontScale(sc)}
-                style={{ fontSize: px }}
-                className={`flex items-center px-3 py-1.5 font-bold leading-none ${
-                  fontScale === sc ? 'bg-[#d9a82f] text-[#111827]' : 'bg-white text-[#143c2c] hover:bg-[#eaf3ed]'
+                aria-label={label}
+                aria-pressed={fontScale === sc}
+                style={{ fontSize: px, fontFamily: 'inherit' }}
+                className={`flex h-8 w-9 items-center justify-center font-[650] leading-none tracking-[-0.01em] ${
+                  fontScale === sc ? 'bg-[#f3c64e] text-[#143c2c]' : 'bg-white text-[#1f5c43] hover:bg-[#eaf3ed]'
                 }`}
               >
                 가
@@ -614,7 +631,6 @@ export default function MockExamPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <div className="text-[#143c2c] font-bold" style={{ fontSize: fs + 3 }}>[문항 {idx + 1}]</div>
-                      <div className="text-[#7c8496] mt-0.5" style={{ fontSize: fs - 3 }}>{q.subjectName} · {q.subTopicName}</div>
                     </div>
                     <div className="flex flex-col gap-1">
                       <button onClick={() => setHlOn((v) => !v)} className={`rounded border px-2 py-1 text-[11px] ${hlOn ? 'border-[#e6b800] bg-[#fff9d6] text-[#8a7300]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#5a6172]'}`}>형광펜 {hlOn ? '켜짐' : '꺼짐'}</button>

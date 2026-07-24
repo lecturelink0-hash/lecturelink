@@ -320,6 +320,54 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .ll-mock-page .select-all:hover { border-color: var(--sage-400); background: #f6fbf7; }
 .ll-mock-page .select-all:disabled { opacity: 0.45; cursor: default; }
 
+.ll-mock-page .question-count-range {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+}
+.ll-mock-page .question-count-range > button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--forest-800);
+  font-size: 17px;
+  font-weight: 740;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+.ll-mock-page .question-count-range > button:hover { border-color: var(--sage-400); background: var(--sage); }
+.ll-mock-page .question-count-range > button:disabled { opacity: 0.4; cursor: default; background: #f8f7f3; }
+.ll-mock-page .range-track { min-width: 0; }
+.ll-mock-page .range-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+.ll-mock-page .range-value output { color: var(--forest); font-size: 12px; font-weight: 820; }
+.ll-mock-page .range-track input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 0;
+  accent-color: var(--forest);
+  cursor: pointer;
+}
+.ll-mock-page .question-count-note {
+  margin: 6px 0 0;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 560;
+  line-height: 1.5;
+}
+
 .ll-mock-page .stepper {
   display: flex;
   align-items: center;
