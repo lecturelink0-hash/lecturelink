@@ -20,6 +20,33 @@ export interface AuthSession {
  * 현재 사용자 세션 조회. 인증되지 않은 경우 null.
  */
 export async function getCurrentSession(): Promise<AuthSession | null> {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_FACULTY_UI_PREVIEW === 'true'
+  ) {
+    return {
+      userId: '00000000-0000-4000-8000-000000000001',
+      email: 'professor.preview@lecturelink.local',
+      role: 'user',
+      profile: {
+        id: '00000000-0000-4000-8000-000000000001',
+        displayName: '백원기',
+        school: {
+          id: '00000000-0000-4000-8000-000000000002',
+          name: 'LectureLink 의과대학',
+          shortName: '렉처링크 의대',
+        },
+        grade: null,
+        currentSemester: null,
+        currentYear: null,
+        planTier: 'free',
+        onboardedAt: new Date(0).toISOString(),
+        accountType: 'professor',
+        facultyStatus: 'approved',
+      },
+    };
+  }
+
   const supabase = await createServerClient();
 
   const {

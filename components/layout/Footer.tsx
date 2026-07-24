@@ -53,14 +53,14 @@ export function Footer({ variant = 'student' }: { variant?: 'student' | 'faculty
             { label: '대시보드', href: '/professor' },
             { label: '내 강의실', href: '/professor/courses' },
             { label: '형성평가', href: '/professor/formative' },
-            { label: '강의자료', href: '/professor/materials' },
+            { label: '자료 개선', href: '/professor/materials' },
           ],
         },
         {
           title: '교육 지원',
           links: [
-            { label: '선수지식', href: '/professor/bridge' },
-            { label: '품질 검사', href: '/professor/quality' },
+            { label: '예습자료', href: '/professor/bridge' },
+            { label: '문항 검토', href: '/professor/quality' },
             { label: '교수 서비스 소개', href: '/faculty' },
             { label: '문의하기', href: '/contact' },
           ],

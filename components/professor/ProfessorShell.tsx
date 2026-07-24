@@ -11,9 +11,9 @@ const NAV = [
   { href: '/professor', label: '대시보드' },
   { href: '/professor/courses', label: '내 강의실' },
   { href: '/professor/formative', label: '형성평가' },
-  { href: '/professor/materials', label: '강의자료' },
-  { href: '/professor/bridge', label: '선수지식' },
-  { href: '/professor/quality', label: '품질 검사' },
+  { href: '/professor/materials', label: '자료 개선' },
+  { href: '/professor/bridge', label: '예습자료' },
+  { href: '/professor/quality', label: '문항 검토' },
 ] as const;
 
 export function ProfessorShell({children,displayName,schoolName}:{children:React.ReactNode;displayName:string;schoolName:string|null}){

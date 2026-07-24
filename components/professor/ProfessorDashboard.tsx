@@ -5,9 +5,9 @@ import type { LucideIcon } from 'lucide-react';
 type ProfessorTool = { title:string; description:string; href:'/professor/formative'|'/professor/materials'|'/professor/bridge'|'/professor/quality'; icon:LucideIcon; eyebrow:string };
 const TOOLS:ProfessorTool[]=[
   {eyebrow:'ASSESSMENT',title:'형성평가 제작',description:'강의자료와 학습목표를 바탕으로 수업 직후 확인할 복습문항을 만듭니다.',href:'/professor/formative',icon:GraduationCap},
-  {eyebrow:'QUALITY',title:'문항 품질 검사',description:'모호한 표현, 정답 단서, 복수정답 가능성과 목표 정렬을 확인합니다.',href:'/professor/quality',icon:ClipboardCheck},
-  {eyebrow:'MATERIAL',title:'강의자료 개선',description:'원문 내용은 보존하고 슬라이드의 밀도와 가독성을 진단합니다.',href:'/professor/materials',icon:FileText},
-  {eyebrow:'PREVIEW',title:'선수지식 브리지',description:'임상 수업에 필요한 기초의학을 수업 전 한 장으로 연결합니다.',href:'/professor/bridge',icon:Layers3},
+  {eyebrow:'QUALITY',title:'문항 검토',description:'모호한 표현, 정답 단서, 복수정답 가능성과 목표 정렬을 확인합니다.',href:'/professor/quality',icon:ClipboardCheck},
+  {eyebrow:'MATERIAL',title:'자료 개선',description:'원문 내용은 보존하고 슬라이드의 밀도와 가독성을 진단합니다.',href:'/professor/materials',icon:FileText},
+  {eyebrow:'PREVIEW',title:'예습자료 제작',description:'임상 수업에 필요한 기초의학을 수업 전 한 장으로 연결합니다.',href:'/professor/bridge',icon:Layers3},
 ];
 
 export function ProfessorDashboard(){return <div className="professor-dashboard">
