@@ -72,6 +72,14 @@ const MAX_GEN_TEXT_CHARS = 150_000;
 const MAX_EMBEDDED_CANDIDATES = 40; // AI 선별에 넣을 후보(추출) 상한
 const VISION_CONCURRENCY = 6;      // 페이지 vision/OCR 동시 처리 수 — 순차 대비 대용량 대폭 가속
 const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 저해상도
+// crop 단위 OCR 동시 처리 수. OCR 은 슬라이드가 아니라 crop 이미지 1장당 1회 호출이므로
+// crop 을 평탄화해 전역 동시성으로 돌린다. (슬라이드 단위 병렬로는 임베드 이미지 경로처럼
+// 한 슬라이드에 crop 이 몰린 경우 사실상 순차가 되어 수십 초를 잃는다.)
+const OCR_CONCURRENCY = 8;
+// 생성 배치당 최대 문항 수. 생성 시간은 출력 토큰 수가 지배하므로 배치를 잘게 쪼개
+// 전부 병렬로 돌리면 체감 시간이 배치 1개(≤4문항) 수준으로 줄어든다.
+// (배치 수만큼 입력 컨텍스트가 반복 과금되므로 무한정 쪼개지는 않는다.)
+const GEN_BATCH_MAX_QUESTIONS = 4;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
@@ -361,54 +369,65 @@ async function extractFromBuffer(input: {
       pdfBuffer = converted;
     }
 
-    // (1) 본문 텍스트 — 실패해도 이미지 경로는 계속 진행.
-    let fullText = '';
-    try {
-      const { default: pdfParse } = await import('pdf-parse');
-      const result = await pdfParse(Buffer.from(pdfBuffer));
-      fullText = (result.text ?? '').trim();
-      allowWholePageOcrFallback = fullText.length < 1500;
-    } catch (e) {
-      warnings.push(
-        `PDF 본문 텍스트 추출 실패 — 페이지 이미지만 사용. ${
-          e instanceof Error ? e.message : String(e)
-        }`,
-      );
-    }
-
-    // (1-b) PDF 에 박힌 이미지 전부 직접 추출(object dedup) → AI 로 "시험용 의료 이미지"만 선별.
-    //       텍스트 양과 무관하게 항상 수행 → 텍스트 위주 강의 PDF 에서도 X-ray/ECG 판독 문항 생성.
-    try {
-      const candidates = await extractEmbeddedPdfImages(Buffer.from(pdfBuffer), {
-        maxImages: MAX_EMBEDDED_CANDIDATES,
-        maxOutEdgePx: 1024,
-      });
-      if (candidates.length > 0) {
-        // AI 선별: 로고·장식·표지·순수 도표 제외, 판독 가치 있는 의료 이미지만(개수는 내용에 따라 가변).
-        const selected = await selectExamImages(candidates, { max: MAX_FEATURED_IMAGES });
-        const chosen =
-          selected ??
-          // 선별 실패(모델 오류/429) 시 면적 큰 순 폴백.
-          candidates
-            .slice(0, MAX_FEATURED_IMAGES)
-            .map((im) => ({ image: im, kind: 'other' as const }));
-        if (chosen.length > 0) {
-          pdfEmbeddedCrops = chosen.map(({ image, kind }) => ({
+    // (1) 본문 텍스트 + (1-b) 임베드 이미지 추출/선별 — 서로 독립이므로 병렬 수행.
+    //     (임베드 선별은 Vision AI 호출이라 네트워크 대기가 길다. pdf-parse 와 겹쳐
+    //      초기 추출 단계 시간을 줄인다.)
+    const [parsedFullText, embeddedCropsResult] = await Promise.all([
+      // (1) 본문 텍스트 — 실패(null)해도 이미지 경로는 계속 진행.
+      (async (): Promise<string | null> => {
+        try {
+          const { default: pdfParse } = await import('pdf-parse');
+          const result = await pdfParse(Buffer.from(pdfBuffer));
+          return (result.text ?? '').trim();
+        } catch (e) {
+          warnings.push(
+            `PDF 본문 텍스트 추출 실패 — 페이지 이미지만 사용. ${
+              e instanceof Error ? e.message : String(e)
+            }`,
+          );
+          return null;
+        }
+      })(),
+      // (1-b) PDF 에 박힌 이미지 전부 직접 추출(object dedup) → AI 로 "시험용 의료 이미지"만 선별.
+      //       텍스트 양과 무관하게 항상 수행 → 텍스트 위주 강의 PDF 에서도 X-ray/ECG 판독 문항 생성.
+      (async (): Promise<CroppedImage[] | null> => {
+        try {
+          const candidates = await extractEmbeddedPdfImages(Buffer.from(pdfBuffer), {
+            maxImages: MAX_EMBEDDED_CANDIDATES,
+            maxOutEdgePx: 1024,
+          });
+          if (candidates.length === 0) return null;
+          // AI 선별: 로고·장식·표지·순수 도표 제외, 판독 가치 있는 의료 이미지만(개수는 내용에 따라 가변).
+          const selected = await selectExamImages(candidates, { max: MAX_FEATURED_IMAGES });
+          const chosen =
+            selected ??
+            // 선별 실패(모델 오류/429) 시 면적 큰 순 폴백.
+            candidates
+              .slice(0, MAX_FEATURED_IMAGES)
+              .map((im) => ({ image: im, kind: 'other' as const }));
+          warnings.push(
+            `임베드 이미지 ${candidates.length}개 추출 → 선별 ${chosen.length}개 사용${selected ? '' : '(선별 실패·폴백)'}.`,
+          );
+          if (chosen.length === 0) return null;
+          return chosen.map(({ image, kind }) => ({
             region: { kind, x: 0, y: 0, width: 1, height: 1, confidence: 1 },
             png: image.png,
             widthPx: image.widthPx,
             heightPx: image.heightPx,
           }));
+        } catch (e) {
+          warnings.push(
+            `임베드 이미지 추출/선별 실패 — Vision 경로로 폴백. ${e instanceof Error ? e.message : String(e)}`,
+          );
+          return null;
         }
-        warnings.push(
-          `임베드 이미지 ${candidates.length}개 추출 → 선별 ${chosen.length}개 사용${selected ? '' : '(선별 실패·폴백)'}.`,
-        );
-      }
-    } catch (e) {
-      warnings.push(
-        `임베드 이미지 추출/선별 실패 — Vision 경로로 폴백. ${e instanceof Error ? e.message : String(e)}`,
-      );
+      })(),
+    ]);
+    const fullText = parsedFullText ?? '';
+    if (parsedFullText !== null) {
+      allowWholePageOcrFallback = fullText.length < 1500;
     }
+    pdfEmbeddedCrops = embeddedCropsResult;
 
     // (2) 페이지 이미지 — 의료 이미지 검출/crop 용.
     //
@@ -728,57 +747,62 @@ export async function generatePrivateQuestionsFromUpload(
     }
     const fileBuffer = await fileBlob.arrayBuffer();
 
-    // 3) 추출 (페이지 텍스트 + crop 이미지)
+    // 3) 추출 (페이지 텍스트 + crop 이미지) — 참고자료 로드는 독립 작업이라 병렬로 겹친다.
     await updateProgress('extracting');
-    const { slides, warnings } = await extractFromBuffer({
-      buffer: fileBuffer,
-      fileType: upload.file_type,
-      userIdForLog: input.userId,
-      onVisionProgress: async (completed, total) =>
-        updateProgress('vision', completed, total),
-    });
-    const referenceImages = await loadReferenceImages({
-      uploadIds: input.referenceUploadIds ?? [],
-      userId: input.userId,
-    });
-    await updateProgress('ocr', 0, slides.length, { page_count: slides.length });
+    const [{ slides, warnings }, referenceImages] = await Promise.all([
+      extractFromBuffer({
+        buffer: fileBuffer,
+        fileType: upload.file_type,
+        userIdForLog: input.userId,
+        onVisionProgress: async (completed, total) =>
+          updateProgress('vision', completed, total),
+      }),
+      loadReferenceImages({
+        uploadIds: input.referenceUploadIds ?? [],
+        userId: input.userId,
+      }),
+    ]);
 
-    // 4) crop 이미지 OCR — 페이지 단위로 병렬 처리(대용량 스캔 가속). 순서는 보존.
+    // 4) crop 이미지 OCR — crop 단위로 평탄화해 전역 병렬 처리.
+    //    (슬라이드 단위 병렬은 임베드 이미지 경로처럼 crop 이 첫 슬라이드에 몰리면
+    //     사실상 순차가 되어 crop 수 × 호출 지연만큼 느려진다.)
+    const allCrops = slides.flatMap((s) =>
+      s.croppedImages.map((c) => ({ slide: s, crop: c })),
+    );
+    await updateProgress('ocr', 0, allCrops.length, { page_count: slides.length });
     let ocrChars = 0;
-    let totalCropped = 0;
-    const slideSummaries = await mapWithConcurrency(
-      slides,
-      VISION_CONCURRENCY,
-      async (s) => {
-        const ocrTexts: string[] = [];
-        for (const c of s.croppedImages) {
-          try {
-            const r = await runOcr({
-              png: c.ocrPng ?? c.png, // OCR 은 전처리본, 표시는 원본 색상 유지
-              userIdForLog: input.userId,
-              context: s.text,
-            });
-            // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
-            totalCost += r.costUsd;
-            ocrChars += r.text.length;
-            c.ocrText = r.text; // 인페인팅 대상(주석 텍스트 유무) 선별에 사용
-            if (r.text) ocrTexts.push(`[${c.region.kind}] ${r.text}`);
-          } catch (e) {
-            warnings.push(
-              `slide ${s.pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
-            );
-          }
+    await mapWithConcurrency(
+      allCrops,
+      OCR_CONCURRENCY,
+      async ({ slide, crop }) => {
+        try {
+          const r = await runOcr({
+            png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
+            userIdForLog: input.userId,
+            context: slide.text,
+          });
+          // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
+          totalCost += r.costUsd;
+          ocrChars += r.text.length;
+          crop.ocrText = r.text; // 인페인팅 대상(주석 텍스트 유무) 선별에 사용
+        } catch (e) {
+          warnings.push(
+            `slide ${slide.pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
+          );
         }
-        return {
-          pageIndex: s.pageIndex,
-          slideText: s.text,
-          ocrTexts,
-          cropCount: s.croppedImages.length,
-        };
+        return null;
       },
       async (completed, total) => updateProgress('ocr', completed, total),
     );
-    totalCropped = slides.reduce((n, s) => n + s.croppedImages.length, 0);
+    const slideSummaries = slides.map((s) => ({
+      pageIndex: s.pageIndex,
+      slideText: s.text,
+      ocrTexts: s.croppedImages
+        .filter((c) => (c.ocrText ?? '').length > 0)
+        .map((c) => `[${c.region.kind}] ${c.ocrText}`),
+      cropCount: s.croppedImages.length,
+    }));
+    const totalCropped = allCrops.length;
 
     // 4.5) 추출 결과가 전부 비어 있으면 Claude 호출은 의미 없음 → 명확한 실패 메시지.
     const totalSlideText = slideSummaries
@@ -1036,12 +1060,15 @@ export async function generatePrivateQuestionsFromUpload(
           },
         } as Anthropic.ImageBlockParam);
       }
+      // 병렬 배치 간 중복 방지: 각 배치에 자료의 서로 다른 구간을 우선 배정한다.
       const batchDirective =
         batchCount === 1
           ? ''
-          : batchIndex === 0
-            ? '\n\n이번 묶음은 전체 출제 계획의 1차 묶음입니다. 자료 전반의 핵심·기본 개념을 우선해 정확히 지정된 수만큼 만드세요.'
-            : '\n\n이번 묶음은 전체 출제 계획의 2차 묶음입니다. 응용·감별·후반부 내용을 우선하고, 전형적인 기본 정의 문항은 피하세요.';
+          : `\n\n이번 묶음은 전체 출제 계획 ${batchCount}묶음 중 ${batchIndex + 1}번째 묶음입니다. ` +
+            `자료를 ${batchCount}개 구간으로 나눴을 때 ${batchIndex + 1}번째 구간의 내용을 우선 출제해 다른 묶음과의 중복을 피하고, 정확히 지정된 수만큼 만드세요.` +
+            (batchIndex === 0
+              ? ' 자료 전반의 핵심·기본 개념 문항을 포함하세요.'
+              : ' 전형적인 기본 정의 문항보다 응용·감별 문항을 우선하세요.');
       userContent.push({
         type: 'text',
         text:
@@ -1230,11 +1257,16 @@ export async function generatePrivateQuestionsFromUpload(
       };
     };
 
-    const firstBatchSize = Math.min(5, desiredCount);
-    const batchSizes =
-      desiredCount > firstBatchSize
-        ? [firstBatchSize, desiredCount - firstBatchSize]
-        : [firstBatchSize];
+    // 생성 시간은 배치당 출력 토큰(≈ 문항 수)이 지배한다. 문항을 GEN_BATCH_MAX_QUESTIONS
+    // 이하의 균등한 소배치로 나눠 전부 병렬 실행하면 전체 소요가 "가장 큰 배치 1개" 수준
+    // (≤4문항 ≈ 수십 초)으로 줄어든다. (기존 [5, 나머지] 2배치는 배치당 5~15문항이라 2분+)
+    const batchCount = Math.ceil(desiredCount / GEN_BATCH_MAX_QUESTIONS);
+    const baseBatchSize = Math.floor(desiredCount / batchCount);
+    const batchRemainder = desiredCount % batchCount;
+    const batchSizes = Array.from(
+      { length: batchCount },
+      (_, i) => baseBatchSize + (i < batchRemainder ? 1 : 0),
+    );
     const batchResults = await Promise.all(
       batchSizes.map((batchSize, batchIndex) =>
         generateAndPersistBatch(batchIndex, batchSize, batchSizes.length),

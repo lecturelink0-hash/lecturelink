@@ -37,6 +37,12 @@ type UploadStatus =
   | 'failed'
   | 'cancelled';
 
+/**
+ * 클라이언트 전용 상태 'uploading' 추가: 파일 선택 즉시 목록에 표시하고
+ * 본체 업로드(PUT)는 백그라운드로 진행한다. 서버 응답(UploadStatus)과 호환.
+ */
+type ClientUploadStatus = UploadStatus | 'uploading';
+
 type UploadKind = 'material' | 'reference';
 
 interface UploadRow {
@@ -44,7 +50,7 @@ interface UploadRow {
   file_name: string;
   file_type: string;
   file_size_bytes: number;
-  status: UploadStatus;
+  status: ClientUploadStatus;
   page_count: number | null;
   processed_at: string | null;
   created_at: string;
@@ -167,6 +173,51 @@ function formatUploadError(raw: string | null | undefined): string {
   return m.length > 140 ? m.slice(0, 137) + '...' : m;
 }
 
+/** 낙관적(업로드 진행 중) 행의 클라이언트 전용 id 접두어 — 서버 API 호출 대상이 아님. */
+const LOCAL_ID_PREFIX = 'local-';
+
+/**
+ * 서버 처리 단계(processing_stage)를 파일 1개 기준 0~100 진행률로 환산.
+ *
+ * 서버는 progress_current/progress_total 을 단계마다 서로 다른 분모(vision=페이지 수,
+ * ocr=crop 수, generating=문항 수)로 0부터 다시 카운트한다. 이 값을 그대로 %로 쓰면
+ * 게이지가 100%까지 찼다가 다음 단계에서 0%로 되돌아간다. 각 단계를 고정 가중 구간에
+ * 매핑해 단계가 넘어갈수록 항상 앞으로만 가게 한다.
+ */
+const STAGE_RANGES: Record<string, [number, number]> = {
+  queued: [2, 4],
+  downloading: [4, 8],
+  extracting: [8, 16],
+  vision: [16, 38],
+  ocr: [38, 58],
+  generating: [58, 100],
+  partially_completed: [58, 100],
+  completed: [100, 100],
+};
+
+function uploadStageProgress(u: UploadRow): number {
+  // 완료/실패/취소 = 이 파일 몫은 끝 — 다음 파일로 진행률이 넘어가도록 100 취급.
+  if (u.status === 'completed' || u.status === 'failed' || u.status === 'cancelled') {
+    return 100;
+  }
+  const stageKey =
+    u.processing_stage && STAGE_RANGES[u.processing_stage]
+      ? u.processing_stage
+      : u.status === 'processing'
+        ? 'downloading'
+        : 'queued';
+  const [lo, hi] = STAGE_RANGES[stageKey];
+  const generating = stageKey === 'generating' || stageKey === 'partially_completed';
+  const total = generating
+    ? u.target_question_count ?? u.progress_total
+    : u.progress_total;
+  const cur = generating
+    ? Math.max(u.progress_current, u.completed_question_count)
+    : u.progress_current;
+  const frac = total > 0 ? Math.min(1, Math.max(0, cur / total)) : 0;
+  return lo + (hi - lo) * frac;
+}
+
 export default function NotesPage() {
   const materialInputRef = useRef<HTMLInputElement>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
@@ -179,6 +230,11 @@ export default function NotesPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   // 생성 세션(여러 자료를 순차 생성하는 동안 전체) — 대기 미니게임 로딩 화면 표시용.
   const [genSession, setGenSession] = useState(false);
+  // 생성 세션 전체 진행률: 이번 세션의 파일 수 / 끝난 파일 수 / 지금까지의 최대 진행률.
+  // 진행 바가 단계·파일 전환 시 뒤로 가지 않도록(100%→0% 리셋 방지) 최대값을 유지한다.
+  const genFilesTotalRef = useRef(0);
+  const genFilesDoneRef = useRef(0);
+  const genMaxProgressRef = useRef(0);
 
   // 문제 세트 정보 폼
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
@@ -273,21 +329,57 @@ export default function NotesPage() {
       alert(`학습자료는 한 번에 최대 ${MAX_MATERIAL_FILES}개까지 업로드할 수 있어요.`);
       return;
     }
+    // 낙관적 표시: 파일 선택 즉시 목록에 올려 다음 단계(설정 입력)를 바로 진행할 수 있게
+    // 하고, 실제 업로드(signed URL 발급 + PUT)는 백그라운드로 계속한다.
+    const tempId = `${LOCAL_ID_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const tempRow: UploadRow = {
+      id: tempId,
+      file_name: file.name,
+      file_type: file.type,
+      file_size_bytes: file.size,
+      status: 'uploading',
+      page_count: null,
+      processed_at: null,
+      created_at: new Date().toISOString(),
+      error_message: null,
+      processing_stage: null,
+      progress_current: 0,
+      progress_total: 0,
+      completed_question_count: 0,
+      target_question_count: null,
+      heartbeat_at: null,
+    };
+    setMaterials((prev) => [tempRow, ...prev]);
     setUploadingMaterial(true);
+    if (materialInputRef.current) materialInputRef.current.value = '';
     try {
       const row = await uploadFile(file);
       if (!row) return;
-      const next = [row, ...materials];
-      setMaterials(next);
+      let replaced = false;
+      let idsForAnalyze: string[] = [];
+      setMaterials((prev) => {
+        if (!prev.some((m) => m.id === tempId)) return prev; // 업로드 중 사용자가 삭제함
+        replaced = true;
+        const next = prev.map((m) => (m.id === tempId ? row : m));
+        idsForAnalyze = next
+          .filter((m) => !m.id.startsWith(LOCAL_ID_PREFIX))
+          .map((m) => m.id);
+        return next;
+      });
+      if (!replaced) {
+        // 대기 중 행이 삭제된 경우 — 서버에 만들어진 행/파일을 정리(베스트에포트).
+        api.delete(`/api/uploads/${row.id}`).catch(() => {});
+        return;
+      }
       // 학습자료 업로드 완료 → AI 자동 분석으로 추천 설정/폼 채움.
-      runAnalyze(next.map((m) => m.id));
+      runAnalyze(idsForAnalyze);
     } catch (e) {
+      setMaterials((prev) => prev.filter((m) => m.id !== tempId));
       const msg =
         e instanceof ApiError ? e.message : e instanceof Error ? e.message : '업로드 실패';
       alert(msg);
     } finally {
       setUploadingMaterial(false);
-      if (materialInputRef.current) materialInputRef.current.value = '';
     }
   }
 
@@ -352,7 +444,8 @@ export default function NotesPage() {
         );
         if (
           !partialShown &&
-          found.completed_question_count >= Math.min(5, count)
+          // 생성이 병렬 소배치(3~4문항)로 완료되므로 첫 배치가 끝나는 즉시 부분 공개.
+          found.completed_question_count >= Math.min(3, count)
         ) {
           const partialQuestions = await fetchGeneratedQuestions(uploadId);
           if (partialQuestions.length > 0) {
@@ -441,17 +534,26 @@ export default function NotesPage() {
 
   /** 업로드된 모든 학습자료에 대해 순차 생성 → 결과 뷰로 전환. */
   async function handleGenerate() {
+    if (materials.some((m) => m.status === 'uploading')) {
+      alert('파일 업로드가 아직 진행 중이에요. 잠시 후(수 초 내) 다시 시도해주세요.');
+      return;
+    }
     const pending = materials.filter((m) => m.status === 'uploaded' || m.status === 'failed');
     if (pending.length === 0) {
       alert('생성할 학습자료를 먼저 업로드해주세요.');
       return;
     }
     const collected: GenQ[] = [];
+    // 세션 전체 진행률 초기화(파일 수 기준) — 진행 바는 세션 동안 단조 증가한다.
+    genFilesTotalRef.current = pending.length;
+    genFilesDoneRef.current = 0;
+    genMaxProgressRef.current = 0;
     setGenSession(true); // 대기 미니게임 로딩 화면 on
     try {
       for (const m of pending) {
         const qs = await kickoffProcessing(m.id);
         collected.push(...qs);
+        genFilesDoneRef.current += 1;
       }
     } finally {
       setGenSession(false); // 생성 완료 → 즉시 게임 종료, 문제 화면으로 전환
@@ -465,6 +567,16 @@ export default function NotesPage() {
 
   async function handleDelete(kind: UploadKind, uploadId: string) {
     if (!confirm('이 자료와 연결된 모든 생성 문항이 함께 삭제됩니다. 계속하시겠어요?')) {
+      return;
+    }
+    if (uploadId.startsWith(LOCAL_ID_PREFIX)) {
+      // 아직 서버에 없는(업로드 진행 중) 행 — 화면에서만 제거하면 업로드 완료 콜백이
+      // 서버 측 잔여물을 정리한다.
+      if (kind === 'material') {
+        setMaterials((prev) => prev.filter((m) => m.id !== uploadId));
+      } else {
+        setReferences((prev) => prev.filter((r) => r.id !== uploadId));
+      }
       return;
     }
     try {
@@ -503,17 +615,17 @@ export default function NotesPage() {
   // ─────────────────────────────────────────────────────────────
   if (genSession) {
     const pm = materials.find((m) => m.id === processingId) ?? null;
-    let genProgress = 3;
-    if (pm) {
-      const total = pm.progress_total > 0 ? pm.progress_total : count;
-      const cur = pm.progress_current || pm.completed_question_count || 0;
-      if (total > 0 && cur > 0) {
-        genProgress = Math.min(99, (cur / total) * 100);
-      } else {
-        const stage = pm.processing_stage ?? '';
-        genProgress = stage === 'generating' ? 12 : stage && stage !== 'queued' ? 6 : 3;
-      }
-    }
+    // 세션 전체 진행률 = (끝난 파일 수 + 현재 파일의 단계별 진행률) / 파일 수.
+    // 단계 전환·파일 전환 시에도 이전 최대값을 유지해 게이지가 절대 뒤로 가지 않는다.
+    const fileProgress = pm ? uploadStageProgress(pm) : 0;
+    const filesTotal = Math.max(1, genFilesTotalRef.current);
+    const overall =
+      ((genFilesDoneRef.current + fileProgress / 100) / filesTotal) * 100;
+    const genProgress = Math.max(
+      genMaxProgressRef.current,
+      Math.min(99, Math.max(3, overall)),
+    );
+    genMaxProgressRef.current = genProgress;
     return (
       <GenerationLoadingGame progress={genProgress} fileName={pm?.file_name ?? undefined} />
     );
@@ -1347,6 +1459,14 @@ function StatusLabel({
   isProcessing: boolean;
 }) {
   const { status } = upload;
+  if (status === 'uploading') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[var(--color-beta)]">
+        <Loader2 className="w-3 h-3 animate-spin" />
+        업로드 중
+      </span>
+    );
+  }
   if (status === 'queued') {
     return (
       <span className="inline-flex items-center gap-1 text-[var(--color-beta)]">

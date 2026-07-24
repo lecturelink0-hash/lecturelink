@@ -42,6 +42,9 @@ export const maxDuration = 60;
 const MAX_UPLOADS = 2; // 분석에 사용할 최대 업로드 수
 const MAX_INPUT_CHARS = 12_000; // Claude 입력 텍스트 길이 제한
 const PER_FILE_CHARS = 8_000; // 파일 1개당 앞부분 추출 한도
+// 분석은 앞부분 텍스트(PER_FILE_CHARS)만 쓰므로 전체 페이지를 파싱할 이유가 없다.
+// 대용량(수십 페이지) PDF 에서 pdf-parse 가 수 초씩 걸리는 것을 막는 페이지 상한.
+const MAX_PDF_PAGES = 12;
 
 const PPTX_MIME =
   'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -92,7 +95,7 @@ async function extractTextPreview(input: {
   try {
     if (fileType === 'application/pdf') {
       const { default: pdfParse } = await import('pdf-parse');
-      const result = await pdfParse(Buffer.from(buffer));
+      const result = await pdfParse(Buffer.from(buffer), { max: MAX_PDF_PAGES });
       return (result.text ?? '').replace(/\s+/g, ' ').trim().slice(0, PER_FILE_CHARS);
     }
     if (fileType === DOCX_MIME) {
@@ -108,7 +111,7 @@ async function extractTextPreview(input: {
         const pdfPath = await convertPptxToPdf(inputPath, tmpRoot);
         const pdfBuf = await fsp.readFile(pdfPath);
         const { default: pdfParse } = await import('pdf-parse');
-        const result = await pdfParse(pdfBuf);
+        const result = await pdfParse(pdfBuf, { max: MAX_PDF_PAGES });
         return (result.text ?? '').replace(/\s+/g, ' ').trim().slice(0, PER_FILE_CHARS);
       } finally {
         await fsp.rm(tmpRoot, { recursive: true, force: true }).catch(() => {});
@@ -245,18 +248,20 @@ export const POST = withErrorHandling(async (request: Request) => {
     return ok(FALLBACK);
   }
 
-  // 2) 텍스트 앞부분 추출 (다운로드 실패는 무시).
-  const texts: string[] = [];
-  for (const u of ordered) {
-    if (!u.storage_path) continue;
-    const { data: blob, error: dlErr } = await admin.storage
-      .from(STORAGE_BUCKET)
-      .download(u.storage_path);
-    if (dlErr || !blob) continue;
-    const buffer = await blob.arrayBuffer();
-    const text = await extractTextPreview({ buffer, fileType: u.file_type });
-    if (text) texts.push(text);
-  }
+  // 2) 텍스트 앞부분 추출 (다운로드 실패는 무시). 파일별 다운로드+파싱은 병렬.
+  const texts = (
+    await Promise.all(
+      ordered.map(async (u) => {
+        if (!u.storage_path) return '';
+        const { data: blob, error: dlErr } = await admin.storage
+          .from(STORAGE_BUCKET)
+          .download(u.storage_path);
+        if (dlErr || !blob) return '';
+        const buffer = await blob.arrayBuffer();
+        return extractTextPreview({ buffer, fileType: u.file_type });
+      }),
+    )
+  ).filter((text) => text.length > 0);
 
   const compositeText = texts.join('\n\n---\n\n').slice(0, MAX_INPUT_CHARS).trim();
 

@@ -3,7 +3,7 @@
 /**
  * GenerationLoadingGame
  * ---------------------------------------------------------------------------
- * 문항 생성(최대 2분+) 대기 동안 보여주는 로딩 화면.
+ * 문항 생성(보통 1분 내외) 대기 동안 보여주는 로딩 화면.
  *  - 최상단: 생성 진척 게이지 + "문제 생성까지 N% 완료" + "약 몇 분/몇 초 남았습니다"
  *  - 그 아래: 크롬 공룡게임 레퍼런스의 2D 픽셀 러너 미니게임
  *
@@ -144,13 +144,13 @@ export default function GenerationLoadingGame({
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
-  const [etaText, setEtaText] = useState('약 2분 남았습니다');
+  const [etaText, setEtaText] = useState('약 1분 30초 남았습니다');
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
 
-  // ── 남은 시간 추정: 진행률 증가 속도 기반, 초기엔 기본 2분에서 카운트다운 ──
+  // ── 남은 시간 추정: 진행률 증가 속도 기반, 초기엔 기본 1분 30초에서 카운트다운 ──
   const etaRef = useRef<{ start: number; p0: number }>({ start: 0, p0: 0 });
   useEffect(() => {
     etaRef.current = { start: performance.now(), p0: progress };
@@ -160,9 +160,9 @@ export default function GenerationLoadingGame({
     const tick = () => {
       const { start, p0 } = etaRef.current;
       const elapsed = (performance.now() - start) / 1000;
-      // 보통 1분 내외로 끝난다 — 사용자에게 절대 "2분 초과"로 안내하지 않는다.
-      // 남은 시간 = 기본 추정 2분에서 경과 시간만큼 감소(최소 10초 표시 유지).
-      if (elapsed > 130) {
+      // 보통 1분 내외로 끝난다(병렬 소배치 생성) — "1분 30초 초과"로 안내하지 않는다.
+      // 남은 시간 = 기본 추정 1분 30초에서 경과 시간만큼 감소(최소 10초 표시 유지).
+      if (elapsed > 100) {
         setEtaText('곧 완료됩니다…');
         return;
       }
@@ -171,11 +171,11 @@ export default function GenerationLoadingGame({
       if (elapsed > 8 && dp > 1.5) {
         secs = (100 - progress) * (elapsed / dp); // 실측 속도 기반
       } else {
-        secs = 120 - elapsed;
+        secs = 90 - elapsed;
       }
-      // 상한 2분: 어떤 경우에도 그 이상으로 안내하지 않는다.
-      secs = Math.min(120 - elapsed * 0.5, secs);
-      setEtaText(formatEta(Math.min(120, Math.max(10, secs))));
+      // 상한 1분 30초: 어떤 경우에도 그 이상으로 안내하지 않는다.
+      secs = Math.min(90 - elapsed * 0.5, secs);
+      setEtaText(formatEta(Math.min(90, Math.max(10, secs))));
     };
     tick();
     const id = setInterval(tick, 1000);
