@@ -302,3 +302,59 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   letter-spacing: -0.02em;
   color: var(--color-sage-800);
 }
+
+/* ── 모의고사 설정 화면 확장 (redesign-reference.css 는 생성 파일이라 여기서 보강) ── */
+.ll-mock-page .select-all {
+  height: 30px;
+  border: 1px solid var(--sage-200);
+  border-radius: 999px;
+  background: var(--sage);
+  color: var(--forest);
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 740;
+  cursor: pointer;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+.ll-mock-page .select-all:hover { border-color: var(--sage-400); background: #f6fbf7; }
+.ll-mock-page .select-all:disabled { opacity: 0.45; cursor: default; }
+
+.ll-mock-page .stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--cream);
+  padding: 6px;
+}
+.ll-mock-page .stepper button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--forest-800);
+  font-size: 17px;
+  font-weight: 740;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+.ll-mock-page .stepper button:hover { border-color: var(--sage-400); }
+.ll-mock-page .stepper button:disabled { opacity: 0.4; cursor: default; }
+.ll-mock-page .stepper-value {
+  flex: 1;
+  text-align: center;
+  color: var(--forest);
+  font-size: 15px;
+  font-weight: 820;
+}
+.ll-mock-page .stepper-note {
+  margin: 7px 0 0;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 560;
+  line-height: 1.5;
+}
