@@ -169,17 +169,31 @@ export async function middleware(request: NextRequest) {
 
   // 온보딩 필요 경로 게이트
   if (requiresOnboarding(pathname) && pathname !== '/onboarding') {
-    // users.onboarded_at 조회 — 미들웨어에서 anon client 로 RLS 통과 (본인 행)
-    const { data: profile } = await supabase
-      .from('users')
-      .select('onboarded_at')
-      .eq('id', user.id)
-      .maybeSingle();
+    // 온보딩 완료는 일방향이므로 한 번 확인되면 쿠키(값=user.id)로 기억해
+    // 매 내비게이션마다 발생하던 users.onboarded_at DB 왕복을 제거한다.
+    // 다른 계정으로 재로그인하면 값이 달라 무시되고 다시 DB 로 확인한다.
+    const onboardedCookie = request.cookies.get('ll-onboarded')?.value;
+    if (onboardedCookie !== user.id) {
+      // users.onboarded_at 조회 — 미들웨어에서 anon client 로 RLS 통과 (본인 행)
+      const { data: profile } = await supabase
+        .from('users')
+        .select('onboarded_at')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (!profile || !profile.onboarded_at) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/onboarding';
-      return NextResponse.redirect(url);
+      if (!profile || !profile.onboarded_at) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/onboarding';
+        return NextResponse.redirect(url);
+      }
+
+      response.cookies.set('ll-onboarded', user.id, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 30,
+      });
     }
   }
 

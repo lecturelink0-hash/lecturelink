@@ -4,6 +4,7 @@
  * Route Handlers / Server Components 에서 현재 사용자 정보 조회.
  */
 
+import { cache } from 'react';
 import { createServerClient } from '@/lib/db/server';
 import { createAdminClient } from '@/lib/db/admin';
 import type { UserProfile } from '@/lib/types/domain';
@@ -18,8 +19,11 @@ export interface AuthSession {
 
 /**
  * 현재 사용자 세션 조회. 인증되지 않은 경우 null.
+ *
+ * React cache() 로 감싸 같은 요청(RSC 렌더) 안에서 레이아웃·페이지가 각각 호출해도
+ * Supabase auth/프로필 왕복은 1회만 발생한다.
  */
-export async function getCurrentSession(): Promise<AuthSession | null> {
+export const getCurrentSession = cache(async (): Promise<AuthSession | null> => {
   if (
     process.env.NODE_ENV === 'development' &&
     process.env.LOCAL_FACULTY_UI_PREVIEW === 'true'
@@ -175,7 +179,7 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
     profile: userProfile,
     role,
   };
-}
+});
 
 /**
  * 인증된 세션을 강제. null이면 UnauthorizedException throw.
