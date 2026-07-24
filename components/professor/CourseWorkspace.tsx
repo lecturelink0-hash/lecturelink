@@ -317,11 +317,14 @@ export function CourseDetail({ courseId }: { courseId: string }) {
       <Link href="/professor/courses" className="back">
         <ArrowLeft size={16} />내 강의실로
       </Link>
-      <header className="professor-welcome">
+      <header className="course-detail-hero">
         <div>
-          <p>{data.course.term || "수업 차시"}</p>
+          <p className="eyebrow">{data.course.term || "수업 차시"}</p>
           <h1>{data.course.title}</h1>
-          <span>이 차시에서 만든 수업자료와 평가를 관리합니다.</span>
+          <p className="lead">
+            이 차시에서 사용하는 강의자료와 생성한 수업 결과물을 한곳에서
+            관리합니다.
+          </p>
           <div className="course-code">
             학생 참여 코드 <b>{data.course.code}</b>
             <button
@@ -333,7 +336,7 @@ export function CourseDetail({ courseId }: { courseId: string }) {
           </div>
         </div>
       </header>
-      <section className="course-overview">
+      <section className="course-detail-stats" aria-label="차시 현황">
         <div>
           <Users size={18} />
           <span>
@@ -344,7 +347,14 @@ export function CourseDetail({ courseId }: { courseId: string }) {
         <div>
           <FileText size={18} />
           <span>
-            <small>만든 결과물</small>
+            <small>강의자료</small>
+            <b>{data.materials.length}개</b>
+          </span>
+        </div>
+        <div>
+          <Sparkles size={18} />
+          <span>
+            <small>생성 결과물</small>
             <b>{data.artifacts.length}개</b>
           </span>
         </div>
@@ -356,11 +366,15 @@ export function CourseDetail({ courseId }: { courseId: string }) {
           </span>
         </Link>
       </section>
-      <section className="course-material-library card pad">
+      <section className="course-detail-section course-material-library">
         <div className="card-head">
           <div>
+            <span className="section-kicker">MATERIAL LIBRARY</span>
             <h2>강의자료</h2>
-            <p>한 번 저장한 자료를 형성평가·예습자료·자료 개선에서 다시 사용합니다.</p>
+            <p>
+              한 번 저장한 자료를 형성평가·예습자료·자료 개선에서 다시
+              사용합니다.
+            </p>
           </div>
           <button
             className="primary-btn material-upload-button"
@@ -381,7 +395,9 @@ export function CourseDetail({ courseId }: { courseId: string }) {
         <div className="course-material-grid">
           {data.materials.map((material) => (
             <article key={material.id}>
-              <span><FileText size={18} /></span>
+              <span>
+                <FileText size={18} />
+              </span>
               <div>
                 <b>{material.file_name}</b>
                 <small>
@@ -391,97 +407,132 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                 </small>
               </div>
               <div className="material-tool-links">
-                <Link href={`/professor/formative?course=${courseId}&material=${material.id}`}>형성평가</Link>
-                <Link href={`/professor/bridge?course=${courseId}&material=${material.id}`}>예습자료</Link>
-                <Link href={`/professor/materials?course=${courseId}&material=${material.id}`}>자료 개선</Link>
+                <Link
+                  href={`/professor/formative?course=${courseId}&material=${material.id}`}
+                >
+                  형성평가
+                </Link>
+                <Link
+                  href={`/professor/bridge?course=${courseId}&material=${material.id}`}
+                >
+                  예습자료
+                </Link>
+                <Link
+                  href={`/professor/materials?course=${courseId}&material=${material.id}`}
+                >
+                  자료 개선
+                </Link>
               </div>
             </article>
           ))}
           {!data.materials.length && (
-            <p className="artifact-empty"><Upload size={16} />아직 저장한 강의자료가 없습니다.</p>
+            <p className="artifact-empty">
+              <Upload size={16} />
+              아직 저장한 강의자료가 없습니다.
+            </p>
           )}
         </div>
       </section>
-      <section className="session-actions">
-        <Link href={`/professor/formative?course=${courseId}`}>
-          <ClipboardCheck size={18} />
-          <span>
-            <b>형성평가 만들기</b>
-            <small>수업 후 이해도 확인</small>
-          </span>
-        </Link>
-        <Link href={`/professor/bridge?course=${courseId}`}>
-          <BookOpen size={18} />
-          <span>
-            <b>예습자료 만들기</b>
-            <small>수업 전 선수지식 복습</small>
-          </span>
-        </Link>
-        <Link href={`/professor/materials?course=${courseId}`}>
-          <FileCheck2 size={18} />
-          <span>
-            <b>자료 개선</b>
-            <small>PPT 가독성 검수</small>
-          </span>
-        </Link>
-        <Link href={`/professor/courses/${courseId}/analytics`}>
-          <BarChart3 size={18} />
-          <span>
-            <b>분석 리포트</b>
-            <small>학생 응답과 취약 문항</small>
-          </span>
-        </Link>
+      <section className="course-detail-section course-action-section">
+        <div className="course-section-heading">
+          <div>
+            <span className="section-kicker">CREATE</span>
+            <h2>이 차시에서 만들기</h2>
+          </div>
+          <p>등록한 자료를 선택하거나 새 자료를 올려 수업 준비를 이어가세요.</p>
+        </div>
+        <div className="session-actions">
+          <Link href={`/professor/formative?course=${courseId}`}>
+            <ClipboardCheck size={18} />
+            <span>
+              <b>형성평가 만들기</b>
+              <small>수업 후 이해도 확인</small>
+            </span>
+          </Link>
+          <Link href={`/professor/bridge?course=${courseId}`}>
+            <BookOpen size={18} />
+            <span>
+              <b>예습자료 만들기</b>
+              <small>수업 전 선수지식 복습</small>
+            </span>
+          </Link>
+          <Link href={`/professor/materials?course=${courseId}`}>
+            <FileCheck2 size={18} />
+            <span>
+              <b>자료 개선</b>
+              <small>PPT 가독성 검수</small>
+            </span>
+          </Link>
+          <Link href={`/professor/courses/${courseId}/analytics`}>
+            <BarChart3 size={18} />
+            <span>
+              <b>분석 리포트</b>
+              <small>학생 응답과 취약 문항</small>
+            </span>
+          </Link>
+        </div>
       </section>
-      <div className="session-artifact-groups">
-        {(
-          Object.entries(groups) as Array<[keyof typeof TYPES, Artifact[]]>
-        ).map(([type, items]) => {
-          const meta = TYPES[type];
-          const Icon = meta.icon;
-          return (
-            <section className="artifact-group" key={type}>
-              <header>
-                <span>
-                  <Icon size={18} />
-                </span>
+      <section className="course-detail-section course-results-section">
+        <div className="course-section-heading">
+          <div>
+            <span className="section-kicker">OUTPUTS</span>
+            <h2>생성한 결과물</h2>
+          </div>
+          <p>검토 상태와 사용한 자료를 유형별로 확인할 수 있습니다.</p>
+        </div>
+        <div className="session-artifact-groups">
+          {(
+            Object.entries(groups) as Array<[keyof typeof TYPES, Artifact[]]>
+          ).map(([type, items]) => {
+            const meta = TYPES[type];
+            const Icon = meta.icon;
+            return (
+              <section className="artifact-group" key={type}>
+                <header>
+                  <span>
+                    <Icon size={18} />
+                  </span>
+                  <div>
+                    <h2>{meta.label}</h2>
+                    <p>{items.length}개의 결과물</p>
+                  </div>
+                </header>
                 <div>
-                  <h2>{meta.label}</h2>
-                  <p>{items.length}개의 결과물</p>
+                  {items.map((item) => (
+                    <Link
+                      href={
+                        type === "formative"
+                          ? `/professor/artifacts/${item.id}`
+                          : "#"
+                      }
+                      className="artifact-row"
+                      key={item.id}
+                    >
+                      <div>
+                        <b>{item.title}</b>
+                        <small>
+                          {item.source_name || "직접 생성"} ·{" "}
+                          {new Date(item.created_at).toLocaleDateString(
+                            "ko-KR",
+                          )}
+                        </small>
+                      </div>
+                      <span>{statusLabel(item.status)}</span>
+                      <ArrowRight size={15} />
+                    </Link>
+                  ))}
+                  {!items.length && (
+                    <p className="artifact-empty">
+                      <Sparkles size={16} />
+                      아직 만든 {meta.label}가 없습니다.
+                    </p>
+                  )}
                 </div>
-              </header>
-              <div>
-                {items.map((item) => (
-                  <Link
-                    href={
-                      type === "formative"
-                        ? `/professor/artifacts/${item.id}`
-                        : "#"
-                    }
-                    className="artifact-row"
-                    key={item.id}
-                  >
-                    <div>
-                      <b>{item.title}</b>
-                      <small>
-                        {item.source_name || "직접 생성"} ·{" "}
-                        {new Date(item.created_at).toLocaleDateString("ko-KR")}
-                      </small>
-                    </div>
-                    <span>{statusLabel(item.status)}</span>
-                    <ArrowRight size={15} />
-                  </Link>
-                ))}
-                {!items.length && (
-                  <p className="artifact-empty">
-                    <Sparkles size={16} />
-                    아직 만든 {meta.label}가 없습니다.
-                  </p>
-                )}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+              </section>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
