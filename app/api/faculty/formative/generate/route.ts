@@ -158,6 +158,13 @@ const settingsSchema = z.object({
   useImages: z.enum(['true', 'false']).transform((value) => value === 'true').default('false'),
 });
 
+function summarizeSchemaIssues(error: z.ZodError) {
+  return error.issues
+    .slice(0, 8)
+    .map((issue) => `${issue.path.join('.') || 'root'}: ${issue.message}`)
+    .join('; ');
+}
+
 const generatedQuestionSchema = z.object({
   stem: z.string().min(1),
   choices: z.array(z.string().min(1)).length(5),
@@ -402,11 +409,30 @@ export const POST = withErrorHandling(async (request: Request) => {
   if (!(file instanceof File)) throw new ApiException('file_required', '강의자료를 선택해주세요.', 400);
   if (file.size > MAX_FILE_BYTES) throw new ApiException('file_too_large', '파일은 25MB 이하만 업로드할 수 있습니다.', 400);
 
-  const settings = settingsSchema.parse({
+  const settingsResult = settingsSchema.safeParse({
     range: form.get('range'), objective: form.get('objective'), count: form.get('count'),
     difficulty: form.get('difficulty'), excluded: form.get('excluded'),
     additionalPrompt: form.get('additionalPrompt'), useImages: form.get('useImages'),
   });
+  if (!settingsResult.success) {
+    const firstField = String(settingsResult.error.issues[0]?.path[0] ?? '');
+    const fieldNames: Record<string, string> = {
+      range: '출제 범위',
+      objective: '꼭 포함할 내용',
+      count: '문항 수',
+      difficulty: '난이도',
+      excluded: '제외할 내용',
+      additionalPrompt: '추가 프롬프트',
+      useImages: '이미지 사용 설정',
+    };
+    throw new ApiException(
+      'invalid_formative_settings',
+      `${fieldNames[firstField] ?? '문항 설정'}을 확인해주세요.`,
+      400,
+      { field: firstField },
+    );
+  }
+  const settings = settingsResult.data;
   const material = await extractMaterial(
     file,
     settings.useImages,
@@ -441,20 +467,55 @@ ${material.text}`;
       },
     ]),
   ];
-  const response = await withRetry(() => createMessage(client, {
-    model: MODELS.generation(),
-    max_tokens: 7000,
-    system: GENERATION_SYSTEM,
-    tools: [createOutputSchema(settings.count)],
-    tool_choice: { type: 'tool', name: 'create_formative_assessment' },
-    messages: [{ role: 'user', content: messageContent }],
-  }), { maxAttempts: 3 });
+  let draft: z.infer<typeof generatedAssessmentSchema> | null = null;
+  let generationFeedback = '';
+  for (let attempt = 0; attempt < 2 && !draft; attempt += 1) {
+    const response = await withRetry(() => createMessage(client, {
+      model: MODELS.generation(),
+      max_tokens: 7000,
+      system: GENERATION_SYSTEM,
+      tools: [createOutputSchema(settings.count)],
+      tool_choice: { type: 'tool', name: 'create_formative_assessment' },
+      messages: [{
+        role: 'user',
+        content: generationFeedback
+          ? [
+              ...messageContent,
+              {
+                type: 'text',
+                text: `이전 출력이 구조 검증에 실패했다. 다음 오류를 모두 고쳐 전체 결과를 다시 반환한다: ${generationFeedback}`,
+              },
+            ]
+          : messageContent,
+      }],
+    }), { maxAttempts: 3 });
 
-  const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
-  if (!block) throw new ApiException('generation_failed', '구조화된 문항 초안을 만들지 못했습니다.', 502);
-  const draft = generatedAssessmentSchema.parse(block.input);
-  if (draft.questions.length !== settings.count) {
-    throw new ApiException('generation_count_mismatch', '요청한 문항 수를 만들지 못했습니다.', 502);
+    const block = response.content.find(
+      (item): item is Anthropic.ToolUseBlock =>
+        item.type === 'tool_use' && item.name === 'create_formative_assessment',
+    );
+    if (!block) {
+      generationFeedback = 'create_formative_assessment 도구 호출이 누락됨';
+      continue;
+    }
+    const parsedDraft = generatedAssessmentSchema.safeParse(block.input);
+    if (!parsedDraft.success) {
+      generationFeedback = summarizeSchemaIssues(parsedDraft.error);
+      console.warn('[formative] invalid draft output:', generationFeedback);
+      continue;
+    }
+    if (parsedDraft.data.questions.length !== settings.count) {
+      generationFeedback = `questions: 정확히 ${settings.count}개가 필요하지만 ${parsedDraft.data.questions.length}개가 반환됨`;
+      continue;
+    }
+    draft = parsedDraft.data;
+  }
+  if (!draft) {
+    throw new ApiException(
+      'generation_invalid_output',
+      '문항 초안의 형식을 자동으로 교정하지 못했습니다. 잠시 후 다시 시도해주세요.',
+      502,
+    );
   }
 
   const verificationContent: Anthropic.MessageCreateParams['messages'][number]['content'] = [
@@ -484,22 +545,62 @@ ${JSON.stringify(draft)}`,
       },
     ]),
   ];
-  const verification = await withRetry(() => createMessage(client, {
-    model: MODELS.generation(),
-    max_tokens: 7000,
-    system: VERIFICATION_SYSTEM,
-    tools: [createVerificationTool(settings.count)],
-    tool_choice: { type: 'tool', name: 'verify_formative_assessment' },
-    messages: [{ role: 'user', content: verificationContent }],
-  }), { maxAttempts: 3 });
-  const verificationBlock = verification.content.find(
-    (item): item is Anthropic.ToolUseBlock => item.type === 'tool_use',
-  );
-  if (!verificationBlock) {
-    throw new ApiException('verification_failed', '생성 문항의 독립 검증을 완료하지 못했습니다.', 502);
+  let verified: z.infer<typeof verifiedAssessmentSchema> | null = null;
+  let verificationFeedback = '';
+  for (let attempt = 0; attempt < 3 && !verified; attempt += 1) {
+    const verification = await withRetry(() => createMessage(client, {
+      model: MODELS.generation(),
+      max_tokens: 7000,
+      system: VERIFICATION_SYSTEM,
+      tools: [createVerificationTool(settings.count)],
+      tool_choice: { type: 'tool', name: 'verify_formative_assessment' },
+      messages: [{
+        role: 'user',
+        content: verificationFeedback
+          ? [
+              ...verificationContent,
+              {
+                type: 'text',
+                text: `이전 검수 결과가 최종 검증에 실패했다. 다음 오류를 직접 수정해 전체 최종본을 다시 반환한다: ${verificationFeedback}`,
+              },
+            ]
+          : verificationContent,
+      }],
+    }), { maxAttempts: 3 });
+    const verificationBlock = verification.content.find(
+      (item): item is Anthropic.ToolUseBlock =>
+        item.type === 'tool_use' && item.name === 'verify_formative_assessment',
+    );
+    if (!verificationBlock) {
+      verificationFeedback = 'verify_formative_assessment 도구 호출이 누락됨';
+      continue;
+    }
+    const parsedVerification = verifiedAssessmentSchema.safeParse(verificationBlock.input);
+    if (!parsedVerification.success) {
+      verificationFeedback = summarizeSchemaIssues(parsedVerification.error);
+      console.warn('[formative] invalid verification output:', verificationFeedback);
+      continue;
+    }
+    try {
+      assertAssessmentIntegrity(
+        parsedVerification.data,
+        settings.count,
+        material.allowedPages,
+        material.images.length,
+      );
+      verified = parsedVerification.data;
+    } catch (error) {
+      verificationFeedback = error instanceof Error ? error.message : '최종 무결성 검사 실패';
+      console.warn('[formative] verification integrity failure:', verificationFeedback);
+    }
   }
-  const verified = verifiedAssessmentSchema.parse(verificationBlock.input);
-  assertAssessmentIntegrity(verified, settings.count, material.allowedPages, material.images.length);
+  if (!verified) {
+    throw new ApiException(
+      'verification_invalid_output',
+      '문항 검수 결과를 자동으로 교정하지 못했습니다. 잠시 후 다시 생성해주세요.',
+      502,
+    );
+  }
   return ok({
     ...verified,
     imageAnalysis: {

@@ -220,7 +220,7 @@ export function FormativeAssessmentStudio() {
                     <span className="field-label">출제 범위</span>
                     <Segmented options={['전체 자료', '페이지 선택'] as const} value={rangeMode} onChange={setRangeMode} ariaLabel="출제 범위" />
                     {rangeMode === '페이지 선택' && (
-                      <input className="page-range-input" value={pageRange} onChange={(event) => setPageRange(event.target.value)} placeholder="예: 1~3, 5, 8~10" aria-label="출제할 페이지" />
+                      <input className="page-range-input" value={pageRange} maxLength={120} onChange={(event) => setPageRange(event.target.value)} placeholder="예: 1~3, 5, 8~10" aria-label="출제할 페이지" />
                     )}
                   </div>
                   <div className="field">
@@ -262,15 +262,18 @@ export function FormativeAssessmentStudio() {
                 <div className="optional-settings-grid">
                   <label className="field">
                     <span className="field-label">꼭 포함할 내용</span>
-                    <textarea value={include} onChange={(event) => setInclude(event.target.value)} placeholder="예: 항부정맥 약물의 작용 기전을 꼭 포함해 주세요." />
+                    <textarea maxLength={300} value={include} onChange={(event) => setInclude(event.target.value)} placeholder="예: 항부정맥 약물의 작용 기전을 꼭 포함해 주세요." />
+                    <small className="field-counter">{include.length}/300</small>
                   </label>
                   <label className="field">
                     <span className="field-label">제외할 내용</span>
-                    <textarea value={excluded} onChange={(event) => setExcluded(event.target.value)} placeholder="예: 세부 용량이나 부작용 암기 문항은 제외해 주세요." />
+                    <textarea maxLength={300} value={excluded} onChange={(event) => setExcluded(event.target.value)} placeholder="예: 세부 용량이나 부작용 암기 문항은 제외해 주세요." />
+                    <small className="field-counter">{excluded.length}/300</small>
                   </label>
                   <label className="field">
                     <span className="field-label">추가하고 싶은 프롬프트</span>
-                    <textarea value={additionalPrompt} onChange={(event) => setAdditionalPrompt(event.target.value)} placeholder="문항을 만들 때 추가로 반영할 요청을 자유롭게 입력해 주세요." />
+                    <textarea maxLength={500} value={additionalPrompt} onChange={(event) => setAdditionalPrompt(event.target.value)} placeholder="문항을 만들 때 추가로 반영할 요청을 자유롭게 입력해 주세요." />
+                    <small className="field-counter">{additionalPrompt.length}/500</small>
                   </label>
                 </div>
               </div>
