@@ -8,7 +8,7 @@ import { createBrowserClient } from '@/lib/db/browser';
 import './professor.css';
 
 const NAV = [
-  { href: '/professor', label: '교수 홈' },
+  { href: '/professor', label: '대시보드' },
   { href: '/professor/courses', label: '내 강의실' },
   { href: '/professor/formative', label: '형성평가' },
   { href: '/professor/materials', label: '강의자료' },

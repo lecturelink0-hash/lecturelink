@@ -12,10 +12,10 @@ const PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.prese
 const settingsSchema = z.object({
   range: z.string().max(120).default('전체 자료'),
   objective: z.string().max(300).default(''),
-  count: z.coerce.number().int().min(3).max(10),
+  count: z.coerce.number().int().min(1).max(10),
   difficulty: z.enum(['하', '중', '상']),
-  mix: z.enum(['핵심 회상 중심', '기전 이해 중심', '임상 적용 중심', '균형 있게']),
   excluded: z.string().max(300).default(''),
+  additionalPrompt: z.string().max(500).default(''),
 });
 
 const generatedQuestionSchema = z.object({
@@ -48,7 +48,7 @@ const outputSchema = {
       objectives: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 5 },
       questions: {
         type: 'array',
-        minItems: 3,
+        minItems: 1,
         maxItems: 10,
         items: {
           type: 'object',
@@ -102,7 +102,8 @@ export const POST = withErrorHandling(async (request: Request) => {
 
   const settings = settingsSchema.parse({
     range: form.get('range'), objective: form.get('objective'), count: form.get('count'),
-    difficulty: form.get('difficulty'), mix: form.get('mix'), excluded: form.get('excluded'),
+    difficulty: form.get('difficulty'), excluded: form.get('excluded'),
+    additionalPrompt: form.get('additionalPrompt'),
   });
   const material = await extractMaterial(file);
   const client = getAnthropic();
@@ -112,7 +113,7 @@ export const POST = withErrorHandling(async (request: Request) => {
     system: `당신은 의과대학 교수의 형성평가 제작을 돕는 교육설계 조교다. 반드시 제공된 강의자료만을 정답 근거로 사용한다. 고부담 시험문제가 아니라 수업 전후 복습용 5지선다 단일정답 문항을 만든다. 자료에서 확정할 수 없는 내용은 만들지 않는다. 모호성, 복수정답 가능성, 정답 단서가 남으면 qualityFlags에 짧게 알린다. 문항마다 근거 페이지/슬라이드와 학습목표를 남긴다. 학생에게 제공 가능한 정확하고 교육적인 한국어를 쓴다.`,
     tools: [outputSchema],
     tool_choice: { type: 'tool', name: 'create_formative_assessment' },
-    messages: [{ role: 'user', content: `파일명: ${file.name}\n출제 범위: ${settings.range}\n교수 지정 학습목표: ${settings.objective || '자료에서 추출'}\n문항 수: ${settings.count}\n난이도: ${settings.difficulty}\n인지 수준: ${settings.mix}\n제외 내용: ${settings.excluded || '없음'}\n\n강의자료:\n${material}` }],
+    messages: [{ role: 'user', content: `파일명: ${file.name}\n출제 범위: ${settings.range}\n꼭 포함할 내용: ${settings.objective || '자료에서 추출'}\n문항 수: ${settings.count}\n난이도: ${settings.difficulty}\n제외 내용: ${settings.excluded || '없음'}\n추가 요청: ${settings.additionalPrompt || '없음'}\n\n강의자료:\n${material}` }],
   }), { maxAttempts: 3 });
 
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');

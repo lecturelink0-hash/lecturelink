@@ -87,6 +87,7 @@ export function ProfessorHome({
   recentArtifacts: Artifact[];
 }) {
   const courseNames = new Map(courses.map((course) => [course.id, course.title]));
+  const professorName = displayName.replace(/\s*교수(?:님)?$/, '').trim() || displayName;
 
   return (
     <div className="professor-home">
@@ -94,7 +95,7 @@ export function ProfessorHome({
         <div>
           <span className="professor-badge">LECTURELINK FACULTY</span>
           <h1>
-            안녕하세요, <em>{displayName}</em>님.
+            안녕하세요, <em>{professorName}</em> 교수님.
             <br />
             오늘 수업 준비를 시작해볼까요?
           </h1>
@@ -171,7 +172,7 @@ export function ProfessorHome({
           <div className="professor-section-head">
             <div>
               <span>COURSE WORKSPACE</span>
-              <h2 id="course-workspace-title">강의별 작업공간</h2>
+              <h2 id="course-workspace-title">최근 강의 작업공간</h2>
             </div>
             <Link href="/professor/courses" className="professor-text-link">전체 보기 <ArrowRight size={15} /></Link>
           </div>

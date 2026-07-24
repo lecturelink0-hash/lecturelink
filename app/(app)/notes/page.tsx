@@ -8,9 +8,11 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { UploadDropZone } from '@/components/ui/UploadDropZone';
+import { UploadNextSteps } from '@/components/ui/UploadNextSteps';
+import { Segmented } from '@/components/ui/Segmented';
 import GenerationLoadingGame from '@/components/notes/GenerationLoadingGame';
 import {
-  Upload,
   FileText,
   Image as ImageIcon,
   Presentation,
@@ -579,10 +581,11 @@ export default function NotesPage() {
                 action={<Badge variant="default">필수</Badge>}
               />
 
-              <DropZone
+              <UploadDropZone
                 uploading={uploadingMaterial}
                 onFile={handleMaterialFile}
                 inputRef={materialInputRef}
+                accept={ACCEPT}
                 title="파일을 끌어오거나 클릭해 업로드"
                 hint="PDF, PPTX, DOCX, 이미지 파일 지원"
               />
@@ -762,28 +765,13 @@ export default function NotesPage() {
           </div>
         )}
         {!hasUploaded && (
-          <div className="flex flex-col justify-center rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-sage-50)]/50 p-6">
-            <p className="text-sm font-bold text-sage-700 mb-4">업로드하면 이렇게 진행돼요</p>
-            <ol className="space-y-4">
-              <li className="flex items-start gap-3">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--color-sage-400)] text-base font-bold text-[var(--color-sage-500)]">2</span>
-                <div>
-                  <div className="text-sm font-semibold text-sage-700">자동 분석 · 설정 확인</div>
-                  <div className="text-xs text-[var(--color-muted)] mt-0.5 leading-relaxed">AI가 제목·과목·난이도를 추천해요. 참고 자료도 추가할 수 있어요.</div>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--color-sage-400)] text-base font-bold text-[var(--color-sage-500)]">3</span>
-                <div>
-                  <div className="text-sm font-semibold text-sage-700">문제 생성</div>
-                  <div className="text-xs text-[var(--color-muted)] mt-0.5 leading-relaxed">올린 자료를 바탕으로 예상 문제 세트가 자동으로 만들어져요.</div>
-                </div>
-              </li>
-            </ol>
-            <p className="mt-5 text-xs text-[var(--color-muted)] leading-relaxed">
-              먼저 왼쪽 <b className="text-sage-700">1. 학습자료</b> 칸에 파일을 올려주세요. 올리는 즉시 위 단계가 순서대로 나타납니다.
-            </p>
-          </div>
+          <UploadNextSteps
+            steps={[
+              { number: 2, title: '자동 분석 · 설정 확인', description: 'AI가 제목·과목·난이도를 추천해요. 참고 자료도 추가할 수 있어요.' },
+              { number: 3, title: '문제 생성', description: '올린 자료를 바탕으로 예상 문제 세트가 자동으로 만들어져요.' },
+            ]}
+            footer={<>먼저 왼쪽 <b className="text-sage-700">1. 학습자료</b> 칸에 파일을 올려주세요. 올리는 즉시 위 단계가 순서대로 나타납니다.</>}
+          />
         )}
 
         {/* 우측: 추천 설정 · 생성 요약 — 업로드 후 노출 */}
@@ -1263,38 +1251,6 @@ function CardHead({
   );
 }
 
-function Segmented<T extends string>({
-  options,
-  value,
-  onChange,
-  cards = false,
-}: {
-  options: readonly T[];
-  value: T;
-  onChange: (v: T) => void;
-  cards?: boolean;
-}) {
-  return (
-    <div className={cards ? 'checkset' : 'segmented'}>
-      {options.map((opt) => {
-        const active = opt === value;
-        return (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(opt)}
-            aria-pressed={active}
-            className={`${cards ? 'check-card' : ''} ${active ? 'active' : ''}`}
-          >
-            {cards && <span className="check-box" aria-hidden />}
-            {opt}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function MultiSegmented<T extends string>({
   options,
   values,
@@ -1333,71 +1289,6 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     <div className="summary-item">
       <dt className="text-sm text-[var(--color-muted)]">{label}</dt>
       <dd className="text-sm font-semibold text-sage-800 text-right">{value}</dd>
-    </div>
-  );
-}
-
-function DropZone({
-  uploading,
-  onFile,
-  inputRef,
-  title,
-  hint,
-}: {
-  uploading: boolean;
-  onFile: (file: File) => void;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-  title: string;
-  hint: string;
-}) {
-  const [dragOver, setDragOver] = useState(false);
-
-  return (
-    <div
-      onClick={() => inputRef.current?.click()}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragOver(true);
-      }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDragOver(false);
-        const file = e.dataTransfer.files[0];
-        if (file) onFile(file);
-      }}
-      className={clsx(
-        'dropzone',
-        dragOver
-          ? 'border-sage-600 ll-tint'
-          : 'border-[var(--color-border)] bg-[var(--color-bg)] hover:border-sage-400 hover:bg-[var(--color-sage-50)]',
-      )}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPT}
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onFile(f);
-        }}
-      />
-      <div className="flex justify-center mb-3">
-        {uploading ? (
-          <span className="upload-badge">
-            <Loader2 className="w-5 h-5 animate-spin" />
-          </span>
-        ) : (
-          <span className="upload-badge">
-            <Upload className="w-5 h-5" strokeWidth={1.9} />
-          </span>
-        )}
-      </div>
-      <div className="drop-title">
-        {uploading ? '업로드 중...' : title}
-      </div>
-      <div className="drop-help">{hint}</div>
     </div>
   );
 }

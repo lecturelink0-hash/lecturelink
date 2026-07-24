@@ -44,24 +44,50 @@ const columns: FooterColumn[] = [
   },
 ];
 
-export function Footer() {
+export function Footer({ variant = 'student' }: { variant?: 'student' | 'faculty' }) {
+  const footerColumns: FooterColumn[] = variant === 'faculty'
+    ? [
+        {
+          title: '교수 도구',
+          links: [
+            { label: '대시보드', href: '/professor' },
+            { label: '내 강의실', href: '/professor/courses' },
+            { label: '형성평가', href: '/professor/formative' },
+            { label: '강의자료', href: '/professor/materials' },
+          ],
+        },
+        {
+          title: '교육 지원',
+          links: [
+            { label: '선수지식', href: '/professor/bridge' },
+            { label: '품질 검사', href: '/professor/quality' },
+            { label: '교수 서비스 소개', href: '/faculty' },
+            { label: '문의하기', href: '/contact' },
+          ],
+        },
+        columns[2],
+      ]
+    : columns;
+
   return (
     <footer className="site-footer">
       <div className="footer-inner">
         <div className="footer-grid">
           {/* 좌측 — 로고 + 한줄 설명 */}
           <div className="footer-brand">
-            <Link className="logo" href="/dashboard">
+            <Link className="logo" href={variant === 'faculty' ? '/professor' : '/dashboard'}>
               <span className="logo-mark"><BookIcon /></span><span className="logo-text">렉쳐링크</span>
             </Link>
             <p>
-              강의자료를 바탕으로 의학 문제를 생성하고, 오답을 분석해 시험 대비를 돕는 학습 플랫폼입니다.
+              {variant === 'faculty'
+                ? '강의자료에서 수업 준비 자료를 만들고, 학생의 이해를 확인하는 의학 교육 지원 플랫폼입니다.'
+                : '강의자료를 바탕으로 의학 문제를 생성하고, 오답을 분석해 시험 대비를 돕는 학습 플랫폼입니다.'}
             </p>
           </div>
 
           {/* 우측 — 3컬럼 */}
           <div className="contents">
-            {columns.map((col) => (
+            {footerColumns.map((col) => (
               <div key={col.title} className="footer-col">
                 <h2>{col.title}</h2><ul>
                   {col.links.map((link) => (

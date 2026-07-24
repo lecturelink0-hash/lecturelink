@@ -1,20 +1,24 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
   Check,
-  ChevronRight,
   FileText,
   Loader2,
   Pencil,
   Plus,
   ShieldCheck,
-  Sparkles,
-  Upload,
   X,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { UploadDropZone } from '@/components/ui/UploadDropZone';
+import { UploadNextSteps } from '@/components/ui/UploadNextSteps';
+import { Segmented } from '@/components/ui/Segmented';
 import './formative-studio.css';
 
 type Question = {
@@ -42,12 +46,13 @@ export function FormativeAssessmentStudio() {
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [range, setRange] = useState('전체 자료');
-  const [objective, setObjective] = useState('');
+  const [rangeMode, setRangeMode] = useState<'전체 자료' | '페이지 선택'>('전체 자료');
+  const [pageRange, setPageRange] = useState('');
+  const [include, setInclude] = useState('');
   const [count, setCount] = useState(5);
   const [difficulty, setDifficulty] = useState('중');
-  const [mix, setMix] = useState('기전 이해 중심');
   const [excluded, setExcluded] = useState('');
+  const [additionalPrompt, setAdditionalPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<GenerateResponse | null>(null);
@@ -62,12 +67,6 @@ export function FormativeAssessmentStudio() {
     });
   }, []);
 
-  const progress = useMemo(() => {
-    if (result) return 3;
-    if (file) return 2;
-    return 1;
-  }, [file, result]);
-
   function chooseFile(next: File | undefined) {
     if (!next) return;
     setError('');
@@ -77,18 +76,18 @@ export function FormativeAssessmentStudio() {
   }
 
   async function generate() {
-    if (!file) return;
+    if (!file || (rangeMode === '페이지 선택' && !pageRange.trim())) return;
     setLoading(true);
     setError('');
     try {
       const form = new FormData();
       form.append('file', file);
-      form.append('range', range);
-      form.append('objective', objective);
+      form.append('range', rangeMode === '전체 자료' ? '전체 자료' : pageRange.trim());
+      form.append('objective', include);
       form.append('count', String(count));
       form.append('difficulty', difficulty);
-      form.append('mix', mix);
       form.append('excluded', excluded);
+      form.append('additionalPrompt', additionalPrompt);
 
       const response = await fetch('/api/faculty/formative/generate', {
         method: 'POST',
@@ -136,75 +135,128 @@ export function FormativeAssessmentStudio() {
   }
 
   return (
-    <div className="faculty-studio">
-      <header className="studio-heading">
+    <div className="faculty-studio ll-upload-page">
+      <Link href="/professor" className="back"><ArrowLeft size={16} />대시보드로</Link>
+      <header className="page-head">
         <div>
-          <p className="studio-context">교수 도구 · 형성평가</p>
-          <h1>강의가 끝나기 전에<br />이해도를 확인하세요.</h1>
-          <p className="studio-lead">
+          <p className="eyebrow">교수 도구 · 형성평가</p>
+          <h1>강의의 끝에서,<br /><span className="headline-accent">형성평가</span>로 <span className="headline-accent">이해도</span>를 확인하세요</h1>
+          <p className="lead">
             강의자료의 근거를 벗어나지 않는 복습문항을 만들고, 교수 검수 후 학생에게 전달합니다.
           </p>
         </div>
-        <div className="studio-steps" aria-label="진행 단계">
-          {['자료', '설계', '검수'].map((label, index) => (
-            <div key={label} className={progress >= index + 1 ? 'is-current' : ''}>
-              <span>{progress > index + 1 ? <Check size={14} /> : index + 1}</span>
-              <b>{label}</b>
-            </div>
-          ))}
+        <div className="guide">
+          <button type="button" className="guide-trigger"><span className="guide-icon">?</span>사용 설명서</button>
+          <div className="guide-panel">
+            <h2>어떻게 사용하나요?</h2>
+            <ol>
+              <li><strong>강의자료 업로드</strong>: 형성평가의 근거가 될 PPTX 또는 PDF를 올립니다.</li>
+              <li><strong>문항 설계</strong>: 출제 범위와 학습목표, 난이도를 선택합니다.</li>
+              <li><strong>교수 검수</strong>: 생성된 문항을 확인하고 승인한 뒤 차시에 저장합니다.</li>
+            </ol>
+          </div>
         </div>
       </header>
 
-      <div className="studio-workbench">
+      <div className={file ? 'studio-workbench' : 'studio-workbench is-upload-only'}>
         <main className="studio-main">
-          <section className="studio-section" aria-labelledby="material-title">
-            <div className="section-heading">
+          <section className="studio-section material-section card pad" aria-labelledby="material-title">
+            <span className="studio-step-number" aria-hidden="true">1</span>
+            <div className="card-head">
               <div>
-                <h2 id="material-title">강의자료</h2>
-                <p>PPTX 또는 PDF 한 개를 올려주세요. 원본은 변경하지 않습니다.</p>
+                <h2 id="material-title">강의자료 업로드</h2>
+                <p>형성평가의 근거로 사용할 PPTX 또는 PDF 한 개를 올려주세요.</p>
               </div>
-              {file && <span className="status-copy"><ShieldCheck size={15} /> 교수 검수 전 비공개</span>}
+              <div className="tag"><Badge variant="default">필수</Badge></div>
             </div>
+            {file && <span className="status-copy"><ShieldCheck size={15} /> 교수 검수 전 비공개</span>}
 
             {!file ? (
-              <button className="material-drop" type="button" onClick={() => inputRef.current?.click()}>
-                <Upload size={22} />
-                <span><b>강의자료 선택</b><small>PPTX, PDF · 최대 25MB</small></span>
-                <ChevronRight size={18} />
-              </button>
+              <UploadDropZone
+                inputRef={inputRef}
+                accept={ACCEPT}
+                onFile={chooseFile}
+                title="파일을 끌어오거나 클릭해 업로드"
+                hint="PPTX, PDF · 최대 25MB"
+              />
             ) : (
-              <div className="material-file">
-                <FileText size={22} />
-                <span><b>{file.name}</b><small>{(file.size / 1024 / 1024).toFixed(1)} MB</small></span>
+              <div className="file-row">
+                <span className="file-icon"><FileText size={20} /></span>
+                <span className="file-main">
+                  <b className="file-name">{file.name}</b>
+                  <small className="file-meta">{(file.size / 1024 / 1024).toFixed(1)} MB · 업로드 완료</small>
+                </span>
                 <button type="button" aria-label="파일 제거" onClick={() => setFile(null)}><X size={17} /></button>
               </div>
             )}
-            <input ref={inputRef} hidden type="file" accept={ACCEPT} onChange={(event) => chooseFile(event.target.files?.[0])} />
           </section>
 
-          <section className="studio-section" aria-labelledby="design-title">
-            <div className="section-heading">
+          {file && <section className="studio-section design-section card pad" aria-labelledby="design-title">
+            <span className="studio-step-number" aria-hidden="true">2</span>
+            <div className="card-head">
               <div>
                 <h2 id="design-title">문항 설계</h2>
                 <p>프롬프트 대신 수업 의도만 선택하면 됩니다.</p>
               </div>
             </div>
 
-            <div className="form-grid">
-              <label><span>출제 범위</span><input value={range} onChange={(e) => setRange(e.target.value)} placeholder="예: 12–28쪽, 부정맥 약물" /></label>
-              <label><span>학습목표</span><input value={objective} onChange={(e) => setObjective(e.target.value)} placeholder="비워두면 자료에서 추출" /></label>
-              <label><span>문항 수</span><select value={count} onChange={(e) => setCount(Number(e.target.value))}>{[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n}문항</option>)}</select></label>
-              <label><span>난이도</span><select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}><option>하</option><option>중</option><option>상</option></select></label>
-              <label><span>인지 수준</span><select value={mix} onChange={(e) => setMix(e.target.value)}><option>핵심 회상 중심</option><option>기전 이해 중심</option><option>임상 적용 중심</option><option>균형 있게</option></select></label>
-              <label><span>제외할 내용</span><input value={excluded} onChange={(e) => setExcluded(e.target.value)} placeholder="예: 용량 암기, 희귀 부작용" /></label>
+            <div className="form-grid studio-design-grid">
+              <div className="design-group full">
+                <div className="design-group-heading">
+                  <h3>필수 설정</h3>
+                  <div className="tag"><Badge variant="default">필수</Badge></div>
+                </div>
+                <div className="required-settings-grid">
+                  <div className="field full">
+                    <span className="field-label">출제 범위</span>
+                    <Segmented options={['전체 자료', '페이지 선택'] as const} value={rangeMode} onChange={setRangeMode} ariaLabel="출제 범위" />
+                    {rangeMode === '페이지 선택' && (
+                      <input className="page-range-input" value={pageRange} onChange={(event) => setPageRange(event.target.value)} placeholder="예: 1~3, 5, 8~10" aria-label="출제할 페이지" />
+                    )}
+                  </div>
+                  <div className="field">
+                    <div className="range-head">
+                      <span className="field-label">문항 수</span>
+                      <strong className="range-value">{count}<span>문항</span></strong>
+                    </div>
+                    <input type="range" min="1" max="10" step="1" value={count} onChange={(event) => setCount(Number(event.target.value))} aria-label="문항 수" />
+                    <div className="range-scale"><span>1</span><span>5</span><span>10</span></div>
+                  </div>
+                  <div className="field">
+                    <span className="field-label">난이도</span>
+                    <Segmented options={['하', '중', '상'] as const} value={difficulty} onChange={setDifficulty} ariaLabel="난이도" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="design-group full optional-settings">
+                <div className="design-group-heading">
+                  <h3>추가 요청</h3>
+                  <div className="tag tag-muted"><Badge variant="gray">선택</Badge></div>
+                </div>
+                <div className="optional-settings-grid">
+                  <label className="field">
+                    <span className="field-label">꼭 포함할 내용</span>
+                    <textarea value={include} onChange={(event) => setInclude(event.target.value)} placeholder="예: 항부정맥 약물의 작용 기전을 꼭 포함해 주세요." />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">제외할 내용</span>
+                    <textarea value={excluded} onChange={(event) => setExcluded(event.target.value)} placeholder="예: 세부 용량이나 부작용 암기 문항은 제외해 주세요." />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">추가하고 싶은 프롬프트</span>
+                    <textarea value={additionalPrompt} onChange={(event) => setAdditionalPrompt(event.target.value)} placeholder="문항을 만들 때 추가로 반영할 요청을 자유롭게 입력해 주세요." />
+                  </label>
+                </div>
+              </div>
             </div>
-          </section>
+          </section>}
 
           {error && <div className="studio-error" role="alert"><AlertTriangle size={17} />{error}</div>}
 
           {result && (
-            <section className="studio-section review-section" aria-labelledby="review-title">
-              <div className="section-heading">
+            <section className="studio-section review-section card pad" aria-labelledby="review-title">
+              <div className="card-head">
                 <div>
                   <h2 id="review-title">검수할 문항</h2>
                   <p>{result.materialSummary}</p>
@@ -251,24 +303,47 @@ export function FormativeAssessmentStudio() {
           )}
         </main>
 
-        <aside className="studio-summary">
-          <div className="summary-title"><Sparkles size={18} /><h2>형성평가 초안</h2></div>
-          <dl>
-            <div><dt>저장할 차시</dt><dd><select value={courseId} onChange={(event) => setCourseId(event.target.value)}><option value="">차시 선택</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}</select></dd></div>
-            <div><dt>자료</dt><dd>{file?.name ?? '선택 전'}</dd></div>
-            <div><dt>범위</dt><dd>{range}</dd></div>
-            <div><dt>구성</dt><dd>{count}문항 · {difficulty}</dd></div>
-            <div><dt>초점</dt><dd>{mix}</dd></div>
+        {!file && (
+          <div className="studio-flow-arrow" aria-hidden="true">
+            <span />
+            <ArrowRight size={24} strokeWidth={2.4} />
+          </div>
+        )}
+
+        {!file && (
+          <UploadNextSteps
+            className="studio-next-flow"
+            steps={[
+              { number: 2, title: '문항 설계', description: '출제 범위·문항 수·난이도를 선택합니다.' },
+              { number: 3, title: '형성평가 생성', description: '강의자료의 근거 안에서 복습문항 초안을 만듭니다.' },
+              { number: 4, title: '검수 후 저장', description: '교수가 승인한 문항만 차시에 저장하고 배포합니다.' },
+            ]}
+            footer={<>먼저 왼쪽 <b className="text-sage-700">1. 강의자료 업로드</b>에서 파일을 선택해주세요.</>}
+          />
+        )}
+
+        {file && <aside className="faculty-summary summary summary-hero card pad">
+          <div className="card-head">
+            <div>
+              <h2>형성평가 초안</h2>
+              <p>설정을 확인하고 초안 생성을 시작하세요.</p>
+            </div>
+          </div>
+          <dl className="summary-list">
+            <div className="summary-item"><span>저장할 차시</span><strong><select value={courseId} onChange={(event) => setCourseId(event.target.value)}><option value="">차시 선택</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}</select></strong></div>
+            <div className="summary-item"><span>자료</span><strong>{file?.name ?? '선택 전'}</strong></div>
+            <div className="summary-item"><span>범위</span><strong>{rangeMode === '전체 자료' ? '전체 자료' : pageRange || '페이지 미입력'}</strong></div>
+            <div className="summary-item"><span>구성</span><strong>{count}문항 · {difficulty}</strong></div>
           </dl>
           {!result ? (
-            <button className="generate-button" type="button" disabled={!file || loading} onClick={generate}>
-              {loading ? <><Loader2 className="spin" size={17} /> 자료 분석 중</> : <><Sparkles size={17} /> 초안 생성</>}
+            <button className="generate-button primary-btn" type="button" disabled={!file || loading || (rangeMode === '페이지 선택' && !pageRange.trim())} onClick={generate}>
+              {loading ? <><Loader2 className="spin" size={17} /> 자료 분석 중</> : <>초안 생성 <ArrowRight size={17} /></>}
             </button>
           ) : (
-            savedId ? <a className="generate-button" href={`/professor/artifacts/${savedId}`}>차시에 저장됨 · 문항 검토하기</a> : <button className="generate-button" type="button" disabled={!courseId || loading} onClick={saveToCourse}>차시에 저장하고 검토하기</button>
+            savedId ? <a className="generate-button primary-btn" href={`/professor/artifacts/${savedId}`}>차시에 저장됨 · 문항 검토하기</a> : <button className="generate-button primary-btn" type="button" disabled={!courseId || loading} onClick={saveToCourse}>차시에 저장하고 검토하기</button>
           )}
-          <p className="summary-note">AI가 만든 초안입니다. 학생 공개 전 교수의 내용 검수가 필요합니다.</p>
-        </aside>
+          <p className="summary-note note">AI가 만든 초안입니다. 학생 공개 전 교수의 내용 검수가 필요합니다.</p>
+        </aside>}
       </div>
     </div>
   );
