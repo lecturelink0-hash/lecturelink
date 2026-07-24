@@ -6,6 +6,7 @@ import { requireDailyCostCap } from '@/lib/ai/cost-cap';
 import { parsePptx } from '@/lib/extract/pptx';
 import { extractEmbeddedPdfImages } from '@/lib/extract/pdf-embedded-images';
 import { normalizeToPng } from '@/lib/extract/preprocess';
+import { renderPdfPages } from '@/lib/extract/render-slides';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -31,6 +32,56 @@ async function prepareVisionImage(bytes: Uint8Array): Promise<Uint8Array | null>
   } catch {
     return null;
   }
+}
+
+async function selectVisualPdfPages(
+  pdfBuffer: ArrayBuffer,
+): Promise<MaterialImage[]> {
+  const previews = await renderPdfPages(pdfBuffer, {
+    maxPages: 60,
+    maxEdgePx: 320,
+  });
+  const { createCanvas, loadImage } = await import('canvas');
+  const scored: Array<{ page: number; score: number }> = [];
+  for (const preview of previews) {
+    try {
+      const image = await loadImage(Buffer.from(preview.png));
+      const width = 48;
+      const height = Math.max(24, Math.round((image.height / image.width) * width));
+      const canvas = createCanvas(width, height);
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0, width, height);
+      const pixels = context.getImageData(0, 0, width, height).data;
+      let dark = 0;
+      let colored = 0;
+      let midtone = 0;
+      const total = width * height;
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        const r = pixels[offset];
+        const g = pixels[offset + 1];
+        const b = pixels[offset + 2];
+        const average = (r + g + b) / 3;
+        if (average < 90) dark += 1;
+        if (Math.max(r, g, b) - Math.min(r, g, b) > 28 && average < 245) colored += 1;
+        if (average >= 90 && average < 220) midtone += 1;
+      }
+      const score = dark / total + (colored / total) * 1.5 + midtone / total;
+      if (score > 0.08) scored.push({ page: preview.pageIndex, score });
+    } catch {
+      // 개별 페이지 판별 실패는 전체 이미지 생성을 막지 않는다.
+    }
+  }
+  const pages = scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_VISION_IMAGES)
+    .map((item) => item.page);
+  if (pages.length === 0) return [];
+  const rendered = await renderPdfPages(pdfBuffer, {
+    pages,
+    maxPages: MAX_VISION_IMAGES,
+    maxEdgePx: 1024,
+  });
+  return rendered.map((page) => ({ page: page.pageIndex, png: page.png }));
 }
 
 const settingsSchema = z.object({
@@ -134,9 +185,14 @@ async function extractMaterial(file: File, useImages: boolean): Promise<{ text: 
           maxOutEdgePx: 1024,
         })
       : [];
+    const images = embedded.length > 0
+      ? embedded.map((image) => ({ page: null, png: image.png }))
+      : useImages
+        ? await selectVisualPdfPages(buffer)
+        : [];
     return {
       text: pages.slice(0, 120_000),
-      images: embedded.map((image) => ({ page: null, png: image.png })),
+      images,
     };
   }
   throw new ApiException('unsupported_file', 'PPTX 또는 PDF 파일만 지원합니다.', 400);
