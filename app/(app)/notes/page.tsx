@@ -224,6 +224,10 @@ export default function NotesPage() {
 
   // 원본 학습자료(문제 생성용)와 보조 참고문항을 별도 상태로 관리.
   const [materials, setMaterials] = useState<UploadRow[]>([]);
+  // 렌더 시점과 무관하게 현재 목록을 읽어야 하는 비동기 콜백용 미러.
+  const materialsRef = useRef<UploadRow[]>([]);
+  // 업로드가 끝나기 전에 사용자가 지운 임시 행 id — 완료 콜백이 서버 잔여물을 정리할 때 사용.
+  const cancelledUploadsRef = useRef<Set<string>>(new Set());
   const [references, setReferences] = useState<UploadRow[]>([]);
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   const [uploadingReference, setUploadingReference] = useState(false);
@@ -262,6 +266,10 @@ export default function NotesPage() {
     refresh();
     loadSubjects();
   }, []);
+
+  useEffect(() => {
+    materialsRef.current = materials;
+  }, [materials]);
 
   async function loadSubjects() {
     try {
@@ -355,22 +363,23 @@ export default function NotesPage() {
     try {
       const row = await uploadFile(file);
       if (!row) return;
-      let replaced = false;
-      let idsForAnalyze: string[] = [];
-      setMaterials((prev) => {
-        if (!prev.some((m) => m.id === tempId)) return prev; // 업로드 중 사용자가 삭제함
-        replaced = true;
-        const next = prev.map((m) => (m.id === tempId ? row : m));
-        idsForAnalyze = next
-          .filter((m) => !m.id.startsWith(LOCAL_ID_PREFIX))
-          .map((m) => m.id);
-        return next;
-      });
-      if (!replaced) {
-        // 대기 중 행이 삭제된 경우 — 서버에 만들어진 행/파일을 정리(베스트에포트).
+      // 취소 판정은 반드시 ref 로 한다. setMaterials 의 업데이터는 호출 직후가 아니라
+      // 다음 렌더에서 실행되므로, 업데이터 안에서 세운 플래그를 바로 읽으면 항상
+      // "취소됨"으로 보여 방금 업로드한 행을 지워 버린다(업로드가 통째로 사라지는 버그).
+      if (cancelledUploadsRef.current.has(tempId)) {
+        cancelledUploadsRef.current.delete(tempId);
+        // 대기 중 행을 사용자가 삭제한 경우 — 서버에 만들어진 행/파일 정리(베스트에포트).
         api.delete(`/api/uploads/${row.id}`).catch(() => {});
         return;
       }
+      // 분석 대상 = 이미 업로드가 끝난 자료(서버 id) + 이번에 올린 자료.
+      const idsForAnalyze = [
+        ...materialsRef.current
+          .filter((m) => m.id !== tempId && !m.id.startsWith(LOCAL_ID_PREFIX))
+          .map((m) => m.id),
+        row.id,
+      ];
+      setMaterials((prev) => prev.map((m) => (m.id === tempId ? row : m)));
       // 학습자료 업로드 완료 → AI 자동 분석으로 추천 설정/폼 채움.
       runAnalyze(idsForAnalyze);
     } catch (e) {
@@ -570,9 +579,10 @@ export default function NotesPage() {
       return;
     }
     if (uploadId.startsWith(LOCAL_ID_PREFIX)) {
-      // 아직 서버에 없는(업로드 진행 중) 행 — 화면에서만 제거하면 업로드 완료 콜백이
-      // 서버 측 잔여물을 정리한다.
+      // 아직 서버에 없는(업로드 진행 중) 행 — 화면에서만 제거하고 취소 표시를 남기면
+      // 업로드 완료 콜백이 서버 측 잔여물을 정리한다.
       if (kind === 'material') {
+        cancelledUploadsRef.current.add(uploadId);
         setMaterials((prev) => prev.filter((m) => m.id !== uploadId));
       } else {
         setReferences((prev) => prev.filter((r) => r.id !== uploadId));
