@@ -439,10 +439,20 @@ export default function NotesPage() {
   async function pollUploadStatus(
     uploadId: string,
     onPartial: (questions: GenQ[]) => void,
+    /** 진행이 멈췄을 때 생성 요청을 다시 보내는 함수(큐 고착 자동 회복). */
+    rekick?: () => Promise<unknown>,
   ): Promise<UploadDetailRes | null> {
     // 대용량 강의록은 OCR과 문항 생성에 5분 이상 걸릴 수 있다. 큐 작업은
     // 브라우저 요청과 독립적으로 진행되므로 충분히 기다리고 완료 상태를 복구한다.
     let partialShown = false;
+    // 큐 고착 자동 회복: 워커가 작업을 집어가지 못하면(전달 실패·함수 사망) 진행이 멈춘 채
+    // 영원히 끝나지 않는다. 서버는 heartbeat 기준으로 재점유를 허용하므로, 진행 신호가
+    // 일정 시간 없으면 사용자가 아무 것도 하지 않아도 생성 요청을 다시 보내 되살린다.
+    const STALL_MS = 150_000; // 서버의 queued 고착 기준(120s)보다 넉넉히
+    const MAX_REKICKS = 2;
+    let lastSignature = '';
+    let lastChangeAt = Date.now();
+    let rekicks = 0;
     for (let i = 0; i < 300; i += 1) {
       try {
         const list = await api.get<UploadRow[]>('/api/uploads');
@@ -451,6 +461,29 @@ export default function NotesPage() {
         setMaterials((prev) =>
           prev.map((m) => (m.id === uploadId ? { ...m, ...found } : m)),
         );
+        const signature = [
+          found.status,
+          found.processing_stage ?? '',
+          found.progress_current,
+          found.completed_question_count,
+        ].join('|');
+        if (signature !== lastSignature) {
+          lastSignature = signature;
+          lastChangeAt = Date.now();
+        } else if (
+          rekick &&
+          rekicks < MAX_REKICKS &&
+          Date.now() - lastChangeAt > STALL_MS &&
+          (found.status === 'queued' || found.status === 'processing')
+        ) {
+          rekicks += 1;
+          lastChangeAt = Date.now();
+          console.warn(
+            `[notes] 생성이 ${Math.round(STALL_MS / 1000)}초간 멈춤 — 재요청 ${rekicks}/${MAX_REKICKS}`,
+          );
+          // 실패해도 폴링은 계속한다(서버가 아직 살아있다고 판단하면 409 를 준다).
+          await rekick().catch(() => {});
+        }
         if (
           !partialShown &&
           // 생성이 병렬 소배치(3~4문항)로 완료되므로 첫 배치가 끝나는 즉시 부분 공개.
@@ -498,20 +531,26 @@ export default function NotesPage() {
   async function kickoffProcessing(uploadId: string): Promise<GenQ[]> {
     setProcessingId(uploadId);
     try {
-      const res = await api.post<ProcessRes>(`/api/uploads/${uploadId}/process`, {
-        desired_count: count,
-        style: 'professor',
-        difficulty,
-        question_types: questionTypes,
-        title: title.trim() || undefined,
-        reference_upload_ids: references.map((reference) => reference.id),
-      });
+      const sendProcess = () =>
+        api.post<ProcessRes>(`/api/uploads/${uploadId}/process`, {
+          desired_count: count,
+          style: 'professor',
+          difficulty,
+          question_types: questionTypes,
+          title: title.trim() || undefined,
+          reference_upload_ids: references.map((reference) => reference.id),
+        });
+      const res = await sendProcess();
 
       if (res.status === 'queued') {
-        const final = await pollUploadStatus(uploadId, (partialQuestions) => {
-          setGenerated({ total: partialQuestions.length, questions: partialQuestions });
-          setShowResult(true);
-        });
+        const final = await pollUploadStatus(
+          uploadId,
+          (partialQuestions) => {
+            setGenerated({ total: partialQuestions.length, questions: partialQuestions });
+            setShowResult(true);
+          },
+          sendProcess,
+        );
         if (final?.status === 'completed') {
           return await fetchGeneratedQuestions(uploadId);
         }

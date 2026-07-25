@@ -20,7 +20,11 @@ export const maxDuration = 300;
 const bodySchema = z.object({
   uploadId: z.string().uuid(),
   userId: z.string().uuid(),
-  desiredCount: z.number().int().min(5).max(20).optional(),
+  // 하한은 반드시 /api/uploads/[id]/process 의 desired_count 와 같아야 한다.
+  // 여기만 min(5) 로 남아 있어서 1~4문항 요청이 워커에서 400 으로 거절되고,
+  // QStash 는 4xx 를 영구 실패로 보아 재시도하지 않아 업로드가 'queued' 에
+  // 영구 고착됐다(사용자에게는 끝나지 않는 생성으로 보임).
+  desiredCount: z.number().int().min(1).max(20).optional(),
   style: z.enum(['kmle', 'professor', 'internal']).optional(),
   difficulty: z.enum(['하', '중', '상']).optional(),
   questionTypes: z.array(z.enum(['지식형', '임상형', '이미지형'])).min(1).max(3).optional(),
@@ -80,6 +84,33 @@ async function verifyQStashSignature(
   }
 }
 
+/**
+ * payload 검증 실패처럼 "재시도해도 소용없는" 실패에서, 원문에서 uploadId 만 건져
+ * 업로드를 'failed' 로 마킹한다. 실패해도 조용히 무시(이미 오류 경로).
+ */
+async function markUploadFailedBestEffort(
+  rawBody: string,
+  message: string,
+): Promise<void> {
+  try {
+    const parsed = JSON.parse(rawBody) as { uploadId?: unknown };
+    const uploadId = typeof parsed.uploadId === 'string' ? parsed.uploadId : null;
+    if (!uploadId || !/^[0-9a-f-]{36}$/i.test(uploadId)) return;
+    const { createAdminClient } = await import('@/lib/db/admin');
+    await createAdminClient()
+      .from('user_uploads')
+      .update({
+        status: 'failed',
+        processing_stage: 'failed',
+        error_message: message,
+        heartbeat_at: new Date().toISOString(),
+      })
+      .eq('id', uploadId);
+  } catch {
+    // 무시 — 알림은 호출자가 남긴다.
+  }
+}
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get('upstash-signature') ?? '';
@@ -111,10 +142,21 @@ export async function POST(request: Request) {
   try {
     payload = bodySchema.parse(JSON.parse(rawBody));
   } catch (e) {
-    return new Response(
-      `Invalid payload: ${e instanceof Error ? e.message : String(e)}`,
-      { status: 400 },
+    // 400 은 QStash 가 재시도하지 않는 영구 실패다. 여기서 아무 것도 하지 않으면 업로드가
+    // 'queued' 상태로 영원히 남아 사용자에게는 "생성이 끝나지 않는" 증상이 된다.
+    // 업로드 id 를 알아낼 수 있으면 'failed' 로 마킹해 사용자가 즉시 재시도할 수 있게 한다.
+    const reason = e instanceof Error ? e.message : String(e);
+    await markUploadFailedBestEffort(
+      rawBody,
+      `작업 요청 형식 오류로 처리하지 못했습니다. 다시 시도해주세요. (${reason.slice(0, 80)})`,
     );
+    await reportAlert({
+      severity: 'critical',
+      source: 'queue/callback',
+      message: '큐 payload 검증 실패 — 업로드를 failed 로 마킹(영구 고착 방지)',
+      payload: { error: reason.slice(0, 300), bodyPrefix: rawBody.slice(0, 200) },
+    });
+    return new Response(`Invalid payload: ${reason}`, { status: 400 });
   }
 
   // P0-3: 비용 캡 사전 체크. inline 경로는 /api/uploads/[id]/process 에서 막지만

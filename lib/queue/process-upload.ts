@@ -23,6 +23,14 @@ import { consumeQuotaCheckedStrict } from '@/lib/quota/check';
 
 export type QueueBackend = 'qstash' | 'inline';
 
+// ── 고착(stuck) 판정 기준
+// 살아있는 작업은 단계마다 heartbeat_at 을 갱신한다. 이보다 오래 갱신이 없으면
+// "죽은 작업"으로 보고 재점유를 허용한다.
+// queued: 정상이면 수 초 안에 워커가 집어간다. QStash 재시도 백오프를 감안해 2분.
+// processing: 워커 maxDuration 이 300초이므로, 그 안에 죽은 함수를 4분 뒤 회복.
+const QUEUED_STALE_MS = 120_000;
+const PROCESSING_STALE_MS = 240_000;
+
 export interface EnqueueInput {
   uploadId: string;
   userId: string;
@@ -70,11 +78,12 @@ function getQStashTargetUrl(): string | null {
  * - 0 row 반환: 누군가 이미 점유했거나(queued/processing/completed) row 가 없음.
  *   현재 status 를 follow-up SELECT 로 확인해 적절한 ApiException 을 던진다.
  */
-async function claimForQueue(uploadId: string): Promise<void> {
+async function claimForQueue(uploadId: string): Promise<{ recovered: boolean }> {
   const admin = createAdminClient();
+  const now = new Date().toISOString();
   const { data, error } = await admin
     .from('user_uploads')
-    .update({ status: 'queued', error_message: null })
+    .update({ status: 'queued', error_message: null, heartbeat_at: now })
     .eq('id', uploadId)
     .in('status', ['uploaded', 'failed'])
     .select('id')
@@ -83,11 +92,11 @@ async function claimForQueue(uploadId: string): Promise<void> {
   if (error) {
     throw new Error(`[queue/claim] ${error.message}`);
   }
-  if (data) return;
+  if (data) return { recovered: false };
 
   const { data: row, error: selErr } = await admin
     .from('user_uploads')
-    .select('status')
+    .select('status, heartbeat_at')
     .eq('id', uploadId)
     .maybeSingle();
 
@@ -95,6 +104,31 @@ async function claimForQueue(uploadId: string): Promise<void> {
     throw new ApiException('upload_not_found', '업로드를 찾을 수 없습니다.', 404);
   }
   if (row.status === 'queued' || row.status === 'processing') {
+    // ── 고착 회복(stale claim)
+    // 워커가 메시지를 못 받았거나(영구 실패), 함수가 timeout·크래시로 죽으면 행이
+    // 'queued'/'processing' 에 남아 영원히 끝나지 않는다. 살아있는 작업은
+    // heartbeat_at 을 계속 갱신하므로, heartbeat 가 충분히 오래됐으면 죽은 작업으로
+    // 보고 다시 점유한다. 조건부 UPDATE 한 문장이라 동시 회복 요청 중 1개만 성공한다.
+    const staleMs = row.status === 'queued' ? QUEUED_STALE_MS : PROCESSING_STALE_MS;
+    const cutoff = new Date(Date.now() - staleMs).toISOString();
+    const isStale = !row.heartbeat_at || row.heartbeat_at < cutoff;
+    if (isStale) {
+      const { data: reclaimed, error: reErr } = await admin
+        .from('user_uploads')
+        .update({ status: 'queued', error_message: null, heartbeat_at: now })
+        .eq('id', uploadId)
+        .in('status', ['queued', 'processing'])
+        .or(`heartbeat_at.is.null,heartbeat_at.lt."${cutoff}"`)
+        .select('id')
+        .maybeSingle();
+      if (reErr) throw new Error(`[queue/reclaim] ${reErr.message}`);
+      if (reclaimed) {
+        console.warn(
+          `[queue/claim] 고착 작업 회복 — uploadId=${uploadId} prevStatus=${row.status} lastHeartbeat=${row.heartbeat_at ?? 'null'}`,
+        );
+        return { recovered: true };
+      }
+    }
     throw new ApiException('already_processing', '이미 처리 중입니다.', 409);
   }
   if (row.status === 'completed') {
@@ -125,7 +159,10 @@ async function setStatus(
 /**
  * QStash 로 작업 enqueue. 재시도 1회 (5xx 한정).
  */
-async function enqueueQStash(payload: EnqueueInput): Promise<{ messageId: string }> {
+async function enqueueQStash(
+  payload: EnqueueInput,
+  options: { recovered: boolean } = { recovered: false },
+): Promise<{ messageId: string }> {
   const token = process.env.QSTASH_TOKEN!;
   let target = getQStashTargetUrl();
   if (!target) {
@@ -161,10 +198,15 @@ async function enqueueQStash(payload: EnqueueInput): Promise<{ messageId: string
     const result = await client.publishJSON({
       url: target,
       body: payload,
-      // upload_id 기준 deduplication — 동일 enqueue 차단
-      deduplicationId: payload.uploadId,
-      // 큐 내 재시도 1회만
-      retries: 1,
+      // upload_id 기준 deduplication — 사용자의 중복 클릭으로 같은 작업이 두 번 도는 것을 막는다.
+      // 단, 고착 회복 재발행은 반드시 통과해야 한다. QStash dedup 창(약 10분) 안에서는
+      // 같은 id 가 조용히 폐기되므로, 회복 시에는 시각을 섞어 새 id 로 발행한다.
+      deduplicationId: options.recovered
+        ? `${payload.uploadId}:recover:${Date.now()}`
+        : payload.uploadId,
+      // 전달 실패(5xx·네트워크)에 대한 큐 재시도. 1회는 너무 얕아 일시적 장애에서
+      // 작업이 그대로 사라졌다(→ 'queued' 고착). 지수 백오프로 3회까지 재시도한다.
+      retries: 3,
     });
     return { messageId: result.messageId };
   } catch (e) {
@@ -212,12 +254,14 @@ export async function enqueueProcessUpload(
     );
   }
 
-  // 1) 원자적 점유 — race-free
-  await claimForQueue(input.uploadId);
+  // 1) 원자적 점유 — race-free. recovered=true 면 고착된 기존 시도를 되살린 것이다.
+  const { recovered } = await claimForQueue(input.uploadId);
 
   // 2) quota 차감 (atomic check+consume). 실패 시 점유 롤백.
+  //    고착 회복은 "새 처리 시도"가 아니라 이미 차감된 시도의 재개이므로 다시 차감하지 않는다
+  //    (시스템 측 실패로 사용자 할당량을 두 번 깎지 않는다).
   try {
-    await consumeQuotaCheckedStrict(input.userId, 'uploads', 1);
+    if (!recovered) await consumeQuotaCheckedStrict(input.userId, 'uploads', 1);
   } catch (e) {
     await setStatus(input.uploadId, 'failed', {
       error_message: `quota 차감 실패: ${e instanceof Error ? e.message : String(e)}`,
@@ -237,7 +281,7 @@ export async function enqueueProcessUpload(
 
   if (backend === 'qstash') {
     try {
-      const r = await enqueueQStash(input);
+      const r = await enqueueQStash(input, { recovered });
       return { mode: 'qstash', messageId: r.messageId };
     } catch (e) {
       // 발송 실패 — failed 마킹. quota 는 이미 차감됐으므로 alert 에 표시해 운영 reconciliation 신호.
