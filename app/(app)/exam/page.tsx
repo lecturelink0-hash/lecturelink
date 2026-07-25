@@ -81,6 +81,22 @@ export default function ExamPage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [savedNote, setSavedNote] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [cpxStats, setCpxStats] = useState<{ cases: number; categories: number } | null>(null);
+
+  // CPX 배너 수치 — 연습 화면과 동일한 승인 증례 카탈로그에서 실제 수를 집계한다(하드코딩 금지).
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/cpx/cases', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { cases?: Array<{ id?: string; category?: string }> } | null) => {
+        if (!alive || !data || !Array.isArray(data.cases)) return;
+        const cases = data.cases.filter((c) => c?.id);
+        const categories = new Set(cases.map((c) => c.category).filter(Boolean));
+        setCpxStats({ cases: cases.length, categories: categories.size });
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     if (!zoomImage) return;
@@ -288,8 +304,8 @@ export default function ExamPage() {
             <h2 className="cpx-banner-title">CPX 실전 연습</h2>
             <p className="cpx-banner-desc">AI 표준화 환자와 12분 진료 세션 · 음성/텍스트 문진 · 부위별 신체진찰 · 루브릭 채점</p>
             <div className="cpx-banner-meta">
-              <span><strong>197</strong> 증례</span>
-              <span><strong>50</strong> 주호소</span>
+              <span><strong>{cpxStats?.cases ?? '…'}</strong> 증례</span>
+              <span><strong>{cpxStats?.categories ?? '…'}</strong> 주호소</span>
             </div>
             <span className="cpx-banner-cta"><Play className="w-4 h-4" strokeWidth={2.4} /> 연습 시작</span>
           </a>
