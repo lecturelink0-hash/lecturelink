@@ -84,6 +84,9 @@ const GEN_BATCH_MAX_QUESTIONS = 2;
 // 생성 배치 동시 실행 상한. 20문항(10배치) 요청 시 대형 입력의 동시 요청 폭주로
 // 429(rate limit) 백오프가 걸리면 오히려 벽시계 시간이 늘어나므로 과도한 동시성만 제한.
 const GEN_CONCURRENCY = 8;
+// 요청 수를 못 채웠을 때 빈 슬롯을 다시 채우는 최대 라운드 수.
+// (모델이 요청보다 적게 반환하거나, 이미지 문항이 정제 실패로 삭제되면 부족분이 생긴다.)
+const GEN_BACKFILL_ROUNDS = 2;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
@@ -851,7 +854,7 @@ export async function generatePrivateQuestionsFromUpload(
     const slideTextTotal = slides.map((s) => s.text).join(' ').trim();
     const canPrefire = batchSizes.length > 1 && slideTextTotal.length >= 1000;
     const prefired = canPrefire
-      ? generateAndPersistBatch(0, batchSizes[0], batchSizes.length, {
+      ? generateAndPersistBatch(0, Array.from({ length: batchSizes[0] }, (_, k) => k), batchSizes.length, {
           contextText: slides
             .filter((s) => s.text.trim().length > 0)
             .map((s) => `## 슬라이드 ${s.pageIndex}\n텍스트: ${s.text}`)
@@ -950,13 +953,29 @@ export async function generatePrivateQuestionsFromUpload(
       return false;
     };
 
+    // gi = 전역 이미지 인덱스. 배치마다 서로 다른 이미지 묶음을 주더라도 인페인팅 캐시와
+    // Storage 경로는 전역 인덱스로 통일해야 배치 간 중복 작업·경로 충돌이 없다.
     const featuredImages = slides
       .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
       // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
       .filter((x) => !x.c.ocrOnly)
       // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
       .filter((x) => !isTextCapture(x.c))
-      .slice(0, MAX_FEATURED_IMAGES);
+      .slice(0, MAX_FEATURED_IMAGES)
+      .map((x, gi) => ({ ...x, gi }));
+
+    // 사용자가 '이미지형'을 선택하지 않았으면 이미지를 생성 배치에 아예 넣지 않는다.
+    // 넣으면 시스템 프롬프트의 "이미지 판독 문항 우선" 지시 때문에 이미지 문항이 만들어지고,
+    // 그 이미지가 정제(인페인팅) 검증에서 탈락하거나 "동일 이미지 최대 2문제" 정리에 걸리면
+    // 문항이 통째로 삭제돼 요청 수보다 적게 남는다(10 요청 → 6 저장의 주 원인).
+    const useImages = (input.questionTypes ?? []).includes('이미지형') && featuredImages.length > 0;
+    if (!useImages) {
+      systemPrompt +=
+        '\n\n## 이미지 사용 금지(이번 요청)\n' +
+        '이번 요청에서는 의료 이미지를 제공하지 않는다. 모든 문항은 제공된 텍스트 근거만으로 ' +
+        '풀 수 있게 만들고, `image_indices` 는 **항상 빈 배열 []** 로 둔다. ' +
+        '"다음 심전도에서", "아래 흉부 X-ray 를 보고" 처럼 제시되지 않은 그림을 가리키는 발문도 쓰지 않는다.';
+    }
 
     // 선별 텍스트 인페인팅(비용 최적화): 모든 featured 를 미리 인페인팅하지 않고,
     // 생성이 "실제 참조한" 이미지에 한해 저장 직전 1회만 인페인팅한다(캐시로 배치 간 중복 방지).
@@ -1043,27 +1062,27 @@ export async function generatePrivateQuestionsFromUpload(
     // 같은 함수를 공유하기 위한 주입 지점.
     type GenContext = {
       contextText: string;
-      featured: Array<{ slide: number; c: CroppedImage }>;
-      getDisplayPng: (i: number) => Promise<Uint8Array | null>;
+      /** 이 배치에 제시할 이미지. gi 는 전역 인덱스(인페인팅 캐시·Storage 경로 기준). */
+      featured: Array<{ slide: number; c: CroppedImage; gi: number }>;
+      getDisplayPng: (gi: number) => Promise<Uint8Array | null>;
     };
 
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
-    // 사용할 수 있다 (참조하는 카탈로그·프롬프트·배치 계획은 모두 4)에서 미리 준비됨).
+    // 사용할 수 있다 (참조하는 카탈로그·프롬프트는 모두 4)에서 미리 준비됨).
+    // slots: 이 배치가 채울 generation_slot 목록(연속이 아닐 수 있다 — 부족분 보충용).
     async function generateAndPersistBatch(
       batchIndex: number,
-      batchSize: number,
+      slots: number[],
       batchCount: number,
       gen: GenContext,
     ): Promise<BatchResult> {
+      const batchSize = slots.length;
       const validImageIndex = (i: number) => i >= 0 && i < gen.featured.length;
-      const slotOffset = batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0);
-      const slotEnd = slotOffset + batchSize - 1;
       const { data: existingBatch, error: existingBatchError } = await admin
         .from('private_questions')
         .select('id, generation_slot')
         .eq('upload_id', uploadRow.id)
-        .gte('generation_slot', slotOffset)
-        .lte('generation_slot', slotEnd);
+        .in('generation_slot', slots);
       if (existingBatchError) throw existingBatchError;
       if ((existingBatch?.length ?? 0) >= batchSize) {
         completedQuestions += batchSize;
@@ -1213,7 +1232,7 @@ export async function generatePrivateQuestionsFromUpload(
           explanation: q.explanation,
           concepts: q.concepts ?? [],
           difficulty: q.difficulty,
-          generation_slot: slotOffset + questionIndex,
+          generation_slot: slots[questionIndex],
         };
       });
       const { data: inserted, error: insertErr } = await admin
@@ -1228,20 +1247,22 @@ export async function generatePrivateQuestionsFromUpload(
       for (const q of parsed.questions) {
         for (const i of q.image_indices ?? []) if (validImageIndex(i)) usedIndices.add(i);
       }
+      // key = 이 배치 안에서의 로컬 이미지 인덱스(모델이 응답한 image_indices 기준).
       const indexToPath = new Map<number, string>();
       // 이미지당 인페인팅(+검증 OCR)이 수십 초씩 걸릴 수 있어 직렬 대신 병렬로 정제·업로드.
       await Promise.all(
         [...usedIndices].map(async (i) => {
-          const display = await gen.getDisplayPng(i);
+          const gi = gen.featured[i].gi;
+          const display = await gen.getDisplayPng(gi);
           if (!display) return; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
-          const imgPath = `${uploadRow.user_id}/${uploadRow.id}/crops/q_image_${i}.png`;
+          const imgPath = `${uploadRow.user_id}/${uploadRow.id}/crops/q_image_${gi}.png`;
           const { error: upErr } = await admin.storage
             .from(STORAGE_BUCKET)
             .upload(imgPath, Buffer.from(display), {
               contentType: 'image/png',
               upsert: true,
             });
-          if (upErr) warnings.push(`이미지 ${i} Storage 저장 실패 — ${upErr.message}`);
+          if (upErr) warnings.push(`이미지 ${gi} Storage 저장 실패 — ${upErr.message}`);
           else indexToPath.set(i, imgPath);
         }),
       );
@@ -1314,35 +1335,77 @@ export async function generatePrivateQuestionsFromUpload(
 
     // 선인페인팅: 인페인팅 대상 여부(다이어그램류 + 주석 텍스트)는 생성 응답 전에 알 수
     // 있으므로, 생성 호출과 병행해 미리 시작해 둔다(Promise 캐시라 중복 실행 없음).
-    // 배치 완료 후 이미지 정제를 기다리던 수십 초 꼬리가 사라진다. 문항에 안 쓰인
-    // 이미지도 인페인팅될 수 있으나 featured ≤ 8 이라 추가 비용은 소액.
-    for (let i = 0; i < featuredImages.length; i++) void getDisplayPng(i);
+    // 배치 완료 후 이미지 정제를 기다리던 수십 초 꼬리가 사라진다.
+    // 이미지를 쓰지 않는 요청에서는 인페인팅 자체가 낭비(장당 수십 초·비용)라 건너뛴다.
+    if (useImages) {
+      for (const fi of featuredImages) void getDisplayPng(fi.gi);
+    }
 
-    const fullGen: GenContext = {
-      contextText: compositeText,
-      featured: featuredImages,
-      getDisplayPng,
+    // 배치별 이미지 배정: 같은 이미지를 여러 배치가 각자 문항으로 쓰면 "동일 이미지 최대
+    // 2문제" 정리에서 초과분 문항이 삭제된다. 배치마다 겹치지 않는 이미지 묶음을 주면
+    // 한 이미지를 참조하는 문항이 배치 크기(≤2) 이하로 제한돼 삭제가 발생하지 않는다.
+    const featuredForBatch = (batchIndex: number, batchCount: number) => {
+      if (!useImages) return [];
+      if (batchCount <= 1) return featuredImages;
+      // 텍스트 선발사 배치(0번)는 OCR 이전에 출발하므로 이미지를 받을 수 없다.
+      // 그 경우 이미지는 1번 이후 배치들에만 분배해 어떤 이미지도 버려지지 않게 한다.
+      const eligible = canPrefire
+        ? Array.from({ length: batchCount - 1 }, (_, k) => k + 1)
+        : Array.from({ length: batchCount }, (_, k) => k);
+      const pos = eligible.indexOf(batchIndex);
+      if (pos < 0) return [];
+      const per = Math.ceil(featuredImages.length / eligible.length);
+      // 이미지 수가 배치 수보다 적으면 뒤쪽 배치는 이미지 없이(텍스트 문항) 생성한다.
+      return featuredImages.slice(pos * per, pos * per + per);
     };
-    const batchResults = await mapWithConcurrency(
+
+    const genFor = (batchIndex: number, batchCount: number): GenContext => ({
+      contextText: compositeText,
+      featured: featuredForBatch(batchIndex, batchCount),
+      getDisplayPng,
+    });
+
+    const batchSettled = await mapWithConcurrency(
       batchSizes,
       GEN_CONCURRENCY,
-      async (batchSize, batchIndex) => {
-        if (batchIndex === 0 && prefired) {
-          const settled = await prefired;
-          if (settled.ok) return settled.v;
-          // 선발사 실패(일시 오류·텍스트 컨텍스트 부족) → OCR 완료된 전체 컨텍스트로 재시도.
-          // (부분 저장은 upsert(upload_id,generation_slot) + 기존 슬롯 조회로 안전하게 이어짐.)
-          console.warn(
-            '[private-gen] 텍스트 선발사 배치 실패 — 전체 컨텍스트로 재시도:',
-            settled.e instanceof Error ? settled.e.message : String(settled.e),
+      async (batchSize, batchIndex): Promise<BatchResult | null> => {
+        const slots = Array.from(
+          { length: batchSize },
+          (_, k) => batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0) + k,
+        );
+        try {
+          if (batchIndex === 0 && prefired) {
+            const settled = await prefired;
+            if (settled.ok) return settled.v;
+            // 선발사 실패(일시 오류·텍스트 컨텍스트 부족) → OCR 완료된 전체 컨텍스트로 재시도.
+            // (부분 저장은 upsert(upload_id,generation_slot) + 기존 슬롯 조회로 안전하게 이어짐.)
+            console.warn(
+              '[private-gen] 텍스트 선발사 배치 실패 — 전체 컨텍스트로 재시도:',
+              settled.e instanceof Error ? settled.e.message : String(settled.e),
+            );
+          }
+          return await generateAndPersistBatch(
+            batchIndex,
+            slots,
+            batchSizes.length,
+            genFor(batchIndex, batchSizes.length),
           );
-          return generateAndPersistBatch(0, batchSize, batchSizes.length, fullGen);
+        } catch (e) {
+          // 배치 1개 실패가 전체 생성을 실패시키지 않게 격리한다. 빈 슬롯은 아래 보충 단계가
+          // 다시 채운다(이전에는 여기서 throw 되어 성공한 배치까지 'failed' 로 끝났다).
+          warnings.push(
+            `배치 ${batchIndex + 1} 생성 실패 — 보충 생성으로 대체 시도. ${
+              e instanceof Error ? e.message : String(e)
+            }`,
+          );
+          return null;
         }
-        return generateAndPersistBatch(batchIndex, batchSize, batchSizes.length, fullGen);
       },
     );
-    let generatedCount = batchResults.reduce((sum, result) => sum + result.generatedCount, 0);
-    let insertedIds = batchResults.flatMap((result) => result.ids);
+    const batchResults = batchSettled.filter((r): r is BatchResult => r !== null);
+    if (batchResults.length === 0) {
+      throw new Error('문항 생성에 모두 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
     const unmatched = batchResults.reduce((sum, result) => sum + result.unmatched, 0);
 
     // 동일 의료 이미지 최대 2문제: 병렬 배치라 같은 이미지가 여러 문항(2개 초과)에
@@ -1396,9 +1459,6 @@ export async function generatePrivateQuestionsFromUpload(
         const orphanQ = [...affectedQ].filter((qid) => (remainingByQ.get(qid) ?? 0) === 0);
         if (orphanQ.length > 0) {
           await admin.from('private_questions').delete().in('id', orphanQ);
-          const orphanSet = new Set(orphanQ);
-          insertedIds = insertedIds.filter((id) => !orphanSet.has(id));
-          generatedCount = Math.max(0, generatedCount - orphanQ.length);
         }
       }
     } catch (cleanupErr) {
@@ -1406,6 +1466,58 @@ export async function generatePrivateQuestionsFromUpload(
         `이미지 재사용 정리 실패 — ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
       );
     }
+
+    // ── 부족분 보충: 요청 수를 반드시 채운다.
+    // 실제 저장 결과를 DB 에서 다시 읽어(누적 산술이 아니라 사실 기준) 빈 슬롯을 확인하고,
+    // 남은 슬롯을 "이미지 없는 텍스트 문항"으로 다시 생성한다. 이미지를 주지 않으므로
+    // 인페인팅 탈락·이미지 재사용 정리로 또 삭제되는 일이 없다.
+    // 부족 원인: 모델이 요청 수보다 적게 반환 / 이미지 문항 삭제 / 배치 실패.
+    const readSaved = async () => {
+      const { data } = await admin
+        .from('private_questions')
+        .select('id, generation_slot')
+        .eq('upload_id', uploadRow.id)
+        .order('generation_slot', { ascending: true });
+      return data ?? [];
+    };
+    let saved = await readSaved();
+    // 진행률 기준도 DB 사실값으로 맞춘다(삭제된 문항까지 세어 100%를 넘기지 않게).
+    completedQuestions = saved.length;
+    for (let round = 0; round < GEN_BACKFILL_ROUNDS && saved.length < desiredCount; round++) {
+      const usedSlots = new Set(saved.map((r) => r.generation_slot));
+      const missingSlots = Array.from({ length: desiredCount }, (_, s) => s).filter(
+        (s) => !usedSlots.has(s),
+      );
+      if (missingSlots.length === 0) break;
+      warnings.push(
+        `보충 생성 ${round + 1}회차: ${saved.length}/${desiredCount} → 부족 ${missingSlots.length}문항 재생성.`,
+      );
+      const fillBatches: number[][] = [];
+      for (let i = 0; i < missingSlots.length; i += GEN_BATCH_MAX_QUESTIONS) {
+        fillBatches.push(missingSlots.slice(i, i + GEN_BATCH_MAX_QUESTIONS));
+      }
+      await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
+        try {
+          await generateAndPersistBatch(i, slots, fillBatches.length, {
+            contextText: compositeText,
+            featured: [], // 텍스트 전용 — 이미지 관련 삭제 경로를 원천 차단
+            getDisplayPng: async () => null,
+          });
+        } catch (e) {
+          warnings.push(
+            `보충 배치 실패 — ${e instanceof Error ? e.message : String(e)}`,
+          );
+        }
+        return null;
+      });
+      saved = await readSaved();
+    }
+    if (saved.length < desiredCount) {
+      warnings.push(`최종 ${saved.length}/${desiredCount}문항 — 요청 수를 채우지 못했습니다.`);
+    }
+    const generatedCount = saved.length;
+    const insertedIds = saved.map((r) => r.id);
+    completedQuestions = generatedCount;
     const contentSummary = batchResults.map((result) => result.contentSummary).find(Boolean) ?? '';
     const cacheReadTokens = batchResults.reduce((sum, result) => sum + result.cacheReadTokens, 0);
     const cacheCreationTokens = batchResults.reduce(
