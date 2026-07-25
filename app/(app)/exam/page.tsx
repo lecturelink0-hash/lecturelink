@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SubjectIcon } from '@/components/SubjectIcon';
 import {
   Stethoscope, ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
-  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, Play,
+  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, Play, ZoomIn, X,
 } from 'lucide-react';
 
 interface SubTopic {
@@ -80,6 +80,36 @@ export default function ExamPage() {
   const [finished, setFinished] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [savedNote, setSavedNote] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [cpxStats, setCpxStats] = useState<{ cases: number; categories: number } | null>(null);
+
+  // CPX 배너 수치 — 연습 화면과 동일한 승인 증례 카탈로그에서 실제 수를 집계한다(하드코딩 금지).
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/cpx/cases', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { cases?: Array<{ id?: string; category?: string }> } | null) => {
+        if (!alive || !data || !Array.isArray(data.cases)) return;
+        const cases = data.cases.filter((c) => c?.id);
+        const categories = new Set(cases.map((c) => c.category).filter(Boolean));
+        setCpxStats({ cases: cases.length, categories: categories.size });
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!zoomImage) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoomImage(null);
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [zoomImage]);
 
   useEffect(() => {
     api
@@ -274,8 +304,8 @@ export default function ExamPage() {
             <h2 className="cpx-banner-title">CPX 실전 연습</h2>
             <p className="cpx-banner-desc">AI 표준화 환자와 12분 진료 세션 · 음성/텍스트 문진 · 부위별 신체진찰 · 루브릭 채점</p>
             <div className="cpx-banner-meta">
-              <span><strong>197</strong> 증례</span>
-              <span><strong>50</strong> 주호소</span>
+              <span><strong>{cpxStats?.cases ?? '…'}</strong> 증례</span>
+              <span><strong>{cpxStats?.categories ?? '…'}</strong> 주호소</span>
             </div>
             <span className="cpx-banner-cta"><Play className="w-4 h-4" strokeWidth={2.4} /> 연습 시작</span>
           </a>
@@ -548,9 +578,21 @@ export default function ExamPage() {
                   </div>
 
                   {current.imageUrl && (
-                    <div className="mb-3 bg-sage-900 rounded-lg h-56 flex items-center justify-center overflow-hidden">
+                    <div className="relative mb-3 bg-sage-900 rounded-lg overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={current.imageUrl} alt="medical" className="max-h-full max-w-full object-contain" />
+                      <img
+                        src={current.imageUrl}
+                        alt="medical"
+                        className="w-full max-h-[70vh] object-contain cursor-zoom-in"
+                        onClick={() => setZoomImage(current.imageUrl)}
+                      />
+                      <button
+                        onClick={() => setZoomImage(current.imageUrl)}
+                        aria-label="이미지 확대"
+                        className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center transition-colors"
+                      >
+                        <ZoomIn className="w-5 h-5" />
+                      </button>
                     </div>
                   )}
 
@@ -620,6 +662,23 @@ export default function ExamPage() {
           )}
         </div>
       </div>
+
+      {zoomImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setZoomImage(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={zoomImage} alt="확대된 문항 이미지" className="max-w-[95vw] max-h-[92vh] object-contain rounded-lg" />
+          <button
+            onClick={() => setZoomImage(null)}
+            aria-label="닫기"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
