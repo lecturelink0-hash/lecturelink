@@ -76,10 +76,14 @@ const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 �
 // crop 을 평탄화해 전역 동시성으로 돌린다. (슬라이드 단위 병렬로는 임베드 이미지 경로처럼
 // 한 슬라이드에 crop 이 몰린 경우 사실상 순차가 되어 수십 초를 잃는다.)
 const OCR_CONCURRENCY = 8;
-// 생성 배치당 최대 문항 수. 생성 시간은 출력 토큰 수가 지배하므로 배치를 잘게 쪼개
-// 전부 병렬로 돌리면 체감 시간이 배치 1개(≤4문항) 수준으로 줄어든다.
+// 생성 배치당 최대 문항 수. 생성 시간은 배치당 "출력 토큰 수"가 지배하므로 배치를 잘게
+// 쪼개 병렬로 돌리면 체감 시간이 배치 1개 수준으로 줄어든다. 문항당 출력이 1천 토큰대라
+// 4문항 배치는 디코딩만 1분+ 걸림 → 2문항으로 줄여 배치 1개를 ~30초대로.
 // (배치 수만큼 입력 컨텍스트가 반복 과금되므로 무한정 쪼개지는 않는다.)
-const GEN_BATCH_MAX_QUESTIONS = 4;
+const GEN_BATCH_MAX_QUESTIONS = 2;
+// 생성 배치 동시 실행 상한. 20문항(10배치) 요청 시 대형 입력의 동시 요청 폭주로
+// 429(rate limit) 백오프가 걸리면 오히려 벽시계 시간이 늘어나므로 과도한 동시성만 제한.
+const GEN_CONCURRENCY = 8;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
@@ -716,6 +720,9 @@ export async function generatePrivateQuestionsFromUpload(
   if (upload.user_id !== input.userId) {
     throw new Error('Upload ownership mismatch');
   }
+  // 아래 배치 생성 함수는 function 선언(호이스팅)이라 TS 가 upload 의 null 배제
+  // 내로잉을 함수 본문에 전파하지 않는다 — non-null 로 확정된 별칭을 캡처시킨다.
+  const uploadRow = upload;
 
   await admin
     .from('user_uploads')
@@ -747,9 +754,10 @@ export async function generatePrivateQuestionsFromUpload(
     }
     const fileBuffer = await fileBlob.arrayBuffer();
 
-    // 3) 추출 (페이지 텍스트 + crop 이미지) — 참고자료 로드는 독립 작업이라 병렬로 겹친다.
+    // 3) 추출 (페이지 텍스트 + crop 이미지) — 참고자료·분류 카탈로그 로드는 독립 작업이라
+    //    병렬로 겹친다. (카탈로그를 미리 받아야 OCR 와중에 텍스트 선발사 배치를 띄울 수 있다.)
     await updateProgress('extracting');
-    const [{ slides, warnings }, referenceImages] = await Promise.all([
+    const [{ slides, warnings }, referenceImages, subTopicsRes] = await Promise.all([
       extractFromBuffer({
         buffer: fileBuffer,
         fileType: upload.file_type,
@@ -761,16 +769,105 @@ export async function generatePrivateQuestionsFromUpload(
         uploadIds: input.referenceUploadIds ?? [],
         userId: input.userId,
       }),
+      admin
+        .from('sub_topics')
+        .select('id, code, name, subject:subjects ( name )'),
     ]);
 
-    // 4) crop 이미지 OCR — crop 단위로 평탄화해 전역 병렬 처리.
-    //    (슬라이드 단위 병렬은 임베드 이미지 경로처럼 crop 이 첫 슬라이드에 몰리면
-    //     사실상 순차가 되어 crop 수 × 호출 지연만큼 느려진다.)
+    // 4) 분류 카탈로그·생성 프롬프트·배치 계획을 OCR "이전"에 준비한다 — 본문 텍스트가
+    //    충분한 자료는 아래 "텍스트 선발사 배치"가 OCR 과 병행으로 먼저 출발할 수 있게.
+    type CatalogRow = {
+      id: string;
+      code: string;
+      name: string;
+      subject: { name: string } | { name: string }[] | null;
+    };
+    const catalog = (subTopicsRes.data ?? []).map((row) => {
+      const s = row as CatalogRow;
+      const subj = Array.isArray(s.subject) ? s.subject[0] : s.subject;
+      return {
+        id: s.id,
+        code: s.code,
+        name: s.name,
+        subject_name: subj?.name ?? '',
+      };
+    });
+    const codeToId = new Map(catalog.map((c) => [c.code, c.id]));
+
+    const catalogText = catalog
+      .map((c) => `  - ${c.subject_name} > ${c.name} (code: \`${c.code}\`)`)
+      .join('\n');
+    let systemPrompt = PRIVATE_GENERATION_SYSTEM_PROMPT.replace(
+      '{SUB_TOPIC_CATALOG}',
+      catalogText,
+    );
+    // 사용자 지정 난이도·문항유형을 생성 지시로 반영.
+    const diffDirective =
+      input.difficulty === '하'
+        ? '전체 문항을 **쉬운(기본 개념) 난이도** 위주로 생성한다(difficulty 1~2).'
+        : input.difficulty === '상'
+          ? '전체 문항을 **어렵고 지엽적/응용 난이도** 위주로 생성한다(difficulty 2~3).'
+          : input.difficulty === '중'
+            ? '전체 문항을 **표준(중간) 난이도** 위주로 생성한다(difficulty 2).'
+            : '';
+    const typeDirectives: Record<string, string> = {
+      '지식형': '**지식형**: 개념·정의·기전을 확인하는 단답/개념 확인 문항 위주로 만든다(긴 증례보다 핵심 지식).',
+      '임상형': '**임상형**: 실제 환자 증례(vignette: 나이/증상/검사)를 제시하고 진단·처치·판단을 묻는 임상 문항 위주로 만든다.',
+      '이미지형': '**이미지형**: 자료의 의료 이미지를 판독·해석해야 푸는 문항을 가능한 한 많이 만든다(이미지가 있으면 우선).',
+    };
+    const selectedTypes = input.questionTypes ?? [];
+    const typeDirective = selectedTypes.length
+      ? `선택된 문항 유형(${selectedTypes.join(', ')})을 전체 문항에 고르게 배분한다.\n${selectedTypes.map((type) => typeDirectives[type]).join('\n')}`
+      : '';
+    if (diffDirective || typeDirective) {
+      systemPrompt += `\n\n## 사용자 지정 출제 조건\n${[diffDirective, typeDirective].filter(Boolean).join('\n')}`;
+    }
+    const client = getAnthropic();
+    modelUsed = MODELS.generation();
+
+    // 생성 시간은 배치당 출력 토큰(≈ 문항 수)이 지배한다. 문항을 GEN_BATCH_MAX_QUESTIONS
+    // 이하의 균등한 소배치로 나눠 병렬 실행하면 전체 소요가 "가장 큰 배치 1개" 수준으로
+    // 줄어든다. (4문항 배치도 디코딩만 1분+ 라 2문항으로 축소 — 상수 주석 참고.)
+    const batchCount = Math.ceil(desiredCount / GEN_BATCH_MAX_QUESTIONS);
+    const baseBatchSize = Math.floor(desiredCount / batchCount);
+    const batchRemainder = desiredCount % batchCount;
+    const batchSizes = Array.from(
+      { length: batchCount },
+      (_, i) => baseBatchSize + (i < batchRemainder ? 1 : 0),
+    );
     const allCrops = slides.flatMap((s) =>
       s.croppedImages.map((c) => ({ slide: s, crop: c })),
     );
-    await updateProgress('ocr', 0, allCrops.length, { page_count: slides.length });
+    const totalCropped = allCrops.length;
     let ocrChars = 0;
+    let completedQuestions = 0;
+
+    // ★ 텍스트 선(先)발사 — 본문 텍스트는 이미 준비된 시점이므로 첫 배치를 텍스트만으로
+    //   즉시 출발시켜 crop OCR(이미지 자료에서 수십 초)과 생성 시간을 겹친다. 이미지 판독
+    //   배치(나머지)는 OCR·이미지 선별 완료 후 실행한다. 텍스트가 빈약한(스캔 위주) 자료는
+    //   선발사 컨텍스트가 부실하므로 기존 순서(OCR 후 일괄)를 유지한다.
+    //   실패는 즉시 던지지 않고 감싸 두었다가(unhandled rejection 크래시 방지) 아래
+    //   본배치 단계에서 전체 컨텍스트로 재시도한다.
+    const slideTextTotal = slides.map((s) => s.text).join(' ').trim();
+    const canPrefire = batchSizes.length > 1 && slideTextTotal.length >= 1000;
+    const prefired = canPrefire
+      ? generateAndPersistBatch(0, batchSizes[0], batchSizes.length, {
+          contextText: slides
+            .filter((s) => s.text.trim().length > 0)
+            .map((s) => `## 슬라이드 ${s.pageIndex}\n텍스트: ${s.text}`)
+            .join('\n\n'),
+          featured: [],
+          getDisplayPng: async () => null,
+        }).then(
+          (v) => ({ ok: true as const, v }),
+          (e: unknown) => ({ ok: false as const, e }),
+        )
+      : null;
+
+    // 5) crop 이미지 OCR — crop 단위로 평탄화해 전역 병렬 처리.
+    //    (슬라이드 단위 병렬은 임베드 이미지 경로처럼 crop 이 첫 슬라이드에 몰리면
+    //     사실상 순차가 되어 crop 수 × 호출 지연만큼 느려진다.)
+    await updateProgress('ocr', 0, allCrops.length, { page_count: slides.length });
     await mapWithConcurrency(
       allCrops,
       OCR_CONCURRENCY,
@@ -802,9 +899,8 @@ export async function generatePrivateQuestionsFromUpload(
         .map((c) => `[${c.region.kind}] ${c.ocrText}`),
       cropCount: s.croppedImages.length,
     }));
-    const totalCropped = allCrops.length;
 
-    // 4.5) 추출 결과가 전부 비어 있으면 Claude 호출은 의미 없음 → 명확한 실패 메시지.
+    // 5.5) 추출 결과가 전부 비어 있으면 Claude 호출은 의미 없음 → 명확한 실패 메시지.
     const totalSlideText = slideSummaries
       .map((ss) => ss.slideText)
       .join(' ')
@@ -816,29 +912,6 @@ export async function generatePrivateQuestionsFromUpload(
         '추출된 텍스트·이미지가 없습니다. 자료에 본문 텍스트나 의료 이미지가 포함되어 있는지 확인하세요.',
       );
     }
-
-    // 5) Sub_topic 카탈로그
-    const { data: subTopics } = await admin
-      .from('sub_topics')
-      .select('id, code, name, subject:subjects ( name )');
-
-    type CatalogRow = {
-      id: string;
-      code: string;
-      name: string;
-      subject: { name: string } | { name: string }[] | null;
-    };
-    const catalog = (subTopics ?? []).map((row) => {
-      const s = row as CatalogRow;
-      const subj = Array.isArray(s.subject) ? s.subject[0] : s.subject;
-      return {
-        id: s.id,
-        code: s.code,
-        name: s.name,
-        subject_name: subj?.name ?? '',
-      };
-    });
-    const codeToId = new Map(catalog.map((c) => [c.code, c.id]));
 
     // 6) 통합 컨텍스트 구성 — 슬라이드 텍스트 + OCR 결과를 라벨링해 한 번에 전달
     const contextBlocks: string[] = [];
@@ -852,37 +925,7 @@ export async function generatePrivateQuestionsFromUpload(
     }
     const compositeText = contextBlocks.join('\n\n');
 
-    // 7) Claude 호출 — 문항 생성
-    const catalogText = catalog
-      .map((c) => `  - ${c.subject_name} > ${c.name} (code: \`${c.code}\`)`)
-      .join('\n');
-    let systemPrompt = PRIVATE_GENERATION_SYSTEM_PROMPT.replace(
-      '{SUB_TOPIC_CATALOG}',
-      catalogText,
-    );
-    // 사용자 지정 난이도·문항유형을 생성 지시로 반영.
-    const diffDirective =
-      input.difficulty === '하'
-        ? '전체 문항을 **쉬운(기본 개념) 난이도** 위주로 생성한다(difficulty 1~2).'
-        : input.difficulty === '상'
-          ? '전체 문항을 **어렵고 지엽적/응용 난이도** 위주로 생성한다(difficulty 2~3).'
-          : input.difficulty === '중'
-            ? '전체 문항을 **표준(중간) 난이도** 위주로 생성한다(difficulty 2).'
-            : '';
-    const typeDirectives: Record<string, string> = {
-      '지식형': '**지식형**: 개념·정의·기전을 확인하는 단답/개념 확인 문항 위주로 만든다(긴 증례보다 핵심 지식).',
-      '임상형': '**임상형**: 실제 환자 증례(vignette: 나이/증상/검사)를 제시하고 진단·처치·판단을 묻는 임상 문항 위주로 만든다.',
-      '이미지형': '**이미지형**: 자료의 의료 이미지를 판독·해석해야 푸는 문항을 가능한 한 많이 만든다(이미지가 있으면 우선).',
-    };
-    const selectedTypes = input.questionTypes ?? [];
-    const typeDirective = selectedTypes.length
-      ? `선택된 문항 유형(${selectedTypes.join(', ')})을 전체 문항에 고르게 배분한다.\n${selectedTypes.map((type) => typeDirectives[type]).join('\n')}`
-      : '';
-    if (diffDirective || typeDirective) {
-      systemPrompt += `\n\n## 사용자 지정 출제 조건\n${[diffDirective, typeDirective].filter(Boolean).join('\n')}`;
-    }
-    const client = getAnthropic();
-    modelUsed = MODELS.generation();
+    // 7) Claude 호출 — 문항 생성 (프롬프트·배치 계획은 4)에서 준비됨)
     await updateProgress('generating', 0, desiredCount);
 
     // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
@@ -996,21 +1039,29 @@ export async function generatePrivateQuestionsFromUpload(
       cacheReadTokens: number;
       cacheCreationTokens: number;
     };
+    // 배치별 생성 컨텍스트 — "텍스트 선발사 배치"(이미지 없음)와 "전체 컨텍스트 배치"가
+    // 같은 함수를 공유하기 위한 주입 지점.
+    type GenContext = {
+      contextText: string;
+      featured: Array<{ slide: number; c: CroppedImage }>;
+      getDisplayPng: (i: number) => Promise<Uint8Array | null>;
+    };
 
-    const validImageIndex = (i: number) => i >= 0 && i < featuredImages.length;
-    let completedQuestions = 0;
-
-    const generateAndPersistBatch = async (
+    // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
+    // 사용할 수 있다 (참조하는 카탈로그·프롬프트·배치 계획은 모두 4)에서 미리 준비됨).
+    async function generateAndPersistBatch(
       batchIndex: number,
       batchSize: number,
       batchCount: number,
-    ): Promise<BatchResult> => {
+      gen: GenContext,
+    ): Promise<BatchResult> {
+      const validImageIndex = (i: number) => i >= 0 && i < gen.featured.length;
       const slotOffset = batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0);
       const slotEnd = slotOffset + batchSize - 1;
       const { data: existingBatch, error: existingBatchError } = await admin
         .from('private_questions')
         .select('id, generation_slot')
-        .eq('upload_id', upload.id)
+        .eq('upload_id', uploadRow.id)
         .gte('generation_slot', slotOffset)
         .lte('generation_slot', slotEnd);
       if (existingBatchError) throw existingBatchError;
@@ -1049,14 +1100,14 @@ export async function generatePrivateQuestionsFromUpload(
           },
         } as Anthropic.ImageBlockParam);
       }
-      for (let i = 0; i < featuredImages.length; i++) {
+      for (let i = 0; i < gen.featured.length; i++) {
         userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
         userContent.push({
           type: 'image',
           source: {
             type: 'base64',
             media_type: 'image/png',
-            data: Buffer.from(featuredImages[i].c.png).toString('base64'),
+            data: Buffer.from(gen.featured[i].c.png).toString('base64'),
           },
         } as Anthropic.ImageBlockParam);
       }
@@ -1073,14 +1124,15 @@ export async function generatePrivateQuestionsFromUpload(
         type: 'text',
         text:
           `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
-          (compositeText || '(추출된 텍스트·이미지 없음)') +
+          (gen.contextText || '(추출된 텍스트·이미지 없음)') +
           `\n\n${userMessage}${batchDirective}`,
       });
 
-      // 한국어 국시형 문항(긴 vignette+선지 5+오답 이유 해설)은 문항당 ~1,500토큰까지
-      // 나온다. 예산이 모자라면 출력이 잘려 함수호출(functionCall)이 통째로 사라지고
-      // "tool_use 블록이 없음"으로 실패하므로 여유 있게 잡는다.
-      const genMaxTokens = Math.min(16000, Math.max(9000, batchSize * 1800));
+      // 해설 길이 상한(350자) 적용 후 문항당 실출력은 ~1,000토큰대. 다만 지시 이탈로
+      // 길어질 때 출력이 잘리면 함수호출(functionCall)이 통째로 사라져 "tool_use 블록이
+      // 없음"으로 실패하므로 예산은 여유 있게(문항당 1,800) 잡는다. max_tokens 는 상한일
+      // 뿐이라 실제 속도는 실출력 토큰 수가 결정한다.
+      const genMaxTokens = Math.min(16000, Math.max(6000, batchSize * 1800));
       const callGenerate = (maxTokens: number) =>
         withRetry(() =>
           createMessage(client, {
@@ -1138,7 +1190,7 @@ export async function generatePrivateQuestionsFromUpload(
         inputTokens: response.usage.input_tokens,
         outputTokens: response.usage.output_tokens,
         metadata: {
-          uploadId: upload.id,
+          uploadId: uploadRow.id,
           batch: batchIndex + 1,
           batchCount,
           slides: slides.length,
@@ -1153,7 +1205,7 @@ export async function generatePrivateQuestionsFromUpload(
         if (!subTopicId) unmatched += 1;
         return {
           user_id: input.userId,
-          upload_id: upload.id,
+          upload_id: uploadRow.id,
           sub_topic_id: subTopicId,
           stem: normalizeStemEnding(q.stem),
           choices: q.choices,
@@ -1177,19 +1229,22 @@ export async function generatePrivateQuestionsFromUpload(
         for (const i of q.image_indices ?? []) if (validImageIndex(i)) usedIndices.add(i);
       }
       const indexToPath = new Map<number, string>();
-      for (const i of usedIndices) {
-        const display = await getDisplayPng(i);
-        if (!display) continue; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
-        const imgPath = `${upload.user_id}/${upload.id}/crops/q_image_${i}.png`;
-        const { error: upErr } = await admin.storage
-          .from(STORAGE_BUCKET)
-          .upload(imgPath, Buffer.from(display), {
-            contentType: 'image/png',
-            upsert: true,
-          });
-        if (upErr) warnings.push(`이미지 ${i} Storage 저장 실패 — ${upErr.message}`);
-        else indexToPath.set(i, imgPath);
-      }
+      // 이미지당 인페인팅(+검증 OCR)이 수십 초씩 걸릴 수 있어 직렬 대신 병렬로 정제·업로드.
+      await Promise.all(
+        [...usedIndices].map(async (i) => {
+          const display = await gen.getDisplayPng(i);
+          if (!display) return; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
+          const imgPath = `${uploadRow.user_id}/${uploadRow.id}/crops/q_image_${i}.png`;
+          const { error: upErr } = await admin.storage
+            .from(STORAGE_BUCKET)
+            .upload(imgPath, Buffer.from(display), {
+              contentType: 'image/png',
+              upsert: true,
+            });
+          if (upErr) warnings.push(`이미지 ${i} Storage 저장 실패 — ${upErr.message}`);
+          else indexToPath.set(i, imgPath);
+        }),
+      );
       const imageRows = parsed.questions.flatMap((q, qi) => {
         const qId = inserted[qi]?.id;
         if (!qId) return [];
@@ -1198,11 +1253,11 @@ export async function generatePrivateQuestionsFromUpload(
           .map((i, order) => {
             const storagePath = indexToPath.get(i);
             if (!storagePath) return null;
-            const fi = featuredImages[i];
+            const fi = gen.featured[i];
             return {
               private_question_id: qId,
               user_id: input.userId,
-              upload_id: upload.id,
+              upload_id: uploadRow.id,
               storage_path: storagePath,
               source_page: fi.slide,
               kind: fi.c.region.kind,
@@ -1255,22 +1310,36 @@ export async function generatePrivateQuestionsFromUpload(
         cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
         cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
       };
-    };
+    }
 
-    // 생성 시간은 배치당 출력 토큰(≈ 문항 수)이 지배한다. 문항을 GEN_BATCH_MAX_QUESTIONS
-    // 이하의 균등한 소배치로 나눠 전부 병렬 실행하면 전체 소요가 "가장 큰 배치 1개" 수준
-    // (≤4문항 ≈ 수십 초)으로 줄어든다. (기존 [5, 나머지] 2배치는 배치당 5~15문항이라 2분+)
-    const batchCount = Math.ceil(desiredCount / GEN_BATCH_MAX_QUESTIONS);
-    const baseBatchSize = Math.floor(desiredCount / batchCount);
-    const batchRemainder = desiredCount % batchCount;
-    const batchSizes = Array.from(
-      { length: batchCount },
-      (_, i) => baseBatchSize + (i < batchRemainder ? 1 : 0),
-    );
-    const batchResults = await Promise.all(
-      batchSizes.map((batchSize, batchIndex) =>
-        generateAndPersistBatch(batchIndex, batchSize, batchSizes.length),
-      ),
+    // 선인페인팅: 인페인팅 대상 여부(다이어그램류 + 주석 텍스트)는 생성 응답 전에 알 수
+    // 있으므로, 생성 호출과 병행해 미리 시작해 둔다(Promise 캐시라 중복 실행 없음).
+    // 배치 완료 후 이미지 정제를 기다리던 수십 초 꼬리가 사라진다. 문항에 안 쓰인
+    // 이미지도 인페인팅될 수 있으나 featured ≤ 8 이라 추가 비용은 소액.
+    for (let i = 0; i < featuredImages.length; i++) void getDisplayPng(i);
+
+    const fullGen: GenContext = {
+      contextText: compositeText,
+      featured: featuredImages,
+      getDisplayPng,
+    };
+    const batchResults = await mapWithConcurrency(
+      batchSizes,
+      GEN_CONCURRENCY,
+      async (batchSize, batchIndex) => {
+        if (batchIndex === 0 && prefired) {
+          const settled = await prefired;
+          if (settled.ok) return settled.v;
+          // 선발사 실패(일시 오류·텍스트 컨텍스트 부족) → OCR 완료된 전체 컨텍스트로 재시도.
+          // (부분 저장은 upsert(upload_id,generation_slot) + 기존 슬롯 조회로 안전하게 이어짐.)
+          console.warn(
+            '[private-gen] 텍스트 선발사 배치 실패 — 전체 컨텍스트로 재시도:',
+            settled.e instanceof Error ? settled.e.message : String(settled.e),
+          );
+          return generateAndPersistBatch(0, batchSize, batchSizes.length, fullGen);
+        }
+        return generateAndPersistBatch(batchIndex, batchSize, batchSizes.length, fullGen);
+      },
     );
     let generatedCount = batchResults.reduce((sum, result) => sum + result.generatedCount, 0);
     let insertedIds = batchResults.flatMap((result) => result.ids);
