@@ -741,6 +741,17 @@ export async function generatePrivateQuestionsFromUpload(
     })
     .eq('id', upload.id);
 
+  // 살아있는 동안 heartbeat 를 주기적으로 갱신한다. 큐의 고착 회복 로직이
+  // "heartbeat 가 오래됨 = 워커가 죽음" 으로 판단하므로, 대용량 PDF 추출처럼 단계 갱신
+  // 없이 수 분이 걸리는 구간에서도 살아있음을 알려야 멀쩡한 작업이 중복 실행되지 않는다.
+  const heartbeatTimer = setInterval(() => {
+    void admin
+      .from('user_uploads')
+      .update({ heartbeat_at: new Date().toISOString() })
+      .eq('id', input.uploadId)
+      .then(() => undefined, () => undefined);
+  }, 20_000);
+
   const startTime = Date.now();
   let totalCost = 0;
   let aggInputTokens = 0;
@@ -1582,5 +1593,7 @@ export async function generatePrivateQuestionsFromUpload(
       })
       .eq('id', upload.id);
     throw error;
+  } finally {
+    clearInterval(heartbeatTimer);
   }
 }
