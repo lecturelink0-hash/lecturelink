@@ -87,6 +87,9 @@ const GEN_CONCURRENCY = 8;
 // 요청 수를 못 채웠을 때 빈 슬롯을 다시 채우는 최대 라운드 수.
 // (모델이 요청보다 적게 반환하거나, 이미지 문항이 정제 실패로 삭제되면 부족분이 생긴다.)
 const GEN_BACKFILL_ROUNDS = 2;
+// 보충 배치에 싣는 출제 근거 텍스트 상한(자). 본 배치(최대 15만 자)와 달리 보충은
+// "빈 칸 몇 개만 빠르게" 채우는 호출이라 입력을 줄여 429·대기 시간을 피한다.
+const GEN_BACKFILL_CONTEXT_CHARS = 30_000;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
@@ -169,6 +172,31 @@ function sanitizeErrorMessage(raw: unknown): string {
   if (!m) return '알 수 없는 처리 오류';
   if (m.length > 200) m = m.slice(0, 197) + '...';
   return m;
+}
+
+/**
+ * 발문이 "제시된 그림을 봐야만 풀리는" 문항인지 판정.
+ *
+ * 이미지가 정제(텍스트 제거) 실패나 재사용 상한으로 빠지면, 그림을 가리키는 발문은
+ * 풀 수 없으므로 문항을 삭제해야 한다. 반대로 모델이 이미지를 곁들이기만 하고 발문은
+ * 텍스트만으로 완결된 경우(흔함)까지 삭제하면 요청 수가 모자라 보충 생성이 돌고,
+ * 그 보충 호출이 전체 시간을 수십 초 늘린다. 그래서 발문 표현으로 구분한다.
+ * (판정이 애매하면 삭제 쪽으로 — 못 푸는 문항을 남기는 것이 더 나쁘다.)
+ */
+const IMAGE_DEIXIS =
+  '다음|아래|위의|위에|제시된|해당|보이는|첨부된|주어진';
+const IMAGE_NOUNS =
+  '그림|사진|이미지|영상|심전도|ECG|EKG|방사선|엑스레이|X-?ray|CT|MRI|초음파|병리|현미경|소견';
+const IMAGE_DEPENDENT_STEM_RE = new RegExp(
+  // 지시어와 명사 사이에 수식어가 끼어드는 형태까지 잡는다("아래 흉부 X-ray 를 보고").
+  `(?:${IMAGE_DEIXIS})\\s*(?:[가-힣A-Za-z0-9]{1,6}\\s*){0,2}(?:${IMAGE_NOUNS})|` +
+    `(?:${IMAGE_NOUNS})\\s*(?:에서|에는|을|를|의|상)\\s*(?:관찰|보이|나타|판독|해석)|` +
+    `판독(?:하|해)|사진\\s*판독`,
+  'i',
+);
+
+function stemDependsOnImage(stem: string): boolean {
+  return IMAGE_DEPENDENT_STEM_RE.test(String(stem ?? ''));
 }
 
 /**
@@ -1076,6 +1104,12 @@ export async function generatePrivateQuestionsFromUpload(
       /** 이 배치에 제시할 이미지. gi 는 전역 인덱스(인페인팅 캐시·Storage 경로 기준). */
       featured: Array<{ slide: number; c: CroppedImage; gi: number }>;
       getDisplayPng: (gi: number) => Promise<Uint8Array | null>;
+      /**
+       * 429(rate limit) 재시도 대기 상한. 보충 배치는 본 배치들이 방금 끝난 직후에
+       * 실행돼 429 를 맞기 쉬운데, 기본 상한(45초)을 그대로 기다리면 그 대기가 전체
+       * 소요를 지배한다(실측 66초 꼬리). 보충은 짧게 여러 번 재시도한다.
+       */
+      retryMaxDelayMs?: number;
     };
 
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
@@ -1164,15 +1198,19 @@ export async function generatePrivateQuestionsFromUpload(
       // 뿐이라 실제 속도는 실출력 토큰 수가 결정한다.
       const genMaxTokens = Math.min(16000, Math.max(6000, batchSize * 1800));
       const callGenerate = (maxTokens: number) =>
-        withRetry(() =>
-          createMessage(client, {
-            model: modelUsed,
-            max_tokens: maxTokens,
-            system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-            tools: [PRIVATE_GENERATION_TOOL_SCHEMA],
-            tool_choice: { type: 'tool', name: 'generate_private_questions' },
-            messages: [{ role: 'user', content: userContent }],
-          }),
+        withRetry(
+          () =>
+            createMessage(client, {
+              model: modelUsed,
+              max_tokens: maxTokens,
+              system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+              tools: [PRIVATE_GENERATION_TOOL_SCHEMA],
+              tool_choice: { type: 'tool', name: 'generate_private_questions' },
+              messages: [{ role: 'user', content: userContent }],
+            }),
+          gen.retryMaxDelayMs
+            ? { maxAttempts: 4, backoffMs: 700, maxDelayMs: gen.retryMaxDelayMs }
+            : {},
         );
       let response = await callGenerate(genMaxTokens);
       let toolUseBlock = response.content.find(
@@ -1308,15 +1346,22 @@ export async function generatePrivateQuestionsFromUpload(
         if (imageError) warnings.push(`이미지 연결 저장 실패 — ${imageError.message}`);
       }
 
-      // 텍스트 제거 실패로 이미지가 제외돼, 이미지 참조 문항인데 연결된 이미지가
-      // 하나도 없게 된 문항은 발문이 없는 그림을 가리키게 되므로 삭제한다.
+      // 텍스트 제거 실패로 이미지가 제외된 문항 처리.
+      // 발문이 그림을 가리키는(그림 없이는 못 푸는) 문항만 삭제하고, 텍스트만으로 완결된
+      // 문항은 이미지 연결만 빠진 채로 살린다 — 불필요한 삭제는 요청 수 미달과
+      // 보충 생성(수십 초 추가)을 유발한다.
       const orphanIds: string[] = [];
       parsed.questions.forEach((q, qi) => {
         const idx = (q.image_indices ?? []).filter(validImageIndex);
         if (idx.length === 0) return;
         if (idx.some((i) => indexToPath.has(i))) return; // 살아남은 이미지가 하나라도 있으면 유지
         const qid = inserted[qi]?.id;
-        if (qid) orphanIds.push(qid);
+        if (!qid) return;
+        if (stemDependsOnImage(q.stem)) {
+          orphanIds.push(qid);
+        } else {
+          warnings.push('이미지가 제외됐지만 발문이 텍스트만으로 완결돼 문항은 유지.');
+        }
       });
       if (orphanIds.length > 0) {
         await admin.from('private_questions').delete().in('id', orphanIds);
@@ -1432,7 +1477,7 @@ export async function generatePrivateQuestionsFromUpload(
           .eq('upload_id', upload.id),
         admin
           .from('private_questions')
-          .select('id, generation_slot')
+          .select('id, generation_slot, stem')
           .eq('upload_id', upload.id),
       ]);
       const slotOf = new Map((slotRows ?? []).map((r) => [r.id, r.generation_slot ?? 0]));
@@ -1467,7 +1512,12 @@ export async function generatePrivateQuestionsFromUpload(
         const affectedQ = new Set(
           (linkRows ?? []).filter((r) => removedSet.has(r.id)).map((r) => r.private_question_id),
         );
-        const orphanQ = [...affectedQ].filter((qid) => (remainingByQ.get(qid) ?? 0) === 0);
+        // 링크가 모두 제거된 문항 중, 발문이 그림을 가리키는 것만 삭제한다.
+        // (텍스트만으로 완결된 문항은 살려 요청 수 미달과 보충 생성을 피한다.)
+        const stemOf = new Map((slotRows ?? []).map((r) => [r.id, r.stem ?? '']));
+        const orphanQ = [...affectedQ]
+          .filter((qid) => (remainingByQ.get(qid) ?? 0) === 0)
+          .filter((qid) => stemDependsOnImage(stemOf.get(qid) ?? ''));
         if (orphanQ.length > 0) {
           await admin.from('private_questions').delete().in('id', orphanQ);
         }
@@ -1491,6 +1541,28 @@ export async function generatePrivateQuestionsFromUpload(
         .order('generation_slot', { ascending: true });
       return data ?? [];
     };
+
+    /**
+     * 보충 배치용 축약 컨텍스트. 빈 슬롯이 원래 속해 있던 구간(= 그 슬롯을 맡았던 배치의
+     * 자료 구간)을 중심으로 잘라, 주제 다양성은 유지하면서 입력을 크게 줄인다.
+     * 자료가 짧으면 그대로 전체를 쓴다.
+     */
+    const backfillContext = (slot: number): string => {
+      if (compositeText.length <= GEN_BACKFILL_CONTEXT_CHARS) return compositeText;
+      const segCount = Math.max(1, batchSizes.length);
+      const segIndex = Math.min(
+        segCount - 1,
+        Math.floor((slot / Math.max(1, desiredCount)) * segCount),
+      );
+      const segLen = Math.ceil(compositeText.length / segCount);
+      const start = segIndex * segLen;
+      // 구간 경계에서 문맥이 끊기지 않게 앞뒤로 조금 넉넉히 잡고 상한으로 자른다.
+      const pad = Math.floor(GEN_BACKFILL_CONTEXT_CHARS * 0.15);
+      return compositeText.slice(
+        Math.max(0, start - pad),
+        Math.max(0, start - pad) + GEN_BACKFILL_CONTEXT_CHARS,
+      );
+    };
     let saved = await readSaved();
     // 진행률 기준도 DB 사실값으로 맞춘다(삭제된 문항까지 세어 100%를 넘기지 않게).
     completedQuestions = saved.length;
@@ -1510,9 +1582,14 @@ export async function generatePrivateQuestionsFromUpload(
       await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
         try {
           await generateAndPersistBatch(i, slots, fillBatches.length, {
-            contextText: compositeText,
+            // 보충은 "빠르게 빈 칸만 채우는" 호출이다. 본 배치들이 방금 끝난 직후라
+            // 같은 대용량 컨텍스트를 다시 실으면 입력 처리량이 커져 429 를 맞고,
+            // 기본 백오프(최대 45초)를 기다리며 전체 소요를 지배한다(실측 66초 꼬리).
+            // → 빈 슬롯이 속한 구간의 컨텍스트만 잘라 싣고, 재시도 대기도 짧게 잡는다.
+            contextText: backfillContext(slots[0]),
             featured: [], // 텍스트 전용 — 이미지 관련 삭제 경로를 원천 차단
             getDisplayPng: async () => null,
+            retryMaxDelayMs: 6_000,
           });
         } catch (e) {
           warnings.push(
