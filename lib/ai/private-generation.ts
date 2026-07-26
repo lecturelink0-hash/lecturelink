@@ -94,7 +94,8 @@ const GEN_CONCURRENCY = 8;
 const GEN_BACKFILL_ROUNDS = 2;
 // 보충 배치에 싣는 출제 근거 텍스트 상한(자). 본 배치(최대 15만 자)와 달리 보충은
 // "빈 칸 몇 개만 빠르게" 채우는 호출이라 입력을 줄여 429·대기 시간을 피한다.
-const GEN_BACKFILL_CONTEXT_CHARS = 30_000;
+// 실측에서 보충 1문항이 27.6초를 써 총 시간을 지배해 30k → 12k 로 더 조였다.
+const GEN_BACKFILL_CONTEXT_CHARS = 12_000;
 // 배치별 구간 분할: 이 길이 미만의 자료는 나눠도 이득이 없어 전체를 그대로 준다.
 const GEN_SEGMENT_ENABLE_MIN_CHARS = 20_000;
 // 구간 하나의 최소 길이. 구간이 이보다 얇아지면 구간 수를 줄여(여러 배치가 같은 구간 공유)
@@ -1753,7 +1754,13 @@ export async function generatePrivateQuestionsFromUpload(
             '"다음은 …모식도이다", "아래 그림에서", "제시된 심전도에서" 처럼 제시되지 않은 그림·사진·' +
             '모식도를 가리키는 표현을 발문에 절대 쓰지 말고, image_indices 는 항상 빈 배열 [] 로 두세요. ' +
             '모든 문항은 제공된 텍스트만으로 풀 수 있어야 합니다.'
-          : '';
+          : // 이미지를 받은 배치에도 "발문과 image_indices 를 반드시 일치시켜라"를 건다.
+            // 실측: 그림을 가리키는 발문인데 image_indices 가 비어 있어 문항이 삭제되고
+            // 보충 생성(27.6초)이 돌았다. 예방이 사후 재생성보다 훨씬 싸다.
+            '\n\n**발문과 image_indices 는 반드시 일치시키세요.** ' +
+            '"다음 CT에서", "제시된 그림은" 처럼 그림을 가리키는 표현을 쓸 거면 그 이미지 번호를 ' +
+            'image_indices 에 반드시 넣고, 번호를 넣지 않을 문항에서는 그림을 가리키는 표현을 쓰지 마세요. ' +
+            '(불일치 문항은 학생이 풀 수 없어 폐기됩니다.)';
       // 조합형 빈도 제한(요청에 별도 조건이 없을 때).
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
@@ -2248,6 +2255,7 @@ export async function generatePrivateQuestionsFromUpload(
     }
 
     const tBackfill = Date.now();
+    diag.generation.backfillRounds = [];
     let saved = await readSaved();
     // 진행률 기준도 DB 사실값으로 맞춘다(삭제된 문항까지 세어 100%를 넘기지 않게).
     completedQuestions = saved.length;
@@ -2264,6 +2272,14 @@ export async function generatePrivateQuestionsFromUpload(
       for (let i = 0; i < missingSlots.length; i += GEN_BATCH_MAX_QUESTIONS) {
         fillBatches.push(missingSlots.slice(i, i + GEN_BATCH_MAX_QUESTIONS));
       }
+      // 보충 라운드 계측 — 실측에서 1문항 보충에 27.6초가 걸려 총 시간을 지배했다.
+      // 어느 단계(모델 호출 vs 재시도 대기)인지 다음 실측에서 갈라 보기 위해 기록한다.
+      const tRound = Date.now();
+      const roundRec: Record<string, unknown> = {
+        round: round + 1,
+        missing: missingSlots.length,
+        batches: fillBatches.length,
+      };
       await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
         try {
           await generateAndPersistBatch(i, slots, fillBatches.length, {
@@ -2274,7 +2290,9 @@ export async function generatePrivateQuestionsFromUpload(
             contextText: backfillContext(slots[0]),
             featured: [], // 텍스트 전용 — 이미지 관련 삭제 경로를 원천 차단
             getDisplayPng: async () => null,
-            retryMaxDelayMs: 6_000,
+            // 보충은 "빈 칸 한두 개"라 오래 기다릴 이유가 없다. 실측에서 1문항 보충이
+            // 27.6초를 써 총 시간을 지배했으므로 대기 상한을 더 조인다.
+            retryMaxDelayMs: 3_000,
           });
         } catch (e) {
           warnings.push(
@@ -2283,7 +2301,11 @@ export async function generatePrivateQuestionsFromUpload(
         }
         return null;
       });
+      const beforeCount = saved.length;
       saved = await readSaved();
+      roundRec.ms = Date.now() - tRound;
+      roundRec.filled = saved.length - beforeCount;
+      (diag.generation.backfillRounds as unknown[] | undefined)?.push(roundRec);
     }
     if (saved.length < desiredCount) {
       warnings.push(`최종 ${saved.length}/${desiredCount}문항 — 요청 수를 채우지 못했습니다.`);
