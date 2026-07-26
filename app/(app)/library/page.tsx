@@ -13,6 +13,7 @@ import {
   Stethoscope, ChevronDown, ChevronRight, AlertTriangle, FileText,
   FolderOpen, Folder, Upload, BookOpen, Search, ArrowLeft, Trash2, type LucideIcon,
 } from 'lucide-react';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1187,7 +1188,7 @@ function PrivateSolveCard({ q, index, onAnswered, prior, onGraded }: { q: Privat
       </div>
 
       {/* 문제 발문을 이미지보다 먼저(위에) 배치한다. */}
-      <div className="text-[15px] leading-7 text-sage-800 font-medium mb-4">{withImageLabels(q.stem)}</div>
+      <QuestionStem className="text-[15px] leading-7 text-sage-800 font-medium mb-4" text={withImageLabels(q.stem)} />
 
       {q.images && q.images.length > 0 && (
         <div className="mb-4 space-y-2">
@@ -1287,7 +1288,7 @@ function PublicSolveCard({ q, index }: { q: PublicQuestion; index: number }) {
         <img src={q.imageUrl} alt="문항 이미지" className="w-full max-h-72 object-contain rounded-xl border border-[var(--color-border)] bg-white mb-4" />
       )}
 
-      <div className="text-[15px] leading-7 text-sage-800 font-medium mb-4">{withImageLabels(q.stem)}</div>
+      <QuestionStem className="text-[15px] leading-7 text-sage-800 font-medium mb-4" text={withImageLabels(q.stem)} />
 
       <div className="space-y-2">
         {q.choices.map((choice, ci) => {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 
 interface PracticeQuestion {
   id: string;
@@ -69,7 +70,7 @@ export default function SimilarPracticePage() {
       </section>
       <article className="ll-card p-6">
         <div className="text-sm font-semibold text-[var(--color-muted)] mb-3">{question.subject_name} · {question.sub_topic_name}</div>
-        <p className="text-[16px] leading-7 font-semibold mb-5">{question.stem}</p>
+        <QuestionStem className="text-[16px] leading-7 font-semibold mb-5" text={question.stem} />
         <div className="space-y-2">
           {question.choices.map((choice, choiceIndex) => {
             const correct = result && choiceIndex === result.correct_index;
