@@ -458,12 +458,13 @@ export default function WrongNotesPage() {
 
   function renderChoicesSection(item: WrongAnswerItem) {
     if (!item.question) return null;
+    const q = item.question;
     const ui = getUI(item.id);
 
     return (
       <>
         <Choices
-          choices={item.question.choices}
+          choices={q.choices}
           selected={ui.selected}
           submitted={ui.submitted}
           correctIndex={ui.correctIndex}
@@ -489,7 +490,7 @@ export default function WrongNotesPage() {
                 state={ui}
                 isPrivate={item.isPrivate}
                 subTopicId={item.subTopicId}
-                sourceQuestionId={item.question!.id}
+                sourceQuestionId={q.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
             </div>
@@ -507,7 +508,7 @@ export default function WrongNotesPage() {
               state={ui}
               isPrivate={item.isPrivate}
               subTopicId={item.subTopicId}
-              sourceQuestionId={item.question!.id}
+              sourceQuestionId={q.id}
               onChange={(patch) => patchUI(item.id, patch)}
             />
           </div>
@@ -570,8 +571,9 @@ export default function WrongNotesPage() {
           </div>
         )}
 
-        {/* Action buttons — 다시 풀기(secondary) + 유사문제 생성(accent) */}
-        {!ui.expanded && (
+        {/* Action buttons — 다시 풀기(secondary) + 유사문제 생성(accent).
+            question 이 null(비활성화·접근 불가 문항)이면 삭제만 가능하다. */}
+        {!ui.expanded && q && (
           <div className="actions">
             <Button
               variant="secondary"
@@ -586,7 +588,7 @@ export default function WrongNotesPage() {
                 state={ui}
                 isPrivate={item.isPrivate}
                 subTopicId={item.subTopicId}
-                sourceQuestionId={item.question!.id}
+                sourceQuestionId={q.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
             )}
@@ -675,7 +677,7 @@ export default function WrongNotesPage() {
                     state={ui}
                     isPrivate={item.isPrivate}
                     subTopicId={item.subTopicId}
-                    sourceQuestionId={item.question!.id}
+                    sourceQuestionId={q.id}
                     onChange={(patch) => patchUI(item.id, patch)}
                   />
                 </div>
@@ -688,7 +690,7 @@ export default function WrongNotesPage() {
                   state={ui}
                   isPrivate={item.isPrivate}
                   subTopicId={item.subTopicId}
-                  sourceQuestionId={item.question!.id}
+                  sourceQuestionId={q.id}
                   onChange={(patch) => patchUI(item.id, patch)}
                 />
               </div>
