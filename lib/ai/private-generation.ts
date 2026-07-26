@@ -53,6 +53,7 @@ import {
 } from '@/lib/extract/pdf-embedded-images';
 import { selectExamImages } from '@/lib/extract/select-exam-images';
 import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
+import { maskTextRegions } from '@/lib/extract/mask-text';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -100,11 +101,6 @@ const GEN_SEGMENT_ENABLE_MIN_CHARS = 20_000;
 const GEN_SEGMENT_MIN_CHARS = 6_000;
 // 구간 경계 겹침 비율 — 경계에 걸친 내용이 어느 배치에도 안 잡히는 일을 방지.
 const GEN_SEGMENT_OVERLAP_RATIO = 0.1;
-// 인페인팅으로 지울 수 있는 글자 양의 상한(의미 있는 글자 수).
-// 실측: 글자가 많은 이미지는 2회 시도해도 잔존해 결국 폐기됐다(8장 중 4장). 그 시도에
-// Gemini 이미지 편집 호출 + 검증 OCR 이 장당 수십 초씩 들었으므로, 애초에 시도하지 않고
-// 문항 이미지에서 제외한다(생성 자체는 원본을 보고 하므로 내용 손실은 없다).
-const INPAINT_MAX_OCR_CHARS = 60;
 // 이미지 1장 정제(인페인팅+검증)에 허용하는 최대 시간. 초과하면 그 이미지는 제외한다.
 // 느린 이미지 편집 호출 한 건이 전체 생성을 붙잡는 꼬리를 차단한다.
 const IMAGE_REFINE_TIMEOUT_MS = 20_000;
@@ -1312,11 +1308,17 @@ export async function generatePrivateQuestionsFromUpload(
             png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
             userIdForLog: input.userId,
             context: slide.text,
+            // 같은 호출에서 텍스트 "위치"까지 받아온다(추가 API 호출 없음).
+            // 이 좌표로 정답 단서 텍스트를 배경색으로 덮어 지운다.
+            withBoxes: true,
+            widthPx: crop.widthPx,
+            heightPx: crop.heightPx,
           });
           // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
           totalCost += r.costUsd;
           ocrChars += r.text.length;
-          crop.ocrText = r.text; // 인페인팅 대상(주석 텍스트 유무) 선별에 사용
+          crop.ocrText = r.text; // 주석 텍스트 유무 판정에 사용
+          crop.ocrBoxes = r.boxes; // 마스킹 좌표(없으면 안전 폴백 경로)
         } catch (e) {
           warnings.push(
             `slide ${slide.pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
@@ -1465,23 +1467,9 @@ export async function generatePrivateQuestionsFromUpload(
       .filter((x) => !x.c.ocrOnly)
       // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
       .filter((x) => !isTextCapture(x.c))
-      // 정제(텍스트 제거)에 성공할 수 없는 이미지는 후보에서 미리 제외한다 — 시도 비용이
-      // 크고 결과는 폐기되므로. (판정 기준은 INPAINT_MAX_OCR_CHARS 주석 참고)
-      .filter((x) => {
-        const kind = x.c.region.kind;
-        const len = (x.c.ocrText ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
-        const willInpaint =
-          process.env.ENABLE_TEXT_INPAINT !== '0' &&
-          new Set(['anatomy_diagram', 'chart_graph', 'other']).has(kind) &&
-          len >= 8;
-        if (willInpaint && len > INPAINT_MAX_OCR_CHARS) {
-          warnings.push(
-            `이미지(${kind}, 글자 ${len}자): 정제 성공 가능성이 낮아 문항 이미지 후보에서 제외.`,
-          );
-          return false;
-        }
-        return true;
-      })
+      // (예전에는 "인페인팅으로 못 지울 이미지"를 여기서 미리 걸렀다. 마스킹은 좌표를
+      //  배경색으로 덮는 방식이라 글자가 많아도 실패하지 않으므로 사전 제외가 필요 없다.
+      //  덕분에 문항에 쓸 수 있는 이미지가 늘어난다 — 실측에서 8장 중 3장만 살아남던 문제.)
       .slice(0, MAX_FEATURED_IMAGES)
       .map((x, gi) => ({ ...x, gi }));
 
@@ -1503,8 +1491,6 @@ export async function generatePrivateQuestionsFromUpload(
     // 대상: 다이어그램/일러스트 유형(anatomy_diagram/chart_graph/other) + 주석 텍스트 감지.
     // 실제 임상 사진(xray/ct/mri/ecg/pathology/microscope/ultrasound)은 재생성 위험이라 제외.
     // 생성 모델은 원본(주석 포함)을 보고 문항을 만들고(내용 이해), 학생에게는 정제본이 저장된다.
-    const inpaintKinds = new Set(['anatomy_diagram', 'chart_graph', 'other']);
-    const inpaintEnabled = process.env.ENABLE_TEXT_INPAINT !== '0';
     // 인페인팅 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
     const RESIDUAL_TEXT_MAX = 8;
 
@@ -1523,55 +1509,84 @@ export async function generatePrivateQuestionsFromUpload(
     // 표시용 이미지 반환. 인페인팅 대상은 (1차 인페인팅 → OCR 검증 → 필요 시 2차 인페인팅)
     // 을 거치고, 그래도 글자가 남거나 인페인팅이 실패하면 null 을 반환한다.
     // null = "정답 단서 텍스트를 못 지운 이미지" → 호출자는 업로드/문항 연결을 하지 않고 제외한다.
-    const inpaintCache = new Map<number, Promise<Uint8Array | null>>();
-    // 이미지별 정제 계측 — 어떤 이미지가 얼마나 걸렸고 왜 제외됐는지 진단에 남긴다.
+    // ── 좌표 기반 마스킹 (생성형 인페인팅 대체)
+    //
+    // 인페인팅은 이미지를 재생성하는 방식이라 해부도·모식도에서 라벨을 새로 그려 넣었고,
+    // 실측에서 4장 중 3장이 정제 후 글자가 오히려 늘어(11→32, 26→112, 28→115, 44→176자)
+    // 폐기됐다. 장당 19~20초를 쓰고 결과를 버린 셈이다.
+    // 이제 크롭 OCR 이 같은 호출에서 알려준 좌표만 배경색으로 덮는다(장당 수 ms, 추가 호출 0).
+    // 그림 픽셀은 건드리지 않아 삽화가 보존되고, 정제 실패로 이미지를 잃지 않는다.
+    // 문항이 가리켜야 하는 짧은 단독 라벨(A~E, 1~5 …)은 mask-text 규칙이 남긴다.
+    //
+    // 롤백: ENABLE_TEXT_INPAINT=1 이면 예전 생성형 인페인팅 경로를 쓴다.
+    const legacyInpaint = process.env.ENABLE_TEXT_INPAINT === '1';
+    const displayCache = new Map<number, Promise<Uint8Array | null>>();
     const getDisplayPng = (i: number): Promise<Uint8Array | null> => {
       const fi = featuredImages[i];
       const ocrLen = (fi.c.ocrText ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
-      const shouldInpaint =
-        inpaintEnabled && inpaintKinds.has(fi.c.region.kind) && ocrLen >= 8;
-      if (!shouldInpaint) {
-        diag.inpaint.push({ gi: i, kind: fi.c.region.kind, ocrLen, skipped: true });
-        return Promise.resolve(fi.c.png);
-      }
-      let p = inpaintCache.get(i);
-      if (!p) {
-        p = (async (): Promise<Uint8Array | null> => {
-          const t0 = Date.now();
-          const rec: Record<string, unknown> = { gi: i, kind: fi.c.region.kind, ocrLen };
-          try {
-            const cleaned = await inpaintRemoveText(fi.c.png, { userId: input.userId });
-            rec.inpaintMs = Date.now() - t0;
-            if (!cleaned) {
-              // 인페인팅 자체 실패 — 원본에는 정답 단서 텍스트가 남아 있으므로 제외.
-              warnings.push(`이미지 ${i}: 텍스트 제거 실패 — 정답 단서 노출 방지를 위해 문항에서 제외`);
-              rec.result = 'inpaint_failed';
-              return null;
-            }
-            // 검증: 남은 글자가 많으면 제외한다.
-            // (2차 시도는 실측에서 성공률이 사실상 0이었고 장당 수십 초를 더 썼으므로 제거.)
-            const tV = Date.now();
-            const residual = await residualTextLen(cleaned);
-            rec.verifyMs = Date.now() - tV;
-            rec.residual = residual;
-            if (residual > RESIDUAL_TEXT_MAX) {
-              warnings.push(`이미지 ${i}: 텍스트가 완전히 지워지지 않아 문항에서 제외(잔존 ${residual}자)`);
-              rec.result = 'residual_text';
-              return null;
-            }
-            rec.result = 'ok';
-            return cleaned;
-          } catch (e) {
-            rec.result = 'error';
-            rec.error = e instanceof Error ? e.message.slice(0, 80) : String(e).slice(0, 80);
-            return null;
-          } finally {
-            rec.totalMs = Date.now() - t0;
-            diag.inpaint.push(rec);
+      const boxes = fi.c.ocrBoxes ?? [];
+
+      const cached = displayCache.get(i);
+      if (cached) return cached;
+
+      const p = (async (): Promise<Uint8Array | null> => {
+        const t0 = Date.now();
+        const rec: Record<string, unknown> = {
+          gi: i,
+          kind: fi.c.region.kind,
+          ocrLen,
+          boxes: boxes.length,
+        };
+        try {
+          // 글자가 거의 없으면 손대지 않는다(정답 단서 위험 없음).
+          if (ocrLen < 8) {
+            rec.result = 'no_text';
+            return fi.c.png;
           }
-        })();
-        inpaintCache.set(i, p);
-      }
+
+          if (!legacyInpaint) {
+            if (boxes.length === 0) {
+              // 글자는 많은데 위치를 모른다 → 어디를 덮을지 알 수 없다.
+              // 정답 단서가 남을 수 있으므로 문항 이미지에서 제외한다(안전 우선).
+              warnings.push(`이미지 ${i}: 텍스트 위치를 얻지 못해 문항에서 제외(글자 ${ocrLen}자).`);
+              rec.result = 'no_boxes';
+              return null;
+            }
+            const masked = await maskTextRegions(fi.c.png, boxes);
+            rec.result = 'masked';
+            rec.maskedBoxes = masked.masked;
+            rec.keptBoxes = masked.kept;
+            rec.keptReasons = masked.keptReasons;
+            return masked.png;
+          }
+
+          // ── 폴백: 예전 생성형 인페인팅(옵션)
+          const cleaned = await inpaintRemoveText(fi.c.png, { userId: input.userId });
+          rec.inpaintMs = Date.now() - t0;
+          if (!cleaned) {
+            warnings.push(`이미지 ${i}: 텍스트 제거 실패 — 문항에서 제외`);
+            rec.result = 'inpaint_failed';
+            return null;
+          }
+          const residual = await residualTextLen(cleaned);
+          rec.residual = residual;
+          if (residual > RESIDUAL_TEXT_MAX) {
+            warnings.push(`이미지 ${i}: 텍스트가 남아 문항에서 제외(잔존 ${residual}자)`);
+            rec.result = 'residual_text';
+            return null;
+          }
+          rec.result = 'inpainted';
+          return cleaned;
+        } catch (e) {
+          rec.result = 'error';
+          rec.error = e instanceof Error ? e.message.slice(0, 80) : String(e).slice(0, 80);
+          return null;
+        } finally {
+          rec.totalMs = Date.now() - t0;
+          diag.inpaint.push(rec);
+        }
+      })();
+      displayCache.set(i, p);
       return p;
     };
 
