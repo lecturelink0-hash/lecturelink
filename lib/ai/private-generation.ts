@@ -100,6 +100,14 @@ const GEN_SEGMENT_ENABLE_MIN_CHARS = 20_000;
 const GEN_SEGMENT_MIN_CHARS = 6_000;
 // 구간 경계 겹침 비율 — 경계에 걸친 내용이 어느 배치에도 안 잡히는 일을 방지.
 const GEN_SEGMENT_OVERLAP_RATIO = 0.1;
+// 인페인팅으로 지울 수 있는 글자 양의 상한(의미 있는 글자 수).
+// 실측: 글자가 많은 이미지는 2회 시도해도 잔존해 결국 폐기됐다(8장 중 4장). 그 시도에
+// Gemini 이미지 편집 호출 + 검증 OCR 이 장당 수십 초씩 들었으므로, 애초에 시도하지 않고
+// 문항 이미지에서 제외한다(생성 자체는 원본을 보고 하므로 내용 손실은 없다).
+const INPAINT_MAX_OCR_CHARS = 60;
+// 이미지 1장 정제(인페인팅+검증)에 허용하는 최대 시간. 초과하면 그 이미지는 제외한다.
+// 느린 이미지 편집 호출 한 건이 전체 생성을 붙잡는 꼬리를 차단한다.
+const IMAGE_REFINE_TIMEOUT_MS = 20_000;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
@@ -361,6 +369,10 @@ export interface GenerationDiagnostics {
   /** 임베드 이미지 경로 진단 — mutool 실행 가능 여부가 여기서 드러난다. */
   embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
   generation: Record<string, unknown>;
+  /** 이미지별 정제(인페인팅+검증) 계측 — 어느 이미지가 왜 제외됐고 얼마나 걸렸는지. */
+  inpaint: unknown[];
+  /** 배치별 계측 — 생성 호출/이미지 처리 소요를 나눠 기록. */
+  batches: unknown[];
   warnings: string[];
   finishedAt: string;
 }
@@ -1001,7 +1013,9 @@ export async function generatePrivateQuestionsFromUpload(
       extract: Record<string, unknown>;
       embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
       generation: Record<string, unknown>;
-    } = { timings: {}, extract: {}, embedded: {}, generation: {} };
+      inpaint: unknown[];
+      batches: unknown[];
+    } = { timings: {}, extract: {}, embedded: {}, generation: {}, inpaint: [], batches: [] };
     diag.timings.queueToStartMs = tDownload - startTime;
     diag.timings.downloadMs = Date.now() - tDownload;
     diag.extract.fileSizeBytes = fileBuffer.byteLength;
@@ -1023,6 +1037,8 @@ export async function generatePrivateQuestionsFromUpload(
           extract: diag.extract,
           embedded: diag.embedded,
           generation: diag.generation,
+          inpaint: diag.inpaint,
+          batches: diag.batches,
           // 경고는 개수·페이지 번호 위주라 강의 내용이 들어가지 않는다. 방어적으로 길이 제한.
           warnings: warnings.slice(0, 60).map((w) => String(w).slice(0, 300)),
           finishedAt: new Date().toISOString(),
@@ -1437,6 +1453,23 @@ export async function generatePrivateQuestionsFromUpload(
       .filter((x) => !x.c.ocrOnly)
       // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
       .filter((x) => !isTextCapture(x.c))
+      // 정제(텍스트 제거)에 성공할 수 없는 이미지는 후보에서 미리 제외한다 — 시도 비용이
+      // 크고 결과는 폐기되므로. (판정 기준은 INPAINT_MAX_OCR_CHARS 주석 참고)
+      .filter((x) => {
+        const kind = x.c.region.kind;
+        const len = (x.c.ocrText ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
+        const willInpaint =
+          process.env.ENABLE_TEXT_INPAINT !== '0' &&
+          new Set(['anatomy_diagram', 'chart_graph', 'other']).has(kind) &&
+          len >= 8;
+        if (willInpaint && len > INPAINT_MAX_OCR_CHARS) {
+          warnings.push(
+            `이미지(${kind}, 글자 ${len}자): 정제 성공 가능성이 낮아 문항 이미지 후보에서 제외.`,
+          );
+          return false;
+        }
+        return true;
+      })
       .slice(0, MAX_FEATURED_IMAGES)
       .map((x, gi) => ({ ...x, gi }));
 
@@ -1479,36 +1512,50 @@ export async function generatePrivateQuestionsFromUpload(
     // 을 거치고, 그래도 글자가 남거나 인페인팅이 실패하면 null 을 반환한다.
     // null = "정답 단서 텍스트를 못 지운 이미지" → 호출자는 업로드/문항 연결을 하지 않고 제외한다.
     const inpaintCache = new Map<number, Promise<Uint8Array | null>>();
+    // 이미지별 정제 계측 — 어떤 이미지가 얼마나 걸렸고 왜 제외됐는지 진단에 남긴다.
     const getDisplayPng = (i: number): Promise<Uint8Array | null> => {
       const fi = featuredImages[i];
+      const ocrLen = (fi.c.ocrText ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
       const shouldInpaint =
-        inpaintEnabled &&
-        inpaintKinds.has(fi.c.region.kind) &&
-        (fi.c.ocrText?.trim().length ?? 0) >= 8;
-      if (!shouldInpaint) return Promise.resolve(fi.c.png);
+        inpaintEnabled && inpaintKinds.has(fi.c.region.kind) && ocrLen >= 8;
+      if (!shouldInpaint) {
+        diag.inpaint.push({ gi: i, kind: fi.c.region.kind, ocrLen, skipped: true });
+        return Promise.resolve(fi.c.png);
+      }
       let p = inpaintCache.get(i);
       if (!p) {
         p = (async (): Promise<Uint8Array | null> => {
+          const t0 = Date.now();
+          const rec: Record<string, unknown> = { gi: i, kind: fi.c.region.kind, ocrLen };
           try {
-            let cleaned = await inpaintRemoveText(fi.c.png, { userId: input.userId });
+            const cleaned = await inpaintRemoveText(fi.c.png, { userId: input.userId });
+            rec.inpaintMs = Date.now() - t0;
             if (!cleaned) {
               // 인페인팅 자체 실패 — 원본에는 정답 단서 텍스트가 남아 있으므로 제외.
               warnings.push(`이미지 ${i}: 텍스트 제거 실패 — 정답 단서 노출 방지를 위해 문항에서 제외`);
+              rec.result = 'inpaint_failed';
               return null;
             }
-            // 검증 1차: 글자가 남아 있으면 한 번 더 인페인팅.
-            if ((await residualTextLen(cleaned)) > RESIDUAL_TEXT_MAX) {
-              const again = await inpaintRemoveText(cleaned, { userId: input.userId });
-              if (again) cleaned = again;
-              // 검증 2차: 그래도 남으면 제외.
-              if ((await residualTextLen(cleaned)) > RESIDUAL_TEXT_MAX) {
-                warnings.push(`이미지 ${i}: 텍스트가 완전히 지워지지 않아 문항에서 제외`);
-                return null;
-              }
+            // 검증: 남은 글자가 많으면 제외한다.
+            // (2차 시도는 실측에서 성공률이 사실상 0이었고 장당 수십 초를 더 썼으므로 제거.)
+            const tV = Date.now();
+            const residual = await residualTextLen(cleaned);
+            rec.verifyMs = Date.now() - tV;
+            rec.residual = residual;
+            if (residual > RESIDUAL_TEXT_MAX) {
+              warnings.push(`이미지 ${i}: 텍스트가 완전히 지워지지 않아 문항에서 제외(잔존 ${residual}자)`);
+              rec.result = 'residual_text';
+              return null;
             }
+            rec.result = 'ok';
             return cleaned;
-          } catch {
+          } catch (e) {
+            rec.result = 'error';
+            rec.error = e instanceof Error ? e.message.slice(0, 80) : String(e).slice(0, 80);
             return null;
+          } finally {
+            rec.totalMs = Date.now() - t0;
+            diag.inpaint.push(rec);
           }
         })();
         inpaintCache.set(i, p);
@@ -1564,6 +1611,12 @@ export async function generatePrivateQuestionsFromUpload(
       gen: GenContext,
     ): Promise<BatchResult> {
       const batchSize = slots.length;
+      const tBatch = Date.now();
+      const batchDiag: Record<string, unknown> = {
+        i: batchIndex,
+        size: batchSize,
+        images: gen.featured.length,
+      };
       const validImageIndex = (i: number) => i >= 0 && i < gen.featured.length;
       const { data: existingBatch, error: existingBatchError } = await admin
         .from('private_questions')
@@ -1576,6 +1629,10 @@ export async function generatePrivateQuestionsFromUpload(
         await updateProgress('partially_completed', completedQuestions, desiredCount, {
           completed_question_count: completedQuestions,
         });
+        batchDiag.kept = batchSize;
+        batchDiag.reused = true;
+        batchDiag.totalMs = Date.now() - tBatch;
+        diag.batches.push(batchDiag);
         return {
           generatedCount: batchSize,
           contentSummary: '',
@@ -1673,7 +1730,9 @@ export async function generatePrivateQuestionsFromUpload(
             ? { maxAttempts: 4, backoffMs: 700, maxDelayMs: gen.retryMaxDelayMs }
             : {},
         );
+      const tGenCall = Date.now();
       let response = await callGenerate(genMaxTokens);
+      batchDiag.genCallMs = Date.now() - tGenCall;
       let toolUseBlock = response.content.find(
         (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
       );
@@ -1683,7 +1742,9 @@ export async function generatePrivateQuestionsFromUpload(
         console.warn(
           `[private-gen] tool_use 누락 → 재시도 (batch=${batchIndex + 1}, stop=${response.stop_reason})`,
         );
+        const tRetry = Date.now();
         response = await callGenerate(Math.min(30000, genMaxTokens * 2));
+        batchDiag.genRetryMs = Date.now() - tRetry;
         toolUseBlock = response.content.find(
           (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
         );
@@ -1788,6 +1849,7 @@ export async function generatePrivateQuestionsFromUpload(
       }
       // key = 이 배치 안에서의 로컬 이미지 인덱스(모델이 응답한 image_indices 기준).
       const indexToPath = new Map<number, string>();
+      const tImages = Date.now();
       // 이미지당 인페인팅(+검증 OCR)이 수십 초씩 걸릴 수 있어 직렬 대신 병렬로 정제·업로드.
       await Promise.all(
         [...usedIndices].map(async (i) => {
@@ -1805,6 +1867,8 @@ export async function generatePrivateQuestionsFromUpload(
           else indexToPath.set(i, imgPath);
         }),
       );
+      batchDiag.imageWorkMs = Date.now() - tImages;
+      batchDiag.imagesUsed = indexToPath.size;
       const imageRows = kept.flatMap(({ q }, qi) => {
         const qId = inserted[qi]?.id;
         if (!qId) return [];
@@ -1869,6 +1933,9 @@ export async function generatePrivateQuestionsFromUpload(
         desiredCount,
         { completed_question_count: completedQuestions },
       );
+      batchDiag.kept = keptCount;
+      batchDiag.totalMs = Date.now() - tBatch;
+      diag.batches.push(batchDiag);
       return {
         generatedCount: keptCount,
         contentSummary: parsed.content_summary,
@@ -1879,20 +1946,47 @@ export async function generatePrivateQuestionsFromUpload(
       };
     }
 
-    // 선인페인팅: 인페인팅 대상 여부(다이어그램류 + 주석 텍스트)는 생성 응답 전에 알 수
-    // 있으므로, 생성 호출과 병행해 미리 시작해 둔다(Promise 캐시라 중복 실행 없음).
-    // 배치 완료 후 이미지 정제를 기다리던 수십 초 꼬리가 사라진다.
-    // 이미지를 쓰지 않는 요청에서는 인페인팅 자체가 낭비(장당 수십 초·비용)라 건너뛴다.
-    if (useImages) {
-      for (const fi of featuredImages) void getDisplayPng(fi.gi);
+    // ── 이미지 정제를 생성 "이전"에 끝낸다.
+    //
+    // 종전에는 생성이 끝난 뒤 참조된 이미지를 정제했다. 그래서 (a) 정제 대기가 배치 완료를
+    // 붙잡고, (b) 정제 실패 이미지를 참조한 문항이 삭제돼 보충 생성까지 유발했다
+    // (실측: 배치 구간 136초, 8장 중 4장 폐기 후 2문항 보충).
+    // 이제 생성 전에 정제를 끝내고 실패한 이미지는 목록에서 제거한다. 모델은 애초에 쓸 수 있는
+    // 이미지만 보므로 사후 삭제·보충이 사라지고, 정제는 이미 출발한 텍스트 배치와 겹쳐 돈다.
+    // 장당 시간 상한(IMAGE_REFINE_TIMEOUT_MS)을 둬 느린 한 건이 전체를 붙잡지 못하게 한다.
+    let usableFeatured = featuredImages;
+    if (useImages && featuredImages.length > 0) {
+      const tRefine = Date.now();
+      const withTimeout = (promise: Promise<Uint8Array | null>): Promise<Uint8Array | null> =>
+        Promise.race([
+          promise,
+          new Promise<Uint8Array | null>((resolve) =>
+            setTimeout(() => resolve(null), IMAGE_REFINE_TIMEOUT_MS),
+          ),
+        ]);
+      const results = await Promise.all(
+        featuredImages.map(async (fi) => ({
+          fi,
+          png: await withTimeout(getDisplayPng(fi.gi)),
+        })),
+      );
+      usableFeatured = results.filter((r) => r.png !== null).map((r) => r.fi);
+      diag.timings.imageRefineMs = Date.now() - tRefine;
+      diag.extract.featuredBefore = featuredImages.length;
+      diag.extract.featuredUsable = usableFeatured.length;
+      if (usableFeatured.length < featuredImages.length) {
+        warnings.push(
+          `이미지 정제 결과 ${usableFeatured.length}/${featuredImages.length}장만 문항에 사용 가능 — 나머지는 생성 전에 제외.`,
+        );
+      }
     }
 
     // 배치별 이미지 배정: 같은 이미지를 여러 배치가 각자 문항으로 쓰면 "동일 이미지 최대
     // 2문제" 정리에서 초과분 문항이 삭제된다. 배치마다 겹치지 않는 이미지 묶음을 주면
     // 한 이미지를 참조하는 문항이 배치 크기(≤2) 이하로 제한돼 삭제가 발생하지 않는다.
     const featuredForBatch = (batchIndex: number, batchCount: number) => {
-      if (!useImages) return [];
-      if (batchCount <= 1) return featuredImages;
+      if (!useImages || usableFeatured.length === 0) return [];
+      if (batchCount <= 1) return usableFeatured;
       // 텍스트 선발사로 먼저 출발한 배치는 OCR·이미지 이전에 시작했으므로 이미지를 받을 수
       // 없다. 이미지는 남은 배치들에만 분배해 어떤 이미지도 버려지지 않게 한다.
       const eligible = Array.from(
@@ -1902,9 +1996,9 @@ export async function generatePrivateQuestionsFromUpload(
       if (eligible.length === 0) return [];
       const pos = eligible.indexOf(batchIndex);
       if (pos < 0) return [];
-      const per = Math.ceil(featuredImages.length / eligible.length);
+      const per = Math.ceil(usableFeatured.length / eligible.length);
       // 이미지 수가 배치 수보다 적으면 뒤쪽 배치는 이미지 없이(텍스트 문항) 생성한다.
-      return featuredImages.slice(pos * per, pos * per + per);
+      return usableFeatured.slice(pos * per, pos * per + per);
     };
 
     const genFor = (batchIndex: number, batchCount: number): GenContext => ({
