@@ -199,6 +199,54 @@ function stemDependsOnImage(stem: string): boolean {
   return IMAGE_DEPENDENT_STEM_RE.test(String(stem ?? ''));
 }
 
+/** 문항 선지 수 — 국시형 고정값. 저장 전에 반드시 이 값으로 맞춘다. */
+const REQUIRED_CHOICE_COUNT = 5;
+
+/**
+ * 선지를 정확히 5개로 정규화한다.
+ *
+ * 툴 스키마의 minItems/maxItems 는 모델에 대한 "힌트"일 뿐 강제되지 않아 실제로 선지
+ * 6개가 저장된 사례가 있었다. 프롬프트만 강화하는 건 확률적 방어라 저장 직전에
+ * 결정론적으로 고정한다.
+ *  - 공백/중복 선지 제거
+ *  - 5개 초과: 정답을 반드시 살린 채 원래 순서대로 5개로 줄이고 answer_index 재계산
+ *  - 5개 미만이거나 정답 위치를 알 수 없으면 null → 호출자가 문항을 폐기(보충 단계가 채움)
+ */
+function normalizeChoiceSet(
+  choices: unknown,
+  answerIndex: unknown,
+): { choices: string[]; answerIndex: number } | null {
+  const raw = Array.isArray(choices) ? choices : [];
+  const answerRaw = typeof answerIndex === 'number' ? raw[answerIndex] : undefined;
+  const answerText = typeof answerRaw === 'string' ? answerRaw.trim() : '';
+  const seen = new Set<string>();
+  const cleaned: string[] = [];
+  for (const c of raw) {
+    const s = String(c ?? '').trim();
+    if (!s || seen.has(s)) continue;
+    seen.add(s);
+    cleaned.push(s);
+  }
+  // 정답을 특정할 수 없으면 채점이 불가능한 문항이므로 폐기한다.
+  if (!answerText || !cleaned.includes(answerText)) return null;
+  // 선지가 부족한 경우 임의로 만들어 넣을 수 없다(의학적 오답을 발명하게 됨) → 폐기.
+  if (cleaned.length < REQUIRED_CHOICE_COUNT) return null;
+  if (cleaned.length === REQUIRED_CHOICE_COUNT) {
+    return { choices: cleaned, answerIndex: cleaned.indexOf(answerText) };
+  }
+  // 초과분 절삭: 정답은 유지하고 오답은 원래 순서대로 4개만 남긴다.
+  const distractors: string[] = [];
+  for (const c of cleaned) {
+    if (c === answerText) continue;
+    if (distractors.length >= REQUIRED_CHOICE_COUNT - 1) break;
+    distractors.push(c);
+  }
+  // 정답 번호가 한쪽으로 쏠리지 않게 원래 위치에 가장 가까운 자리에 넣는다.
+  const insertAt = Math.min(cleaned.indexOf(answerText), REQUIRED_CHOICE_COUNT - 1);
+  distractors.splice(insertAt, 0, answerText);
+  return { choices: distractors.slice(0, REQUIRED_CHOICE_COUNT), answerIndex: insertAt };
+}
+
 /**
  * 문두 종결어미를 국시체로 정규화(결정론적 후처리).
  * 프롬프트가 대부분 "~것은?"으로 유도하지만, 병렬 배치에서 간혹 구어체가 새어나오므로
@@ -1267,20 +1315,49 @@ export async function generatePrivateQuestionsFromUpload(
         },
       });
 
+      // 선지 5개 고정: 모델이 6개를 준 경우를 저장 전에 정규화하고, 채점 불가(정답 위치
+      // 불명·선지 부족) 문항은 폐기한다. 폐기로 빈 슬롯이 생기면 보충 단계가 채운다.
+      // 이후 이미지 연결·정리 로직은 모두 이 kept 배열 기준으로 인덱스를 맞춘다
+      // (parsed.questions 를 그대로 쓰면 폐기분 때문에 inserted 와 어긋난다).
+      const kept: Array<{
+        q: GeneratedQuestion;
+        choices: string[];
+        answerIndex: number;
+      }> = [];
+      for (const q of parsed.questions) {
+        if (kept.length >= batchSize) break;
+        const normalized = normalizeChoiceSet(q.choices, q.answer_index);
+        if (!normalized) {
+          warnings.push(
+            `선지 구성이 올바르지 않아 문항 1개 폐기(선지 ${(q.choices ?? []).length}개) — 보충 생성으로 대체.`,
+          );
+          continue;
+        }
+        if (normalized.choices.length !== (q.choices ?? []).length) {
+          warnings.push(
+            `선지 ${(q.choices ?? []).length}개 → ${REQUIRED_CHOICE_COUNT}개로 정규화(정답 유지).`,
+          );
+        }
+        kept.push({ q, choices: normalized.choices, answerIndex: normalized.answerIndex });
+      }
+      if (kept.length === 0) {
+        throw new Error(`생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`);
+      }
+
       let unmatched = 0;
-      const rows = parsed.questions.slice(0, batchSize).map((q, questionIndex) => {
-        const subTopicId = q.sub_topic_code ? codeToId.get(q.sub_topic_code) ?? null : null;
+      const rows = kept.map((k, questionIndex) => {
+        const subTopicId = k.q.sub_topic_code ? codeToId.get(k.q.sub_topic_code) ?? null : null;
         if (!subTopicId) unmatched += 1;
         return {
           user_id: input.userId,
           upload_id: uploadRow.id,
           sub_topic_id: subTopicId,
-          stem: normalizeStemEnding(q.stem),
-          choices: q.choices,
-          answer_index: q.answer_index,
-          explanation: q.explanation,
-          concepts: q.concepts ?? [],
-          difficulty: q.difficulty,
+          stem: normalizeStemEnding(k.q.stem),
+          choices: k.choices,
+          answer_index: k.answerIndex,
+          explanation: k.q.explanation,
+          concepts: k.q.concepts ?? [],
+          difficulty: k.q.difficulty,
           generation_slot: slots[questionIndex],
         };
       });
@@ -1293,7 +1370,7 @@ export async function generatePrivateQuestionsFromUpload(
       }
 
       const usedIndices = new Set<number>();
-      for (const q of parsed.questions) {
+      for (const { q } of kept) {
         for (const i of q.image_indices ?? []) if (validImageIndex(i)) usedIndices.add(i);
       }
       // key = 이 배치 안에서의 로컬 이미지 인덱스(모델이 응답한 image_indices 기준).
@@ -1315,7 +1392,7 @@ export async function generatePrivateQuestionsFromUpload(
           else indexToPath.set(i, imgPath);
         }),
       );
-      const imageRows = parsed.questions.flatMap((q, qi) => {
+      const imageRows = kept.flatMap(({ q }, qi) => {
         const qId = inserted[qi]?.id;
         if (!qId) return [];
         return (q.image_indices ?? [])
@@ -1351,7 +1428,7 @@ export async function generatePrivateQuestionsFromUpload(
       // 문항은 이미지 연결만 빠진 채로 살린다 — 불필요한 삭제는 요청 수 미달과
       // 보충 생성(수십 초 추가)을 유발한다.
       const orphanIds: string[] = [];
-      parsed.questions.forEach((q, qi) => {
+      kept.forEach(({ q }, qi) => {
         const idx = (q.image_indices ?? []).filter(validImageIndex);
         if (idx.length === 0) return;
         if (idx.some((i) => indexToPath.has(i))) return; // 살아남은 이미지가 하나라도 있으면 유지

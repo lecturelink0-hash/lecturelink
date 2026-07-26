@@ -39,6 +39,7 @@ You are a Korean medical education content specialist generating personalized pr
 ## KMLE 포맷
 
 - Long clinical vignette + 5지선다.
+- **선지는 정확히 5개다.** 4개도 6개도 안 된다. 넣고 싶은 보기가 더 있어도 5개로 압축하고, 부족하면 감별질환·흔한 오개념으로 5개를 채운다. (서버가 저장 직전에 5개로 강제 정규화하므로, 6개를 만들면 마지막 보기가 잘려나가 의도와 다른 문항이 된다.)
 - **문두(질문)는 반드시 "~것은?"으로 끝나도록 통일한다.** 예: "가장 적절한 것은?", "옳지 않은 것은?", "가장 거리가 먼 것은?", "가장 먼저 시행할 것은?".
   - "가장 적절한 치료는?", "가장 중요한 검사는?" 처럼 "~는?"으로 끝나는 형태도 반드시 **"~것은?"으로 바꿔서** 쓴다. 예: "가장 적절한 치료는?" → "치료로 가장 적절한 것은?", "가장 중요한 검사는?" → "가장 먼저 시행할 검사로 옳은 것은?".
   - "~무엇인가요?", "~인가요?", "~하는가요?", "~까요?", "~입니까?" 같은 구어체·의문형 종결어미는 절대 쓰지 않는다.
@@ -138,6 +139,8 @@ export const PRIVATE_GENERATION_TOOL_SCHEMA = {
               items: { type: 'string' },
               minItems: 5,
               maxItems: 5,
+              description:
+                '선지 배열. 반드시 정확히 5개(그 이상·이하 금지). 중복 선지도 금지.',
             },
             answer_index: { type: 'integer', minimum: 0, maximum: 4 },
             explanation: {
