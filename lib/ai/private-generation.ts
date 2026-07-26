@@ -188,6 +188,18 @@ function sanitizeErrorMessage(raw: unknown): string {
   let m = raw instanceof Error ? raw.message : String(raw ?? '');
   m = m.replace(/\s+/g, ' ').trim();
   if (!m) return '알 수 없는 처리 오류';
+  // AI 크레딧·쿼터 소진은 사용자가 "다시 시도"해도 소용없다. 원인을 그대로 알려
+  // 조치(충전/한도 상향)로 이어지게 한다. 실측에서 이 경우 화면에는
+  // "잠시 후 다시 시도해주세요"만 떠서 원인을 알 수 없었다.
+  const lower = m.toLowerCase();
+  if (
+    lower.includes('credit') ||
+    lower.includes('billing') ||
+    lower.includes('quota') ||
+    lower.includes('resource_exhausted')
+  ) {
+    return 'AI 사용량 크레딧이 소진되어 생성을 완료하지 못했습니다. 결제·한도를 확인한 뒤 다시 시도해주세요.';
+  }
   if (m.length > 200) m = m.slice(0, 197) + '...';
   return m;
 }
@@ -2009,6 +2021,7 @@ export async function generatePrivateQuestionsFromUpload(
     });
 
     const tGen = Date.now();
+    const batchFailureReasons: string[] = [];
     const batchSettled = await mapWithConcurrency(
       batchSizes,
       GEN_CONCURRENCY,
@@ -2038,11 +2051,9 @@ export async function generatePrivateQuestionsFromUpload(
         } catch (e) {
           // 배치 1개 실패가 전체 생성을 실패시키지 않게 격리한다. 빈 슬롯은 아래 보충 단계가
           // 다시 채운다(이전에는 여기서 throw 되어 성공한 배치까지 'failed' 로 끝났다).
-          warnings.push(
-            `배치 ${batchIndex + 1} 생성 실패 — 보충 생성으로 대체 시도. ${
-              e instanceof Error ? e.message : String(e)
-            }`,
-          );
+          const reason = e instanceof Error ? e.message : String(e);
+          batchFailureReasons.push(reason);
+          warnings.push(`배치 ${batchIndex + 1} 생성 실패 — 보충 생성으로 대체 시도. ${reason}`);
           return null;
         }
       },
@@ -2051,7 +2062,14 @@ export async function generatePrivateQuestionsFromUpload(
     const batchResults = batchSettled.filter((r): r is BatchResult => r !== null);
     diag.generation.batchesSucceeded = batchSettled.filter((r) => r !== null).length;
     if (batchResults.length === 0) {
-      throw new Error('문항 생성에 모두 실패했습니다. 잠시 후 다시 시도해주세요.');
+      // 전부 실패한 경우 원인을 그대로 올린다(크레딧 소진 등은 sanitizeErrorMessage 가
+      // 사용자용 문구로 바꾼다). 종전에는 일괄 "잠시 후 다시 시도" 문구라 원인 파악이 불가능했다.
+      const firstReason = batchFailureReasons[0];
+      throw new Error(
+        firstReason
+          ? `문항 생성에 모두 실패했습니다. ${firstReason}`
+          : '문항 생성에 모두 실패했습니다. 잠시 후 다시 시도해주세요.',
+      );
     }
     const unmatched = batchResults.reduce((sum, result) => sum + result.unmatched, 0);
 
