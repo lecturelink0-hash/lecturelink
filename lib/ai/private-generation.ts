@@ -1027,15 +1027,26 @@ export async function generatePrivateQuestionsFromUpload(
           warnings: warnings.slice(0, 60).map((w) => String(w).slice(0, 300)),
           finishedAt: new Date().toISOString(),
         };
-        await admin.storage
-          .from(STORAGE_BUCKET)
-          .upload(
-            `${uploadRow.user_id}/${uploadRow.id}/diagnostics.json`,
-            Buffer.from(JSON.stringify(payload, null, 2)),
-            { contentType: 'application/json', upsert: true },
-          );
-      } catch {
-        // 진단 기록 실패는 무시.
+        // 저장소: ai_cost_log.metadata (jsonb).
+        // Storage 에 JSON 으로 넣으려 했지만 user_uploads 버킷의 allowed_mime_types 가
+        // pdf/pptx/이미지/dicom 만 허용해 application/json 업로드가 거부됐다(조용히 실패).
+        // 마이그레이션 없이 쓸 수 있는 jsonb 컬럼으로 옮긴다. cost_usd=0 이라 비용 집계에
+        // 영향을 주지 않으며, endpoint 로 진단 행임을 구분한다.
+        const { error: diagErr } = await admin.from('ai_cost_log').insert({
+          user_id: input.userId,
+          endpoint: 'private.diagnostics',
+          model: modelUsed,
+          cost_usd: 0,
+          input_tokens: 0,
+          output_tokens: 0,
+          metadata: payload as unknown as Record<string, unknown>,
+        });
+        if (diagErr) console.warn('[private-gen] 진단 기록 실패:', diagErr.message);
+      } catch (e) {
+        console.warn(
+          '[private-gen] 진단 기록 예외:',
+          e instanceof Error ? e.message : String(e),
+        );
       }
     };
 
