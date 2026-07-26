@@ -112,11 +112,31 @@ export async function maskTextRegions(
   const median = (arr: number[]) => arr.slice().sort((a, b) => a - b)[Math.floor(arr.length / 2)];
 
   let masked = 0;
+  // 짧은 라벨이 "다른 텍스트와 한 구절을 이루는지" 판정한다.
+  // 실측 사고: "Type A" 가 OCR 에서 "Type" + "A" 두 박스로 쪼개졌고, "Type" 만 지워지고
+  // "A" 는 짧은 라벨 규칙으로 남아 정답이 그대로 노출됐다.
+  // → 같은 줄에서 가까이에 다른 텍스트가 있으면 구절의 일부이므로 함께 지운다.
+  //   그림 구석에 홀로 찍힌 패널 라벨(A/B/C/D)만 보존한다.
+  const hasNeighborText = (box: MaskBox): boolean => {
+    const h = Math.max(1, box.y1 - box.y0);
+    const gap = h * 1.5; // 글자 높이의 1.5배 이내면 같은 구절로 본다
+    return boxes.some((o) => {
+      if (o === box) return false;
+      const sameLine = Math.abs((o.y0 + o.y1) / 2 - (box.y0 + box.y1) / 2) < h * 0.8;
+      if (!sameLine) return false;
+      const dx = o.x0 > box.x1 ? o.x0 - box.x1 : box.x0 > o.x1 ? box.x0 - o.x1 : 0;
+      return dx <= gap;
+    });
+  };
+
   for (const box of boxes) {
-    // (3) 짧은 단독 라벨은 그림의 일부 — 남긴다.
+    // (3) 짧은 단독 라벨은 그림의 일부 — 남긴다. 단 "홀로 있을 때"만.
     if (isShortFigureLabel(box.text)) {
-      keep('short_label');
-      continue;
+      if (!hasNeighborText(box)) {
+        keep('short_label');
+        continue;
+      }
+      // 옆에 글자가 붙어 있으면 구절의 일부(예: "Type A" 의 A) → 지운다.
     }
 
     const x0 = Math.max(0, Math.min(W - 1, box.x0));
@@ -203,6 +223,21 @@ export async function maskTextRegions(
       iy1 = y1;
     }
 
+    // 큰 박스가 잉크로 가득 차 있으면 글자가 아니라 그림일 가능성이 높다.
+    // (작은 박스는 굵은 인쇄체일 수 있어 예외 — 그 경우가 실측에서 dense_ink 로 잘못 걸렸다.)
+    const boxArea = (ix1 - ix0 + 1) * (iy1 - iy0 + 1);
+    if (boxArea > W * H * 0.02) {
+      let ink = 0;
+      for (let y = iy0; y <= iy1; y += 2) {
+        for (let x = ix0; x <= ix1; x += 2) if (isInk(x, y)) ink += 1;
+      }
+      const sampled = Math.max(1, Math.ceil((iy1 - iy0 + 1) / 2) * Math.ceil((ix1 - ix0 + 1) / 2));
+      if (ink / sampled > 0.5) {
+        keep('dense_ink_large');
+        continue;
+      }
+    }
+
     // 여유: 좌표 오차·안티에일리어싱으로 글자 가장자리가 남지 않게 한다.
     // 글자 높이에 비례해 주므로 작은 글자에는 여전히 최소 크기다(수칙 2 유지).
     const grow = Math.max(pad, Math.round((iy1 - iy0 + 1) * padRatio));
@@ -211,8 +246,46 @@ export async function maskTextRegions(
     const fx1 = Math.min(W - 1, ix1 + grow);
     const fy1 = Math.min(H - 1, iy1 + grow);
 
-    ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
-    ctx.fillRect(fx0, fy0, fx1 - fx0 + 1, fy1 - fy0 + 1);
+    // (1') 채우기: 단색 사각형 대신 "주변 색 보간"으로 메운다.
+    //
+    // 흰 배경 위 캡션은 단색으로 충분했지만, 그림 위에 얹힌 글자를 단색으로 덮으면
+    // 회색 사각형 자국이 남는 문제가 실측에서 나왔다(사용자 확인).
+    // 각 픽셀을 좌/우 바깥 경계색의 가로 보간과 상/하 바깥 경계색의 세로 보간으로 채우면
+    // 배경의 색·그라데이션을 따라가 자국이 거의 보이지 않는다.
+    const bw = fx1 - fx0 + 1;
+    const bh = fy1 - fy0 + 1;
+    // 보간은 작은 영역에서만 자연스럽다. 넓은 영역에 쓰면 그림을 가로지르는 긴 번짐이
+    // 생긴다(실측에서 확인). 큰 박스는 단색(최빈 배경색)으로 덮는다.
+    if (bw * bh > W * H * 0.01) {
+      ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
+      ctx.fillRect(fx0, fy0, bw, bh);
+      masked += 1;
+      continue;
+    }
+    const fill = ctx.createImageData(bw, bh);
+    const outside = (x: number, y: number): [number, number, number] =>
+      at(Math.max(0, Math.min(W - 1, x)), Math.max(0, Math.min(H - 1, y)));
+    for (let yy = 0; yy < bh; yy++) {
+      const y = fy0 + yy;
+      const left = outside(fx0 - 1, y);
+      const right = outside(fx1 + 1, y);
+      for (let xx = 0; xx < bw; xx++) {
+        const x = fx0 + xx;
+        const top = outside(x, fy0 - 1);
+        const bottom = outside(x, fy1 + 1);
+        const tx = bw === 1 ? 0.5 : xx / (bw - 1);
+        const ty = bh === 1 ? 0.5 : yy / (bh - 1);
+        const o = (yy * bw + xx) * 4;
+        for (let ch = 0; ch < 3; ch++) {
+          const horiz = left[ch] + (right[ch] - left[ch]) * tx;
+          const vert = top[ch] + (bottom[ch] - top[ch]) * ty;
+          // 가로/세로 추정의 평균. 한쪽이 글자 획에 걸려도 다른 쪽이 보정한다.
+          fill.data[o + ch] = Math.round((horiz + vert) / 2);
+        }
+        fill.data[o + 3] = 255;
+      }
+    }
+    ctx.putImageData(fill, fx0, fy0);
     masked += 1;
   }
 
