@@ -30,14 +30,17 @@ export interface MaskBox {
 }
 
 export interface MaskTextOptions {
-  /** 글자 박스 주변 여유(px). 기본 1 — 수칙 2(최소 크기). */
+  /** 글자 박스 주변 최소 여유(px). 좌표 오차·안티에일리어싱을 덮는다. */
   pad?: number;
-  /** 박스 높이가 이미지 높이의 이 비율을 넘으면 글자가 아니라 그림으로 본다. */
-  maxHeightRatio?: number;
-  /** 박스 너비가 이미지 너비의 이 비율을 넘으면 글자가 아니라 그림으로 본다. */
-  maxWidthRatio?: number;
-  /** 박스 안 잉크 비율이 이 값을 넘으면 색이 칠해진 그림으로 본다. */
-  maxInkRatio?: number;
+  /** 박스 높이 대비 추가 여유 비율(작은 글자일수록 절대 여백이 작아지게). */
+  padRatio?: number;
+  /**
+   * 박스가 이미지 면적의 이 비율을 넘으면 텍스트로 보지 않는다.
+   * 실측 교훈: 예전엔 높이 10%·너비 35% 로 좁게 잡아 여러 줄 주석·넓은 캡션이
+   * 통째로 걸러졌고(too_large 4건) 강의록 인쇄 텍스트가 그대로 남았다.
+   * 모델이 준 박스는 실제 텍스트에 붙어 있으므로 "명백히 이상한 경우"만 막는다.
+   */
+  maxAreaRatio?: number;
 }
 
 export interface MaskTextResult {
@@ -79,10 +82,9 @@ export async function maskTextRegions(
   boxes: MaskBox[],
   options: MaskTextOptions = {},
 ): Promise<MaskTextResult> {
-  const pad = options.pad ?? 1;
-  const maxHeightRatio = options.maxHeightRatio ?? 0.1;
-  const maxWidthRatio = options.maxWidthRatio ?? 0.35;
-  const maxInkRatio = options.maxInkRatio ?? 0.55;
+  const pad = options.pad ?? 2;
+  const padRatio = options.padRatio ?? 0.08;
+  const maxAreaRatio = options.maxAreaRatio ?? 0.6;
 
   const keptReasons: Record<string, number> = {};
   const keep = (reason: string) => {
@@ -126,8 +128,9 @@ export async function maskTextRegions(
       continue;
     }
 
-    // (4) 그림 오인 방지 — 글자 한 덩어리는 이미지에 비해 작다.
-    if (y1 - y0 > H * maxHeightRatio || x1 - x0 > W * maxWidthRatio) {
+    // (4) 그림 오인 방지 — 모델이 명백히 이상한 박스를 준 경우만 막는다.
+    //     (좁은 가드는 여러 줄 주석·넓은 캡션을 통째로 걸러 텍스트를 남겼다.)
+    if ((x1 - x0) * (y1 - y0) > W * H * maxAreaRatio) {
       keep('too_large');
       continue;
     }
@@ -150,26 +153,43 @@ export async function maskTextRegions(
       keep('no_ring');
       continue;
     }
-    const bg: [number, number, number] = [
+    // 배경색: 링 픽셀의 "최빈 색"을 쓴다(8단계 양자화).
+    // 중앙값을 쓰면 링에 걸친 글자 획·인접 텍스트 때문에 회색으로 치우쳐, 흰 배경 위에
+    // 회색 사각형이 남는 문제가 실측에서 나왔다.
+    const bucket = new Map<string, { c: [number, number, number]; n: number }>();
+    for (const c of ring) {
+      const key = `${c[0] >> 5}_${c[1] >> 5}_${c[2] >> 5}`;
+      const cur = bucket.get(key);
+      if (cur) cur.n += 1;
+      else bucket.set(key, { c, n: 1 });
+    }
+    let bg: [number, number, number] = [
       median(ring.map((c) => c[0])),
       median(ring.map((c) => c[1])),
       median(ring.map((c) => c[2])),
     ];
+    let best = 0;
+    for (const { c, n } of bucket.values()) {
+      if (n > best) {
+        best = n;
+        bg = c;
+      }
+    }
     const bgLum = lum(bg);
     const isInk = (x: number, y: number) => Math.abs(lum(at(x, y)) - bgLum) > 40;
 
     // (2) 글자 픽셀 범위로 축소 — 박스가 넉넉해도 실제 글자에만 밀착시킨다.
+    //     단 글자를 찾지 못하면 "덮지 않는" 대신 모델이 준 박스를 그대로 쓴다.
+    //     (밝은 색 글자는 잉크로 안 잡혀 그대로 노출되는 사고가 실측에서 나왔다.)
     let ix0 = x1;
     let iy0 = y1;
     let ix1 = x0;
     let iy1 = y0;
     let found = false;
-    let inkCount = 0;
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
         if (!isInk(x, y)) continue;
         found = true;
-        inkCount += 1;
         if (x < ix0) ix0 = x;
         if (x > ix1) ix1 = x;
         if (y < iy0) iy0 = y;
@@ -177,23 +197,22 @@ export async function maskTextRegions(
       }
     }
     if (!found) {
-      keep('no_ink');
-      continue;
-    }
-    // (4) 잉크가 가득 찬 영역은 글자가 아니라 칠해진 그림이다.
-    const shrunkArea = Math.max(1, (ix1 - ix0 + 1) * (iy1 - iy0 + 1));
-    if (inkCount / shrunkArea > maxInkRatio) {
-      keep('dense_ink');
-      continue;
+      ix0 = x0;
+      iy0 = y0;
+      ix1 = x1;
+      iy1 = y1;
     }
 
+    // 여유: 좌표 오차·안티에일리어싱으로 글자 가장자리가 남지 않게 한다.
+    // 글자 높이에 비례해 주므로 작은 글자에는 여전히 최소 크기다(수칙 2 유지).
+    const grow = Math.max(pad, Math.round((iy1 - iy0 + 1) * padRatio));
+    const fx0 = Math.max(0, ix0 - grow);
+    const fy0 = Math.max(0, iy0 - grow);
+    const fx1 = Math.min(W - 1, ix1 + grow);
+    const fy1 = Math.min(H - 1, iy1 + grow);
+
     ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
-    ctx.fillRect(
-      Math.max(0, ix0 - pad),
-      Math.max(0, iy0 - pad),
-      Math.min(W - 1, ix1 + pad) - Math.max(0, ix0 - pad) + 1,
-      Math.min(H - 1, iy1 + pad) - Math.max(0, iy0 - pad) + 1,
-    );
+    ctx.fillRect(fx0, fy0, fx1 - fx0 + 1, fy1 - fy0 + 1);
     masked += 1;
   }
 
