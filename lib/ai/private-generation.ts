@@ -51,6 +51,7 @@ import {
   extractEmbeddedPdfImages,
   type ExtractEmbeddedDiagnostic,
 } from '@/lib/extract/pdf-embedded-images';
+import { extractPdfImageObjects } from '@/lib/extract/pdf-image-objects';
 import { selectExamImages } from '@/lib/extract/select-exam-images';
 import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
 import { maskTextRegions } from '@/lib/extract/mask-text';
@@ -596,11 +597,32 @@ async function extractFromBuffer(input: {
         }
         const tEmbed = Date.now();
         try {
-          const candidates = await extractEmbeddedPdfImages(Buffer.from(pdfBuffer), {
-            maxImages: MAX_EMBEDDED_CANDIDATES,
-            maxOutEdgePx: 1024,
-            diag: input.diag?.embedded,
-          });
+          // 1순위: pdfjs 로 PDF 안의 이미지 객체를 직접 추출한다.
+          //   외부 바이너리(mutool)가 프로덕션(Vercel)에 없어 종전 경로는 항상 실패했고
+          //   (ENOENT), 그 때문에 모든 이미지 PDF 가 비싼 폴백(전체 렌더 8.5초 + 페이지별
+          //   Vision 19.1초)으로 떨어졌다. pdfjs 는 이미 렌더링에 쓰고 있어 추가 의존성이 없다.
+          //   실측: 25페이지에서 이미지 17개를 2.0초에 추출.
+          //   부수 효과 — 슬라이드에 겹쳐 그린 손글씨 주석은 이미지 객체에 포함되지 않아
+          //   원본 그림만 깨끗하게 얻는다.
+          const objDiag: Record<string, unknown> = {};
+          let candidates: { png: Uint8Array; widthPx: number; heightPx: number }[] =
+            await extractPdfImageObjects(pdfBuffer, {
+              maxImages: MAX_EMBEDDED_CANDIDATES,
+              maxOutEdgePx: 1024,
+              diag: objDiag,
+            });
+          if (input.diag) {
+            input.diag.extract.pdfImageObjects = objDiag;
+            input.diag.timings.imageObjectsMs = Date.now() - tEmbed;
+          }
+          // 2순위: mutool 기반 추출(로컬·Docker 환경에서만 동작). 실패해도 무해.
+          if (candidates.length === 0) {
+            candidates = await extractEmbeddedPdfImages(Buffer.from(pdfBuffer), {
+              maxImages: MAX_EMBEDDED_CANDIDATES,
+              maxOutEdgePx: 1024,
+              diag: input.diag?.embedded,
+            });
+          }
           if (input.diag) input.diag.timings.embeddedExtractMs = Date.now() - tEmbed;
           if (candidates.length === 0) return null;
           // AI 선별: 로고·장식·표지·순수 도표 제외, 판독 가치 있는 의료 이미지만(개수는 내용에 따라 가변).
@@ -1206,10 +1228,17 @@ export async function generatePrivateQuestionsFromUpload(
     //   실패는 즉시 던지지 않고 감싸 두었다가 본배치 단계에서 전체 컨텍스트로 재시도한다.
     const earlyFullText = await earlyText;
     const canPrefire = batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
+    // 조기 출발 폭. 이미지형이라도 "이미지가 실제로 필요한 배치"만 전처리를 기다리면 된다.
+    //   이미지 1장당 최대 2문항(재사용 상한)이므로 필요한 이미지 배치 수는
+    //   ceil(문항 수의 절반 / 배치 크기) 이하로 충분하다. 나머지는 텍스트로 먼저 출발시킨다.
+    //   실측 근거: 텍스트는 1.6초에 준비되는데 이미지형은 첫 배치가 10초에야 출발했다.
+    const imageBatchesNeeded = wantsImages
+      ? Math.min(batchSizes.length - 1, Math.max(1, Math.ceil(batchSizes.length / 3)))
+      : 0;
     const prefireCount = !canPrefire
       ? 0
       : wantsImages
-        ? Math.max(1, Math.floor(batchSizes.length / 2))
+        ? Math.max(1, batchSizes.length - imageBatchesNeeded)
         : batchSizes.length;
 
     // 조기 텍스트는 슬라이드 라벨 없이 한 덩어리로 오므로, 구간 분할은 문자 기준으로 한다.
