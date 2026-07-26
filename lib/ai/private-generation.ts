@@ -195,18 +195,47 @@ function sanitizeErrorMessage(raw: unknown): string {
  */
 const IMAGE_DEIXIS =
   '다음|아래|위의|위에|제시된|해당|보이는|첨부된|주어진';
+// 모식도·도해 같은 "그림" 표현을 빠뜨려 실제 사고가 났다(발문은 "…모식도이다"인데 이미지 없음).
 const IMAGE_NOUNS =
-  '그림|사진|이미지|영상|심전도|ECG|EKG|방사선|엑스레이|X-?ray|CT|MRI|초음파|병리|현미경|소견';
+  '그림|사진|이미지|영상|심전도|ECG|EKG|방사선|엑스레이|X-?ray|CT|MRI|초음파|병리|현미경|소견|' +
+  '모식도|도해|도식|개념도|삽화|도표';
+// 그림을 "선언"하는 발문에 쓰이는 명사(표·그래프처럼 본문에 글로 넣을 수 있는 것은 제외).
+const FIGURE_NOUNS =
+  '그림|사진|이미지|영상|모식도|도해|도식|개념도|삽화|심전도|ECG|EKG|X-?ray|엑스레이|방사선\\s*사진|CT|MRI|초음파|현미경\\s*사진|병리\\s*소견';
 const IMAGE_DEPENDENT_STEM_RE = new RegExp(
   // 지시어와 명사 사이에 수식어가 끼어드는 형태까지 잡는다("아래 흉부 X-ray 를 보고").
   `(?:${IMAGE_DEIXIS})\\s*(?:[가-힣A-Za-z0-9]{1,6}\\s*){0,2}(?:${IMAGE_NOUNS})|` +
     `(?:${IMAGE_NOUNS})\\s*(?:에서|에는|을|를|의|상)\\s*(?:관찰|보이|나타|판독|해석)|` +
+    // "다음은 대동맥 박리의 발생 기전에 대한 모식도이다" 처럼 지시어와 그림 명사 사이에
+    // 설명이 길게 끼는 선언형. 명사 뒤 조사로 "그림을 가리키는 문장"임을 확인해
+    // "심전도 소견은 정상이었다"(본문에 소견을 서술한 경우)와 구분한다.
+    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
     `판독(?:하|해)|사진\\s*판독`,
   'i',
 );
 
 function stemDependsOnImage(stem: string): boolean {
   return IMAGE_DEPENDENT_STEM_RE.test(String(stem ?? ''));
+}
+
+/**
+ * "제시된 그림을 가리키는" 발문인지 더 엄격하게 판정한다.
+ *
+ * 용도 차이:
+ *  - stemDependsOnImage: 모델이 image_indices 를 채웠는데 이미지가 정제 실패로 빠진 경우에 쓴다.
+ *    이미 그림을 의도한 문항이므로 느슨해도 된다.
+ *  - stemDeclaresFigure: 이미지가 애초에 하나도 연결되지 않은 문항을 지울지 판단한다.
+ *    오탐이면 멀쩡한 문항을 지우게 되므로, 그림 명사 뒤 조사까지 확인해
+ *    "다음 환자의 심전도 소견은 정상이었다"(본문 서술)와 "…모식도이다"(그림 지칭)를 구분한다.
+ */
+const FIGURE_DECLARATION_RE = new RegExp(
+  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})` +
+    `\\s*(?:이다|입니다|이며|이고|에서|에는|으로|로|를\\s*보고|을\\s*보고|를\\s*판독|을\\s*판독)`,
+  'i',
+);
+
+function stemDeclaresFigure(stem: string): boolean {
+  return FIGURE_DECLARATION_RE.test(String(stem ?? ''));
 }
 
 /** 문항 선지 수 — 국시형 고정값. 저장 전에 반드시 이 값으로 맞춘다. */
@@ -1118,6 +1147,15 @@ export async function generatePrivateQuestionsFromUpload(
       { length: batchCount },
       (_, i) => baseBatchSize + (i < batchRemainder ? 1 : 0),
     );
+    // 조합형(ㄱ/ㄴ/ㄷ) 빈도 제한: 학교 시험에서 매우 드문 유형이라 요청에 별도 조건이 없으면
+    // 10문항당 1문항 이하로 억제한다. 배치가 병렬이라 "전체의 10%"를 프롬프트로 지시해도
+    // 배치마다 독립 판단해 과다 생성되므로, 허용 배치를 정해 결정론적으로 배분한다.
+    const comboQuota = Math.floor(desiredCount / 10);
+    const comboBatches = new Set(
+      Array.from({ length: comboQuota }, (_, i) => batchSizes.length - 1 - i).filter(
+        (i) => i >= 0,
+      ),
+    );
     let ocrChars = 0;
     let completedQuestions = 0;
     // 배치 비용 로그용 — 추출 완료 후 채워진다(선발사 배치는 추출 전에 시작하므로 0으로 기록).
@@ -1583,12 +1621,25 @@ export async function generatePrivateQuestionsFromUpload(
             (batchIndex === 0
               ? ' 핵심·기본 개념 문항을 포함하세요.'
               : ' 전형적인 기본 정의 문항보다 응용·감별 문항을 우선하세요.');
+      // 이미지를 받지 못한 배치가 발문에서 그림을 가리키면(예: "다음은 …모식도이다")
+      // 학생 화면에 그림 없는 문항이 나온다. 배치 단위로 명시 금지한다.
+      const noImageDirective =
+        gen.featured.length === 0
+          ? '\n\n이번 묶음에는 의료 이미지가 제공되지 않았습니다. 따라서 ' +
+            '"다음은 …모식도이다", "아래 그림에서", "제시된 심전도에서" 처럼 제시되지 않은 그림·사진·' +
+            '모식도를 가리키는 표현을 발문에 절대 쓰지 말고, image_indices 는 항상 빈 배열 [] 로 두세요. ' +
+            '모든 문항은 제공된 텍스트만으로 풀 수 있어야 합니다.'
+          : '';
+      // 조합형 빈도 제한(요청에 별도 조건이 없을 때).
+      const comboDirective = comboBatches.has(batchIndex)
+        ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
+        : '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형("옳은 것을 모두 고른 것은?")을 **만들지 마세요.** 모든 문항을 단일 정답 5지선다로 만드세요.';
       userContent.push({
         type: 'text',
         text:
           `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
           (gen.contextText || '(추출된 텍스트·이미지 없음)') +
-          `\n\n${userMessage}${batchDirective}`,
+          `\n\n${userMessage}${batchDirective}${noImageDirective}${comboDirective}`,
       });
 
       // 해설 길이 상한(350자) 적용 후 문항당 실출력은 ~1,000토큰대. 다만 지시 이탈로
@@ -1997,6 +2048,38 @@ export async function generatePrivateQuestionsFromUpload(
             GEN_BACKFILL_CONTEXT_CHARS,
           );
     };
+    // ── 깨진 그림 참조 정리
+    // 발문이 "다음은 …모식도이다" 처럼 제시된 그림을 가리키는데 연결된 이미지가 하나도 없으면
+    // 학생이 풀 수 없는 문항이다(사용자 신고 사례). 원인은 두 가지다.
+    //   ① 모델이 image_indices 를 비운 채 발문에서만 그림을 언급(프롬프트 위반)
+    //   ② 이미지가 정제 실패·재사용 상한으로 빠졌는데 발문 판정이 그림 표현을 놓침
+    // 배치 내부 검사로는 ①을 잡을 수 없어(연결이 애초에 없으므로) 저장 결과를 훑어 정리한다.
+    // 삭제한 슬롯은 바로 아래 보충 단계가 텍스트 문항으로 다시 채운다.
+    try {
+      const [{ data: qRows }, { data: imgRows }] = await Promise.all([
+        admin.from('private_questions').select('id, stem').eq('upload_id', uploadRow.id),
+        admin
+          .from('private_question_images')
+          .select('private_question_id')
+          .eq('upload_id', uploadRow.id),
+      ]);
+      const linked = new Set((imgRows ?? []).map((r) => r.private_question_id));
+      const brokenIds = (qRows ?? [])
+        .filter((r) => !linked.has(r.id) && stemDeclaresFigure(r.stem ?? ''))
+        .map((r) => r.id);
+      if (brokenIds.length > 0) {
+        await admin.from('private_questions').delete().in('id', brokenIds);
+        warnings.push(
+          `그림을 가리키지만 이미지가 없는 문항 ${brokenIds.length}개 삭제 — 보충 생성으로 대체.`,
+        );
+        diag.generation.brokenFigureRefsRemoved = brokenIds.length;
+      }
+    } catch (e) {
+      warnings.push(
+        `깨진 그림 참조 정리 실패 — ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+
     const tBackfill = Date.now();
     let saved = await readSaved();
     // 진행률 기준도 DB 사실값으로 맞춘다(삭제된 문항까지 세어 100%를 넘기지 않게).
