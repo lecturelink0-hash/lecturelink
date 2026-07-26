@@ -428,10 +428,28 @@ async function extractFromBuffer(input: {
   buffer: ArrayBuffer;
   fileType: string;
   userIdForLog: string;
+  /**
+   * 이 요청이 이미지 문항을 원하는지('이미지형' 선택 여부).
+   * false 면 크롭은 문항에 쓰이지 않으므로, 본문 텍스트가 충분한 자료에서는
+   * 임베드 이미지 추출·페이지 렌더·Vision 검출·크롭을 통째로 건너뛴다(전처리 시간 절감).
+   * 텍스트가 부족한 스캔 자료는 OCR 이 유일한 내용원이므로 예외로 계속 수행한다.
+   */
+  wantsImages: boolean;
+  /** 경고 수집 배열(호출자와 공유) — 텍스트 조기 반환 이후에도 계속 쌓을 수 있게 주입받는다. */
+  warnings: string[];
+  /** 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다. */
+  onEarlyText?: (text: string) => void;
   onVisionProgress?: (completed: number, total: number) => Promise<void> | void;
-}): Promise<{ slides: ExtractedSlide[]; warnings: string[] }> {
-  const { buffer, fileType, userIdForLog } = input;
-  const warnings: string[] = [];
+}): Promise<{ slides: ExtractedSlide[] }> {
+  const { buffer, fileType, userIdForLog, wantsImages, warnings } = input;
+  // 이미지 분석(렌더+Vision+크롭) 생략 여부 — 텍스트 확보 후 확정한다.
+  let skipImageAnalysis = false;
+  let earlyTextSent = false;
+  const sendEarlyText = (text: string) => {
+    if (earlyTextSent) return;
+    earlyTextSent = true;
+    input.onEarlyText?.(text);
+  };
 
   // PDF 임베드 이미지(object dedup) — 있으면 Vision 검출/crop 대신 이걸 우선 사용.
   let pdfEmbeddedCrops: CroppedImage[] | null = null;
@@ -481,6 +499,9 @@ async function extractFromBuffer(input: {
       // (1-b) PDF 에 박힌 이미지 전부 직접 추출(object dedup) → AI 로 "시험용 의료 이미지"만 선별.
       //       텍스트 양과 무관하게 항상 수행 → 텍스트 위주 강의 PDF 에서도 X-ray/ECG 판독 문항 생성.
       (async (): Promise<CroppedImage[] | null> => {
+        // '이미지형'을 선택하지 않은 요청에서는 크롭이 문항에 쓰이지 않는다.
+        // mutool 실행 + AI 선별(Vision 호출)을 아예 하지 않아 추출 시간을 줄인다.
+        if (!wantsImages) return null;
         try {
           const candidates = await extractEmbeddedPdfImages(Buffer.from(pdfBuffer), {
             maxImages: MAX_EMBEDDED_CANDIDATES,
@@ -519,6 +540,20 @@ async function extractFromBuffer(input: {
     }
     pdfEmbeddedCrops = embeddedCropsResult;
 
+    // ★ 텍스트 조기 전달 — 호출자가 이 시점에 텍스트 배치를 먼저 출발시켜
+    //   아래 렌더·Vision·OCR 시간을 생성 시간 뒤로 숨긴다.
+    sendEarlyText(fullText);
+
+    // ★ 이미지 분석 생략 판정: 이미지 문항을 원하지 않고 본문 텍스트가 충분하면
+    //   페이지 렌더 + Vision 검출 + 크롭을 건너뛴다(크롭이 없으므로 OCR 도 자동 생략).
+    //   텍스트가 부족한 스캔 자료(allowWholePageOcrFallback)는 OCR 이 유일한 내용원이라 유지.
+    skipImageAnalysis = !wantsImages && !allowWholePageOcrFallback;
+    if (skipImageAnalysis) {
+      warnings.push(
+        `이미지형 미선택 + 본문 텍스트 ${fullText.length}자 확보 → 페이지 렌더·Vision·OCR 생략(텍스트 전용 경로).`,
+      );
+    }
+
     // (2) 페이지 이미지 — 의료 이미지 검출/crop 용.
     //
     // ★ 속도 최적화: 본문 텍스트가 충분히 추출된(=텍스트 위주) 자료는 페이지 렌더 +
@@ -529,7 +564,7 @@ async function extractFromBuffer(input: {
     //   텍스트가 부족한(스캔/이미지 위주) 자료만 기존 페이지 렌더 + Vision 경로를 탄다.
     let pages: Awaited<ReturnType<typeof renderPdfPages>> = [];
     try {
-      if (!pdfEmbeddedCrops) {
+      if (!pdfEmbeddedCrops && !skipImageAnalysis) {
         if (allowWholePageOcrFallback) {
           pages = await renderPdfPages(pdfBuffer, {
             maxPages: MAX_PDF_PAGES,
@@ -690,6 +725,7 @@ async function extractFromBuffer(input: {
     const s = slidesData[i];
     if (
       !pdfEmbeddedCrops &&
+      !skipImageAnalysis &&
       s.png.length > 0 &&
       visionIndices.length < MAX_VISION_SLIDES
     ) {
@@ -765,7 +801,8 @@ async function extractFromBuffer(input: {
     }
   }
 
-  return { slides, warnings };
+  sendEarlyText(slides.map((s) => s.text).join('\n\n'));
+  return { slides };
 }
 
 export async function generatePrivateQuestionsFromUpload(
@@ -851,25 +888,44 @@ export async function generatePrivateQuestionsFromUpload(
     }
     const fileBuffer = await fileBlob.arrayBuffer();
 
-    // 3) 추출 (페이지 텍스트 + crop 이미지) — 참고자료·분류 카탈로그 로드는 독립 작업이라
-    //    병렬로 겹친다. (카탈로그를 미리 받아야 OCR 와중에 텍스트 선발사 배치를 띄울 수 있다.)
+    // 3) 추출 · 참고자료 · 분류 카탈로그를 동시에 시작한다(서로 독립).
+    //
+    //    ★ 전처리와 생성의 중첩: 추출은 "본문 텍스트"를 확보한 즉시 onEarlyText 로 알려주고,
+    //      호출자는 그 시점에 텍스트 배치를 먼저 출발시킨다. 그래서 페이지 렌더·Vision·OCR
+    //      시간이 생성 시간 뒤로 숨는다(예전에는 추출·Vision·OCR 이 모두 끝나야 생성 시작).
     await updateProgress('extracting');
-    const [{ slides, warnings }, referenceImages, subTopicsRes] = await Promise.all([
-      extractFromBuffer({
-        buffer: fileBuffer,
-        fileType: upload.file_type,
-        userIdForLog: input.userId,
-        onVisionProgress: async (completed, total) =>
-          updateProgress('vision', completed, total),
-      }),
-      loadReferenceImages({
-        uploadIds: input.referenceUploadIds ?? [],
-        userId: input.userId,
-      }),
-      admin
-        .from('sub_topics')
-        .select('id, code, name, subject:subjects ( name )'),
-    ]);
+    const warnings: string[] = [];
+    // '이미지형'을 고르지 않았다면 크롭이 문항에 쓰이지 않으므로 이미지 분석을 생략할 수 있다.
+    const wantsImages = (input.questionTypes ?? []).includes('이미지형');
+
+    let resolveEarlyText: (text: string) => void = () => {};
+    const earlyText = new Promise<string>((resolve) => {
+      resolveEarlyText = resolve;
+    });
+
+    const extractPromise = extractFromBuffer({
+      buffer: fileBuffer,
+      fileType: upload.file_type,
+      userIdForLog: input.userId,
+      wantsImages,
+      warnings,
+      onEarlyText: (text) => resolveEarlyText(text),
+      onVisionProgress: async (completed, total) =>
+        updateProgress('vision', completed, total),
+    });
+    const referencePromise = loadReferenceImages({
+      uploadIds: input.referenceUploadIds ?? [],
+      userId: input.userId,
+    });
+    // 추출이 실패해도 earlyText 가 영원히 대기하지 않게 방어한다.
+    extractPromise.catch(() => resolveEarlyText(''));
+
+    const subTopicsRes = await admin
+      .from('sub_topics')
+      .select('id, code, name, subject:subjects ( name )');
+    // 참고자료는 선발사 배치가 클로저로 참조하므로 반드시 그 전에 확정해야 한다
+    //  (const 초기화 전 접근 = ReferenceError). 추출과 병렬로 이미 시작돼 있어 대기 비용은 없다.
+    const referenceImages = await referencePromise;
 
     // 4) 분류 카탈로그·생성 프롬프트·배치 계획을 OCR "이전"에 준비한다 — 본문 텍스트가
     //    충분한 자료는 아래 "텍스트 선발사 배치"가 OCR 과 병행으로 먼저 출발할 수 있게.
@@ -932,71 +988,108 @@ export async function generatePrivateQuestionsFromUpload(
       { length: batchCount },
       (_, i) => baseBatchSize + (i < batchRemainder ? 1 : 0),
     );
-    const allCrops = slides.flatMap((s) =>
-      s.croppedImages.map((c) => ({ slide: s, crop: c })),
-    );
-    const totalCropped = allCrops.length;
     let ocrChars = 0;
     let completedQuestions = 0;
+    // 배치 비용 로그용 — 추출 완료 후 채워진다(선발사 배치는 추출 전에 시작하므로 0으로 기록).
+    let extractedSlideCount = 0;
+    let extractedCropCount = 0;
 
-    // ★ 텍스트 선(先)발사 — 본문 텍스트는 이미 준비된 시점이므로 첫 배치를 텍스트만으로
-    //   즉시 출발시켜 crop OCR(이미지 자료에서 수십 초)과 생성 시간을 겹친다. 이미지 판독
-    //   배치(나머지)는 OCR·이미지 선별 완료 후 실행한다. 텍스트가 빈약한(스캔 위주) 자료는
-    //   선발사 컨텍스트가 부실하므로 기존 순서(OCR 후 일괄)를 유지한다.
-    //   실패는 즉시 던지지 않고 감싸 두었다가(unhandled rejection 크래시 방지) 아래
-    //   본배치 단계에서 전체 컨텍스트로 재시도한다.
-    const slideTextTotal = slides.map((s) => s.text).join(' ').trim();
-    const canPrefire = batchSizes.length > 1 && slideTextTotal.length >= 1000;
-    // 선발사 컨텍스트: 자료가 커서 구간 분할이 적용될 규모면 앞쪽 구간(0번)만 맡는다.
-    const prefireBlocks = slides
-      .filter((s) => s.text.trim().length > 0)
-      .map((s) => `## 슬라이드 ${s.pageIndex}\n텍스트: ${s.text}`);
-    const prefireFull = prefireBlocks.join('\n\n');
+    // ★ 텍스트 선(先)발사 — 본문 텍스트가 확보되는 즉시(추출 완료를 기다리지 않고)
+    //   텍스트 배치들을 출발시켜, 남은 전처리(페이지 렌더·Vision·크롭 OCR) 시간을
+    //   생성 시간 뒤로 숨긴다.
+    //   · 이미지형 미선택: 어차피 이미지를 쓰지 않으므로 전 배치를 여기서 출발.
+    //   · 이미지형 선택: 앞쪽 절반만 텍스트로 먼저 출발하고, 나머지는 OCR·이미지 배정을
+    //     받아 이미지 판독 문항을 담당한다.
+    //   실패는 즉시 던지지 않고 감싸 두었다가 본배치 단계에서 전체 컨텍스트로 재시도한다.
+    const earlyFullText = await earlyText;
+    const canPrefire = batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
+    const prefireCount = !canPrefire
+      ? 0
+      : wantsImages
+        ? Math.max(1, Math.floor(batchSizes.length / 2))
+        : batchSizes.length;
+
+    // 조기 텍스트는 슬라이드 라벨 없이 한 덩어리로 오므로, 구간 분할은 문자 기준으로 한다.
     const prefireSegments =
-      prefireFull.length < GEN_SEGMENT_ENABLE_MIN_CHARS
+      earlyFullText.length < GEN_SEGMENT_ENABLE_MIN_CHARS
         ? 1
         : Math.max(
             1,
             Math.min(
-              batchSizes.length,
-              Math.floor(prefireFull.length / GEN_SEGMENT_MIN_CHARS),
+              prefireCount || 1,
+              Math.floor(earlyFullText.length / GEN_SEGMENT_MIN_CHARS),
             ),
           );
     const prefireSegmented = prefireSegments > 1;
-    const prefireContext = (): string => {
-      if (!prefireSegmented) return prefireFull;
-      if (prefireBlocks.length >= prefireSegments) {
-        const per = Math.ceil(prefireBlocks.length / prefireSegments);
-        return prefireBlocks.slice(0, per + 1).join('\n\n');
-      }
-      const segLen = Math.ceil(prefireFull.length / prefireSegments);
-      const end = Math.min(
-        prefireFull.length,
-        segLen + Math.round(segLen * GEN_SEGMENT_OVERLAP_RATIO),
+    const prefireContext = (batchIndex: number): string => {
+      if (!prefireSegmented) return earlyFullText;
+      const segIndex = Math.min(
+        prefireSegments - 1,
+        Math.floor((batchIndex * prefireSegments) / Math.max(1, prefireCount)),
       );
-      const nl = prefireFull.lastIndexOf('\n', end);
-      return prefireFull.slice(0, nl > segLen * 0.5 ? nl : end);
+      const segLen = Math.ceil(earlyFullText.length / prefireSegments);
+      const pad = Math.round(segLen * GEN_SEGMENT_OVERLAP_RATIO);
+      let from = Math.max(0, segIndex * segLen - pad);
+      let to = Math.min(earlyFullText.length, segIndex * segLen + segLen + pad);
+      if (from > 0) {
+        const nl = earlyFullText.indexOf('\n', from);
+        if (nl >= 0 && nl - from < 500) from = nl + 1;
+      }
+      if (to < earlyFullText.length) {
+        const nl = earlyFullText.lastIndexOf('\n', to);
+        if (nl > from) to = nl;
+      }
+      return earlyFullText.slice(from, to);
     };
-    const prefired = canPrefire
-      ? generateAndPersistBatch(0, Array.from({ length: batchSizes[0] }, (_, k) => k), batchSizes.length, {
-          // 선발사는 OCR 이전이라 자기만의 컨텍스트를 만든다. 본 배치들과 마찬가지로
-          // 자료 전체가 아니라 0번 구간만 맡아 입력을 줄이고 중복 출제도 피한다.
-          // (OCR 후 구성되는 compositeText 와 분할 기준이 조금 달라도, 담당 범위가
-          //  자료 앞부분이라는 점은 일치한다.)
-          contextText: prefireContext(),
-          featured: [],
-          getDisplayPng: async () => null,
-          segmented: prefireSegmented,
-        }).then(
-          (v) => ({ ok: true as const, v }),
-          (e: unknown) => ({ ok: false as const, e }),
-        )
-      : null;
+
+    const slotsFor = (batchIndex: number) =>
+      Array.from(
+        { length: batchSizes[batchIndex] },
+        (_, k) => batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0) + k,
+      );
+
+    type SettledBatch = { ok: true; v: BatchResult } | { ok: false; e: unknown };
+    const prefired: Array<Promise<SettledBatch> | null> = batchSizes.map((_, batchIndex) =>
+      batchIndex < prefireCount
+        ? generateAndPersistBatch(batchIndex, slotsFor(batchIndex), batchSizes.length, {
+            contextText: prefireContext(batchIndex),
+            featured: [],
+            getDisplayPng: async () => null,
+            segmented: prefireSegmented,
+          }).then(
+            (v): SettledBatch => ({ ok: true, v }),
+            (e: unknown): SettledBatch => ({ ok: false, e }),
+          )
+        : null,
+    );
+    if (prefireCount > 0) {
+      warnings.push(
+        `텍스트 선발사: ${prefireCount}/${batchSizes.length} 배치를 전처리 완료 전에 출발.`,
+      );
+    }
+
+    // 4-b) 추출 완료 대기 — 위 선발사 배치들은 이 시간 동안 이미 생성 중이다.
+    const { slides } = await extractPromise;
+    const allCrops = slides.flatMap((s) =>
+      s.croppedImages.map((c) => ({ slide: s, crop: c })),
+    );
+    const totalCropped = allCrops.length;
+    extractedSlideCount = slides.length;
+    extractedCropCount = totalCropped;
+
 
     // 5) crop 이미지 OCR — crop 단위로 평탄화해 전역 병렬 처리.
     //    (슬라이드 단위 병렬은 임베드 이미지 경로처럼 crop 이 첫 슬라이드에 몰리면
     //     사실상 순차가 되어 crop 수 × 호출 지연만큼 느려진다.)
-    await updateProgress('ocr', 0, allCrops.length, { page_count: slides.length });
+    // 선발사 배치가 이미 생성 중이면 단계 표시를 'ocr' 로 되돌리지 않는다(진행 표시 역행 방지).
+    const reportOcrProgress = prefireCount === 0 && allCrops.length > 0;
+    if (reportOcrProgress) {
+      await updateProgress('ocr', 0, allCrops.length, { page_count: slides.length });
+    } else {
+      await updateProgress('generating', completedQuestions, desiredCount, {
+        page_count: slides.length,
+      });
+    }
     await mapWithConcurrency(
       allCrops,
       OCR_CONCURRENCY,
@@ -1018,7 +1111,9 @@ export async function generatePrivateQuestionsFromUpload(
         }
         return null;
       },
-      async (completed, total) => updateProgress('ocr', completed, total),
+      reportOcrProgress
+        ? async (completed, total) => updateProgress('ocr', completed, total)
+        : undefined,
     );
     const slideSummaries = slides.map((s) => ({
       pageIndex: s.pageIndex,
@@ -1161,7 +1256,7 @@ export async function generatePrivateQuestionsFromUpload(
     // 넣으면 시스템 프롬프트의 "이미지 판독 문항 우선" 지시 때문에 이미지 문항이 만들어지고,
     // 그 이미지가 정제(인페인팅) 검증에서 탈락하거나 "동일 이미지 최대 2문제" 정리에 걸리면
     // 문항이 통째로 삭제돼 요청 수보다 적게 남는다(10 요청 → 6 저장의 주 원인).
-    const useImages = (input.questionTypes ?? []).includes('이미지형') && featuredImages.length > 0;
+    const useImages = wantsImages && featuredImages.length > 0;
     if (!useImages) {
       systemPrompt +=
         '\n\n## 이미지 사용 금지(이번 요청)\n' +
@@ -1426,8 +1521,8 @@ export async function generatePrivateQuestionsFromUpload(
           uploadId: uploadRow.id,
           batch: batchIndex + 1,
           batchCount,
-          slides: slides.length,
-          croppedImages: totalCropped,
+          slides: extractedSlideCount,
+          croppedImages: extractedCropCount,
           ocrChars,
         },
       });
@@ -1597,11 +1692,13 @@ export async function generatePrivateQuestionsFromUpload(
     const featuredForBatch = (batchIndex: number, batchCount: number) => {
       if (!useImages) return [];
       if (batchCount <= 1) return featuredImages;
-      // 텍스트 선발사 배치(0번)는 OCR 이전에 출발하므로 이미지를 받을 수 없다.
-      // 그 경우 이미지는 1번 이후 배치들에만 분배해 어떤 이미지도 버려지지 않게 한다.
-      const eligible = canPrefire
-        ? Array.from({ length: batchCount - 1 }, (_, k) => k + 1)
-        : Array.from({ length: batchCount }, (_, k) => k);
+      // 텍스트 선발사로 먼저 출발한 배치는 OCR·이미지 이전에 시작했으므로 이미지를 받을 수
+      // 없다. 이미지는 남은 배치들에만 분배해 어떤 이미지도 버려지지 않게 한다.
+      const eligible = Array.from(
+        { length: Math.max(0, batchCount - prefireCount) },
+        (_, k) => k + prefireCount,
+      );
+      if (eligible.length === 0) return [];
       const pos = eligible.indexOf(batchIndex);
       if (pos < 0) return [];
       const per = Math.ceil(featuredImages.length / eligible.length);
@@ -1625,13 +1722,14 @@ export async function generatePrivateQuestionsFromUpload(
           (_, k) => batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0) + k,
         );
         try {
-          if (batchIndex === 0 && prefired) {
-            const settled = await prefired;
+          const early = prefired[batchIndex];
+          if (early) {
+            const settled = await early;
             if (settled.ok) return settled.v;
             // 선발사 실패(일시 오류·텍스트 컨텍스트 부족) → OCR 완료된 전체 컨텍스트로 재시도.
             // (부분 저장은 upsert(upload_id,generation_slot) + 기존 슬롯 조회로 안전하게 이어짐.)
             console.warn(
-              '[private-gen] 텍스트 선발사 배치 실패 — 전체 컨텍스트로 재시도:',
+              `[private-gen] 텍스트 선발사 배치 ${batchIndex + 1} 실패 — 전체 컨텍스트로 재시도:`,
               settled.e instanceof Error ? settled.e.message : String(settled.e),
             );
           }
