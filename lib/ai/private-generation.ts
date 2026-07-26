@@ -47,7 +47,10 @@ import {
   cropRegions,
   type CroppedImage,
 } from '@/lib/extract/crop-medical-images';
-import { extractEmbeddedPdfImages } from '@/lib/extract/pdf-embedded-images';
+import {
+  extractEmbeddedPdfImages,
+  type ExtractEmbeddedDiagnostic,
+} from '@/lib/extract/pdf-embedded-images';
 import { selectExamImages } from '@/lib/extract/select-exam-images';
 import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
@@ -308,6 +311,31 @@ interface ExtractedSlide {
   croppedImages: CroppedImage[];
 }
 
+/**
+ * 파이프라인 진단 기록.
+ *
+ * 전처리에서 시간이 어디로 가는지, 임베드 이미지 경로가 왜 결과를 못 내는지를
+ * 배포 환경에서 확인할 수 없어 추측에 의존해야 했다. 실행마다 아래 값을 모아
+ * Storage 에 JSON 으로 남기고 GET /api/uploads/[id]/diagnostics 로 조회한다.
+ * (스키마 변경 없이 즉시 사용 가능. 강의 내용은 담지 않고 수치·경고만 담는다.)
+ */
+export interface GenerationDiagnostics {
+  uploadId: string;
+  fileType: string;
+  fileSizeBytes: number | null;
+  wantsImages: boolean;
+  desiredCount: number;
+  /** 단계별 소요(ms). */
+  timings: Record<string, number>;
+  /** 추출 세부 수치(페이지 수·후보 수·생략 여부 등). */
+  extract: Record<string, unknown>;
+  /** 임베드 이미지 경로 진단 — mutool 실행 가능 여부가 여기서 드러난다. */
+  embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+  generation: Record<string, unknown>;
+  warnings: string[];
+  finishedAt: string;
+}
+
 const MAX_REFERENCE_IMAGES = 6;
 
 async function loadReferenceImages(input: {
@@ -439,6 +467,12 @@ async function extractFromBuffer(input: {
   warnings: string[];
   /** 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다. */
   onEarlyText?: (text: string) => void;
+  /** 진단 수집기(선택). 단계별 소요와 세부 수치를 채워 넣는다. */
+  diag?: {
+    timings: Record<string, number>;
+    extract: Record<string, unknown>;
+    embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+  };
   onVisionProgress?: (completed: number, total: number) => Promise<void> | void;
 }): Promise<{ slides: ExtractedSlide[] }> {
   const { buffer, fileType, userIdForLog, wantsImages, warnings } = input;
@@ -483,9 +517,15 @@ async function extractFromBuffer(input: {
     const [parsedFullText, embeddedCropsResult] = await Promise.all([
       // (1) 본문 텍스트 — 실패(null)해도 이미지 경로는 계속 진행.
       (async (): Promise<string | null> => {
+        const t0 = Date.now();
         try {
           const { default: pdfParse } = await import('pdf-parse');
           const result = await pdfParse(Buffer.from(pdfBuffer));
+          if (input.diag) {
+            input.diag.timings.pdfParseMs = Date.now() - t0;
+            input.diag.extract.pdfPages = result.numpages ?? null;
+            input.diag.extract.textChars = (result.text ?? '').trim().length;
+          }
           return (result.text ?? '').trim();
         } catch (e) {
           warnings.push(
@@ -501,15 +541,26 @@ async function extractFromBuffer(input: {
       (async (): Promise<CroppedImage[] | null> => {
         // '이미지형'을 선택하지 않은 요청에서는 크롭이 문항에 쓰이지 않는다.
         // mutool 실행 + AI 선별(Vision 호출)을 아예 하지 않아 추출 시간을 줄인다.
-        if (!wantsImages) return null;
+        if (!wantsImages) {
+          if (input.diag) input.diag.embedded.mutoolRan = undefined; // 시도 자체를 생략
+          return null;
+        }
+        const tEmbed = Date.now();
         try {
           const candidates = await extractEmbeddedPdfImages(Buffer.from(pdfBuffer), {
             maxImages: MAX_EMBEDDED_CANDIDATES,
             maxOutEdgePx: 1024,
+            diag: input.diag?.embedded,
           });
+          if (input.diag) input.diag.timings.embeddedExtractMs = Date.now() - tEmbed;
           if (candidates.length === 0) return null;
           // AI 선별: 로고·장식·표지·순수 도표 제외, 판독 가치 있는 의료 이미지만(개수는 내용에 따라 가변).
+          const tSelect = Date.now();
           const selected = await selectExamImages(candidates, { max: MAX_FEATURED_IMAGES });
+          if (input.diag) {
+            input.diag.embedded.selectMs = Date.now() - tSelect;
+            input.diag.embedded.chosen = selected ? selected.length : null;
+          }
           const chosen =
             selected ??
             // 선별 실패(모델 오류/429) 시 면적 큰 순 폴백.
@@ -548,6 +599,11 @@ async function extractFromBuffer(input: {
     //   페이지 렌더 + Vision 검출 + 크롭을 건너뛴다(크롭이 없으므로 OCR 도 자동 생략).
     //   텍스트가 부족한 스캔 자료(allowWholePageOcrFallback)는 OCR 이 유일한 내용원이라 유지.
     skipImageAnalysis = !wantsImages && !allowWholePageOcrFallback;
+    if (input.diag) {
+      input.diag.extract.skipImageAnalysis = skipImageAnalysis;
+      input.diag.extract.allowWholePageOcrFallback = allowWholePageOcrFallback;
+      input.diag.extract.embeddedCropsUsed = pdfEmbeddedCrops !== null;
+    }
     if (skipImageAnalysis) {
       warnings.push(
         `이미지형 미선택 + 본문 텍스트 ${fullText.length}자 확보 → 페이지 렌더·Vision·OCR 생략(텍스트 전용 경로).`,
@@ -566,22 +622,37 @@ async function extractFromBuffer(input: {
     try {
       if (!pdfEmbeddedCrops && !skipImageAnalysis) {
         if (allowWholePageOcrFallback) {
+          const tAll = Date.now();
           pages = await renderPdfPages(pdfBuffer, {
             maxPages: MAX_PDF_PAGES,
             maxEdgePx: PDF_RENDER_EDGE_PX,
           });
+          if (input.diag) {
+            input.diag.timings.renderAllPagesMs = Date.now() - tAll;
+            input.diag.extract.renderedPages = pages.length;
+          }
         } else {
+          const tScan = Date.now();
           const scanPages = await renderPdfPages(pdfBuffer, {
             maxPages: MAX_PDF_PAGES,
             maxEdgePx: PDF_SCAN_EDGE_PX,
           });
+          const tScore = Date.now();
           const candidatePages = await selectLikelyImagePages(scanPages);
+          const tCand = Date.now();
           if (candidatePages.length > 0) {
             pages = await renderPdfPages(pdfBuffer, {
               pages: candidatePages,
               maxPages: MAX_PDF_PAGES,
               maxEdgePx: PDF_RENDER_EDGE_PX,
             });
+          }
+          if (input.diag) {
+            input.diag.timings.renderScanMs = tScore - tScan;
+            input.diag.timings.scoreMs = tCand - tScore;
+            input.diag.timings.renderCandidatesMs = Date.now() - tCand;
+            input.diag.extract.scanPages = scanPages.length;
+            input.diag.extract.candidatePages = candidatePages.length;
           }
           warnings.push(
             `로컬 이미지 후보 선별: 전체 ${scanPages.length}페이지 중 ${candidatePages.length}페이지 Vision 대상.`,
@@ -737,6 +808,7 @@ async function extractFromBuffer(input: {
   }
 
   // 선정된 페이지들의 검출+crop+전처리를 병렬로 수행 (순차 대비 대용량 스캔 대폭 가속).
+  const tVision = Date.now();
   await mapWithConcurrency(
     visionIndices,
     VISION_CONCURRENCY,
@@ -785,6 +857,10 @@ async function extractFromBuffer(input: {
     },
     input.onVisionProgress,
   );
+  if (input.diag) {
+    input.diag.timings.visionMs = Date.now() - tVision;
+    input.diag.extract.visionPages = visionIndices.length;
+  }
 
   const imagePages = slidesData.filter((s) => s.png.length > 0).length;
   if (imagePages > MAX_VISION_SLIDES) {
@@ -873,6 +949,8 @@ export async function generatePrivateQuestionsFromUpload(
   }, 20_000);
 
   const startTime = Date.now();
+  // 진단 기록 함수 — try 안에서 준비되지만 실패 경로(catch)에서도 호출해야 하므로 외부에 둔다.
+  let writeDiagnostics: (() => Promise<void>) | null = null;
   let totalCost = 0;
   let aggInputTokens = 0;
   let aggOutputTokens = 0;
@@ -880,6 +958,7 @@ export async function generatePrivateQuestionsFromUpload(
 
   try {
     // 2) 다운로드
+    const tDownload = Date.now();
     const { data: fileBlob, error: dlErr } = await admin.storage
       .from(STORAGE_BUCKET)
       .download(upload.storage_path);
@@ -887,6 +966,49 @@ export async function generatePrivateQuestionsFromUpload(
       throw new Error(`Storage download failed: ${dlErr?.message}`);
     }
     const fileBuffer = await fileBlob.arrayBuffer();
+    // ── 진단 수집 시작. 단계별 소요와 세부 수치를 모아 마지막에 Storage 로 남긴다.
+    const diag: {
+      timings: Record<string, number>;
+      extract: Record<string, unknown>;
+      embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+      generation: Record<string, unknown>;
+    } = { timings: {}, extract: {}, embedded: {}, generation: {} };
+    diag.timings.queueToStartMs = tDownload - startTime;
+    diag.timings.downloadMs = Date.now() - tDownload;
+    diag.extract.fileSizeBytes = fileBuffer.byteLength;
+
+    /**
+     * 진단 JSON 을 Storage 에 남긴다(스키마 변경 없이 조회 가능).
+     * 경로: {userId}/{uploadId}/diagnostics.json — GET /api/uploads/[id]/diagnostics 로 읽는다.
+     * 실패해도 본 처리에 영향을 주지 않는다.
+     */
+    writeDiagnostics = async (): Promise<void> => {
+      try {
+        const payload: GenerationDiagnostics = {
+          uploadId: uploadRow.id,
+          fileType: upload.file_type,
+          fileSizeBytes: fileBuffer.byteLength,
+          wantsImages,
+          desiredCount,
+          timings: { ...diag.timings, totalMs: Date.now() - startTime },
+          extract: diag.extract,
+          embedded: diag.embedded,
+          generation: diag.generation,
+          // 경고는 개수·페이지 번호 위주라 강의 내용이 들어가지 않는다. 방어적으로 길이 제한.
+          warnings: warnings.slice(0, 60).map((w) => String(w).slice(0, 300)),
+          finishedAt: new Date().toISOString(),
+        };
+        await admin.storage
+          .from(STORAGE_BUCKET)
+          .upload(
+            `${uploadRow.user_id}/${uploadRow.id}/diagnostics.json`,
+            Buffer.from(JSON.stringify(payload, null, 2)),
+            { contentType: 'application/json', upsert: true },
+          );
+      } catch {
+        // 진단 기록 실패는 무시.
+      }
+    };
 
     // 3) 추출 · 참고자료 · 분류 카탈로그를 동시에 시작한다(서로 독립).
     //
@@ -903,16 +1025,24 @@ export async function generatePrivateQuestionsFromUpload(
       resolveEarlyText = resolve;
     });
 
+    const tExtract = Date.now();
     const extractPromise = extractFromBuffer({
       buffer: fileBuffer,
       fileType: upload.file_type,
       userIdForLog: input.userId,
       wantsImages,
       warnings,
-      onEarlyText: (text) => resolveEarlyText(text),
+      diag,
+      onEarlyText: (text) => {
+        diag.timings.textReadyMs = Date.now() - startTime;
+        resolveEarlyText(text);
+      },
       onVisionProgress: async (completed, total) =>
         updateProgress('vision', completed, total),
     });
+    extractPromise
+      .then(() => { diag.timings.extractTotalMs = Date.now() - tExtract; })
+      .catch(() => {});
     const referencePromise = loadReferenceImages({
       uploadIds: input.referenceUploadIds ?? [],
       userId: input.userId,
@@ -1062,6 +1192,10 @@ export async function generatePrivateQuestionsFromUpload(
           )
         : null,
     );
+    diag.generation.batchCount = batchSizes.length;
+    diag.generation.prefireCount = prefireCount;
+    diag.generation.prefireSegments = prefireSegments;
+    diag.timings.firstBatchStartMs = Date.now() - startTime;
     if (prefireCount > 0) {
       warnings.push(
         `텍스트 선발사: ${prefireCount}/${batchSizes.length} 배치를 전처리 완료 전에 출발.`,
@@ -1070,6 +1204,7 @@ export async function generatePrivateQuestionsFromUpload(
 
     // 4-b) 추출 완료 대기 — 위 선발사 배치들은 이 시간 동안 이미 생성 중이다.
     const { slides } = await extractPromise;
+    diag.timings.extractAwaitedMs = Date.now() - startTime;
     const allCrops = slides.flatMap((s) =>
       s.croppedImages.map((c) => ({ slide: s, crop: c })),
     );
@@ -1082,6 +1217,7 @@ export async function generatePrivateQuestionsFromUpload(
     //    (슬라이드 단위 병렬은 임베드 이미지 경로처럼 crop 이 첫 슬라이드에 몰리면
     //     사실상 순차가 되어 crop 수 × 호출 지연만큼 느려진다.)
     // 선발사 배치가 이미 생성 중이면 단계 표시를 'ocr' 로 되돌리지 않는다(진행 표시 역행 방지).
+    const tOcr = Date.now();
     const reportOcrProgress = prefireCount === 0 && allCrops.length > 0;
     if (reportOcrProgress) {
       await updateProgress('ocr', 0, allCrops.length, { page_count: slides.length });
@@ -1115,6 +1251,9 @@ export async function generatePrivateQuestionsFromUpload(
         ? async (completed, total) => updateProgress('ocr', completed, total)
         : undefined,
     );
+    diag.timings.ocrMs = Date.now() - tOcr;
+    diag.extract.ocrCalls = allCrops.length;
+    diag.extract.ocrChars = ocrChars;
     const slideSummaries = slides.map((s) => ({
       pageIndex: s.pageIndex,
       slideText: s.text,
@@ -1713,6 +1852,7 @@ export async function generatePrivateQuestionsFromUpload(
       segmented: segmentCount > 1,
     });
 
+    const tGen = Date.now();
     const batchSettled = await mapWithConcurrency(
       batchSizes,
       GEN_CONCURRENCY,
@@ -1751,7 +1891,9 @@ export async function generatePrivateQuestionsFromUpload(
         }
       },
     );
+    diag.timings.batchesMs = Date.now() - tGen;
     const batchResults = batchSettled.filter((r): r is BatchResult => r !== null);
+    diag.generation.batchesSucceeded = batchSettled.filter((r) => r !== null).length;
     if (batchResults.length === 0) {
       throw new Error('문항 생성에 모두 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
@@ -1855,6 +1997,7 @@ export async function generatePrivateQuestionsFromUpload(
             GEN_BACKFILL_CONTEXT_CHARS,
           );
     };
+    const tBackfill = Date.now();
     let saved = await readSaved();
     // 진행률 기준도 DB 사실값으로 맞춘다(삭제된 문항까지 세어 100%를 넘기지 않게).
     completedQuestions = saved.length;
@@ -1895,6 +2038,7 @@ export async function generatePrivateQuestionsFromUpload(
     if (saved.length < desiredCount) {
       warnings.push(`최종 ${saved.length}/${desiredCount}문항 — 요청 수를 채우지 못했습니다.`);
     }
+    diag.timings.backfillMs = Date.now() - tBackfill;
     const generatedCount = saved.length;
     const insertedIds = saved.map((r) => r.id);
     completedQuestions = generatedCount;
@@ -1923,6 +2067,8 @@ export async function generatePrivateQuestionsFromUpload(
         ...(titleTrim ? { file_name: titleTrim } : {}),
       })
       .eq('id', upload.id);
+
+    await writeDiagnostics();
 
     if (warnings.length > 0) {
       // 업로드 자체는 private 자료라 본문은 남기지 말고 메타만 기록.
@@ -1961,6 +2107,12 @@ export async function generatePrivateQuestionsFromUpload(
         error_message: sanitizeErrorMessage(error),
       })
       .eq('id', upload.id);
+    // 실패 원인 분석을 위해 진단도 남긴다(생성 전 단계에서 죽은 경우 diag 가 없을 수 있어 방어).
+    try {
+      await writeDiagnostics?.();
+    } catch {
+      /* 무시 */
+    }
     throw error;
   } finally {
     clearInterval(heartbeatTimer);
