@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Copy,
 } from 'lucide-react';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -554,7 +555,7 @@ export default function WrongNotesPage() {
         {/* Expanded content — 다시 풀기 */}
         {ui.expanded && q && (
           <div className="mt-2 border-t border-[var(--color-border)] pt-4">
-            <div className="text-[14px] leading-7 text-sage-800 mb-4">{q.stem}</div>
+            <QuestionStem className="text-[14px] leading-7 text-sage-800 mb-4" text={q.stem} />
             {q.imageUrl && (
               <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-48 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -623,7 +624,7 @@ export default function WrongNotesPage() {
 
         {q ? (
           <>
-            <div className="text-[15px] leading-7 text-sage-800 mb-4">{q.stem}</div>
+            <QuestionStem className="text-[15px] leading-7 text-sage-800 mb-4" text={q.stem} />
             {q.imageUrl && (
               <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-56 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

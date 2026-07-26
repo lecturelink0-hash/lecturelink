@@ -28,6 +28,7 @@ import {
   XCircle,
   BookmarkPlus,
 } from 'lucide-react';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 
 type UploadStatus =
   | 'uploaded'
@@ -1282,9 +1283,10 @@ function QuestionCard({
         >
           {index}
         </span>
-        <p className="text-base text-sage-800 font-medium leading-relaxed pt-1.5">
-          {withImageLabels(q.stem)}
-        </p>
+        <QuestionStem
+          className="text-base text-sage-800 font-medium leading-relaxed pt-1.5"
+          text={withImageLabels(q.stem)}
+        />
       </div>
 
       {q.images && q.images.length > 0 && (
