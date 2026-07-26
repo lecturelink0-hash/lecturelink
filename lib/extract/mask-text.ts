@@ -223,6 +223,58 @@ export async function maskTextRegions(
       iy1 = y1;
     }
 
+    // (2') 잘린 글자 따라가기 — 모델 좌표가 실제 글자보다 밀려 있는 경우를 구제한다.
+    //
+    // 실측 사고: "Vasa vasorum" 의 박스가 왼쪽으로 밀려 있어 왼쪽 절반만 덮이고
+    // 오른쪽 꼬리("sa", "rum")가 그대로 남았다. 축소(2)만 하면 이 경우를 못 잡는다.
+    // 잉크가 박스 경계에 닿아 있으면 "글자가 박스 밖으로 이어진다"는 신호다.
+    // 그때만 같은 줄 띠를 따라가며 잉크가 이어지는 만큼 넓힌다.
+    //
+    // 그림을 잡아먹지 않도록: 띠(글자 높이) 위아래로 잉크가 크게 번지는 열을 만나면
+    // 글자가 아니라 그림이므로 즉시 멈춘다. 확장 길이도 상한을 둔다.
+    if (found) {
+      const bandH = iy1 - iy0 + 1;
+      const maxGap = Math.max(2, Math.round(bandH * 0.6)); // 글자 사이 공백 허용치
+      const maxRun = Math.max(bandH * 8, (ix1 - ix0 + 1) * 2); // 확장 상한
+      const bandHasInk = (x: number): boolean => {
+        for (let y = iy0; y <= iy1; y++) if (isInk(x, y)) return true;
+        return false;
+      };
+      // 띠 밖으로 잉크가 길게 삐져나오면 글자가 아니라 그림(선·면)이다.
+      const spillsBand = (x: number): boolean => {
+        const up = Math.max(0, iy0 - bandH);
+        const dn = Math.min(H - 1, iy1 + bandH);
+        let out = 0;
+        for (let y = up; y < iy0; y++) if (isInk(x, y)) out += 1;
+        for (let y = iy1 + 1; y <= dn; y++) if (isInk(x, y)) out += 1;
+        return out > bandH * 0.6;
+      };
+      if (ix1 >= x1 - 1 && ix1 < W - 1) {
+        let gap = 0;
+        let end = ix1;
+        for (let x = ix1 + 1; x < W && x - ix1 <= maxRun; x++) {
+          if (spillsBand(x)) break;
+          if (bandHasInk(x)) {
+            gap = 0;
+            end = x;
+          } else if (++gap > maxGap) break;
+        }
+        ix1 = end;
+      }
+      if (ix0 <= x0 + 1 && ix0 > 0) {
+        let gap = 0;
+        let start = ix0;
+        for (let x = ix0 - 1; x >= 0 && ix0 - x <= maxRun; x--) {
+          if (spillsBand(x)) break;
+          if (bandHasInk(x)) {
+            gap = 0;
+            start = x;
+          } else if (++gap > maxGap) break;
+        }
+        ix0 = start;
+      }
+    }
+
     // 큰 박스가 잉크로 가득 차 있으면 글자가 아니라 그림일 가능성이 높다.
     // (작은 박스는 굵은 인쇄체일 수 있어 예외 — 그 경우가 실측에서 dense_ink 로 잘못 걸렸다.)
     const boxArea = (ix1 - ix0 + 1) * (iy1 - iy0 + 1);
