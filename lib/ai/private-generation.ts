@@ -90,6 +90,13 @@ const GEN_BACKFILL_ROUNDS = 2;
 // 보충 배치에 싣는 출제 근거 텍스트 상한(자). 본 배치(최대 15만 자)와 달리 보충은
 // "빈 칸 몇 개만 빠르게" 채우는 호출이라 입력을 줄여 429·대기 시간을 피한다.
 const GEN_BACKFILL_CONTEXT_CHARS = 30_000;
+// 배치별 구간 분할: 이 길이 미만의 자료는 나눠도 이득이 없어 전체를 그대로 준다.
+const GEN_SEGMENT_ENABLE_MIN_CHARS = 20_000;
+// 구간 하나의 최소 길이. 구간이 이보다 얇아지면 구간 수를 줄여(여러 배치가 같은 구간 공유)
+// 출제 근거가 부족해지는 것을 막는다.
+const GEN_SEGMENT_MIN_CHARS = 6_000;
+// 구간 경계 겹침 비율 — 경계에 걸친 내용이 어느 배치에도 안 잡히는 일을 방지.
+const GEN_SEGMENT_OVERLAP_RATIO = 0.1;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
@@ -940,14 +947,46 @@ export async function generatePrivateQuestionsFromUpload(
     //   본배치 단계에서 전체 컨텍스트로 재시도한다.
     const slideTextTotal = slides.map((s) => s.text).join(' ').trim();
     const canPrefire = batchSizes.length > 1 && slideTextTotal.length >= 1000;
+    // 선발사 컨텍스트: 자료가 커서 구간 분할이 적용될 규모면 앞쪽 구간(0번)만 맡는다.
+    const prefireBlocks = slides
+      .filter((s) => s.text.trim().length > 0)
+      .map((s) => `## 슬라이드 ${s.pageIndex}\n텍스트: ${s.text}`);
+    const prefireFull = prefireBlocks.join('\n\n');
+    const prefireSegments =
+      prefireFull.length < GEN_SEGMENT_ENABLE_MIN_CHARS
+        ? 1
+        : Math.max(
+            1,
+            Math.min(
+              batchSizes.length,
+              Math.floor(prefireFull.length / GEN_SEGMENT_MIN_CHARS),
+            ),
+          );
+    const prefireSegmented = prefireSegments > 1;
+    const prefireContext = (): string => {
+      if (!prefireSegmented) return prefireFull;
+      if (prefireBlocks.length >= prefireSegments) {
+        const per = Math.ceil(prefireBlocks.length / prefireSegments);
+        return prefireBlocks.slice(0, per + 1).join('\n\n');
+      }
+      const segLen = Math.ceil(prefireFull.length / prefireSegments);
+      const end = Math.min(
+        prefireFull.length,
+        segLen + Math.round(segLen * GEN_SEGMENT_OVERLAP_RATIO),
+      );
+      const nl = prefireFull.lastIndexOf('\n', end);
+      return prefireFull.slice(0, nl > segLen * 0.5 ? nl : end);
+    };
     const prefired = canPrefire
       ? generateAndPersistBatch(0, Array.from({ length: batchSizes[0] }, (_, k) => k), batchSizes.length, {
-          contextText: slides
-            .filter((s) => s.text.trim().length > 0)
-            .map((s) => `## 슬라이드 ${s.pageIndex}\n텍스트: ${s.text}`)
-            .join('\n\n'),
+          // 선발사는 OCR 이전이라 자기만의 컨텍스트를 만든다. 본 배치들과 마찬가지로
+          // 자료 전체가 아니라 0번 구간만 맡아 입력을 줄이고 중복 출제도 피한다.
+          // (OCR 후 구성되는 compositeText 와 분할 기준이 조금 달라도, 담당 범위가
+          //  자료 앞부분이라는 점은 일치한다.)
+          contextText: prefireContext(),
           featured: [],
           getDisplayPng: async () => null,
+          segmented: prefireSegmented,
         }).then(
           (v) => ({ ok: true as const, v }),
           (e: unknown) => ({ ok: false as const, e }),
@@ -1014,6 +1053,73 @@ export async function generatePrivateQuestionsFromUpload(
       }
     }
     const compositeText = contextBlocks.join('\n\n');
+
+    // ── 배치별 구간 분할
+    // 지금까지는 모든 배치가 자료 전체(최대 15만 자)를 실어 동시에 호출했다. 그래서
+    // 배치 수만큼 입력 토큰이 중복 과금되고, 순간 입력량이 커져 429(rate limit)에 걸려
+    // 백오프 대기가 전체 소요를 지배했다(실측: 배치 삽입이 49~105초로 흩어짐).
+    // 각 배치에 자기 구간만 주면 배치당 입력이 구간 수만큼 줄고, 구간이 물리적으로
+    // 분리돼 배치 간 문항 중복도 함께 줄어든다.
+    //
+    // 안전장치:
+    //  - 자료가 작으면(GEN_SEGMENT_ENABLE_MIN_CHARS 미만) 분할하지 않는다(이득 없음).
+    //  - 구간이 너무 얇아 출제 근거가 부족해지지 않게 구간당 최소 길이를 보장하고,
+    //    필요하면 구간 수를 배치 수보다 적게 줄여 여러 배치가 같은 구간을 공유한다.
+    //  - 경계에서 문맥이 끊기지 않게 앞뒤로 겹침을 둔다.
+    const segmentCount = (() => {
+      if (batchSizes.length <= 1) return 1;
+      if (compositeText.length < GEN_SEGMENT_ENABLE_MIN_CHARS) return 1;
+      const byLength = Math.floor(compositeText.length / GEN_SEGMENT_MIN_CHARS);
+      return Math.max(1, Math.min(batchSizes.length, byLength));
+    })();
+
+    /** 문장/줄 경계에 맞춰 text 의 index/count 번째 구간을 잘라낸다(앞뒤 겹침 포함). */
+    const sliceByChars = (
+      text: string,
+      index: number,
+      count: number,
+      maxChars = Number.POSITIVE_INFINITY,
+    ): string => {
+      if (count <= 1) return text;
+      const segLen = Math.ceil(text.length / count);
+      const pad = Math.round(segLen * GEN_SEGMENT_OVERLAP_RATIO);
+      let start = Math.max(0, index * segLen - pad);
+      let end = Math.min(text.length, index * segLen + segLen + pad);
+      // 시작은 다음 줄바꿈까지 밀고, 끝은 이전 줄바꿈까지 당겨 문장이 잘리지 않게 한다.
+      if (start > 0) {
+        const nl = text.indexOf('\n', start);
+        if (nl >= 0 && nl - start < 500) start = nl + 1;
+      }
+      if (end < text.length) {
+        const nl = text.lastIndexOf('\n', end);
+        if (nl > start && end - nl < 500) end = nl;
+      }
+      return text.slice(start, Math.min(end, start + maxChars));
+    };
+
+    /** 배치 index 가 볼 출제 근거. 분할이 필요 없으면 전체를 그대로 준다. */
+    const segmentForBatch = (batchIndex: number, batchCount: number): string => {
+      if (segmentCount <= 1) return compositeText;
+      // 배치를 구간에 고르게 배분(구간 수 < 배치 수면 여러 배치가 같은 구간을 본다).
+      const segIndex = Math.min(
+        segmentCount - 1,
+        Math.floor((batchIndex * segmentCount) / Math.max(1, batchCount)),
+      );
+      // 슬라이드 블록이 구간 수보다 많으면 블록 경계로 나눈다(문장이 잘리지 않는다).
+      if (contextBlocks.length >= segmentCount) {
+        const per = Math.ceil(contextBlocks.length / segmentCount);
+        const from = Math.max(0, segIndex * per - 1); // 앞 블록 1개 겹침
+        const to = Math.min(contextBlocks.length, segIndex * per + per + 1);
+        return contextBlocks.slice(from, to).join('\n\n');
+      }
+      // 텍스트 위주 PDF 는 본문이 한 블록에 몰리므로 문자 단위로 나눈다.
+      return sliceByChars(compositeText, segIndex, segmentCount);
+    };
+    if (segmentCount > 1) {
+      warnings.push(
+        `출제 근거 ${compositeText.length}자를 ${segmentCount}개 구간으로 분할해 배치별로 배정.`,
+      );
+    }
 
     // 7) Claude 호출 — 문항 생성 (프롬프트·배치 계획은 4)에서 준비됨)
     await updateProgress('generating', 0, desiredCount);
@@ -1158,6 +1264,11 @@ export async function generatePrivateQuestionsFromUpload(
        * 소요를 지배한다(실측 66초 꼬리). 보충은 짧게 여러 번 재시도한다.
        */
       retryMaxDelayMs?: number;
+      /**
+       * contextText 가 자료 "전체"가 아니라 배정된 구간인지. true 면 배치 지시문에서
+       * "구간을 스스로 골라 출제하라"는 문구를 쓰지 않는다(이미 구간만 받았으므로).
+       */
+      segmented?: boolean;
     };
 
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
@@ -1223,14 +1334,20 @@ export async function generatePrivateQuestionsFromUpload(
           },
         } as Anthropic.ImageBlockParam);
       }
-      // 병렬 배치 간 중복 방지: 각 배치에 자료의 서로 다른 구간을 우선 배정한다.
+      // 병렬 배치 간 중복 방지.
+      //  - 구간 분할이 적용된 경우(gen.segmented): 아래 근거 자체가 이 배치에 배정된
+      //    구간이므로 "구간을 골라 출제하라"고 하지 않고 "받은 근거로만 출제"하게 한다.
+      //  - 분할하지 않은 경우(자료가 작음): 종전처럼 구간을 스스로 나눠 맡게 안내한다.
       const batchDirective =
         batchCount === 1
           ? ''
-          : `\n\n이번 묶음은 전체 출제 계획 ${batchCount}묶음 중 ${batchIndex + 1}번째 묶음입니다. ` +
-            `자료를 ${batchCount}개 구간으로 나눴을 때 ${batchIndex + 1}번째 구간의 내용을 우선 출제해 다른 묶음과의 중복을 피하고, 정확히 지정된 수만큼 만드세요.` +
+          : (gen.segmented
+              ? `\n\n아래 출제 근거는 전체 자료를 ${batchCount}묶음으로 나눠 이번 묶음(${batchIndex + 1}번째)에 배정된 구간입니다. ` +
+                `다른 묶음이 나머지 구간을 담당하므로, 제시된 근거 안에서만 출제하고 정확히 지정된 수만큼 만드세요.`
+              : `\n\n이번 묶음은 전체 출제 계획 ${batchCount}묶음 중 ${batchIndex + 1}번째 묶음입니다. ` +
+                `자료를 ${batchCount}개 구간으로 나눴을 때 ${batchIndex + 1}번째 구간의 내용을 우선 출제해 다른 묶음과의 중복을 피하고, 정확히 지정된 수만큼 만드세요.`) +
             (batchIndex === 0
-              ? ' 자료 전반의 핵심·기본 개념 문항을 포함하세요.'
+              ? ' 핵심·기본 개념 문항을 포함하세요.'
               : ' 전형적인 기본 정의 문항보다 응용·감별 문항을 우선하세요.');
       userContent.push({
         type: 'text',
@@ -1493,9 +1610,10 @@ export async function generatePrivateQuestionsFromUpload(
     };
 
     const genFor = (batchIndex: number, batchCount: number): GenContext => ({
-      contextText: compositeText,
+      contextText: segmentForBatch(batchIndex, batchCount),
       featured: featuredForBatch(batchIndex, batchCount),
       getDisplayPng,
+      segmented: segmentCount > 1,
     });
 
     const batchSettled = await mapWithConcurrency(
@@ -1626,19 +1744,18 @@ export async function generatePrivateQuestionsFromUpload(
      */
     const backfillContext = (slot: number): string => {
       if (compositeText.length <= GEN_BACKFILL_CONTEXT_CHARS) return compositeText;
-      const segCount = Math.max(1, batchSizes.length);
-      const segIndex = Math.min(
-        segCount - 1,
-        Math.floor((slot / Math.max(1, desiredCount)) * segCount),
+      // 빈 슬롯을 원래 맡았던 배치와 같은 구간을 준다(본 배치와 동일한 분할 로직 재사용).
+      const batchIndex = Math.min(
+        batchSizes.length - 1,
+        Math.floor((slot / Math.max(1, desiredCount)) * batchSizes.length),
       );
-      const segLen = Math.ceil(compositeText.length / segCount);
-      const start = segIndex * segLen;
-      // 구간 경계에서 문맥이 끊기지 않게 앞뒤로 조금 넉넉히 잡고 상한으로 자른다.
-      const pad = Math.floor(GEN_BACKFILL_CONTEXT_CHARS * 0.15);
-      return compositeText.slice(
-        Math.max(0, start - pad),
-        Math.max(0, start - pad) + GEN_BACKFILL_CONTEXT_CHARS,
-      );
+      const segment = segmentForBatch(batchIndex, batchSizes.length);
+      return segment.length <= GEN_BACKFILL_CONTEXT_CHARS
+        ? segment
+        : sliceByChars(segment, 0, 1, GEN_BACKFILL_CONTEXT_CHARS).slice(
+            0,
+            GEN_BACKFILL_CONTEXT_CHARS,
+          );
     };
     let saved = await readSaved();
     // 진행률 기준도 DB 사실값으로 맞춘다(삭제된 문항까지 세어 100%를 넘기지 않게).
