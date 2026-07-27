@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 import {
   Calculator as CalcIcon, ChevronLeft, ChevronRight,
   Clock, CheckCircle2, XCircle, BookmarkPlus, X, Send, ArrowLeft,
@@ -363,7 +364,7 @@ export default function MockExamPage() {
                       </Button>
                     ))}
                 </div>
-                <div className="text-[15px] leading-7 text-sage-800 mb-3">{q.stem}</div>
+                <QuestionStem className="text-[15px] leading-7 text-sage-800 mb-3" text={q.stem} />
                 <div className="space-y-1.5">
                   {q.choices.map((c, ci) => {
                     const isCorrect = ci === correct;

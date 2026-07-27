@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ImageAttribution } from '@/components/ui/ImageAttribution';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 import { ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 
 interface QuestionForUser {
@@ -189,8 +190,9 @@ export default function PracticePage() {
           <Badge variant={current.badge.color}>{current.badge.label}</Badge>
         </div>
 
-        <div className="text-[15px] leading-7 text-sage-800 mb-4">
-          <strong>{currentIdx + 1}.</strong> {current.stem}
+        <div className="flex gap-2 text-[15px] leading-7 text-sage-800 mb-4">
+          <strong className="shrink-0">{currentIdx + 1}.</strong>
+          <QuestionStem className="flex-1" text={current.stem} />
         </div>
 
         {current.imageUrl && (
