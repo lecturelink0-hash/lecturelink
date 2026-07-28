@@ -8,6 +8,10 @@
  * 규칙(사용자 요구):
  *  - ㄱ/ㄴ/ㄷ 보기는 각각 자기 줄에 표시한다.
  *  - 박스(테두리)는 만들지 않는다. 줄 구분과 표식 정렬만으로 구분한다.
+ *
+ * `pre-line` 이 아니라 `pre-wrap` 을 쓴다. 국시형 문항의 검사 결과 블록은
+ * `혈액:` / `소변:` 라벨 아래 이어지는 줄을 공백으로 들여써서 묶는데,
+ * `pre-line` 은 줄바꿈만 남기고 연속 공백을 합쳐버려 들여쓰기가 사라진다.
  */
 
 export interface StemParts {
@@ -69,12 +73,12 @@ export function QuestionStem({
 
   if (items.length === 0) {
     // 조합형이 아니면 원문 그대로. 발문 안의 다른 줄바꿈도 살린다.
-    return <div className={className} style={{ whiteSpace: 'pre-line' }}>{lead}</div>;
+    return <div className={className} style={{ whiteSpace: 'pre-wrap' }}>{lead}</div>;
   }
 
   return (
     <div className={className}>
-      {lead && <div style={{ whiteSpace: 'pre-line' }}>{lead}</div>}
+      {lead && <div style={{ whiteSpace: 'pre-wrap' }}>{lead}</div>}
       {/* 박스 없이 줄 구분 + 표식 정렬(행잉 인덴트) */}
       <div className="mt-2 mb-1 space-y-1">
         {items.map((item, i) => (
@@ -84,7 +88,7 @@ export function QuestionStem({
           </div>
         ))}
       </div>
-      {tail && <div style={{ whiteSpace: 'pre-line' }}>{tail}</div>}
+      {tail && <div style={{ whiteSpace: 'pre-wrap' }}>{tail}</div>}
     </div>
   );
 }
