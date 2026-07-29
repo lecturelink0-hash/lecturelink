@@ -753,7 +753,7 @@ function ProfileStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 bg-[var(--color-sage-100)] px-3 py-3">
       <p className="truncate text-[11px] font-medium text-[var(--color-muted)]">{label}</p>
-      <p className="ll-stat mt-1 text-[1.3rem] font-bold leading-none tracking-tight">{value}</p>
+      <p className="ll-stat mt-1 whitespace-nowrap text-[16px] font-bold leading-none tracking-[-0.03em]">{value}</p>
     </div>
   );
 }
