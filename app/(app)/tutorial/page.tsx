@@ -3,20 +3,19 @@
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Upload, BookOpen, FileCheck2, RotateCcw, GraduationCap } from 'lucide-react';
+import { ArrowRight, Upload, BookOpen, FileCheck2, RotateCcw, GraduationCap } from 'lucide-react';
 
 /** 학습 튜토리얼 — 서비스 사용법 안내(기획서: [학습 튜토리얼 페이지]). */
 export default function TutorialPage() {
   return (
     <div className="ll-system-page max-w-3xl mx-auto">
       <PageHeader
-        title="학습 튜토리얼"
-        description="렉처링크로 어떻게 공부하는지 한눈에 안내해 드릴게요."
+        title="렉처링크 이용 가이드"
+        description="주요 기능과 학습 방법을 빠르게 확인해 보세요."
       />
 
       <div className="space-y-4">
-        <Card icon={<Upload className="w-5 h-5" strokeWidth={1.9} />} title="1. 자료 업로드 → 문제 생성">
+        <Card icon={<Upload className="w-5 h-5" strokeWidth={1.9} />} title="1. 자료 업로드 → 문제 생성" action={<TutorialLink href="/notes" />}>
           <ul className="list-disc pl-5 space-y-1.5 text-sm text-sage-800 leading-relaxed">
             <li>강의자료(PDF·PPTX·DOCX·이미지)를 올리면 AI가 시험 범위에 맞는 문제집을 만들어요.</li>
             <li>자료를 올리면 <b>문제 세트 정보</b>(이름·단원·난이도·문항 유형)가 자동으로 제안되고, 원하는 대로 바꿀 수 있어요.</li>
@@ -32,7 +31,7 @@ export default function TutorialPage() {
           </div>
         </Card>
 
-        <Card icon={<BookOpen className="w-5 h-5" strokeWidth={1.9} />} title="3. 국시 문제 풀이">
+        <Card icon={<BookOpen className="w-5 h-5" strokeWidth={1.9} />} title="3. 국시 문제 풀이" action={<TutorialLink href="/exam" />}>
           <ul className="list-disc pl-5 space-y-1.5 text-sm text-sage-800 leading-relaxed">
             <li>과목 → 세부주제를 고르면 바로 문제를 풀 수 있어요.</li>
             <li>한 문제를 풀면 즉시 채점되고(정답 초록·오답 빨강) 해설이 표시돼요.</li>
@@ -40,14 +39,14 @@ export default function TutorialPage() {
           </ul>
         </Card>
 
-        <Card icon={<RotateCcw className="w-5 h-5" strokeWidth={1.9} />} title="4. 오답노트 · 반복 학습">
+        <Card icon={<RotateCcw className="w-5 h-5" strokeWidth={1.9} />} title="4. 오답노트 · 반복 학습" action={<TutorialLink href="/wrong-notes" />}>
           <ul className="list-disc pl-5 space-y-1.5 text-sm text-sage-800 leading-relaxed">
             <li><b>요약 보기</b>/<b>전체 보기</b> 중 원하는 방식으로 오답을 복습해요.</li>
             <li>틀린 문제는 <b>다시 풀기</b>로 재도전하거나, <b>유사문제 생성</b>으로 비슷한 문제를 더 풀 수 있어요.</li>
           </ul>
         </Card>
 
-        <Card icon={<FileCheck2 className="w-5 h-5" strokeWidth={1.9} />} title="5. 모의고사(CBT)">
+        <Card icon={<FileCheck2 className="w-5 h-5" strokeWidth={1.9} />} title="5. 모의고사(CBT)" action={<TutorialLink href="/mock" />}>
           <ul className="list-disc pl-5 space-y-1.5 text-sm text-sage-800 leading-relaxed">
             <li>과목을 골라 실제 국시 CBT와 유사한 환경에서 모의고사를 볼 수 있어요.</li>
             <li>표시(체크)·메모·계산기 등 CBT 도구를 그대로 사용해요. (국가고시 대비 이상 요금제)</li>
@@ -55,10 +54,14 @@ export default function TutorialPage() {
         </Card>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/notes"><Button variant="accent" size="lg">지금 자료 올리고 시작하기</Button></Link>
-        <Link href="/exam"><Button variant="secondary" size="lg">국시 문제 풀어보기</Button></Link>
-      </div>
     </div>
+  );
+}
+
+function TutorialLink({ href }: { href: string }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-sage-700 hover:text-sage-800">
+      하러가기 <ArrowRight className="w-4 h-4" />
+    </Link>
   );
 }

@@ -9,8 +9,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { QuestionStem } from '@/components/ui/QuestionStem';
 import { SubjectIcon } from '@/components/SubjectIcon';
 import {
-  Stethoscope, ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
-  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, Play, ZoomIn, X,
+  ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
+  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, ZoomIn, X,
 } from 'lucide-react';
 
 interface SubTopic {
@@ -82,23 +82,6 @@ export default function ExamPage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [savedNote, setSavedNote] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
-  const [cpxStats, setCpxStats] = useState<{ cases: number; categories: number } | null>(null);
-
-  // CPX 배너 수치 — 연습 화면과 동일한 승인 증례 카탈로그에서 실제 수를 집계한다(하드코딩 금지).
-  useEffect(() => {
-    let alive = true;
-    fetch('/api/cpx/cases', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { cases?: Array<{ id?: string; category?: string }> } | null) => {
-        if (!alive || !data || !Array.isArray(data.cases)) return;
-        const cases = data.cases.filter((c) => c?.id);
-        const categories = new Set(cases.map((c) => c.category).filter(Boolean));
-        setCpxStats({ cases: cases.length, categories: categories.size });
-      })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
-
   useEffect(() => {
     if (!zoomImage) return;
     const onKey = (e: KeyboardEvent) => {
@@ -296,20 +279,6 @@ export default function ExamPage() {
             <h1><span className="headline-accent">예상문제</span>를 통해<br/><span className="headline-accent">국가고시</span>를 대비해보세요</h1>
             <p className="lead">교과서적 의학 지식과 임상 시나리오를 결합한 국가고시형 문제입니다. 과목·세부주제별로 풀고, 오답 데이터로 약한 개념을 반복 학습하세요.</p>
           </div>
-          {/* CPX 실전 연습 — 국시 대비 우측 대표 배너(별도 진입) */}
-          <a href="/cpx" className="cpx-banner">
-            <div className="cpx-banner-top">
-              <span className="cpx-banner-icon"><Stethoscope className="w-5 h-5" strokeWidth={2} /></span>
-              <span className="cpx-banner-badge">CPX</span>
-            </div>
-            <h2 className="cpx-banner-title">CPX 실전 연습</h2>
-            <p className="cpx-banner-desc">AI 표준화 환자와 12분 진료 세션 · 음성/텍스트 문진 · 부위별 신체진찰 · 루브릭 채점</p>
-            <div className="cpx-banner-meta">
-              <span><strong>{cpxStats?.cases ?? '…'}</strong> 증례</span>
-              <span><strong>{cpxStats?.categories ?? '…'}</strong> 주호소</span>
-            </div>
-            <span className="cpx-banner-cta"><Play className="w-4 h-4" strokeWidth={2.4} /> 연습 시작</span>
-          </a>
         </section>
 
         {totalQuestions > 0 && (
@@ -332,25 +301,24 @@ export default function ExamPage() {
               return (
                 <div
                   key={s.id}
-                  className={`subject-card ll-card p-6 flex flex-col items-center text-center ${ready ? 'ready ll-card-hover' : 'disabled opacity-60'}`}
+                  className={`subject-card ll-card ${ready ? 'ready ll-card-hover' : 'disabled opacity-60'}`}
                 >
-                  <div className="card-top w-full">
-                    <div className="subject-title">
-                      <span className="subject-icon"><SubjectIcon name={s.name} className="w-6 h-6" strokeWidth={1.9} /></span>
+                  <span className="subject-icon"><SubjectIcon name={s.name} className="w-6 h-6" strokeWidth={1.9} /></span>
+                  <div className="subject-content">
+                    <div className="subject-heading">
                       <h3>{s.name}</h3>
+                      <span className={`status ${ready ? 'ready' : 'locked'}`}>{ready ? '학습 가능' : '준비 중'}</span>
                     </div>
-                    <span className={`status ${ready ? 'ready' : 'locked'}`}>{ready ? 'READY' : '준비 중'}</span>
-                  </div>
-                  <p className="subject-desc">{s.sub_topics.slice(0, 4).map((topic) => topic.name).join(' · ') || '세부 주제를 준비하고 있습니다.'}</p>
-                  <div className="metrics">
-                    <div className="metric"><span>문항</span><strong>{countOrDots(count ?? 0)}</strong></div>
-                    <div className="metric"><span>주제</span><strong>{s.sub_topics.length}</strong></div>
+                    <div className="metrics">
+                      <div className="metric"><span>문항</span><strong>{countOrDots(count ?? 0)}</strong></div>
+                      <div className="metric"><span>주제</span><strong>{s.sub_topics.length}</strong></div>
+                    </div>
                   </div>
 
                   {ready ? (
-                    <Button className="start-btn" onClick={() => openSubject(s)} fullWidth>
-                      <Play className="w-4 h-4" strokeWidth={2.4} />
-                      학습 시작
+                    <Button className="start-btn" onClick={() => openSubject(s)} aria-label={`${s.name} 학습 시작`}>
+                      <ChevronRight className="w-5 h-5" strokeWidth={2} />
+                      <span className="sr-only">학습 시작</span>
                     </Button>
                   ) : (
                     <div className="locked-btn">

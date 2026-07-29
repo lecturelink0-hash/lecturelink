@@ -137,8 +137,8 @@ export default function MockHomePage() {
       <section className="page-head">
         <div>
           <span className="eyebrow"><GraduationCap className="icon" />실전 CBT 환경</span>
-          <h1><span className="headline-accent">모의고사</span>를<br/>시험처럼 시작합니다</h1>
-          <p className="lead">여러 과목을 섞어 실제 국시 CBT와 유사한 흐름으로 풀 수 있어요. 문항 수와 시간 제한만 정하면 바로 응시를 시작합니다.</p>
+          <h1><span className="headline-accent">실전처럼</span> 모의고사를<br/>풀어보세요</h1>
+          <p className="lead">원하는 과목과 문항 수, 제한 시간을 설정해 국시 CBT와 유사한 환경에서 연습할 수 있어요.</p>
         </div>
         <div className="exam-meta" aria-label="모의고사 요약">
           <span className="meta-pill"><ListChecks className="icon" />선택 <strong>{selected.size}</strong>과목</span>

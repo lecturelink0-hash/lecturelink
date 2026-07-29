@@ -714,7 +714,7 @@ export default function NotesPage() {
         <ArrowLeft className="w-4 h-4" />
         홈으로
       </Link>
-      <section className="page-head"><div><span className="eyebrow">STEP 1 / 1 · 자료 업로드</span><h1>학습자료를 업로드하고<br/><span className="headline-accent">문제를 생성</span>하세요</h1><p className="lead">강의자료와 참고 문항을 바탕으로 예상 문제를 생성합니다.</p></div><div className="guide"><Link href="/tutorial" className="guide-trigger"><span className="guide-icon">?</span>사용 설명서</Link><div className="guide-panel"><h2>어떻게 사용하나요?</h2><ol><li><strong>학습자료 업로드</strong>: 업로드한 자료를 기반으로 문제를 생성합니다.</li><li><strong>참고 자료 추가</strong>: 예시 문항의 형식과 난이도를 반영합니다.</li><li><strong>문제 세트 정보 확인</strong>: 이름과 주제를 확인하고 수정합니다.</li></ol></div></div></section>
+      <section className="page-head"><div><span className="eyebrow">STEP 1 / 1 · 자료 업로드</span><h1><span className="headline-accent">내 학습자료</span>로<br/>문제를 만들어보세요</h1><p className="lead">강의자료와 기출문제를 업로드하고 원하는 범위의 예상 문제를 생성해 보세요.</p></div><div className="guide"><Link href="/tutorial" className="guide-trigger"><span className="guide-icon">?</span>사용 설명서</Link><div className="guide-panel"><h2>어떻게 사용하나요?</h2><ol><li><strong>학습자료 업로드</strong>: 업로드한 자료를 기반으로 문제를 생성합니다.</li><li><strong>참고 자료 추가</strong>: 예시 문항의 형식과 난이도를 반영합니다.</li><li><strong>문제 세트 정보 확인</strong>: 이름과 주제를 확인하고 수정합니다.</li></ol></div></div></section>
 
       <div
         className={clsx(

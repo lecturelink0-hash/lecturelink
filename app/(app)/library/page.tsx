@@ -377,7 +377,7 @@ export default function LibraryPage() {
 
   return (
     <div className="ll-library-page content">
-      <section className="page-head"><div><span className="eyebrow">문제집 보관함</span><h1><span className="headline-accent">내 문제집</span>을<br/>한곳에서 이어갑니다</h1><p className="lead">가장 최근에 풀던 문제집을 먼저 이어가고, 필요할 때 폴더와 검색으로 원하는 문제집을 찾으세요.</p></div></section>
+      <section className="page-head"><div><span className="eyebrow">문제집 보관함</span><h1>풀던 <span className="headline-accent">문제집</span>을<br/>이어서 풀어보세요</h1><p className="lead">최근 학습 기록부터 저장한 문제까지 한곳에서 관리할 수 있어요.</p></div></section>
 
       {nextSet && (
         <div className="focus-band"><section className="next-action" aria-label="이어풀기 추천">
