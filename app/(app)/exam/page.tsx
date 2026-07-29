@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { QuestionStem } from '@/components/ui/QuestionStem';
 import { SubjectIcon } from '@/components/SubjectIcon';
 import {
   ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
@@ -76,12 +75,14 @@ export default function ExamPage() {
   const shownAtRef = useRef<number>(Date.now());
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AttemptResponse | null>(null);
+  const [showQuestionGrid, setShowQuestionGrid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<SetResult[]>([]);
   const [finished, setFinished] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [savedNote, setSavedNote] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const current = questions[idx];
   useEffect(() => {
     if (!zoomImage) return;
     const onKey = (e: KeyboardEvent) => {
@@ -149,12 +150,13 @@ export default function ExamPage() {
 
   async function openSubTopic(st: SubTopic, subjectName: string) {
     setActive({ subTopicId: st.id, name: st.name, subjectName });
-    setLoadingQuestions(true);
-    setQuestions([]);
-    setIdx(0);
-    setSelected(null);
-    setResult(null);
-    setResults([]);
+      setLoadingQuestions(true);
+      setQuestions([]);
+      setIdx(0);
+      setSelected(null);
+      setResult(null);
+      setShowQuestionGrid(false);
+      setResults([]);
     setFinished(false);
     setChecked(new Set());
     setSavedNote(false);
@@ -168,8 +170,6 @@ export default function ExamPage() {
       setLoadingQuestions(false);
     }
   }
-
-  const current = questions[idx];
 
   // 새 문항이 표시될 때마다(문항 이동 / 새 세부주제 로드) 타이머를 리셋해
   // 실제 문항 풀이 시간을 측정한다.
@@ -193,17 +193,20 @@ export default function ExamPage() {
         track: 'smart_practice',
       });
       setResult(res);
-      setResults((r) => [
-        ...r,
-        {
+      setResults((previous) => {
+        const nextResult: SetResult = {
           questionId: current.id,
           subTopicId: current.subTopicId,
           selected,
           correctIndex: res.correct_index,
           isCorrect: res.is_correct,
           stem: current.stem,
-        },
-      ]);
+        };
+        const alreadyRecorded = previous.some((item) => item.questionId === current.id);
+        return alreadyRecorded
+          ? previous.map((item) => item.questionId === current.id ? nextResult : item)
+          : [...previous, nextResult];
+      });
     } catch (e) {
       if (e instanceof ApiError && e.code === 'quota_exceeded') {
         window.location.href = '/plan?limit=1';
@@ -215,17 +218,28 @@ export default function ExamPage() {
     }
   }
 
+  function goToQuestion(nextIndex: number) {
+    if (nextIndex < 0 || nextIndex >= questions.length) return;
+    setIdx(nextIndex);
+    setSelected(null);
+    setResult(null);
+    setShowQuestionGrid(false);
+  }
+
   function next() {
     if (idx < questions.length - 1) {
-      setIdx((i) => i + 1);
-      setSelected(null);
-      setResult(null);
+      goToQuestion(idx + 1);
     } else {
       setFinished(true);
     }
   }
 
+  function previous() {
+    if (idx > 0) goToQuestion(idx - 1);
+  }
+
   const wrongResults = results.filter((r) => !r.isCorrect);
+  const completedQuestionIds = new Set(results.map((item) => item.questionId));
 
   async function saveToNotes() {
     const targets = wrongResults.filter((r) => checked.has(r.questionId));
@@ -367,7 +381,7 @@ export default function ExamPage() {
       {/* 전용 클래스 사용 — 과목 카드 그리드용 `.ll-exam-page .grid`(3등분)와 충돌 방지 */}
       <div className="exam-detail-layout items-start">
         {/* 좌측: 세부주제 */}
-        <div className="ll-card p-3 md:sticky md:top-6">
+        <div className="ll-card exam-topic-sidebar p-3 md:sticky md:top-6" style={{ fontFamily: 'var(--font-body)' }}>
           <div className="flex items-center gap-2 px-2 pb-2.5 mb-1.5 border-b border-[var(--color-border)]">
             <BookOpen className="w-4 h-4 text-[var(--color-sage-600)]" strokeWidth={2} />
             <span className="text-[13px] font-bold text-sage-800 tracking-tight">세부주제</span>
@@ -380,7 +394,7 @@ export default function ExamPage() {
                 active === null ? 'bg-sage-700 text-white font-semibold' : 'text-sage-800 hover:bg-[var(--color-sage-100)]'
               }`}
             >
-              <span>전체</span>
+              <span className="exam-topic-label">전체</span>
               <span className={`text-[11px] tnum ${active === null ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
                 {countOrDots(questionCounts[selectedSubject.id] ?? 0)}
               </span>
@@ -408,7 +422,7 @@ export default function ExamPage() {
                           className={`w-3 h-3 flex-shrink-0 ${isActive ? 'text-white' : 'text-[var(--color-warn)]'}`}
                         />
                       )}
-                      <span className="flex-1 truncate">{mid.name}</span>
+                      <span className="exam-topic-label flex-1 truncate">{mid.name}</span>
                       <span className={`text-[11px] tnum ${isActive ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
                         {countOrDots(midCount)}
                       </span>
@@ -436,7 +450,7 @@ export default function ExamPage() {
                               {leaf.is_risk_category && (
                                 <AlertTriangle className={`w-3 h-3 flex-shrink-0 ${leafActive ? 'text-white' : 'text-[var(--color-warn)]'}`} />
                               )}
-                              <span className="flex-1 truncate">{leaf.name}</span>
+                              <span className="exam-topic-label flex-1 truncate">{leaf.name}</span>
                               <span className={`text-[11px] tnum ${leafActive ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
                                 {countOrDots(stCount[leaf.id] ?? 0)}
                               </span>
@@ -521,9 +535,69 @@ export default function ExamPage() {
                         <div className="text-[15px] font-bold text-sage-800 tracking-tight truncate">{active.name}</div>
                       </div>
                     </div>
-                    <span className="text-sm text-[var(--color-muted)] whitespace-nowrap">
-                      문항 <strong className="text-sage-800 tnum">{idx + 1}</strong> / {questions.length}
-                    </span>
+                    <div className="relative flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={previous}
+                        disabled={idx === 0}
+                        aria-label="이전 문제"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowQuestionGrid((open) => !open)}
+                          aria-expanded={showQuestionGrid}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-white px-2.5 text-sm font-semibold text-sage-800 transition-colors hover:border-sage-400"
+                        >
+                          문항 <span className="tnum">{idx + 1}/{questions.length}</span>
+                          <ChevronDown className={`h-3.5 w-3.5 text-[var(--color-muted)] transition-transform ${showQuestionGrid ? 'rotate-180' : ''}`} />
+                        </button>
+                        {showQuestionGrid && (
+                          <div className="absolute right-0 top-10 z-30 w-56 rounded-xl border border-[var(--color-border)] bg-white p-2.5 shadow-[0_16px_36px_rgba(31,46,40,0.16)]">
+                            <div className="mb-2 flex items-center justify-between text-[11px]">
+                              <span className="font-bold text-sage-800">문항 선택</span>
+                              <span className="inline-flex items-center gap-1.5 text-[var(--color-muted)]"><i className="h-2 w-2 rounded-full bg-sage-200" />풀이 완료</span>
+                            </div>
+                            <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+                              {questions.map((question, questionIndex) => {
+                                const isCurrent = questionIndex === idx;
+                                const isCompleted = completedQuestionIds.has(question.id);
+                                return (
+                                  <button
+                                    key={question.id}
+                                    type="button"
+                                    onClick={() => goToQuestion(questionIndex)}
+                                    aria-label={`${questionIndex + 1}번 문항${isCompleted ? ', 풀이 완료' : ''}`}
+                                    aria-current={isCurrent ? 'step' : undefined}
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold transition-colors ${
+                                      isCurrent
+                                        ? 'border-sage-700 bg-sage-700 text-white'
+                                        : isCompleted
+                                          ? 'border-sage-200 bg-[var(--color-sage-100)] text-sage-700 hover:border-sage-400'
+                                          : 'border-[var(--color-border)] bg-white text-sage-700 hover:border-sage-400'
+                                    }`}
+                                  >
+                                    {questionIndex + 1}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => goToQuestion(idx + 1)}
+                        disabled={idx === questions.length - 1}
+                        aria-label="다음 문제"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   <div className="w-full h-2 bg-[var(--color-sage-200)] rounded-full overflow-hidden">
                     <div
@@ -542,9 +616,8 @@ export default function ExamPage() {
                     <Badge variant={current.badge.color}>{current.badge.label}</Badge>
                   </div>
 
-                  <div className="flex gap-2 text-[17px] leading-8 text-sage-800 mb-6">
-                    <strong className="shrink-0 text-sage-700">{idx + 1}.</strong>
-                    <QuestionStem className="flex-1" text={current.stem} />
+                  <div className="text-[17px] leading-8 text-sage-800 mb-6">
+                    <strong className="text-sage-700">{idx + 1}.</strong> {current.stem}
                   </div>
 
                   {current.imageUrl && (
@@ -574,7 +647,7 @@ export default function ExamPage() {
                       return (
                         <button
                           key={i}
-                          onClick={() => !result && setSelected(i)}
+                           onClick={() => !result && setSelected(i)}
                           disabled={result !== null}
                           className={`w-full text-left p-3.5 px-4 rounded-xl border flex items-center gap-3 transition-all ${
                             isCorrect

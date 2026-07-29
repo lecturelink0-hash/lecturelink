@@ -279,7 +279,7 @@ function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange
             <span className="text-sm font-bold text-sage-800">AI 유사문제</span>
             <Badge variant={state.similarQ.badge.color}>{state.similarQ.badge.label}</Badge>
           </div>
-          <QuestionStem className="text-sm text-sage-800 leading-6 mb-4" text={state.similarQ.stem} />
+          <div className="text-sm text-sage-800 leading-6 mb-4">{state.similarQ.stem}</div>
           <Choices
             choices={state.similarQ.choices}
             selected={state.similarSelected}
@@ -329,12 +329,14 @@ function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 type ViewMode = 'summary' | 'full';
+type ReviewFolder = 'need' | 'done';
 
 export default function WrongNotesPage() {
   const [items, setItems] = useState<WrongAnswerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [reviewFolder, setReviewFolder] = useState<ReviewFolder>('need');
   const [selectedSubTopicId, setSelectedSubTopicId] = useState<string | null>(null); // null = 전체
   const [uiStates, setUiStates] = useState<Record<string, QuestionUIState>>({});
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
@@ -376,10 +378,18 @@ export default function WrongNotesPage() {
     return true;
   });
 
+  const reviewFilteredItems = typeFilteredItems.filter((item) =>
+    reviewFolder === 'need' ? !item.resolved : item.resolved,
+  );
+  const reviewFolderCounts = {
+    need: typeFilteredItems.filter((item) => !item.resolved).length,
+    done: typeFilteredItems.filter((item) => item.resolved).length,
+  };
+
   // 세부 주제 폴더 목록(타입 필터 반영한 카운트)
   const subTopics: SubTopicEntry[] = (() => {
     const map = new Map<string, SubTopicEntry>();
-    typeFilteredItems.forEach((item) => {
+    reviewFilteredItems.forEach((item) => {
       const key = item.subTopicId ?? '__null__';
       if (!map.has(key)) {
         map.set(key, { id: item.subTopicId, name: item.subTopicName, count: 0 });
@@ -390,8 +400,8 @@ export default function WrongNotesPage() {
   })();
 
   const filteredItems = selectedSubTopicId === null
-    ? typeFilteredItems
-    : typeFilteredItems.filter((item) => item.subTopicId === selectedSubTopicId);
+    ? reviewFilteredItems
+    : reviewFilteredItems.filter((item) => item.subTopicId === selectedSubTopicId);
 
   // 헤더 카운트 서브라인
   const privateCount = items.filter((i) => i.isPrivate).length;
@@ -531,9 +541,8 @@ export default function WrongNotesPage() {
         {/* Header row — 과목/세부주제 배지 + 삭제 */}
         <div className="badges">
           <div className="badges">
-            <Badge>{item.subjectName}</Badge>
+            <Badge variant="gray">{item.subjectName}</Badge>
             <Badge variant="gray">{item.subTopicName}</Badge>
-            {q && <Badge variant={q.badge.color}>{q.badge.label}</Badge>}
             {q && <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>}
           </div>
           <button
@@ -548,7 +557,7 @@ export default function WrongNotesPage() {
 
         {/* Stem preview */}
         {q ? (
-          <><QuestionStem className="question" text={q.stem} /><div className="answer-grid"><div className="answer wrong"><div className="answer-label">내 답</div><div className="answer-text">{myAnswer}</div></div><div className="answer correct"><div className="answer-label">정답</div><div className="answer-text">{correctAnswer}</div></div></div></>
+          <><p className="question">{q.stem}</p><div className="answer-grid"><div className="answer wrong"><div className="answer-label">내 답</div><div className="answer-text">{myAnswer}</div></div><div className="answer correct"><div className="answer-label">정답</div><div className="answer-text">{correctAnswer}</div></div></div></>
         ) : (
           <p className="text-sm text-[var(--color-muted)] mb-3">문제를 불러올 수 없습니다.</p>
         )}
@@ -609,9 +618,8 @@ export default function WrongNotesPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <Badge>{item.subjectName}</Badge>
+            <Badge variant="gray">{item.subjectName}</Badge>
             <Badge variant="gray">{item.subTopicName}</Badge>
-            {q && <Badge variant={q.badge.color}>{q.badge.label}</Badge>}
             {q && <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>}
           </div>
           <button
@@ -757,6 +765,46 @@ export default function WrongNotesPage() {
             <aside className="card sidebar">
                 <div className="px-2.5 py-2">
                   <span className="ll-eyebrow">
+                    <FolderOpen className="w-3.5 h-3.5" strokeWidth={2.4} />
+                    복습 상태
+                  </span>
+                </div>
+                <ul className="topic-list pb-2">
+                  {([
+                    { id: 'need' as const, label: '오답 복습 필요' },
+                    { id: 'done' as const, label: '오답 복습 완료' },
+                  ]).map((folder) => {
+                    const active = reviewFolder === folder.id;
+                    return (
+                      <li key={folder.id}>
+                        <button
+                          onClick={() => {
+                            setReviewFolder(folder.id);
+                            setSelectedSubTopicId(null);
+                          }}
+                          className={`topic ${
+                            active
+                              ? 'bg-[var(--color-sage-100)] text-sage-700 font-semibold'
+                              : 'text-sage-800 hover:bg-sage-50'
+                          }`}
+                        >
+                          {active
+                            ? <FolderOpen className="w-4 h-4 flex-shrink-0 text-sage-700" />
+                            : <Folder className="w-4 h-4 flex-shrink-0 text-[var(--color-sage-400)]" />}
+                          <span className="flex-1 truncate">{folder.label}</span>
+                          <span className={`text-xs tabular-nums px-2 py-0.5 rounded-full ${
+                            active
+                              ? 'bg-sage-700 text-white'
+                              : 'bg-[var(--color-sage-100)] text-[var(--color-muted)]'
+                          }`}>{reviewFolderCounts[folder.id]}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="border-t border-[var(--color-border)] my-2" />
+                <div className="px-2.5 py-2">
+                  <span className="ll-eyebrow">
                     <Folder className="w-3.5 h-3.5" strokeWidth={2.4} />
                     세부 주제
                   </span>
@@ -780,7 +828,7 @@ export default function WrongNotesPage() {
                         selectedSubTopicId === null
                           ? 'bg-sage-700 text-white'
                           : 'bg-[var(--color-sage-100)] text-[var(--color-muted)]'
-                      }`}>{typeFilteredItems.length}</span>
+                      }`}>{reviewFilteredItems.length}</span>
                     </button>
                   </li>
                   {/* SubTopic folders */}

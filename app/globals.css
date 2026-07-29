@@ -101,7 +101,6 @@ body { min-width: 320px; }
 .ll-app-shell .nav a.active,.ll-app-shell .nav a:hover{background:var(--color-primary-soft);color:var(--color-primary)}
 .ll-app-shell .nav a.primary{display:inline-flex;align-items:center;gap:6px}
 .ll-app-shell .nav a.primary::before{content:"";width:7px;height:7px;border-radius:999px;background:var(--color-gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-gold) 18%,transparent)}
-
 /* ── CPX 파트 선택(대분류) 카드 ── */
 .cpx-part-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:1000px){.cpx-part-grid{grid-template-columns:repeat(2,1fr)}}
@@ -431,10 +430,14 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .ll-plan-page .plan.current .plan-name,
 .ll-plan-page .plan.current .price strong,
 .ll-plan-page .plan.current .features li,
-.ll-plan-page .plan.current .features li span { color: var(--forest-800); }
+.ll-plan-page .plan.current .features li span {
+  color: var(--forest-800);
+}
 .ll-plan-page .plan.current .plan-sub,
 .ll-plan-page .plan.current .price span,
-.ll-plan-page .plan.current .desc { color: var(--ink-soft); }
+.ll-plan-page .plan.current .desc {
+  color: var(--ink-soft);
+}
 .ll-plan-page .plan.current .ribbon {
   background: var(--gold);
   border: 1px solid #d9ad32;
@@ -453,7 +456,13 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 }
 .ll-plan-page .plan-current-button:disabled { opacity: 1; }
 
-/* ── 국시 대비: 과목을 선택 대상으로 강조하는 압축형 카드 ── */
+/* ── 국시 대비: 소개 영역과 CPX 카드의 세로 중심 정렬 ── */
+@media (min-width: 961px) {
+  .ll-exam-page .page-head { align-items: center; }
+  .ll-exam-page .cpx-banner { align-self: center; }
+}
+
+/* ── 국시 대비: 과목 카드 핵심 정보만 남기는 압축형 레이아웃 ── */
 .ll-exam-page .subject-card {
   position: relative;
   display: flex;
@@ -552,6 +561,29 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 @media (max-width: 720px) {
   .ll-exam-page .grid { grid-template-columns: 1fr; }
   .ll-exam-page .subject-card { padding-right: 82px; }
+}
+
+/* ── 국시 대비: CPX 카드 정보와 시작 버튼 사이 여백 조정 ── */
+.ll-exam-page .cpx-banner {
+  min-height: 261px;
+  height: 261px;
+  padding: 18px 22px 15px;
+}
+.ll-exam-page .cpx-banner-top { margin-bottom: 6px; }
+.ll-exam-page .cpx-banner-title { margin-top: 0; }
+.ll-exam-page .cpx-banner-desc { margin: 6px 0 0; }
+.ll-exam-page .cpx-banner-meta { margin: 10px 0 0; }
+.ll-exam-page .cpx-banner-cta { margin-top: 18px; }
+
+/* 국시대비 세부주제 목록은 내문제집 폴더와 동일한 본문 글꼴·무게를 사용한다. */
+.ll-exam-page .exam-topic-sidebar .exam-topic-label {
+  font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 620;
+  letter-spacing: 0;
+}
+.ll-exam-page .exam-topic-sidebar .exam-topic-label + span {
+  font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 /* ── 요금 안내: 다른 주요 화면과 같은 왼쪽 정렬 흐름 ── */
