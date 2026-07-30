@@ -185,16 +185,14 @@ export function FormativeAssessmentStudio() {
     <div className="faculty-studio ll-upload-page">
       <Link href="/professor" className="back">
         <ArrowLeft size={16} />
-        대시보드로
+        홈으로
       </Link>
       <header className="page-head">
         <div>
           <p className="eyebrow">교수 도구 · 형성평가</p>
           <h1>
-            강의의 끝에서,
-            <br />
-            <span className="headline-accent">형성평가</span>로{" "}
-            <span className="headline-accent">이해도</span>를 확인하세요
+            <span className="headline-accent">형성평가</span>로 이해도를
+            확인하세요
           </h1>
           <p className="lead">
             강의자료의 근거를 벗어나지 않는 복습문항을 만들고, 교수 검수 후

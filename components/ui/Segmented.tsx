@@ -15,6 +15,7 @@ export function Segmented<T extends string>({
     <div className="segmented" role="group" aria-label={ariaLabel}>
       {options.map((option) => {
         const active = option === value;
+        const schoolYear = option.match(/^(의예과|의학과) (.+)$/);
         return (
           <button
             key={option}
@@ -23,7 +24,14 @@ export function Segmented<T extends string>({
             aria-pressed={active}
             className={active ? 'active' : ''}
           >
-            {option}
+            {schoolYear ? (
+              <span className="segmented-school-year">
+                <span>{schoolYear[1]}</span>
+                <span>{schoolYear[2]}</span>
+              </span>
+            ) : (
+              option
+            )}
           </button>
         );
       })}

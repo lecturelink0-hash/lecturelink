@@ -17,6 +17,12 @@
   line-height: 1.35;
 }
 
+.segmented-school-year {
+  display: grid;
+  gap: 1px;
+  line-height: 1.25;
+}
+
 .bridge-text-input,
 .bridge-controls textarea {
   width: 100%;
@@ -53,9 +59,10 @@
 
 .bridge-check-option {
   display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  padding: 14px;
+  min-height: 58px;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--sage);
@@ -63,9 +70,9 @@
 }
 
 .bridge-check-option input {
-  width: 17px;
-  height: 17px;
-  margin: 2px 0 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
   accent-color: var(--forest);
 }
 
@@ -76,13 +83,8 @@
 
 .bridge-check-option b {
   color: var(--forest-800);
-  font-size: 13.5px;
-}
-
-.bridge-check-option small {
-  color: var(--ink-soft);
-  font-size: 12.5px;
-  line-height: 1.55;
+  font-size: 17px;
+  line-height: 1.35;
 }
 
 .bridge-result {

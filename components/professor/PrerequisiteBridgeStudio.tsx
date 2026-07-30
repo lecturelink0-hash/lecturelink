@@ -171,17 +171,15 @@ export function PrerequisiteBridgeStudio() {
     <div className="faculty-studio bridge-studio ll-upload-page">
       <Link href="/professor" className="back">
         <ArrowLeft size={16} />
-        대시보드로
+        홈으로
       </Link>
 
       <header className="page-head">
         <div>
           <p className="eyebrow">교수 도구 · 예습자료</p>
           <h1>
-            <span className="headline-accent">예습자료</span>로 기초와 임상을
-            잇고,
-            <br />
-            수업을 시작하세요
+            <span className="headline-accent">예습자료</span>와 함께 수업을
+            시작하세요
           </h1>
           <p className="lead">
             업로드한 강의에서 주제를 파악하고, 수업을 이해하는 데 필요한 이전
@@ -336,10 +334,6 @@ export function PrerequisiteBridgeStudio() {
                     />
                     <span>
                       <b>예습 확인 문항 2개 포함</b>
-                      <small>
-                        자료를 읽은 뒤 핵심 개념을 떠올릴 수 있는 짧은 확인
-                        문항을 추가합니다.
-                      </small>
                     </span>
                   </label>
                 </div>
