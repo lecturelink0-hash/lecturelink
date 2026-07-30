@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FileText, Loader2, Plus, Upload, X } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Plus, Upload, X } from "lucide-react";
 
 type Course = { id: string; title: string; term?: string | null };
 type Material = {
@@ -13,6 +13,15 @@ type Material = {
   status: string;
   page_count: number | null;
 };
+
+const PREVIEW_COURSES: Course[] = [
+  { id: "preview-cardiology", title: "순환기학", term: "2026년 2학기" },
+  { id: "preview-arrhythmia", title: "부정맥 약물", term: "임상약리학" },
+];
+const PREVIEW_MATERIALS: Material[] = [
+  { id: "preview-material-1", course_id: "preview-cardiology", file_name: "순환기학_부정맥_강의자료.pdf", file_type: "pdf", file_size_bytes: 6920000, status: "ready", page_count: 38 },
+  { id: "preview-material-2", course_id: "preview-cardiology", file_name: "심전도_핵심정리.pptx", file_type: "pptx", file_size_bytes: 12400000, status: "ready", page_count: 24 },
+];
 
 export async function uploadTeachingMaterial(courseId: string, file: File) {
   const form = new FormData();
@@ -52,9 +61,12 @@ export function CourseMaterialSelector({
   onCourseTitle?: (value: string) => void;
   onMaterialName?: (value: string) => void;
 }) {
+  const localPreview = process.env.NEXT_PUBLIC_LOCAL_FACULTY_UI_PREVIEW === "true";
   const inputRef = useRef<HTMLInputElement>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [courses, setCourses] = useState<Course[]>(localPreview ? PREVIEW_COURSES : []);
+  const [materials, setMaterials] = useState<Material[]>(
+    localPreview ? PREVIEW_MATERIALS.filter((item) => item.course_id === courseId) : [],
+  );
   const [mode, setMode] = useState<"library" | "upload">("library");
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
@@ -63,6 +75,11 @@ export function CourseMaterialSelector({
   const [error, setError] = useState("");
 
   async function loadCourses(preferredId?: string) {
+    if (localPreview) {
+      const selectedId = preferredId ?? courseId;
+      onCourseTitle?.(PREVIEW_COURSES.find((item) => item.id === selectedId)?.title ?? "");
+      return;
+    }
     const response = await fetch("/api/professor/courses");
     const payload = await response.json();
     if (!payload.ok) return;
@@ -77,6 +94,15 @@ export function CourseMaterialSelector({
   async function loadMaterials(id: string) {
     if (!id) {
       setMaterials([]);
+      return;
+    }
+    if (localPreview) {
+      const next = PREVIEW_MATERIALS.filter((item) => item.course_id === id);
+      setMaterials(next);
+      const selected = next.find((item) => item.id === materialId);
+      onMaterialName?.(selected?.file_name ?? "");
+      if (selected) setMode("library");
+      if (next.length === 0) setMode("upload");
       return;
     }
     const response = await fetch(
@@ -108,6 +134,24 @@ export function CourseMaterialSelector({
     setBusy(true);
     setError("");
     try {
+      if (localPreview) {
+        const course: Course = {
+          id: `preview-course-${Date.now()}`,
+          title: title.trim(),
+          term: term.trim() || null,
+        };
+        setCourses((current) => [...current, course]);
+        onCourseId(course.id);
+        onMaterialId("");
+        onFile(null);
+        onCourseTitle?.(course.title);
+        onMaterialName?.("");
+        setMode("upload");
+        setCreating(false);
+        setTitle("");
+        setTerm("");
+        return;
+      }
       const response = await fetch("/api/professor/courses", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -146,12 +190,17 @@ export function CourseMaterialSelector({
     onMaterialName?.(next.name);
   }
 
+  const selectedMaterial = materials.find((item) => item.id === materialId);
+
   return (
     <section className="course-material-selector">
+      <div className="selector-title">
+        <b>차시 선택</b>
+      </div>
       <div className="source-row">
         <label>
-          <span>저장할 차시</span>
           <select
+            aria-label="차시 선택"
             value={courseId}
             onChange={(event) => {
               onCourseId(event.target.value);
@@ -159,7 +208,7 @@ export function CourseMaterialSelector({
               onFile(null);
             }}
           >
-            <option value="">차시 선택</option>
+            <option value="">차시를 선택하세요</option>
             {courses.map((course) => (
               <option key={course.id} value={course.id}>
                 {course.title}
@@ -170,26 +219,42 @@ export function CourseMaterialSelector({
         <button
           className="inline-create-trigger"
           type="button"
-          onClick={() => setCreating((value) => !value)}
+          onClick={() => {
+            if (!creating) {
+              onCourseId("");
+              onMaterialId("");
+              onFile(null);
+              onCourseTitle?.("");
+              onMaterialName?.("");
+            }
+            setCreating((value) => !value);
+          }}
         >
-          <Plus size={15} /> 새 차시
+          <Plus size={17} /> 새 차시 만들기
         </button>
       </div>
 
       {creating && (
         <div className="inline-course-create">
-          <input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="차시명 · 예: 피부진균증"
-            maxLength={120}
-          />
-          <input
-            value={term}
-            onChange={(event) => setTerm(event.target.value)}
-            placeholder="학기 · 선택"
-            maxLength={60}
-          />
+          <strong>새 차시 만들기</strong>
+          <label>
+            <span>차시명</span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="예: 피부진균증"
+              maxLength={120}
+            />
+          </label>
+          <label>
+            <span>학기</span>
+            <input
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              placeholder="선택 입력"
+              maxLength={60}
+            />
+          </label>
           <button
             type="button"
             disabled={busy || !title.trim()}
@@ -203,6 +268,13 @@ export function CourseMaterialSelector({
 
       {courseId && (
         <>
+          <div className="selector-stage selector-material-stage">
+            <span>자료</span>
+            <div>
+              <b>강의자료 선택</b>
+              <p>등록된 자료를 사용하거나 새 자료를 업로드하세요.</p>
+            </div>
+          </div>
           <div
             className="material-source-tabs"
             role="tablist"
@@ -241,6 +313,15 @@ export function CourseMaterialSelector({
               </select>
               {materials.length === 0 && (
                 <p>이 차시에 등록된 자료가 없습니다. 새로 업로드해주세요.</p>
+              )}
+              {selectedMaterial && (
+                <div className="selected-material-notice" role="status">
+                  <CheckCircle2 size={19} />
+                  <span>
+                    <b>선택된 강의자료</b>
+                    <small>{selectedMaterial.file_name} 파일이 현재 작업에 사용됩니다.</small>
+                  </span>
+                </div>
               )}
             </div>
           ) : file ? (

@@ -4,17 +4,15 @@ import { createServerClient } from '@/lib/db/server';
 
 export default async function ProfessorHomePage() {
   const session = await requireProfessor();
-  const localPreview =
-    process.env.NODE_ENV === 'development' &&
-    process.env.LOCAL_FACULTY_UI_PREVIEW === 'true';
+  const localPreview = process.env.NODE_ENV === 'development' && process.env.LOCAL_FACULTY_UI_PREVIEW === 'true';
 
   if (localPreview) {
     return (
       <ProfessorHome
-        displayName={session.profile.displayName ?? '교수'}
+        displayName={session.profile.displayName ?? '김현우 교수님'}
         courses={[
           { id: 'preview-cardiology', title: '순환기학', term: '2026년 2학기', created_at: '2026-07-20T00:00:00.000Z' },
-          { id: 'preview-arrhythmia', title: '부정맥 약물', term: '임상약리학', created_at: '2026-07-18T00:00:00.000Z' },
+          { id: 'preview-arrhythmia', title: '부정맥 정리', term: '임상 정리반', created_at: '2026-07-18T00:00:00.000Z' },
         ]}
         recentArtifacts={[]}
       />
@@ -40,11 +38,5 @@ export default async function ProfessorHomePage() {
     recentArtifacts = data ?? [];
   }
 
-  return (
-    <ProfessorHome
-      displayName={session.profile.displayName ?? '교수'}
-      courses={courseList}
-      recentArtifacts={recentArtifacts}
-    />
-  );
+  return <ProfessorHome displayName={session.profile.displayName ?? '교수님'} courses={courseList} recentArtifacts={recentArtifacts} />;
 }

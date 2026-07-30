@@ -79,7 +79,7 @@ export function FormativeQualityStudio() {
 
   return (
     <div className="faculty-studio quality-studio ll-upload-page">
-      <Link href="/professor" className="back"><ArrowLeft size={16} />대시보드로</Link>
+      <Link href="/professor" className="back"><ArrowLeft size={16} />홈으로</Link>
 
       <header className="page-head">
         <div>

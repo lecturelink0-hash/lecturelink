@@ -128,7 +128,7 @@ export function MaterialImprovementStudio() {
     <div className="faculty-studio material-studio ll-upload-page">
       <Link href="/professor" className="back">
         <ArrowLeft size={16} />
-        대시보드로
+        홈으로
       </Link>
 
       <header className="page-head">

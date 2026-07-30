@@ -16,8 +16,8 @@
 }
 
 .studio-workbench.is-upload-only {
-  grid-template-columns: minmax(0, 1.42fr) minmax(320px, .78fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 286px;
+  gap: 28px;
   align-items: start;
 }
 

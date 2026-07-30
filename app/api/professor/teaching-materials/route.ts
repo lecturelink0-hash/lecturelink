@@ -11,6 +11,7 @@ import {
 } from '@/lib/teaching/materials';
 
 const courseIdSchema = z.string().uuid();
+const materialIdSchema = z.string().uuid();
 
 export const GET = withErrorHandling(async (request: Request) => {
   const session = await requireProfessor();
@@ -95,4 +96,33 @@ export const POST = withErrorHandling(async (request: Request) => {
     }).eq('id', materialId);
     throw error;
   }
+});
+
+export const DELETE = withErrorHandling(async (request: Request) => {
+  const session = await requireProfessor();
+  const materialId = new URL(request.url).searchParams.get('materialId');
+  if (!materialId || !materialIdSchema.safeParse(materialId).success) {
+    throw new ApiException('invalid_material', '삭제할 강의자료를 확인해주세요.', 400);
+  }
+  const db = await createServerClient() as any;
+  const { data: material } = await db
+    .from('teaching_materials')
+    .select('id,storage_path')
+    .eq('id', materialId)
+    .eq('professor_id', session.userId)
+    .maybeSingle();
+  if (!material) throw new ApiException('material_not_found', '강의자료를 찾을 수 없습니다.', 404);
+
+  const { error: storageError } = await db.storage
+    .from(TEACHING_MATERIAL_BUCKET)
+    .remove([material.storage_path]);
+  if (storageError) throw new ApiException('material_delete_failed', '강의자료 파일을 삭제하지 못했습니다.', 500);
+
+  const { error: deleteError } = await db
+    .from('teaching_materials')
+    .delete()
+    .eq('id', materialId)
+    .eq('professor_id', session.userId);
+  if (deleteError) throw new ApiException('material_delete_failed', '강의자료 정보를 삭제하지 못했습니다.', 500);
+  return ok({ id: materialId });
 });
