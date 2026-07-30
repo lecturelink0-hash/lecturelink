@@ -4,6 +4,7 @@ import { KakaoEmailPrompt } from '@/components/auth/KakaoEmailPrompt';
 
 interface Day { label: string; studied: boolean; isToday: boolean }
 interface Recent { isCorrect: boolean; subTopicName: string; subjectName: string; label: string }
+interface WeakConcept { name: string; subjectName: string; accuracy: number; count: number }
 
 export function DashboardView({
   displayName,
@@ -15,7 +16,7 @@ export function DashboardView({
   weekDays,
   overallAccuracy,
   totalSolved,
-  weakCount,
+  weakConcept,
 }: {
   displayName: string;
   recent: Recent | null;
@@ -26,7 +27,7 @@ export function DashboardView({
   weekDays: Day[];
   overallAccuracy: number;
   totalSolved: number;
-  weakCount: number;
+  weakConcept: WeakConcept | null;
 }) {
   const studyTime = weekSeconds < 60 ? `${weekSeconds}초` : weekSeconds < 3600 ? `${Math.floor(weekSeconds / 60)}분` : `${Math.floor(weekSeconds / 3600)}시간 ${Math.floor((weekSeconds % 3600) / 60)}분`;
 
@@ -73,13 +74,13 @@ export function DashboardView({
         <article className="card pad supporting-card">
           <div className="section-title">
             <span>이번 주 학습</span>
-            <span className="chip">{streak}일 연속 학습 🔥</span>
+            {streak >= 2 && <span className="chip">{streak}일 연속 학습 🔥</span>}
           </div>
-          <p className="muted">오늘 짧게라도 이어가면 학습 흐름이 더 단단해집니다.</p>
-          <div className="stats">
-            {[[studyTime, '이번 주 공부시간'], [`${weekCount}문항`, '이번 주 푼 문항'], [`${weekAccuracy}%`, '이번 주 정답률']].map(([value, label]) => (
+          <p className="muted">이번 주 학습 현황을 확인해보세요.</p>
+          <div className="stats stats-inline">
+            {[[studyTime, '학습 시간'], [`${weekCount}문항`, '푼 문항'], [`${weekAccuracy}%`, '정답률']].map(([value, label]) => (
               <div key={label} className="stat">
-                <strong>{value}</strong><span>{label}</span>
+                <span>{label}</span><strong>{value}</strong>
               </div>
             ))}
           </div>
@@ -104,12 +105,12 @@ export function DashboardView({
           <h2 className="section-title">나의 학습 분석</h2>
           <div className="card pad quiet-card">
             <div className="analysis">
-              {[[`${overallAccuracy}%`, '평균 정답률'], [`${totalSolved}문항`, '누적 학습'], [`${weakCount}개`, '취약 개념']].map(([value, label]) => (
+              {[[`${overallAccuracy}%`, '평균 정답률'], [`${totalSolved}문항`, '누적 학습'], [weakConcept?.name ?? '–', '가장 취약한 개념']].map(([value, label]) => (
                 <div key={label}><strong>{value}</strong><span>{label}</span></div>
               ))}
             </div>
             <div className="analysis-action">
-              {totalSolved < 10 ? `분석을 열려면 ${10 - totalSolved}문항만 더 풀어보세요. 이후 자주 틀리는 개념과 복습 우선순위를 자동으로 보여드립니다.` : '학습 결과를 바탕으로 자주 틀리는 개념과 복습 우선순위를 정리했습니다.'}
+              최근 학습 기록과 자주 틀린 개념을 확인해보세요.
             </div>
           </div>
         </div>
