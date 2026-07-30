@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 import {
-  StickyNote, Calculator as CalcIcon, ChevronLeft, ChevronRight,
-  Clock, Check, CheckCircle2, XCircle, BookmarkPlus, X, Send, ArrowLeft,
+  Calculator as CalcIcon, ChevronLeft, ChevronRight,
+  Clock, CheckCircle2, XCircle, BookmarkPlus, X, Send, ArrowLeft,
   Pencil, Eraser, Columns2, Square,
 } from 'lucide-react';
 import { ExamResultView } from './ExamResultView';
@@ -127,11 +128,12 @@ export default function MockExamPage() {
 
   const submitted = data?.session.status === 'submitted';
 
-  // 타이머
+  // 타이머 — 제한시간이 저장되지 않은 과거 세션도 문항당 1분 기본값으로 항상 카운트다운하고,
+  // 시간이 다 되면 즉시 자동 제출·채점한다.
   useEffect(() => {
-    if (!data || submitted || !data.session.durationSeconds) return;
+    if (!data || submitted) return;
     const startMs = new Date(data.session.startedAt).getTime();
-    const total = data.session.durationSeconds;
+    const total = data.session.durationSeconds ?? data.session.total * 60;
     const tick = () => {
       const elapsed = Math.floor((Date.now() - startMs) / 1000);
       const left = total - elapsed;
@@ -164,6 +166,11 @@ export default function MockExamPage() {
 
   function chooseFor(qi: number, ci: number) {
     if (submitted) return;
+    setEliminated((prev) => {
+      const current = prev[qi] ?? [];
+      if (!current.includes(ci)) return prev;
+      return { ...prev, [qi]: current.filter((choice) => choice !== ci) };
+    });
     const next = [...answers];
     next[qi] = ci;
     setAnswers(next);
@@ -178,6 +185,12 @@ export default function MockExamPage() {
 
   function toggleEliminate(qi: number, ci: number) {
     if (submitted) return;
+    if (answers[qi] === ci) {
+      const nextAnswers = [...answers];
+      nextAnswers[qi] = -1;
+      setAnswers(nextAnswers);
+      scheduleSave(nextAnswers, flagged, memos);
+    }
     setEliminated((prev) => {
       const cur = new Set(prev[qi] ?? []);
       if (cur.has(ci)) cur.delete(ci);
@@ -351,7 +364,7 @@ export default function MockExamPage() {
                       </Button>
                     ))}
                 </div>
-                <div className="text-[15px] leading-7 text-sage-800 mb-3">{q.stem}</div>
+                <QuestionStem className="text-[15px] leading-7 text-sage-800 mb-3" text={q.stem} />
                 <div className="space-y-1.5">
                   {q.choices.map((c, ci) => {
                     const isCorrect = ci === correct;
@@ -397,6 +410,7 @@ export default function MockExamPage() {
   const fs = Math.round(16 * fontScale);
   const examNo = (id.replace(/[^0-9]/g, '') + '00000000').slice(0, 8);
   const NAVY = '#1f5c43';
+  const durationSec = data.session.durationSeconds ?? total * 60;
 
   const choiceBlock = (
     <div className="rounded-md border border-[#d7dbe3] bg-white p-4 sm:p-5">
@@ -412,28 +426,30 @@ export default function MockExamPage() {
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
+            type="button"
             onClick={() => toggleFlag()}
-            className={`flex h-8 w-14 flex-col items-center justify-center gap-px rounded border text-[10px] leading-none ${
+            aria-pressed={flagged.includes(idx)}
+            className={`flex h-9 min-w-[3.75rem] items-center justify-center whitespace-nowrap rounded border px-2 text-[11px] font-medium leading-none ${
               flagged.includes(idx) ? 'border-[#e0743a] bg-[#fbeee4] text-[#c9622e]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#5a6172] hover:bg-[#eef0f4]'
             }`}
           >
-            <Check className="w-3 h-3" strokeWidth={2.5} />체크문제
+            체크문제
           </button>
           <button
             onClick={() => setOverlay('memo')}
-            className={`flex h-8 w-14 flex-col items-center justify-center gap-px rounded border text-[10px] leading-none ${
+            className={`flex h-9 min-w-[3.75rem] items-center justify-center whitespace-nowrap rounded border px-1.5 text-[10px] leading-none ${
               memos[idx] ? 'border-[#3a52a0] bg-[#eaeefb] text-[#2c3f86]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#5a6172] hover:bg-[#eef0f4]'
             }`}
           >
-            <StickyNote className="w-3 h-3" />메모
+            메모
           </button>
         </div>
       </div>
 
       {q.imageUrl && (
-        <div className="mb-3 bg-[#f6f7f9] border border-[#e3e6ec] rounded h-56 flex items-center justify-center overflow-hidden">
+        <div className="mb-3 bg-[#f6f7f9] border border-[#e3e6ec] rounded p-2 flex items-center justify-center overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={q.imageUrl} alt="문항 이미지" className="max-h-full max-w-full object-contain" />
+          <img src={q.imageUrl} alt="문항 이미지" className="max-w-full h-auto object-contain" />
         </div>
       )}
 
@@ -483,9 +499,6 @@ export default function MockExamPage() {
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="text-[#143c2c] font-bold" style={{ fontSize: fs + 3 }}>[문항 {idx + 1}]</div>
-          <div className="text-[#7c8496] mt-0.5" style={{ fontSize: fs - 3 }}>
-            {q.subjectName} · {q.subTopicName}
-          </div>
         </div>
         <div className="flex flex-col gap-1">
           <button
@@ -521,7 +534,7 @@ export default function MockExamPage() {
   };
 
   // 실제 CBT 화면을 기본 응시 화면으로 사용한다. ScrollExamView는 대체안으로 보존한다.
-  return renderLegacy(data, remaining ?? 0);
+  return renderLegacy(data, remaining ?? durationSec);
 
   function renderLegacy(data: SessionData, remaining: number) { return (
     <div className="ll-exam-session-page fixed inset-0 z-50 flex flex-col bg-[#fcfaf4] text-[#111827]">
@@ -544,16 +557,24 @@ export default function MockExamPage() {
         {/* 글자 크기 */}
         <div className="hidden md:flex items-center gap-2">
           <span className="text-[11px] leading-tight text-white/80 text-center">글자<br />크기</span>
-          <div className="flex overflow-hidden rounded-md">
-            {([[0.9, '가', 'text-sm'], [1, '가', 'text-base'], [1.25, '가', 'text-lg']] as const).map(([sc, label, sz]) => (
+          <div className="flex items-stretch overflow-hidden rounded-md">
+            {([
+              [0.9, 13, '글자 크기 작게'],
+              [1, 16, '글자 크기 기본'],
+              [1.18, 19, '글자 크기 크게'],
+            ] as const).map(([sc, px, label]) => (
               <button
                 key={sc}
+                type="button"
                 onClick={() => setFontScale(sc)}
-                className={`px-3 py-1.5 font-bold ${sz} ${
-                  fontScale === sc ? 'bg-[#d9a82f] text-[#111827]' : 'bg-white text-[#143c2c] hover:bg-[#eaf3ed]'
+                aria-label={label}
+                aria-pressed={fontScale === sc}
+                style={{ fontSize: px, fontFamily: 'inherit' }}
+                className={`flex h-8 w-9 items-center justify-center font-[650] leading-none tracking-[-0.01em] ${
+                  fontScale === sc ? 'bg-[#f3c64e] text-[#143c2c]' : 'bg-white text-[#1f5c43] hover:bg-[#eaf3ed]'
                 }`}
               >
-                {label}
+                가
               </button>
             ))}
           </div>
@@ -584,11 +605,11 @@ export default function MockExamPage() {
         <div className="flex items-center gap-2 text-[13px]">
           <Clock className="w-5 h-5 text-[#ff6b6b]" />
           <div className="leading-tight">
-            <div>제한시간 : {data.session.durationSeconds ? `${Math.round(data.session.durationSeconds / 60)}분` : '없음'}</div>
+            <div>제한시간 : {Math.round(durationSec / 60)}분</div>
             <div className="flex items-center gap-1">
               남은시간 :
               <span className="rounded bg-[#ffe3e3] px-1.5 py-0.5 font-bold tnum text-[#e03131]">
-                {remaining !== null ? fmtTime(remaining) : '제한 없음'}
+                {fmtTime(remaining)}
               </span>
             </div>
           </div>
@@ -611,7 +632,6 @@ export default function MockExamPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <div className="text-[#143c2c] font-bold" style={{ fontSize: fs + 3 }}>[문항 {idx + 1}]</div>
-                      <div className="text-[#7c8496] mt-0.5" style={{ fontSize: fs - 3 }}>{q.subjectName} · {q.subTopicName}</div>
                     </div>
                     <div className="flex flex-col gap-1">
                       <button onClick={() => setHlOn((v) => !v)} className={`rounded border px-2 py-1 text-[11px] ${hlOn ? 'border-[#e6b800] bg-[#fff9d6] text-[#8a7300]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#5a6172]'}`}>형광펜 {hlOn ? '켜짐' : '꺼짐'}</button>
@@ -764,14 +784,39 @@ function Overlay({ children, title, onClose, wide }: { children: React.ReactNode
 }
 
 /* ─────────── 그림판(간이 캔버스) ─────────── */
+const ERASER_SIZES = [
+  { label: '소', size: 10 },
+  { label: '중', size: 24 },
+  { label: '대', size: 44 },
+] as const;
+
 function DrawingBoard() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
+  const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
+  const [eraserSize, setEraserSize] = useState<number>(24);
 
+  // 캔버스는 CSS 로 늘려 그려지므로, 화면 좌표를 캔버스 내부 좌표로 스케일 보정해야
+  // 펜이 마우스가 눌린 바로 그 위치에 찍힌다.
   function pos(e: React.MouseEvent) {
     const c = canvasRef.current!;
     const r = c.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    return {
+      x: (e.clientX - r.left) * (c.width / r.width),
+      y: (e.clientY - r.top) * (c.height / r.height),
+    };
+  }
+  function applyStroke(ctx: CanvasRenderingContext2D) {
+    if (tool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = eraserSize;
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#1a2b5b';
+    }
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
   }
   function start(e: React.MouseEvent) {
     const ctx = canvasRef.current!.getContext('2d')!;
@@ -779,15 +824,17 @@ function DrawingBoard() {
     drawing.current = true;
     ctx.beginPath();
     ctx.moveTo(x, y);
+    // 클릭만 해도 점이 찍히도록 아주 짧은 선을 그린다.
+    applyStroke(ctx);
+    ctx.lineTo(x + 0.01, y + 0.01);
+    ctx.stroke();
   }
   function move(e: React.MouseEvent) {
     if (!drawing.current) return;
     const ctx = canvasRef.current!.getContext('2d')!;
     const { x, y } = pos(e);
+    applyStroke(ctx);
     ctx.lineTo(x, y);
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1a2b5b';
     ctx.stroke();
   }
   function end() { drawing.current = false; }
@@ -797,6 +844,45 @@ function DrawingBoard() {
   }
   return (
     <div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setTool('pen')}
+            className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm ${
+              tool === 'pen' ? 'border-[#1a2b5b] bg-[#eaeefb] font-semibold text-[#1a2b5b]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#3a3f4b] hover:bg-[#eef0f4]'
+            }`}
+          >
+            <Pencil className="w-4 h-4" /> 펜
+          </button>
+          <button
+            onClick={() => setTool('eraser')}
+            className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm ${
+              tool === 'eraser' ? 'border-[#1a2b5b] bg-[#eaeefb] font-semibold text-[#1a2b5b]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#3a3f4b] hover:bg-[#eef0f4]'
+            }`}
+          >
+            <Eraser className="w-4 h-4" /> 지우개
+          </button>
+          {tool === 'eraser' && (
+            <div className="ml-1 flex items-center gap-1">
+              <span className="text-[11px] text-[#8a91a0]">크기</span>
+              {ERASER_SIZES.map(({ label, size }) => (
+                <button
+                  key={size}
+                  onClick={() => setEraserSize(size)}
+                  className={`rounded border px-2 py-1 text-[11px] ${
+                    eraserSize === size ? 'border-[#1a2b5b] bg-[#eaeefb] font-semibold text-[#1a2b5b]' : 'border-[#d7dbe3] bg-[#f6f7f9] text-[#5a6172] hover:bg-[#eef0f4]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button onClick={clear} className="flex items-center gap-1.5 rounded border border-[#d7dbe3] bg-[#f6f7f9] px-3 py-1.5 text-sm text-[#3a3f4b] hover:bg-[#eef0f4]">
+          전체 지우기
+        </button>
+      </div>
       <canvas
         ref={canvasRef}
         width={640}
@@ -807,11 +893,6 @@ function DrawingBoard() {
         onMouseLeave={end}
         className="w-full rounded-lg border border-[#d7dbe3] bg-white cursor-crosshair touch-none"
       />
-      <div className="mt-3 flex justify-end">
-        <button onClick={clear} className="flex items-center gap-1.5 rounded border border-[#d7dbe3] bg-[#f6f7f9] px-3 py-1.5 text-sm text-[#3a3f4b] hover:bg-[#eef0f4]">
-          <Eraser className="w-4 h-4" /> 지우기
-        </button>
-      </div>
     </div>
   );
 }
@@ -825,6 +906,12 @@ function Calculator() {
     if (key === 'C') {
       setExpr('');
       setDisplay('0');
+      return;
+    }
+    if (key === '⌫') {
+      const next = expr.slice(0, -1);
+      setExpr(next);
+      setDisplay(next || '0');
       return;
     }
     if (key === '=') {
@@ -847,22 +934,25 @@ function Calculator() {
     setDisplay(next);
   }
 
-  const keys = ['7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '=', '+'];
+  const keys = ['C', '(', ')', '⌫', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '=', '+'];
   return (
     <div className="max-w-[260px] mx-auto">
       <div className="mb-2 overflow-x-auto rounded-lg bg-[#1a2b5b] px-4 py-3 text-right font-mono text-xl text-white">
         {display}
       </div>
       <div className="grid grid-cols-4 gap-1.5">
-        <button onClick={() => press('C')} className="col-span-4 h-10 rounded-lg bg-[#fbeee4] text-sm font-semibold text-[#c9622e]">
-          C (초기화)
-        </button>
         {keys.map((k) => (
           <button
             key={k}
             onClick={() => press(k)}
             className={`h-11 rounded-lg text-sm font-semibold ${
-              ['/', '*', '-', '+', '='].includes(k) ? 'bg-[#2f6ae0] text-white' : 'bg-[#eef1f5] text-[#1a2b5b] hover:bg-[#e2e7f0]'
+              k === 'C'
+                ? 'bg-[#fbeee4] text-[#c9622e]'
+                : ['(', ')', '⌫'].includes(k)
+                  ? 'bg-[#dfe5f0] text-[#1a2b5b] hover:bg-[#d2dae9]'
+                  : ['/', '*', '-', '+', '='].includes(k)
+                    ? 'bg-[#2f6ae0] text-white'
+                    : 'bg-[#eef1f5] text-[#1a2b5b] hover:bg-[#e2e7f0]'
             }`}
           >
             {k}

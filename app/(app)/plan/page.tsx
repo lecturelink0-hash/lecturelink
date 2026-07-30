@@ -164,12 +164,12 @@ export default function PlanPage() {
         </div>
       )}
 
-      <section className="page-head"><span className="eyebrow">요금 안내</span><h1>학습 목표에 맞게<br/><span className="headline-accent">필요한 기능만</span> 선택하세요</h1><p className="lead">학교 시험 대비, 국가고시 대비, 또는 둘 다. 렉처링크의 주요 학습 흐름을 필요한 만큼 골라 사용할 수 있습니다.</p></section>
+      <section className="page-head"><span className="eyebrow">요금 안내</span><h1><span className="headline-accent">학습 방식</span>에 맞는<br/>플랜을 선택하세요</h1><p className="lead">내신 대비, 국시 대비 또는 두 기능을 모두 이용할 수 있는 플랜을 선택할 수 있어요.</p></section>
 
       <div className="space-y-8">
         {/* 첫 달 무료 배너 — 통합형 요금제 한정(기획서) */}
         <div className="notice">
-          <strong>가입 후 첫 달, 모든 기능 무료</strong><span>부담 없이 시작하고 언제든 해지할 수 있습니다.</span>
+          <strong>첫 달 무료 체험</strong><span>모든 기능을 한 달 동안 무료로 이용하고, 언제든 해지할 수 있어요.</span>
         </div>
 
         {/* 요금제 카드 */}
@@ -184,11 +184,17 @@ export default function PlanPage() {
                   className={clsx(
                     'plan',
                     featured && 'integrated',
+                    isCurrent && 'current',
                   )}
                 >
                   {featured && (
                     <span className="ribbon">
                       추천
+                    </span>
+                  )}
+                  {isCurrent && (
+                    <span className="current-state">
+                      현재 이용 중
                     </span>
                   )}
 
@@ -245,17 +251,26 @@ export default function PlanPage() {
 
                   {/* CTA */}
                   <div className="mt-auto">
-                    {featured ? (
+                    {isCurrent ? (
+                      <button
+                        type="button"
+                        disabled
+                        aria-current="true"
+                        className="plan-current-button"
+                      >
+                        현재 이용 중
+                      </button>
+                    ) : featured ? (
                       <button
                         type="button"
                         onClick={() => handlePurchase(plan)}
-                        disabled={isCurrent || loading === plan.tier}
+                        disabled={loading === plan.tier}
                         className="w-full h-[52px] rounded-lg inline-flex items-center justify-center gap-2 text-base font-bold bg-[var(--color-gold)] text-sage-900 hover:bg-[var(--color-gold-dark)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {loading === plan.tier && (
                           <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         )}
-                        {isCurrent ? '현재 플랜' : '결제하기'}
+                        결제하기
                       </button>
                     ) : (
                       <Button
@@ -264,9 +279,8 @@ export default function PlanPage() {
                         variant="secondary"
                         onClick={() => handlePurchase(plan)}
                         loading={loading === plan.tier}
-                        disabled={isCurrent}
                       >
-                        {plan.displayOnly ? '문의하기' : isCurrent ? '현재 플랜' : '결제하기'}
+                        {plan.displayOnly ? '문의하기' : '결제하기'}
                       </Button>
                     )}
                   </div>

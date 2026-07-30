@@ -15,6 +15,7 @@
  */
 
 import { generateQuestions, type GenerationInput } from './generate';
+import { normalizeKmleQuestion, lintKmleQuestion } from './kmle-format';
 import { verifyQuestion } from './verify';
 import { tagQuestion } from './tag';
 import { embedText, buildEmbeddingText } from './embed';
@@ -108,9 +109,17 @@ export async function admitGeneratedQuestions(
   const admitted: AdmittedQuestion[] = [];
   const rejected: RejectedQuestion[] = [];
 
+  // ───── 1.5. 국시 형식 후처리 ─────
+  // 결정론적으로 판정 가능한 규칙은 모델의 준수에만 맡기지 않는다.
+  // 선지를 길이순으로 재정렬하면서 answer_index 도 함께 다시 계산한다.
+  const normalized = generation.questions.map((q) => normalizeKmleQuestion(q));
+
   // ───── 2. 각 문항 검증·태깅 (병렬 처리) ─────
   await Promise.all(
-    generation.questions.map(async (question) => {
+    normalized.map(async (question) => {
+      // 자동 교정이 위험한 형식 위반은 지적만 받아 tier 판정에 반영한다.
+      const formatIssues = lintKmleQuestion(question);
+
       // 검증
       const verification = await verifyQuestion({
         subjectName: input.subjectName,
@@ -157,8 +166,14 @@ export async function admitGeneratedQuestions(
       totalCost += tagging.usage.costUSD + embedding.usage.costUSD;
 
       // tier 결정 (MVP 단계: severity·score 만으로 판정. 위험 영역 강제 beta 는 정식 출시 후 추가)
+      // 국시 형식 위반이 남아 있으면 community 로 올리지 않는다 — 학습자에게
+      // 국시 형식이라고 제시하는 문항은 형식을 지켜야 한다.
       let tier: ContentTier;
-      if (verification.severity === 'none' && verification.score >= 0.85) {
+      if (
+        verification.severity === 'none' &&
+        verification.score >= 0.85 &&
+        formatIssues.length === 0
+      ) {
         tier = 'community';
       } else {
         tier = 'beta';
@@ -168,7 +183,10 @@ export async function admitGeneratedQuestions(
         question,
         tier,
         verificationScore: verification.score,
-        verificationIssues: verification.issues,
+        verificationIssues: [
+          ...verification.issues,
+          ...formatIssues.map((i) => `[${i.rule}] ${i.message}`),
+        ],
         concepts: tagging.concepts,
         examRelevance: tagging.exam_relevance,
         imageDependency: tagging.image_dependency,

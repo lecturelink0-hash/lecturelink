@@ -253,6 +253,7 @@ export default function MyPage() {
   const summary = calendarData?.summary;
   const streak = calendarData ? calcStreak(calendarData.days) : 0;
   const accuracyPct = summary ? Math.round((summary.accuracy ?? 0) * 100) : 0;
+  const generatedQuestionCount = quota?.questions.used ?? 0;
 
   const today = todayKey();
 
@@ -389,16 +390,16 @@ export default function MyPage() {
       />
 
       {/* ── Top: Profile + Plan ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Profile */}
-        <div className="ll-card p-6">
-          <div className="flex items-start gap-4">
-            <span className="w-12 h-12 rounded-full bg-sage-700 text-white flex items-center justify-center flex-shrink-0">
-              <User className="w-6 h-6" strokeWidth={2} />
+        <div className="ll-card p-5 lg:h-[230px] flex flex-col justify-between">
+          <div className="flex items-start gap-3">
+            <span className="w-10 h-10 rounded-full bg-sage-700 text-white flex items-center justify-center flex-shrink-0">
+              <User className="w-5 h-5" strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-bold text-sage-800 tracking-tight leading-none">
+                <h2 className="text-[17px] font-bold text-sage-800 tracking-tight leading-none">
                   {displayName}
                 </h2>
                 <Badge variant="default">{plan.name}</Badge>
@@ -412,42 +413,36 @@ export default function MyPage() {
             </div>
           </div>
 
-          {/* Cumulative study stat */}
-          <div className="mt-5 rounded-xl ll-tint p-4">
-            <p className="text-[12px] text-[var(--color-muted)] mb-1.5">
-              LECTURELINK와 함께한 누적 학습시간
-            </p>
-            <p className="ll-stat text-[1.8rem] font-bold leading-none">
-              {formatStudyTime(summary?.totalStudySeconds ?? 0)}
-            </p>
-            <p className="text-[12px] text-[var(--color-muted)] mt-2">
-              누적 {summary?.totalSolved ?? 0}문항 · 학습한 날 {summary?.activeDays ?? 0}일 · 평균 정답률 {accuracyPct}%
-            </p>
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-px overflow-hidden rounded-xl border border-[var(--color-sage-200)] bg-[var(--color-sage-200)]">
+            <ProfileStat label="누적 학습시간" value={formatStudyTime(summary?.totalStudySeconds ?? 0)} />
+            <ProfileStat label="생성한 문항" value={`${generatedQuestionCount}문항`} />
+            <ProfileStat label="학습한 날" value={`${summary?.activeDays ?? 0}일`} />
+            <ProfileStat label="평균 정답률" value={`${accuracyPct}%`} />
           </div>
         </div>
 
         {/* Plan */}
-        <div className="ll-card p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="ll-card p-5 lg:h-[230px] flex flex-col">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-[15px] font-bold text-sage-800">현재 요금제</h2>
             <Link
               href="/plan"
               className="inline-flex items-center gap-0.5 text-[13px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
             >
-              안내 <ChevronRight className="w-3.5 h-3.5" />
+              요금제 보기 <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {/* Plan highlight */}
-          <div className="rounded-xl bg-sage-700 text-white px-4 py-3.5 flex items-center justify-between gap-3">
+          <div className="rounded-xl bg-sage-700 text-white px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[15px] font-bold leading-tight">{plan.name}</p>
-              <p className="text-[12px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
+              <p className="text-[14px] font-bold leading-tight">{plan.name}</p>
+              <p className="text-[11px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
             </div>
             <p className="text-right flex-shrink-0">
               {plan.price > 0 ? (
                 <>
-                  <span className="text-[17px] font-bold tnum">
+                  <span className="text-[16px] font-bold tnum">
                     {plan.price.toLocaleString()}원
                   </span>
                   <span className="text-[12px] text-white/70"> / 월</span>
@@ -459,7 +454,7 @@ export default function MyPage() {
           </div>
 
           {/* Quota rows */}
-          <div className="mt-4 space-y-3.5">
+          <div className="mt-3 grid grid-cols-2 gap-4">
             <QuotaRow
               label="남은 문항 생성"
               remaining={quota?.questions.remaining ?? 0}
@@ -473,7 +468,7 @@ export default function MyPage() {
           </div>
 
           {/* Next billing */}
-          <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between text-[13px]">
+          <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[12px]">
             <span className="text-[var(--color-muted)]">다음 결제일</span>
             <span className="font-semibold text-sage-800 tnum">{nextBillingDate}</span>
           </div>
@@ -750,6 +745,15 @@ export default function MyPage() {
           모드의 새 문제 풀이나 추가 문제 생성은 제한됩니다.
         </p>
       </div>
+    </div>
+  );
+}
+
+function ProfileStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 bg-[var(--color-sage-100)] px-3 py-3">
+      <p className="truncate text-[11px] font-medium text-[var(--color-muted)]">{label}</p>
+      <p className="ll-stat mt-1 whitespace-nowrap text-[16px] font-bold leading-none tracking-[-0.03em]">{value}</p>
     </div>
   );
 }

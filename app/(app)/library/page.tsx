@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -10,9 +11,11 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import {
   Heart, Wind, Utensils, Droplet, Droplets, Bug, Activity, Flower2,
   Ribbon, Bone, Scissors, Baby, Brain, Ear, Eye, Fingerprint, Shield, Scale,
-  Stethoscope, ChevronDown, ChevronRight, AlertTriangle, FileText,
+  Stethoscope, ChevronLeft, ChevronDown, ChevronRight, AlertTriangle, FileText,
   FolderOpen, Folder, Upload, BookOpen, Search, ArrowLeft, Trash2, type LucideIcon,
+  CheckCircle2, XCircle,
 } from 'lucide-react';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -75,12 +78,13 @@ type ActiveItem =
   | { kind: 'upload'; uploadId: string; fileName: string };
 
 // 문제집(업로드) 학습 상태 — 풀이 기록 API가 이 화면 범위에 없어 문항 난이도 구성으로 파생.
-type SetStatus = 'inprogress' | 'review' | 'done';
+type SetStatus = 'inprogress' | 'done';
 
 interface UploadProgress {
   total: number;
   attempted: number;
   correct: number;
+  lastAttemptedQuestionId?: string | null;
 }
 
 interface SetItem {
@@ -120,20 +124,16 @@ function pickIcon(name: string): LucideIcon {
 const STATUS_FILTERS: { key: SetStatus | 'all'; label: string }[] = [
   { key: 'all', label: '전체 문제집' },
   { key: 'inprogress', label: '풀이 중' },
-  { key: 'review', label: '오답 복습 필요' },
   { key: 'done', label: '완료' },
 ];
 
-const STATUS_BADGE: Record<SetStatus, { label: string; variant: 'default' | 'warn' | 'curated' }> = {
+const STATUS_BADGE: Record<SetStatus, { label: string; variant: 'default' | 'curated' }> = {
   inprogress: { label: '풀이 중', variant: 'default' },
-  review: { label: '오답 복습 필요', variant: 'warn' },
   done: { label: '완료', variant: 'curated' },
 };
 
 /** 문항 난이도 구성으로 문제집 상태를 파생(풀이 기록이 아직 없을 때의 근사치). */
 function deriveStatus(qs: PrivateQuestion[]): SetStatus {
-  if (qs.some((q) => q.difficulty === 3)) return 'review';
-  if (qs.length > 0 && qs.every((q) => q.difficulty === 1)) return 'done';
   return 'inprogress';
 }
 
@@ -146,7 +146,6 @@ function deriveStatus(qs: PrivateQuestion[]): SetStatus {
  */
 function realStatus(total: number, attempted: number, correct: number): SetStatus {
   if (total > 0 && attempted < total) return 'inprogress';
-  if (correct < attempted) return 'review';
   return 'done';
 }
 
@@ -183,6 +182,12 @@ function fileTypeLabel(ft: string): string {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function LibraryPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedUploadId = searchParams.get('set');
+  const requestedReset = searchParams.get('reset') === '1';
+  const requestedResume = searchParams.get('resume') === '1';
+
   // 폴더 트리 데이터
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -193,9 +198,8 @@ export default function LibraryPage() {
   // 과목 키: 'subject_<id>'
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  // 과목별 세부주제 count 캐시 { subTopicId -> count }
-  const [subTopicCounts, setSubTopicCounts] = useState<Record<string, number>>({});
-  const [loadingCounts, setLoadingCounts] = useState<Record<string, boolean>>({});
+  // 세부주제별 문항 수 { subTopicId -> count } — 마운트 시 전역 1회 로드 (null = 로딩 중)
+  const [subTopicCounts, setSubTopicCounts] = useState<Record<string, number> | null>(null);
 
   // 선택된 항목 및 우측 콘텐츠
   const [active, setActive] = useState<ActiveItem | null>(null);
@@ -211,6 +215,7 @@ export default function LibraryPage() {
   const [attemptsByQuestion, setAttemptsByQuestion] = useState<Record<string, { selectedIndex: number; isCorrect: boolean }>>({});
   // 다시풀기(완료 세트) 로 열었는지 — true 면 이전 답 복원 없이 빈 상태로.
   const [solveReset, setSolveReset] = useState(false);
+  const [resumeFromQuestionId, setResumeFromQuestionId] = useState<string | null>(null);
 
   // 학습 상태 필터 · 검색어 (우측 문제집 그리드용)
   const [statusFilter, setStatusFilter] = useState<SetStatus | 'all'>('all');
@@ -230,6 +235,11 @@ export default function LibraryPage() {
         setUploads(ups);
       })
       .finally(() => setLoadingTree(false));
+    // 세부주제별 문항 수 — 요청 1회로 전체 로드(펼칠 때마다 leaf당 count 요청을 발사하던 방식 대체)
+    api
+      .get<{ total: number; counts: Record<string, number> }>('/api/questions?count_by=sub_topic')
+      .then((r) => setSubTopicCounts(r.counts))
+      .catch(() => setSubTopicCounts({}));
   }, []);
 
   // private-questions 를 한 번만 전체 로드해 upload_id 기준으로 필터링
@@ -246,6 +256,29 @@ export default function LibraryPage() {
   }, []);
 
   // 세트별 진행도/정답률 로드 (마운트 + 풀이 후 갱신)
+  // 이어풀기 링크(/library?set=업로드ID)로 들어오면 해당 문제집을 바로 연다.
+  // 문항 목록이 나중에 도착하는 경우에도 다시 반영해 빈 화면으로 멈추지 않는다.
+  useEffect(() => {
+    if (!requestedUploadId) return;
+    const upload = uploads.find((item) => item.id === requestedUploadId);
+    if (!upload) return;
+
+    openUpload(upload, requestedReset);
+    setResumeFromQuestionId(
+      requestedResume ? progressByUpload[upload.id]?.lastAttemptedQuestionId ?? null : null,
+    );
+  }, [requestedUploadId, requestedReset, requestedResume, uploads, allPrivateQuestions, progressByUpload]);
+
+  // 문제집을 연 뒤 실제 풀이 영역을 화면 상단에 보여준다.
+  useEffect(() => {
+    if (active?.kind !== 'upload') return;
+    const frame = window.requestAnimationFrame(() => {
+      const resumeTarget = document.querySelector<HTMLElement>('[data-library-resume-target="true"]');
+      (resumeTarget ?? document.getElementById('library-solve'))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [active, privateQuestions, resumeFromQuestionId]);
+
   const loadProgress = useCallback(() => {
     api
       .get<{
@@ -271,48 +304,6 @@ export default function LibraryPage() {
     setExpanded((e) => ({ ...e, [key]: !e[key] }));
   }
 
-  // ── 과목 펼칠 때 count lazy 로드 ──────────────────────────────────────────
-
-  const loadCountsForLeaves = useCallback(
-    (leaves: SubTopic[]) => {
-      const needsFetch = leaves.filter(
-        (st) => subTopicCounts[st.id] === undefined && !loadingCounts[st.id],
-      );
-      if (needsFetch.length === 0) return;
-
-      setLoadingCounts((prev) => {
-        const next = { ...prev };
-        needsFetch.forEach((st) => { next[st.id] = true; });
-        return next;
-      });
-
-      Promise.all(
-        needsFetch.map(async (st) => {
-          try {
-            const res = await api.get<{ count: number }>(
-              `/api/questions?sub_topic_id=${st.id}&count_only=true`,
-            );
-            return { id: st.id, count: res.count };
-          } catch {
-            return { id: st.id, count: 0 };
-          }
-        }),
-      ).then((results) => {
-        setSubTopicCounts((prev) => {
-          const next = { ...prev };
-          results.forEach(({ id, count }) => { next[id] = count; });
-          return next;
-        });
-        setLoadingCounts((prev) => {
-          const next = { ...prev };
-          needsFetch.forEach((st) => { next[st.id] = false; });
-          return next;
-        });
-      });
-    },
-    [subTopicCounts, loadingCounts],
-  );
-
   const midsOf = (s: Subject) => s.sub_topics.filter((t) => t.level === 1);
   const leavesOf = (s: Subject, midId: string) =>
     s.sub_topics.filter((t) => t.level === 2 && t.parent_id === midId);
@@ -321,11 +312,8 @@ export default function LibraryPage() {
     toggle(`subject_${subject.id}`);
   }
 
-  function toggleMid(mid: SubTopic, subject: Subject) {
-    const key = `mid_${mid.id}`;
-    const willOpen = !expanded[key];
-    toggle(key);
-    if (willOpen) loadCountsForLeaves(leavesOf(subject, mid.id));
+  function toggleMid(mid: SubTopic) {
+    toggle(`mid_${mid.id}`);
   }
 
   // ── 우측 콘텐츠 로드 ──────────────────────────────────────────────────────
@@ -349,6 +337,19 @@ export default function LibraryPage() {
     }
   }
 
+  function continueUpload(upload: Upload, reset = false) {
+    const params = new URLSearchParams({ set: upload.id });
+    if (reset) params.set('reset', '1');
+    else params.set('resume', '1');
+    router.push(`/library?${params.toString()}`);
+  }
+
+  function closeActive() {
+    setActive(null);
+    setResumeFromQuestionId(null);
+    router.replace('/library', { scroll: false });
+  }
+
   function openUpload(upload: Upload, reset = false) {
     setActive({ kind: 'upload', uploadId: upload.id, fileName: upload.file_name });
     setLoadingRight(false);
@@ -360,7 +361,7 @@ export default function LibraryPage() {
 
   function selectFilter(key: SetStatus | 'all') {
     setStatusFilter(key);
-    setActive(null);
+    closeActive();
   }
 
   async function handleDeleteSet(uploadId: string, fileName: string) {
@@ -377,7 +378,12 @@ export default function LibraryPage() {
 
   // ── 파생 데이터 (문제집 그리드 · 통계) ────────────────────────────────────
 
-  const setItems: SetItem[] = uploads.map((u) => {
+  // 내신대비에서 만든 문제집과 국시 오답 기반 유사문항을 출처별로 나눈다.
+  // 국시대비 폴더에는 원본 국시 문항이 아니라 generated/similar 문항만 들어간다.
+  const nationalSimilarUploads = uploads.filter((upload) => upload.file_type === 'generated/similar');
+  const schoolUploads = uploads.filter((upload) => upload.file_type !== 'generated/similar');
+  const libraryUploads = [...schoolUploads, ...nationalSimilarUploads];
+  const setItems: SetItem[] = libraryUploads.map((u) => {
     const qs = allPrivateQuestions.filter((q) => q.upload_id === u.id);
     const p = progressByUpload[u.id];
     const total = p?.total ?? qs.length;
@@ -395,7 +401,6 @@ export default function LibraryPage() {
   const statusCounts: Record<SetStatus | 'all', number> = {
     all: setItems.length,
     inprogress: setItems.filter((s) => s.status === 'inprogress').length,
-    review: setItems.filter((s) => s.status === 'review').length,
     done: setItems.filter((s) => s.status === 'done').length,
   };
 
@@ -413,11 +418,18 @@ export default function LibraryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   const rootNationalOpen = expanded['root_national'] ?? false;
-  const rootPrivateOpen = expanded['root_private'] ?? false;
+  const rootSchoolOpen = expanded['folder_school'] ?? false;
+  const rootNationalSimilarOpen = expanded['folder_national'] ?? false;
+  const folderLabelStyle = {
+    fontFamily: 'var(--font-body)',
+    fontSize: '13.5px',
+    fontWeight: 700,
+    lineHeight: 1.35,
+  };
 
   return (
     <div className="ll-library-page content">
-      <section className="page-head"><div><span className="eyebrow">문제집 보관함</span><h1><span className="headline-accent">내 문제집</span>을<br/>한곳에서 이어갑니다</h1><p className="lead">가장 최근에 풀던 문제집을 먼저 이어가고, 필요할 때 폴더와 검색으로 원하는 문제집을 찾으세요.</p></div></section>
+      <section className="page-head"><div><span className="eyebrow">내 문제집</span><h1>내신대비와 국시대비에서 만든<br/><span className="headline-accent">문제집</span>을 한곳에서 관리하세요</h1><p className="lead">내신대비에서 생성한 문제와 국시 오답 기반 유사문항을 출처별 폴더에서 이어서 풀 수 있어요.</p></div></section>
 
       {nextSet && (
         <div className="focus-band"><section className="next-action" aria-label="이어풀기 추천">
@@ -429,7 +441,7 @@ export default function LibraryPage() {
             <div className="next-panel-row"><span>진행도</span><strong>{nextSet.attempted}/{nextSet.progressTotal || nextSet.count}</strong></div>
             <div className="bar"><span style={{ width: `${Math.min(100, Math.round((nextSet.attempted / Math.max(1, nextSet.progressTotal || nextSet.count)) * 100))}%` }} /></div>
             <div className="next-panel-row"><span>최근 정답률</span><strong>{nextSet.attempted ? Math.round((nextSet.correct / nextSet.attempted) * 100) : 0}%</strong></div>
-            <button className="hero-cta" type="button" onClick={() => openUpload(nextSet.upload)}>이어풀기</button>
+            <button className="hero-cta" type="button" onClick={() => continueUpload(nextSet.upload)}>이어풀기</button>
           </div>
         </section></div>
       )}
@@ -471,7 +483,7 @@ export default function LibraryPage() {
             <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-1">
 
               {/* ── 최상위: 국시 문제 ── */}
-              <div>
+              <div className="hidden">
                 <button
                   onClick={() => toggle('root_national')}
                   className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[var(--color-sage-100)] text-left transition-colors"
@@ -543,7 +555,7 @@ export default function LibraryPage() {
                                         <button
                                           onClick={() =>
                                             leaves.length > 0
-                                              ? toggleMid(mid, subject)
+                                              ? toggleMid(mid)
                                               : openSubTopic(mid, subject.name)
                                           }
                                           className={`w-full flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left text-[12px] transition-colors ${
@@ -569,8 +581,8 @@ export default function LibraryPage() {
                                               const isActive =
                                                 active?.kind === 'subTopic' &&
                                                 active.subTopicId === leaf.id;
-                                              const count = subTopicCounts[leaf.id];
-                                              const counting = loadingCounts[leaf.id];
+                                              const count = subTopicCounts ? (subTopicCounts[leaf.id] ?? 0) : undefined;
+                                              const counting = subTopicCounts === null;
                                               return (
                                                 <button
                                                   key={leaf.id}
@@ -620,13 +632,13 @@ export default function LibraryPage() {
               </div>
 
               {/* 구분선 */}
-              <div className="border-t border-[var(--color-border)] my-1.5" />
+              <div className="hidden border-t border-[var(--color-border)] my-1.5" />
 
               {/* ── 최상위: 내 문제집 ── */}
               <div>
                 <button
-                  onClick={() => toggle('root_private')}
-                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[var(--color-private-bg)] text-left transition-colors"
+                  onClick={() => toggle('folder_school')}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[var(--color-sage-100)] text-left transition-colors"
                 >
                   <span
                     className="ll-chip"
@@ -634,69 +646,66 @@ export default function LibraryPage() {
                       width: '2rem',
                       height: '2rem',
                       borderRadius: '10px',
-                      background: 'var(--color-private-bg)',
-                      color: 'var(--color-private)',
+                      background: 'var(--color-sage-100)',
+                      color: 'var(--color-sage-700)',
                     }}
                   >
-                    {rootPrivateOpen ? (
+                    {rootSchoolOpen ? (
                       <FolderOpen className="w-4 h-4" strokeWidth={2} />
                     ) : (
                       <Folder className="w-4 h-4" strokeWidth={2} />
                     )}
                   </span>
-                  <span
-                    className="text-[13.5px] font-bold flex-1"
-                    style={{ color: 'var(--color-private)' }}
-                  >
-                    내 문제집
+                  <span className="flex-1" style={{ ...folderLabelStyle, color: 'var(--color-sage-800)' }}>
+                    내신대비
                   </span>
-                  {rootPrivateOpen ? (
+                  {rootSchoolOpen ? (
                     <ChevronDown className="w-4 h-4 text-[var(--color-muted)]" />
                   ) : (
                     <ChevronRight className="w-4 h-4 text-[var(--color-muted)]" />
                   )}
                 </button>
 
-                {rootPrivateOpen && (
+                {rootSchoolOpen && (
                   <div className="ml-3 border-l border-[var(--color-border)] pl-2 my-1">
-                    {uploads.length === 0 ? (
+                    {schoolUploads.length === 0 ? (
                       /* 빈 상태 */
                       <div className="px-2 py-3">
                         <p className="text-[11px] text-[var(--color-muted)] leading-relaxed mb-2">
-                          업로드한 자료가 없습니다.
+                          내신대비에서 생성한 문제집이 없습니다.
                           <br />
-                          내신 대비에서 강의자료를 업로드하세요.
+                          내신대비에서 학습자료로 문제를 만들어 보세요.
                         </p>
                         <Link
-                          href="/notes"
+                          href="/upload"
                           className="text-[11px] font-semibold underline"
-                          style={{ color: 'var(--color-private)' }}
+                          style={{ color: 'var(--color-sage-700)' }}
                         >
-                          내신 대비 바로가기 →
+                          내신대비 바로가기 →
                         </Link>
                       </div>
                     ) : (
-                      uploads.map((upload) => {
+                      schoolUploads.map((upload) => {
                         const isActive =
                           active?.kind === 'upload' && active.uploadId === upload.id;
                         return (
                           <button
                             key={upload.id}
-                            onClick={() => openUpload(upload)}
-                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-[12px] transition-colors"
+                            onClick={() => continueUpload(upload)}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors"
                             style={
                               isActive
                                 ? {
-                                    background: 'var(--color-private)',
+                                    background: 'var(--color-sage-700)',
                                     color: 'white',
-                                    boxShadow: '0 4px 12px -4px rgba(194,94,42,0.55)',
+                                    boxShadow: '0 4px 12px -4px rgba(31,92,67,0.55)',
                                   }
                                 : {}
                             }
                             onMouseEnter={(e) => {
                               if (!isActive) {
                                 (e.currentTarget as HTMLButtonElement).style.background =
-                                  'var(--color-private-bg)';
+                                  'var(--color-sage-100)';
                               }
                             }}
                             onMouseLeave={(e) => {
@@ -710,18 +719,88 @@ export default function LibraryPage() {
                               style={{
                                 color: isActive
                                   ? 'rgba(255,255,255,0.8)'
-                                  : 'var(--color-private)',
+                                  : 'var(--color-sage-700)',
                               }}
                               strokeWidth={2}
                             />
                             <span
-                              className="flex-1 truncate leading-snug font-medium"
+                              className="flex-1 truncate"
                               style={
-                                isActive ? {} : { color: 'var(--color-private)' }
+                                isActive
+                                  ? folderLabelStyle
+                                  : { ...folderLabelStyle, color: 'var(--color-sage-800)' }
                               }
                             >
                               {upload.file_name}
                             </span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-[var(--color-border)] my-1.5" />
+
+              {/* 국시대비: 국시 전체 문항이 아닌, 오답을 바탕으로 만든 유사문항만 표시 */}
+              <div>
+                <button
+                  onClick={() => toggle('folder_national')}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[var(--color-sage-100)] text-left transition-colors"
+                >
+                  <span
+                    className="ll-chip"
+                    style={{
+                      width: '2rem',
+                      height: '2rem',
+                      borderRadius: '10px',
+                      background: 'var(--color-sage-100)',
+                      color: 'var(--color-sage-700)',
+                    }}
+                  >
+                    {rootNationalSimilarOpen ? (
+                      <FolderOpen className="w-4 h-4" strokeWidth={2} />
+                    ) : (
+                      <Folder className="w-4 h-4" strokeWidth={2} />
+                    )}
+                  </span>
+                  <span className="text-sage-800 flex-1" style={folderLabelStyle}>국시대비</span>
+                  {rootNationalSimilarOpen ? (
+                    <ChevronDown className="w-4 h-4 text-[var(--color-muted)]" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-[var(--color-muted)]" />
+                  )}
+                </button>
+
+                {rootNationalSimilarOpen && (
+                  <div className="ml-3 border-l border-[var(--color-border)] pl-2 my-1">
+                    {nationalSimilarUploads.length === 0 ? (
+                      <div className="px-2 py-3">
+                        <p className="text-[11px] text-[var(--color-muted)] leading-relaxed mb-2">
+                          오답 기반 유사문항이 없습니다.
+                          <br />
+                          오답노트에서 유사문항을 만들어 보세요.
+                        </p>
+                        <Link href="/wrong-notes" className="text-[11px] font-semibold underline text-sage-700">
+                          오답노트 바로가기 →
+                        </Link>
+                      </div>
+                    ) : (
+                      nationalSimilarUploads.map((upload) => {
+                        const isActive = active?.kind === 'upload' && active.uploadId === upload.id;
+                        return (
+                          <button
+                            key={upload.id}
+                            onClick={() => continueUpload(upload)}
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${
+                              isActive
+                                ? 'bg-sage-700 text-white shadow-[0_4px_12px_-4px_rgba(31,92,67,0.55)]'
+                                : 'text-sage-800 hover:bg-[var(--color-sage-100)]'
+                            }`}
+                          >
+                            <FileText className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2} />
+                            <span className="flex-1 truncate" style={folderLabelStyle}>{upload.file_name}</span>
                           </button>
                         );
                       })
@@ -734,11 +813,11 @@ export default function LibraryPage() {
         </Card>
 
         {/* ─── 우측: 콘텐츠 패널 ─────────────────────────────────────────── */}
-        <section className="main-list">
+        <section id="library-solve" className="main-list">
           {active ? (
             <div>
               <button
-                onClick={() => setActive(null)}
+                onClick={closeActive}
                 className="inline-flex items-center gap-1 text-[13px] text-[var(--color-muted)] hover:text-sage-800 transition-colors mb-4"
               >
                 <ArrowLeft className="w-4 h-4" /> 문제집 목록
@@ -750,12 +829,13 @@ export default function LibraryPage() {
                   loading={loadingRight}
                 />
               ) : (
-                <PrivateContent
+                <PrivateExamSession
                   key={`${active.uploadId}-${solveReset ? 'reset' : 'resume'}`}
                   active={active}
                   questions={privateQuestions}
                   onAnswered={loadProgress}
                   priorAttempts={solveReset ? undefined : attemptsByQuestion}
+                  resumeFromQuestionId={solveReset ? undefined : resumeFromQuestionId}
                 />
               )}
             </div>
@@ -781,7 +861,7 @@ export default function LibraryPage() {
 
               {loadingTree ? (
                 <Card className="py-16 text-center text-[var(--color-muted)]">불러오는 중...</Card>
-              ) : uploads.length === 0 ? (
+              ) : libraryUploads.length === 0 ? (
                 <Card className="py-16 text-center flex flex-col items-center">
                   <span
                     className="ll-chip mb-4"
@@ -795,12 +875,12 @@ export default function LibraryPage() {
                   >
                     <Upload className="w-6 h-6" strokeWidth={1.7} />
                   </span>
-                  <div className="text-lg font-bold text-sage-800 mb-1">아직 문제집이 없습니다</div>
+                  <div className="text-lg font-bold text-sage-800 mb-1">생성한 문제집이 없습니다</div>
                   <div className="text-sm text-[var(--color-muted)] max-w-sm mb-5">
-                    강의자료를 업로드하면 문제집이 자동으로 생성됩니다.
+                    내신대비에서 문제를 생성하거나, 국시 오답 기반 유사문항을 만들어 보세요.
                   </div>
-                  <Link href="/notes">
-                    <Button variant="accent" size="md">자료 업로드하고 문제집 만들기 →</Button>
+                  <Link href="/wrong-notes">
+                    <Button variant="accent" size="md">오답노트에서 유사문항 만들기 →</Button>
                   </Link>
                 </Card>
               ) : visibleSets.length === 0 ? (
@@ -810,14 +890,14 @@ export default function LibraryPage() {
               ) : (
                 <div className="books">
                   {visibleSets.map((item) => (
-                    <SetCard key={item.upload.id} item={item} onOpen={openUpload} onDelete={handleDeleteSet} />
+                    <SetCard key={item.upload.id} item={item} onOpen={continueUpload} onDelete={handleDeleteSet} />
                   ))}
                 </div>
               )}
 
               <p className="mt-5 text-[12px] text-[var(--color-muted)] leading-relaxed">
-                국시 문제는 왼쪽 <span className="font-semibold text-sage-700">폴더 → 국시 문제</span>에서
-                과목·세부주제를 선택해 풀 수 있어요.
+                <span className="font-semibold text-sage-700">내신대비</span>에는 학습자료로 생성한 문제집이,
+                <span className="font-semibold text-sage-700"> 국시대비</span>에는 오답 기반 유사문항만 표시돼요.
               </p>
             </div>
           )}
@@ -854,6 +934,7 @@ function SetCard({
 }) {
   const { upload, count, status, attempted, correct } = item;
   const badge = STATUS_BADGE[status];
+  const sourceLabel = upload.file_type === 'generated/similar' ? '국시 오답 기반' : '내신대비 생성';
   const total = item.progressTotal || count;
   const isDone = total > 0 && attempted >= total; // 다 풀었으면 '다시풀기'
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : null;
@@ -862,7 +943,7 @@ function SetCard({
     <article className="card book-card">
       <div className="book-top">
         <div className="source-tag">
-          <Folder className="icon"/><span>내 자료</span>
+          <Folder className="icon"/><span>{sourceLabel}</span>
           <span className="text-[11px] text-[var(--color-muted)]">{fileTypeLabel(upload.file_type)}</span>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -997,16 +1078,171 @@ function NationalContent({
 
 // ─── 내 문제집 자료 우측 패널 ─────────────────────────────────────────────────
 
-function PrivateContent({
+/** 내문제집 풀이도 국시대비와 같은 한 문항씩 푸는 세션 화면으로 제공한다. */
+function PrivateExamSession({
   active,
   questions,
   onAnswered,
   priorAttempts,
+  resumeFromQuestionId,
 }: {
   active: { kind: 'upload'; uploadId: string; fileName: string };
   questions: PrivateQuestion[];
   onAnswered?: () => void;
   priorAttempts?: Record<string, { selectedIndex: number; isCorrect: boolean }>;
+  resumeFromQuestionId?: string | null;
+}) {
+  const [answers, setAnswers] = useState<Record<string, { selected: number; correct: boolean }>>(() =>
+    Object.fromEntries(
+      Object.entries(priorAttempts ?? {})
+        .filter(([, answer]) => answer.selectedIndex >= 0)
+        .map(([questionId, answer]) => [questionId, { selected: answer.selectedIndex, correct: answer.isCorrect }]),
+    ),
+  );
+  const [selections, setSelections] = useState<Record<string, number>>({});
+  const [index, setIndex] = useState(0);
+  const [showQuestionGrid, setShowQuestionGrid] = useState(false);
+
+  useEffect(() => {
+    if (!resumeFromQuestionId || questions.length === 0) return;
+    const lastIndex = questions.findIndex((question) => question.id === resumeFromQuestionId);
+    const ordered = lastIndex >= 0
+      ? [...questions.slice(lastIndex + 1), ...questions.slice(0, lastIndex + 1)]
+      : questions;
+    const resumeQuestion = ordered.find((question) => !priorAttempts?.[question.id]);
+    const resumeIndex = questions.findIndex((question) => question.id === (resumeQuestion?.id ?? resumeFromQuestionId));
+    if (resumeIndex >= 0) setIndex(resumeIndex);
+  }, [priorAttempts, questions, resumeFromQuestionId]);
+
+  if (questions.length === 0) {
+    return (
+      <Card className="py-16 text-center flex flex-col items-center">
+        <FileText className="w-7 h-7 mb-3 text-sage-600" />
+        <div className="text-lg font-bold text-sage-800 mb-1">문항이 없습니다</div>
+        <div className="text-sm text-[var(--color-muted)]">이 문제집에서 생성된 문항이 아직 없습니다.</div>
+      </Card>
+    );
+  }
+
+  const current = questions[index];
+  const submitted = answers[current.id];
+  const selected = submitted?.selected ?? selections[current.id] ?? null;
+  const completedQuestionIds = new Set(Object.keys(answers));
+  const correctCount = Object.values(answers).filter((answer) => answer.correct).length;
+  const allAnswered = completedQuestionIds.size === questions.length;
+
+  function goToQuestion(nextIndex: number) {
+    if (nextIndex < 0 || nextIndex >= questions.length) return;
+    setIndex(nextIndex);
+    setShowQuestionGrid(false);
+  }
+
+  function selectChoice(choiceIndex: number) {
+    if (submitted) return;
+    setSelections((previous) => ({ ...previous, [current.id]: choiceIndex }));
+  }
+
+  function submitCurrent() {
+    if (selected === null || submitted) return;
+    const correct = selected === current.answer_index;
+    setAnswers((previous) => ({ ...previous, [current.id]: { selected, correct } }));
+    api
+      .post('/api/attempts', { question_id: current.id, selected_index: selected, track: 'lecture_note' })
+      .then(() => onAnswered?.())
+      .catch(() => {});
+  }
+
+  return (
+    <div>
+      <div className="ll-card p-5 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-3.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="ll-chip" style={{ width: '2.25rem', height: '2.25rem' }}>
+              <BookOpen className="w-4 h-4" strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[12px] font-semibold text-sage-600">내 문제집</div>
+              <div className="text-[15px] font-bold text-sage-800 tracking-tight truncate">{active.fileName}</div>
+            </div>
+          </div>
+          <div className="relative flex items-center gap-1.5">
+            <button type="button" onClick={() => goToQuestion(index - 1)} disabled={index === 0} aria-label="이전 문항" className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="relative">
+              <button type="button" onClick={() => setShowQuestionGrid((open) => !open)} aria-expanded={showQuestionGrid} className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-white px-2.5 text-sm font-semibold text-sage-800 transition-colors hover:border-sage-400">
+                문항 <span className="tnum">{index + 1}/{questions.length}</span>
+                <ChevronDown className={`h-3.5 w-3.5 text-[var(--color-muted)] transition-transform ${showQuestionGrid ? 'rotate-180' : ''}`} />
+              </button>
+              {showQuestionGrid && (
+                <div className="absolute right-0 top-10 z-30 w-56 rounded-xl border border-[var(--color-border)] bg-white p-2.5 shadow-[0_16px_36px_rgba(31,46,40,0.16)]">
+                  <div className="mb-2 flex items-center justify-between text-[11px]"><span className="font-bold text-sage-800">문항 선택</span><span className="inline-flex items-center gap-1.5 text-[var(--color-muted)]"><i className="h-2 w-2 rounded-full bg-sage-200" />풀이 완료</span></div>
+                  <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+                    {questions.map((question, questionIndex) => {
+                      const isCurrent = questionIndex === index;
+                      const isCompleted = completedQuestionIds.has(question.id);
+                      return <button key={question.id} type="button" onClick={() => goToQuestion(questionIndex)} className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold transition-colors ${isCurrent ? 'border-sage-700 bg-sage-700 text-white' : isCompleted ? 'border-sage-200 bg-[var(--color-sage-100)] text-sage-700 hover:border-sage-400' : 'border-[var(--color-border)] bg-white text-sage-700 hover:border-sage-400'}`}>
+                        {questionIndex + 1}
+                      </button>;
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={() => goToQuestion(index + 1)} disabled={index === questions.length - 1} aria-label="다음 문항" className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        <div className="w-full h-2 bg-[var(--color-sage-200)] rounded-full overflow-hidden"><div className="h-full bg-sage-700 rounded-full transition-all" style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div>
+      </div>
+
+      <Card className="mb-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
+          <div className="flex gap-2 flex-wrap"><Badge>문제집 문항</Badge><Badge variant="warn">난이도 {'★'.repeat(current.difficulty)}</Badge></div>
+          <Badge variant="curated">내신·국시 대비</Badge>
+        </div>
+        <div className="flex gap-1.5 text-[17px] leading-8 text-sage-800 mb-6">
+          <strong className="text-sage-700 shrink-0">{index + 1}.</strong>
+          <QuestionStem className="flex-1" text={withImageLabels(current.stem)} />
+        </div>
+        {current.images && current.images.length > 0 && <div className="mb-4 space-y-2">{current.images.map((image, imageIndex) => <img key={imageIndex} src={image.url} alt={image.caption ?? `문항 이미지 ${imageIndex + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />)}</div>}
+        <div className="space-y-2">
+          {current.choices.map((choice, choiceIndex) => {
+            const isCorrect = submitted && choiceIndex === current.answer_index;
+            const isWrong = submitted && choiceIndex === selected && !submitted.correct;
+            const isSelected = !submitted && choiceIndex === selected;
+            return <button key={choiceIndex} type="button" disabled={!!submitted} onClick={() => selectChoice(choiceIndex)} className={`w-full text-left p-3.5 px-4 rounded-xl border flex items-center gap-3 transition-all ${isCorrect ? 'bg-[var(--color-curated-bg)] border-sage-600' : isWrong ? 'bg-[var(--color-warn-bg)] border-[var(--color-warn)]' : isSelected ? 'bg-[var(--color-sage-100)] border-sage-600' : 'bg-white border-[var(--color-border)] hover:border-sage-400 hover:bg-[var(--color-sage-50)]'}`}>
+              <span className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${isCorrect || isSelected ? 'bg-sage-700 text-white border-sage-700' : isWrong ? 'bg-[var(--color-warn)] text-white border-[var(--color-warn)]' : 'border-[var(--color-sage-400)] text-[var(--color-muted)]'}`}>{choiceIndex + 1}</span>
+              <span className="text-[15px] text-sage-800 flex-1">{choice}</span>
+              {isCorrect && <CheckCircle2 className="w-5 h-5 text-sage-700 flex-shrink-0" />}{isWrong && <XCircle className="w-5 h-5 text-[var(--color-warn)] flex-shrink-0" />}
+            </button>;
+          })}
+        </div>
+        {submitted && current.explanation && <div className="mt-5 ll-tint rounded-2xl p-5 border border-[var(--color-border)]"><span className="ll-eyebrow mb-3">해설</span><div className="text-sm text-sage-800 leading-relaxed whitespace-pre-line">{current.explanation}</div></div>}
+      </Card>
+
+      <div className="flex justify-end mb-5">
+        {!submitted ? <Button variant="accent" onClick={submitCurrent} disabled={selected === null}>제출하고 채점</Button> : index < questions.length - 1 ? <Button onClick={() => goToQuestion(index + 1)}>다음 문항 <ChevronRight className="w-4 h-4" /></Button> : <Button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>결과 보기</Button>}
+      </div>
+
+      {allAnswered && <Card className="mb-5"><div className="flex items-center justify-between gap-3"><div className="text-lg font-bold text-sage-800">전체 채점 결과</div><Badge variant={correctCount / questions.length >= 0.6 ? 'curated' : 'warn'}>정답률 {Math.round((correctCount / questions.length) * 100)}%</Badge></div><p className="mt-3 text-sm text-sage-800">총 {questions.length}문항 중 <b>{correctCount}문항</b> 정답 · <b>{questions.length - correctCount}문항</b> 오답</p></Card>}
+    </div>
+  );
+}
+
+function PrivateContent({
+  active,
+  questions,
+  onAnswered,
+  priorAttempts,
+  resumeFromQuestionId,
+}: {
+  active: { kind: 'upload'; uploadId: string; fileName: string };
+  questions: PrivateQuestion[];
+  onAnswered?: () => void;
+  priorAttempts?: Record<string, { selectedIndex: number; isCorrect: boolean }>;
+  resumeFromQuestionId?: string | null;
 }) {
   // 세트 전체 채점 집계 — 각 문항 카드의 채점 결과를 모은다(이어풀기 시 이전 답도 시드).
   const [answers, setAnswers] = useState<Record<string, { selected: number; correct: boolean }>>(() => {
@@ -1031,6 +1267,14 @@ function PrivateContent({
   const correctCount = answeredList.filter((q) => answers[q.id].correct).length;
   const wrongList = questions.filter((q) => answers[q.id] && !answers[q.id].correct);
   const pct = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
+  const resumeTargetId = (() => {
+    if (!resumeFromQuestionId || questions.length === 0) return null;
+    const lastIndex = questions.findIndex((question) => question.id === resumeFromQuestionId);
+    const ordered = lastIndex >= 0
+      ? [...questions.slice(lastIndex + 1), ...questions.slice(0, lastIndex + 1)]
+      : questions;
+    return ordered.find((question) => !priorAttempts?.[question.id])?.id ?? resumeFromQuestionId;
+  })();
 
   // 다 풀면 오답을 기본 선택 상태로.
   useEffect(() => {
@@ -1071,7 +1315,7 @@ function PrivateContent({
 
   return (
     <div>
-      {/* 상단 메타 + 내신 대비 풀기 링크 */}
+      {/* 상단 메타 + 오답노트 링크 */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
         <div className="flex items-center gap-3 min-w-0">
           <span
@@ -1087,7 +1331,7 @@ function PrivateContent({
             <Upload className="w-5 h-5" strokeWidth={2} />
           </span>
           <div className="min-w-0">
-            <span className="ll-eyebrow mb-2">내 업로드 자료</span>
+            <span className="ll-eyebrow mb-2">국시 오답 유사문항</span>
             <div
               className="text-2xl font-bold tracking-tight leading-tight truncate"
               style={{ color: 'var(--color-private)' }}
@@ -1096,9 +1340,9 @@ function PrivateContent({
             </div>
           </div>
         </div>
-        <Link href="/notes">
+        <Link href="/wrong-notes">
           <Button variant="secondary" size="md">
-            새 문제 만들기 →
+            오답노트 보기 →
           </Button>
         </Link>
       </div>
@@ -1132,14 +1376,27 @@ function PrivateContent({
         <>
           <div className="space-y-4">
             {questions.map((q, i) => (
-              <PrivateSolveCard
+              <div
                 key={q.id}
-                q={q}
-                index={i}
-                onAnswered={onAnswered}
-                prior={priorAttempts?.[q.id]}
-                onGraded={(sel, correct) => handleGraded(q.id, sel, correct)}
-              />
+                id={`private-solve-${q.id}`}
+                data-library-resume-target={q.id === resumeTargetId ? 'true' : undefined}
+                className="scroll-mt-6"
+              >
+                {q.id === resumeTargetId && (
+                  <div className="mb-2 flex items-center gap-2 text-[12px] font-bold text-[var(--color-private)]">
+                    <span className="h-px flex-1 bg-[var(--color-border)]" />
+                    <span>이어서 푸는 문항</span>
+                    <span className="h-px flex-1 bg-[var(--color-border)]" />
+                  </div>
+                )}
+                <PrivateSolveCard
+                  q={q}
+                  index={i}
+                  onAnswered={onAnswered}
+                  prior={priorAttempts?.[q.id]}
+                  onGraded={(sel, correct) => handleGraded(q.id, sel, correct)}
+                />
+              </div>
             ))}
           </div>
 
@@ -1221,14 +1478,14 @@ function PrivateSolveCard({ q, index, onAnswered, prior, onGraded }: { q: Privat
     <Card>
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex gap-1.5 flex-wrap">
-          <Badge variant="private">내 자료</Badge>
+          <Badge variant="private">오답 유사문항</Badge>
           <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>
         </div>
         <span className="text-xs font-semibold text-[var(--color-muted)] tabular-nums">#{index + 1}</span>
       </div>
 
       {/* 문제 발문을 이미지보다 먼저(위에) 배치한다. */}
-      <div className="text-[15px] leading-7 text-sage-800 font-medium mb-4">{withImageLabels(q.stem)}</div>
+      <QuestionStem className="text-[15px] leading-7 text-sage-800 font-medium mb-4" text={withImageLabels(q.stem)} />
 
       {q.images && q.images.length > 0 && (
         <div className="mb-4 space-y-2">
@@ -1328,7 +1585,7 @@ function PublicSolveCard({ q, index }: { q: PublicQuestion; index: number }) {
         <img src={q.imageUrl} alt="문항 이미지" className="w-full max-h-72 object-contain rounded-xl border border-[var(--color-border)] bg-white mb-4" />
       )}
 
-      <div className="text-[15px] leading-7 text-sage-800 font-medium mb-4">{withImageLabels(q.stem)}</div>
+      <QuestionStem className="text-[15px] leading-7 text-sage-800 font-medium mb-4" text={withImageLabels(q.stem)} />
 
       <div className="space-y-2">
         {q.choices.map((choice, ci) => {

@@ -6,11 +6,10 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SubjectIcon } from '@/components/SubjectIcon';
 import {
-  Heart, Wind, Utensils, Droplet, Droplets, Bug, Activity, Flower2,
-  Ribbon, Bone, Scissors, Baby, Brain, Ear, Eye, Fingerprint, Shield, Scale,
-  Stethoscope, ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
-  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, Play, type LucideIcon,
+  ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
+  BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, ZoomIn, X,
 } from 'lucide-react';
 
 interface SubTopic {
@@ -56,41 +55,16 @@ interface SetResult {
   stem: string;
 }
 
-function pickIcon(name: string): LucideIcon {
-  const n = name;
-  if (/외과/.test(n)) return Scissors;
-  if (/순환|심/.test(n)) return Heart;
-  if (/호흡|폐/.test(n)) return Wind;
-  if (/소화|위장|간담췌/.test(n)) return Utensils;
-  if (/비뇨/.test(n)) return Droplets;
-  if (/신장|콩팥/.test(n)) return Droplet;
-  if (/감염/.test(n)) return Bug;
-  if (/내분비/.test(n)) return Activity;
-  if (/알레르기|알러지/.test(n)) return Flower2;
-  if (/혈액/.test(n)) return Droplets;
-  if (/종양|암/.test(n)) return Ribbon;
-  if (/류마티스|정형|골/.test(n)) return Bone;
-  if (/부인|산과|소아/.test(n)) return Baby;
-  if (/정신|신경/.test(n)) return Brain;
-  if (/이비인후/.test(n)) return Ear;
-  if (/안과/.test(n)) return Eye;
-  if (/피부/.test(n)) return Fingerprint;
-  if (/예방/.test(n)) return Shield;
-  if (/법규|법/.test(n)) return Scale;
-  return Stethoscope;
-}
-
 export default function ExamPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [expandedMid, setExpandedMid] = useState<Record<string, boolean>>({});
   const [loadingSubjects, setLoadingSubjects] = useState(true);
-  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
+  // 전 세부주제별 실제 문항 수(전역 1회 로드) — 과목 카드·상세 사이드바 카운트가 모두 여기서 파생
+  const [stCounts, setStCounts] = useState<Record<string, number> | null>(null);
 
-  // 브라우즈 → 상세: 선택된 과목 + 과목 전체 문항(사이드바 카운트/문제 카드 그리드용)
+  // 브라우즈 → 상세: 선택된 과목
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [subjectQuestions, setSubjectQuestions] = useState<QuestionForUser[]>([]);
-  const [loadingSubjectQuestions, setLoadingSubjectQuestions] = useState(false);
 
   const [active, setActive] = useState<{ subTopicId: string; name: string; subjectName: string } | null>(null);
   const [questions, setQuestions] = useState<QuestionForUser[]>([]);
@@ -101,11 +75,26 @@ export default function ExamPage() {
   const shownAtRef = useRef<number>(Date.now());
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AttemptResponse | null>(null);
+  const [showQuestionGrid, setShowQuestionGrid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<SetResult[]>([]);
   const [finished, setFinished] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [savedNote, setSavedNote] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const current = questions[idx];
+  useEffect(() => {
+    if (!zoomImage) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoomImage(null);
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [zoomImage]);
 
   useEffect(() => {
     api
@@ -113,28 +102,24 @@ export default function ExamPage() {
       .then(setSubjects)
       .catch(() => {})
       .finally(() => setLoadingSubjects(false));
+    // 전 세부주제 문항 수를 요청 1회로 로드 — 과목 목록과 병렬.
+    // (과목당 count_only 요청 N개를 병렬 발사하던 방식을 대체)
+    api
+      .get<{ total: number; counts: Record<string, number> }>('/api/questions?count_by=sub_topic')
+      .then((r) => setStCounts(r.counts))
+      .catch(() => setStCounts({}));
   }, []);
 
-  // 과목별 문항 수(READY/준비중 · 문항 카운트) — 기존 count_only 엔드포인트에서 파생.
-  useEffect(() => {
-    if (subjects.length === 0) return;
-    let cancelled = false;
-    Promise.all(
-      subjects.map(async (s) => {
-        try {
-          const r = await api.get<{ count: number }>(`/api/questions?subject_id=${s.id}&count_only=true`);
-          return [s.id, r.count] as const;
-        } catch {
-          return [s.id, 0] as const;
-        }
-      }),
-    ).then((pairs) => {
-      if (!cancelled) setQuestionCounts(Object.fromEntries(pairs));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [subjects]);
+  // 과목별 문항 수 — 전역 세부주제 카운트에서 파생 (READY/준비중 · 카드 문항 수)
+  const questionCounts = useMemo<Record<string, number>>(() => {
+    if (!stCounts) return {};
+    return Object.fromEntries(
+      subjects.map((s) => [
+        s.id,
+        s.sub_topics.reduce((sum, t) => sum + (stCounts[t.id] ?? 0), 0),
+      ]),
+    );
+  }, [subjects, stCounts]);
 
   function toggle(subjectId: string) {
     setExpanded((e) => ({ ...e, [subjectId]: !e[subjectId] }));
@@ -146,8 +131,8 @@ export default function ExamPage() {
   const leavesOf = (s: Subject, midId: string) =>
     s.sub_topics.filter((t) => t.level === 2 && t.parent_id === midId);
 
-  // 과목 카드 → 상세 뷰 진입: 과목 전체 문항 로드(그리드/카운트용)
-  async function openSubject(s: Subject) {
+  // 과목 카드 → 상세 뷰 진입. 카운트는 브라우즈에서 이미 로드한 전역 집계를 재사용(추가 요청 없음 — 즉시 표시).
+  function openSubject(s: Subject) {
     setSelectedSubject(s);
     setActive(null);
     setExpandedMid({});
@@ -156,37 +141,28 @@ export default function ExamPage() {
     setFinished(false);
     setChecked(new Set());
     setSavedNote(false);
-    setSubjectQuestions([]);
-    setLoadingSubjectQuestions(true);
-    try {
-      const qs = await api.get<QuestionForUser[]>(`/api/questions?subject_id=${s.id}&limit=50`);
-      setSubjectQuestions(qs);
-    } catch {
-      setSubjectQuestions([]);
-    } finally {
-      setLoadingSubjectQuestions(false);
-    }
   }
 
   function backToBrowse() {
     setSelectedSubject(null);
     setActive(null);
-    setSubjectQuestions([]);
   }
 
   async function openSubTopic(st: SubTopic, subjectName: string) {
     setActive({ subTopicId: st.id, name: st.name, subjectName });
-    setLoadingQuestions(true);
-    setQuestions([]);
-    setIdx(0);
-    setSelected(null);
-    setResult(null);
-    setResults([]);
+      setLoadingQuestions(true);
+      setQuestions([]);
+      setIdx(0);
+      setSelected(null);
+      setResult(null);
+      setShowQuestionGrid(false);
+      setResults([]);
     setFinished(false);
     setChecked(new Set());
     setSavedNote(false);
     try {
-      const qs = await api.get<QuestionForUser[]>(`/api/questions?sub_topic_id=${st.id}&limit=10`);
+      // 사이드바에 표시된 문항 수와 실제 풀 수 있는 문항 수가 일치하도록 API 최대치(50)까지 로드
+      const qs = await api.get<QuestionForUser[]>(`/api/questions?sub_topic_id=${st.id}&limit=50`);
       setQuestions(qs);
     } catch (e) {
       alert(e instanceof ApiError ? e.message : '문항을 불러오지 못했습니다.');
@@ -194,8 +170,6 @@ export default function ExamPage() {
       setLoadingQuestions(false);
     }
   }
-
-  const current = questions[idx];
 
   // 새 문항이 표시될 때마다(문항 이동 / 새 세부주제 로드) 타이머를 리셋해
   // 실제 문항 풀이 시간을 측정한다.
@@ -219,17 +193,20 @@ export default function ExamPage() {
         track: 'smart_practice',
       });
       setResult(res);
-      setResults((r) => [
-        ...r,
-        {
+      setResults((previous) => {
+        const nextResult: SetResult = {
           questionId: current.id,
           subTopicId: current.subTopicId,
           selected,
           correctIndex: res.correct_index,
           isCorrect: res.is_correct,
           stem: current.stem,
-        },
-      ]);
+        };
+        const alreadyRecorded = previous.some((item) => item.questionId === current.id);
+        return alreadyRecorded
+          ? previous.map((item) => item.questionId === current.id ? nextResult : item)
+          : [...previous, nextResult];
+      });
     } catch (e) {
       if (e instanceof ApiError && e.code === 'quota_exceeded') {
         window.location.href = '/plan?limit=1';
@@ -241,17 +218,28 @@ export default function ExamPage() {
     }
   }
 
+  function goToQuestion(nextIndex: number) {
+    if (nextIndex < 0 || nextIndex >= questions.length) return;
+    setIdx(nextIndex);
+    setSelected(null);
+    setResult(null);
+    setShowQuestionGrid(false);
+  }
+
   function next() {
     if (idx < questions.length - 1) {
-      setIdx((i) => i + 1);
-      setSelected(null);
-      setResult(null);
+      goToQuestion(idx + 1);
     } else {
       setFinished(true);
     }
   }
 
+  function previous() {
+    if (idx > 0) goToQuestion(idx - 1);
+  }
+
   const wrongResults = results.filter((r) => !r.isCorrect);
+  const completedQuestionIds = new Set(results.map((item) => item.questionId));
 
   async function saveToNotes() {
     const targets = wrongResults.filter((r) => checked.has(r.questionId));
@@ -288,14 +276,9 @@ export default function ExamPage() {
     [subjects, questionCounts],
   );
 
-  // 과목 전체 문항에서 세부주제별 카운트 파생
-  const stCount = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const q of subjectQuestions) {
-      if (q.subTopicId) m[q.subTopicId] = (m[q.subTopicId] ?? 0) + 1;
-    }
-    return m;
-  }, [subjectQuestions]);
+  // 세부주제별 실제 문항 수(DB 집계, 전역 1회 로드). 로딩 중에는 0 대신 자리 표시자를 렌더링한다.
+  const stCount = stCounts ?? {};
+  const countOrDots = (n: number) => (stCounts === null ? '…' : n);
 
   // ============================================================
   // 브라우즈 뷰 — 과목 카드 그리드
@@ -310,20 +293,6 @@ export default function ExamPage() {
             <h1><span className="headline-accent">예상문제</span>를 통해<br/><span className="headline-accent">국가고시</span>를 대비해보세요</h1>
             <p className="lead">교과서적 의학 지식과 임상 시나리오를 결합한 국가고시형 문제입니다. 과목·세부주제별로 풀고, 오답 데이터로 약한 개념을 반복 학습하세요.</p>
           </div>
-          {/* CPX 실전 연습 — 국시 대비 우측 대표 배너(별도 진입) */}
-          <a href="/cpx" className="cpx-banner">
-            <div className="cpx-banner-top">
-              <span className="cpx-banner-icon"><Stethoscope className="w-5 h-5" strokeWidth={2} /></span>
-              <span className="cpx-banner-badge">CPX</span>
-            </div>
-            <h2 className="cpx-banner-title">CPX 실전 연습</h2>
-            <p className="cpx-banner-desc">AI 표준화 환자와 12분 진료 세션 · 음성/텍스트 문진 · 부위별 신체진찰 · 루브릭 채점</p>
-            <div className="cpx-banner-meta">
-              <span><strong>197</strong> 증례</span>
-              <span><strong>50</strong> 주호소</span>
-            </div>
-            <span className="cpx-banner-cta"><Play className="w-4 h-4" strokeWidth={2.4} /> 연습 시작</span>
-          </a>
         </section>
 
         {totalQuestions > 0 && (
@@ -341,31 +310,29 @@ export default function ExamPage() {
         ) : (
           <><div className="grid-head"><div className="grid-note">카드를 선택하면 해당 과목의 국시형 문제 풀이로 이동합니다.</div></div><section className="grid">
             {sortedSubjects.map((s) => {
-              const Icon = pickIcon(s.name);
               const count = questionCounts[s.id];
               const ready = count === undefined ? s.sub_topics.length > 0 : count > 0;
               return (
                 <div
                   key={s.id}
-                  className={`subject-card ll-card p-6 flex flex-col items-center text-center ${ready ? 'ready ll-card-hover' : 'disabled opacity-60'}`}
+                  className={`subject-card ll-card ${ready ? 'ready ll-card-hover' : 'disabled opacity-60'}`}
                 >
-                  <div className="card-top w-full">
-                    <div className="subject-title">
-                      <span className="subject-icon"><Icon className="w-6 h-6" strokeWidth={1.9} /></span>
+                  <span className="subject-icon"><SubjectIcon name={s.name} className="w-6 h-6" strokeWidth={1.9} /></span>
+                  <div className="subject-content">
+                    <div className="subject-heading">
                       <h3>{s.name}</h3>
+                      <span className={`status ${ready ? 'ready' : 'locked'}`}>{ready ? '학습 가능' : '준비 중'}</span>
                     </div>
-                    <span className={`status ${ready ? 'ready' : 'locked'}`}>{ready ? 'READY' : '준비 중'}</span>
-                  </div>
-                  <p className="subject-desc">{s.sub_topics.slice(0, 4).map((topic) => topic.name).join(' · ') || '세부 주제를 준비하고 있습니다.'}</p>
-                  <div className="metrics">
-                    <div className="metric"><span>문항</span><strong>{count ?? 0}</strong></div>
-                    <div className="metric"><span>주제</span><strong>{s.sub_topics.length}</strong></div>
+                    <div className="metrics">
+                      <div className="metric"><span>문항</span><strong>{countOrDots(count ?? 0)}</strong></div>
+                      <div className="metric"><span>주제</span><strong>{s.sub_topics.length}</strong></div>
+                    </div>
                   </div>
 
                   {ready ? (
-                    <Button className="start-btn" onClick={() => openSubject(s)} fullWidth>
-                      <Play className="w-4 h-4" strokeWidth={2.4} />
-                      학습 시작
+                    <Button className="start-btn" onClick={() => openSubject(s)} aria-label={`${s.name} 학습 시작`}>
+                      <ChevronRight className="w-5 h-5" strokeWidth={2} />
+                      <span className="sr-only">학습 시작</span>
                     </Button>
                   ) : (
                     <div className="locked-btn">
@@ -414,7 +381,7 @@ export default function ExamPage() {
       {/* 전용 클래스 사용 — 과목 카드 그리드용 `.ll-exam-page .grid`(3등분)와 충돌 방지 */}
       <div className="exam-detail-layout items-start">
         {/* 좌측: 세부주제 */}
-        <div className="ll-card p-3 md:sticky md:top-6">
+        <div className="ll-card exam-topic-sidebar p-3 md:sticky md:top-6" style={{ fontFamily: 'var(--font-body)' }}>
           <div className="flex items-center gap-2 px-2 pb-2.5 mb-1.5 border-b border-[var(--color-border)]">
             <BookOpen className="w-4 h-4 text-[var(--color-sage-600)]" strokeWidth={2} />
             <span className="text-[13px] font-bold text-sage-800 tracking-tight">세부주제</span>
@@ -427,9 +394,9 @@ export default function ExamPage() {
                 active === null ? 'bg-sage-700 text-white font-semibold' : 'text-sage-800 hover:bg-[var(--color-sage-100)]'
               }`}
             >
-              <span>전체</span>
+              <span className="exam-topic-label">전체</span>
               <span className={`text-[11px] tnum ${active === null ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
-                {subjectQuestions.length}
+                {countOrDots(questionCounts[selectedSubject.id] ?? 0)}
               </span>
             </button>
 
@@ -455,9 +422,9 @@ export default function ExamPage() {
                           className={`w-3 h-3 flex-shrink-0 ${isActive ? 'text-white' : 'text-[var(--color-warn)]'}`}
                         />
                       )}
-                      <span className="flex-1 truncate">{mid.name}</span>
+                      <span className="exam-topic-label flex-1 truncate">{mid.name}</span>
                       <span className={`text-[11px] tnum ${isActive ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
-                        {midCount}
+                        {countOrDots(midCount)}
                       </span>
                       {leaves.length > 0 &&
                         (midOpen ? (
@@ -483,9 +450,9 @@ export default function ExamPage() {
                               {leaf.is_risk_category && (
                                 <AlertTriangle className={`w-3 h-3 flex-shrink-0 ${leafActive ? 'text-white' : 'text-[var(--color-warn)]'}`} />
                               )}
-                              <span className="flex-1 truncate">{leaf.name}</span>
+                              <span className="exam-topic-label flex-1 truncate">{leaf.name}</span>
                               <span className={`text-[11px] tnum ${leafActive ? 'text-white/80' : 'text-[var(--color-muted)]'}`}>
-                                {stCount[leaf.id] ?? 0}
+                                {countOrDots(stCount[leaf.id] ?? 0)}
                               </span>
                             </button>
                           );
@@ -568,9 +535,69 @@ export default function ExamPage() {
                         <div className="text-[15px] font-bold text-sage-800 tracking-tight truncate">{active.name}</div>
                       </div>
                     </div>
-                    <span className="text-sm text-[var(--color-muted)] whitespace-nowrap">
-                      문항 <strong className="text-sage-800 tnum">{idx + 1}</strong> / {questions.length}
-                    </span>
+                    <div className="relative flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={previous}
+                        disabled={idx === 0}
+                        aria-label="이전 문제"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowQuestionGrid((open) => !open)}
+                          aria-expanded={showQuestionGrid}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-white px-2.5 text-sm font-semibold text-sage-800 transition-colors hover:border-sage-400"
+                        >
+                          문항 <span className="tnum">{idx + 1}/{questions.length}</span>
+                          <ChevronDown className={`h-3.5 w-3.5 text-[var(--color-muted)] transition-transform ${showQuestionGrid ? 'rotate-180' : ''}`} />
+                        </button>
+                        {showQuestionGrid && (
+                          <div className="absolute right-0 top-10 z-30 w-56 rounded-xl border border-[var(--color-border)] bg-white p-2.5 shadow-[0_16px_36px_rgba(31,46,40,0.16)]">
+                            <div className="mb-2 flex items-center justify-between text-[11px]">
+                              <span className="font-bold text-sage-800">문항 선택</span>
+                              <span className="inline-flex items-center gap-1.5 text-[var(--color-muted)]"><i className="h-2 w-2 rounded-full bg-sage-200" />풀이 완료</span>
+                            </div>
+                            <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+                              {questions.map((question, questionIndex) => {
+                                const isCurrent = questionIndex === idx;
+                                const isCompleted = completedQuestionIds.has(question.id);
+                                return (
+                                  <button
+                                    key={question.id}
+                                    type="button"
+                                    onClick={() => goToQuestion(questionIndex)}
+                                    aria-label={`${questionIndex + 1}번 문항${isCompleted ? ', 풀이 완료' : ''}`}
+                                    aria-current={isCurrent ? 'step' : undefined}
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold transition-colors ${
+                                      isCurrent
+                                        ? 'border-sage-700 bg-sage-700 text-white'
+                                        : isCompleted
+                                          ? 'border-sage-200 bg-[var(--color-sage-100)] text-sage-700 hover:border-sage-400'
+                                          : 'border-[var(--color-border)] bg-white text-sage-700 hover:border-sage-400'
+                                    }`}
+                                  >
+                                    {questionIndex + 1}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => goToQuestion(idx + 1)}
+                        disabled={idx === questions.length - 1}
+                        aria-label="다음 문제"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   <div className="w-full h-2 bg-[var(--color-sage-200)] rounded-full overflow-hidden">
                     <div
@@ -594,9 +621,21 @@ export default function ExamPage() {
                   </div>
 
                   {current.imageUrl && (
-                    <div className="mb-3 bg-sage-900 rounded-lg h-56 flex items-center justify-center overflow-hidden">
+                    <div className="relative mb-3 bg-sage-900 rounded-lg overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={current.imageUrl} alt="medical" className="max-h-full max-w-full object-contain" />
+                      <img
+                        src={current.imageUrl}
+                        alt="medical"
+                        className="w-full max-h-[70vh] object-contain cursor-zoom-in"
+                        onClick={() => setZoomImage(current.imageUrl)}
+                      />
+                      <button
+                        onClick={() => setZoomImage(current.imageUrl)}
+                        aria-label="이미지 확대"
+                        className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center transition-colors"
+                      >
+                        <ZoomIn className="w-5 h-5" />
+                      </button>
                     </div>
                   )}
 
@@ -608,7 +647,7 @@ export default function ExamPage() {
                       return (
                         <button
                           key={i}
-                          onClick={() => !result && setSelected(i)}
+                           onClick={() => !result && setSelected(i)}
                           disabled={result !== null}
                           className={`w-full text-left p-3.5 px-4 rounded-xl border flex items-center gap-3 transition-all ${
                             isCorrect
@@ -666,6 +705,23 @@ export default function ExamPage() {
           )}
         </div>
       </div>
+
+      {zoomImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setZoomImage(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={zoomImage} alt="확대된 문항 이미지" className="max-w-[95vw] max-h-[92vh] object-contain rounded-lg" />
+          <button
+            onClick={() => setZoomImage(null)}
+            aria-label="닫기"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

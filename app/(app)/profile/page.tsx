@@ -276,7 +276,7 @@ export default function ProfilePage() {
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-sage-800 tracking-tight">기본 정보</h2>
               <p className="text-sm text-[var(--color-muted)] mt-1 leading-relaxed">
-                학교·학년·학기 정보를 최신 상태로 유지하면 같은 코호트 선배들의 학습 데이터를 정확히 반영할 수 있습니다.
+                학교·학년·학기 정보를 입력하면 현재 학습 과정에 맞는 학습 범위가 적용됩니다.
               </p>
             </div>
           </div>
@@ -382,8 +382,7 @@ export default function ProfilePage() {
             <Info className="w-4 h-4" strokeWidth={2} />
           </span>
           <p className="text-sm text-sage-800 leading-relaxed">
-            학교·학년·과목을 변경하면 새 학기 코호트가 자동으로 연결됩니다. 시험 범위 세부 설정은
-            <strong className="font-semibold"> 마이페이지</strong>와 각 문제 풀이 화면에서 이어서 조정할 수 있습니다.
+            학교·학년·과목을 변경하면 해당 조건에 맞는 학습 설정이 자동으로 적용됩니다. 시험 범위는 마이페이지 또는 문제 풀이 화면에서 언제든 변경할 수 있습니다.
           </p>
         </div>
 

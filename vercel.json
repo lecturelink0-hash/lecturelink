@@ -1,3 +1,4 @@
 {
-  "installCommand": "npm ci"
+  "installCommand": "npm ci",
+  "regions": ["icn1"]
 }

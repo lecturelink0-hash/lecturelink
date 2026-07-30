@@ -51,5 +51,8 @@ export const GET = withErrorHandling(async (request: Request) => {
     sub_topics: (subTopics ?? []).filter((st) => st.subject_id === subject.id),
   }));
 
-  return ok(result);
+  // 과목/세부주제 구조는 드물게 바뀌므로 브라우저 캐시 허용(개인 캐시만) — 재방문 시 즉시 표시
+  const res = ok(result);
+  res.headers.set('Cache-Control', 'private, max-age=300, stale-while-revalidate=3600');
+  return res;
 });

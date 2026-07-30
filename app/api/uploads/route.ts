@@ -9,6 +9,7 @@
  *   4. (선택) GET /api/uploads/[id]    (상태 폴링)
  */
 
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { requireSession } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/db/admin';
@@ -66,61 +67,53 @@ export const POST = withErrorHandling(async (request: Request) => {
 
   const admin = createAdminClient();
 
-  // 1) user_uploads 행 생성 (uploaded 상태, 파일은 아직 X)
-  const { data: upload, error: insertErr } = await admin
-    .from('user_uploads')
-    .insert({
-      user_id: session.userId,
-      file_name: body.file_name,
-      file_type: body.file_type,
-      file_size_bytes: body.file_size_bytes,
-      storage_path: '',          // 임시. 아래에서 업데이트
-      status: 'uploaded',
-    })
-    .select('id')
-    .single();
+  // upload id 를 서버에서 미리 생성해 storage 경로를 확정한다.
+  // 행 insert 와 signed URL 발급이 서로를 기다릴 필요가 없어져 병렬 1회 왕복으로 끝난다.
+  // (기존: insert → signed URL → storage_path update 3회 순차 왕복 — 업로드 시작 지연의 주원인)
+  const uploadId = randomUUID();
+  const storagePath = buildStoragePath(session.userId, uploadId, body.file_name);
 
-  if (insertErr || !upload) {
+  const [insertRes, signedRes] = await Promise.all([
+    admin
+      .from('user_uploads')
+      .insert({
+        id: uploadId,
+        user_id: session.userId,
+        file_name: body.file_name,
+        file_type: body.file_type,
+        file_size_bytes: body.file_size_bytes,
+        storage_path: storagePath,
+        status: 'uploaded',
+      })
+      .select('id')
+      .single(),
+    admin.storage.from(STORAGE_BUCKET).createSignedUploadUrl(storagePath),
+  ]);
+
+  if (insertRes.error || !insertRes.data) {
     throw new ApiException(
       'upload_init_failed',
       '업로드 초기화 실패',
       500,
-      insertErr,
+      insertRes.error,
     );
   }
 
-  // 2) Storage 경로 + signed upload URL 발급
-  const storagePath = buildStoragePath(
-    session.userId,
-    upload.id,
-    body.file_name,
-  );
-
-  const { data: signed, error: signedErr } = await admin.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUploadUrl(storagePath);
-
-  if (signedErr || !signed) {
+  if (signedRes.error || !signedRes.data) {
     // 정합성 정리
-    await admin.from('user_uploads').delete().eq('id', upload.id);
+    await admin.from('user_uploads').delete().eq('id', uploadId);
     throw new ApiException(
       'signed_url_failed',
-      `Signed URL 발급 실패: ${signedErr?.message}`,
+      `Signed URL 발급 실패: ${signedRes.error?.message}`,
       500,
     );
   }
 
-  // 3) storage_path 업데이트
-  await admin
-    .from('user_uploads')
-    .update({ storage_path: storagePath })
-    .eq('id', upload.id);
-
   return ok({
-    upload_id: upload.id,
+    upload_id: uploadId,
     storage_path: storagePath,
-    signed_upload_url: signed.signedUrl,
-    signed_token: signed.token,
+    signed_upload_url: signedRes.data.signedUrl,
+    signed_token: signedRes.data.token,
     expires_in_seconds: 3600,
   });
 });

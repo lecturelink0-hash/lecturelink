@@ -99,11 +99,8 @@ body { min-width: 320px; }
 .ll-app-shell .nav{align-items:center;justify-content:center;gap:4px;flex:1}
 .ll-app-shell .nav a{border-radius:10px;padding:9px 12px;font-size:14px;font-weight:650;color:var(--color-muted);transition:.18s ease;white-space:nowrap}
 .ll-app-shell .nav a.active,.ll-app-shell .nav a:hover{background:var(--color-primary-soft);color:var(--color-primary)}
-/* 레퍼런스 핵심 메뉴 강조: 골드 그라데이션 + ✦ (내신 대비·국시 대비) */
-.ll-app-shell .nav a.feature{min-height:40px;padding:0 15px;display:inline-flex;align-items:center;justify-content:center;color:#143C2C;font-weight:820;background:linear-gradient(90deg,#FFF4B8 0%,#EAF7C8 48%,#D8F3E1 100%);border:1px solid #DCE9B6;border-radius:13px;box-shadow:0 6px 20px -14px rgba(31,92,67,.4)}
-.ll-app-shell .nav a.feature::before{content:"✦";margin-right:6px;color:#D9A82F;font-size:12px;transform:translateY(-1px)}
-.ll-app-shell .nav a.feature:hover{color:#143C2C;filter:brightness(1.02)}
-
+.ll-app-shell .nav a.primary{display:inline-flex;align-items:center;gap:6px}
+.ll-app-shell .nav a.primary::before{content:"";width:7px;height:7px;border-radius:999px;background:var(--color-gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-gold) 18%,transparent)}
 /* ── CPX 파트 선택(대분류) 카드 ── */
 .cpx-part-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:1000px){.cpx-part-grid{grid-template-columns:repeat(2,1fr)}}
@@ -301,4 +298,306 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: var(--color-sage-800);
+}
+
+/* ── 모의고사 설정 화면 확장 (redesign-reference.css 는 생성 파일이라 여기서 보강) ── */
+.ll-mock-page .select-all {
+  height: 30px;
+  border: 1px solid var(--sage-200);
+  border-radius: 999px;
+  background: var(--sage);
+  color: var(--forest);
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 740;
+  cursor: pointer;
+  transition: 0.18s ease;
+  white-space: nowrap;
+}
+.ll-mock-page .select-all:hover { border-color: var(--sage-400); background: #f6fbf7; }
+.ll-mock-page .select-all:disabled { opacity: 0.45; cursor: default; }
+
+.ll-mock-page .question-count-range {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+}
+.ll-mock-page .question-count-range > button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--forest-800);
+  font-size: 17px;
+  font-weight: 740;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+.ll-mock-page .question-count-range > button:hover { border-color: var(--sage-400); background: var(--sage); }
+.ll-mock-page .question-count-range > button:disabled { opacity: 0.4; cursor: default; background: #f8f7f3; }
+.ll-mock-page .range-track { min-width: 0; }
+.ll-mock-page .range-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+.ll-mock-page .range-value output { color: var(--forest); font-size: 12px; font-weight: 820; }
+.ll-mock-page .range-track input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 0;
+  accent-color: var(--forest);
+  cursor: pointer;
+}
+.ll-mock-page .question-count-note {
+  margin: 6px 0 0;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 560;
+  line-height: 1.5;
+}
+
+.ll-mock-page .stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--cream);
+  padding: 6px;
+}
+.ll-mock-page .stepper button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--forest-800);
+  font-size: 17px;
+  font-weight: 740;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+.ll-mock-page .stepper button:hover { border-color: var(--sage-400); }
+.ll-mock-page .stepper button:disabled { opacity: 0.4; cursor: default; }
+.ll-mock-page .stepper-value {
+  flex: 1;
+  text-align: center;
+  color: var(--forest);
+  font-size: 15px;
+  font-weight: 820;
+}
+.ll-mock-page .stepper-note {
+  margin: 7px 0 0;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  font-weight: 560;
+  line-height: 1.5;
+}
+
+/* ── 요금제: 추천(골드)과 현재 이용 상태(그린)를 분리 ── */
+.ll-plan-page .plan.current {
+  border: 2px solid var(--forest);
+  background: linear-gradient(180deg, #eef8f0 0%, #f9fdf9 58%, #ffffff 100%);
+  box-shadow: 0 18px 38px -26px rgba(31, 92, 67, 0.52);
+}
+.ll-plan-page .plan.current:hover {
+  border-color: var(--forest);
+  box-shadow: 0 20px 40px -24px rgba(31, 92, 67, 0.58);
+}
+.ll-plan-page .plan.current .mb-5 { padding-top: 30px; }
+.ll-plan-page .current-state {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: var(--forest);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 820;
+  line-height: 1;
+}
+.ll-plan-page .plan.current .plan-name,
+.ll-plan-page .plan.current .price strong,
+.ll-plan-page .plan.current .features li,
+.ll-plan-page .plan.current .features li span {
+  color: var(--forest-800);
+}
+.ll-plan-page .plan.current .plan-sub,
+.ll-plan-page .plan.current .price span,
+.ll-plan-page .plan.current .desc {
+  color: var(--ink-soft);
+}
+.ll-plan-page .plan.current .ribbon {
+  background: var(--gold);
+  border: 1px solid #d9ad32;
+  color: #5d4710;
+}
+.ll-plan-page .plan-current-button {
+  width: 100%;
+  height: 52px;
+  border: 1px solid var(--forest);
+  border-radius: 0.5rem;
+  background: var(--forest);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: default;
+}
+.ll-plan-page .plan-current-button:disabled { opacity: 1; }
+
+/* ── 국시 대비: 소개 영역과 CPX 카드의 세로 중심 정렬 ── */
+@media (min-width: 961px) {
+  .ll-exam-page .page-head { align-items: center; }
+  .ll-exam-page .cpx-banner { align-self: center; }
+}
+
+/* ── 국시 대비: 과목 카드 핵심 정보만 남기는 압축형 레이아웃 ── */
+.ll-exam-page .subject-card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  min-height: 118px;
+  padding: 20px 88px 20px 20px;
+}
+.ll-exam-page .grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.ll-exam-page .subject-icon {
+  flex: 0 0 60px;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+}
+.ll-exam-page .subject-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ll-exam-page .subject-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ll-exam-page .subject-heading h3 {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.ll-exam-page .subject-heading .status {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  font-size: 10px;
+}
+.ll-exam-page .metrics {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  justify-content: flex-start;
+  text-align: center;
+}
+.ll-exam-page .metric {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.ll-exam-page .metric + .metric {
+  padding-left: 10px;
+  border-left: 1px solid var(--color-border);
+}
+.ll-exam-page .metric span,
+.ll-exam-page .metric strong {
+  font-size: 14px;
+  line-height: 1.3;
+}
+.ll-exam-page .metric span { color: var(--color-text-muted); }
+.ll-exam-page .metric strong {
+  color: var(--color-text-subtle);
+  font-weight: 700;
+}
+.ll-exam-page .start-btn,
+.ll-exam-page .locked-btn {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  width: 46px;
+  min-width: 46px;
+  height: 46px;
+  padding: 0;
+  transform: translateY(-50%);
+  border-radius: 14px;
+}
+.ll-exam-page .start-btn {
+  background: var(--color-surface-muted);
+  color: var(--color-text-subtle);
+  border-color: transparent;
+}
+.ll-exam-page .start-btn:hover {
+  background: var(--color-primary);
+  color: white;
+}
+.ll-exam-page .locked-btn {
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+}
+@media (max-width: 720px) {
+  .ll-exam-page .grid { grid-template-columns: 1fr; }
+  .ll-exam-page .subject-card { padding-right: 82px; }
+}
+
+/* ── 국시 대비: CPX 카드 정보와 시작 버튼 사이 여백 조정 ── */
+.ll-exam-page .cpx-banner {
+  min-height: 261px;
+  height: 261px;
+  padding: 18px 22px 15px;
+}
+.ll-exam-page .cpx-banner-top { margin-bottom: 6px; }
+.ll-exam-page .cpx-banner-title { margin-top: 0; }
+.ll-exam-page .cpx-banner-desc { margin: 6px 0 0; }
+.ll-exam-page .cpx-banner-meta { margin: 10px 0 0; }
+.ll-exam-page .cpx-banner-cta { margin-top: 18px; }
+
+/* 국시대비 세부주제 목록은 내문제집 폴더와 동일한 본문 글꼴·무게를 사용한다. */
+.ll-exam-page .exam-topic-sidebar .exam-topic-label {
+  font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 620;
+  letter-spacing: 0;
+}
+.ll-exam-page .exam-topic-sidebar .exam-topic-label + span {
+  font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+/* ── 요금 안내: 다른 주요 화면과 같은 왼쪽 정렬 흐름 ── */
+.ll-plan-page .page-head {
+  max-width: none;
+  margin: 0 0 28px;
+  text-align: left;
+}
+.ll-plan-page .page-head .lead {
+  max-width: 680px;
+  margin: 12px 0 0;
+}
+.ll-plan-page .notice {
+  max-width: none;
+  margin: 0 0 22px;
+  text-align: left;
 }

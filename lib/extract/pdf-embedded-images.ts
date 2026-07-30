@@ -26,7 +26,26 @@ export interface EmbeddedImage {
   heightPx: number;
 }
 
+/**
+ * 추출 진단 정보. 왜 임베드 이미지 경로가 결과를 못 냈는지(바이너리 부재 / 후보 없음 /
+ * 크기 미달)를 밖에서 확인하기 위한 값. 함수가 채워 넣는다.
+ */
+export interface ExtractEmbeddedDiagnostic {
+  /** mutool 실행 자체가 가능했는지. false 면 배포 환경에 바이너리가 없다는 뜻. */
+  mutoolRan?: boolean;
+  /** 실행 실패 사유 요약(ENOENT = 미설치). */
+  mutoolError?: string;
+  /** mutool 이 쏟아낸 이미지 파일 수(크기 필터 이전). */
+  rawFiles?: number;
+  /** 크기 필터를 통과한 후보 수. */
+  candidates?: number;
+  /** 이 함수 전체 소요(ms). */
+  ms?: number;
+}
+
 export interface ExtractEmbeddedOptions {
+  /** 진단 정보를 채워 넣을 객체(선택). */
+  diag?: ExtractEmbeddedDiagnostic;
   /** 이 값보다 짧은 변을 가진 이미지는 제외(아이콘/장식 컷). 기본 300px. */
   minEdgePx?: number;
   /** 최대 반환 개수(면적 큰 순). 기본 5. */
@@ -47,6 +66,13 @@ export async function extractEmbeddedPdfImages(
   const maxImages = opts.maxImages ?? 5;
   const maxOutEdge = opts.maxOutEdgePx ?? 1024;
 
+  const diag = opts.diag;
+  const startedAt = Date.now();
+  const finish = <T>(v: T): T => {
+    if (diag) diag.ms = Date.now() - startedAt;
+    return v;
+  };
+
   const dir = await mkdtemp(path.join(tmpdir(), 'pdfimg-'));
   try {
     const pdfPath = path.join(dir, 'in.pdf');
@@ -59,12 +85,20 @@ export async function extractEmbeddedPdfImages(
         timeout: 90_000,
         maxBuffer: 64 * 1024 * 1024,
       });
-    } catch {
-      return [];
+      if (diag) diag.mutoolRan = true;
+    } catch (e) {
+      // ENOENT = 배포 환경에 mupdf-tools 가 없음(가장 흔한 원인). 그 외는 실행 오류.
+      const err = e as { code?: string; message?: string };
+      if (diag) {
+        diag.mutoolRan = false;
+        diag.mutoolError = `${err?.code ?? 'ERR'}: ${(err?.message ?? '').slice(0, 120)}`;
+      }
+      return finish([]);
     }
 
     const files = (await readdir(dir)).filter((f) => /^image-\d+\.(png|jpe?g)$/i.test(f));
-    if (files.length === 0) return [];
+    if (diag) diag.rawFiles = files.length;
+    if (files.length === 0) return finish([]);
 
     const { loadImage, createCanvas } = await import('canvas');
 
@@ -91,7 +125,10 @@ export async function extractEmbeddedPdfImages(
     }
 
     candidates.sort((a, b) => b.area - a.area);
-    return candidates.slice(0, maxImages).map(({ png, widthPx, heightPx }) => ({ png, widthPx, heightPx }));
+    if (diag) diag.candidates = candidates.length;
+    return finish(
+      candidates.slice(0, maxImages).map(({ png, widthPx, heightPx }) => ({ png, widthPx, heightPx })),
+    );
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }

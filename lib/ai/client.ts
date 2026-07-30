@@ -269,9 +269,32 @@ function getRetryStatus(error: unknown): number | undefined {
  *  - AbortError / TimeoutError (fetch timeout) → retry
  *  - 그 외 → 즉시 throw
  */
+/**
+ * 429 중에서도 "재시도해도 절대 성공하지 않는" 경우를 가려낸다.
+ *
+ * 크레딧 소진·쿼터 초과·결제 문제는 시간이 지나도 그대로다. 그런데 429 를 일괄
+ * 재시도하면 호출당 최대 3회 × 45초 백오프를 쓰고, 파이프라인 전체로는 수십 건의
+ * 호출이 같은 대기를 반복해 4분을 헛되게 쓴 뒤 실패한다(실측: Vision 25페이지 207초).
+ * 이런 429 는 즉시 중단해 사용자에게 바로 원인을 알린다.
+ */
+export function isNonRetryableQuotaError(error: unknown): boolean {
+  if (getRetryStatus(error) !== 429) return false;
+  const msg = (error instanceof Error ? error.message : String(error ?? '')).toLowerCase();
+  return (
+    msg.includes('credit') ||           // "prepayment credits are depleted"
+    msg.includes('billing') ||
+    msg.includes('quota exceeded') ||
+    msg.includes('exceeded your current quota') ||
+    msg.includes('resource_exhausted') ||
+    msg.includes('insufficient')
+  );
+}
+
 function isRetryableError(error: unknown): boolean {
   const status = getRetryStatus(error);
   if (status !== undefined) {
+    // 크레딧·쿼터 소진은 재시도 대상이 아니다(기다려도 복구되지 않음).
+    if (status === 429 && isNonRetryableQuotaError(error)) return false;
     return status === 429 || status >= 500;
   }
   // Anthropic SDK timeout — status 가 없는 connection 계열 에러.

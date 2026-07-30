@@ -7,12 +7,12 @@ import clsx from 'clsx';
 import { Menu, X, LogOut, ChevronDown, CalendarDays, UserCog } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
 
-// 레퍼런스(lecturelink_connected_site) 순서 준수. CPX는 국시 대비 안으로 통합돼 상단 메뉴에서 제외.
-// feature: 레퍼런스처럼 골드 그라데이션 + ✦로 강조되는 핵심 메뉴(내신 대비·국시 대비).
+// 학습 흐름 순서: 내신 대비, 국시 대비, CPX를 각각 독립 메뉴로 제공한다.
 const NAV_ITEMS = [
   { label: '홈', href: '/dashboard' },
-  { label: '내신 대비', href: '/notes', feature: true },
-  { label: '국시 대비', href: '/exam', feature: true },
+  { label: '내신 대비', href: '/notes', primary: true },
+  { label: '국시 대비', href: '/exam', primary: true },
+  { label: 'CPX', href: '/cpx', primary: true },
   { label: '내 문제집', href: '/library' },
   { label: '오답노트', href: '/wrong-notes' },
   { label: '모의고사', href: '/mock' },
@@ -143,7 +143,7 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={clsx('feature' in item && item.feature && 'feature', isActive(item.href) && 'active')}
+              className={clsx('primary' in item && item.primary && 'primary', isActive(item.href) && 'active')}
             >
               {item.label}
             </Link>

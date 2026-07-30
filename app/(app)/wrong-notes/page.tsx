@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Copy,
 } from 'lucide-react';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -328,12 +329,14 @@ function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 type ViewMode = 'summary' | 'full';
+type ReviewFolder = 'need' | 'done';
 
 export default function WrongNotesPage() {
   const [items, setItems] = useState<WrongAnswerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [reviewFolder, setReviewFolder] = useState<ReviewFolder>('need');
   const [selectedSubTopicId, setSelectedSubTopicId] = useState<string | null>(null); // null = 전체
   const [uiStates, setUiStates] = useState<Record<string, QuestionUIState>>({});
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
@@ -375,10 +378,18 @@ export default function WrongNotesPage() {
     return true;
   });
 
+  const reviewFilteredItems = typeFilteredItems.filter((item) =>
+    reviewFolder === 'need' ? !item.resolved : item.resolved,
+  );
+  const reviewFolderCounts = {
+    need: typeFilteredItems.filter((item) => !item.resolved).length,
+    done: typeFilteredItems.filter((item) => item.resolved).length,
+  };
+
   // 세부 주제 폴더 목록(타입 필터 반영한 카운트)
   const subTopics: SubTopicEntry[] = (() => {
     const map = new Map<string, SubTopicEntry>();
-    typeFilteredItems.forEach((item) => {
+    reviewFilteredItems.forEach((item) => {
       const key = item.subTopicId ?? '__null__';
       if (!map.has(key)) {
         map.set(key, { id: item.subTopicId, name: item.subTopicName, count: 0 });
@@ -389,8 +400,8 @@ export default function WrongNotesPage() {
   })();
 
   const filteredItems = selectedSubTopicId === null
-    ? typeFilteredItems
-    : typeFilteredItems.filter((item) => item.subTopicId === selectedSubTopicId);
+    ? reviewFilteredItems
+    : reviewFilteredItems.filter((item) => item.subTopicId === selectedSubTopicId);
 
   // 헤더 카운트 서브라인
   const privateCount = items.filter((i) => i.isPrivate).length;
@@ -457,12 +468,13 @@ export default function WrongNotesPage() {
 
   function renderChoicesSection(item: WrongAnswerItem) {
     if (!item.question) return null;
+    const q = item.question;
     const ui = getUI(item.id);
 
     return (
       <>
         <Choices
-          choices={item.question.choices}
+          choices={q.choices}
           selected={ui.selected}
           submitted={ui.submitted}
           correctIndex={ui.correctIndex}
@@ -488,7 +500,7 @@ export default function WrongNotesPage() {
                 state={ui}
                 isPrivate={item.isPrivate}
                 subTopicId={item.subTopicId}
-                sourceQuestionId={item.question!.id}
+                sourceQuestionId={q.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
             </div>
@@ -506,7 +518,7 @@ export default function WrongNotesPage() {
               state={ui}
               isPrivate={item.isPrivate}
               subTopicId={item.subTopicId}
-              sourceQuestionId={item.question!.id}
+              sourceQuestionId={q.id}
               onChange={(patch) => patchUI(item.id, patch)}
             />
           </div>
@@ -529,9 +541,8 @@ export default function WrongNotesPage() {
         {/* Header row — 과목/세부주제 배지 + 삭제 */}
         <div className="badges">
           <div className="badges">
-            <Badge>{item.subjectName}</Badge>
+            <Badge variant="gray">{item.subjectName}</Badge>
             <Badge variant="gray">{item.subTopicName}</Badge>
-            {q && <Badge variant={q.badge.color}>{q.badge.label}</Badge>}
             {q && <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>}
           </div>
           <button
@@ -554,7 +565,7 @@ export default function WrongNotesPage() {
         {/* Expanded content — 다시 풀기 */}
         {ui.expanded && q && (
           <div className="mt-2 border-t border-[var(--color-border)] pt-4">
-            <div className="text-[14px] leading-7 text-sage-800 mb-4">{q.stem}</div>
+            <QuestionStem className="text-[14px] leading-7 text-sage-800 mb-4" text={q.stem} />
             {q.imageUrl && (
               <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-48 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -569,8 +580,9 @@ export default function WrongNotesPage() {
           </div>
         )}
 
-        {/* Action buttons — 다시 풀기(secondary) + 유사문제 생성(accent) */}
-        {!ui.expanded && (
+        {/* Action buttons — 다시 풀기(secondary) + 유사문제 생성(accent).
+            question 이 null(비활성화·접근 불가 문항)이면 삭제만 가능하다. */}
+        {!ui.expanded && q && (
           <div className="actions">
             <Button
               variant="secondary"
@@ -585,7 +597,7 @@ export default function WrongNotesPage() {
                 state={ui}
                 isPrivate={item.isPrivate}
                 subTopicId={item.subTopicId}
-                sourceQuestionId={item.question!.id}
+                sourceQuestionId={q.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
             )}
@@ -606,9 +618,8 @@ export default function WrongNotesPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <Badge>{item.subjectName}</Badge>
+            <Badge variant="gray">{item.subjectName}</Badge>
             <Badge variant="gray">{item.subTopicName}</Badge>
-            {q && <Badge variant={q.badge.color}>{q.badge.label}</Badge>}
             {q && <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>}
           </div>
           <button
@@ -623,7 +634,7 @@ export default function WrongNotesPage() {
 
         {q ? (
           <>
-            <div className="text-[15px] leading-7 text-sage-800 mb-4">{q.stem}</div>
+            <QuestionStem className="text-[15px] leading-7 text-sage-800 mb-4" text={q.stem} />
             {q.imageUrl && (
               <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-56 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -674,7 +685,7 @@ export default function WrongNotesPage() {
                     state={ui}
                     isPrivate={item.isPrivate}
                     subTopicId={item.subTopicId}
-                    sourceQuestionId={item.question!.id}
+                    sourceQuestionId={q.id}
                     onChange={(patch) => patchUI(item.id, patch)}
                   />
                 </div>
@@ -687,7 +698,7 @@ export default function WrongNotesPage() {
                   state={ui}
                   isPrivate={item.isPrivate}
                   subTopicId={item.subTopicId}
-                  sourceQuestionId={item.question!.id}
+                  sourceQuestionId={q.id}
                   onChange={(patch) => patchUI(item.id, patch)}
                 />
               </div>
@@ -754,6 +765,46 @@ export default function WrongNotesPage() {
             <aside className="card sidebar">
                 <div className="px-2.5 py-2">
                   <span className="ll-eyebrow">
+                    <FolderOpen className="w-3.5 h-3.5" strokeWidth={2.4} />
+                    복습 상태
+                  </span>
+                </div>
+                <ul className="topic-list pb-2">
+                  {([
+                    { id: 'need' as const, label: '오답 복습 필요' },
+                    { id: 'done' as const, label: '오답 복습 완료' },
+                  ]).map((folder) => {
+                    const active = reviewFolder === folder.id;
+                    return (
+                      <li key={folder.id}>
+                        <button
+                          onClick={() => {
+                            setReviewFolder(folder.id);
+                            setSelectedSubTopicId(null);
+                          }}
+                          className={`topic ${
+                            active
+                              ? 'bg-[var(--color-sage-100)] text-sage-700 font-semibold'
+                              : 'text-sage-800 hover:bg-sage-50'
+                          }`}
+                        >
+                          {active
+                            ? <FolderOpen className="w-4 h-4 flex-shrink-0 text-sage-700" />
+                            : <Folder className="w-4 h-4 flex-shrink-0 text-[var(--color-sage-400)]" />}
+                          <span className="flex-1 truncate">{folder.label}</span>
+                          <span className={`text-xs tabular-nums px-2 py-0.5 rounded-full ${
+                            active
+                              ? 'bg-sage-700 text-white'
+                              : 'bg-[var(--color-sage-100)] text-[var(--color-muted)]'
+                          }`}>{reviewFolderCounts[folder.id]}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="border-t border-[var(--color-border)] my-2" />
+                <div className="px-2.5 py-2">
+                  <span className="ll-eyebrow">
                     <Folder className="w-3.5 h-3.5" strokeWidth={2.4} />
                     세부 주제
                   </span>
@@ -777,7 +828,7 @@ export default function WrongNotesPage() {
                         selectedSubTopicId === null
                           ? 'bg-sage-700 text-white'
                           : 'bg-[var(--color-sage-100)] text-[var(--color-muted)]'
-                      }`}>{typeFilteredItems.length}</span>
+                      }`}>{reviewFilteredItems.length}</span>
                     </button>
                   </li>
                   {/* SubTopic folders */}

@@ -29,7 +29,7 @@ interface ErrorScreenProps {
   reset: () => void;
 }
 
-export function ErrorScreen({ error, reset }: ErrorScreenProps) {
+export function ErrorScreen({ error }: ErrorScreenProps) {
   const [autoReloading, setAutoReloading] = useState(false);
 
   useEffect(() => {
@@ -87,12 +87,12 @@ export function ErrorScreen({ error, reset }: ErrorScreenProps) {
         ) : (
           <>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#1f2e28' }}>
-              일시적인 오류가 발생했습니다
+              일시적인 오류가 발생했습니다.
             </h1>
             <p style={{ margin: '10px 0 0', fontSize: '14px', lineHeight: 1.6, color: '#6b7a72' }}>
-              새 버전 배포 직후 이전 화면이 남아 있으면 생길 수 있어요.
+              잠시 후 다시 시도해 주세요.
               <br />
-              새로고침하면 대부분 해결됩니다.
+              문제가 계속되면 고객센터에 문의해 주세요.
             </p>
             <div
               style={{
@@ -109,22 +109,6 @@ export function ErrorScreen({ error, reset }: ErrorScreenProps) {
                   height: '44px',
                   padding: '0 22px',
                   borderRadius: '10px',
-                  border: 'none',
-                  background: '#1f5c43',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                새로고침
-              </button>
-              <button
-                onClick={reset}
-                style={{
-                  height: '44px',
-                  padding: '0 22px',
-                  borderRadius: '10px',
                   border: '1px solid #c9debe',
                   background: '#ffffff',
                   color: '#1f5c43',
@@ -133,7 +117,7 @@ export function ErrorScreen({ error, reset }: ErrorScreenProps) {
                   cursor: 'pointer',
                 }}
               >
-                다시 시도
+                새로고침
               </button>
               <button
                 onClick={() => {
@@ -156,7 +140,7 @@ export function ErrorScreen({ error, reset }: ErrorScreenProps) {
             </div>
             {error.digest && (
               <p style={{ margin: '18px 0 0', fontSize: '11px', color: '#a8b3ac' }}>
-                오류 코드: {error.digest}
+                문의 시 오류 코드: {error.digest}
               </p>
             )}
           </>
