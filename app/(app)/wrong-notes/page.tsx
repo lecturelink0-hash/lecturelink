@@ -191,7 +191,7 @@ function ExplanationBox({ explanation, isCorrect }: ExplanationBoxProps) {
       {explanation && (
         <div className="p-4 bg-[var(--color-sage-100)] rounded-lg">
           <div className="text-xs font-bold text-sage-700 mb-2">해설</div>
-          <div className="text-sm text-sage-800 leading-relaxed whitespace-pre-line">
+          <div className="text-sm text-sage-800 leading-relaxed whitespace-pre-wrap">
             {explanation}
           </div>
         </div>

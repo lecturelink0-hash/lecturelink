@@ -1536,7 +1536,7 @@ function PrivateSolveCard({ q, index, onAnswered, prior, onGraded }: { q: Privat
             {selected === q.answer_index ? '✓ 정답입니다' : `✗ 오답 — 정답: ${q.answer_index + 1}번`}
           </div>
           {q.explanation && (
-            <div className="text-sm text-sage-800 leading-relaxed">{q.explanation}</div>
+            <div className="text-sm text-sage-800 leading-relaxed whitespace-pre-wrap">{q.explanation}</div>
           )}
         </div>
       )}
