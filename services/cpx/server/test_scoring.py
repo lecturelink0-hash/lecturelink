@@ -152,7 +152,22 @@ def run():
         checked += 1
     assert checked >= 54, checked
 
-    print('전체', 13, '개 테스트 그룹 통과 ✅ (전 루브릭', checked, '종 회귀 포함)')
+    # 14. 신체진찰 면제(physicalExamRequired=False): 진찰 영역 제외 + 나머지 85 → 100 재정규화
+    ctx_no_pe = {'depressionRelated': True, 'physicalExamRequired': False}
+    r = score_session(RUBRIC, judg(set(ALL_ITEM_IDS)), ctx_no_pe)
+    assert r['totalScore'] == 100.0, r['totalScore']
+    assert all(s['id'] != 'physical_exam' for s in r['sections']), '진찰 영역이 sections에 남음'
+    assert r['excludedSections'][0]['id'] == 'physical_exam' and r['excludedSections'][0]['weightPercent'] == 15
+    # 병력만 전부 충족(35) + 임상예의(10) = 45 → ×100/85 = 52.9
+    ht_ids = {i['id'] for s in RUBRIC['sections'] if s['id'] == 'history_taking' for i in s['items']}
+    r = score_session(RUBRIC, judg(ht_ids), ctx_no_pe)
+    assert r['totalScore'] == 52.9, r['totalScore']
+    # 플래그 없으면(기본) 기존 산식 그대로 — 진찰 미수행이 그대로 감점
+    r = score_session(RUBRIC, judg(ht_ids), ctx_dep)
+    assert r['totalScore'] == 45.0, r['totalScore']
+    assert 'excludedSections' not in r
+
+    print('전체', 14, '개 테스트 그룹 통과 ✅ (전 루브릭', checked, '종 회귀 포함)')
 
 
 if __name__ == '__main__':
