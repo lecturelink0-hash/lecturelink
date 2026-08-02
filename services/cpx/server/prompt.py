@@ -67,6 +67,8 @@ def public_case(case: dict) -> dict:
         'peCount': len(case['physicalExamRule']),
         'mustAskCount': len(case['evaluationUse']['mustAsk']),
         'contentStatus': content_status(case),
+        # false 면 신체진찰 없이 진행하는 시나리오 — 채점에서 진찰 영역 제외 (기본 true)
+        'physicalExamRequired': case.get('physicalExamRequired', True) is not False,
     }
 
 

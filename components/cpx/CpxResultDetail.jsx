@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import CpxTimeAnalysis from './CpxTimeAnalysis';
 
 function request(path, init) {
   return fetch(`/api/cpx${path}`, { cache: 'no-store', ...init }).then(async (response) => {
@@ -143,6 +144,11 @@ export default function CpxResultDetail({ sessionId }) {
           </div>
         </div>
       </Card>
+
+      {/* 단계별 시간 사용 + 신체진찰 면제 안내 — 과거 세션(채점 캐시)엔 없을 수 있어 조건부 */}
+      {(result.timeAnalysis || result.excludedSections?.length > 0) && (
+        <Card><CpxTimeAnalysis analysis={result.timeAnalysis} excludedSections={result.excludedSections} /></Card>
+      )}
 
       {/* 점수 칸 아래: 좌(영역별 세부 채점) / 우(피드백) 2단 */}
       <div className="grid items-start gap-4 lg:grid-cols-2">
