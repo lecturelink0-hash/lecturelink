@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "canonical_rubric_fatigue_v1",
   "title": "피로 CPX 종합 채점 루브릭 (정본)",
   "provenance": {
@@ -10,7 +10,8 @@
       "ht12(월경력)는 여성 케이스에서만 분모에 포함 (conditional flag: femalePatient)",
       "진찰은 채점표 3항목 + 교재 진찰 섹션(갑상샘·복부·부종)으로 세분화 — 파생 규칙",
       "영역 가중치 35/15/15/25/10 — 도메인 공통",
-      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)"
+      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)",
+      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)"
     ],
     "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 37 '피로' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 재작성했으며 교재 문장을 직접 인용하지 않음."
   },
@@ -31,21 +32,34 @@
       "type": "checklist",
       "weightPercent": 35,
       "gradeCutoffs": {
-        "excellent": 8,
-        "fairMin": 5
+        "excellent": 11,
+        "fairMin": 7
       },
       "items": [
         {
-          "id": "ht01",
-          "text": "피로의 발생 시기와 양상(언제부터, 하루 중 언제 심한지, 지속적인지) 질문"
+          "id": "ht01a",
+          "text": "피로의 발생 시기(언제부터) 질문"
         },
         {
-          "id": "ht02",
-          "text": "피로의 경과와 지속 기간(점점 심해지는지, 6개월 이상인지) 질문"
+          "id": "ht01b",
+          "text": "피로의 양상(하루 중 언제 심한지, 지속적인지) 질문"
         },
         {
-          "id": "ht03",
-          "text": "악화·완화 요인(휴식이나 수면으로 회복되는지, 운동 후 어떤지) 질문",
+          "id": "ht02a",
+          "text": "피로의 경과(점점 심해지는지) 질문"
+        },
+        {
+          "id": "ht02b",
+          "text": "피로의 지속 기간(6개월 이상인지) 질문"
+        },
+        {
+          "id": "ht03a",
+          "text": "악화 요인(운동 후 어떤지) 질문",
+          "contextHint": "휴식 무회복은 만성피로증후군·기질적 원인의 단서"
+        },
+        {
+          "id": "ht03b",
+          "text": "완화 요인(휴식이나 수면으로 회복되는지) 질문",
           "contextHint": "휴식 무회복은 만성피로증후군·기질적 원인의 단서"
         },
         {
@@ -74,8 +88,16 @@
           "text": "복용 중인 약물(처방약, 일반약, 한약·건강보조식품 포함) 질문"
         },
         {
-          "id": "ht10",
-          "text": "가족력·직업력과 음주·흡연 등 생활습관 질문"
+          "id": "ht10a",
+          "text": "가족력 질문"
+        },
+        {
+          "id": "ht10b",
+          "text": "직업력 질문"
+        },
+        {
+          "id": "ht10c",
+          "text": "음주·흡연 등 생활습관 질문"
         },
         {
           "id": "ht11",
@@ -97,8 +119,8 @@
       "type": "checklist",
       "weightPercent": 15,
       "gradeCutoffs": {
-        "excellent": 5,
-        "fairMin": 3
+        "excellent": 6,
+        "fairMin": 4
       },
       "declarationCountsAsPerformance": true,
       "items": [
@@ -107,8 +129,12 @@
           "text": "활력징후와 전반적인 외양·안색·영양상태 관찰 (말로 언급)"
         },
         {
-          "id": "pe02",
-          "text": "두경부 진찰 — 결막(빈혈)·공막(황달)·경부 림프절 확인"
+          "id": "pe02a",
+          "text": "두경부 진찰 — 결막(빈혈)·공막(황달) 확인"
+        },
+        {
+          "id": "pe02b",
+          "text": "두경부 진찰 — 경부 림프절 확인"
         },
         {
           "id": "pe03",
@@ -131,8 +157,12 @@
           "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
         },
         {
-          "id": "pe08",
-          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+          "id": "pe08a",
+          "text": "시행할 신체 검진을 미리 설명"
+        },
+        {
+          "id": "pe08b",
+          "text": "진찰 중/후 '불편하진 않으신가요?' 점검"
         }
       ]
     },

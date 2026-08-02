@@ -1,11 +1,14 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "canonical_rubric_sleep_v1",
   "title": "수면장애 CPX 종합 채점 루브릭 (정본)",
   "provenance": {
     "content": "불면장애 CPX AI 종합 채점 루브릭 (최종 완성본).txt + 반영된 예외 규칙 가이드라인 (최최최종 수정본).txt",
     "structure": "034_sleep_disorder.json userEvaluationRubric/evaluationOutputContract",
-    "decisions": "결합안(§4.0) + 이중 표기(§4.8) — 사용자 승인 2026-07-07",
+    "decisions": [
+      "결합안(§4.0) + 이중 표기(§4.8) — 사용자 승인 2026-07-07",
+      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)"
+    ],
     "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 02 '수면장애' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 재작성했으며 교재 문장을 직접 인용하지 않음."
   },
   "totalScore": 100,
@@ -25,7 +28,7 @@
       "type": "checklist",
       "weightPercent": 35,
       "gradeCutoffs": {
-        "excellent": 9,
+        "excellent": 10,
         "fairMin": 5
       },
       "items": [
@@ -54,8 +57,12 @@
           "text": "야뇨, 폐경, 통증, 코골이 등 동반 신체 증상 확인"
         },
         {
-          "id": "ht07",
-          "text": "복용 중인 약물 및 수면제 복용 경험 질문"
+          "id": "ht07a",
+          "text": "복용 중인 약물 질문"
+        },
+        {
+          "id": "ht07b",
+          "text": "수면제 복용 경험 질문"
         },
         {
           "id": "ht08",
@@ -86,7 +93,7 @@
       "type": "checklist",
       "weightPercent": 15,
       "gradeCutoffs": {
-        "excellent": 4,
+        "excellent": 5,
         "fairMin": 2
       },
       "declarationCountsAsPerformance": true,
@@ -114,8 +121,12 @@
           "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
         },
         {
-          "id": "pe06",
-          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+          "id": "pe06a",
+          "text": "시행할 신체 검진을 미리 설명"
+        },
+        {
+          "id": "pe06b",
+          "text": "진찰 중/후 '불편하진 않으신가요?' 점검"
         }
       ]
     },

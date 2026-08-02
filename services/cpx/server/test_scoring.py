@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-from scoring import score_session
+from scoring import round1, score_session
 
 RUBRIC = json.loads(
     (Path(__file__).resolve().parent.parent / 'data/cpx/common/canonical_rubric.sleep.json').read_text()
@@ -64,14 +64,19 @@ def run():
     assert section(r, 'etiquette')['violationCount'] == 1
     assert section(r, 'etiquette')['score'] == 8.0
 
-    # 5. 병력청취 부분점수·컷오프: 9/12 충족 → 26.3점(35×9/12), 등급 우수
-    ht9 = {f'ht{i:02d}' for i in range(1, 10)}
-    r = score_session(RUBRIC, judg(ht9), ctx_dep)
+    # 5. 병력청취 부분점수·컷오프 — 세분화 이후 항목 수가 변할 수 있어 구조 기반으로 검증
+    hist = next(s for s in RUBRIC['sections'] if s['id'] == 'history_taking')
+    h_ids = [i['id'] for i in hist['items']]
+    n_h = len(h_ids)
+    h_exc, h_fair = hist['gradeCutoffs']['excellent'], hist['gradeCutoffs']['fairMin']
+    ht_exc = set(h_ids[:h_exc])
+    r = score_session(RUBRIC, judg(ht_exc), ctx_dep)
     s = section(r, 'history_taking')
-    assert s['score'] == 26.3 and s['grade'] == 2, s
-    # 8/12 → 보통, 4/12 → 미흡
-    assert section(score_session(RUBRIC, judg({f'ht{i:02d}' for i in range(1, 9)}), ctx_dep), 'history_taking')['grade'] == 1
-    assert section(score_session(RUBRIC, judg({f'ht{i:02d}' for i in range(1, 5)}), ctx_dep), 'history_taking')['grade'] == 0
+    assert s['score'] == round1(hist['weightPercent'] * h_exc / n_h) and s['grade'] == 2, s
+    # 우수 미달·보통 이상 → 보통, 보통 미달 → 미흡
+    if h_fair <= h_exc - 1:
+        assert section(score_session(RUBRIC, judg(set(h_ids[:h_exc - 1])), ctx_dep), 'history_taking')['grade'] == 1
+    assert section(score_session(RUBRIC, judg(set(h_ids[:h_fair - 1])), ctx_dep), 'history_taking')['grade'] == 0
 
     # 6. 환자교육 조건부 분기(§4.4-5): 우울 연관 아니면 ed05 제외 → 분모 5
     ed_all_but_05 = {'ed01', 'ed02', 'ed03', 'ed04', 'ed06'}
@@ -94,14 +99,16 @@ def run():
     assert section(score_session(RUBRIC, judg({'ppi01', 'ppi02', 'ppi03'}), ctx_dep), 'ppi')['grade'] == 1
     assert section(score_session(RUBRIC, judg({'ppi01'}), ctx_dep), 'ppi')['grade'] == 0
 
-    # 8. 신체진찰: 4/6 우수 10점, 2/6 보통 5점
-    pe4 = {'pe01', 'pe02', 'pe03', 'pe04'}
-    s = section(score_session(RUBRIC, judg(pe4), ctx_dep), 'physical_exam')
-    assert s['score'] == 10.0 and s['grade'] == 2, s
+    # 8. 신체진찰: 우수 컷 충족 수만큼 부분점수 — 구조 기반 검증
+    pe_sec = next(s for s in RUBRIC['sections'] if s['id'] == 'physical_exam')
+    pe_ids = [i['id'] for i in pe_sec['items']]
+    pe_exc = pe_sec['gradeCutoffs']['excellent']
+    s = section(score_session(RUBRIC, judg(set(pe_ids[:pe_exc])), ctx_dep), 'physical_exam')
+    assert s['score'] == round1(pe_sec['weightPercent'] * pe_exc / len(pe_ids)) and s['grade'] == 2, s
 
     # 9. 재현성: 동일 입력 → 동일 출력
-    a = score_session(RUBRIC, judg(ht9, [{'type': 'et03'}]), ctx_dep)
-    b = score_session(RUBRIC, judg(ht9, [{'type': 'et03'}]), ctx_dep)
+    a = score_session(RUBRIC, judg(ht_exc, [{'type': 'et03'}]), ctx_dep)
+    b = score_session(RUBRIC, judg(ht_exc, [{'type': 'et03'}]), ctx_dep)
     assert a == b
 
     # 10. 3상태 판정: 부분 수행은 0.5점, 목록과 피드백용 ID에 따로 남는다.
@@ -111,24 +118,41 @@ def run():
     assert s['earnedItemUnits'] == 1.5 and s['partialIds'] == ['ht02'], s
 
     # 11. 고위험 실신: 총점이 높아도 필수 응급행동 누락 시 전체 등급은 미흡으로 제한된다.
+    sy_gate = SYNCOPE_RUBRIC['safetyGates'][0]
+    sy_miss = sy_gate['requiredItemIds'][-1]
     r = score_session(
         SYNCOPE_RUBRIC,
-        all_met_judgments(SYNCOPE_RUBRIC, {'ed06'}),
-        {'caseId': 'cardiac_syncope_rule', 'depressionRelated': False},
+        all_met_judgments(SYNCOPE_RUBRIC, {sy_miss}),
+        {'caseId': sy_gate['caseIds'][0], 'depressionRelated': False},
     )
     assert r['totalScore'] >= 90 and r['overallGradeLabel'] == '미흡', r
-    assert r['safetyGate']['triggered'][0]['missingItemIds'] == ['ed06'], r['safetyGate']
+    assert r['safetyGate']['triggered'][0]['missingItemIds'] == [sy_miss], r['safetyGate']
 
     # 12. 우울증 관련 인지저하: 자살위험 안전안내 누락도 동일하게 차단한다.
+    ml_gate = MEMORY_RUBRIC['safetyGates'][0]
+    ml_miss = ml_gate['requiredItemIds'][-1]
     r = score_session(
         MEMORY_RUBRIC,
-        all_met_judgments(MEMORY_RUBRIC, {'ed05'}),
-        {'caseId': 'pseudodementia_rule', 'depressionRelated': True},
+        all_met_judgments(MEMORY_RUBRIC, {ml_miss}),
+        {'caseId': ml_gate['caseIds'][0], 'depressionRelated': True},
     )
     assert r['overallGradeLabel'] == '미흡', r
-    assert r['safetyGate']['triggered'][0]['missingItemIds'] == ['ed05'], r['safetyGate']
+    assert r['safetyGate']['triggered'][0]['missingItemIds'] == [ml_miss], r['safetyGate']
 
-    # 13. 신체진찰 면제(physicalExamRequired=False): 진찰 영역 제외 + 나머지 85 → 100 재정규화
+    # 13. 전 루브릭 회귀: 세분화 이후에도 만점 100·빈 판정 10(임상예의만)·전 영역 등급 정합
+    ctx_all = {'depressionRelated': True, 'femalePatient': True}
+    checked = 0
+    for path in sorted(DATA_DIR.glob('canonical_rubric.*.json')):
+        rub = json.loads(path.read_text())
+        full = score_session(rub, all_met_judgments(rub), ctx_all)
+        assert full['totalScore'] == 100.0, (path.name, full['totalScore'])
+        assert all(s['grade'] == 2 for s in full['sections']), path.name
+        empty = score_session(rub, {'items': {}, 'violations': []}, ctx_all)
+        assert empty['totalScore'] == 10.0, (path.name, empty['totalScore'])
+        checked += 1
+    assert checked >= 54, checked
+
+    # 14. 신체진찰 면제(physicalExamRequired=False): 진찰 영역 제외 + 나머지 85 → 100 재정규화
     ctx_no_pe = {'depressionRelated': True, 'physicalExamRequired': False}
     r = score_session(RUBRIC, judg(set(ALL_ITEM_IDS)), ctx_no_pe)
     assert r['totalScore'] == 100.0, r['totalScore']
@@ -143,7 +167,7 @@ def run():
     assert r['totalScore'] == 45.0, r['totalScore']
     assert 'excludedSections' not in r
 
-    print('전체', 13, '개 테스트 그룹 통과 ✅')
+    print('전체', 14, '개 테스트 그룹 통과 ✅ (전 루브릭', checked, '종 회귀 포함)')
 
 
 if __name__ == '__main__':

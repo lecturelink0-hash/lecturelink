@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "canonical_rubric_memory_loss_v1",
   "title": "기억력 저하 CPX 종합 채점 루브릭 (정본)",
   "provenance": {
@@ -9,7 +9,8 @@
       "met/partial/not_met 3상태를 보존하고 결과 화면에서 부분 수행을 별도 표시 — 2026-07-16 임상 검수 반영",
       "영역 가중치 35/15/15/25/10 — 도메인 공통",
       "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)",
-      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)"
+      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)",
+      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)"
     ],
     "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 50 '기억력 저하' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 재작성했으며 교재 문장을 직접 인용하지 않음."
   },
@@ -30,8 +31,8 @@
       "type": "checklist",
       "weightPercent": 35,
       "gradeCutoffs": {
-        "excellent": 9,
-        "fairMin": 6
+        "excellent": 18,
+        "fairMin": 12
       },
       "items": [
         {
@@ -47,32 +48,84 @@
           "text": "기억장애의 특성(최근 일 vs 오래된 일 중 무엇을 잊는지) 질문"
         },
         {
-          "id": "ht04",
-          "text": "다른 인지기능 문제(길 찾기, 계산, 언어, 판단력) 확인"
+          "id": "ht04a",
+          "text": "길 찾기 문제 여부 확인"
+        },
+        {
+          "id": "ht04b",
+          "text": "계산 능력 문제 여부 확인"
+        },
+        {
+          "id": "ht04c",
+          "text": "언어 기능 문제 여부 확인"
+        },
+        {
+          "id": "ht04d",
+          "text": "판단력 문제 여부 확인"
         },
         {
           "id": "ht05",
           "text": "일상생활 수행에 미치는 영향(가스불, 돈 관리, 약속 등) 확인"
         },
         {
-          "id": "ht06",
-          "text": "우울감·의욕 저하·수면 문제와 자살사고·의도·계획을 직접적이고 중립적으로 확인 — 우울증 관련 인지저하 감별"
+          "id": "ht06a",
+          "text": "우울감 여부를 확인 — 우울증 관련 인지저하 감별"
+        },
+        {
+          "id": "ht06b",
+          "text": "의욕 저하 여부를 확인"
+        },
+        {
+          "id": "ht06c",
+          "text": "수면 문제를 확인"
+        },
+        {
+          "id": "ht06d",
+          "text": "자살사고·의도·계획을 직접적이고 중립적으로 확인"
         },
         {
           "id": "ht07",
           "text": "성격·행동의 변화 여부 확인"
         },
         {
-          "id": "ht08",
-          "text": "신경학적 동반 증상(보행 장애, 요실금, 손떨림, 마비) 확인 — 정상압수두증·파킨슨 감별"
+          "id": "ht08a",
+          "text": "보행 장애 여부 확인 — 정상압수두증 감별"
         },
         {
-          "id": "ht09",
-          "text": "혈관성 위험인자·질병력(고혈압, 당뇨, 뇌졸중, 경련) 질문"
+          "id": "ht08b",
+          "text": "요실금 여부 확인 — 정상압수두증 감별"
         },
         {
-          "id": "ht10",
-          "text": "복용 약물과 음주력 질문"
+          "id": "ht08c",
+          "text": "손떨림 여부 확인 — 파킨슨 감별"
+        },
+        {
+          "id": "ht08d",
+          "text": "마비 여부 확인"
+        },
+        {
+          "id": "ht09a",
+          "text": "고혈압 병력 질문"
+        },
+        {
+          "id": "ht09b",
+          "text": "당뇨 병력 질문"
+        },
+        {
+          "id": "ht09c",
+          "text": "뇌졸중 병력 질문"
+        },
+        {
+          "id": "ht09d",
+          "text": "경련 병력 질문"
+        },
+        {
+          "id": "ht10a",
+          "text": "복용 약물 질문"
+        },
+        {
+          "id": "ht10b",
+          "text": "음주력 질문"
         },
         {
           "id": "ht11",
@@ -94,7 +147,7 @@
       "type": "checklist",
       "weightPercent": 15,
       "gradeCutoffs": {
-        "excellent": 4,
+        "excellent": 5,
         "fairMin": 2
       },
       "items": [
@@ -120,8 +173,12 @@
           "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
         },
         {
-          "id": "pe06",
-          "text": "시행할 검사를 미리 설명하고 환자가 불안하지 않게 배려"
+          "id": "pe06a",
+          "text": "시행할 검사를 미리 설명"
+        },
+        {
+          "id": "pe06b",
+          "text": "환자가 불안하지 않게 배려하는 표현"
         }
       ],
       "declarationCountsAsPerformance": true
@@ -132,8 +189,8 @@
       "type": "checklist",
       "weightPercent": 15,
       "gradeCutoffs": {
-        "excellent": 3,
-        "fairMin": 2
+        "excellent": 6,
+        "fairMin": 4
       },
       "items": [
         {
@@ -141,20 +198,44 @@
           "text": "환자의 증상에 대한 적절한 추정 진단과 그 의미 설명"
         },
         {
-          "id": "ed02",
-          "text": "정밀 검사(신경심리검사, 뇌 영상, 혈액검사)의 필요성과 이유 설명"
+          "id": "ed02a",
+          "text": "신경심리검사의 필요성과 이유 설명"
+        },
+        {
+          "id": "ed02b",
+          "text": "뇌 영상 검사의 필요성과 이유 설명"
+        },
+        {
+          "id": "ed02c",
+          "text": "혈액검사의 필요성과 이유 설명"
         },
         {
           "id": "ed03",
           "text": "정기적인 병원 방문을 통한 평가·치료의 중요성 설명"
         },
         {
-          "id": "ed04",
-          "text": "기억력이 저하된 환자의 생활을 돕는 가이드(메모 습관, 안전, 가족 지지 및 보호자 보조 병력) 교육"
+          "id": "ed04a",
+          "text": "기억 보조를 위한 메모 습관 교육"
         },
         {
-          "id": "ed05",
-          "text": "자살사고 또는 즉각적 안전 우려가 있으면 혼자 두지 않고 즉시 감독자·응급 평가 체계로 연결함을 설명",
+          "id": "ed04b",
+          "text": "생활 안전 관리 교육"
+        },
+        {
+          "id": "ed04c",
+          "text": "가족 지지와 보호자 보조 병력 활용 교육"
+        },
+        {
+          "id": "ed05a",
+          "text": "자살사고·즉각적 안전 우려 시 환자를 혼자 두지 않도록(보호자 동반) 설명",
+          "conditional": {
+            "flag": "depressionRelated",
+            "note": "우울증 관련 인지저하 증례에서만 평가"
+          }
+        },
+        {
+          "id": "ed05b",
+          "text": "자살사고·즉각적 안전 우려 시 즉시 감독자·응급 평가 체계로 연결함을 설명",
           "conditional": {
             "flag": "depressionRelated",
             "note": "우울증 관련 인지저하 증례에서만 평가"
@@ -231,8 +312,9 @@
         "pseudodementia_rule"
       ],
       "requiredItemIds": [
-        "ht06",
-        "ed05"
+        "ht06d",
+        "ed05a",
+        "ed05b"
       ],
       "maxOverallGrade": 0,
       "message": "우울증 관련 인지저하 증례에서 자살 안전 평가 또는 즉시 연결 설명이 누락되었습니다."
