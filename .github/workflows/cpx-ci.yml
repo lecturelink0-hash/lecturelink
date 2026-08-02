@@ -58,6 +58,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python -m py_compile main.py evaluate.py scoring.py prompt.py physical_exam.py db.py
       - run: python test_scoring.py
+      - run: python test_time_analysis.py
       - run: python test_all_cases.py
       - run: python test_all_cases_api.py
       - run: python test_lecturelink_auth.py
