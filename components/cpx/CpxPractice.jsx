@@ -6,6 +6,7 @@ import { Activity, Baby, Brain, CheckCircle2, ChevronDown, ChevronLeft, ChevronR
 import Avatar3D from './Avatar3D';
 import { GeminiLivePatient } from './live';
 import { startMic } from './mic';
+import { sanitizePatientText } from './sanitize';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -79,15 +80,6 @@ function request(path, options = {}) {
 function formatTime(seconds) {
   const safe = Math.max(0, seconds);
   return `${String(Math.floor(safe / 60)).padStart(2, '0')}:${String(safe % 60).padStart(2, '0')}`;
-}
-
-function sanitizePatientText(value) {
-  return String(value || '')
-    .replace(/\[SYS_EVENT[^\]]*\]/gi, '')
-    .replace(/\[[^\]]{0,40}\]/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/^[\s"“”']+|[\s"“”']+$/g, '')
-    .trim();
 }
 
 function Wave({ active }) {
