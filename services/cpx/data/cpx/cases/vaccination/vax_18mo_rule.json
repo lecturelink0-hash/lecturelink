@@ -19,7 +19,12 @@
     "fixed": {
       "location": "외래",
       "gender": "여성",
-      "role": "보호자(어머니)"
+      "role": "보호자(어머니)",
+      "child": {
+        "gender": "랜덤",
+        "age": 1,
+        "ageDetail": "18개월"
+      }
     },
     "recommended": {
       "age": "28~38세"
