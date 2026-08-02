@@ -494,7 +494,7 @@ SKIN_RASH_BUTTONS = [
      'declaration': '활력징후와 전반적인 몸 상태를 확인하겠습니다.', 'defaultFinding': '활력징후 안정, 전신 상태 양호.'},
     {'id': 'rash_inspection', 'label': '피부 발진 시진', 'keywords': ['피부 발진', '발진 분포', '인설', '물집', '가피', '삼출'],
      'declaration': '발진 부위의 분포와 모양, 물집·인설·진물이 있는지 살펴보겠습니다.', 'defaultFinding': '특이 피부 발진 없음.'},
-    {'id': 'rash_palpation', 'label': '발진 촉진/피부묘기증', 'keywords': ['피부 촉진', '열감', '압통', '피부묘기증', '눌러'],
+    {'id': 'rash_palpation', 'label': '발진 촉진/피부묘기증', 'keywords': ['피부 촉진', '발진 촉진', '열감', '압통', '피부묘기증', '눌러', '눌림'],
      'declaration': '발진을 부드럽게 만져 열감·압통을 보고, 눌렀을 때 변화를 확인하겠습니다.', 'defaultFinding': '열감·압통·피부묘기증 없음.'},
     {'id': 'eye_oral', 'label': '눈·구강 점막 확인', 'keywords': ['눈', '구강', '점막', '구강 궤양'],
      'declaration': '눈과 입 안 점막에 병변이나 부종이 있는지 확인하겠습니다.', 'defaultFinding': '눈·구강 점막 병변 없음.'},
@@ -548,7 +548,7 @@ HAND_TREMOR_BUTTONS = [
      'declaration': '손을 무릎이나 탁자 위에 편하게 올려두신 상태에서 떨림을 관찰하겠습니다.', 'defaultFinding': '안정 시 뚜렷한 떨림 없음.'},
     {'id': 'postural_action_tremor', 'label': '자세·동작 떨림/글씨 검사', 'keywords': ['자세떨림', '동작떨림', '나선', '글씨', '손떨림'],
      'declaration': '팔을 앞으로 뻗고 손바닥을 편 다음, 나선을 그리고 글씨를 써 보시며 떨림을 확인하겠습니다.', 'defaultFinding': '양손에서 자세·동작 시 미세하고 대칭적인 떨림이 관찰되며 글씨가 약간 흔들립니다.'},
-    {'id': 'neuro_motor', 'label': '뇌신경·근력·반사/근경직', 'keywords': ['뇌신경', '안구운동', '근력', '감각', '반사', '근경직'],
+    {'id': 'neuro_motor', 'label': '뇌신경·근력·반사/근경직', 'keywords': ['뇌신경', '안구운동', '근력', '감각', '반사', '근경직', '신경학적 진찰'],
      'declaration': '안구운동과 얼굴 움직임, 팔·다리의 힘·감각·반사와 근육이 뻣뻣한지 확인하겠습니다.', 'defaultFinding': '뇌신경·근력·감각·반사 정상, 근경직 없음.'},
     {'id': 'coordination_gait', 'label': '협응·보행·균형 검사', 'keywords': ['손가락-코', '교대운동', '보행', 'Tandem', 'Romberg', '소뇌'],
      'declaration': '손가락-코 검사와 빠른 교대운동, 일자 걷기와 균형 검사를 해보겠습니다.', 'defaultFinding': '손가락-코·빠른 교대운동·보행·Tandem/Romberg 정상.'},
@@ -603,7 +603,7 @@ ANTENATAL_CARE_BUTTONS = [
 ]
 
 DEVELOPMENTAL_DELAY_BUTTONS = [
-    {'id': 'growth', 'label': '키·체중·두위/성장곡선', 'keywords': ['키', '체중', '두위', '성장곡선'],
+    {'id': 'growth', 'label': '키·체중·두위/성장곡선', 'keywords': ['키', '체중', '두위', '성장곡선', '성장 측정'],
      'declaration': '키와 몸무게, 머리둘레를 재고 성장곡선에서 변화를 확인하겠습니다.', 'defaultFinding': '키·체중·두위가 성장곡선의 추적 범위 안에 있습니다.'},
     {'id': 'development', 'label': '놀이·언어·사회성 관찰', 'keywords': ['발달 관찰', '운동 발달', '언어 발달', '사회성', '놀이'],
      'declaration': '아이와 놀이를 하며 눈맞춤·이해·표현 언어와 사회적 상호작용을 관찰하겠습니다.', 'defaultFinding': '두 단계 지시를 이해하나 자발적 두 단어 조합 표현이 적습니다.'},
@@ -714,7 +714,7 @@ DYSPNEA_BUTTONS = [
      'declaration': '가슴을 살펴보고 두드리고 숨소리를 청진하겠습니다.', 'defaultFinding': '흉곽 대칭, 호흡음 깨끗함.'},
     {'id': 'conjunctiva', 'label': '결막 확인', 'keywords': ['결막', '빈혈'],
      'declaration': '빈혈이 있는지 눈 결막을 확인하겠습니다.', 'defaultFinding': '결막 창백 없음.'},
-    {'id': 'neck', 'label': '경부 (갑상샘/JVD)', 'keywords': ['경정맥', '갑상샘', '림프절'],
+    {'id': 'neck', 'label': '경부 (갑상샘/JVD)', 'keywords': ['경정맥', '갑상샘', '림프절', '경부'],
      'declaration': '목의 갑상샘과 정맥 팽창을 확인하겠습니다.', 'defaultFinding': '갑상샘 정상, JVD 없음.'},
     {'id': 'limbs', 'label': '사지 (부종/곤봉지/청색증)', 'keywords': ['부종', '곤봉지', '청색증', '사지'],
      'declaration': '다리 부종과 손가락 끝 모양, 입술 색을 확인하겠습니다.', 'defaultFinding': '부종·곤봉지·청색증 없음.'},
