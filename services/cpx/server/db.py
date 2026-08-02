@@ -49,7 +49,7 @@ def connect() -> sqlite3.Connection:
     conn.executescript(SCHEMA)
     # 기존 DB 마이그레이션: 누락 컬럼 추가
     cols = {r[1] for r in conn.execute('PRAGMA table_info(sessions)')}
-    for col in ('persona', 'result', 'user_id'):
+    for col in ('persona', 'result', 'user_id', 'config'):
         if col not in cols:
             if col == 'user_id':
                 conn.execute("ALTER TABLE sessions ADD COLUMN user_id TEXT NOT NULL DEFAULT 'local'")
@@ -64,12 +64,12 @@ def set_result(session_id: str, user_id: str, result_json: str) -> None:
         conn.execute('UPDATE sessions SET result = ? WHERE id = ? AND user_id = ?', (result_json, session_id, user_id))
 
 
-def create_session(case_id: str, user_id: str, persona_json: str | None = None) -> str:
+def create_session(case_id: str, user_id: str, persona_json: str | None = None, config_json: str | None = None) -> str:
     session_id = uuid.uuid4().hex
     with connect() as conn:
         conn.execute(
-            'INSERT INTO sessions (id, user_id, case_id, started_at, persona) VALUES (?, ?, ?, ?, ?)',
-            (session_id, user_id, case_id, time.time(), persona_json),
+            'INSERT INTO sessions (id, user_id, case_id, started_at, persona, config) VALUES (?, ?, ?, ?, ?, ?)',
+            (session_id, user_id, case_id, time.time(), persona_json, config_json),
         )
     return session_id
 

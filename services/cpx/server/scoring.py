@@ -86,9 +86,18 @@ def score_session(rubric: dict, judgments: dict, context: dict) -> dict:
     violations = [v for v in judgments.get('violations', []) if not v.get('exempt')]
 
     sections_out = []
+    excluded_sections = []
     total = 0.0
     for section in rubric['sections']:
         weight = section['weightPercent']
+        # 신체진찰 면제 케이스(physicalExamRequired=false): 진찰 영역을 채점에서 제외하고
+        # 나머지 영역 합계를 100점 만점으로 재정규화한다 — 진찰을 안 해도 감점되지 않는다.
+        if section['id'] == 'physical_exam' and context.get('physicalExamRequired', True) is False:
+            excluded_sections.append({
+                'id': section['id'], 'name': section['name'], 'weightPercent': weight,
+                'reason': '이 시나리오는 신체진찰이 필요하지 않아 채점에서 제외되었습니다.',
+            })
+            continue
         if section['type'] == 'deduction':
             # 임상예의: 감점제 (기본 10점, 위반당 -2, 하한 0) — §4.8-2
             raw = max(section['floor'], section['baseScore'] - section['deductionPerViolation'] * len(violations))
@@ -123,12 +132,17 @@ def score_session(rubric: dict, judgments: dict, context: dict) -> dict:
             })
         total += score
 
+    # 제외 영역이 있으면 남은 가중치 합을 100으로 환산 (예: 진찰 15 제외 → ×100/85)
+    excluded_weight = sum(s['weightPercent'] for s in excluded_sections)
+    if excluded_weight and excluded_weight < 100:
+        total = total * 100.0 / (100.0 - excluded_weight)
+
     total = round1(total)
     overall_grade = 2 if total >= 80 else (1 if total >= 50 else 0)  # 파생 규칙 (원문에 총점 등급 없음)
     safety_gates = evaluate_safety_gates(rubric, context, item_judgments)
     if safety_gates:
         overall_grade = min(overall_grade, min(gate['maxOverallGrade'] for gate in safety_gates))
-    return {
+    result = {
         'totalScore': total,
         'overallGradeLabel': GRADE_LABELS[overall_grade],
         'sections': sections_out,
@@ -136,3 +150,6 @@ def score_session(rubric: dict, judgments: dict, context: dict) -> dict:
         'context': context,
         'safetyGate': {'triggered': safety_gates, 'passed': not safety_gates},
     }
+    if excluded_sections:
+        result['excludedSections'] = excluded_sections
+    return result

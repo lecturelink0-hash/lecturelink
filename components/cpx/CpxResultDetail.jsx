@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import CpxTimeAnalysis from './CpxTimeAnalysis';
 import CpxTranscriptView from './CpxTranscriptView';
 
 function request(path, init) {
@@ -168,6 +169,11 @@ export default function CpxResultDetail({ sessionId }) {
           </div>
         </div>
       </Card>
+
+      {/* 단계별 시간 사용 + 신체진찰 면제 안내 — 과거 세션(채점 캐시)엔 없을 수 있어 조건부 */}
+      {(result.timeAnalysis || result.excludedSections?.length > 0) && (
+        <Card><CpxTimeAnalysis analysis={result.timeAnalysis} excludedSections={result.excludedSections} /></Card>
+      )}
 
       {/* 전체 대화록 — 헤더 [전체 대화록] 버튼으로 토글 */}
       {transcriptOpen && (
