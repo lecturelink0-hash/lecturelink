@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Activity, Baby, Brain, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock3, Ear, Eye, Heart, MessageCircle, Mic, MicOff, MinusCircle, PersonStanding, RotateCcw, Search, Send, Shield, ShieldAlert, Sparkles, Stethoscope, UserRound, Utensils, Wind, XCircle } from 'lucide-react';
 import Avatar3D from './Avatar3D';
 import CpxTimeAnalysis from './CpxTimeAnalysis';
+import CpxTranscriptView from './CpxTranscriptView';
 import { GeminiLivePatient } from './live';
 import { startMic } from './mic';
 import { sanitizePatientText } from './sanitize';
@@ -163,6 +164,7 @@ export default function CpxPractice() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [result, setResult] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null); // 채점 결과에서 펼친 영역 id
+  const [showTranscript, setShowTranscript] = useState(false); // 채점 후 [전체 대화록] 패널 토글
   const [gradingProgress, setGradingProgress] = useState(0); // 채점 로딩 원형 게이지(%)
   const [voiceOn, setVoiceOn] = useState(true); // 음성 on/off (off 시 텍스트 전용)
   // 환자 인적사항 공개 여부 — 학생이 직접 물어봤을 때만 해당 항목을 노출한다.
@@ -263,7 +265,7 @@ export default function CpxPractice() {
     const target = overrideCase && overrideCase.id ? overrideCase : selected;
     if (!target || phase === 'starting') return;
     if (caseId !== target.id) setCaseId(target.id);
-    setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
+    setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     try {
       const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: target.id, timeLimitSeconds: limitSeconds }) });
@@ -638,11 +640,22 @@ export default function CpxPractice() {
     </div></Card>}
 
     {phase === 'ended' && (
-      <div className="flex justify-center">
-        <Button variant="accent" size="lg" onClick={() => { setPhase('ready'); setSelectedPart(''); setSelectedCategory(''); setCaseId(''); setResult(null); setTranscript([]); setFindings([]); setSessionId(''); setPersona(null); setStatus('증례를 선택하고 진료를 시작하세요.'); setError(''); }}>
-          <RotateCcw className="h-4 w-4" /> 다른 증례로 다시 연습
-        </Button>
-      </div>
+      <>
+        {/* 전체 대화록 — 세션 동안 쌓인 transcript state 그대로 표시 (진찰 선언 포함, 서버 조회 불필요) */}
+        {showTranscript && (
+          <Card title="전체 대화록" description="이번 진료에서 환자와 나눈 대화 전체입니다. 신체진찰 선언도 함께 표시됩니다." icon={<MessageCircle className="h-5 w-5" />}>
+            <CpxTranscriptView events={transcript} />
+          </Card>
+        )}
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button variant="secondary" size="lg" onClick={() => setShowTranscript((current) => !current)} aria-expanded={showTranscript}>
+            <MessageCircle className="h-4 w-4" /> {showTranscript ? '전체 대화록 닫기' : '전체 대화록'}
+          </Button>
+          <Button variant="accent" size="lg" onClick={() => { setPhase('ready'); setSelectedPart(''); setSelectedCategory(''); setCaseId(''); setResult(null); setTranscript([]); setFindings([]); setShowTranscript(false); setSessionId(''); setPersona(null); setStatus('증례를 선택하고 진료를 시작하세요.'); setError(''); }}>
+            <RotateCcw className="h-4 w-4" /> 다른 증례로 다시 연습
+          </Button>
+        </div>
+      </>
     )}
     </>)}
   </div>;
