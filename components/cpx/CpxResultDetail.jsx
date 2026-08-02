@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft, CheckCircle2, ChevronDown, Clock3, MinusCircle,
+  ArrowLeft, CheckCircle2, ChevronDown, Clock3, MessageCircle, MinusCircle,
   Quote, ShieldAlert, Sparkles, ThumbsUp, XCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import CpxTranscriptView from './CpxTranscriptView';
 
 function request(path, init) {
   return fetch(`/api/cpx${path}`, { cache: 'no-store', ...init }).then(async (response) => {
@@ -70,6 +71,27 @@ export default function CpxResultDetail({ sessionId }) {
   const [startedAt, setStartedAt] = useState(null);
   const [error, setError] = useState('');
   const [openSections, setOpenSections] = useState({});
+  // 전체 대화록 — 버튼을 처음 눌렀을 때만 조회한다 (기록 화면 초기 로딩과 분리).
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [transcriptEvents, setTranscriptEvents] = useState(null);
+  const [transcriptError, setTranscriptError] = useState('');
+  const [transcriptLoading, setTranscriptLoading] = useState(false);
+
+  const toggleTranscript = () => {
+    const nextOpen = !transcriptOpen;
+    setTranscriptOpen(nextOpen);
+    if (!nextOpen || transcriptEvents !== null || transcriptLoading) return;
+    setTranscriptLoading(true);
+    setTranscriptError('');
+    // persist 모드: Supabase 미러(/history/{id}/transcript) → 실패 시 Fly 백엔드 폴백.
+    request(`/history/${sessionId}/transcript`)
+      .catch(() => request(`/sessions/${sessionId}/transcript`))
+      .then((data) => setTranscriptEvents(Array.isArray(data.events) ? data.events : []))
+      .catch((nextError) => {
+        setTranscriptError(nextError instanceof Error ? nextError.message : '대화록을 불러오지 못했습니다.');
+      })
+      .finally(() => setTranscriptLoading(false));
+  };
 
   useEffect(() => {
     let active = true;
@@ -121,7 +143,10 @@ export default function CpxResultDetail({ sessionId }) {
         {result?.persona && <p className="mt-2 text-sm text-[var(--color-muted)]">{result.persona.name} · {result.persona.age}세 · {result.persona.gender}</p>}
         {startedAt && <p className="mt-1 flex items-center gap-1 text-xs text-[var(--color-muted)]"><Clock3 className="h-3.5 w-3.5" />{formatStartedAt(startedAt)}</p>}
       </div>
-      <Link href="/cpx/history" className="inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 text-[15px] font-bold text-white transition hover:bg-[var(--color-primary-strong)]"><ArrowLeft className="h-4 w-4" />기록으로 돌아가기</Link>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={toggleTranscript} aria-expanded={transcriptOpen} className={`inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] border px-5 text-[15px] font-bold transition ${transcriptOpen ? 'border-[var(--color-primary)] bg-[var(--color-sage-50)] text-[var(--color-primary)]' : 'border-[var(--color-border)] bg-white text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]'}`}><MessageCircle className="h-4 w-4" />전체 대화록</button>
+        <Link href="/cpx/history" className="inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 text-[15px] font-bold text-white transition hover:bg-[var(--color-primary-strong)]"><ArrowLeft className="h-4 w-4" />기록으로 돌아가기</Link>
+      </div>
     </section>
 
     {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-4 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
@@ -143,6 +168,15 @@ export default function CpxResultDetail({ sessionId }) {
           </div>
         </div>
       </Card>
+
+      {/* 전체 대화록 — 헤더 [전체 대화록] 버튼으로 토글 */}
+      {transcriptOpen && (
+        <Card title="전체 대화록" description="이 진료에서 환자와 나눈 대화 전체입니다. 신체진찰 선언도 함께 표시됩니다." icon={<MessageCircle className="h-5 w-5" />}>
+          {transcriptLoading && <div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--color-muted)]"><span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />대화록을 불러오는 중입니다.</div>}
+          {!transcriptLoading && transcriptError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-4 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{transcriptError}</div>}
+          {!transcriptLoading && !transcriptError && <CpxTranscriptView events={transcriptEvents} />}
+        </Card>
+      )}
 
       {/* 점수 칸 아래: 좌(영역별 세부 채점) / 우(피드백) 2단 */}
       <div className="grid items-start gap-4 lg:grid-cols-2">

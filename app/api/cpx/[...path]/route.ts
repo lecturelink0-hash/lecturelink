@@ -71,6 +71,58 @@ async function persistedSessionResult(userId: string, sessionId: string) {
   );
 }
 
+// 저장된 세션의 전체 대화록을 Supabase 미러에서 조회.
+// 학생·환자 발화(cpx_transcript_events)에 신체진찰 선언(cpx_physical_exam_events.result.declaration)을
+// 시간순으로 병합 — Fly SQLite에는 진찰 선언이 student 발화로 함께 저장되지만, 미러에서는
+// 두 테이블로 나뉘어 있으므로 여기서 합쳐 Fly transcript 응답과 같은 events 형태를 만든다.
+async function persistedSessionTranscript(userId: string, sessionId: string) {
+  const supabase = await createServerClient();
+  const { data: session, error: sessionError } = await supabase
+    .from('cpx_sessions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('external_session_id', sessionId)
+    .maybeSingle();
+  if (sessionError) {
+    console.error('[cpx transcript] session lookup failed:', sessionError);
+    return NextResponse.json({ detail: '대화록을 불러오지 못했습니다.' }, { status: 503 });
+  }
+  if (!session) {
+    return NextResponse.json({ detail: '세션 없음' }, { status: 404 });
+  }
+  const [talk, exams] = await Promise.all([
+    supabase
+      .from('cpx_transcript_events')
+      .select('role, text, t_offset_ms')
+      .eq('user_id', userId)
+      .eq('session_id', session.id)
+      .order('t_offset_ms', { ascending: true })
+      .order('id', { ascending: true }),
+    supabase
+      .from('cpx_physical_exam_events')
+      .select('result, t_offset_ms')
+      .eq('user_id', userId)
+      .eq('session_id', session.id)
+      .order('t_offset_ms', { ascending: true }),
+  ]);
+  if (talk.error || exams.error) {
+    console.error('[cpx transcript] events load failed:', talk.error ?? exams.error);
+    return NextResponse.json({ detail: '대화록을 불러오지 못했습니다.' }, { status: 503 });
+  }
+  const events = [
+    ...(talk.data ?? []).map((row) => ({ role: row.role, text: row.text, tOffsetMs: row.t_offset_ms })),
+    ...(exams.data ?? []).flatMap((row) => {
+      const result = row.result && typeof row.result === 'object' && !Array.isArray(row.result)
+        ? row.result as Record<string, unknown>
+        : {};
+      return typeof result.declaration === 'string' && result.declaration
+        ? [{ role: 'student', text: result.declaration, tOffsetMs: row.t_offset_ms }]
+        : [];
+    }),
+  ].sort((a, b) => a.tOffsetMs - b.tOffsetMs);
+  return NextResponse.json({ events }, { headers: { 'cache-control': 'no-store' } });
+}
+
 async function forward(request: Request, context: { params: Promise<{ path: string[] }> }) {
   const session = await requireSession();
   const { path } = await context.params;
@@ -85,6 +137,12 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   if (request.method === 'GET' && path.length === 2 && path[0] === 'history'
       && process.env.CPX_PERSIST_TO_SUPABASE === 'true') {
     return persistedSessionResult(session.userId, path[1]);
+  }
+
+  // GET /history/{sessionId}/transcript → 저장된 세션의 전체 대화록 (기록 상세 [전체 대화록] 버튼용)
+  if (request.method === 'GET' && path.length === 3 && path[0] === 'history' && path[2] === 'transcript'
+      && process.env.CPX_PERSIST_TO_SUPABASE === 'true') {
+    return persistedSessionTranscript(session.userId, path[1]);
   }
 
   const base = process.env.CPX_BACKEND_URL;
