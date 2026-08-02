@@ -2,10 +2,12 @@
 
 // 환자 아바타 렌더러.
 // public/models/ 에 GLB가 있으면 그것을 로드하고, 없으면 절차적 로우폴리로 폴백한다.
-//   - /models/patient_{male|female}_old.glb  (60세 이상 케이스에서 최우선)
-//   - /models/patient_{male|female}.glb      (성별 전용)
-//   - /models/patient.glb                    (공용)
+//   - /models/patient_{male|female}_old.glb    (60세 이상 케이스에서 최우선)
+//   - /models/patient_{male|female}_child.glb  (12세 이하 케이스에서 최우선)
+//   - /models/patient_{male|female}.glb        (성별 전용)
+//   - /models/patient.glb                      (공용)
 // 파일을 넣기만 하면 자동으로 3D 모델로 바뀐다. 라이선스는 docs/asset-license-ledger.md에 기록.
+// 보호자 동반 케이스(persona.child 존재)는 중앙에 환아, 측면에 보호자(화자) 2인을 세운다.
 import { Canvas, createPortal, useFrame, useThree } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
@@ -30,7 +32,11 @@ function lowPolyMat(color) {
 // 머리(+y)가 -x 방향, 얼굴(+z)이 +y(천장), 등(-z)이 침대에 닿는다.
 const BED = { top: 0.5, length: 1.9, width: 0.75 }
 
-// 신체진찰 부위 → 발끝 기준 신장 비율. 머리가 -x 쪽이므로 x = bodyH/2 - frac*bodyH.
+// 눕기 시 머리(정수리) x 고정점 — 베개 위치. 체구가 달라도(소아) 머리는 베개에 오고
+// 발 위치만 달라진다. 성인(1.55)은 종전 중앙 배치와 동일한 값이 되도록 -0.775.
+const LYING_HEAD_X = -0.775
+
+// 신체진찰 부위 → 발끝 기준 신장 비율. 머리가 -x 쪽이므로 x = bodyH*(1-frac) + LYING_HEAD_X.
 // 모델 무관(정규화 신장 기반)이라 하드코딩 좌표 없음.
 const EXAM_REGION_FRAC = {
   head: 0.93,
@@ -42,6 +48,23 @@ const EXAM_REGION_FRAC = {
   knee: 0.27,
   foot: 0.06,
 }
+
+// 소아(_child) 체형은 머리가 신장의 ~30%라 성인 비율표를 쓰면 '가슴'이 턱에 떨어진다.
+// 소아 모델 실측(머리 정수리~턱 ≈ 상위 30%) 기반 보정표.
+const CHILD_EXAM_REGION_FRAC = {
+  head: 0.85,
+  neck: 0.66,
+  chest: 0.54,
+  abdomen: 0.4,
+  pelvis: 0.3,
+  legs: 0.18,
+  knee: 0.16,
+  foot: 0.05,
+}
+
+// bodyH로 성인/소아 비율표 선택 (소아 렌더 키는 항상 1.5 미만)
+const regionFrac = (bodyH, examTarget) =>
+  (bodyH < 1.5 ? CHILD_EXAM_REGION_FRAC : EXAM_REGION_FRAC)[examTarget]
 
 function ExamBed() {
   const { top: T, length: L, width: W } = BED
@@ -86,13 +109,15 @@ function CameraRig({ pose, examTarget, bodyH = 1.55 }) {
   const cur = useRef(null)
   useFrame((_, delta) => {
     const lying = pose === 'lying'
-    const frac = lying && examTarget ? EXAM_REGION_FRAC[examTarget] : undefined
+    const frac = lying && examTarget ? regionFrac(bodyH, examTarget) : undefined
     let pos
     let tgt
     if (frac != null) {
-      const x = bodyH / 2 - frac * bodyH
-      pos = [x, BED.top + 1.25, 1.0]
-      tgt = [x, BED.top + 0.1, 0]
+      // 클로즈업 거리·높이는 체구 비례(√ 완충) — 선형 비례는 소아에서 과도한 초근접이 된다
+      const k = Math.sqrt(bodyH / 1.55)
+      const x = bodyH * (1 - frac) + LYING_HEAD_X
+      pos = [x, BED.top + 1.25 * k, 1.0 * k]
+      tgt = [x, BED.top + 0.1 * k, 0]
     } else if (lying) {
       pos = [0, 1.45, 2.9]
       tgt = [0, BED.top, 0]
@@ -114,12 +139,12 @@ function CameraRig({ pose, examTarget, bodyH = 1.55 }) {
 function ExamSpotlight({ examTarget, bodyH = 1.55 }) {
   const light = useRef()
   const target = useMemo(() => new THREE.Object3D(), [])
-  const frac = EXAM_REGION_FRAC[examTarget]
+  const frac = regionFrac(bodyH, examTarget)
   useEffect(() => {
     if (light.current) light.current.target = target
   }, [target, frac])
   if (frac == null) return null
-  const x = bodyH / 2 - frac * bodyH
+  const x = bodyH * (1 - frac) + LYING_HEAD_X
   return (
     <>
       <spotLight ref={light} position={[x, BED.top + 1.7, 0.5]} angle={0.45} penumbra={0.7} intensity={2.5} />
@@ -221,8 +246,9 @@ function useIdleMotion(ref, { speaking, audioLevel, pose, hasIdleClip = false, b
     if (lying) {
       // 등을 침대에 대고 천장 보기. (x,y,z)→(-y,z,-x): 머리 -x, 얼굴 +y.
       // y: 등(모델 -z 최저점)이 침대 상판에 닿도록 bodyMinZ(음수)만큼 들어올림.
+      // x: 머리를 베개(LYING_HEAD_X)에 고정 — 소아도 머리가 베개에 온다.
       g.rotation.set(-Math.PI / 2, 0, Math.PI / 2)
-      g.position.set(bodyH / 2, BED.top - bodyMinZ + bob, 0)
+      g.position.set(bodyH + LYING_HEAD_X, BED.top - bodyMinZ + bob, 0)
     } else {
       g.rotation.set(0, Math.sin(t.current * 0.5) * 0.05, 0)
       g.position.set(0, bob, 0)
@@ -385,8 +411,49 @@ function FaceOverlay({ anchors, speaking, audioLevel }) {
   )
 }
 
+// ── 소아 렌더 키 ─────────────────────────────────────────────
+// 12세 이하는 _child 모델 + 나이대별 목표 키. 성인·노인은 기존 1.55 유지.
+function targetHeightForAge(age) {
+  const a = Number(age)
+  if (!Number.isFinite(a) || a > 12) return 1.55
+  if (a <= 3) return 0.95
+  if (a <= 8) return 1.15
+  return 1.3
+}
+
+// _child GLB는 본 스케일 수술(머리·어깨 배율)이 들어 있어 바인드 박스와 실제
+// 포즈 크기가 다르다 → CPU 스키닝(applyBoneTransform)으로 실측한다.
+// 로우폴리(정점 수천 개) 1회 순회라 비용 미미. 실패 시 null(바인드 박스 폴백).
+function measurePosedBounds(root) {
+  try {
+    root.updateMatrixWorld(true)
+    const box = new THREE.Box3()
+    let bodyMinZ = Infinity // Hair 제외 — 눕기 침대 접촉 기준 (기존 바인드 경로와 동일 규칙)
+    const v = new THREE.Vector3()
+    let sampled = false
+    root.traverse((o) => {
+      if (!o.isSkinnedMesh || !o.geometry?.attributes?.position || typeof o.applyBoneTransform !== 'function') return
+      o.skeleton.update()
+      const pos = o.geometry.attributes.position
+      const isHair = [].concat(o.material).some((m) => m && m.name === 'Hair')
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i)
+        o.applyBoneTransform(i, v)
+        v.applyMatrix4(o.matrixWorld)
+        box.expandByPoint(v)
+        if (!isHair && v.z < bodyMinZ) bodyMinZ = v.z
+      }
+      sampled = true
+    })
+    if (!sampled || box.isEmpty()) return null
+    return { box, bodyMinZ: Number.isFinite(bodyMinZ) ? bodyMinZ : box.min.z }
+  } catch {
+    return null
+  }
+}
+
 // ── GLB 로더 ─────────────────────────────────────────────────
-function GlbPatient({ url, ...motion }) {
+function GlbPatient({ url, targetH = 1.55, ...motion }) {
   const { scene, animations } = useGLTF(url)
   // 스킨드 메시(리깅 모델)는 plain clone이 본 바인딩을 깨므로 SkeletonUtils로 복제
   const clone = useMemo(() => {
@@ -394,22 +461,29 @@ function GlbPatient({ url, ...motion }) {
     applyGlbColorFix(c)
     return c
   }, [scene])
-  // 어떤 드롭인 모델이든 키 ~1.55·발 y=0으로 정규화 (카메라 [0,1.4,3.2] 기준)
+  // 어떤 드롭인 모델이든 키 ~targetH·발 y=0으로 정규화 (카메라 [0,1.4,3.2] 기준)
   // minZ: 등 쪽(-z) 최저점(스케일 적용) — 눕기 시 침대 접촉 높이 산출용.
   // Hair는 제외: 뒷머리 뭉치를 접촉 기준으로 삼으면 몸통이 침대에서 떠 보인다(머리카락은 눌린다고 가정).
+  // _child 모델은 본 스케일이 바인드 박스에 안 잡히므로 포즈 실측 바운드를 우선 사용.
   const { scale, offsetY, minZ } = useMemo(() => {
-    const box = new THREE.Box3().setFromObject(clone)
+    const posed = url.includes('_child') ? measurePosedBounds(clone) : null
+    const box = posed ? posed.box : new THREE.Box3().setFromObject(clone)
     const h = box.max.y - box.min.y || 1
-    const s = 1.55 / h
-    const body = new THREE.Box3()
-    clone.traverse((o) => {
-      if (!o.isMesh && !o.isSkinnedMesh) return
-      if ([].concat(o.material).some((m) => m && m.name === 'Hair')) return
-      body.expandByObject(o)
-    })
-    const zRef = body.isEmpty() ? box.min.z : body.min.z
+    const s = targetH / h
+    let zRef
+    if (posed) {
+      zRef = posed.bodyMinZ
+    } else {
+      const body = new THREE.Box3()
+      clone.traverse((o) => {
+        if (!o.isMesh && !o.isSkinnedMesh) return
+        if ([].concat(o.material).some((m) => m && m.name === 'Hair')) return
+        body.expandByObject(o)
+      })
+      zRef = body.isEmpty() ? box.min.z : body.min.z
+    }
     return { scale: s, offsetY: -box.min.y * s, minZ: zRef * s }
-  }, [clone])
+  }, [clone, url, targetH])
   // A안 오버레이 앵커 (Face 지오메트리 기반 자동 산출; 실패 시 오버레이 생략)
   const anchors = useMemo(() => computeFaceAnchors(clone), [clone])
   const ref = useRef()
@@ -426,7 +500,7 @@ function GlbPatient({ url, ...motion }) {
     action.reset().fadeIn(0.3).play()
     return () => action.fadeOut(0.2)
   }, [animations, mixer, hasIdleClip])
-  useIdleMotion(ref, { ...motion, hasIdleClip, bodyH: 1.55, bodyMinZ: minZ })
+  useIdleMotion(ref, { ...motion, hasIdleClip, bodyH: targetH, bodyMinZ: minZ })
   return (
     <group ref={ref}>
       <group position={[0, offsetY, 0]} scale={scale}>
@@ -546,8 +620,10 @@ function useResolvedModel(gender, age) {
   useEffect(() => {
     let alive = true
     const g = GENDER_KEY[gender] || 'male'
+    const a = Number(age)
     const candidates = [
-      ...(Number(age) >= 60 ? [`/cpx/models/patient_${g}_old.glb`] : []),
+      ...(a >= 60 ? [`/cpx/models/patient_${g}_old.glb`] : []),
+      ...(a <= 12 ? [`/cpx/models/patient_${g}_child.glb`] : []),
       `/cpx/models/patient_${g}.glb`,
     ]
     ;(async () => {
@@ -572,9 +648,14 @@ function useResolvedModel(gender, age) {
   return url
 }
 
-function PatientAvatar({ gender, age, speaking, audioLevel, pose, motionProfile }) {
+function PatientAvatar({ gender, age, targetH = 1.55, speaking, audioLevel, pose, motionProfile }) {
   const url = useResolvedModel(gender, age)
-  const procedural = <ProceduralPatient gender={gender} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
+  // 절차적 폴백은 성인 치수 기반 — 소아는 서있을 때만 축소(눕기는 침대 좌표가 절대값이라 유지)
+  const procedural = (
+    <group scale={pose === 'lying' ? 1 : targetH / 1.55}>
+      <ProceduralPatient gender={gender} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
+    </group>
+  )
 
   // 확인 중이거나 GLB 없음 → 절차적
   if (!url) return procedural
@@ -582,18 +663,39 @@ function PatientAvatar({ gender, age, speaking, audioLevel, pose, motionProfile 
   return (
     <AvatarErrorBoundary url={url} fallback={procedural}>
       <Suspense fallback={procedural}>
-        <GlbPatient url={url} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
+        <GlbPatient url={url} targetH={targetH} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
       </Suspense>
     </AvatarErrorBoundary>
   )
 }
 
+// 보호자 동반 케이스의 측면 인물 — 항상 서있는 성인(화자), 진찰·눕기 대상 아님.
+// GLB가 없으면 생략(절차적 2인 배치는 시각적으로 과함).
+function GuardianFigure({ gender, age, speaking, audioLevel, pose }) {
+  const url = useResolvedModel(gender, age)
+  if (!url) return null
+  const lying = pose === 'lying'
+  return (
+    <group position={lying ? [0.9, 0, -0.6] : [0.62, 0, -0.15]} rotation={[0, lying ? -0.6 : -0.28, 0]}>
+      <AvatarErrorBoundary url={url} fallback={null}>
+        <Suspense fallback={null}>
+          <GlbPatient url={url} targetH={1.55} speaking={speaking} audioLevel={audioLevel} pose="sitting" motionProfile={null} />
+        </Suspense>
+      </AvatarErrorBoundary>
+    </group>
+  )
+}
+
 // examTarget: 누운 상태가 필수인 신체진찰 시 카메라·조명이 향할 부위 키 (EXAM_REGION_FRAC 참조)
-export default function Avatar3D({ gender = '남성', age, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null, category = '' }) {
+// child: persona.child (보호자 동반 케이스). 있으면 중앙 인물=환아(진찰 대상),
+//        gender/age(화자=보호자)는 측면 인물로 서고 발화 연기도 보호자가 한다.
+export default function Avatar3D({ gender = '남성', age, child = null, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null, category = '' }) {
   const motionProfile = MOTION_PROFILE_BY_CATEGORY[category] || null
+  const patient = child ? { gender: child.gender || '남성', age: child.age } : { gender, age }
+  const patientH = targetHeightForAge(patient.age)
   return (
     <Canvas
-      key={`${gender}-${age}`}
+      key={`${gender}-${age}-${child ? `${child.gender}-${child.age}` : 'solo'}`}
       shadows="percentage"
       camera={{ position: [0, 1.35, 3.1], fov: 40 }}
       onCreated={({ camera }) => camera.lookAt(0, 0.75, 0)}
@@ -603,10 +705,22 @@ export default function Avatar3D({ gender = '남성', age, speaking = false, aud
       <directionalLight position={[3, 4, 3]} intensity={1.5} color="#ffe8bf" castShadow />
       <directionalLight position={[-3, 2, -2]} intensity={0.6} color="#bcd6ff" />
       <pointLight position={[0, 2, -3]} intensity={1.2} color="#f3c64e" />
-      <CameraRig pose={pose} examTarget={examTarget} />
+      <CameraRig pose={pose} examTarget={examTarget} bodyH={patientH} />
       {pose === 'lying' && <ExamBed />}
-      {pose === 'lying' && examTarget && <ExamSpotlight examTarget={examTarget} />}
-      <PatientAvatar gender={gender} age={age} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
+      {pose === 'lying' && examTarget && <ExamSpotlight examTarget={examTarget} bodyH={patientH} />}
+      {/* 2인 스탠딩 구도: 환아를 좌측으로 밀어 보호자와 함께 중앙 정렬 (눕기는 침대 좌표 절대값 유지) */}
+      <group position={child && pose !== 'lying' ? [-0.35, 0, 0] : [0, 0, 0]}>
+        <PatientAvatar
+          gender={patient.gender}
+          age={patient.age}
+          targetH={patientH}
+          speaking={child ? false : speaking}
+          audioLevel={child ? 0 : audioLevel}
+          pose={pose}
+          motionProfile={motionProfile}
+        />
+      </group>
+      {child && <GuardianFigure gender={gender} age={age} speaking={speaking} audioLevel={audioLevel} pose={pose} />}
       {typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debugaxes') && (
         <axesHelper args={[1.5]} />
       )}
