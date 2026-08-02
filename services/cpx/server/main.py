@@ -63,6 +63,16 @@ def current_user_id(
 
 class SessionCreate(BaseModel):
     caseId: str
+    # 연습용 시간제한(초). 실전 12분(720) 외에 11분 30초·11분 단축 연습 지원.
+    timeLimitSeconds: int | None = None
+
+
+DEFAULT_TIME_LIMIT_SECONDS = 12 * 60
+TIME_LIMIT_CHOICES = {720, 690, 660}
+
+
+def resolve_time_limit(value: int | None) -> int:
+    return value if value in TIME_LIMIT_CHOICES else DEFAULT_TIME_LIMIT_SECONDS
 
 
 class TranscriptEvent(BaseModel):
@@ -98,8 +108,10 @@ def create_session(body: SessionCreate, user_id: str = Depends(current_user_id))
     import uuid as _uuid
     seed = _uuid.uuid4().hex
     persona = prompt_mod.resolve_persona(case, seed)
-    session_id = db.create_session(body.caseId, user_id, _json.dumps(persona, ensure_ascii=False))
-    return {'sessionId': session_id, 'persona': persona}
+    time_limit = resolve_time_limit(body.timeLimitSeconds)
+    config = _json.dumps({'timeLimitSeconds': time_limit}, ensure_ascii=False)
+    session_id = db.create_session(body.caseId, user_id, _json.dumps(persona, ensure_ascii=False), config)
+    return {'sessionId': session_id, 'persona': persona, 'timeLimitSeconds': time_limit}
 
 
 @app.post('/api/sessions/{session_id}/live-token')
@@ -276,6 +288,13 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
     result['judgments'] = judgments['items']  # 항목별 근거 인용 (§4.4-3)
     result['caseId'] = session['case_id']
     result['persona'] = _json.loads(session['persona']) if session.get('persona') else None
+    # 단계별 사용 시간 — LLM이 보고한 단계 경계 + 전사 타임스탬프로 결정론 계산
+    import physical_exam
+    config = _json.loads(session['config']) if session.get('config') else {}
+    exam_declarations = {b['declaration'] for b in physical_exam.buttons_for(case)}
+    result['timeAnalysis'] = ev.compute_time_analysis(
+        events, judgments.get('phases'), config.get('timeLimitSeconds'), session, exam_declarations,
+    )
     # 프론트 표시용 항목 원문
     result['itemTexts'] = {
         i['id']: i['text'] for s in rubric['sections'] if s['type'] != 'deduction' for i in s['items']
