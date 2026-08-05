@@ -32,7 +32,6 @@ import {
   RotateCcw,
   Sparkles,
   Star,
-  Stethoscope,
   Upload,
   X,
 } from 'lucide-react';
@@ -160,27 +159,6 @@ const BTN_GHOST =
    (IntersectionObserver 1회 재생 후 unobserve · prefers-reduced-motion 제거
     · 이동 8~14px · 450~650ms · 등장 후 유지)
    ============================================================ */
-function HeroReveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const animation = element.animate(
-      [
-        { opacity: 0, transform: 'translateY(12px)' },
-        { opacity: 1, transform: 'translateY(0)' },
-      ],
-      { duration: 500, delay, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'both' },
-    );
-    return () => animation.cancel();
-  }, [delay]);
-
-  return <div ref={ref}>{children}</div>;
-}
-
 function ScrollReveal({
   children,
   delay = 0,
@@ -787,6 +765,15 @@ export function Landing() {
     <div className="ll-land min-h-screen overflow-x-hidden bg-[#FCFAF4] text-[#111827]">
       {/* 기존 랜딩의 프리뷰 데모 애니메이션(커서 클릭·진행 바·음성 웨이브) — 스코프 유지 */}
       <style>{`
+        .ll-land .llh-1{animation:llh-fade .45s ease both}
+        .ll-land .llh-2{animation:llh-rise .5s cubic-bezier(.22,1,.36,1) .5s both}
+        .ll-land .llh-line{transform-origin:left center;animation:llh-draw 1.1s cubic-bezier(.45,0,.2,1) 1.05s both}
+        .ll-land .llh-3{animation:llh-rise .45s cubic-bezier(.22,1,.36,1) 2.05s both}
+        .ll-land .llh-4{animation:llh-fade .6s ease 2.55s both}
+        .ll-land .llh-5{animation:llh-rise .5s cubic-bezier(.22,1,.36,1) 3s both}
+        @keyframes llh-fade{from{opacity:0}to{opacity:1}}
+        @keyframes llh-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes llh-draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
         .ll-land .ll-option{background:#fff;box-shadow:inset 0 0 0 1px #E5E1D8;transition:background-color .38s ease,color .38s ease,box-shadow .38s ease,transform .38s ease}
         .ll-land .ll-correct-target svg{opacity:0;transform:scale(.7)}
         .ll-land .ll-demo-cursor{position:absolute;left:63%;top:53%;z-index:4;width:34px;height:34px;color:#143C2C;filter:drop-shadow(0 10px 16px rgba(17,24,39,.20));opacity:0;pointer-events:none}
@@ -807,6 +794,7 @@ export function Landing() {
         @keyframes ll-check-pop{0%{opacity:0;transform:scale(.7)}70%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
         @keyframes ll-wave{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
         @media (prefers-reduced-motion: reduce){
+          .ll-land .llh-1,.ll-land .llh-2,.ll-land .llh-3,.ll-land .llh-4,.ll-land .llh-5,.ll-land .llh-line{animation:none !important}
           .ll-land .ll-demo-cursor{display:none}
           .ll-land .ll-play .ll-picked-target,.ll-land .ll-play .ll-correct-target,.ll-land .ll-play .ll-picked-target>span:first-child,.ll-land .ll-play .ll-correct-target>span:first-child,.ll-land .ll-play .ll-correct-target svg,.ll-land .cpx-wave{animation:none !important}
           .ll-land .ll-correct-target{background:#EAF3ED;color:#1F5C43;box-shadow:inset 0 0 0 1px rgba(31,92,67,.16)}
@@ -819,36 +807,32 @@ export function Landing() {
       <Header />
 
       <main>
-        {/* ── 히어로 — 새 기획 카피 · 기존 버튼/배지 스타일 ── */}
-        <section id="top" className="scroll-mt-16 border-b border-[#E5E1D8] px-5 sm:px-8">
-          <div className="mx-auto max-w-[860px] pb-16 pt-14 text-center sm:pb-20 sm:pt-20 [word-break:keep-all]">
-            <HeroReveal>
-              <Badge tone="sage">
-                <Stethoscope className="h-[13px] w-[13px]" /> 의대생을 위한 통합 학습 플랫폼
-              </Badge>
-            </HeroReveal>
-            <HeroReveal delay={70}>
-              <h1 className="mt-5 text-[clamp(30px,4.6vw,46px)] font-extrabold leading-[1.18] tracking-tight text-[#111827]">
-                매번 ChatGPT로 내신 문제 만들기,
-                <br />
-                <span className="text-[#1F5C43]">힘들지 않았나요?</span>
+        {/* ── 히어로 — 브랜드 인트로 모션: "의대 공부의 흐름을 / 잇———다 / 렉처링크" ──
+             페이지 로드 시 1회 재생: 1줄 즉시 → "잇" 등장 → 초록 선이 흐르듯 연결 →
+             선 끝에서 "다" → "렉처링크" 페이드인 → CTA. prefers-reduced-motion 시 정적 표시. */}
+        <section id="top" className="scroll-mt-16 border-b border-[#E5E1D8] bg-white px-5 sm:px-8">
+          <div className="mx-auto max-w-[1140px] pb-16 pt-16 sm:pb-24 sm:pt-24 [word-break:keep-all]">
+            <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_.85fr] lg:gap-14">
+              <h1
+                aria-label="의대 공부의 흐름을 잇다 — 렉처링크"
+                className="text-[clamp(34px,5.5vw,64px)] font-extrabold leading-[1.22] tracking-tight text-[#111827]"
+              >
+                <span className="llh-1 block">의대 공부의 흐름을</span>
+                <span className="mt-[0.08em] flex items-center gap-[0.16em]" aria-hidden="true">
+                  <span className="llh-2 shrink-0 text-[#1F5C43]">잇</span>
+                  <span className="llh-line h-[0.11em] min-w-0 flex-1 rounded-full bg-[#1F5C43]" />
+                  <span className="llh-3 shrink-0 text-[#1F5C43]">다</span>
+                </span>
               </h1>
-            </HeroReveal>
-            <HeroReveal delay={140}>
-              <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-[#6B7280]">
-                강의자료를 다시 설명하고, 원하는 문제가 나올 때까지 수정하고,
-                <br className="hidden sm:block" /> 문제를 풀고 나면 오답은 또 직접 정리해야 했으니까요.
+              <p
+                aria-hidden="true"
+                className="llh-4 text-[clamp(34px,5.5vw,64px)] font-extrabold leading-none tracking-tight text-[#1F5C43] lg:text-center"
+              >
+                렉처링크
               </p>
-            </HeroReveal>
-            <HeroReveal delay={210}>
-              <p className="mx-auto mt-4 text-[18px] font-extrabold leading-relaxed tracking-tight text-[#1F5C43] sm:text-[20px]">
-                내신 대비부터 국시 필기, CPX까지
-                <br />
-                렉처링크 하나로 준비하세요.
-              </p>
-            </HeroReveal>
-            <HeroReveal delay={280}>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
+            </div>
+            <div className="llh-5 mt-12 sm:mt-14">
+              <div className="flex flex-wrap gap-3">
                 <Link href="/login" className={`${BTN_PRIMARY} group h-[52px] px-6 text-[16px]`}>
                   1달 무료체험 시작하기
                   <ArrowRight className="h-[18px] w-[18px] transition-transform group-hover:translate-x-0.5" />
@@ -861,7 +845,7 @@ export function Landing() {
                 </a>
               </div>
               <p className="mt-5 text-[13px] font-semibold text-[#9AA1AC]">카드 등록 없이 시작 · 첫 한 달 무료</p>
-            </HeroReveal>
+            </div>
           </div>
         </section>
 
