@@ -32,6 +32,7 @@ import {
   RotateCcw,
   Sparkles,
   Star,
+  Stethoscope,
   Upload,
   X,
 } from 'lucide-react';
@@ -849,8 +850,39 @@ export function Landing() {
           </div>
         </section>
 
+        {/* ── 문제 공감 — 기존 히어로 카피 (매번 ChatGPT로…) ── */}
+        <section className="px-5 py-16 sm:px-8 sm:py-20">
+          <div className="mx-auto max-w-[860px] text-center [word-break:keep-all]">
+            <ScrollReveal>
+              <Badge tone="sage">
+                <Stethoscope className="h-[13px] w-[13px]" /> 의대생을 위한 통합 학습 플랫폼
+              </Badge>
+            </ScrollReveal>
+            <ScrollReveal delay={70}>
+              <h2 className="mt-5 text-[clamp(26px,3.6vw,40px)] font-extrabold leading-[1.3] tracking-tight text-[#111827]">
+                매번 ChatGPT로 내신 문제 만들기,
+                <br />
+                <span className="text-[#1F5C43]">힘들지 않았나요?</span>
+              </h2>
+            </ScrollReveal>
+            <ScrollReveal delay={140}>
+              <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-[#6B7280]">
+                강의자료를 다시 설명하고, 원하는 문제가 나올 때까지 수정하고,
+                <br className="hidden sm:block" /> 문제를 풀고 나면 오답은 또 직접 정리해야 했으니까요.
+              </p>
+            </ScrollReveal>
+            <ScrollReveal delay={210}>
+              <p className="mx-auto mt-4 text-[18px] font-extrabold leading-relaxed tracking-tight text-[#1F5C43] sm:text-[20px]">
+                내신 대비부터 국시 필기, CPX까지
+                <br />
+                렉처링크 하나로 준비하세요.
+              </p>
+            </ScrollReveal>
+          </div>
+        </section>
+
         {/* ── 문제 제기 — 새 기획 콘텐츠 ── */}
-        <section id="why" className="scroll-mt-16 border-b border-[#E5E1D8] bg-white px-5 py-16 sm:px-8 sm:py-20">
+        <section id="why" className="scroll-mt-16 border-y border-[#E5E1D8] bg-white px-5 py-16 sm:px-8 sm:py-20">
           <div className="mx-auto grid max-w-[1140px] gap-10 lg:grid-cols-[.9fr_1.1fr] lg:gap-14">
             <div className="[word-break:keep-all]">
               <ScrollReveal>
