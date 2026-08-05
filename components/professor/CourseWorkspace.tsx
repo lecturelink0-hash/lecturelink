@@ -4,12 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  AlertCircle,
   BarChart3,
   BookOpen,
+  CheckCircle2,
   ClipboardCheck,
   FileCheck2,
   FileText,
   Plus,
+  Loader2,
+  RotateCcw,
   ShieldCheck,
   Trash2,
   Upload,
@@ -49,6 +53,11 @@ type CourseDetailData = {
   artifacts: Artifact[];
   materials: Material[];
   studentCount: number;
+};
+type MaterialUploadState = {
+  fileName: string;
+  stage: "uploading" | "processing" | "complete" | "failed";
+  message: string;
 };
 const TYPES = {
   formative: { label: "형성평가", icon: ClipboardCheck },
@@ -133,6 +142,7 @@ export function CourseList() {
   const [title, setTitle] = useState("");
   const [term, setTerm] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
   const [createMessage, setCreateMessage] = useState("");
   const courseListRef = useRef<HTMLElement>(null);
@@ -199,6 +209,36 @@ export function CourseList() {
       showCreated(payload.data);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function removeCourse(course: Course) {
+    const confirmed = window.confirm(
+      `‘${course.title}’ 작업공간을 삭제하시겠습니까?\n\n저장된 강의자료, 생성 결과, 배포한 형성평가와 학생 제출 결과가 함께 삭제됩니다.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingCourseId(course.id);
+    setCreatedCourseId(null);
+    setCreateMessage("");
+    try {
+      if (!localPreview) {
+        const response = await fetch(
+          `/api/professor/courses/${encodeURIComponent(course.id)}`,
+          { method: "DELETE" },
+        );
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          setCreateMessage(
+            payload?.error?.message ?? "작업공간을 삭제하지 못했습니다.",
+          );
+          return;
+        }
+      }
+      setCourses((current) => current.filter((item) => item.id !== course.id));
+      setCreateMessage(`‘${course.title}’ 작업공간을 삭제했습니다.`);
+    } finally {
+      setDeletingCourseId(null);
     }
   }
 
@@ -323,23 +363,34 @@ export function CourseList() {
         )}
         <div className="course-card-grid">
           {courses.map((course, index) => (
-            <Link
+            <article
               className={`course-card${course.id === createdCourseId ? " is-new" : ""}`}
-              href={`/professor/courses/${course.id}`}
               key={course.id}
             >
-              <div className="course-card-top">
-                <span className="course-card-icon">
-                  <BookOpen size={19} />
+              <Link className="course-card-open" href={`/professor/courses/${course.id}`}>
+                <div className="course-card-top">
+                  <span className="course-card-icon">
+                    <BookOpen size={19} />
+                  </span>
+                  <small>{course.term || "학기 미지정"}</small>
+                  <b>{String(index + 1).padStart(2, "0")}</b>
+                </div>
+                <h3>{course.title}</h3>
+                <span className="course-card-link">
+                  차시 열기 <ArrowRight size={15} />
                 </span>
-                <small>{course.term || "학기 미지정"}</small>
-                <b>{String(index + 1).padStart(2, "0")}</b>
-              </div>
-              <h3>{course.title}</h3>
-              <span className="course-card-link">
-                차시 열기 <ArrowRight size={15} />
-              </span>
-            </Link>
+              </Link>
+              <button
+                type="button"
+                className="course-card-delete"
+                aria-label={`${course.title} 작업공간 삭제`}
+                disabled={deletingCourseId === course.id}
+                onClick={() => void removeCourse(course)}
+              >
+                <Trash2 size={16} />
+                {deletingCourseId === course.id ? "삭제 중" : "삭제"}
+              </button>
+            </article>
           ))}
           {!courses.length && (
             <div className="professor-empty">
@@ -367,8 +418,11 @@ export function CourseDetail({ courseId }: { courseId: string }) {
       : null,
   );
   const [uploading, setUploading] = useState(false);
+  const [uploadState, setUploadState] = useState<MaterialUploadState | null>(null);
+  const [uploadedMaterialId, setUploadedMaterialId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const retryFileRef = useRef<File | null>(null);
   useEffect(() => {
     if (localPreview) return;
     fetch(`/api/professor/courses/${courseId}`)
@@ -386,14 +440,67 @@ export function CourseDetail({ courseId }: { courseId: string }) {
   );
   async function upload(file: File | undefined) {
     if (!file) return;
+    retryFileRef.current = file;
     setUploading(true);
+    setUploadedMaterialId(null);
+    setUploadState({
+      fileName: file.name,
+      stage: "uploading",
+      message: "파일을 안전하게 저장하고 있습니다.",
+    });
+    const processingTimer = window.setTimeout(() => {
+      setUploadState((current) => current?.stage === "uploading" ? {
+        ...current,
+        stage: "processing",
+        message: "자료의 글자와 페이지를 읽고 있습니다.",
+      } : current);
+    }, 700);
     try {
-      await uploadTeachingMaterial(courseId, file);
-      const response = await fetch(`/api/professor/courses/${courseId}`);
-      const payload = await response.json();
-      if (payload.ok) setData(payload.data);
+      if (localPreview) {
+        const previewMaterial: Material = {
+          id: `preview-material-${Date.now()}`,
+          file_name: file.name,
+          file_type: file.name.toLowerCase().endsWith(".pptx") ? "pptx" : "pdf",
+          file_size_bytes: file.size,
+          page_count: null,
+          status: "ready",
+          created_at: new Date().toISOString(),
+        };
+        await new Promise((resolve) => window.setTimeout(resolve, 1100));
+        setData((current) => current ? {
+          ...current,
+          materials: [previewMaterial, ...current.materials],
+        } : current);
+        setUploadedMaterialId(previewMaterial.id);
+      } else {
+        const stored = await uploadTeachingMaterial(courseId, file);
+        const response = await fetch(`/api/professor/courses/${courseId}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload?.error?.message ?? "자료 목록을 다시 불러오지 못했습니다.");
+        }
+        setData(payload.data);
+        setUploadedMaterialId(stored.id);
+      }
+      retryFileRef.current = null;
+      setUploadState({
+        fileName: file.name,
+        stage: "complete",
+        message: "강의자료가 추가되었습니다.",
+      });
+      window.setTimeout(() => setUploadState((current) =>
+        current?.stage === "complete" ? null : current
+      ), 5000);
+    } catch (error) {
+      setUploadState({
+        fileName: file.name,
+        stage: "failed",
+        message: error instanceof Error ? error.message : "강의자료를 업로드하지 못했습니다.",
+      });
     } finally {
+      window.clearTimeout(processingTimer);
       setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
     }
   }
 
@@ -483,8 +590,33 @@ export function CourseDetail({ courseId }: { courseId: string }) {
               </aside>
             </div>
             <div className="course-material-list">
+              {uploadState && (
+                <article
+                  className={`course-upload-status is-${uploadState.stage}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span className="course-upload-status-icon">
+                    {uploadState.stage === "complete" ? <CheckCircle2 size={22} /> :
+                      uploadState.stage === "failed" ? <AlertCircle size={22} /> :
+                      <Loader2 className="is-spinning" size={22} />}
+                  </span>
+                  <div>
+                    <b>{uploadState.fileName}</b>
+                    <span>{uploadState.message}</span>
+                  </div>
+                  {uploadState.stage === "failed" && retryFileRef.current && (
+                    <button type="button" onClick={() => void upload(retryFileRef.current ?? undefined)}>
+                      <RotateCcw size={16} /> 다시 시도
+                    </button>
+                  )}
+                </article>
+              )}
               {data.materials.map((material) => (
-                <article className="course-material-row" key={material.id}>
+                <article
+                  className={`course-material-row${material.id === uploadedMaterialId ? " is-new" : ""}`}
+                  key={material.id}
+                >
                   <span className="course-row-icon">
                     <FileText size={18} />
                   </span>
@@ -519,7 +651,7 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                   </div>
                 </article>
               ))}
-              {!data.materials.length && (
+              {!data.materials.length && !uploadState && (
                 <div className="course-empty">
                   <Upload size={17} />
                   <span>

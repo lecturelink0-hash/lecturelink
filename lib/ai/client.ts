@@ -95,8 +95,8 @@ export async function createMessage(
   client: Anthropic,
   params: MessageCreateParams,
 ): Promise<ExtendedMessage> {
-  // provider 스위치: AI_PROVIDER=gemini 이면 Gemini 로 위임(응답은 Anthropic 형태로 반환).
-  // 그 외에는 아래 기존 Claude 경로를 그대로 사용한다.
+  // 기본 provider인 Gemini로 위임한다(응답은 Anthropic 형태로 반환).
+  // AI_PROVIDER=anthropic을 명시한 환경에서만 아래 Claude 경로를 사용한다.
   if (isGeminiProvider()) {
     return geminiCreateMessage(params);
   }
