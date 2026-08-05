@@ -92,10 +92,13 @@
 
 .course-data-notice {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 11px;
-  padding: 17px 18px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-rows: 22px auto;
+  align-self: start;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 13px 15px 12px;
   border: 1px solid var(--sage-400);
   border-radius: 12px;
   background: var(--sage-50, #f6faf7);
@@ -103,20 +106,26 @@
 }
 
 .course-data-notice > svg {
+  grid-column: 1;
+  grid-row: 1;
   color: var(--forest);
 }
 
 .course-data-notice p {
-  display: grid;
-  gap: 3px;
+  grid-column: 2;
+  grid-row: 2;
   margin: 0;
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.45;
 }
 
-.course-data-notice b {
+.course-data-notice > b {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
   color: var(--forest);
   font-size: 16px;
+  line-height: 1.2;
 }
 
 .course-material-list,
