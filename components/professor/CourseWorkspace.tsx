@@ -582,8 +582,8 @@ export function CourseDetail({ courseId }: { courseId: string }) {
               </div>
               <aside className="course-data-notice">
                 <ShieldCheck size={22} />
+                <b>업로드 자료 보호 안내</b>
                 <p>
-                  <b>업로드 자료 보호 안내</b>
                   삭제한 자료는 서버에서도 삭제됩니다. 모델 학습이나 외부 배포에
                   사용하지 않고, 선택한 기능의 분석에만 사용합니다.
                 </p>
