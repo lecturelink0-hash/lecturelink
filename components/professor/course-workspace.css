@@ -126,6 +126,49 @@
   gap: 10px;
 }
 
+.course-upload-status {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #a8c9b2;
+  border-radius: 14px;
+  background: #f1f8f3;
+  color: var(--p-forest-dark);
+}
+
+.course-upload-status-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #dcefe2;
+  color: var(--p-forest);
+}
+
+.course-upload-status > div { display: grid; gap: 3px; }
+.course-upload-status b { overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.course-upload-status div > span { color: var(--p-muted); font-size: 15px; }
+.course-upload-status.is-complete { border-color: #82b493; background: #edf8f0; }
+.course-upload-status.is-failed { border-color: #d9aaaa; background: #fff5f4; color: #813b3b; }
+.course-upload-status.is-failed .course-upload-status-icon { background: #f9dddd; color: #a54242; }
+.course-upload-status button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border: 1px solid #c77d7d; border-radius: 9px; background: #fff; color: #8d3434; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; }
+.is-spinning { animation: course-upload-spin .8s linear infinite; }
+@keyframes course-upload-spin { to { transform: rotate(360deg); } }
+
+.course-material-row.is-new {
+  border-color: #79ad8a;
+  background: #f3faf5;
+  animation: course-material-added 1s ease-out;
+}
+@keyframes course-material-added {
+  0% { transform: translateY(7px); box-shadow: 0 0 0 0 rgba(31,92,67,.24); }
+  45% { transform: translateY(0); box-shadow: 0 0 0 8px rgba(31,92,67,.07); }
+  100% { box-shadow: none; }
+}
+
 .course-material-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -481,6 +524,8 @@
 }
 
 @media (max-width: 760px) {
+  .course-upload-status { grid-template-columns: 40px minmax(0, 1fr); }
+  .course-upload-status button { grid-column: 2; justify-self: start; }
   .course-output-groups {
     grid-template-columns: 1fr;
   }

@@ -1,15 +1,15 @@
 /**
  * Gemini (Google Generative Language API) 어댑터
  *
- * Claude 연동 로직은 그대로 두고, 환경변수 `AI_PROVIDER=gemini` 일 때만
- * `createMessage` 가 이 모듈로 라우팅된다. Anthropic `messages.create` 파라미터를
+ * Gemini를 기본 제공자로 사용하고, 환경변수 `AI_PROVIDER=anthropic`을 명시한 경우에만
+ * Claude 경로를 사용한다. Anthropic `messages.create` 파라미터를
  * Gemini `generateContent` 요청으로 변환하고, 응답을 다시 Anthropic `Message`
  * (tool_use 블록 포함) 형태로 되돌려 기존 소비자 코드가 수정 없이 동작하게 한다.
  *
  * 필요한 환경변수:
- *  - AI_PROVIDER=gemini            (미설정/anthropic 이면 이 모듈은 비활성 — 기존 Claude 경로)
+ *  - AI_PROVIDER=gemini            (기본값, anthropic을 명시하면 기존 Claude 경로)
  *  - GEMINI_API_KEY                (Google AI Studio 키)
- *  - GEMINI_GEN_MODEL     (기본: gemini-2.5-pro)
+ *  - GEMINI_GEN_MODEL     (기본: gemini-2.5-flash)
  *  - GEMINI_VERIFY_MODEL  (기본: gemini-2.5-flash)
  *  - GEMINI_VISION_MODEL  (기본: gemini-2.5-flash)
  */
@@ -20,7 +20,7 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 /** 현재 활성 provider 가 Gemini 인지 */
 export function isGeminiProvider(): boolean {
-  return (process.env.AI_PROVIDER ?? 'anthropic').toLowerCase() === 'gemini';
+  return (process.env.AI_PROVIDER ?? 'gemini').toLowerCase() === 'gemini';
 }
 
 const GEMINI_TIMEOUT_MS = parseInt(process.env.ANTHROPIC_TIMEOUT_MS ?? '60000', 10);
