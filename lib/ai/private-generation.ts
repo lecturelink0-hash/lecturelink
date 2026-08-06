@@ -549,6 +549,14 @@ async function extractFromBuffer(input: {
   warnings: string[];
   /** 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다. */
   onEarlyText?: (text: string) => void;
+  /**
+   * 크롭이 만들어진 즉시 그 크롭의 OCR 을 시작시키는 훅(스트리밍).
+   * 종전에는 "전체 추출(모든 페이지 Vision) 완료 → 전체 크롭 OCR" 직렬이라 Vision 파도와
+   * OCR 파도가 순서대로 쌓였다. 크롭 확보 즉시 OCR 을 출발시키면 남은 페이지의 Vision 과
+   * 겹쳐 돌아, OCR 완료(=이미지 정제·이미지 배치 출발의 선행 조건)가 앞당겨진다.
+   * 중복 시작은 호출자가 크롭 객체 단위로 막는다.
+   */
+  startOcr?: (slideText: string, pageIndex: number, crop: CroppedImage) => void;
   /** 진단 수집기(선택). 단계별 소요와 세부 수치를 채워 넣는다. */
   diag?: {
     timings: Record<string, number>;
@@ -721,6 +729,13 @@ async function extractFromBuffer(input: {
       warnings.push(
         `임베드 이미지 ${pdfEmbeddedCrops?.length}장뿐 — Vision 검출을 병행해 후보 보충.`,
       );
+    }
+    // ★ OCR 스트리밍: 임베드 크롭도 확보 즉시 OCR 출발(이후의 보충 렌더·Vision 과 겹친다).
+    //   context 는 이 크롭들이 붙는 slides[0] 의 텍스트(본문 슬라이스)와 동일하게 준다.
+    if (pdfEmbeddedCrops) {
+      for (const crop of pdfEmbeddedCrops) {
+        input.startOcr?.(fullText.slice(0, MAX_GEN_TEXT_CHARS), 1, crop);
+      }
     }
 
     // ★ 텍스트 조기 전달 — 호출자가 이 시점에 텍스트 배치를 먼저 출발시켜
@@ -986,6 +1001,9 @@ async function extractFromBuffer(input: {
           preprocessed.push({ ...c, ocrOnly: isWholePageFallback }); // 원본 그대로 진행
         }
       }
+        // ★ OCR 스트리밍: 이 페이지의 크롭이 준비된 즉시 OCR 을 출발시켜
+        //   아직 처리 중인 다른 페이지들의 Vision 검출과 겹친다.
+        for (const crop of preprocessed) input.startOcr?.(s.text, s.pageIndex, crop);
         slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: preprocessed };
       } catch (e) {
         warnings.push(
@@ -1183,6 +1201,52 @@ export async function generatePrivateQuestionsFromUpload(
     // '이미지형'을 고르지 않았다면 크롭이 문항에 쓰이지 않으므로 이미지 분석을 생략할 수 있다.
     const wantsImages = (input.questionTypes ?? []).includes('이미지형');
 
+    // ── 크롭 OCR 스트리밍(이미지 준비 조기화)
+    // 추출이 크롭을 만든 즉시 여기로 넘겨 OCR 을 출발시킨다(남은 페이지 Vision 과 겹침).
+    // 아래 OCR "단계"는 시작 보장 + 완료 대기만 담당하게 된다. 동시성은 종전과 동일하게
+    // OCR_CONCURRENCY 로 제한한다(슬롯 이양 세마포어 — 해제·획득 사이에 새 작업이
+    // 끼어들어 동시성이 초과되지 않게 대기자에게 슬롯을 그대로 넘긴다).
+    let ocrChars = 0;
+    let ocrActive = 0;
+    const ocrWaiters: Array<() => void> = [];
+    const ocrTasks = new Map<CroppedImage, Promise<void>>();
+    const startCropOcr = (slideText: string, pageIndex: number, crop: CroppedImage): void => {
+      if (ocrTasks.has(crop)) return;
+      const task = (async () => {
+        if (ocrActive < OCR_CONCURRENCY) {
+          ocrActive += 1;
+        } else {
+          await new Promise<void>((resolve) => ocrWaiters.push(resolve));
+        }
+        try {
+          const r = await runOcr({
+            png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
+            userIdForLog: input.userId,
+            context: slideText,
+            // 같은 호출에서 텍스트 "위치"까지 받아온다(추가 API 호출 없음).
+            // 이 좌표로 정답 단서 텍스트를 배경색으로 덮어 지운다.
+            withBoxes: true,
+            widthPx: crop.widthPx,
+            heightPx: crop.heightPx,
+          });
+          // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
+          totalCost += r.costUsd;
+          ocrChars += r.text.length;
+          crop.ocrText = r.text; // 주석 텍스트 유무 판정에 사용
+          crop.ocrBoxes = r.boxes; // 마스킹 좌표(없으면 안전 폴백 경로)
+        } catch (e) {
+          warnings.push(
+            `slide ${pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
+          );
+        } finally {
+          const next = ocrWaiters.shift();
+          if (next) next(); // 슬롯 이양 — ocrActive 유지
+          else ocrActive -= 1;
+        }
+      })();
+      ocrTasks.set(crop, task);
+    };
+
     let resolveEarlyText: (text: string) => void = () => {};
     const earlyText = new Promise<string>((resolve) => {
       resolveEarlyText = resolve;
@@ -1196,6 +1260,7 @@ export async function generatePrivateQuestionsFromUpload(
       wantsImages,
       warnings,
       diag,
+      startOcr: startCropOcr,
       onEarlyText: (text) => {
         diag.timings.textReadyMs = Date.now() - startTime;
         resolveEarlyText(text);
@@ -1290,7 +1355,6 @@ export async function generatePrivateQuestionsFromUpload(
         (i) => i >= 0,
       ),
     );
-    let ocrChars = 0;
     let completedQuestions = 0;
     // 배치 비용 로그용 — 추출 완료 후 채워진다(선발사 배치는 추출 전에 시작하므로 0으로 기록).
     let extractedSlideCount = 0;
@@ -1426,37 +1490,20 @@ export async function generatePrivateQuestionsFromUpload(
         page_count: slides.length,
       });
     }
-    await mapWithConcurrency(
-      allCrops,
-      OCR_CONCURRENCY,
-      async ({ slide, crop }) => {
-        try {
-          const r = await runOcr({
-            png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
-            userIdForLog: input.userId,
-            context: slide.text,
-            // 같은 호출에서 텍스트 "위치"까지 받아온다(추가 API 호출 없음).
-            // 이 좌표로 정답 단서 텍스트를 배경색으로 덮어 지운다.
-            withBoxes: true,
-            widthPx: crop.widthPx,
-            heightPx: crop.heightPx,
-          });
-          // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
-          totalCost += r.costUsd;
-          ocrChars += r.text.length;
-          crop.ocrText = r.text; // 주석 텍스트 유무 판정에 사용
-          crop.ocrBoxes = r.boxes; // 마스킹 좌표(없으면 안전 폴백 경로)
-        } catch (e) {
-          warnings.push(
-            `slide ${slide.pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
-          );
-        }
-        return null;
-      },
-      reportOcrProgress
-        ? async (completed, total) => updateProgress('ocr', completed, total)
-        : undefined,
+    // 스트리밍으로 이미 시작된 크롭은 완료만 기다리고, 시작이 누락된 크롭이 있다면
+    // 여기서 방어적으로 시작한다(중복 시작은 crop 객체 단위로 차단됨). 동시성·컨텍스트·
+    // 비용 누적은 전부 startCropOcr 안에 있어 종전과 동일하다.
+    for (const { slide, crop } of allCrops) startCropOcr(slide.text, slide.pageIndex, crop);
+    let ocrDone = 0;
+    await Promise.all(
+      allCrops.map(({ crop }) =>
+        (ocrTasks.get(crop) ?? Promise.resolve()).then(async () => {
+          ocrDone += 1;
+          if (reportOcrProgress) await updateProgress('ocr', ocrDone, allCrops.length);
+        }),
+      ),
     );
+    // 스트리밍이라 이 값은 "Vision 과 겹친 뒤 남은 잔여 대기"만 나타낸다.
     diag.timings.ocrMs = Date.now() - tOcr;
     diag.extract.ocrCalls = allCrops.length;
     diag.extract.ocrChars = ocrChars;
