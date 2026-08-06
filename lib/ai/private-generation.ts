@@ -71,10 +71,21 @@ const MAX_PDF_PAGES = 100;         // 이미지 검출용 페이지 렌더 상�
 const PDF_RENDER_EDGE_PX = 1280;   // PDF 페이지 렌더 해상도 — 메모리·토큰 절감 (기본 1600 대비 하향)
 const MAX_VISION_SLIDES = 100;     // detectMedicalRegions 대상 슬라이드 수
 const MAX_FEATURED_IMAGES = 8;     // 문항에 투입하는 이미지 상한 — 과다·노이즈 방지(기존 15에서 하향)
+// 동일 이미지 1장을 문항에 연결할 수 있는 상한. 저장 후 정리(초과 연결 제거)뿐 아니라
+// 이미지 배치 예약 수·배치별 최소 이미지 문항 수·보충 배치의 이미지 재투입 판단이 공유한다.
+const MAX_QUESTIONS_PER_IMAGE = 2;
 // 생성에 투입하는 텍스트 상한(자). 유료 티어(대컨텍스트)이므로 상향해 대용량(30~50p) 강의록의
 // 뒷부분 내용이 잘리지 않게 한다. (기존 40,000자 → 30페이지 뒷부분 누락 원인)
 const MAX_GEN_TEXT_CHARS = 150_000;
 const MAX_EMBEDDED_CANDIDATES = 40; // AI 선별에 넣을 후보(추출) 상한
+// 임베드 추출 성공 개수가 이 값 미만이면(이미지형 요청 한정) 페이지 렌더+Vision 검출을
+// 병행해 후보를 보충한다. 슬라이드에 벡터로 그려진 다이어그램·차트는 임베드 래스터
+// 객체가 아니라서 임베드 경로에 안 잡히는데, 종전에는 임베드가 1장이라도 성공하면
+// Vision 을 통째로 생략해 그 자료의 이미지 후보가 그대로 바닥났다.
+const EMBED_SUPPLEMENT_MIN = 4;
+// 임베드 이미지 최소 변(px). 기본 300 은 강의 슬라이드의 중간 크기(200~300px) 임상
+// 사진까지 아이콘으로 오인해 버렸다 — 크기 컷을 낮추고 저품질 여부는 AI 선별에 맡긴다.
+const EMBED_MIN_EDGE_PX = 200;
 const VISION_CONCURRENCY = 6;      // 페이지 vision/OCR 동시 처리 수 — 순차 대비 대용량 대폭 가속
 const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 저해상도
 // crop 단위 OCR 동시 처리 수. OCR 은 슬라이드가 아니라 crop 이미지 1장당 1회 호출이므로
@@ -109,9 +120,12 @@ const IMAGE_REFINE_TIMEOUT_MS = 20_000;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
+  opts: { minSelected?: number } = {},
 ): Promise<number[]> {
   const { createCanvas, loadImage } = await import('canvas');
   const selected: number[] = [];
+  // 임계 미달 페이지의 점수(최소 보장 채움용).
+  const belowThreshold: Array<{ pageIndex: number; score: number }> = [];
   for (const page of pages) {
     try {
       const image = await loadImage(Buffer.from(page.png));
@@ -136,13 +150,30 @@ async function selectLikelyImagePages(
       }
       // Text glyphs mostly disappear at 48px width. Medical photos, radiology,
       // charts, and shaded diagrams retain contiguous dark/color/midtone mass.
-      if (dark / total > 0.025 || colored / total > 0.035 || midtone / total > 0.11) {
-        selected.push(page.pageIndex);
-      }
+      // score > 1 ⇔ 종전 임계(dark 2.5% / colored 3.5% / midtone 11%) 중 하나 초과.
+      const score = Math.max(
+        dark / total / 0.025,
+        colored / total / 0.035,
+        midtone / total / 0.11,
+      );
+      if (score > 1) selected.push(page.pageIndex);
+      else belowThreshold.push({ pageIndex: page.pageIndex, score });
     } catch {
       // A page that cannot be scored is kept so local selection never becomes
       // a silent content-loss mechanism.
       selected.push(page.pageIndex);
+    }
+  }
+  // 최소 보장: 임계 미달이어도 점수 상위 페이지를 minSelected 까지 채운다.
+  // 흰 배경의 회색조 X-ray·얇은 선 다이어그램은 48px 다운샘플에서 잉크 질량이 임계에
+  // 못 미쳐 통째로 탈락하곤 했다 — 그 자료는 이미지 문항이 0이 된다. 최종 판정은
+  // 어차피 페이지별 Vision 검출이 하므로, 여기서는 후보를 조금 후하게 넘긴다.
+  const minSelected = Math.min(opts.minSelected ?? 0, pages.length);
+  if (selected.length < minSelected) {
+    belowThreshold.sort((a, b) => b.score - a.score);
+    for (const s of belowThreshold) {
+      if (selected.length >= minSelected) break;
+      selected.push(s.pageIndex);
     }
   }
   return selected;
@@ -518,6 +549,14 @@ async function extractFromBuffer(input: {
   warnings: string[];
   /** 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다. */
   onEarlyText?: (text: string) => void;
+  /**
+   * 크롭이 만들어진 즉시 그 크롭의 OCR 을 시작시키는 훅(스트리밍).
+   * 종전에는 "전체 추출(모든 페이지 Vision) 완료 → 전체 크롭 OCR" 직렬이라 Vision 파도와
+   * OCR 파도가 순서대로 쌓였다. 크롭 확보 즉시 OCR 을 출발시키면 남은 페이지의 Vision 과
+   * 겹쳐 돌아, OCR 완료(=이미지 정제·이미지 배치 출발의 선행 조건)가 앞당겨진다.
+   * 중복 시작은 호출자가 크롭 객체 단위로 막는다.
+   */
+  startOcr?: (slideText: string, pageIndex: number, crop: CroppedImage) => void;
   /** 진단 수집기(선택). 단계별 소요와 세부 수치를 채워 넣는다. */
   diag?: {
     timings: Record<string, number>;
@@ -538,6 +577,11 @@ async function extractFromBuffer(input: {
 
   // PDF 임베드 이미지(object dedup) — 있으면 Vision 검출/crop 대신 이걸 우선 사용.
   let pdfEmbeddedCrops: CroppedImage[] | null = null;
+  // 임베드가 소수만 나온 경우(이미지형 요청) 페이지 렌더+Vision 을 병행하는 보충 모드.
+  let supplementVision = false;
+  // 임베드 이미지가 나온 페이지(1-based) — 보충 Vision 에서 같은 그림이 임베드와
+  // 페이지 크롭으로 중복 등재되지 않게 제외한다.
+  const embeddedPagesUsed = new Set<number>();
   let allowWholePageOcrFallback = fileType.startsWith('image/');
 
   // ── 슬라이드 / 페이지 텍스트 + PNG 산출
@@ -606,12 +650,18 @@ async function extractFromBuffer(input: {
           //   부수 효과 — 슬라이드에 겹쳐 그린 손글씨 주석은 이미지 객체에 포함되지 않아
           //   원본 그림만 깨끗하게 얻는다.
           const objDiag: Record<string, unknown> = {};
-          let candidates: { png: Uint8Array; widthPx: number; heightPx: number }[] =
-            await extractPdfImageObjects(pdfBuffer, {
-              maxImages: MAX_EMBEDDED_CANDIDATES,
-              maxOutEdgePx: 1024,
-              diag: objDiag,
-            });
+          let candidates: {
+            png: Uint8Array;
+            widthPx: number;
+            heightPx: number;
+            /** 1-based 출처 페이지(pdfjs 경로만 보유). 보충 Vision 의 중복 페이지 제외용. */
+            pageIndex?: number;
+          }[] = await extractPdfImageObjects(pdfBuffer, {
+            maxImages: MAX_EMBEDDED_CANDIDATES,
+            maxOutEdgePx: 1024,
+            minEdgePx: EMBED_MIN_EDGE_PX,
+            diag: objDiag,
+          });
           if (input.diag) {
             input.diag.extract.pdfImageObjects = objDiag;
             input.diag.timings.imageObjectsMs = Date.now() - tEmbed;
@@ -643,6 +693,11 @@ async function extractFromBuffer(input: {
             `임베드 이미지 ${candidates.length}개 추출 → 선별 ${chosen.length}개 사용${selected ? '' : '(선별 실패·폴백)'}.`,
           );
           if (chosen.length === 0) return null;
+          // 보충 Vision 의 중복 방지용 출처 페이지 기록. 프로덕션 경로(pdfjs 추출)만
+          // pageIndex 를 보유한다 — mutool 폴백(로컬 전용)은 페이지 미상이라 기록 없음.
+          for (const { image } of chosen) {
+            if (typeof image.pageIndex === 'number') embeddedPagesUsed.add(image.pageIndex);
+          }
           return chosen.map(({ image, kind }) => ({
             region: { kind, x: 0, y: 0, width: 1, height: 1, confidence: 1 },
             png: image.png,
@@ -662,6 +717,26 @@ async function extractFromBuffer(input: {
       allowWholePageOcrFallback = fullText.length < 1500;
     }
     pdfEmbeddedCrops = embeddedCropsResult;
+    // 임베드가 소수만 나오면 벡터로 그려진 다이어그램·차트(래스터 객체 아님)가 못 잡힌
+    // 자료일 가능성이 높다 — 이미지형 요청에 한해 페이지 렌더+Vision 검출을 병행해
+    // 후보를 보충한다(임베드가 나온 페이지는 제외해 중복 등재 방지).
+    supplementVision =
+      wantsImages &&
+      pdfEmbeddedCrops !== null &&
+      pdfEmbeddedCrops.length > 0 &&
+      pdfEmbeddedCrops.length < EMBED_SUPPLEMENT_MIN;
+    if (supplementVision) {
+      warnings.push(
+        `임베드 이미지 ${pdfEmbeddedCrops?.length}장뿐 — Vision 검출을 병행해 후보 보충.`,
+      );
+    }
+    // ★ OCR 스트리밍: 임베드 크롭도 확보 즉시 OCR 출발(이후의 보충 렌더·Vision 과 겹친다).
+    //   context 는 이 크롭들이 붙는 slides[0] 의 텍스트(본문 슬라이스)와 동일하게 준다.
+    if (pdfEmbeddedCrops) {
+      for (const crop of pdfEmbeddedCrops) {
+        input.startOcr?.(fullText.slice(0, MAX_GEN_TEXT_CHARS), 1, crop);
+      }
+    }
 
     // ★ 텍스트 조기 전달 — 호출자가 이 시점에 텍스트 배치를 먼저 출발시켜
     //   아래 렌더·Vision·OCR 시간을 생성 시간 뒤로 숨긴다.
@@ -675,6 +750,7 @@ async function extractFromBuffer(input: {
       input.diag.extract.skipImageAnalysis = skipImageAnalysis;
       input.diag.extract.allowWholePageOcrFallback = allowWholePageOcrFallback;
       input.diag.extract.embeddedCropsUsed = pdfEmbeddedCrops !== null;
+      input.diag.extract.embeddedSupplementVision = supplementVision;
     }
     if (skipImageAnalysis) {
       warnings.push(
@@ -692,7 +768,7 @@ async function extractFromBuffer(input: {
     //   텍스트가 부족한(스캔/이미지 위주) 자료만 기존 페이지 렌더 + Vision 경로를 탄다.
     let pages: Awaited<ReturnType<typeof renderPdfPages>> = [];
     try {
-      if (!pdfEmbeddedCrops && !skipImageAnalysis) {
+      if ((!pdfEmbeddedCrops || supplementVision) && !skipImageAnalysis) {
         if (allowWholePageOcrFallback) {
           const tAll = Date.now();
           pages = await renderPdfPages(pdfBuffer, {
@@ -710,7 +786,14 @@ async function extractFromBuffer(input: {
             maxEdgePx: PDF_SCAN_EDGE_PX,
           });
           const tScore = Date.now();
-          const candidatePages = await selectLikelyImagePages(scanPages);
+          let candidatePages = await selectLikelyImagePages(scanPages, {
+            // 이미지형 요청은 임계 미달이어도 점수 상위 페이지를 채워 최소 후보를 보장
+            // (흰 배경 회색조 영상·얇은 선 다이어그램의 휴리스틱 탈락 방지).
+            minSelected: wantsImages ? Math.min(6, scanPages.length) : 0,
+          });
+          if (supplementVision) {
+            candidatePages = candidatePages.filter((p) => !embeddedPagesUsed.has(p));
+          }
           const tCand = Date.now();
           if (candidatePages.length > 0) {
             pages = await renderPdfPages(pdfBuffer, {
@@ -867,7 +950,7 @@ async function extractFromBuffer(input: {
   for (let i = 0; i < slidesData.length; i++) {
     const s = slidesData[i];
     if (
-      !pdfEmbeddedCrops &&
+      (!pdfEmbeddedCrops || supplementVision) &&
       !skipImageAnalysis &&
       s.png.length > 0 &&
       visionIndices.length < MAX_VISION_SLIDES
@@ -918,6 +1001,9 @@ async function extractFromBuffer(input: {
           preprocessed.push({ ...c, ocrOnly: isWholePageFallback }); // 원본 그대로 진행
         }
       }
+        // ★ OCR 스트리밍: 이 페이지의 크롭이 준비된 즉시 OCR 을 출발시켜
+        //   아직 처리 중인 다른 페이지들의 Vision 검출과 겹친다.
+        for (const crop of preprocessed) input.startOcr?.(s.text, s.pageIndex, crop);
         slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: preprocessed };
       } catch (e) {
         warnings.push(
@@ -941,11 +1027,19 @@ async function extractFromBuffer(input: {
     );
   }
 
-  // PDF 임베드 추출이 있으면 그것을 featured 이미지로 우선 사용(Vision crop 결과는 중복 방지 위해 대체).
+  // PDF 임베드 추출이 있으면 그것을 featured 이미지로 우선 사용.
+  //  - 보충 모드: 임베드(원본 화질·주석 없음)를 앞에 두고 Vision 크롭을 뒤에 유지한다.
+  //    featured 선정이 슬라이드 순회 순서를 따르므로 임베드가 우선 사용되고, 임베드가
+  //    나온 페이지는 후보에서 이미 제외돼 같은 그림이 중복 등재되지 않는다.
+  //  - 단독 모드(종전): Vision crop 결과를 통째로 대체(중복 방지).
   if (pdfEmbeddedCrops && pdfEmbeddedCrops.length > 0 && slides.length > 0) {
-    slides[0].croppedImages = pdfEmbeddedCrops;
-    for (let i = 1; i < slides.length; i++) {
-      if (slides[i]) slides[i].croppedImages = [];
+    if (supplementVision) {
+      slides[0].croppedImages = [...pdfEmbeddedCrops, ...slides[0].croppedImages];
+    } else {
+      slides[0].croppedImages = pdfEmbeddedCrops;
+      for (let i = 1; i < slides.length; i++) {
+        if (slides[i]) slides[i].croppedImages = [];
+      }
     }
   }
 
@@ -1107,6 +1201,52 @@ export async function generatePrivateQuestionsFromUpload(
     // '이미지형'을 고르지 않았다면 크롭이 문항에 쓰이지 않으므로 이미지 분석을 생략할 수 있다.
     const wantsImages = (input.questionTypes ?? []).includes('이미지형');
 
+    // ── 크롭 OCR 스트리밍(이미지 준비 조기화)
+    // 추출이 크롭을 만든 즉시 여기로 넘겨 OCR 을 출발시킨다(남은 페이지 Vision 과 겹침).
+    // 아래 OCR "단계"는 시작 보장 + 완료 대기만 담당하게 된다. 동시성은 종전과 동일하게
+    // OCR_CONCURRENCY 로 제한한다(슬롯 이양 세마포어 — 해제·획득 사이에 새 작업이
+    // 끼어들어 동시성이 초과되지 않게 대기자에게 슬롯을 그대로 넘긴다).
+    let ocrChars = 0;
+    let ocrActive = 0;
+    const ocrWaiters: Array<() => void> = [];
+    const ocrTasks = new Map<CroppedImage, Promise<void>>();
+    const startCropOcr = (slideText: string, pageIndex: number, crop: CroppedImage): void => {
+      if (ocrTasks.has(crop)) return;
+      const task = (async () => {
+        if (ocrActive < OCR_CONCURRENCY) {
+          ocrActive += 1;
+        } else {
+          await new Promise<void>((resolve) => ocrWaiters.push(resolve));
+        }
+        try {
+          const r = await runOcr({
+            png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
+            userIdForLog: input.userId,
+            context: slideText,
+            // 같은 호출에서 텍스트 "위치"까지 받아온다(추가 API 호출 없음).
+            // 이 좌표로 정답 단서 텍스트를 배경색으로 덮어 지운다.
+            withBoxes: true,
+            widthPx: crop.widthPx,
+            heightPx: crop.heightPx,
+          });
+          // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
+          totalCost += r.costUsd;
+          ocrChars += r.text.length;
+          crop.ocrText = r.text; // 주석 텍스트 유무 판정에 사용
+          crop.ocrBoxes = r.boxes; // 마스킹 좌표(없으면 안전 폴백 경로)
+        } catch (e) {
+          warnings.push(
+            `slide ${pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
+          );
+        } finally {
+          const next = ocrWaiters.shift();
+          if (next) next(); // 슬롯 이양 — ocrActive 유지
+          else ocrActive -= 1;
+        }
+      })();
+      ocrTasks.set(crop, task);
+    };
+
     let resolveEarlyText: (text: string) => void = () => {};
     const earlyText = new Promise<string>((resolve) => {
       resolveEarlyText = resolve;
@@ -1120,6 +1260,7 @@ export async function generatePrivateQuestionsFromUpload(
       wantsImages,
       warnings,
       diag,
+      startOcr: startCropOcr,
       onEarlyText: (text) => {
         diag.timings.textReadyMs = Date.now() - startTime;
         resolveEarlyText(text);
@@ -1214,7 +1355,6 @@ export async function generatePrivateQuestionsFromUpload(
         (i) => i >= 0,
       ),
     );
-    let ocrChars = 0;
     let completedQuestions = 0;
     // 배치 비용 로그용 — 추출 완료 후 채워진다(선발사 배치는 추출 전에 시작하므로 0으로 기록).
     let extractedSlideCount = 0;
@@ -1230,11 +1370,30 @@ export async function generatePrivateQuestionsFromUpload(
     const earlyFullText = await earlyText;
     const canPrefire = batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
     // 조기 출발 폭. 이미지형이라도 "이미지가 실제로 필요한 배치"만 전처리를 기다리면 된다.
-    //   이미지 1장당 최대 2문항(재사용 상한)이므로 필요한 이미지 배치 수는
-    //   ceil(문항 수의 절반 / 배치 크기) 이하로 충분하다. 나머지는 텍스트로 먼저 출발시킨다.
     //   실측 근거: 텍스트는 1.6초에 준비되는데 이미지형은 첫 배치가 10초에야 출발했다.
+    //
+    // 이미지 배치 예약 수는 "이미지 판독 문항 목표 수"에서 역산한다. 종전의 고정 1/3 예약은
+    //   이미지형을 선택해도 문항의 2/3가 이미지를 아예 받을 수 없어(선발사 배치는 이미지
+    //   배정 대상에서 제외) 이미지 문항 비율을 구조적으로 깎았다.
+    //   목표: 이미지형 단독 선택이면 전 문항, 다른 유형과 섞이면 유형 수로 나눈 몫.
+    //   공급 상한(featured 최대 MAX_FEATURED_IMAGES장 × 장당 MAX_QUESTIONS_PER_IMAGE문항)으로 캡.
+    //   예약을 늘려도 벽시계 시간은 거의 늘지 않는다 — 이미지 배치들은 어차피 추출·정제
+    //   완료 후에야 출발하고 서로 병렬(GEN_CONCURRENCY)이라, 전체 소요를 지배하는
+    //   "추출→정제→이미지 배치 1개" 경로의 길이는 예약 수와 무관하다.
+    //   최소 1배치는 텍스트 선발사로 남겨 전처리를 생성 뒤로 숨기는 조기 출발을 유지한다.
+    const imageQuestionTarget = wantsImages
+      ? Math.min(
+          selectedTypes.length <= 1
+            ? desiredCount
+            : Math.ceil(desiredCount / selectedTypes.length),
+          MAX_FEATURED_IMAGES * MAX_QUESTIONS_PER_IMAGE,
+        )
+      : 0;
     const imageBatchesNeeded = wantsImages
-      ? Math.min(batchSizes.length - 1, Math.max(1, Math.ceil(batchSizes.length / 3)))
+      ? Math.min(
+          batchSizes.length - 1,
+          Math.max(1, Math.ceil(imageQuestionTarget / GEN_BATCH_MAX_QUESTIONS)),
+        )
       : 0;
     const prefireCount = !canPrefire
       ? 0
@@ -1298,6 +1457,8 @@ export async function generatePrivateQuestionsFromUpload(
     diag.generation.batchCount = batchSizes.length;
     diag.generation.prefireCount = prefireCount;
     diag.generation.prefireSegments = prefireSegments;
+    diag.generation.imageQuestionTarget = imageQuestionTarget;
+    diag.generation.imageBatchesNeeded = imageBatchesNeeded;
     diag.timings.firstBatchStartMs = Date.now() - startTime;
     if (prefireCount > 0) {
       warnings.push(
@@ -1329,37 +1490,20 @@ export async function generatePrivateQuestionsFromUpload(
         page_count: slides.length,
       });
     }
-    await mapWithConcurrency(
-      allCrops,
-      OCR_CONCURRENCY,
-      async ({ slide, crop }) => {
-        try {
-          const r = await runOcr({
-            png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
-            userIdForLog: input.userId,
-            context: slide.text,
-            // 같은 호출에서 텍스트 "위치"까지 받아온다(추가 API 호출 없음).
-            // 이 좌표로 정답 단서 텍스트를 배경색으로 덮어 지운다.
-            withBoxes: true,
-            widthPx: crop.widthPx,
-            heightPx: crop.heightPx,
-          });
-          // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
-          totalCost += r.costUsd;
-          ocrChars += r.text.length;
-          crop.ocrText = r.text; // 주석 텍스트 유무 판정에 사용
-          crop.ocrBoxes = r.boxes; // 마스킹 좌표(없으면 안전 폴백 경로)
-        } catch (e) {
-          warnings.push(
-            `slide ${slide.pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
-          );
-        }
-        return null;
-      },
-      reportOcrProgress
-        ? async (completed, total) => updateProgress('ocr', completed, total)
-        : undefined,
+    // 스트리밍으로 이미 시작된 크롭은 완료만 기다리고, 시작이 누락된 크롭이 있다면
+    // 여기서 방어적으로 시작한다(중복 시작은 crop 객체 단위로 차단됨). 동시성·컨텍스트·
+    // 비용 누적은 전부 startCropOcr 안에 있어 종전과 동일하다.
+    for (const { slide, crop } of allCrops) startCropOcr(slide.text, slide.pageIndex, crop);
+    let ocrDone = 0;
+    await Promise.all(
+      allCrops.map(({ crop }) =>
+        (ocrTasks.get(crop) ?? Promise.resolve()).then(async () => {
+          ocrDone += 1;
+          if (reportOcrProgress) await updateProgress('ocr', ocrDone, allCrops.length);
+        }),
+      ),
     );
+    // 스트리밍이라 이 값은 "Vision 과 겹친 뒤 남은 잔여 대기"만 나타낸다.
     diag.timings.ocrMs = Date.now() - tOcr;
     diag.extract.ocrCalls = allCrops.length;
     diag.extract.ocrChars = ocrChars;
@@ -1575,14 +1719,36 @@ export async function generatePrivateQuestionsFromUpload(
           }
 
           if (!legacyInpaint) {
-            if (boxes.length === 0) {
+            let useBoxes = boxes;
+            if (useBoxes.length === 0) {
+              // 좌표 누락은 OCR 응답의 간헐적 실수인 경우가 많다. 바로 버리면 그 문항이
+              // 텍스트 문항으로 치환돼 이미지 비율이 떨어지므로, 좌표 요청 OCR 을 1회
+              // 재시도해 이미지를 살린다. (정제는 생성 전 병렬 구간 + 장당 시간 상한
+              // 안에서 돌므로 전체 소요에 주는 영향은 없다.)
+              try {
+                const retry = await runOcr({
+                  png: fi.c.ocrPng ?? fi.c.png,
+                  userIdForLog: input.userId,
+                  withBoxes: true,
+                  widthPx: fi.c.widthPx,
+                  heightPx: fi.c.heightPx,
+                });
+                totalCost += retry.costUsd;
+                const retryBoxes = retry.boxes ?? [];
+                rec.boxRetry = retryBoxes.length;
+                if (retryBoxes.length > 0) useBoxes = retryBoxes;
+              } catch {
+                // 재시도 실패 → 아래 제외 경로.
+              }
+            }
+            if (useBoxes.length === 0) {
               // 글자는 많은데 위치를 모른다 → 어디를 덮을지 알 수 없다.
               // 정답 단서가 남을 수 있으므로 문항 이미지에서 제외한다(안전 우선).
               warnings.push(`이미지 ${i}: 텍스트 위치를 얻지 못해 문항에서 제외(글자 ${ocrLen}자).`);
               rec.result = 'no_boxes';
               return null;
             }
-            const masked = await maskTextRegions(fi.c.png, boxes);
+            const masked = await maskTextRegions(fi.c.png, useBoxes);
             rec.result = 'masked';
             rec.maskedBoxes = masked.masked;
             rec.keptBoxes = masked.kept;
@@ -1656,6 +1822,13 @@ export async function generatePrivateQuestionsFromUpload(
        * "구간을 스스로 골라 출제하라"는 문구를 쓰지 않는다(이미 구간만 받았으므로).
        */
       segmented?: boolean;
+      /**
+       * 이 배치에서 "이미지를 직접 판독해야 풀 수 있는" 문항의 최소 수.
+       * 시스템 프롬프트의 '확신이 없으면 image_indices 를 빈 배열로' 지시가 이미지형
+       * 요청에서도 모델을 보수적으로 만들어, 이미지를 받은 배치조차 텍스트 문항만
+       * 만드는 일이 잦았다 — 정량 지시로 강제한다. 0 이면 지시하지 않는다.
+       */
+      imageQuota?: number;
     };
 
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
@@ -1760,7 +1933,17 @@ export async function generatePrivateQuestionsFromUpload(
             '\n\n**발문과 image_indices 는 반드시 일치시키세요.** ' +
             '"다음 CT에서", "제시된 그림은" 처럼 그림을 가리키는 표현을 쓸 거면 그 이미지 번호를 ' +
             'image_indices 에 반드시 넣고, 번호를 넣지 않을 문항에서는 그림을 가리키는 표현을 쓰지 마세요. ' +
-            '(불일치 문항은 학생이 풀 수 없어 폐기됩니다.)';
+            '(불일치 문항은 학생이 풀 수 없어 폐기됩니다.)' +
+            // 이미지형 요청의 정량 강제. "우선 생성" 같은 정성 지시만으로는 기본 규칙
+            // ('확신이 없으면 빈 배열')에 눌려 이미지를 받은 배치조차 텍스트 문항만
+            // 만드는 일이 잦았다 — 최소 수를 명시해야 이미지 문항 비율이 유지된다.
+            (gen.imageQuota && gen.imageQuota > 0
+              ? `\n\n**이미지 판독 문항 최소 ${gen.imageQuota}문항**: 이번 묶음 ${batchSize}문항 중 ` +
+                `최소 ${gen.imageQuota}문항은 제시된 [이미지 N]을 직접 판독·해석해야 풀 수 있는 문항으로 ` +
+                `만들고, 그 문항의 image_indices 에 해당 번호를 넣으세요. 텍스트 근거와 이미지 근거가 ` +
+                `모두 가능한 내용이면 이미지 판독 문항을 우선하세요. ` +
+                `단, 같은 이미지는 최대 ${MAX_QUESTIONS_PER_IMAGE}문항까지만 사용하세요.`
+              : '');
       // 조합형 빈도 제한(요청에 별도 조건이 없을 때).
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
@@ -2064,12 +2247,32 @@ export async function generatePrivateQuestionsFromUpload(
       return usableFeatured.slice(pos * per, pos * per + per);
     };
 
-    const genFor = (batchIndex: number, batchCount: number): GenContext => ({
-      contextText: segmentForBatch(batchIndex, batchCount),
-      featured: featuredForBatch(batchIndex, batchCount),
-      getDisplayPng,
-      segmented: segmentCount > 1,
-    });
+    // 배치의 "이미지 판독 문항 최소 수". 단독 선택이면 배치 전 문항이 목표, 유형 혼합이면
+    // 유형 비중만큼(최소 1). 배정된 이미지의 재사용 상한(장당 MAX_QUESTIONS_PER_IMAGE)을
+    // 넘는 강제는 하지 않는다 — 초과분은 저장 후 정리에서 삭제돼 오히려 문항을 잃는다.
+    const imageQuotaFor = (featuredLen: number, batchSize: number): number => {
+      if (!wantsImages || featuredLen === 0) return 0;
+      const supplyCap = featuredLen * MAX_QUESTIONS_PER_IMAGE;
+      if (selectedTypes.length <= 1) return Math.min(batchSize, supplyCap);
+      return Math.max(
+        1,
+        Math.min(batchSize, supplyCap, Math.round(batchSize / selectedTypes.length)),
+      );
+    };
+
+    const genFor = (batchIndex: number, batchCount: number): GenContext => {
+      const featured = featuredForBatch(batchIndex, batchCount);
+      return {
+        contextText: segmentForBatch(batchIndex, batchCount),
+        featured,
+        getDisplayPng,
+        segmented: segmentCount > 1,
+        imageQuota: imageQuotaFor(
+          featured.length,
+          batchSizes[batchIndex] ?? GEN_BATCH_MAX_QUESTIONS,
+        ),
+      };
+    };
 
     const tGen = Date.now();
     const batchFailureReasons: string[] = [];
@@ -2128,8 +2331,10 @@ export async function generatePrivateQuestionsFromUpload(
     // 연결될 수 있다. 업로드 전체를 훑어 storage_path 당 문항이 2개를 넘으면 초과분의
     // 이미지 연결을 제거하고, 그 결과 이미지가 하나도 남지 않은(=이미지 판독 전용) 문항은
     // 발문이 실제 이미지 없이 이미지를 참조하게 되므로 통째로 삭제한다.
+    // (함수로 분리: 이미지를 실은 보충 배치가 새 연결을 만들 수 있어 보충 라운드 뒤에도
+    //  같은 정리를 다시 돌린다. 멱등 — 유지 대상 선정이 generation_slot 순이라 반복 호출 안전.)
+    const enforceImageReuseCap = async (): Promise<void> => {
     try {
-      const MAX_QUESTIONS_PER_IMAGE = 2;
       const [{ data: linkRows }, { data: slotRows }] = await Promise.all([
         admin
           .from('private_question_images')
@@ -2187,6 +2392,8 @@ export async function generatePrivateQuestionsFromUpload(
         `이미지 재사용 정리 실패 — ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
       );
     }
+    };
+    await enforceImageReuseCap();
 
     // ── 부족분 보충: 요청 수를 반드시 채운다.
     // 실제 저장 결과를 DB 에서 다시 읽어(누적 산술이 아니라 사실 기준) 빈 슬롯을 확인하고,
@@ -2200,6 +2407,23 @@ export async function generatePrivateQuestionsFromUpload(
         .eq('upload_id', uploadRow.id)
         .order('generation_slot', { ascending: true });
       return data ?? [];
+    };
+
+    // 이미지별(gi 기준) 현재 문항 연결 수. 보충 배치에 "재사용 상한에 아직 여유가 있는"
+    // 이미지만 다시 실기 위해 저장 경로(crops/q_image_{gi}.png)에서 gi 를 역산한다.
+    const readImageLinkCounts = async (): Promise<Map<number, number>> => {
+      const counts = new Map<number, number>();
+      const { data } = await admin
+        .from('private_question_images')
+        .select('storage_path')
+        .eq('upload_id', uploadRow.id);
+      for (const r of data ?? []) {
+        const m = /\/crops\/q_image_(\d+)\.png$/.exec(r.storage_path ?? '');
+        if (!m) continue;
+        const gi = Number(m[1]);
+        counts.set(gi, (counts.get(gi) ?? 0) + 1);
+      }
+      return counts;
     };
 
     /**
@@ -2228,7 +2452,9 @@ export async function generatePrivateQuestionsFromUpload(
     //   ① 모델이 image_indices 를 비운 채 발문에서만 그림을 언급(프롬프트 위반)
     //   ② 이미지가 정제 실패·재사용 상한으로 빠졌는데 발문 판정이 그림 표현을 놓침
     // 배치 내부 검사로는 ①을 잡을 수 없어(연결이 애초에 없으므로) 저장 결과를 훑어 정리한다.
-    // 삭제한 슬롯은 바로 아래 보충 단계가 텍스트 문항으로 다시 채운다.
+    // 삭제한 슬롯은 바로 아래 보충 단계가 다시 채운다.
+    // (함수로 분리: 이미지를 실은 보충 배치도 ①을 만들 수 있어 보충 라운드 뒤에 재실행.)
+    const removeBrokenFigureQuestions = async (): Promise<void> => {
     try {
       const [{ data: qRows }, { data: imgRows }] = await Promise.all([
         admin.from('private_questions').select('id, stem').eq('upload_id', uploadRow.id),
@@ -2246,13 +2472,18 @@ export async function generatePrivateQuestionsFromUpload(
         warnings.push(
           `그림을 가리키지만 이미지가 없는 문항 ${brokenIds.length}개 삭제 — 보충 생성으로 대체.`,
         );
-        diag.generation.brokenFigureRefsRemoved = brokenIds.length;
+        // 보충 라운드 뒤 재실행에서도 누적되게 더한다.
+        diag.generation.brokenFigureRefsRemoved =
+          ((diag.generation.brokenFigureRefsRemoved as number | undefined) ?? 0) +
+          brokenIds.length;
       }
     } catch (e) {
       warnings.push(
         `깨진 그림 참조 정리 실패 — ${e instanceof Error ? e.message : String(e)}`,
       );
     }
+    };
+    await removeBrokenFigureQuestions();
 
     const tBackfill = Date.now();
     diag.generation.backfillRounds = [];
@@ -2280,6 +2511,38 @@ export async function generatePrivateQuestionsFromUpload(
         missing: missingSlots.length,
         batches: fillBatches.length,
       };
+      // 이미지 재투입: 종전 보충은 무조건 텍스트 전용이라, 이미지 문항이 폐기될 때마다
+      // 텍스트 문항으로 치환돼 최종 이미지 문항 비율이 떨어졌다. 재사용 상한(장당
+      // MAX_QUESTIONS_PER_IMAGE)에 여유가 남은 이미지를 보충 배치에 겹치지 않게 1장씩
+      // 나눠 실어 이미지 문항으로 되채운다. 정제(마스킹)는 이미 생성 전에 끝나 캐시에
+      // 있으므로 추가 지연이 없다.
+      // 배치 슬롯 수 이상 여유가 남은 이미지만 준다 — 모델이 배치의 전 문항에 같은
+      // 이미지를 붙여도 상한을 넘지 않아, 사후 정리로 문항을 또 잃는 순환이 안 생긴다.
+      let fillFeatured: Array<GenContext['featured']> = fillBatches.map(() => []);
+      if (useImages && usableFeatured.length > 0) {
+        try {
+          const linkCounts = await readImageLinkCounts();
+          const pool = usableFeatured
+            .map((fi) => ({
+              fi,
+              remaining: MAX_QUESTIONS_PER_IMAGE - (linkCounts.get(fi.gi) ?? 0),
+            }))
+            .filter((x) => x.remaining > 0)
+            .sort((a, b) => b.remaining - a.remaining);
+          fillFeatured = fillBatches.map((slots) => {
+            const pickIdx = pool.findIndex((x) => x.remaining >= slots.length);
+            if (pickIdx < 0) return [];
+            return [pool.splice(pickIdx, 1)[0].fi];
+          });
+        } catch (e) {
+          warnings.push(
+            `보충 이미지 배정 실패 — 텍스트 전용으로 진행. ${e instanceof Error ? e.message : String(e)}`,
+          );
+          fillFeatured = fillBatches.map(() => []);
+        }
+      }
+      const imagesOffered = fillFeatured.reduce((n, f) => n + f.length, 0);
+      roundRec.imagesOffered = imagesOffered;
       await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
         try {
           await generateAndPersistBatch(i, slots, fillBatches.length, {
@@ -2288,11 +2551,12 @@ export async function generatePrivateQuestionsFromUpload(
             // 기본 백오프(최대 45초)를 기다리며 전체 소요를 지배한다(실측 66초 꼬리).
             // → 빈 슬롯이 속한 구간의 컨텍스트만 잘라 싣고, 재시도 대기도 짧게 잡는다.
             contextText: backfillContext(slots[0]),
-            featured: [], // 텍스트 전용 — 이미지 관련 삭제 경로를 원천 차단
-            getDisplayPng: async () => null,
+            featured: fillFeatured[i],
+            getDisplayPng, // 정제 캐시가 이미 채워져 있어 재호출 비용 없음
             // 보충은 "빈 칸 한두 개"라 오래 기다릴 이유가 없다. 실측에서 1문항 보충이
             // 27.6초를 써 총 시간을 지배했으므로 대기 상한을 더 조인다.
             retryMaxDelayMs: 3_000,
+            imageQuota: imageQuotaFor(fillFeatured[i].length, slots.length),
           });
         } catch (e) {
           warnings.push(
@@ -2301,6 +2565,12 @@ export async function generatePrivateQuestionsFromUpload(
         }
         return null;
       });
+      // 이미지를 실은 보충이 만들 수 있는 초과 연결·깨진 그림 참조를 라운드 안에서
+      // 정리한다 — 정리로 생긴 빈 슬롯은 다음 라운드가 다시 채운다.
+      if (imagesOffered > 0) {
+        await enforceImageReuseCap();
+        await removeBrokenFigureQuestions();
+      }
       const beforeCount = saved.length;
       saved = await readSaved();
       roundRec.ms = Date.now() - tRound;
