@@ -70,10 +70,50 @@ export async function getOwnedTeachingMaterial(materialId: string, professorId: 
 }
 
 export async function loadTeachingMaterialFile(materialId: string, professorId: string) {
-  const material = await getOwnedTeachingMaterial(materialId, professorId);
-  const db = await createServerClient();
+  const db = await createServerClient() as any;
+  const { data: owned } = await db
+    .from('teaching_materials')
+    .select('*')
+    .eq('id', materialId)
+    .eq('professor_id', professorId)
+    .maybeSingle();
+  if (!owned) throw new ApiException('material_not_found', '선택한 강의자료를 찾을 수 없습니다.', 404);
+
+  let material = owned as TeachingMaterialRow;
   const { data, error } = await db.storage.from(TEACHING_MATERIAL_BUCKET).download(material.storage_path);
   if (error || !data) throw new ApiException('material_download_failed', '저장된 강의자료를 불러오지 못했습니다.', 500);
   const file = new File([await data.arrayBuffer()], material.file_name, { type: material.mime_type });
+
+  if (material.status !== 'ready') {
+    try {
+      const extracted = await extractTeachingMaterial(file);
+      const { data: repaired, error: repairError } = await db
+        .from('teaching_materials')
+        .update({
+          status: 'ready',
+          page_count: extracted.pages.length,
+          extracted_text: extracted.text,
+          extracted_pages: extracted.pages,
+          error_message: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', material.id)
+        .eq('professor_id', professorId)
+        .select('*')
+        .single();
+      if (repairError || !repaired) {
+        throw new ApiException('material_repair_failed', '강의자료 처리 상태를 갱신하지 못했습니다.', 500);
+      }
+      material = repaired as TeachingMaterialRow;
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : '강의자료를 다시 처리하지 못했습니다.';
+      await db
+        .from('teaching_materials')
+        .update({ status: 'failed', error_message: message, updated_at: new Date().toISOString() })
+        .eq('id', material.id)
+        .eq('professor_id', professorId);
+      throw cause;
+    }
+  }
   return { material, file };
 }
