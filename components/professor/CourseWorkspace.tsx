@@ -46,7 +46,9 @@ type Material = {
   file_size_bytes: number;
   page_count: number | null;
   status: string;
+  error_message?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 type CourseDetailData = {
   course: Course;
@@ -429,6 +431,15 @@ export function CourseDetail({ courseId }: { courseId: string }) {
       .then((r) => r.json())
       .then((p) => p.ok && setData(p.data));
   }, [courseId, localPreview]);
+  useEffect(() => {
+    if (localPreview || !data?.materials.some((material) => material.status === "processing")) return;
+    const timer = window.setInterval(() => {
+      fetch(`/api/professor/courses/${courseId}`)
+        .then((response) => response.json())
+        .then((payload) => payload.ok && setData(payload.data));
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [courseId, data?.materials, localPreview]);
   const groups = useMemo(
     () => ({
       formative: data?.artifacts.filter((a) => a.type === "formative") ?? [],
@@ -486,7 +497,7 @@ export function CourseDetail({ courseId }: { courseId: string }) {
       setUploadState({
         fileName: file.name,
         stage: "complete",
-        message: "강의자료가 추가되었습니다.",
+        message: "파일 저장 완료 · 자료의 글자와 페이지를 읽고 있습니다.",
       });
       window.setTimeout(() => setUploadState((current) =>
         current?.stage === "complete" ? null : current
@@ -501,6 +512,23 @@ export function CourseDetail({ courseId }: { courseId: string }) {
       window.clearTimeout(processingTimer);
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function retryMaterial(material: Material) {
+    setDeletingId(material.id);
+    try {
+      const response = await fetch(`/api/professor/teaching-materials/${material.id}/process`, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload?.error?.message ?? "다시 처리를 시작하지 못했습니다.");
+      setData((current) => current ? {
+        ...current,
+        materials: current.materials.map((item) => item.id === material.id ? { ...item, status: "processing", error_message: null } : item),
+      } : current);
+    } catch (cause) {
+      window.alert(cause instanceof Error ? cause.message : "다시 처리를 시작하지 못했습니다.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -622,9 +650,14 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                   </span>
                   <div className="course-row-copy">
                     <b>{material.file_name}</b>
+                    <small className={`course-material-status is-${material.status}`}>
+                      {material.status === "ready" && "사용할 수 있는 강의자료입니다"}
+                      {material.status === "processing" && "자료의 글자와 페이지를 읽고 있습니다"}
+                      {material.status === "failed" && (material.error_message?.split(":").slice(1).join(":") || "자료 처리에 실패했습니다")}
+                    </small>
                   </div>
                   <div className="course-row-actions">
-                    <Link
+                    {material.status === "ready" ? <><Link
                       href={`/professor/formative?course=${courseId}&material=${material.id}`}
                     >
                       형성평가 만들기 <ArrowRight size={15} />
@@ -633,7 +666,11 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                       href={`/professor/bridge?course=${courseId}&material=${material.id}`}
                     >
                       예습자료 만들기 <ArrowRight size={15} />
-                    </Link>
+                    </Link></> : (
+                      <button type="button" className="course-material-retry" disabled={deletingId === material.id} onClick={() => void retryMaterial(material)}>
+                        <RotateCcw size={16} /> {material.status === "processing" ? "처리 상태 확인" : "다시 처리"}
+                      </button>
+                    )}
                     <Link
                       href={`/professor/materials?course=${courseId}&material=${material.id}`}
                     >

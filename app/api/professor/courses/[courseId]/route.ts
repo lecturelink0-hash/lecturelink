@@ -11,7 +11,7 @@ export const GET = withErrorHandling(async (_request: Request, context: { params
   if (error || !course) throw new ApiException('course_not_found', '강의를 찾을 수 없습니다.', 404);
   const [{ data: artifacts }, { data: materials }, { count: studentCount }] = await Promise.all([
     db.from('learning_artifacts').select('id,type,title,status,source_name,summary,created_at,published_at').eq('course_id', courseId).order('created_at', { ascending: false }),
-    db.from('teaching_materials').select('id,file_name,file_type,file_size_bytes,page_count,status,created_at').eq('course_id', courseId).order('created_at', { ascending: false }),
+    db.from('teaching_materials').select('id,file_name,file_type,file_size_bytes,page_count,status,error_message,created_at,updated_at').eq('course_id', courseId).order('created_at', { ascending: false }),
     db.from('course_members').select('*', { count: 'exact', head: true }).eq('course_id', courseId),
   ]);
   return ok({ course, artifacts: artifacts ?? [], materials: materials ?? [], studentCount: studentCount ?? 0 });

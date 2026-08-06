@@ -205,6 +205,13 @@
   min-width: 0;
 }
 
+.course-row-copy { display:grid; gap:5px; }
+.course-material-status { font-size:15px; line-height:1.4; color:var(--p-muted); }
+.course-material-status.is-ready { color:var(--forest); }
+.course-material-status.is-processing { color:#77611c; }
+.course-material-status.is-failed { color:#983f38; }
+.course-row-actions .course-material-retry { display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:0 12px; border:1px solid #b7cdbd; border-radius:10px; background:#f4faf6; color:var(--forest); font:inherit; font-size:15px; font-weight:750; cursor:pointer; }
+
 .course-row-copy b {
   display: block;
 }
