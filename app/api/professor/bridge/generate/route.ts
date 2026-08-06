@@ -6,7 +6,7 @@ import { requireDailyCostCap } from '@/lib/ai/cost-cap';
 import { parsePptx } from '@/lib/extract/pptx';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import { createServerClient } from '@/lib/db/server';
-import { getOwnedTeachingMaterial, loadTeachingMaterialFile } from '@/lib/teaching/materials';
+import { loadTeachingMaterialFile } from '@/lib/teaching/materials';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
@@ -86,10 +86,10 @@ export const POST = withErrorHandling(async (request: Request) => {
   const submittedFile = form.get('file');
   const materialId = String(form.get('materialId') ?? '');
   const courseId = String(form.get('courseId') ?? '');
-  const cached = z.string().uuid().safeParse(materialId).success
-    ? await getOwnedTeachingMaterial(materialId, session.userId)
+  const loaded = z.string().uuid().safeParse(materialId).success
+    ? await loadTeachingMaterialFile(materialId, session.userId)
     : null;
-  const loaded = cached ? await loadTeachingMaterialFile(materialId, session.userId) : null;
+  const cached = loaded?.material ?? null;
   const file = loaded?.file ?? submittedFile;
   if (!(file instanceof File)) throw new ApiException('file_required', '강의자료를 선택해주세요.', 400);
   if (!z.string().uuid().safeParse(courseId).success) throw new ApiException('course_required', '저장할 차시를 선택해주세요.', 400);

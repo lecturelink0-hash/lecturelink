@@ -10,6 +10,8 @@ import {
   TEACHING_MATERIAL_BUCKET,
 } from '@/lib/teaching/materials';
 
+export const maxDuration = 120;
+
 const courseIdSchema = z.string().uuid();
 const materialIdSchema = z.string().uuid();
 
