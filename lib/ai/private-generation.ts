@@ -78,6 +78,14 @@ const MAX_QUESTIONS_PER_IMAGE = 2;
 // 뒷부분 내용이 잘리지 않게 한다. (기존 40,000자 → 30페이지 뒷부분 누락 원인)
 const MAX_GEN_TEXT_CHARS = 150_000;
 const MAX_EMBEDDED_CANDIDATES = 40; // AI 선별에 넣을 후보(추출) 상한
+// 임베드 추출 성공 개수가 이 값 미만이면(이미지형 요청 한정) 페이지 렌더+Vision 검출을
+// 병행해 후보를 보충한다. 슬라이드에 벡터로 그려진 다이어그램·차트는 임베드 래스터
+// 객체가 아니라서 임베드 경로에 안 잡히는데, 종전에는 임베드가 1장이라도 성공하면
+// Vision 을 통째로 생략해 그 자료의 이미지 후보가 그대로 바닥났다.
+const EMBED_SUPPLEMENT_MIN = 4;
+// 임베드 이미지 최소 변(px). 기본 300 은 강의 슬라이드의 중간 크기(200~300px) 임상
+// 사진까지 아이콘으로 오인해 버렸다 — 크기 컷을 낮추고 저품질 여부는 AI 선별에 맡긴다.
+const EMBED_MIN_EDGE_PX = 200;
 const VISION_CONCURRENCY = 6;      // 페이지 vision/OCR 동시 처리 수 — 순차 대비 대용량 대폭 가속
 const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 저해상도
 // crop 단위 OCR 동시 처리 수. OCR 은 슬라이드가 아니라 crop 이미지 1장당 1회 호출이므로
@@ -112,9 +120,12 @@ const IMAGE_REFINE_TIMEOUT_MS = 20_000;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
+  opts: { minSelected?: number } = {},
 ): Promise<number[]> {
   const { createCanvas, loadImage } = await import('canvas');
   const selected: number[] = [];
+  // 임계 미달 페이지의 점수(최소 보장 채움용).
+  const belowThreshold: Array<{ pageIndex: number; score: number }> = [];
   for (const page of pages) {
     try {
       const image = await loadImage(Buffer.from(page.png));
@@ -139,13 +150,30 @@ async function selectLikelyImagePages(
       }
       // Text glyphs mostly disappear at 48px width. Medical photos, radiology,
       // charts, and shaded diagrams retain contiguous dark/color/midtone mass.
-      if (dark / total > 0.025 || colored / total > 0.035 || midtone / total > 0.11) {
-        selected.push(page.pageIndex);
-      }
+      // score > 1 ⇔ 종전 임계(dark 2.5% / colored 3.5% / midtone 11%) 중 하나 초과.
+      const score = Math.max(
+        dark / total / 0.025,
+        colored / total / 0.035,
+        midtone / total / 0.11,
+      );
+      if (score > 1) selected.push(page.pageIndex);
+      else belowThreshold.push({ pageIndex: page.pageIndex, score });
     } catch {
       // A page that cannot be scored is kept so local selection never becomes
       // a silent content-loss mechanism.
       selected.push(page.pageIndex);
+    }
+  }
+  // 최소 보장: 임계 미달이어도 점수 상위 페이지를 minSelected 까지 채운다.
+  // 흰 배경의 회색조 X-ray·얇은 선 다이어그램은 48px 다운샘플에서 잉크 질량이 임계에
+  // 못 미쳐 통째로 탈락하곤 했다 — 그 자료는 이미지 문항이 0이 된다. 최종 판정은
+  // 어차피 페이지별 Vision 검출이 하므로, 여기서는 후보를 조금 후하게 넘긴다.
+  const minSelected = Math.min(opts.minSelected ?? 0, pages.length);
+  if (selected.length < minSelected) {
+    belowThreshold.sort((a, b) => b.score - a.score);
+    for (const s of belowThreshold) {
+      if (selected.length >= minSelected) break;
+      selected.push(s.pageIndex);
     }
   }
   return selected;
@@ -541,6 +569,11 @@ async function extractFromBuffer(input: {
 
   // PDF 임베드 이미지(object dedup) — 있으면 Vision 검출/crop 대신 이걸 우선 사용.
   let pdfEmbeddedCrops: CroppedImage[] | null = null;
+  // 임베드가 소수만 나온 경우(이미지형 요청) 페이지 렌더+Vision 을 병행하는 보충 모드.
+  let supplementVision = false;
+  // 임베드 이미지가 나온 페이지(1-based) — 보충 Vision 에서 같은 그림이 임베드와
+  // 페이지 크롭으로 중복 등재되지 않게 제외한다.
+  const embeddedPagesUsed = new Set<number>();
   let allowWholePageOcrFallback = fileType.startsWith('image/');
 
   // ── 슬라이드 / 페이지 텍스트 + PNG 산출
@@ -609,12 +642,18 @@ async function extractFromBuffer(input: {
           //   부수 효과 — 슬라이드에 겹쳐 그린 손글씨 주석은 이미지 객체에 포함되지 않아
           //   원본 그림만 깨끗하게 얻는다.
           const objDiag: Record<string, unknown> = {};
-          let candidates: { png: Uint8Array; widthPx: number; heightPx: number }[] =
-            await extractPdfImageObjects(pdfBuffer, {
-              maxImages: MAX_EMBEDDED_CANDIDATES,
-              maxOutEdgePx: 1024,
-              diag: objDiag,
-            });
+          let candidates: {
+            png: Uint8Array;
+            widthPx: number;
+            heightPx: number;
+            /** 1-based 출처 페이지(pdfjs 경로만 보유). 보충 Vision 의 중복 페이지 제외용. */
+            pageIndex?: number;
+          }[] = await extractPdfImageObjects(pdfBuffer, {
+            maxImages: MAX_EMBEDDED_CANDIDATES,
+            maxOutEdgePx: 1024,
+            minEdgePx: EMBED_MIN_EDGE_PX,
+            diag: objDiag,
+          });
           if (input.diag) {
             input.diag.extract.pdfImageObjects = objDiag;
             input.diag.timings.imageObjectsMs = Date.now() - tEmbed;
@@ -646,6 +685,11 @@ async function extractFromBuffer(input: {
             `임베드 이미지 ${candidates.length}개 추출 → 선별 ${chosen.length}개 사용${selected ? '' : '(선별 실패·폴백)'}.`,
           );
           if (chosen.length === 0) return null;
+          // 보충 Vision 의 중복 방지용 출처 페이지 기록. 프로덕션 경로(pdfjs 추출)만
+          // pageIndex 를 보유한다 — mutool 폴백(로컬 전용)은 페이지 미상이라 기록 없음.
+          for (const { image } of chosen) {
+            if (typeof image.pageIndex === 'number') embeddedPagesUsed.add(image.pageIndex);
+          }
           return chosen.map(({ image, kind }) => ({
             region: { kind, x: 0, y: 0, width: 1, height: 1, confidence: 1 },
             png: image.png,
@@ -665,6 +709,19 @@ async function extractFromBuffer(input: {
       allowWholePageOcrFallback = fullText.length < 1500;
     }
     pdfEmbeddedCrops = embeddedCropsResult;
+    // 임베드가 소수만 나오면 벡터로 그려진 다이어그램·차트(래스터 객체 아님)가 못 잡힌
+    // 자료일 가능성이 높다 — 이미지형 요청에 한해 페이지 렌더+Vision 검출을 병행해
+    // 후보를 보충한다(임베드가 나온 페이지는 제외해 중복 등재 방지).
+    supplementVision =
+      wantsImages &&
+      pdfEmbeddedCrops !== null &&
+      pdfEmbeddedCrops.length > 0 &&
+      pdfEmbeddedCrops.length < EMBED_SUPPLEMENT_MIN;
+    if (supplementVision) {
+      warnings.push(
+        `임베드 이미지 ${pdfEmbeddedCrops?.length}장뿐 — Vision 검출을 병행해 후보 보충.`,
+      );
+    }
 
     // ★ 텍스트 조기 전달 — 호출자가 이 시점에 텍스트 배치를 먼저 출발시켜
     //   아래 렌더·Vision·OCR 시간을 생성 시간 뒤로 숨긴다.
@@ -678,6 +735,7 @@ async function extractFromBuffer(input: {
       input.diag.extract.skipImageAnalysis = skipImageAnalysis;
       input.diag.extract.allowWholePageOcrFallback = allowWholePageOcrFallback;
       input.diag.extract.embeddedCropsUsed = pdfEmbeddedCrops !== null;
+      input.diag.extract.embeddedSupplementVision = supplementVision;
     }
     if (skipImageAnalysis) {
       warnings.push(
@@ -695,7 +753,7 @@ async function extractFromBuffer(input: {
     //   텍스트가 부족한(스캔/이미지 위주) 자료만 기존 페이지 렌더 + Vision 경로를 탄다.
     let pages: Awaited<ReturnType<typeof renderPdfPages>> = [];
     try {
-      if (!pdfEmbeddedCrops && !skipImageAnalysis) {
+      if ((!pdfEmbeddedCrops || supplementVision) && !skipImageAnalysis) {
         if (allowWholePageOcrFallback) {
           const tAll = Date.now();
           pages = await renderPdfPages(pdfBuffer, {
@@ -713,7 +771,14 @@ async function extractFromBuffer(input: {
             maxEdgePx: PDF_SCAN_EDGE_PX,
           });
           const tScore = Date.now();
-          const candidatePages = await selectLikelyImagePages(scanPages);
+          let candidatePages = await selectLikelyImagePages(scanPages, {
+            // 이미지형 요청은 임계 미달이어도 점수 상위 페이지를 채워 최소 후보를 보장
+            // (흰 배경 회색조 영상·얇은 선 다이어그램의 휴리스틱 탈락 방지).
+            minSelected: wantsImages ? Math.min(6, scanPages.length) : 0,
+          });
+          if (supplementVision) {
+            candidatePages = candidatePages.filter((p) => !embeddedPagesUsed.has(p));
+          }
           const tCand = Date.now();
           if (candidatePages.length > 0) {
             pages = await renderPdfPages(pdfBuffer, {
@@ -870,7 +935,7 @@ async function extractFromBuffer(input: {
   for (let i = 0; i < slidesData.length; i++) {
     const s = slidesData[i];
     if (
-      !pdfEmbeddedCrops &&
+      (!pdfEmbeddedCrops || supplementVision) &&
       !skipImageAnalysis &&
       s.png.length > 0 &&
       visionIndices.length < MAX_VISION_SLIDES
@@ -944,11 +1009,19 @@ async function extractFromBuffer(input: {
     );
   }
 
-  // PDF 임베드 추출이 있으면 그것을 featured 이미지로 우선 사용(Vision crop 결과는 중복 방지 위해 대체).
+  // PDF 임베드 추출이 있으면 그것을 featured 이미지로 우선 사용.
+  //  - 보충 모드: 임베드(원본 화질·주석 없음)를 앞에 두고 Vision 크롭을 뒤에 유지한다.
+  //    featured 선정이 슬라이드 순회 순서를 따르므로 임베드가 우선 사용되고, 임베드가
+  //    나온 페이지는 후보에서 이미 제외돼 같은 그림이 중복 등재되지 않는다.
+  //  - 단독 모드(종전): Vision crop 결과를 통째로 대체(중복 방지).
   if (pdfEmbeddedCrops && pdfEmbeddedCrops.length > 0 && slides.length > 0) {
-    slides[0].croppedImages = pdfEmbeddedCrops;
-    for (let i = 1; i < slides.length; i++) {
-      if (slides[i]) slides[i].croppedImages = [];
+    if (supplementVision) {
+      slides[0].croppedImages = [...pdfEmbeddedCrops, ...slides[0].croppedImages];
+    } else {
+      slides[0].croppedImages = pdfEmbeddedCrops;
+      for (let i = 1; i < slides.length; i++) {
+        if (slides[i]) slides[i].croppedImages = [];
+      }
     }
   }
 

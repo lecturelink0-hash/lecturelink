@@ -48,7 +48,7 @@ const SELECT_TOOL = {
 const SELECT_SYSTEM = `너는 의대 시험 문항 제작을 돕는 이미지 선별 도구다. 여러 이미지가 [이미지 0], [이미지 1] ... 순서로 주어진다.
 각 이미지가 "이미지를 직접 보고 판독·해석해야 풀 수 있는 시험 문항"에 쓸 만한 실제 의료 이미지인지 판정하라.
 
-- useful=true: X-ray, CT, MRI, 초음파, 심전도(ECG), 병리·현미경 사진, 임상 사진, 판독 가치가 있는 해부도/모식도 등
+- useful=true: X-ray, CT, MRI, 초음파, 심전도(ECG), 병리·현미경 사진, 임상 사진, 판독 가치가 있는 해부도/모식도, 수치·데이터를 읽어야 해석되는 도표/그래프 등
 - useful=false: 로고·아이콘·장식·배경·표지, 순수 텍스트/표, 의미 없는 장식 그래프, 잘리거나 저품질이라 판독 불가한 이미지
 - 제시된 모든 이미지에 대해 index 를 하나씩 빠짐없이 판정 결과에 포함하라.`;
 
@@ -58,11 +58,14 @@ interface Classified {
   kind: MedicalImageKind;
 }
 
-/** 후보 이미지를 배치 판정해, useful 로 선별된 것만 kind 와 함께 반환. 실패 시 null(폴백 신호). */
-export async function selectExamImages(
-  candidates: EmbeddedImage[],
+/**
+ * 후보 이미지를 배치 판정해, useful 로 선별된 것만 kind 와 함께 반환. 실패 시 null(폴백 신호).
+ * 제네릭: 후보에 부가 필드(pageIndex 등)가 있으면 그대로 보존해 돌려준다.
+ */
+export async function selectExamImages<T extends EmbeddedImage>(
+  candidates: T[],
   opts: { max?: number; thumbEdgePx?: number } = {},
-): Promise<{ image: EmbeddedImage; kind: MedicalImageKind }[] | null> {
+): Promise<{ image: T; kind: MedicalImageKind }[] | null> {
   if (candidates.length === 0) return [];
   const max = opts.max ?? 15;
   const thumbEdge = opts.thumbEdgePx ?? 320;
@@ -128,7 +131,7 @@ export async function selectExamImages(
   for (const r of classified) byIndex.set(r.index, r);
 
   // 선별: useful=true 인 후보만, 원래 면적(큰 순) 유지, 상한 적용.
-  const selected: { image: EmbeddedImage; kind: MedicalImageKind }[] = [];
+  const selected: { image: T; kind: MedicalImageKind }[] = [];
   for (let i = 0; i < candidates.length; i++) {
     const r = byIndex.get(i);
     if (r?.useful) {
