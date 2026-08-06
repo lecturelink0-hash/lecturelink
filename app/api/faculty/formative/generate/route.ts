@@ -175,7 +175,7 @@ const generatedQuestionSchema = z.object({
   ),
   explanation: z.string().min(1),
   objective: z.string().min(1),
-  sourcePages: z.array(z.number().int().min(1)).min(1).max(4),
+  sourcePages: z.array(z.number().int().min(1)).min(1).max(200),
   cognitiveLevel: z.enum(['회상', '이해', '적용']),
   qualityFlags: z.array(z.string()).max(3),
   imageIndex: z.preprocess(
@@ -188,7 +188,7 @@ const generatedQuestionSchema = z.object({
 const generatedAssessmentSchema = z.object({
   title: z.string().min(1),
   materialSummary: z.string().min(1),
-  objectives: z.array(z.string().min(1)).min(1).max(5),
+  objectives: z.array(z.string().min(1)).min(1).max(200),
   questions: z.array(generatedQuestionSchema).min(1).max(10),
 });
 
@@ -202,7 +202,7 @@ function createOutputSchema(count: number) {
     properties: {
       title: { type: 'string' },
       materialSummary: { type: 'string' },
-      objectives: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 5 },
+      objectives: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 200 },
       questions: {
         type: 'array',
         minItems: count,
@@ -216,7 +216,7 @@ function createOutputSchema(count: number) {
             answerIndex: { type: 'integer', minimum: 0, maximum: 4, description: '0부터 시작하는 정답 선택지 인덱스. 첫 선택지는 0, 마지막 선택지는 4.' },
             explanation: { type: 'string' },
             objective: { type: 'string' },
-            sourcePages: { type: 'array', items: { type: 'integer', minimum: 1 }, minItems: 1, maxItems: 4 },
+            sourcePages: { type: 'array', items: { type: 'integer', minimum: 1 }, minItems: 1, maxItems: 200 },
             cognitiveLevel: { type: 'string', enum: ['회상', '이해', '적용'] },
             qualityFlags: { type: 'array', items: { type: 'string' }, maxItems: 3 },
             imageIndex: {
