@@ -52,7 +52,10 @@ import {
   type ExtractEmbeddedDiagnostic,
 } from '@/lib/extract/pdf-embedded-images';
 import { extractPdfImageObjects } from '@/lib/extract/pdf-image-objects';
-import { selectExamImages } from '@/lib/extract/select-exam-images';
+import {
+  selectExamImages,
+  type SelectExamImagesDiag,
+} from '@/lib/extract/select-exam-images';
 import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
 import { maskTextRegions } from '@/lib/extract/mask-text';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
@@ -70,7 +73,21 @@ import { runOcr } from '@/lib/ocr/engine';
 const MAX_PDF_PAGES = 100;         // 이미지 검출용 페이지 렌더 상한
 const PDF_RENDER_EDGE_PX = 1280;   // PDF 페이지 렌더 해상도 — 메모리·토큰 절감 (기본 1600 대비 하향)
 const MAX_VISION_SLIDES = 100;     // detectMedicalRegions 대상 슬라이드 수
-const MAX_FEATURED_IMAGES = 8;     // 문항에 투입하는 이미지 상한 — 과다·노이즈 방지(기존 15에서 하향)
+// 문항에 투입하는 이미지 상한의 절대 천장. 실제 상한은 요청 문항 수에 연동해 정한다
+// (featuredBudget). 종전 고정 8은 "주석 텍스트가 정답 단서로 새는 것"을 막으려 15에서
+// 내린 값인데, 그 뒤 좌표 마스킹·재OCR 검증·텍스트 캡처 검열이 들어가 원래 이유가 해소됐다.
+// 상한만 남아 공급을 조르고 있었다 — 실측: 후보 26장 전부 useful 판정인데 면적 상위 8장만
+// 생존, 버려진 18장 중 9장이 진짜 임상영상(CT 5·심초음파 2·X-ray 2).
+const MAX_FEATURED_IMAGES_CAP = 20;
+// 이미지가 필요 없는 요청(이미지형 미선택)에서 쓰는 하한 — 종전 동작 유지용.
+const MIN_FEATURED_IMAGES = 8;
+/**
+ * 이번 요청에서 확보할 문항 이미지 수. 장당 MAX_QUESTIONS_PER_IMAGE 문항까지 쓰므로
+ * desiredCount 장이면 이론상 요청의 2배를 덮어 배치마다 이미지가 돌아가고 다양성도 남는다.
+ */
+function featuredBudget(desiredCount: number): number {
+  return Math.min(MAX_FEATURED_IMAGES_CAP, Math.max(MIN_FEATURED_IMAGES, desiredCount));
+}
 // 동일 이미지 1장을 문항에 연결할 수 있는 상한. 저장 후 정리(초과 연결 제거)뿐 아니라
 // 이미지 배치 예약 수·배치별 최소 이미지 문항 수·보충 배치의 이미지 재투입 판단이 공유한다.
 const MAX_QUESTIONS_PER_IMAGE = 2;
@@ -408,7 +425,12 @@ export interface GenerationDiagnostics {
   /** 추출 세부 수치(페이지 수·후보 수·생략 여부 등). */
   extract: Record<string, unknown>;
   /** 임베드 이미지 경로 진단 — mutool 실행 가능 여부가 여기서 드러난다. */
-  embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+  embedded: ExtractEmbeddedDiagnostic & {
+    selectMs?: number;
+    chosen?: number | null;
+    /** 상한 절삭 전 판정 결과 — chosen(절삭 후)만으론 원인 규명이 안 됐던 문제 대응. */
+    select?: SelectExamImagesDiag & { max?: number };
+  };
   generation: Record<string, unknown>;
   /** 이미지별 정제(인페인팅+검증) 계측 — 어느 이미지가 왜 제외됐고 얼마나 걸렸는지. */
   inpaint: unknown[];
@@ -545,6 +567,8 @@ async function extractFromBuffer(input: {
    * 텍스트가 부족한 스캔 자료는 OCR 이 유일한 내용원이므로 예외로 계속 수행한다.
    */
   wantsImages: boolean;
+  /** 이번 요청에서 확보할 문항 이미지 수(요청 문항 수 연동, featuredBudget). */
+  maxFeatured: number;
   /** 경고 수집 배열(호출자와 공유) — 텍스트 조기 반환 이후에도 계속 쌓을 수 있게 주입받는다. */
   warnings: string[];
   /** 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다. */
@@ -561,11 +585,16 @@ async function extractFromBuffer(input: {
   diag?: {
     timings: Record<string, number>;
     extract: Record<string, unknown>;
-    embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+    embedded: ExtractEmbeddedDiagnostic & {
+    selectMs?: number;
+    chosen?: number | null;
+    /** 상한 절삭 전 판정 결과 — chosen(절삭 후)만으론 원인 규명이 안 됐던 문제 대응. */
+    select?: SelectExamImagesDiag & { max?: number };
+  };
   };
   onVisionProgress?: (completed: number, total: number) => Promise<void> | void;
 }): Promise<{ slides: ExtractedSlide[] }> {
-  const { buffer, fileType, userIdForLog, wantsImages, warnings } = input;
+  const { buffer, fileType, userIdForLog, wantsImages, warnings, maxFeatured } = input;
   // 이미지 분석(렌더+Vision+크롭) 생략 여부 — 텍스트 확보 후 확정한다.
   let skipImageAnalysis = false;
   let earlyTextSent = false;
@@ -678,16 +707,23 @@ async function extractFromBuffer(input: {
           if (candidates.length === 0) return null;
           // AI 선별: 로고·장식·표지·순수 도표 제외, 판독 가치 있는 의료 이미지만(개수는 내용에 따라 가변).
           const tSelect = Date.now();
-          const selected = await selectExamImages(candidates, { max: MAX_FEATURED_IMAGES });
+          const selectDiag: SelectExamImagesDiag = {};
+          const selected = await selectExamImages(candidates, {
+            max: maxFeatured,
+            diag: selectDiag,
+          });
           if (input.diag) {
             input.diag.embedded.selectMs = Date.now() - tSelect;
+            // chosen 은 "절삭 후" 수치라 이것만으론 AI 가 몇 장을 통과시켰는지 알 수 없었다
+            // (조사에서 실제로 오진을 유발했다). 절삭 전 판정 수·버려진 수를 함께 남긴다.
             input.diag.embedded.chosen = selected ? selected.length : null;
+            input.diag.embedded.select = { ...selectDiag, max: maxFeatured };
           }
           const chosen =
             selected ??
             // 선별 실패(모델 오류/429) 시 면적 큰 순 폴백.
             candidates
-              .slice(0, MAX_FEATURED_IMAGES)
+              .slice(0, maxFeatured)
               .map((im) => ({ image: im, kind: 'other' as const }));
           warnings.push(
             `임베드 이미지 ${candidates.length}개 추출 → 선별 ${chosen.length}개 사용${selected ? '' : '(선별 실패·폴백)'}.`,
@@ -1136,7 +1172,12 @@ export async function generatePrivateQuestionsFromUpload(
     const diag: {
       timings: Record<string, number>;
       extract: Record<string, unknown>;
-      embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+      embedded: ExtractEmbeddedDiagnostic & {
+    selectMs?: number;
+    chosen?: number | null;
+    /** 상한 절삭 전 판정 결과 — chosen(절삭 후)만으론 원인 규명이 안 됐던 문제 대응. */
+    select?: SelectExamImagesDiag & { max?: number };
+  };
       generation: Record<string, unknown>;
       inpaint: unknown[];
       batches: unknown[];
@@ -1200,6 +1241,8 @@ export async function generatePrivateQuestionsFromUpload(
     const warnings: string[] = [];
     // '이미지형'을 고르지 않았다면 크롭이 문항에 쓰이지 않으므로 이미지 분석을 생략할 수 있다.
     const wantsImages = (input.questionTypes ?? []).includes('이미지형');
+    // 이번 요청의 문항 이미지 상한 — 요청 문항 수에 연동(고정 8이 공급 병목이었다).
+    const featuredCap = featuredBudget(desiredCount);
 
     // ── 크롭 OCR 스트리밍(이미지 준비 조기화)
     // 추출이 크롭을 만든 즉시 여기로 넘겨 OCR 을 출발시킨다(남은 페이지 Vision 과 겹침).
@@ -1258,6 +1301,7 @@ export async function generatePrivateQuestionsFromUpload(
       fileType: upload.file_type,
       userIdForLog: input.userId,
       wantsImages,
+      maxFeatured: featuredCap,
       warnings,
       diag,
       startOcr: startCropOcr,
@@ -1376,7 +1420,7 @@ export async function generatePrivateQuestionsFromUpload(
     //   이미지형을 선택해도 문항의 2/3가 이미지를 아예 받을 수 없어(선발사 배치는 이미지
     //   배정 대상에서 제외) 이미지 문항 비율을 구조적으로 깎았다.
     //   목표: 이미지형 단독 선택이면 전 문항, 다른 유형과 섞이면 유형 수로 나눈 몫.
-    //   공급 상한(featured 최대 MAX_FEATURED_IMAGES장 × 장당 MAX_QUESTIONS_PER_IMAGE문항)으로 캡.
+    //   공급 상한(featured 최대 featuredCap장 × 장당 MAX_QUESTIONS_PER_IMAGE문항)으로 캡.
     //   예약을 늘려도 벽시계 시간은 거의 늘지 않는다 — 이미지 배치들은 어차피 추출·정제
     //   완료 후에야 출발하고 서로 병렬(GEN_CONCURRENCY)이라, 전체 소요를 지배하는
     //   "추출→정제→이미지 배치 1개" 경로의 길이는 예약 수와 무관하다.
@@ -1386,7 +1430,7 @@ export async function generatePrivateQuestionsFromUpload(
           selectedTypes.length <= 1
             ? desiredCount
             : Math.ceil(desiredCount / selectedTypes.length),
-          MAX_FEATURED_IMAGES * MAX_QUESTIONS_PER_IMAGE,
+          featuredCap * MAX_QUESTIONS_PER_IMAGE,
         )
       : 0;
     const imageBatchesNeeded = wantsImages
@@ -1459,6 +1503,7 @@ export async function generatePrivateQuestionsFromUpload(
     diag.generation.prefireSegments = prefireSegments;
     diag.generation.imageQuestionTarget = imageQuestionTarget;
     diag.generation.imageBatchesNeeded = imageBatchesNeeded;
+    diag.generation.featuredCap = featuredCap;
     diag.timings.firstBatchStartMs = Date.now() - startTime;
     if (prefireCount > 0) {
       warnings.push(
@@ -1644,7 +1689,7 @@ export async function generatePrivateQuestionsFromUpload(
       // (예전에는 "인페인팅으로 못 지울 이미지"를 여기서 미리 걸렀다. 마스킹은 좌표를
       //  배경색으로 덮는 방식이라 글자가 많아도 실패하지 않으므로 사전 제외가 필요 없다.
       //  덕분에 문항에 쓸 수 있는 이미지가 늘어난다 — 실측에서 8장 중 3장만 살아남던 문제.)
-      .slice(0, MAX_FEATURED_IMAGES)
+      .slice(0, featuredCap)
       .map((x, gi) => ({ ...x, gi }));
 
     // 사용자가 '이미지형'을 선택하지 않았으면 이미지를 생성 배치에 아예 넣지 않는다.
@@ -2242,9 +2287,16 @@ export async function generatePrivateQuestionsFromUpload(
       if (eligible.length === 0) return [];
       const pos = eligible.indexOf(batchIndex);
       if (pos < 0) return [];
-      const per = Math.ceil(usableFeatured.length / eligible.length);
+      // 균등 분배(나머지를 앞 배치부터 1장씩). 종전 ceil 분배는 앞 배치가 몫을 다 가져가
+      // 꼬리 배치가 0장을 받았다 — 6장·4배치면 [2,2,2,0] 이 되어 마지막 배치 문항이
+      // 통째로 텍스트 문항이 됐다(실측에서 이미지 문항이 8개가 아닌 6개에 그친 직접 원인).
+      // 이제 [2,2,1,1] 로 나눠 자격 있는 배치는 최소 1장을 받는다.
+      const base = Math.floor(usableFeatured.length / eligible.length);
+      const remainder = usableFeatured.length % eligible.length;
+      const start = pos * base + Math.min(pos, remainder);
+      const count = base + (pos < remainder ? 1 : 0);
       // 이미지 수가 배치 수보다 적으면 뒤쪽 배치는 이미지 없이(텍스트 문항) 생성한다.
-      return usableFeatured.slice(pos * per, pos * per + per);
+      return usableFeatured.slice(start, start + count);
     };
 
     // 배치의 "이미지 판독 문항 최소 수". 단독 선택이면 배치 전 문항이 목표, 유형 혼합이면
