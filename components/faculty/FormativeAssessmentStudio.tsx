@@ -19,6 +19,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import {
   CourseMaterialSelector,
   uploadTeachingMaterial,
+  waitForTeachingMaterialReady,
 } from "@/components/professor/CourseMaterialSelector";
 import "./formative-studio.css";
 import "@/components/professor/course-material-selector.css";
@@ -111,6 +112,7 @@ export function FormativeAssessmentStudio() {
         selectedMaterialId = stored.id;
         setMaterialId(stored.id);
         setMaterialName(stored.file_name);
+        await waitForTeachingMaterialReady(courseId, stored.id);
       }
       const form = new FormData();
       form.append("materialId", selectedMaterialId);

@@ -23,7 +23,9 @@ export type TeachingMaterialRow = {
   page_count: number | null;
   extracted_text: string | null;
   extracted_pages: CachedMaterialPage[];
+  error_message: string | null;
   created_at: string;
+  updated_at: string;
 };
 
 export function materialFileType(file: File): 'pdf' | 'pptx' {

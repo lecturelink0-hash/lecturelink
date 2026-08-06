@@ -19,6 +19,7 @@ import { UploadNextSteps } from "@/components/ui/UploadNextSteps";
 import {
   CourseMaterialSelector,
   uploadTeachingMaterial,
+  waitForTeachingMaterialReady,
 } from "./CourseMaterialSelector";
 import "@/components/faculty/formative-studio.css";
 import "./course-material-selector.css";
@@ -91,6 +92,7 @@ export function MaterialImprovementStudio() {
       if (file) {
         const stored = await uploadTeachingMaterial(courseId, file);
         selectedMaterialId = stored.id;
+        await waitForTeachingMaterialReady(courseId, stored.id);
         setMaterialId(stored.id);
         setMaterialName(stored.file_name);
       }

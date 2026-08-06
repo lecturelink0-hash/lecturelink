@@ -3,12 +3,13 @@ import { requireProfessor } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import {
-  extractTeachingMaterial,
   hashFile,
   materialFileType,
   MAX_TEACHING_MATERIAL_BYTES,
   TEACHING_MATERIAL_BUCKET,
 } from '@/lib/teaching/materials';
+import { enqueueTeachingMaterial } from '@/lib/teaching/queue-material';
+import { processTeachingMaterial } from '@/lib/teaching/process-material';
 
 export const maxDuration = 120;
 
@@ -52,7 +53,13 @@ export const POST = withErrorHandling(async (request: Request) => {
     .eq('course_id', courseId)
     .eq('file_hash', fileHash)
     .maybeSingle();
-  if (duplicate) return ok({ ...duplicate, reused: true });
+  if (duplicate) {
+    if (duplicate.status !== 'ready') {
+      const queued = await enqueueTeachingMaterial(duplicate.id, session.userId, true);
+      if (queued.mode === 'inline') await processTeachingMaterial(duplicate.id, session.userId);
+    }
+    return ok({ ...duplicate, reused: true });
+  }
 
   const materialId = crypto.randomUUID();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-120) || `material.${fileType}`;
@@ -80,23 +87,19 @@ export const POST = withErrorHandling(async (request: Request) => {
   }
 
   try {
-    const extracted = await extractTeachingMaterial(file);
-    const { data, error } = await db.from('teaching_materials').update({
-      status: 'ready',
-      page_count: extracted.pages.length,
-      extracted_text: extracted.text,
-      extracted_pages: extracted.pages,
-      updated_at: new Date().toISOString(),
-    }).eq('id', materialId).select('id,course_id,file_name,file_type,mime_type,file_size_bytes,status,page_count,error_message,created_at').single();
-    if (error || !data) throw error ?? new Error('material update failed');
-    return ok({ ...data, reused: false }, 201);
+    const queued = await enqueueTeachingMaterial(materialId, session.userId);
+    if (queued.mode === 'inline') await processTeachingMaterial(materialId, session.userId);
+    const { data } = await db.from('teaching_materials')
+      .select('id,course_id,file_name,file_type,mime_type,file_size_bytes,status,page_count,error_message,created_at')
+      .eq('id', materialId).single();
+    return ok({ ...data, reused: false }, queued.mode === 'qstash' ? 202 : 201);
   } catch (error) {
     await db.from('teaching_materials').update({
       status: 'failed',
-      error_message: error instanceof Error ? error.message.slice(0, 500) : '자료 처리 실패',
+      error_message: `processing_failed:${error instanceof Error ? error.message.slice(0, 400) : '자료 처리 실패'}`,
       updated_at: new Date().toISOString(),
     }).eq('id', materialId);
-    throw error;
+    throw new ApiException('processing_failed', '원본은 저장했지만 자료 처리를 시작하지 못했습니다. 다시 처리를 눌러주세요.', 503);
   }
 });
 

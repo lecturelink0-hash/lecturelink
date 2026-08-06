@@ -12,6 +12,7 @@ type Material = {
   file_size_bytes: number;
   status: string;
   page_count: number | null;
+  error_message?: string | null;
 };
 
 const PREVIEW_COURSES: Course[] = [
@@ -38,6 +39,20 @@ export async function uploadTeachingMaterial(courseId: string, file: File) {
     );
   }
   return payload.data as Material & { reused: boolean };
+}
+
+export async function waitForTeachingMaterialReady(courseId: string, materialId: string) {
+  const deadline = Date.now() + 120_000;
+  while (Date.now() < deadline) {
+    const response = await fetch(`/api/professor/teaching-materials?courseId=${encodeURIComponent(courseId)}`);
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) throw new Error(payload?.error?.message ?? "자료 처리 상태를 확인하지 못했습니다.");
+    const material = (payload.data as Material[]).find((item) => item.id === materialId);
+    if (material?.status === "ready") return material;
+    if (material?.status === "failed") throw new Error(material.error_message?.split(":").slice(1).join(":") || "강의자료 처리에 실패했습니다.");
+    await new Promise((resolve) => window.setTimeout(resolve, 2000));
+  }
+  throw new Error("자료 처리 시간이 길어지고 있습니다. 통합 관리에서 상태를 확인한 뒤 다시 시도해주세요.");
 }
 
 export function CourseMaterialSelector({
