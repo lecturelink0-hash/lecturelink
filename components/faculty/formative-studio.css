@@ -422,6 +422,24 @@
   opacity: .45;
 }
 
+.summary-generate-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 12px 13px;
+  border: 1px solid #d99b96;
+  border-radius: 11px;
+  background: #fff4f2;
+  color: #873b35;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.summary-generate-error > svg { flex: 0 0 auto; margin-top: 1px; }
+.summary-generate-error > span { display: grid; gap: 2px; }
+.summary-generate-error b { font-size: 15px; }
+
 .ll-upload-page .summary-material {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);

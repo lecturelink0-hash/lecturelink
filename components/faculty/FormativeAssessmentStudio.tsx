@@ -90,12 +90,18 @@ export function FormativeAssessmentStudio() {
   }
 
   async function generate() {
-    if (
-      !courseId ||
-      !sourceReady ||
-      (rangeMode === "페이지 선택" && !pageRange.trim())
-    )
+    if (!courseId) {
+      setError("결과를 저장할 차시를 선택해 주세요.");
       return;
+    }
+    if (!sourceReady) {
+      setError("형성평가에 사용할 강의자료를 선택해 주세요.");
+      return;
+    }
+    if (rangeMode === "페이지 선택" && !pageRange.trim()) {
+      setError("출제할 페이지 범위를 입력해 주세요.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -428,7 +434,7 @@ export function FormativeAssessmentStudio() {
             </section>
           )}
 
-          {error && (
+          {error && !sourceReady && (
             <div className="studio-error" role="alert">
               <AlertTriangle size={17} />
               {error}
@@ -644,6 +650,15 @@ export function FormativeAssessmentStudio() {
                 <strong>{useImages ? "사용" : "사용 안 함"}</strong>
               </div>
             </dl>
+            {error && (
+              <div className="summary-generate-error" role="alert">
+                <AlertTriangle size={18} />
+                <span>
+                  <b>초안을 만들지 못했습니다.</b>
+                  {error}
+                </span>
+              </div>
+            )}
             {!result ? (
               <button
                 className="generate-button primary-btn"
@@ -659,7 +674,7 @@ export function FormativeAssessmentStudio() {
                 {loading ? (
                   <>
                     <Loader2 className="spin" size={17} />{" "}
-                    {useImages ? "텍스트와 이미지 분석 중" : "자료 분석 중"}
+                    {useImages ? "자료와 이미지로 문항 생성 중" : "강의자료로 문항 생성 중"}
                   </>
                 ) : (
                   <>

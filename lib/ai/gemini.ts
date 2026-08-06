@@ -73,7 +73,40 @@ function sanitizeSchema(node: unknown): Record<string, unknown> | undefined {
   const n = node as Record<string, unknown>;
   const out: Record<string, unknown> = {};
 
-  if (n.type && typeof n.type === 'string') {
+  // Anthropic 도구 스키마에서 `T | null`은 주로 anyOf/oneOf로 표현된다.
+  // Gemini functionDeclarations는 이 형태를 그대로 받지 않으므로
+  // 비-null 타입에 nullable을 결합한 OpenAPI 형태로 변환한다.
+  const union = Array.isArray(n.anyOf)
+    ? n.anyOf
+    : Array.isArray(n.oneOf)
+      ? n.oneOf
+      : null;
+  if (union) {
+    const members = union.filter(
+      (member) =>
+        member &&
+        typeof member === 'object' &&
+        (member as Record<string, unknown>).type !== 'null',
+    );
+    const hasNull = union.some(
+      (member) =>
+        member &&
+        typeof member === 'object' &&
+        (member as Record<string, unknown>).type === 'null',
+    );
+    if (members.length === 1) {
+      const member = sanitizeSchema(members[0]);
+      if (member) Object.assign(out, member);
+      if (hasNull) out.nullable = true;
+    } else if (members.length > 1) {
+      out.anyOf = members
+        .map((member) => sanitizeSchema(member))
+        .filter((member): member is Record<string, unknown> => Boolean(member));
+      if (hasNull) out.nullable = true;
+    }
+  }
+
+  if (!out.type && n.type && typeof n.type === 'string' && n.type !== 'null') {
     out.type = TYPE_MAP[n.type.toLowerCase()] ?? n.type.toUpperCase();
   }
   if (typeof n.description === 'string') out.description = n.description;
