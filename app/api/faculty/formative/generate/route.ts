@@ -169,13 +169,20 @@ function summarizeSchemaIssues(error: z.ZodError) {
 const generatedQuestionSchema = z.object({
   stem: z.string().min(1),
   choices: z.array(z.string().min(1)).length(5),
-  answerIndex: z.number().int().min(0).max(4),
+  answerIndex: z.preprocess(
+    (value) => typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value,
+    z.number().int().min(0).max(4),
+  ),
   explanation: z.string().min(1),
   objective: z.string().min(1),
   sourcePages: z.array(z.number().int().min(1)).min(1).max(4),
   cognitiveLevel: z.enum(['회상', '이해', '적용']),
   qualityFlags: z.array(z.string()).max(3),
-  imageIndex: z.number().int().min(0).max(MAX_VISION_IMAGES - 1).nullable().default(null),
+  imageIndex: z.preprocess(
+    (value) => value === '' || value === -1 || value === '-1' ? null :
+      typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value,
+    z.number().int().min(0).max(MAX_VISION_IMAGES - 1).nullable().default(null),
+  ),
 });
 
 const generatedAssessmentSchema = z.object({
@@ -206,7 +213,7 @@ function createOutputSchema(count: number) {
           properties: {
             stem: { type: 'string' },
             choices: { type: 'array', items: { type: 'string' }, minItems: 5, maxItems: 5 },
-            answerIndex: { type: 'integer', minimum: 0, maximum: 4 },
+            answerIndex: { type: 'integer', minimum: 0, maximum: 4, description: '0부터 시작하는 정답 선택지 인덱스. 첫 선택지는 0, 마지막 선택지는 4.' },
             explanation: { type: 'string' },
             objective: { type: 'string' },
             sourcePages: { type: 'array', items: { type: 'integer', minimum: 1 }, minItems: 1, maxItems: 4 },
@@ -217,7 +224,7 @@ function createOutputSchema(count: number) {
                 { type: 'integer', minimum: 0, maximum: MAX_VISION_IMAGES - 1 },
                 { type: 'null' },
               ],
-              description: '풀이에 이미지가 꼭 필요한 경우에만 제공된 이미지의 0부터 시작하는 번호를 지정한다.',
+              description: '풀이에 이미지가 꼭 필요한 경우에만 제공된 이미지의 0부터 시작하는 번호를 지정한다. 이미지가 필요 없거나 후보가 없으면 반드시 null.',
             },
           },
         },
@@ -481,10 +488,10 @@ ${material.text}`;
   ];
   let draft: z.infer<typeof generatedAssessmentSchema> | null = null;
   let generationFeedback = '';
-  for (let attempt = 0; attempt < 2 && !draft; attempt += 1) {
+  for (let attempt = 0; attempt < 3 && !draft; attempt += 1) {
     const response = await withRetry(() => createMessage(client, {
       model: MODELS.generation(),
-      max_tokens: 7000,
+      max_tokens: 10000,
       system: GENERATION_SYSTEM,
       tools: [createOutputSchema(settings.count)],
       tool_choice: { type: 'tool', name: 'create_formative_assessment' },
@@ -518,6 +525,7 @@ ${material.text}`;
     }
     if (parsedDraft.data.questions.length !== settings.count) {
       generationFeedback = `questions: 정확히 ${settings.count}개가 필요하지만 ${parsedDraft.data.questions.length}개가 반환됨`;
+      console.warn('[formative] draft count mismatch:', generationFeedback);
       continue;
     }
     draft = parsedDraft.data;
