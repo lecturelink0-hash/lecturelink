@@ -125,6 +125,10 @@ OCR 결과만 출력. 설명·머리말 금지.`;
     createMessage(client, {
       model,
       max_tokens: 4096,
+      // OCR 은 창작이 아니라 판독이다. 기본 temperature(제공자 기본값 1.0)로 두면 같은
+      // 이미지에서도 실행마다 좌표 묶음이 달라져(실측: 같은 크롭이 5개/7개) 어떤 실행은
+      // 글자를 덜 덮는다. 재현 가능하게 0 으로 고정한다.
+      temperature: 0,
       messages: [
         {
           role: 'user',

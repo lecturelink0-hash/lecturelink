@@ -57,7 +57,7 @@ import {
   type SelectExamImagesDiag,
 } from '@/lib/extract/select-exam-images';
 import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
-import { maskTextRegions } from '@/lib/extract/mask-text';
+import { maskTextRegions, isShortFigureLabel } from '@/lib/extract/mask-text';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -1713,6 +1713,50 @@ export async function generatePrivateQuestionsFromUpload(
     // 인페인팅 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
     const RESIDUAL_TEXT_MAX = 8;
 
+    /**
+     * 정제(마스킹) 결과에 남은 글자를 다시 읽어 "덮였는지"를 실제로 확인한다.
+     *
+     * 반환하는 len 은 문항 이미지에서 지워져야 할 글자 수 — 의도적으로 남기는 짧은
+     * 패널 라벨(A~E, 1~5 …)은 제외한다. 그것들은 그림의 일부이자 발문이 가리키는
+     * 대상이라 남는 게 정상이고, 세면 멀쩡한 이미지가 과도하게 제외된다.
+     *
+     * OCR 은 원본과 같은 전처리(업스케일·대비 정규화)를 거친 이미지로 수행해야 작은
+     * 크롭의 글자를 놓치지 않는다. 실패하면 len 0 을 돌려 "판단 불가"로 통과시킨다
+     * (검증 실패를 이유로 이미지를 버리면 일시적 API 오류가 공급을 끊는다).
+     */
+    const readResidualText = async (
+      crop: CroppedImage,
+      png: Uint8Array,
+    ): Promise<{ len: number; boxes: NonNullable<Awaited<ReturnType<typeof runOcr>>['boxes']> }> => {
+      try {
+        const forOcr = await preprocessForOcr(png, {
+          grayscale: crop.region.kind === 'ecg' || crop.region.kind === 'xray',
+          normalizeContrast: true,
+        }).catch(() => png);
+        const r = await runOcr({
+          png: forOcr,
+          userIdForLog: input.userId,
+          withBoxes: true,
+          widthPx: crop.widthPx,
+          heightPx: crop.heightPx,
+        });
+        totalCost += r.costUsd;
+        const boxes = (r.boxes ?? []).filter((b) => !isShortFigureLabel(b.text));
+        const len =
+          boxes.length > 0
+            ? boxes.map((b) => b.text).join('').replace(/[^\p{L}\p{N}]/gu, '').length
+            : // 좌표가 없으면 전체 텍스트로 보수적으로 판단(짧은 라벨만 남은 경우는 통과).
+              (r.text ?? '')
+                .split(/\s+/)
+                .filter((t) => !isShortFigureLabel(t))
+                .join('')
+                .replace(/[^\p{L}\p{N}]/gu, '').length;
+        return { len, boxes };
+      } catch {
+        return { len: 0, boxes: [] };
+      }
+    };
+
     // 인페인팅된 이미지를 다시 OCR 하여 남은 "의미 있는 글자(한글·라틴·숫자)" 개수를 센다.
     // OCR 실패 시 0 반환(판단 불가 → 과도한 제외 방지).
     const residualTextLen = async (png: Uint8Array): Promise<number> => {
@@ -1793,12 +1837,51 @@ export async function generatePrivateQuestionsFromUpload(
               rec.result = 'no_boxes';
               return null;
             }
+            // ── 마스킹 + 결과 검증
+            //
+            // 마스킹은 "OCR 이 준 좌표"만 덮는다. 그 좌표가 일부 줄을 빠뜨리거나 어긋나면
+            // 글자가 그대로 남는데, 배경이 어두운 영상에서는 빗나간 마스크가 배경색으로
+            // 채워져 눈에 띄지 않아 육안 검수로도 놓친다.
+            // 실측 사고(운영): 심초음파 크롭에서 라벨 7줄 중 2줄만 덮이고 "Intimal Flap"
+            // 등 5줄이 남아 진단명이 이미지에 그대로 노출됐다. 그런데 진단 로그에는
+            // "5개 마스킹"으로 남아 로그만으로는 정상으로 보였다.
+            // 근본 원인은 좌표 품질이 아니라 **검증의 부재**다 — 생성형 인페인팅을 좌표
+            // 마스킹으로 교체할 때(e040e76) 인페인팅 경로에 있던 잔존 텍스트 재검사가
+            // 함께 옮겨지지 않았다. 아래에서 "덮은 뒤 실제로 글자가 사라졌는지"를 확인하고,
+            // 남아 있으면 새로 얻은 좌표로 2차 마스킹, 그래도 남으면 이미지를 제외한다.
             const masked = await maskTextRegions(fi.c.png, useBoxes);
-            rec.result = 'masked';
             rec.maskedBoxes = masked.masked;
             rec.keptBoxes = masked.kept;
             rec.keptReasons = masked.keptReasons;
-            return masked.png;
+
+            const first = await readResidualText(fi.c, masked.png);
+            rec.residual = first.len;
+            if (first.len <= RESIDUAL_TEXT_MAX) {
+              rec.result = 'masked';
+              return masked.png;
+            }
+
+            // 2차: 검증 OCR 이 알려준 좌표(= 실제로 남아 있는 글자 위치)로 다시 덮는다.
+            if (first.boxes.length === 0) {
+              warnings.push(
+                `이미지 ${i}: 마스킹 후에도 글자 ${first.len}자가 남았고 위치를 얻지 못해 문항에서 제외.`,
+              );
+              rec.result = 'residual_text';
+              return null;
+            }
+            const masked2 = await maskTextRegions(masked.png, first.boxes);
+            rec.maskedBoxes2 = masked2.masked;
+            const second = await readResidualText(fi.c, masked2.png);
+            rec.residual2 = second.len;
+            if (second.len > RESIDUAL_TEXT_MAX) {
+              warnings.push(
+                `이미지 ${i}: 2차 마스킹 후에도 글자 ${second.len}자가 남아 문항에서 제외(정답 단서 위험).`,
+              );
+              rec.result = 'residual_text';
+              return null;
+            }
+            rec.result = 'masked_2pass';
+            return masked2.png;
           }
 
           // ── 폴백: 예전 생성형 인페인팅(옵션)
