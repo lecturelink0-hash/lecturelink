@@ -2063,6 +2063,14 @@ export async function generatePrivateQuestionsFromUpload(
       contextText: string;
       /** 이 배치에 제시할 이미지. gi 는 전역 인덱스(인페인팅 캐시·Storage 경로 기준). */
       featured: Array<{ slide: number; c: CroppedImage; gi: number }>;
+      /**
+       * 이미지를 "정제 완료를 기다려" 확정하는 경로. 있으면 featured 대신 이걸 쓴다.
+       * 배치가 자기 몫의 정제만 기다리게 해서(배치별 게이팅) 느린 한 장이 다른 배치를
+       * 붙잡지 않게 한다. 반환값에는 정제에 성공한 이미지만 담긴다.
+       */
+      resolveFeatured?: () => Promise<Array<{ slide: number; c: CroppedImage; gi: number }>>;
+      /** 정제 후 확정된 장수로 이미지 문항 최소 수를 다시 계산한다(정제 탈락 반영). */
+      imageQuotaFor?: (featuredLen: number, batchSize: number) => number;
       getDisplayPng: (gi: number) => Promise<Uint8Array | null>;
       /**
        * 429(rate limit) 재시도 대기 상한. 보충 배치는 본 배치들이 방금 끝난 직후에
@@ -2095,12 +2103,20 @@ export async function generatePrivateQuestionsFromUpload(
     ): Promise<BatchResult> {
       const batchSize = slots.length;
       const tBatch = Date.now();
+      // 이 배치에 배정된 이미지의 정제만 기다린다(다른 배치의 느린 이미지와 무관).
+      const tWait = Date.now();
+      const featured = gen.resolveFeatured ? await gen.resolveFeatured() : gen.featured;
+      const imageWaitMs = Date.now() - tWait;
+      const imageQuota = gen.imageQuotaFor
+        ? gen.imageQuotaFor(featured.length, batchSize)
+        : (gen.imageQuota ?? 0);
       const batchDiag: Record<string, unknown> = {
         i: batchIndex,
         size: batchSize,
-        images: gen.featured.length,
+        images: featured.length,
+        imageWaitMs,
       };
-      const validImageIndex = (i: number) => i >= 0 && i < gen.featured.length;
+      const validImageIndex = (i: number) => i >= 0 && i < featured.length;
       const { data: existingBatch, error: existingBatchError } = await admin
         .from('private_questions')
         .select('id, generation_slot')
@@ -2146,14 +2162,14 @@ export async function generatePrivateQuestionsFromUpload(
           },
         } as Anthropic.ImageBlockParam);
       }
-      for (let i = 0; i < gen.featured.length; i++) {
+      for (let i = 0; i < featured.length; i++) {
         userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
         userContent.push({
           type: 'image',
           source: {
             type: 'base64',
             media_type: 'image/png',
-            data: Buffer.from(gen.featured[i].c.png).toString('base64'),
+            data: Buffer.from(featured[i].c.png).toString('base64'),
           },
         } as Anthropic.ImageBlockParam);
       }
@@ -2175,7 +2191,7 @@ export async function generatePrivateQuestionsFromUpload(
       // 이미지를 받지 못한 배치가 발문에서 그림을 가리키면(예: "다음은 …모식도이다")
       // 학생 화면에 그림 없는 문항이 나온다. 배치 단위로 명시 금지한다.
       const noImageDirective =
-        gen.featured.length === 0
+        featured.length === 0
           ? '\n\n이번 묶음에는 의료 이미지가 제공되지 않았습니다. 따라서 ' +
             '"다음은 …모식도이다", "아래 그림에서", "제시된 심전도에서" 처럼 제시되지 않은 그림·사진·' +
             '모식도를 가리키는 표현을 발문에 절대 쓰지 말고, image_indices 는 항상 빈 배열 [] 로 두세요. ' +
@@ -2190,9 +2206,9 @@ export async function generatePrivateQuestionsFromUpload(
             // 이미지형 요청의 정량 강제. "우선 생성" 같은 정성 지시만으로는 기본 규칙
             // ('확신이 없으면 빈 배열')에 눌려 이미지를 받은 배치조차 텍스트 문항만
             // 만드는 일이 잦았다 — 최소 수를 명시해야 이미지 문항 비율이 유지된다.
-            (gen.imageQuota && gen.imageQuota > 0
-              ? `\n\n**이미지 판독 문항 최소 ${gen.imageQuota}문항**: 이번 묶음 ${batchSize}문항 중 ` +
-                `최소 ${gen.imageQuota}문항은 제시된 [이미지 N]을 직접 판독·해석해야 풀 수 있는 문항으로 ` +
+            (imageQuota > 0
+              ? `\n\n**이미지 판독 문항 최소 ${imageQuota}문항**: 이번 묶음 ${batchSize}문항 중 ` +
+                `최소 ${imageQuota}문항은 제시된 [이미지 N]을 직접 판독·해석해야 풀 수 있는 문항으로 ` +
                 `만들고, 그 문항의 image_indices 에 해당 번호를 넣으세요. 텍스트 근거와 이미지 근거가 ` +
                 `모두 가능한 내용이면 이미지 판독 문항을 우선하세요. ` +
                 `단, 같은 이미지는 최대 ${MAX_QUESTIONS_PER_IMAGE}문항까지만 사용하세요.`
@@ -2352,7 +2368,7 @@ export async function generatePrivateQuestionsFromUpload(
       // 이미지당 인페인팅(+검증 OCR)이 수십 초씩 걸릴 수 있어 직렬 대신 병렬로 정제·업로드.
       await Promise.all(
         [...usedIndices].map(async (i) => {
-          const gi = gen.featured[i].gi;
+          const gi = featured[i].gi;
           const display = await gen.getDisplayPng(gi);
           if (!display) return; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
           const imgPath = `${uploadRow.user_id}/${uploadRow.id}/crops/q_image_${gi}.png`;
@@ -2376,7 +2392,7 @@ export async function generatePrivateQuestionsFromUpload(
           .map((i, order) => {
             const storagePath = indexToPath.get(i);
             if (!storagePath) return null;
-            const fi = gen.featured[i];
+            const fi = featured[i];
             // 발문이 말하는 검사와 다른 종류의 이미지는 연결하지 않는다(예: 발문은
             // 흉부 X-ray 인데 붙은 그림은 심초음파 — 학생이 볼 때 따로 논다).
             // 연결을 끊으면 이후 "그림을 가리키는데 이미지가 없는 문항" 정리가 받아
@@ -2463,39 +2479,51 @@ export async function generatePrivateQuestionsFromUpload(
     // 이제 생성 전에 정제를 끝내고 실패한 이미지는 목록에서 제거한다. 모델은 애초에 쓸 수 있는
     // 이미지만 보므로 사후 삭제·보충이 사라지고, 정제는 이미 출발한 텍스트 배치와 겹쳐 돈다.
     // 장당 시간 상한(IMAGE_REFINE_TIMEOUT_MS)을 둬 느린 한 건이 전체를 붙잡지 못하게 한다.
-    let usableFeatured = featuredImages;
-    if (useImages && featuredImages.length > 0) {
-      const tRefine = Date.now();
-      const withTimeout = (promise: Promise<Uint8Array | null>): Promise<Uint8Array | null> =>
-        Promise.race([
-          promise,
-          new Promise<Uint8Array | null>((resolve) =>
-            setTimeout(() => resolve(null), IMAGE_REFINE_TIMEOUT_MS),
-          ),
-        ]);
+    // ★ 배치별 이미지 준비 게이팅
+    //
+    // 종전에는 여기서 featured 전체의 정제가 끝날 때까지 기다린 뒤(배리어) 배치를
+    // 출발시켰다. 배치마다 쓰는 이미지가 다른데도 "가장 느린 이미지 한 장"이 모든 이미지
+    // 배치를 붙잡았다(실측: 정제 구간이 15.3초까지 커져 앞단에서 번 8초를 상쇄).
+    // 이제 배치는 자기에게 배정된 이미지의 정제만 기다린다. 정제는 이미지별로 독립이고
+    // getDisplayPng 는 gi 단위로 캐시되므로, 배정만 먼저 확정하면 서로 기다릴 이유가 없다.
+    const withRefineTimeout = (
+      promise: Promise<Uint8Array | null>,
+    ): Promise<Uint8Array | null> =>
+      Promise.race([
+        promise,
+        new Promise<Uint8Array | null>((resolve) =>
+          setTimeout(() => resolve(null), IMAGE_REFINE_TIMEOUT_MS),
+        ),
+      ]);
+    diag.extract.featuredBefore = featuredImages.length;
+    // 정제에 성공해 실제로 문항에 쓸 수 있었던 이미지(gi) — 배치들이 채워 나간다.
+    const refinedUsableGis = new Set<number>();
+    /** 배정된 이미지의 정제를 기다려 "쓸 수 있는 것만" 남긴다. 장당 시간 상한 적용. */
+    const resolveRefined = async (
+      list: Array<{ slide: number; c: CroppedImage; gi: number }>,
+    ): Promise<Array<{ slide: number; c: CroppedImage; gi: number }>> => {
+      if (list.length === 0) return [];
       const results = await Promise.all(
-        featuredImages.map(async (fi) => ({
-          fi,
-          png: await withTimeout(getDisplayPng(fi.gi)),
-        })),
+        list.map(async (fi) => ({ fi, png: await withRefineTimeout(getDisplayPng(fi.gi)) })),
       );
-      usableFeatured = results.filter((r) => r.png !== null).map((r) => r.fi);
-      diag.timings.imageRefineMs = Date.now() - tRefine;
-      diag.extract.featuredBefore = featuredImages.length;
-      diag.extract.featuredUsable = usableFeatured.length;
-      if (usableFeatured.length < featuredImages.length) {
+      const usable = results.filter((r) => r.png !== null).map((r) => r.fi);
+      for (const fi of usable) refinedUsableGis.add(fi.gi);
+      if (usable.length < list.length) {
         warnings.push(
-          `이미지 정제 결과 ${usableFeatured.length}/${featuredImages.length}장만 문항에 사용 가능 — 나머지는 생성 전에 제외.`,
+          `이미지 정제 결과 ${usable.length}/${list.length}장만 이 배치에서 사용 가능 — 나머지는 제외.`,
         );
       }
-    }
+      return usable;
+    };
 
     // 배치별 이미지 배정: 같은 이미지를 여러 배치가 각자 문항으로 쓰면 "동일 이미지 최대
     // 2문제" 정리에서 초과분 문항이 삭제된다. 배치마다 겹치지 않는 이미지 묶음을 주면
     // 한 이미지를 참조하는 문항이 배치 크기(≤2) 이하로 제한돼 삭제가 발생하지 않는다.
+    // 배정은 "정제 이전" 목록(featuredImages)으로 한다 — 정제 결과를 기다려 배정하면
+    // 다시 배리어가 생긴다. 정제에 실패한 장은 각 배치가 자기 몫을 기다릴 때 걸러낸다.
     const featuredForBatch = (batchIndex: number, batchCount: number) => {
-      if (!useImages || usableFeatured.length === 0) return [];
-      if (batchCount <= 1) return usableFeatured;
+      if (!useImages || featuredImages.length === 0) return [];
+      if (batchCount <= 1) return featuredImages;
       // 텍스트 선발사로 먼저 출발한 배치는 OCR·이미지 이전에 시작했으므로 이미지를 받을 수
       // 없다. 이미지는 남은 배치들에만 분배해 어떤 이미지도 버려지지 않게 한다.
       const eligible = Array.from(
@@ -2509,12 +2537,12 @@ export async function generatePrivateQuestionsFromUpload(
       // 꼬리 배치가 0장을 받았다 — 6장·4배치면 [2,2,2,0] 이 되어 마지막 배치 문항이
       // 통째로 텍스트 문항이 됐다(실측에서 이미지 문항이 8개가 아닌 6개에 그친 직접 원인).
       // 이제 [2,2,1,1] 로 나눠 자격 있는 배치는 최소 1장을 받는다.
-      const base = Math.floor(usableFeatured.length / eligible.length);
-      const remainder = usableFeatured.length % eligible.length;
+      const base = Math.floor(featuredImages.length / eligible.length);
+      const remainder = featuredImages.length % eligible.length;
       const start = pos * base + Math.min(pos, remainder);
       const count = base + (pos < remainder ? 1 : 0);
       // 이미지 수가 배치 수보다 적으면 뒤쪽 배치는 이미지 없이(텍스트 문항) 생성한다.
-      return usableFeatured.slice(start, start + count);
+      return featuredImages.slice(start, start + count);
     };
 
     // 배치의 "이미지 판독 문항 최소 수". 단독 선택이면 배치 전 문항이 목표, 유형 혼합이면
@@ -2531,16 +2559,15 @@ export async function generatePrivateQuestionsFromUpload(
     };
 
     const genFor = (batchIndex: number, batchCount: number): GenContext => {
-      const featured = featuredForBatch(batchIndex, batchCount);
+      const assigned = featuredForBatch(batchIndex, batchCount);
       return {
         contextText: segmentForBatch(batchIndex, batchCount),
-        featured,
+        // 배정만 지금 확정하고, 정제 완료는 배치가 시작할 때 자기 몫만 기다린다.
+        featured: [],
+        resolveFeatured: () => resolveRefined(assigned),
+        imageQuotaFor,
         getDisplayPng,
         segmented: segmentCount > 1,
-        imageQuota: imageQuotaFor(
-          featured.length,
-          batchSizes[batchIndex] ?? GEN_BATCH_MAX_QUESTIONS,
-        ),
       };
     };
 
@@ -2648,6 +2675,8 @@ export async function generatePrivateQuestionsFromUpload(
       },
     );
     diag.timings.batchesMs = Date.now() - tGen;
+    // 배리어를 없앤 대신, 실제로 정제에 성공해 쓰인 이미지 수를 여기서 집계한다.
+    diag.extract.featuredUsable = refinedUsableGis.size;
     const batchResults = batchSettled.filter((r): r is BatchResult => r !== null);
     diag.generation.batchesSucceeded = batchSettled.filter((r) => r !== null).length;
     if (batchResults.length === 0) {
@@ -2854,10 +2883,13 @@ export async function generatePrivateQuestionsFromUpload(
       // 배치 슬롯 수 이상 여유가 남은 이미지만 준다 — 모델이 배치의 전 문항에 같은
       // 이미지를 붙여도 상한을 넘지 않아, 사후 정리로 문항을 또 잃는 순환이 안 생긴다.
       let fillFeatured: Array<GenContext['featured']> = fillBatches.map(() => []);
-      if (useImages && usableFeatured.length > 0) {
+      // 보충에는 "이미 정제에 성공한" 이미지만 쓴다(캐시 히트라 추가 지연이 없고,
+      // 정제 실패분을 다시 실어 문항이 또 삭제되는 순환을 막는다).
+      const refinedPool = featuredImages.filter((fi) => refinedUsableGis.has(fi.gi));
+      if (useImages && refinedPool.length > 0) {
         try {
           const linkCounts = await readImageLinkCounts();
-          const pool = usableFeatured
+          const pool = refinedPool
             .map((fi) => ({
               fi,
               remaining: MAX_QUESTIONS_PER_IMAGE - (linkCounts.get(fi.gi) ?? 0),
@@ -2886,12 +2918,13 @@ export async function generatePrivateQuestionsFromUpload(
             // 기본 백오프(최대 45초)를 기다리며 전체 소요를 지배한다(실측 66초 꼬리).
             // → 빈 슬롯이 속한 구간의 컨텍스트만 잘라 싣고, 재시도 대기도 짧게 잡는다.
             contextText: backfillContext(slots[0]),
-            featured: fillFeatured[i],
+            featured: [],
+            resolveFeatured: () => resolveRefined(fillFeatured[i]),
+            imageQuotaFor,
             getDisplayPng, // 정제 캐시가 이미 채워져 있어 재호출 비용 없음
             // 보충은 "빈 칸 한두 개"라 오래 기다릴 이유가 없다. 실측에서 1문항 보충이
             // 27.6초를 써 총 시간을 지배했으므로 대기 상한을 더 조인다.
             retryMaxDelayMs: 3_000,
-            imageQuota: imageQuotaFor(fillFeatured[i].length, slots.length),
           });
         } catch (e) {
           warnings.push(
