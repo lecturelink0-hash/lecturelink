@@ -1658,24 +1658,40 @@ export async function generatePrivateQuestionsFromUpload(
 
     // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
     // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
-    // 텍스트 캡처 검열: OCR 로 읽힌 "의미 있는 글자(문자·숫자)" 수 기준.
-    // 강의록 본문/필기 캡처가 문항 이미지로 쓰이면 이미지 안 텍스트가 정답 단서가
-    // 되므로 결정론적으로 배제한다 (vision 분류 오류에 대한 2차 방어선).
+    // 텍스트 캡처 검열 — 강의록 본문 캡처를 문항 이미지에서 배제한다.
+    //
+    // 판정 기준을 "글자 수"에서 "텍스트가 차지하는 면적 비율"로 바꿨다.
+    //  · 글자 수는 이미지 크기·주석 밀도와 무관한 절대값이라, 라벨이 조금 많은 진짜
+    //    임상영상(설명이 붙은 조영술·초음파)과 글자로 가득 찬 슬라이드를 못 가른다.
+    //  · 이제 정답 단서 유출은 마스킹 후 재검증이 막는다(readResidualText). 그래서 이
+    //    사전 필터의 역할은 "덮고 나면 그림이 남지 않는 이미지"를 걸러내는 것 하나다.
+    //    그 판단에는 글자가 화면을 얼마나 덮고 있는지가 정확한 척도다.
+    //  실측(대동맥 강의록): 그림 크롭 0.0~7.4% vs 텍스트 페이지 28.0~44.1% —
+    //  임계 15%는 양쪽에 2배 이상 여유가 있다.
+    const TEXT_AREA_RATIO_MAX = 0.15;
     const meaningfulOcrLen = (t?: string) =>
       (t ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
     const CLINICAL_KINDS = new Set([
       'xray', 'ct', 'mri', 'ecg', 'pathology', 'microscope', 'ultrasound',
     ]);
+    const textAreaRatio = (c: (typeof slides)[number]['croppedImages'][number]) => {
+      const boxes = c.ocrBoxes ?? [];
+      if (boxes.length === 0) return null;
+      const total = Math.max(1, c.widthPx * c.heightPx);
+      const area = boxes.reduce(
+        (sum, b) => sum + Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0),
+        0,
+      );
+      return area / total;
+    };
     const isTextCapture = (c: (typeof slides)[number]['croppedImages'][number]) => {
       if (c.region.kind === 'text_slide') return true; // vision 이 텍스트 캡처로 분류
+      const ratio = textAreaRatio(c);
+      if (ratio !== null) return ratio >= TEXT_AREA_RATIO_MAX;
+      // 좌표를 못 받은 경우에만 종전 글자 수 기준으로 폴백한다.
       const len = meaningfulOcrLen(c.ocrText);
-      // 실제 임상 영상(X-ray/CT 등)에는 판독 가능한 텍스트가 거의 없다 —
-      // 글자가 많다면 "chest x-ray" 같은 단어 때문에 오분류된 텍스트 캡처다.
       if (CLINICAL_KINDS.has(c.region.kind) && len >= 80) return true;
-      // 다이어그램류도 글자가 이 정도로 많으면 그림이 아니라 텍스트 슬라이드다
-      // (인페인팅해도 빈 이미지만 남는다).
-      if (len >= 250) return true;
-      return false;
+      return len >= 250;
     };
 
     // gi = 전역 이미지 인덱스. 배치마다 서로 다른 이미지 묶음을 주더라도 인페인팅 캐시와
@@ -1685,7 +1701,19 @@ export async function generatePrivateQuestionsFromUpload(
       // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
       .filter((x) => !x.c.ocrOnly)
       // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
-      .filter((x) => !isTextCapture(x.c))
+      .filter((x) => {
+        const excluded = isTextCapture(x.c);
+        if (excluded) {
+          const ratio = textAreaRatio(x.c);
+          warnings.push(
+            `이미지(슬라이드 ${x.slide}, ${x.c.region.kind}) 텍스트 캡처로 제외 — ` +
+              (ratio !== null
+                ? `텍스트 면적비 ${(ratio * 100).toFixed(1)}%`
+                : `글자 ${meaningfulOcrLen(x.c.ocrText)}자(좌표 없음)`),
+          );
+        }
+        return !excluded;
+      })
       // (예전에는 "인페인팅으로 못 지울 이미지"를 여기서 미리 걸렀다. 마스킹은 좌표를
       //  배경색으로 덮는 방식이라 글자가 많아도 실패하지 않으므로 사전 제외가 필요 없다.
       //  덕분에 문항에 쓸 수 있는 이미지가 늘어난다 — 실측에서 8장 중 3장만 살아남던 문제.)
