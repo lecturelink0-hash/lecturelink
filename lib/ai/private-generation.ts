@@ -1802,10 +1802,15 @@ export async function generatePrivateQuestionsFromUpload(
     // 숫자는 전부 "실제 글자 조각"이다. 실측 사고: 잔존 3자가 통과했는데 그 3자가
     // 하필 "Int"(Intimal Flap 의 앞부분)라 화면에 그대로 읽혔다 — 진단 단어의 앞부분은
     // 조각이어도 정답 단서다. 단어 조각을 남기지 않으려면 임계가 한 글자 수준이어야 한다.
-    const RESIDUAL_TEXT_MAX = 2;
-    // 2차 마스킹은 "1차가 이미 빗나간 자리"를 덮는 작업이라 좌표를 넉넉히 잡는다.
-    // (1차의 기본 여백 pad 2px·8% 로는 작은 크롭에서 글자 가장자리가 삐져나왔다.)
+    // 한 글자는 진단명을 드러낼 수 없고(패널 라벨 A~E·1~5 는 애초에 세지 않는다),
+    // OCR 이 질감을 글자로 오독하는 잡음이 대개 한 글자라 여기서 끊는다.
+    // 실측: "In"(2자)이 화면에 그대로 읽혔다 — 두 글자부터는 단어 조각이라 막아야 한다.
+    const RESIDUAL_TEXT_MAX = 1;
+    // 2패스부터의 마스킹은 "앞 패스가 이미 빗나간 자리"를 덮는 작업이라 여백을 넉넉히 잡는다.
+    // (1패스 기본 여백 pad 2px·8% 로는 작은 크롭에서 글자 가장자리가 삐져나왔다.)
     const SECOND_PASS_MASK_OPTS = { pad: 6, padRatio: 0.3 } as const;
+    // 마스킹→검증 반복 상한. 실측 10장에서 1패스 5·2패스 3·3패스 1로 전부 수렴했다.
+    const MAX_MASK_PASSES = 3;
 
     /**
      * 정제(마스킹) 결과에 남은 글자를 다시 읽어 "덮였는지"를 실제로 확인한다.
@@ -1943,43 +1948,49 @@ export async function generatePrivateQuestionsFromUpload(
             // 마스킹으로 교체할 때(e040e76) 인페인팅 경로에 있던 잔존 텍스트 재검사가
             // 함께 옮겨지지 않았다. 아래에서 "덮은 뒤 실제로 글자가 사라졌는지"를 확인하고,
             // 남아 있으면 새로 얻은 좌표로 2차 마스킹, 그래도 남으면 이미지를 제외한다.
-            const masked = await maskTextRegions(fi.c.png, useBoxes);
-            rec.maskedBoxes = masked.masked;
-            rec.keptBoxes = masked.kept;
-            rec.keptReasons = masked.keptReasons;
-
-            const first = await readResidualText(fi.c, masked.png);
-            rec.residual = first.len;
-            if (first.len <= RESIDUAL_TEXT_MAX) {
-              rec.result = 'masked';
-              return masked.png;
-            }
-
-            // 2차: 검증 OCR 이 알려준 좌표(= 실제로 남아 있는 글자 위치)로 다시 덮는다.
-            if (first.boxes.length === 0) {
-              warnings.push(
-                `이미지 ${i}: 마스킹 후에도 글자 ${first.len}자가 남았고 위치를 얻지 못해 문항에서 제외.`,
+            // 마스킹 → 검증을 잔존 글자가 사라질 때까지 반복한다.
+            //
+            // 왜 반복이 필요한가: OCR 이 주는 박스는 글자보다 좁게 나오는 일이 잦다
+            // (실측: "Aortic Valve" 가 x 7~60 에 있는데 박스는 7~37 — 뒤쪽 "Valve" 가
+            // 그대로 남았다). 남은 조각을 다시 읽어 덮으면 대개 한 번 더로 정리되지만,
+            // 그 조각의 박스도 또 좁을 수 있어 실행에 따라 두 번으로는 부족했다
+            // (운영 실측에서 "Int" → "In" 처럼 한 글자씩만 줄어든 사례).
+            // 실측 10장 기준 1패스 5·2패스 3·3패스 1로 전부 수렴한다.
+            let current = fi.c.png;
+            let boxesToMask = useBoxes;
+            let lastLen = 0;
+            for (let pass = 1; pass <= MAX_MASK_PASSES; pass++) {
+              const m = await maskTextRegions(
+                current,
+                boxesToMask,
+                // 2패스부터는 "앞 패스가 이미 빗나간 자리"를 덮는 작업이라 여백을 넉넉히.
+                pass === 1 ? undefined : SECOND_PASS_MASK_OPTS,
               );
-              rec.result = 'residual_text';
-              return null;
+              current = m.png;
+              rec[`pass${pass}Masked`] = m.masked;
+              if (pass === 1) {
+                rec.keptBoxes = m.kept;
+                rec.keptReasons = m.keptReasons;
+              }
+
+              const check = await readResidualText(fi.c, current);
+              rec[`pass${pass}Residual`] = check.len;
+              lastLen = check.len;
+              if (check.len <= RESIDUAL_TEXT_MAX) {
+                rec.result = pass === 1 ? 'masked' : `masked_${pass}pass`;
+                rec.passes = pass;
+                return current;
+              }
+              // 글자는 남았는데 위치를 모르면 더 덮을 수 없다.
+              if (check.boxes.length === 0) break;
+              boxesToMask = check.boxes;
             }
-            const masked2 = await maskTextRegions(
-              masked.png,
-              first.boxes,
-              SECOND_PASS_MASK_OPTS,
+            warnings.push(
+              `이미지 ${i}: ${MAX_MASK_PASSES}회 마스킹 후에도 글자 ${lastLen}자가 남아 문항에서 제외(정답 단서 위험).`,
             );
-            rec.maskedBoxes2 = masked2.masked;
-            const second = await readResidualText(fi.c, masked2.png);
-            rec.residual2 = second.len;
-            if (second.len > RESIDUAL_TEXT_MAX) {
-              warnings.push(
-                `이미지 ${i}: 2차 마스킹 후에도 글자 ${second.len}자가 남아 문항에서 제외(정답 단서 위험).`,
-              );
-              rec.result = 'residual_text';
-              return null;
-            }
-            rec.result = 'masked_2pass';
-            return masked2.png;
+            rec.result = 'residual_text';
+            rec.passes = MAX_MASK_PASSES;
+            return null;
           }
 
           // ── 폴백: 예전 생성형 인페인팅(옵션)
