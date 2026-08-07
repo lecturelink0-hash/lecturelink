@@ -435,6 +435,65 @@ export function stemModalityConflict(stem: string, kind: string): boolean {
   return !mentioned.includes(kind);
 }
 
+/**
+ * 느린 호출에 복제 요청을 띄워 꼬리를 자른다(hedged request).
+ *
+ * 모델 호출은 편차가 크다 — 실측에서 다른 배치가 8~14초일 때 한 배치만 29초가 걸렸다
+ * (429 백오프로 추정). 배치는 병렬이라 그 한 건이 전체 소요를 지배한다.
+ * afterMs 를 넘기면 같은 호출을 한 번 더 띄우고 **먼저 끝난 쪽**을 채택한다.
+ * afterMs 전에 실패하면 기다리지 않고 즉시 다시 시도하고, 모든 시도가 실패해야 거부한다.
+ *
+ * 주의: 감싸는 대상은 "모델 호출"이어야 한다. 배치 전체(이미지 준비 대기 포함)를 감싸면
+ * 대기 시간까지 임계에 포함돼 정상 배치가 복제를 유발한다(실측: 이미지 게이팅 도입 후
+ * 배치 총시간이 19~24초가 되면서 헤지가 4회 헛발동).
+ */
+function hedgedCall<T>(
+  run: () => Promise<T>,
+  opts: { afterMs: number; onHedge?: () => void; onRetry?: () => void },
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let done = false;
+    let launched = 0;
+    let failed = 0;
+    let firstError: unknown;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const launch = (): void => {
+      launched += 1;
+      run().then(
+        (v) => {
+          if (done) return;
+          done = true;
+          if (timer) clearTimeout(timer);
+          resolve(v); // 먼저 끝난 쪽을 채택. 늦게 끝난 쪽 결과는 버린다.
+        },
+        (e) => {
+          failed += 1;
+          firstError ??= e;
+          if (done) return; // 이미 다른 시도가 성공했다면 실패는 무시한다.
+          if (failed < launched) return; // 아직 대기 중인 시도가 남아 있다.
+          if (timer) {
+            clearTimeout(timer);
+            timer = undefined;
+            opts.onRetry?.();
+            launch();
+            return;
+          }
+          reject(firstError); // 모든 시도가 실패.
+        },
+      );
+    };
+
+    timer = setTimeout(() => {
+      timer = undefined;
+      if (done) return;
+      opts.onHedge?.();
+      launch();
+    }, opts.afterMs);
+    launch();
+  });
+}
+
 export interface PrivateGenerationInput {
   uploadId: string;
   userId: string;
@@ -2092,6 +2151,12 @@ export async function generatePrivateQuestionsFromUpload(
       imageQuota?: number;
     };
 
+    // 진단 카운터. generateAndPersistBatch 가 선발사 경로에서 일찍 호출되므로
+    // const 가 아니라 함수 선언으로 두어 초기화 순서(TDZ) 문제를 피한다.
+    function bumpGenDiag(key: string): void {
+      diag.generation[key] = ((diag.generation[key] as number | undefined) ?? 0) + 1;
+    }
+
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
     // 사용할 수 있다 (참조하는 카탈로그·프롬프트는 모두 4)에서 미리 준비됨).
     // slots: 이 배치가 채울 generation_slot 목록(연속이 아닐 수 있다 — 부족분 보충용).
@@ -2246,7 +2311,16 @@ export async function generatePrivateQuestionsFromUpload(
             : {},
         );
       const tGenCall = Date.now();
-      let response = await callGenerate(genMaxTokens);
+      // 헤지 대상은 "모델 호출"만이다 — 위쪽 이미지 준비 대기는 포함하지 않는다.
+      // 복제 호출의 토큰은 승자 기준으로만 기록된다(패자 응답은 도착하지 않을 수 있다).
+      let response = await hedgedCall(() => callGenerate(genMaxTokens), {
+        afterMs: GEN_HEDGE_AFTER_MS,
+        onHedge: () => {
+          bumpGenDiag('batchHedged');
+          warnings.push(`배치 ${batchIndex + 1} 모델 호출 지연 — 복제 요청으로 꼬리 단축 시도.`);
+        },
+        onRetry: () => bumpGenDiag('batchRetried'),
+      });
       batchDiag.genCallMs = Date.now() - tGenCall;
       let toolUseBlock = response.content.find(
         (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
@@ -2574,68 +2648,6 @@ export async function generatePrivateQuestionsFromUpload(
     const tGen = Date.now();
     const batchFailureReasons: string[] = [];
 
-    /**
-     * 느린 배치에 복제 요청을 띄워 꼬리를 자른다(hedged request).
-     *
-     * 배치는 병렬이라 전체 소요를 "가장 느린 배치 하나"가 지배한다. 실측에서 다른 배치가
-     * 8~14초일 때 한 배치만 29초가 걸린 실행이 있었다(429 백오프로 추정). 이 한 건이
-     * 그 실행을 10초 이상 늘렸다.
-     *
-     * GEN_HEDGE_AFTER_MS 를 넘기면 같은 슬롯으로 한 번 더 호출하고 먼저 끝난 쪽을 쓴다.
-     * 저장이 upsert(upload_id, generation_slot) 라 두 호출이 같은 슬롯에 써도 멱등하고,
-     * 최종 결과는 아래에서 DB 를 다시 읽어(readSaved) 확정하므로 어긋나지 않는다.
-     * 늦게 끝난 쪽의 예외는 무시한다(이미 승자가 있으므로 실패로 보지 않는다).
-     */
-    const bumpDiag = (key: string) => {
-      diag.generation[key] = ((diag.generation[key] as number | undefined) ?? 0) + 1;
-    };
-    const withHedge = (
-      batchIndex: number,
-      run: () => Promise<BatchResult>,
-    ): Promise<BatchResult> =>
-      new Promise<BatchResult>((resolve, reject) => {
-        let done = false;
-        let launched = 0;
-        let failed = 0;
-        let firstError: unknown;
-        let timer: ReturnType<typeof setTimeout> | undefined;
-
-        const launch = (): void => {
-          launched += 1;
-          run().then(
-            (v) => {
-              if (done) return;
-              done = true;
-              if (timer) clearTimeout(timer);
-              resolve(v); // 먼저 끝난 쪽을 채택. 늦게 끝난 쪽 결과는 버린다.
-            },
-            (e) => {
-              failed += 1;
-              firstError ??= e;
-              if (done) return; // 이미 다른 시도가 성공했다면 실패는 무시한다.
-              if (failed < launched) return; // 아직 대기 중인 시도가 남아 있다.
-              if (timer) {
-                // 헤지 예정 시각 전에 실패했다면 기다릴 이유가 없다 — 즉시 다시 시도.
-                clearTimeout(timer);
-                timer = undefined;
-                bumpDiag('batchRetried');
-                launch();
-                return;
-              }
-              reject(firstError); // 모든 시도가 실패.
-            },
-          );
-        };
-
-        timer = setTimeout(() => {
-          timer = undefined;
-          if (done) return;
-          bumpDiag('batchHedged');
-          warnings.push(`배치 ${batchIndex + 1} 지연 — 복제 요청으로 꼬리 단축 시도.`);
-          launch();
-        }, GEN_HEDGE_AFTER_MS);
-        launch();
-      });
     const batchSettled = await mapWithConcurrency(
       batchSizes,
       GEN_CONCURRENCY,
@@ -2656,13 +2668,11 @@ export async function generatePrivateQuestionsFromUpload(
               settled.e instanceof Error ? settled.e.message : String(settled.e),
             );
           }
-          return await withHedge(batchIndex, () =>
-            generateAndPersistBatch(
-              batchIndex,
-              slots,
-              batchSizes.length,
-              genFor(batchIndex, batchSizes.length),
-            ),
+          return await generateAndPersistBatch(
+            batchIndex,
+            slots,
+            batchSizes.length,
+            genFor(batchIndex, batchSizes.length),
           );
         } catch (e) {
           // 배치 1개 실패가 전체 생성을 실패시키지 않게 격리한다. 빈 슬롯은 아래 보충 단계가
