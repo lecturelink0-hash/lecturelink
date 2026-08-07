@@ -61,6 +61,19 @@ const SELECT_SYSTEM = `너는 의대 시험 문항 제작을 돕는 이미지 �
   같은 그림을 쪼갠 조각이나 거의 같은 내용이 여러 장이면 가장 완전한 1장만 높게 주고 나머지는 낮춰라.
 - 제시된 모든 이미지에 대해 index 를 하나씩 빠짐없이 판정 결과에 포함하라.`;
 
+/**
+ * 한 번의 판정 호출에 넣는 후보 수. 판정은 이미지별 독립이라 나눠도 결과가 같고,
+ * 응답 길이에 비례하는 지연만 줄어든다.
+ *
+ * 같은 후보 26장으로 A/B 실측(각 2회):
+ *   1콜(26장)  8.0 / 8.2초
+ *   2콜(13장)  7.0 / 5.9초
+ *   4콜(8장)   6.6 / 5.0초   ← 채택
+ * 이미지 업로드·전처리 같은 고정 비용이 있어 호출 수에 반비례하지는 않는다(절반까지는
+ * 줄지 않는다). 더 잘게 쪼개면 병렬 호출만 늘어 레이트리밋 압력이 커지므로 4묶음 선에서 멈춘다.
+ */
+const SELECT_CHUNK_SIZE = 8;
+
 interface Classified {
   index: number;
   useful: boolean;
@@ -80,6 +93,10 @@ export interface SelectExamImagesDiag {
   droppedByCap?: number;
   /** 반환분의 kind 분포. */
   kinds?: Record<string, number>;
+  /** 판정에 실패해 '판정 불가'로 살린 묶음 수(0 이면 전부 정상 판정). */
+  failedChunks?: number;
+  /** 판정 호출을 몇 묶음으로 나눴는지. */
+  chunks?: number;
 }
 
 /**
@@ -153,22 +170,33 @@ export async function selectExamImages<T extends EmbeddedImage>(
     }
   }
 
-  const content: Anthropic.MessageParam['content'] = [];
-  for (let i = 0; i < thumbs.length; i++) {
-    if (!thumbs[i]) continue;
-    content.push({ type: 'text', text: `[이미지 ${i}]` });
-    content.push({
-      type: 'image',
-      source: { type: 'base64', media_type: 'image/png', data: thumbs[i] },
-    } as Anthropic.ImageBlockParam);
-  }
-  content.push({
-    type: 'text',
-    text: '위 각 이미지가 시험 문항에 쓸 만한 의료 이미지인지 모두 판정하라.',
-  });
+  // ── 판정을 여러 묶음으로 쪼개 병렬 호출한다.
+  //
+  // 판정은 이미지별로 독립이라 나눠도 결과가 달라지지 않는데, 한 번에 몰아 보내면
+  // 응답(=출력 토큰) 길이에 비례해 지연이 커진다. 이 호출은 임계경로 위에 있다
+  // (끝나야 크롭이 확정되고 OCR·정제·이미지 배치가 시작). 실측 A/B 는 위 상수 주석 참고
+  // — 26장 기준 8.1초(1콜) → 5.8초(4콜). 총 토큰량이 같아 비용은 동일하다.
+  const chunkStarts: number[] = [];
+  for (let i = 0; i < candidates.length; i += SELECT_CHUNK_SIZE) chunkStarts.push(i);
 
-  let classified: Classified[];
-  try {
+  const judgeChunk = async (start: number): Promise<Classified[] | null> => {
+    const end = Math.min(candidates.length, start + SELECT_CHUNK_SIZE);
+    const content: Anthropic.MessageParam['content'] = [];
+    for (let i = start; i < end; i++) {
+      if (!thumbs[i]) continue;
+      // 묶음 안에서는 0부터 다시 번호를 매기고, 응답을 전역 인덱스로 되돌린다.
+      content.push({ type: 'text', text: `[이미지 ${i - start}]` });
+      content.push({
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/png', data: thumbs[i] },
+      } as Anthropic.ImageBlockParam);
+    }
+    if (content.length === 0) return [];
+    content.push({
+      type: 'text',
+      text: '위 각 이미지가 시험 문항에 쓸 만한 의료 이미지인지 모두 판정하라.',
+    });
+
     const client = getAnthropic();
     const response = await withRetry(
       () =>
@@ -186,11 +214,34 @@ export async function selectExamImages<T extends EmbeddedImage>(
       (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
     );
     if (!tool) return null;
-    classified = ((tool.input as { results?: Classified[] }).results ?? []).filter(
-      (r) => typeof r?.index === 'number',
+    return ((tool.input as { results?: Classified[] }).results ?? [])
+      .filter((r) => typeof r?.index === 'number')
+      .map((r) => ({ ...r, index: r.index + start }));
+  };
+
+  let classified: Classified[];
+  {
+    const settled = await Promise.all(
+      chunkStarts.map((start) =>
+        judgeChunk(start).catch(() => null as Classified[] | null),
+      ),
     );
-  } catch {
-    return null; // 판정 실패 → 호출측 폴백
+    // 전 묶음 실패 = 판정 자체가 불가 → 호출측 폴백(면적 큰 순)에 맡긴다.
+    if (settled.every((r) => r === null)) return null;
+    classified = settled.flatMap((r, i) => {
+      if (r !== null) return r;
+      // 일부 묶음만 실패하면 그 구간은 "판정 불가"로 두고 후보를 살린다.
+      // (버리면 멀쩡한 의료 이미지가 통째로 사라진다. 호출측 전체 폴백과 같은 취급.)
+      const start = chunkStarts[i];
+      const end = Math.min(candidates.length, start + SELECT_CHUNK_SIZE);
+      if (opts.diag) opts.diag.failedChunks = (opts.diag.failedChunks ?? 0) + 1;
+      return Array.from({ length: end - start }, (_, k) => ({
+        index: start + k,
+        useful: true,
+        kind: 'other' as MedicalImageKind,
+        score: 2,
+      }));
+    });
   }
 
   const byIndex = new Map<number, Classified>();
@@ -219,6 +270,7 @@ export async function selectExamImages<T extends EmbeddedImage>(
   const picked = pickDiverse(usefulItems, max);
   if (opts.diag) {
     opts.diag.candidates = candidates.length;
+    opts.diag.chunks = chunkStarts.length;
     opts.diag.usefulCount = usefulItems.length;
     opts.diag.returned = picked.length;
     opts.diag.droppedByCap = Math.max(0, usefulItems.length - picked.length);

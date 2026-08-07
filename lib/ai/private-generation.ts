@@ -108,7 +108,10 @@ const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 �
 // crop 단위 OCR 동시 처리 수. OCR 은 슬라이드가 아니라 crop 이미지 1장당 1회 호출이므로
 // crop 을 평탄화해 전역 동시성으로 돌린다. (슬라이드 단위 병렬로는 임베드 이미지 경로처럼
 // 한 슬라이드에 crop 이 몰린 경우 사실상 순차가 되어 수십 초를 잃는다.)
-const OCR_CONCURRENCY = 8;
+// 8 → 14: OCR 은 CPU 가 아니라 네트워크 대기가 지배하는 호출이라 동시성을 올리면
+// 그만큼 줄어든다(실측: 이미지가 많은 20문항 실행에서 OCR 구간 12.4초). 재시도·백오프는
+// 그대로라 레이트리밋에 걸려도 안전하게 물러난다.
+const OCR_CONCURRENCY = 14;
 // 생성 배치당 최대 문항 수. 생성 시간은 배치당 "출력 토큰 수"가 지배하므로 배치를 잘게
 // 쪼개 병렬로 돌리면 체감 시간이 배치 1개 수준으로 줄어든다. 문항당 출력이 1천 토큰대라
 // 4문항 배치는 디코딩만 1분+ 걸림 → 2문항으로 줄여 배치 1개를 ~30초대로.
@@ -711,7 +714,15 @@ async function extractFromBuffer(input: {
             input.diag.extract.pdfPages = result.numpages ?? null;
             input.diag.extract.textChars = (result.text ?? '').trim().length;
           }
-          return (result.text ?? '').trim();
+          const parsed = (result.text ?? '').trim();
+          // ★ 본문 텍스트가 나온 "즉시" 호출자에게 넘긴다.
+          //   종전에는 아래 Promise.all 이 끝난 뒤(= 임베드 추출 + AI 선별까지 마친 뒤)
+          //   전달해서, 텍스트가 5.5초에 준비되는데도 11~14초까지 붙들려 있었다.
+          //   그래서 "텍스트 배치를 먼저 출발시켜 전처리를 숨긴다"는 최적화가 사실상
+          //   작동하지 않았다(실측: 텍스트준비 = 첫배치시작 = 11.3~14.0초, 매번 임베드
+          //   분기 소요와 일치). 여기서 넘기면 텍스트 배치가 6~8초 일찍 출발한다.
+          sendEarlyText(parsed);
+          return parsed;
         } catch (e) {
           warnings.push(
             `PDF 본문 텍스트 추출 실패 — 페이지 이미지만 사용. ${
