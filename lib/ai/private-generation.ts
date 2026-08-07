@@ -120,6 +120,11 @@ const GEN_BATCH_MAX_QUESTIONS = 2;
 // 생성 배치 동시 실행 상한. 20문항(10배치) 요청 시 대형 입력의 동시 요청 폭주로
 // 429(rate limit) 백오프가 걸리면 오히려 벽시계 시간이 늘어나므로 과도한 동시성만 제한.
 const GEN_CONCURRENCY = 8;
+// 배치가 이 시간을 넘기면 같은 슬롯으로 복제 요청을 한 번 더 띄운다(hedged request).
+// 배치는 병렬이라 전체 소요를 "가장 느린 배치 하나"가 지배하는데, 실측에서 다른 배치가
+// 8~14초일 때 한 배치만 29초가 걸린 실행이 있었다(429 백오프로 추정) — 그 한 건이 전체를
+// 10초 이상 늘렸다. 정상 배치(8~14초)에는 발동하지 않도록 그보다 넉넉히 잡는다.
+const GEN_HEDGE_AFTER_MS = 18_000;
 // 요청 수를 못 채웠을 때 빈 슬롯을 다시 채우는 최대 라운드 수.
 // (모델이 요청보다 적게 반환하거나, 이미지 문항이 정제 실패로 삭제되면 부족분이 생긴다.)
 const GEN_BACKFILL_ROUNDS = 2;
@@ -2541,6 +2546,69 @@ export async function generatePrivateQuestionsFromUpload(
 
     const tGen = Date.now();
     const batchFailureReasons: string[] = [];
+
+    /**
+     * 느린 배치에 복제 요청을 띄워 꼬리를 자른다(hedged request).
+     *
+     * 배치는 병렬이라 전체 소요를 "가장 느린 배치 하나"가 지배한다. 실측에서 다른 배치가
+     * 8~14초일 때 한 배치만 29초가 걸린 실행이 있었다(429 백오프로 추정). 이 한 건이
+     * 그 실행을 10초 이상 늘렸다.
+     *
+     * GEN_HEDGE_AFTER_MS 를 넘기면 같은 슬롯으로 한 번 더 호출하고 먼저 끝난 쪽을 쓴다.
+     * 저장이 upsert(upload_id, generation_slot) 라 두 호출이 같은 슬롯에 써도 멱등하고,
+     * 최종 결과는 아래에서 DB 를 다시 읽어(readSaved) 확정하므로 어긋나지 않는다.
+     * 늦게 끝난 쪽의 예외는 무시한다(이미 승자가 있으므로 실패로 보지 않는다).
+     */
+    const bumpDiag = (key: string) => {
+      diag.generation[key] = ((diag.generation[key] as number | undefined) ?? 0) + 1;
+    };
+    const withHedge = (
+      batchIndex: number,
+      run: () => Promise<BatchResult>,
+    ): Promise<BatchResult> =>
+      new Promise<BatchResult>((resolve, reject) => {
+        let done = false;
+        let launched = 0;
+        let failed = 0;
+        let firstError: unknown;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
+        const launch = (): void => {
+          launched += 1;
+          run().then(
+            (v) => {
+              if (done) return;
+              done = true;
+              if (timer) clearTimeout(timer);
+              resolve(v); // 먼저 끝난 쪽을 채택. 늦게 끝난 쪽 결과는 버린다.
+            },
+            (e) => {
+              failed += 1;
+              firstError ??= e;
+              if (done) return; // 이미 다른 시도가 성공했다면 실패는 무시한다.
+              if (failed < launched) return; // 아직 대기 중인 시도가 남아 있다.
+              if (timer) {
+                // 헤지 예정 시각 전에 실패했다면 기다릴 이유가 없다 — 즉시 다시 시도.
+                clearTimeout(timer);
+                timer = undefined;
+                bumpDiag('batchRetried');
+                launch();
+                return;
+              }
+              reject(firstError); // 모든 시도가 실패.
+            },
+          );
+        };
+
+        timer = setTimeout(() => {
+          timer = undefined;
+          if (done) return;
+          bumpDiag('batchHedged');
+          warnings.push(`배치 ${batchIndex + 1} 지연 — 복제 요청으로 꼬리 단축 시도.`);
+          launch();
+        }, GEN_HEDGE_AFTER_MS);
+        launch();
+      });
     const batchSettled = await mapWithConcurrency(
       batchSizes,
       GEN_CONCURRENCY,
@@ -2561,11 +2629,13 @@ export async function generatePrivateQuestionsFromUpload(
               settled.e instanceof Error ? settled.e.message : String(settled.e),
             );
           }
-          return await generateAndPersistBatch(
-            batchIndex,
-            slots,
-            batchSizes.length,
-            genFor(batchIndex, batchSizes.length),
+          return await withHedge(batchIndex, () =>
+            generateAndPersistBatch(
+              batchIndex,
+              slots,
+              batchSizes.length,
+              genFor(batchIndex, batchSizes.length),
+            ),
           );
         } catch (e) {
           // 배치 1개 실패가 전체 생성을 실패시키지 않게 격리한다. 빈 슬롯은 아래 보충 단계가
