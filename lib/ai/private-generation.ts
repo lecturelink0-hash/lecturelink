@@ -276,6 +276,12 @@ const IMAGE_NOUNS =
 // 그림을 "선언"하는 발문에 쓰이는 명사(표·그래프처럼 본문에 글로 넣을 수 있는 것은 제외).
 const FIGURE_NOUNS =
   '그림|사진|이미지|영상|모식도|도해|도식|개념도|삽화|심전도|ECG|EKG|X-?ray|엑스레이|방사선\\s*사진|CT|MRI|초음파|현미경\\s*사진|병리\\s*소견';
+// 그림 명사와 서술어 사이에 흔히 끼는 명사("초음파 소견이다", "CT 영상이다").
+// 실측 사고: "다음은 복부 초음파 소견이다" 가 이 틈 때문에 '그림 선언'으로 안 잡혀,
+// 이미지가 붙지 않은 채로 학생에게 나갔다.
+// 주의: 조사 목록에 '은/는' 을 넣지 않아 "심전도 소견은 정상이었다"(본문 서술)는 계속 제외된다.
+const FIGURE_TAIL_NOUN = '(?:\\s*(?:소견|사진|영상|결과|이미지))?';
+
 const IMAGE_DEPENDENT_STEM_RE = new RegExp(
   // 지시어와 명사 사이에 수식어가 끼어드는 형태까지 잡는다("아래 흉부 X-ray 를 보고").
   `(?:${IMAGE_DEIXIS})\\s*(?:[가-힣A-Za-z0-9]{1,6}\\s*){0,2}(?:${IMAGE_NOUNS})|` +
@@ -283,7 +289,7 @@ const IMAGE_DEPENDENT_STEM_RE = new RegExp(
     // "다음은 대동맥 박리의 발생 기전에 대한 모식도이다" 처럼 지시어와 그림 명사 사이에
     // 설명이 길게 끼는 선언형. 명사 뒤 조사로 "그림을 가리키는 문장"임을 확인해
     // "심전도 소견은 정상이었다"(본문에 소견을 서술한 경우)와 구분한다.
-    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
+    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
     `판독(?:하|해)|사진\\s*판독`,
   'i',
 );
@@ -303,10 +309,13 @@ function stemDependsOnImage(stem: string): boolean {
  *    "다음 환자의 심전도 소견은 정상이었다"(본문 서술)와 "…모식도이다"(그림 지칭)를 구분한다.
  */
 const FIGURE_DECLARATION_RE = new RegExp(
-  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})` +
+  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}` +
     `\\s*(?:이다|입니다|이며|이고|에서|에는|으로|로|를\\s*보고|을\\s*보고|를\\s*판독|을\\s*판독)`,
   'i',
 );
+
+/** 테스트 전용 재노출 — 런타임 동작에는 영향이 없다. */
+export const stemDeclaresFigureForTest = (stem: string): boolean => stemDeclaresFigure(stem);
 
 function stemDeclaresFigure(stem: string): boolean {
   return FIGURE_DECLARATION_RE.test(String(stem ?? ''));
