@@ -366,6 +366,67 @@ function normalizeStemEnding(stem: string): string {
   return s;
 }
 
+/** 판독 대상이 되는 실제 임상 검사 유형. 발문-이미지 정합성 판단의 기준. */
+const CLINICAL_IMAGE_KINDS = new Set([
+  'xray', 'ct', 'mri', 'ecg', 'pathology', 'microscope', 'ultrasound',
+]);
+
+/**
+ * 발문에서 내부 인덱스·메타 문구를 결정론적으로 제거한다.
+ *
+ * 시스템 프롬프트가 "[이미지 N] 같은 내부 번호를 발문에 쓰지 말라"고 명시하는데도
+ * 실측에서 반복적으로 새어나왔다("다음 초음파 영상(이미지 2)에서 …"). 내부 번호는
+ * 0-based 인데 학생 화면 라벨은 1-based 라 그대로 두면 가리키는 그림이 어긋난다.
+ * 또 이미지 문항을 요구받은 모델이 "(이미지 없음)" 같은 자기 메모를 발문에 남기는
+ * 사례도 관찰됐다. 프롬프트로 두 번 실패했으므로 저장 직전에 확정적으로 지운다.
+ */
+export function sanitizeStemArtifacts(stem: string): string {
+  let s = String(stem ?? '');
+  // "(이미지 없음)", "[사진 없음]", "(그림 없음)" 같은 메타 메모 — 괄호째 제거.
+  s = s.replace(/[([{]\s*(?:이미지|사진|그림|영상)\s*(?:없음|미제공|없습니다)\s*[)\]}]/g, '');
+  // "(이미지 2)", "[이미지 0]" — 괄호로 감싼 내부 번호는 괄호째 제거.
+  s = s.replace(/[([{]\s*(?:이미지|그림|사진|영상)\s*\d+\s*[)\]}]/g, '');
+  // 괄호 없이 쓰인 "이미지 1" — 번호만 떼어 "이미지"라는 지시어는 살린다
+  // ("이미지 1에서 보이는" → "이미지에서 보이는").
+  s = s.replace(/(이미지|그림|사진|영상)\s*\d+/g, '$1');
+  // 제거 후 남는 공백·구두점 정리.
+  s = s.replace(/\s{2,}/g, ' ').replace(/\s+([,.?!)\]}])/g, '$1').replace(/([([{])\s+/g, '$1');
+  // 괄호를 들어낸 자리에 조사가 떨어져 나간 경우를 붙인다("흉부 CT (이미지 2)에서" →
+  // "흉부 CT 에서" → "흉부 CT에서"). 조사가 독립 토큰일 때만 붙여 "5 cm 이상" 같은
+  // 정상 띄어쓰기를 건드리지 않는다.
+  s = s.replace(
+    /([A-Za-z0-9)\]])\s+(에서|에는|에도|에|으로|로|을|를|은|는|이|가|의|와|과)(?=[\s,.?!)]|$)/g,
+    '$1$2',
+  );
+  return s.trim();
+}
+
+/** 발문이 명시한 검사 유형들. 여러 개를 언급할 수 있으므로 전부 모은다. */
+const STEM_MODALITY_PATTERNS: Array<[string, RegExp]> = [
+  ['xray', /X-?ray|엑스레이|단순\s*방사선|흉부\s*방사선|흉부\s*단순촬영/i],
+  ['ct', /\bCT\b|전산화\s*단층/i],
+  ['mri', /\bMRI\b|자기공명/i],
+  ['ultrasound', /초음파|심초음파|\becho(?:cardiograph)?/i],
+  ['ecg', /심전도|\bECG\b|\bEKG\b/i],
+  ['pathology', /병리\s*소견|병리\s*사진|생검\s*소견/i],
+  ['microscope', /현미경\s*(?:소견|사진)/i],
+];
+
+/**
+ * 발문이 말하는 검사와 실제로 붙은 이미지가 어긋나는지.
+ *
+ * 실측 사고: 발문은 "흉부 X-ray 에서 종격동 확장이 관찰된다"인데 붙은 이미지는
+ * 심초음파였다 — 학생이 볼 때 발문과 그림이 따로 놀아 풀 수 없다.
+ * 발문이 검사를 특정하지 않았거나(예: "다음 사진에서"), 이미지가 도해·기타 유형이면
+ * 판단 근거가 없으므로 통과시킨다(과도한 연결 해제 방지).
+ */
+export function stemModalityConflict(stem: string, kind: string): boolean {
+  if (!CLINICAL_IMAGE_KINDS.has(kind)) return false;
+  const mentioned = STEM_MODALITY_PATTERNS.filter(([, re]) => re.test(stem)).map(([k]) => k);
+  if (mentioned.length === 0) return false;
+  return !mentioned.includes(kind);
+}
+
 export interface PrivateGenerationInput {
   uploadId: string;
   userId: string;
@@ -1671,9 +1732,6 @@ export async function generatePrivateQuestionsFromUpload(
     const TEXT_AREA_RATIO_MAX = 0.15;
     const meaningfulOcrLen = (t?: string) =>
       (t ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
-    const CLINICAL_KINDS = new Set([
-      'xray', 'ct', 'mri', 'ecg', 'pathology', 'microscope', 'ultrasound',
-    ]);
     const textAreaRatio = (c: (typeof slides)[number]['croppedImages'][number]) => {
       const boxes = c.ocrBoxes ?? [];
       if (boxes.length === 0) return null;
@@ -1690,7 +1748,7 @@ export async function generatePrivateQuestionsFromUpload(
       if (ratio !== null) return ratio >= TEXT_AREA_RATIO_MAX;
       // 좌표를 못 받은 경우에만 종전 글자 수 기준으로 폴백한다.
       const len = meaningfulOcrLen(c.ocrText);
-      if (CLINICAL_KINDS.has(c.region.kind) && len >= 80) return true;
+      if (CLINICAL_IMAGE_KINDS.has(c.region.kind) && len >= 80) return true;
       return len >= 250;
     };
 
@@ -1738,8 +1796,16 @@ export async function generatePrivateQuestionsFromUpload(
     // 대상: 다이어그램/일러스트 유형(anatomy_diagram/chart_graph/other) + 주석 텍스트 감지.
     // 실제 임상 사진(xray/ct/mri/ecg/pathology/microscope/ultrasound)은 재생성 위험이라 제외.
     // 생성 모델은 원본(주석 포함)을 보고 문항을 만들고(내용 이해), 학생에게는 정제본이 저장된다.
-    // 인페인팅 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
-    const RESIDUAL_TEXT_MAX = 8;
+    // 정제 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
+    //
+    // 8 → 2 로 조인다. 잔존 계산에서 짧은 패널 라벨(A~E, 1~5)은 이미 빼고 세므로, 남은
+    // 숫자는 전부 "실제 글자 조각"이다. 실측 사고: 잔존 3자가 통과했는데 그 3자가
+    // 하필 "Int"(Intimal Flap 의 앞부분)라 화면에 그대로 읽혔다 — 진단 단어의 앞부분은
+    // 조각이어도 정답 단서다. 단어 조각을 남기지 않으려면 임계가 한 글자 수준이어야 한다.
+    const RESIDUAL_TEXT_MAX = 2;
+    // 2차 마스킹은 "1차가 이미 빗나간 자리"를 덮는 작업이라 좌표를 넉넉히 잡는다.
+    // (1차의 기본 여백 pad 2px·8% 로는 작은 크롭에서 글자 가장자리가 삐져나왔다.)
+    const SECOND_PASS_MASK_OPTS = { pad: 6, padRatio: 0.3 } as const;
 
     /**
      * 정제(마스킹) 결과에 남은 글자를 다시 읽어 "덮였는지"를 실제로 확인한다.
@@ -1897,7 +1963,11 @@ export async function generatePrivateQuestionsFromUpload(
               rec.result = 'residual_text';
               return null;
             }
-            const masked2 = await maskTextRegions(masked.png, first.boxes);
+            const masked2 = await maskTextRegions(
+              masked.png,
+              first.boxes,
+              SECOND_PASS_MASK_OPTS,
+            );
             rec.maskedBoxes2 = masked2.masked;
             const second = await readResidualText(fi.c, masked2.png);
             rec.residual2 = second.len;
@@ -2228,7 +2298,7 @@ export async function generatePrivateQuestionsFromUpload(
           user_id: input.userId,
           upload_id: uploadRow.id,
           sub_topic_id: subTopicId,
-          stem: normalizeStemEnding(k.q.stem),
+          stem: normalizeStemEnding(sanitizeStemArtifacts(k.q.stem)),
           choices: k.choices,
           answer_index: k.answerIndex,
           explanation: k.q.explanation,
@@ -2280,6 +2350,16 @@ export async function generatePrivateQuestionsFromUpload(
             const storagePath = indexToPath.get(i);
             if (!storagePath) return null;
             const fi = gen.featured[i];
+            // 발문이 말하는 검사와 다른 종류의 이미지는 연결하지 않는다(예: 발문은
+            // 흉부 X-ray 인데 붙은 그림은 심초음파 — 학생이 볼 때 따로 논다).
+            // 연결을 끊으면 이후 "그림을 가리키는데 이미지가 없는 문항" 정리가 받아
+            // 발문이 그림에 의존하면 삭제하고 보충 생성이 채운다.
+            if (stemModalityConflict(sanitizeStemArtifacts(q.stem), fi.c.region.kind)) {
+              warnings.push(
+                `문항 발문과 이미지 종류 불일치(${fi.c.region.kind}) — 이미지 연결 해제.`,
+              );
+              return null;
+            }
             return {
               private_question_id: qId,
               user_id: input.userId,
