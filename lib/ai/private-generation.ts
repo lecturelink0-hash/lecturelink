@@ -276,6 +276,12 @@ const IMAGE_NOUNS =
 // 그림을 "선언"하는 발문에 쓰이는 명사(표·그래프처럼 본문에 글로 넣을 수 있는 것은 제외).
 const FIGURE_NOUNS =
   '그림|사진|이미지|영상|모식도|도해|도식|개념도|삽화|심전도|ECG|EKG|X-?ray|엑스레이|방사선\\s*사진|CT|MRI|초음파|현미경\\s*사진|병리\\s*소견';
+// 그림 명사와 서술어 사이에 흔히 끼는 명사("초음파 소견이다", "CT 영상이다").
+// 실측 사고: "다음은 복부 초음파 소견이다" 가 이 틈 때문에 '그림 선언'으로 안 잡혀,
+// 이미지가 붙지 않은 채로 학생에게 나갔다.
+// 주의: 조사 목록에 '은/는' 을 넣지 않아 "심전도 소견은 정상이었다"(본문 서술)는 계속 제외된다.
+const FIGURE_TAIL_NOUN = '(?:\\s*(?:소견|사진|영상|결과|이미지))?';
+
 const IMAGE_DEPENDENT_STEM_RE = new RegExp(
   // 지시어와 명사 사이에 수식어가 끼어드는 형태까지 잡는다("아래 흉부 X-ray 를 보고").
   `(?:${IMAGE_DEIXIS})\\s*(?:[가-힣A-Za-z0-9]{1,6}\\s*){0,2}(?:${IMAGE_NOUNS})|` +
@@ -283,7 +289,7 @@ const IMAGE_DEPENDENT_STEM_RE = new RegExp(
     // "다음은 대동맥 박리의 발생 기전에 대한 모식도이다" 처럼 지시어와 그림 명사 사이에
     // 설명이 길게 끼는 선언형. 명사 뒤 조사로 "그림을 가리키는 문장"임을 확인해
     // "심전도 소견은 정상이었다"(본문에 소견을 서술한 경우)와 구분한다.
-    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
+    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
     `판독(?:하|해)|사진\\s*판독`,
   'i',
 );
@@ -303,10 +309,13 @@ function stemDependsOnImage(stem: string): boolean {
  *    "다음 환자의 심전도 소견은 정상이었다"(본문 서술)와 "…모식도이다"(그림 지칭)를 구분한다.
  */
 const FIGURE_DECLARATION_RE = new RegExp(
-  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})` +
+  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}` +
     `\\s*(?:이다|입니다|이며|이고|에서|에는|으로|로|를\\s*보고|을\\s*보고|를\\s*판독|을\\s*판독)`,
   'i',
 );
+
+/** 테스트 전용 재노출 — 런타임 동작에는 영향이 없다. */
+export const stemDeclaresFigureForTest = (stem: string): boolean => stemDeclaresFigure(stem);
 
 function stemDeclaresFigure(stem: string): boolean {
   return FIGURE_DECLARATION_RE.test(String(stem ?? ''));
@@ -433,6 +442,65 @@ export function stemModalityConflict(stem: string, kind: string): boolean {
   const mentioned = STEM_MODALITY_PATTERNS.filter(([, re]) => re.test(stem)).map(([k]) => k);
   if (mentioned.length === 0) return false;
   return !mentioned.includes(kind);
+}
+
+/**
+ * 느린 호출에 복제 요청을 띄워 꼬리를 자른다(hedged request).
+ *
+ * 모델 호출은 편차가 크다 — 실측에서 다른 배치가 8~14초일 때 한 배치만 29초가 걸렸다
+ * (429 백오프로 추정). 배치는 병렬이라 그 한 건이 전체 소요를 지배한다.
+ * afterMs 를 넘기면 같은 호출을 한 번 더 띄우고 **먼저 끝난 쪽**을 채택한다.
+ * afterMs 전에 실패하면 기다리지 않고 즉시 다시 시도하고, 모든 시도가 실패해야 거부한다.
+ *
+ * 주의: 감싸는 대상은 "모델 호출"이어야 한다. 배치 전체(이미지 준비 대기 포함)를 감싸면
+ * 대기 시간까지 임계에 포함돼 정상 배치가 복제를 유발한다(실측: 이미지 게이팅 도입 후
+ * 배치 총시간이 19~24초가 되면서 헤지가 4회 헛발동).
+ */
+function hedgedCall<T>(
+  run: () => Promise<T>,
+  opts: { afterMs: number; onHedge?: () => void; onRetry?: () => void },
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let done = false;
+    let launched = 0;
+    let failed = 0;
+    let firstError: unknown;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const launch = (): void => {
+      launched += 1;
+      run().then(
+        (v) => {
+          if (done) return;
+          done = true;
+          if (timer) clearTimeout(timer);
+          resolve(v); // 먼저 끝난 쪽을 채택. 늦게 끝난 쪽 결과는 버린다.
+        },
+        (e) => {
+          failed += 1;
+          firstError ??= e;
+          if (done) return; // 이미 다른 시도가 성공했다면 실패는 무시한다.
+          if (failed < launched) return; // 아직 대기 중인 시도가 남아 있다.
+          if (timer) {
+            clearTimeout(timer);
+            timer = undefined;
+            opts.onRetry?.();
+            launch();
+            return;
+          }
+          reject(firstError); // 모든 시도가 실패.
+        },
+      );
+    };
+
+    timer = setTimeout(() => {
+      timer = undefined;
+      if (done) return;
+      opts.onHedge?.();
+      launch();
+    }, opts.afterMs);
+    launch();
+  });
 }
 
 export interface PrivateGenerationInput {
@@ -2092,6 +2160,12 @@ export async function generatePrivateQuestionsFromUpload(
       imageQuota?: number;
     };
 
+    // 진단 카운터. generateAndPersistBatch 가 선발사 경로에서 일찍 호출되므로
+    // const 가 아니라 함수 선언으로 두어 초기화 순서(TDZ) 문제를 피한다.
+    function bumpGenDiag(key: string): void {
+      diag.generation[key] = ((diag.generation[key] as number | undefined) ?? 0) + 1;
+    }
+
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
     // 사용할 수 있다 (참조하는 카탈로그·프롬프트는 모두 4)에서 미리 준비됨).
     // slots: 이 배치가 채울 generation_slot 목록(연속이 아닐 수 있다 — 부족분 보충용).
@@ -2246,7 +2320,16 @@ export async function generatePrivateQuestionsFromUpload(
             : {},
         );
       const tGenCall = Date.now();
-      let response = await callGenerate(genMaxTokens);
+      // 헤지 대상은 "모델 호출"만이다 — 위쪽 이미지 준비 대기는 포함하지 않는다.
+      // 복제 호출의 토큰은 승자 기준으로만 기록된다(패자 응답은 도착하지 않을 수 있다).
+      let response = await hedgedCall(() => callGenerate(genMaxTokens), {
+        afterMs: GEN_HEDGE_AFTER_MS,
+        onHedge: () => {
+          bumpGenDiag('batchHedged');
+          warnings.push(`배치 ${batchIndex + 1} 모델 호출 지연 — 복제 요청으로 꼬리 단축 시도.`);
+        },
+        onRetry: () => bumpGenDiag('batchRetried'),
+      });
       batchDiag.genCallMs = Date.now() - tGenCall;
       let toolUseBlock = response.content.find(
         (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
@@ -2574,68 +2657,6 @@ export async function generatePrivateQuestionsFromUpload(
     const tGen = Date.now();
     const batchFailureReasons: string[] = [];
 
-    /**
-     * 느린 배치에 복제 요청을 띄워 꼬리를 자른다(hedged request).
-     *
-     * 배치는 병렬이라 전체 소요를 "가장 느린 배치 하나"가 지배한다. 실측에서 다른 배치가
-     * 8~14초일 때 한 배치만 29초가 걸린 실행이 있었다(429 백오프로 추정). 이 한 건이
-     * 그 실행을 10초 이상 늘렸다.
-     *
-     * GEN_HEDGE_AFTER_MS 를 넘기면 같은 슬롯으로 한 번 더 호출하고 먼저 끝난 쪽을 쓴다.
-     * 저장이 upsert(upload_id, generation_slot) 라 두 호출이 같은 슬롯에 써도 멱등하고,
-     * 최종 결과는 아래에서 DB 를 다시 읽어(readSaved) 확정하므로 어긋나지 않는다.
-     * 늦게 끝난 쪽의 예외는 무시한다(이미 승자가 있으므로 실패로 보지 않는다).
-     */
-    const bumpDiag = (key: string) => {
-      diag.generation[key] = ((diag.generation[key] as number | undefined) ?? 0) + 1;
-    };
-    const withHedge = (
-      batchIndex: number,
-      run: () => Promise<BatchResult>,
-    ): Promise<BatchResult> =>
-      new Promise<BatchResult>((resolve, reject) => {
-        let done = false;
-        let launched = 0;
-        let failed = 0;
-        let firstError: unknown;
-        let timer: ReturnType<typeof setTimeout> | undefined;
-
-        const launch = (): void => {
-          launched += 1;
-          run().then(
-            (v) => {
-              if (done) return;
-              done = true;
-              if (timer) clearTimeout(timer);
-              resolve(v); // 먼저 끝난 쪽을 채택. 늦게 끝난 쪽 결과는 버린다.
-            },
-            (e) => {
-              failed += 1;
-              firstError ??= e;
-              if (done) return; // 이미 다른 시도가 성공했다면 실패는 무시한다.
-              if (failed < launched) return; // 아직 대기 중인 시도가 남아 있다.
-              if (timer) {
-                // 헤지 예정 시각 전에 실패했다면 기다릴 이유가 없다 — 즉시 다시 시도.
-                clearTimeout(timer);
-                timer = undefined;
-                bumpDiag('batchRetried');
-                launch();
-                return;
-              }
-              reject(firstError); // 모든 시도가 실패.
-            },
-          );
-        };
-
-        timer = setTimeout(() => {
-          timer = undefined;
-          if (done) return;
-          bumpDiag('batchHedged');
-          warnings.push(`배치 ${batchIndex + 1} 지연 — 복제 요청으로 꼬리 단축 시도.`);
-          launch();
-        }, GEN_HEDGE_AFTER_MS);
-        launch();
-      });
     const batchSettled = await mapWithConcurrency(
       batchSizes,
       GEN_CONCURRENCY,
@@ -2656,13 +2677,11 @@ export async function generatePrivateQuestionsFromUpload(
               settled.e instanceof Error ? settled.e.message : String(settled.e),
             );
           }
-          return await withHedge(batchIndex, () =>
-            generateAndPersistBatch(
-              batchIndex,
-              slots,
-              batchSizes.length,
-              genFor(batchIndex, batchSizes.length),
-            ),
+          return await generateAndPersistBatch(
+            batchIndex,
+            slots,
+            batchSizes.length,
+            genFor(batchIndex, batchSizes.length),
           );
         } catch (e) {
           // 배치 1개 실패가 전체 생성을 실패시키지 않게 격리한다. 빈 슬롯은 아래 보충 단계가
