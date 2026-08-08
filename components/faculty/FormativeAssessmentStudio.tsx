@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -9,8 +9,6 @@ import {
   ArrowRight,
   Check,
   Loader2,
-  Pencil,
-  Plus,
   ShieldCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -69,7 +67,7 @@ export function FormativeAssessmentStudio() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<GenerateResponse | null>(null);
-  const [approved, setApproved] = useState<Set<string>>(new Set());
+  const reviewRef = useRef<HTMLElement>(null);
   const [courseId, setCourseId] = useState(searchParams.get("course") ?? "");
   const [courseTitle, setCourseTitle] = useState("");
   const [materialId, setMaterialId] = useState(
@@ -86,7 +84,6 @@ export function FormativeAssessmentStudio() {
     }
     setError("");
     setResult(null);
-    setApproved(new Set());
     setFile(next);
   }
 
@@ -138,6 +135,9 @@ export function FormativeAssessmentStudio() {
         );
       }
       setResult(payload.data);
+      requestAnimationFrame(() =>
+        reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -147,15 +147,6 @@ export function FormativeAssessmentStudio() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function toggleApproved(id: string) {
-    setApproved((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
   }
 
   async function saveToCourse() {
@@ -275,6 +266,7 @@ export function FormativeAssessmentStudio() {
 
           {sourceReady && (
             <section
+              ref={reviewRef}
               className="studio-section design-section card pad"
               aria-labelledby="design-title"
             >
@@ -453,9 +445,7 @@ export function FormativeAssessmentStudio() {
                   <h2 id="review-title">검수할 문항</h2>
                   <p>{result.materialSummary}</p>
                 </div>
-                <span className="approval-count">
-                  {approved.size}/{result.questions.length} 승인
-                </span>
+                <span className="approval-count">{result.questions.length}문항 생성</span>
               </div>
               <div className="objective-strip">
                 {result.objectives.map((item) => (
@@ -485,35 +475,19 @@ export function FormativeAssessmentStudio() {
               )}
               <div className="question-list">
                 {result.questions.map((question, index) => (
-                  <article
-                    className={
-                      approved.has(question.id)
-                        ? "question is-approved"
-                        : "question"
-                    }
-                    key={question.id}
-                  >
+                  <article className="question" key={question.id}>
                     <div className="question-topline">
                       <span className="question-number">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <div className="question-meta">
-                        <span>{question.cognitiveLevel}</span>
                         <span>
-                          근거{" "}
+                          출제 근거:{" "}
                           {question.sourcePages.length
-                            ? `${question.sourcePages.join(", ")}쪽`
+                            ? `${[...question.sourcePages].sort((a, b) => a - b).join(", ")}쪽`
                             : "자료 전체"}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        className="edit-button"
-                        disabled
-                        title="MVP 다음 단계에서 문항 직접 편집을 지원합니다"
-                      >
-                        <Pencil size={15} /> 편집
-                      </button>
                     </div>
                     <h3>{question.stem}</h3>
                     {question.imageDataUrl && (
@@ -553,21 +527,6 @@ export function FormativeAssessmentStudio() {
                         <span>{question.qualityFlags.join(" · ")}</span>
                       </div>
                     )}
-                    <button
-                      type="button"
-                      className="approve-button"
-                      onClick={() => toggleApproved(question.id)}
-                    >
-                      {approved.has(question.id) ? (
-                        <>
-                          <Check size={16} /> 승인됨
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={16} /> 문항 승인
-                        </>
-                      )}
-                    </button>
                   </article>
                 ))}
               </div>
