@@ -177,13 +177,6 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
                 onChange={(event) => change(index, "explanation", event.target.value)}
               />
             </label>
-            <label className="editor-field">
-              학습목표
-              <input
-                value={item.objective}
-                onChange={(event) => change(index, "objective", event.target.value)}
-              />
-            </label>
           </article>
         ))}
         <button className="editor-add" type="button" onClick={addQuestion}>
