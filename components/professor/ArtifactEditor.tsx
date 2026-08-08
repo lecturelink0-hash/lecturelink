@@ -1,11 +1,13 @@
 "use client";
 
-import { Check, Save, Send } from "lucide-react";
+import { Check, QrCode, Save, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   const [data, setData] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     fetch(`/api/professor/artifacts/${artifactId}`)
@@ -66,6 +68,14 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
     if (payload.ok) setData((current: any) => ({ ...current, status: "published" }));
   }
 
+  async function createLiveSession() {
+    await save();
+    const response=await fetch(`/api/professor/artifacts/${artifactId}/sessions`,{method:'POST'});
+    const payload=await response.json();
+    if(payload.ok) router.push(`/professor/live/${payload.data.id}`);
+    else setMessage(payload.error?.message ?? '평가 세션을 만들지 못했습니다.');
+  }
+
   const allApproved = data.formative_items.every((item: any) => item.approved);
   return (
     <div className="professor-dashboard">
@@ -88,6 +98,9 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
             onClick={publish}
           >
             <Send size={16} /> 학생 배포
+          </button>
+          <button className="professor-primary" disabled={!allApproved} onClick={createLiveSession}>
+            <QrCode size={16} /> 학생에게 QR로 배포하기
           </button>
         </div>
       </header>
