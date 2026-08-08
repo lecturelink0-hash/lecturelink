@@ -34,6 +34,7 @@ const PUBLIC_PREFIXES = [
   '/api/public/', // 익명 참여 토큰 기반 공개 API
   '/faculty', // 교수용 공개 서비스 소개
   '/landing.html', // 정적 랜딩 (루트 rewrite 대상 · 직접 접근 허용)
+  '/cpx/models/', // React 랜딩의 CPX 환자 모델 공개
 ];
 
 const ONBOARDING_REQUIRED_PREFIXES = [
@@ -90,14 +91,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  // 홈(/): 세션 쿠키가 아예 없는 익명 방문은 인증 조회 없이 바로 랜딩(빠른 경로).
+  // 홈(/): 세션 쿠키가 아예 없는 익명 방문은 app/page.tsx의 React 랜딩을 보여준다.
   // 세션 쿠키가 있으면 아래에서 getUser 로 검증 후 로그인 사용자는 /dashboard 로 보낸다(기획서: 기 사용자 바로 홈).
   if (isRoot) {
     const hasAuthCookie = request.cookies
       .getAll()
       .some((c) => /^sb-.*-auth-token(\.\d+)?$/.test(c.name) && c.value);
     if (!hasAuthCookie) {
-      return toLanding(request);
+      return NextResponse.next({ request });
     }
   }
 
@@ -137,10 +138,10 @@ export async function middleware(request: NextRequest) {
 
   // 홈(/): 세션 쿠키는 있었으나 실제 로그인 상태에 따라 분기.
   //   - 로그인됨(기 사용자) → 바로 홈(/dashboard)
-  //   - 아니면(만료 등)     → 랜딩
+  //   - 아니면(만료 등)     → app/page.tsx의 React 랜딩
   if (isRoot) {
     if (!user) {
-      return toLanding(request);
+      return response;
     }
     const { data: profile } = await supabase
       .from('users')
