@@ -1,0 +1,36 @@
+.student-live.result-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.save-panel {
+  width: min(100%, 520px);
+  margin: 24px auto 0;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #dce2db;
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.save-panel p {
+  margin: 0;
+  color: #53665e;
+  font-weight: 500;
+}
+
+.save-panel button,
+.save-panel a {
+  border: 0;
+  border-radius: 10px;
+  background: #1f5c43;
+  color: #fff;
+  padding: 14px 22px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.save-panel button:disabled {
+  opacity: .55;
+}

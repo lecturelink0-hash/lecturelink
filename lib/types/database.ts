@@ -280,6 +280,7 @@ export type PrivateQuestionRow = {
   choices: string[];
   answer_index: number;
   explanation: string | null;
+  source_image_url: string | null;
   concepts: string[];
   difficulty: 1 | 2 | 3;
   generation_slot: number | null;

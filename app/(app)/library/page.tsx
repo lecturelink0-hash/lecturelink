@@ -378,11 +378,14 @@ export default function LibraryPage() {
 
   // ── 파생 데이터 (문제집 그리드 · 통계) ────────────────────────────────────
 
-  // 내신대비에서 만든 문제집과 국시 오답 기반 유사문항을 출처별로 나눈다.
+  // 내신대비, 국시 오답 기반 유사문항, QR 형성평가를 출처별로 나눈다.
   // 국시대비 폴더에는 원본 국시 문항이 아니라 generated/similar 문항만 들어간다.
   const nationalSimilarUploads = uploads.filter((upload) => upload.file_type === 'generated/similar');
-  const schoolUploads = uploads.filter((upload) => upload.file_type !== 'generated/similar');
-  const libraryUploads = [...schoolUploads, ...nationalSimilarUploads];
+  const formativeUploads = uploads.filter((upload) => upload.file_type === 'formative/live');
+  const schoolUploads = uploads.filter(
+    (upload) => upload.file_type !== 'generated/similar' && upload.file_type !== 'formative/live',
+  );
+  const libraryUploads = [...schoolUploads, ...nationalSimilarUploads, ...formativeUploads];
   const setItems: SetItem[] = libraryUploads.map((u) => {
     const qs = allPrivateQuestions.filter((q) => q.upload_id === u.id);
     const p = progressByUpload[u.id];
@@ -420,6 +423,7 @@ export default function LibraryPage() {
   const rootNationalOpen = expanded['root_national'] ?? false;
   const rootSchoolOpen = expanded['folder_school'] ?? false;
   const rootNationalSimilarOpen = expanded['folder_national'] ?? false;
+  const rootFormativeOpen = expanded['folder_formative'] ?? false;
   const folderLabelStyle = {
     fontFamily: 'var(--font-body)',
     fontSize: '13.5px',
@@ -429,7 +433,7 @@ export default function LibraryPage() {
 
   return (
     <div className="ll-library-page content">
-      <section className="page-head"><div><span className="eyebrow">내 문제집</span><h1>내신대비와 국시대비에서 만든<br/><span className="headline-accent">문제집</span>을 한곳에서 관리하세요</h1><p className="lead">내신대비에서 생성한 문제와 국시 오답 기반 유사문항을 출처별 폴더에서 이어서 풀 수 있어요.</p></div></section>
+      <section className="page-head"><div><span className="eyebrow">내 문제집</span><h1>내신·국시·형성평가 <span className="headline-accent">문제집</span>을<br/>한곳에서 관리하세요</h1><p className="lead">직접 만든 문제와 QR 형성평가 문항을 출처별 폴더에서 이어서 풀 수 있어요.</p></div></section>
 
       {nextSet && (
         <div className="focus-band"><section className="next-action" aria-label="이어풀기 추천">
@@ -743,6 +747,32 @@ export default function LibraryPage() {
 
               <div className="border-t border-[var(--color-border)] my-1.5" />
 
+              {/* QR 평가 종료 화면에서 저장한 형성평가 */}
+              <div>
+                <button
+                  onClick={() => toggle('folder_formative')}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[var(--color-sage-100)] text-left transition-colors"
+                >
+                  <span className="ll-chip" style={{ width: '2rem', height: '2rem', borderRadius: '10px', background: 'var(--color-sage-100)', color: 'var(--color-sage-700)' }}>
+                    {rootFormativeOpen ? <FolderOpen className="w-4 h-4" strokeWidth={2} /> : <Folder className="w-4 h-4" strokeWidth={2} />}
+                  </span>
+                  <span className="text-sage-800 flex-1" style={folderLabelStyle}>형성평가</span>
+                  {rootFormativeOpen ? <ChevronDown className="w-4 h-4 text-[var(--color-muted)]" /> : <ChevronRight className="w-4 h-4 text-[var(--color-muted)]" />}
+                </button>
+                {rootFormativeOpen && (
+                  <div className="ml-3 border-l border-[var(--color-border)] pl-2 my-1">
+                    {formativeUploads.length === 0 ? (
+                      <div className="px-2 py-3 text-[11px] text-[var(--color-muted)] leading-relaxed">QR 형성평가를 푼 뒤<br />결과 화면에서 문항을 저장해 보세요.</div>
+                    ) : formativeUploads.map((upload) => {
+                      const isActive = active?.kind === 'upload' && active.uploadId === upload.id;
+                      return <button key={upload.id} onClick={() => continueUpload(upload)} className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors ${isActive ? 'bg-sage-700 text-white shadow-[0_4px_12px_-4px_rgba(31,92,67,0.55)]' : 'text-sage-800 hover:bg-[var(--color-sage-100)]'}`}><FileText className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2} /><span className="flex-1 truncate" style={folderLabelStyle}>{upload.file_name}</span></button>;
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-[var(--color-border)] my-1.5" />
+
               {/* 국시대비: 국시 전체 문항이 아닌, 오답을 바탕으로 만든 유사문항만 표시 */}
               <div>
                 <button
@@ -934,7 +964,11 @@ function SetCard({
 }) {
   const { upload, count, status, attempted, correct } = item;
   const badge = STATUS_BADGE[status];
-  const sourceLabel = upload.file_type === 'generated/similar' ? '국시 오답 기반' : '내신대비 생성';
+  const sourceLabel = upload.file_type === 'generated/similar'
+    ? '국시 오답 기반'
+    : upload.file_type === 'formative/live'
+      ? '형성평가 저장'
+      : '내신대비 생성';
   const total = item.progressTotal || count;
   const isDone = total > 0 && attempted >= total; // 다 풀었으면 '다시풀기'
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : null;

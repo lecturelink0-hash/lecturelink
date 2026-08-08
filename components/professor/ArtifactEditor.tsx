@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, QrCode, Save, Send } from "lucide-react";
+import { Check, QrCode, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -56,18 +56,6 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
     setMessage(response.ok ? "수정사항을 저장했습니다." : "저장하지 못했습니다.");
   }
 
-  async function publish() {
-    await save();
-    const response = await fetch(`/api/professor/artifacts/${artifactId}/publish`, {
-      method: "POST",
-    });
-    const payload = await response.json();
-    setMessage(
-      payload.ok ? "학생에게 배포했습니다." : payload.error?.message || "배포하지 못했습니다.",
-    );
-    if (payload.ok) setData((current: any) => ({ ...current, status: "published" }));
-  }
-
   async function createLiveSession() {
     await save();
     const response=await fetch(`/api/professor/artifacts/${artifactId}/sessions`,{method:'POST'});
@@ -91,13 +79,6 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
         <div className="editor-actions">
           <button className="professor-primary" onClick={save}>
             <Save size={16} /> 저장
-          </button>
-          <button
-            className="professor-primary"
-            disabled={!allApproved || data.status === "published"}
-            onClick={publish}
-          >
-            <Send size={16} /> 학생 배포
           </button>
           <button className="professor-primary" disabled={!allApproved} onClick={createLiveSession}>
             <QrCode size={16} /> 학생에게 QR로 배포하기
