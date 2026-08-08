@@ -558,7 +558,7 @@ export function FormativeAssessmentStudio() {
               {
                 number: 4,
                 title: "검수 후 저장",
-                description: "교수가 승인한 문항만 차시에 저장하고 배포합니다.",
+                description: "문항을 검토한 뒤 차시에 저장하고 배포합니다.",
               },
             ]}
             footer={
