@@ -99,17 +99,6 @@ function initUIState(expanded = false): QuestionUIState {
   };
 }
 
-// ─── Type filter (오답 카드 상단 필터 탭) ───────────────────────────────────────
-
-const TYPE_FILTERS = [
-  { id: 'all', label: '전체' },
-  { id: 'private', label: '자료 기반' },
-  { id: 'exam', label: '국가고시형' },
-  { id: 'image', label: '이미지 문제' },
-] as const;
-
-type TypeFilter = (typeof TYPE_FILTERS)[number]['id'];
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 interface ChoicesProps {
@@ -335,7 +324,6 @@ export default function WrongNotesPage() {
   const [items, setItems] = useState<WrongAnswerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [reviewFolder, setReviewFolder] = useState<ReviewFolder>('need');
   const [selectedSubTopicId, setSelectedSubTopicId] = useState<string | null>(null); // null = 전체
   const [uiStates, setUiStates] = useState<Record<string, QuestionUIState>>({});
@@ -370,23 +358,15 @@ export default function WrongNotesPage() {
 
   type SubTopicEntry = { id: string | null; name: string; count: number };
 
-  // 상단 타입 필터(전체 / 자료 기반 / 국가고시형 / 이미지 문제)
-  const typeFilteredItems = items.filter((item) => {
-    if (typeFilter === 'private') return item.isPrivate;
-    if (typeFilter === 'exam') return !item.isPrivate;
-    if (typeFilter === 'image') return !!item.question?.imageUrl;
-    return true;
-  });
-
-  const reviewFilteredItems = typeFilteredItems.filter((item) =>
+  const reviewFilteredItems = items.filter((item) =>
     reviewFolder === 'need' ? !item.resolved : item.resolved,
   );
   const reviewFolderCounts = {
-    need: typeFilteredItems.filter((item) => !item.resolved).length,
-    done: typeFilteredItems.filter((item) => item.resolved).length,
+    need: items.filter((item) => !item.resolved).length,
+    done: items.filter((item) => item.resolved).length,
   };
 
-  // 세부 주제 폴더 목록(타입 필터 반영한 카운트)
+  // 세부 주제 폴더 목록
   const subTopics: SubTopicEntry[] = (() => {
     const map = new Map<string, SubTopicEntry>();
     reviewFilteredItems.forEach((item) => {
@@ -402,11 +382,6 @@ export default function WrongNotesPage() {
   const filteredItems = selectedSubTopicId === null
     ? reviewFilteredItems
     : reviewFilteredItems.filter((item) => item.subTopicId === selectedSubTopicId);
-
-  // 헤더 카운트 서브라인
-  const privateCount = items.filter((i) => i.isPrivate).length;
-  const examCount = items.length - privateCount;
-  const countSubline = `총 ${items.length}개 · 자료 기반 ${privateCount} · 국가고시형 ${examCount}`;
 
   // ── UI state helpers ──────────────────────────────────────────────────────
 
@@ -724,7 +699,7 @@ export default function WrongNotesPage() {
 
   return (
     <div className="ll-wrong-page content">
-      <section className="page-head"><div><span className="eyebrow"><FolderOpen className="icon"/>복습 큐레이션</span><h1><span className="headline-accent">오답노트</span>에서<br/>틀린 흐름을 다시 잡습니다</h1><p className="lead">틀린 문제를 주제별로 모아 보고, 바로 다시 풀거나 유사문제를 만들어 약한 개념을 이어서 복습할 수 있어요.</p></div><div className="stats"><span className="stat-pill">총 <strong>{items.length}</strong>개</span><span className="stat-pill">자료 기반 <strong>{items.filter(i => i.isPrivate).length}</strong></span><span className="stat-pill">국가고시형 <strong>{items.filter(i => !i.isPrivate).length}</strong></span></div></section>
+      <section className="page-head"><div><span className="eyebrow"><FolderOpen className="icon"/>오답노트</span><h1>틀린 문제를 모아<br/><span className="headline-accent">다시 복습하세요</span></h1><p className="lead">저장한 오답을 확인하고, 다시 풀거나 유사문제로 부족한 개념을 복습할 수 있어요.</p></div><div className="stats"><span className="stat-pill">복습할 문제 <strong>{items.length}</strong>개</span></div></section>
 
       {items.length === 0 ? (
         // ── Empty state
@@ -736,30 +711,14 @@ export default function WrongNotesPage() {
             <BookOpen className="w-7 h-7" strokeWidth={1.9} />
           </span>
           <h2 className="mt-5 text-xl font-bold text-sage-800 tracking-tight">
-            아직 오답노트에 담긴 문제가 없습니다
+            아직 저장한 오답이 없어요
           </h2>
           <p className="mt-2 text-sm text-[var(--color-muted)] max-w-sm">
-            국시 대비에서 문제를 풀고 오답을 담아보세요.
+            문제집에서 문제를 풀고, 틀린 문제를 오답노트에 담아보세요.
           </p>
         </div>
       ) : (
         <>
-          {/* ── Type filter tab row */}
-          <div className="filters">
-            {TYPE_FILTERS.map((f) => {
-              const active = typeFilter === f.id;
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => setTypeFilter(f.id)}
-                  className={`filter ${active ? 'active' : ''}`}
-                >
-                  {f.label}
-                </button>
-              );
-            })}
-          </div>
-
           <div className="layout">
             {/* ── Left: SubTopic folder list */}
             <aside className="card sidebar">
