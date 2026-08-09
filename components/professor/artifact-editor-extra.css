@@ -1,0 +1,21 @@
+.editor-field textarea {
+  min-height: 190px;
+  line-height: 1.65;
+}
+
+.editor-delete,
+.editor-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--p-line);
+  border-radius: 9px;
+  background: #fff;
+  padding: 9px 12px;
+  color: var(--p-muted);
+  font-weight: 700;
+}
+
+.editor-delete { color: #9e3f38; }
+.editor-add { min-height: 52px; border-style: dashed; color: var(--p-forest); }

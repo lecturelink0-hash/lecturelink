@@ -39,8 +39,8 @@ export async function GET(request: Request) {
       cookieStore.delete('lecturelink_account_type');
       return fallback;
     }
-    const { data } = await supabase.auth.getUser();
-    return data.user ? '/' : fallback;
+    await supabase.auth.getUser();
+    return fallback;
   }
 
   // (A) 이메일 확인 링크(token_hash + type) — verifyOtp 로 검증.

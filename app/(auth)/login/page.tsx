@@ -117,7 +117,7 @@ export default function LoginPage() {
       setErrorMsg(authErrorMessage(error));
       return;
     }
-    window.location.href = '/';
+    window.location.href = postAuthDest();
   }
 
   const [forgotState, setForgotState] = useState<'idle' | 'sending' | 'sent'>('idle');

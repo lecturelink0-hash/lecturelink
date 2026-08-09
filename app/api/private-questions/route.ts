@@ -36,6 +36,7 @@ export const GET = withErrorHandling(async (request: Request) => {
     .select(
       `
       id, stem, choices, answer_index, explanation, concepts, difficulty, sub_topic_id,
+      source_image_url,
       upload_id, created_at,
       images:private_question_images ( storage_path, kind, caption, sort_order ),
       sub_topic:sub_topics ( name, subject:subjects ( name ) ),
@@ -69,6 +70,7 @@ export const GET = withErrorHandling(async (request: Request) => {
     sub_topic_id: string | null;
     upload_id: string;
     created_at: string;
+    source_image_url: string | null;
     images:
       | {
           storage_path: string;
@@ -97,7 +99,7 @@ export const GET = withErrorHandling(async (request: Request) => {
       // 연결된 의료 이미지들 — 각각 1시간 유효 signed URL 생성 (user_uploads 는 private 버킷).
       const rawImages = Array.isArray(row.images) ? [...row.images] : [];
       rawImages.sort((a, b) => a.sort_order - b.sort_order);
-      const images = (
+      const storedImages = (
         await Promise.all(
           rawImages.map(async (im) => {
             const { data: signed } = await supabase.storage
@@ -112,6 +114,9 @@ export const GET = withErrorHandling(async (request: Request) => {
           }),
         )
       ).filter((i): i is NonNullable<typeof i> => i !== null);
+      const images = row.source_image_url
+        ? [{ url: row.source_image_url, kind: 'formative', caption: null }, ...storedImages]
+        : storedImages;
 
       return {
         id: row.id,

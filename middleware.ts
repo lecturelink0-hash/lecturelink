@@ -30,6 +30,8 @@ const PUBLIC_PREFIXES = [
   '/privacy',
   '/faq',
   '/contact', // 문의하기 (비로그인도 접근 가능)
+  '/join', // 회원가입 없는 실시간 형성평가 참여
+  '/api/public/', // 익명 참여 토큰 기반 공개 API
   '/faculty', // 교수용 공개 서비스 소개
   '/landing.html', // 정적 랜딩 (루트 rewrite 대상 · 직접 접근 허용)
   // CPX 환자 모델(glb) 정적 에셋 — 랜딩의 CPX 프리뷰가 실제 캐릭터를 렌더링하려면

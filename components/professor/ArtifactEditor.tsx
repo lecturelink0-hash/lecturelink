@@ -1,11 +1,14 @@
 "use client";
 
-import { Check, Save, Send } from "lucide-react";
+import { Plus, QrCode, Save, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import "./artifact-editor-extra.css";
 
 export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   const [data, setData] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     fetch(`/api/professor/artifacts/${artifactId}`)
@@ -47,26 +50,48 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
           answerIndex: item.answer_index,
           explanation: item.explanation,
           objective: item.objective,
-          approved: item.approved,
         })),
       }),
     });
     setMessage(response.ok ? "수정사항을 저장했습니다." : "저장하지 못했습니다.");
+    return response.ok;
   }
 
-  async function publish() {
-    await save();
-    const response = await fetch(`/api/professor/artifacts/${artifactId}/publish`, {
-      method: "POST",
-    });
-    const payload = await response.json();
-    setMessage(
-      payload.ok ? "학생에게 배포했습니다." : payload.error?.message || "배포하지 못했습니다.",
-    );
-    if (payload.ok) setData((current: any) => ({ ...current, status: "published" }));
+  async function createLiveSession() {
+    if (!(await save())) return;
+    const response=await fetch(`/api/professor/artifacts/${artifactId}/sessions`,{method:'POST'});
+    const payload=await response.json();
+    if(payload.ok) router.push(`/professor/live/${payload.data.id}`);
+    else setMessage(payload.error?.message ?? '평가 세션을 만들지 못했습니다.');
   }
 
-  const allApproved = data.formative_items.every((item: any) => item.approved);
+  function addQuestion() {
+    setData((current: any) => ({
+      ...current,
+      formative_items: [...current.formative_items, {
+        id: crypto.randomUUID(), position: current.formative_items.length,
+        stem: "새 문항의 질문을 입력하세요.",
+        choices: ["선택지 1", "선택지 2", "선택지 3", "선택지 4", "선택지 5"],
+        answer_index: 0, explanation: "정답의 근거와 핵심 해설을 입력하세요.",
+        objective: "학습목표를 입력하세요.", approved: true,
+      }],
+    }));
+    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+  }
+
+  function deleteQuestion(id: string) {
+    if (data.formative_items.length === 1) {
+      setMessage("형성평가에는 문항이 한 개 이상 필요합니다.");
+      return;
+    }
+    if (!confirm("이 문항을 삭제할까요? 저장하면 되돌릴 수 없습니다.")) return;
+    setData((current: any) => ({
+      ...current,
+      formative_items: current.formative_items.filter((item: any) => item.id !== id),
+    }));
+  }
+
+  const canDistribute = data.formative_items.length > 0;
   return (
     <div className="professor-dashboard">
       <header className="professor-welcome">
@@ -82,12 +107,8 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
           <button className="professor-primary" onClick={save}>
             <Save size={16} /> 저장
           </button>
-          <button
-            className="professor-primary"
-            disabled={!allApproved || data.status === "published"}
-            onClick={publish}
-          >
-            <Send size={16} /> 학생 배포
+          <button className="professor-primary" disabled={!canDistribute} onClick={createLiveSession}>
+            <QrCode size={16} /> 학생에게 QR로 배포하기
           </button>
         </div>
       </header>
@@ -114,14 +135,9 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
           <article className="editor-card" key={item.id}>
             <div className="editor-card-head">
               <b>문항 {index + 1}</b>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={item.approved}
-                  onChange={(event) => change(index, "approved", event.target.checked)}
-                />
-                <Check size={14} /> 교수 승인
-              </label>
+              <button className="editor-delete" type="button" onClick={() => deleteQuestion(item.id)}>
+                <Trash2 size={15} /> 문항 삭제
+              </button>
             </div>
             <textarea
               value={item.stem}
@@ -156,19 +172,16 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
             <label className="editor-field">
               해설
               <textarea
+                rows={8}
                 value={item.explanation}
                 onChange={(event) => change(index, "explanation", event.target.value)}
               />
             </label>
-            <label className="editor-field">
-              학습목표
-              <input
-                value={item.objective}
-                onChange={(event) => change(index, "objective", event.target.value)}
-              />
-            </label>
           </article>
         ))}
+        <button className="editor-add" type="button" onClick={addQuestion}>
+          <Plus size={17} /> 직접 문항 추가하기
+        </button>
       </div>
     </div>
   );

@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
   Loader2,
-  Pencil,
-  Plus,
   ShieldCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -55,6 +53,7 @@ const ACCEPT =
 
 export function FormativeAssessmentStudio() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [rangeMode, setRangeMode] = useState<"전체 자료" | "페이지 선택">(
     "전체 자료",
@@ -68,15 +67,14 @@ export function FormativeAssessmentStudio() {
   const [useImages, setUseImages] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<GenerateResponse | null>(null);
-  const [approved, setApproved] = useState<Set<string>>(new Set());
+  // 생성 결과는 별도 검토 페이지로 즉시 이동하므로 이 화면에는 표시하지 않는다.
+  const [result] = useState<GenerateResponse | null>(null);
   const [courseId, setCourseId] = useState(searchParams.get("course") ?? "");
   const [courseTitle, setCourseTitle] = useState("");
   const [materialId, setMaterialId] = useState(
     searchParams.get("material") ?? "",
   );
   const [materialName, setMaterialName] = useState("");
-  const [savedId, setSavedId] = useState("");
   const sourceReady = Boolean(file || materialId);
 
   function chooseFile(next: File | null | undefined) {
@@ -85,8 +83,6 @@ export function FormativeAssessmentStudio() {
       return;
     }
     setError("");
-    setResult(null);
-    setApproved(new Set());
     setFile(next);
   }
 
@@ -137,53 +133,33 @@ export function FormativeAssessmentStudio() {
           payload?.error?.message ?? "형성평가를 생성하지 못했습니다.",
         );
       }
-      setResult(payload.data);
+      const generated = payload.data as GenerateResponse;
+      const saveResponse = await fetch(
+        `/api/professor/courses/${courseId}/formative`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            title: generated.title,
+            sourceName: materialName || file?.name,
+            materialId: selectedMaterialId,
+            summary: generated.materialSummary,
+            objectives: generated.objectives,
+            questions: generated.questions,
+          }),
+        },
+      );
+      const saved = await saveResponse.json();
+      if (!saveResponse.ok || !saved.ok) {
+        throw new Error(saved?.error?.message ?? "생성한 문항을 저장하지 못했습니다.");
+      }
+      router.push(`/professor/artifacts/${saved.data.id}`);
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
           : "형성평가를 생성하지 못했습니다.",
       );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function toggleApproved(id: string) {
-    setApproved((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  async function saveToCourse() {
-    if (!result || !courseId) return;
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch(
-        `/api/professor/courses/${courseId}/formative`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            title: result.title,
-            sourceName: materialName || file?.name,
-            materialId,
-            summary: result.materialSummary,
-            objectives: result.objectives,
-            questions: result.questions,
-          }),
-        },
-      );
-      const payload = await response.json();
-      if (!payload.ok)
-        throw new Error(payload.error?.message ?? "저장하지 못했습니다.");
-      setSavedId(payload.data.id);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "저장하지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -453,9 +429,7 @@ export function FormativeAssessmentStudio() {
                   <h2 id="review-title">검수할 문항</h2>
                   <p>{result.materialSummary}</p>
                 </div>
-                <span className="approval-count">
-                  {approved.size}/{result.questions.length} 승인
-                </span>
+                <span className="approval-count">{result.questions.length}문항 생성</span>
               </div>
               <div className="objective-strip">
                 {result.objectives.map((item) => (
@@ -485,35 +459,19 @@ export function FormativeAssessmentStudio() {
               )}
               <div className="question-list">
                 {result.questions.map((question, index) => (
-                  <article
-                    className={
-                      approved.has(question.id)
-                        ? "question is-approved"
-                        : "question"
-                    }
-                    key={question.id}
-                  >
+                  <article className="question" key={question.id}>
                     <div className="question-topline">
                       <span className="question-number">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <div className="question-meta">
-                        <span>{question.cognitiveLevel}</span>
                         <span>
-                          근거{" "}
+                          출제 근거:{" "}
                           {question.sourcePages.length
-                            ? `${question.sourcePages.join(", ")}쪽`
+                            ? `${[...question.sourcePages].sort((a, b) => a - b).join(", ")}쪽`
                             : "자료 전체"}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        className="edit-button"
-                        disabled
-                        title="MVP 다음 단계에서 문항 직접 편집을 지원합니다"
-                      >
-                        <Pencil size={15} /> 편집
-                      </button>
                     </div>
                     <h3>{question.stem}</h3>
                     {question.imageDataUrl && (
@@ -553,21 +511,6 @@ export function FormativeAssessmentStudio() {
                         <span>{question.qualityFlags.join(" · ")}</span>
                       </div>
                     )}
-                    <button
-                      type="button"
-                      className="approve-button"
-                      onClick={() => toggleApproved(question.id)}
-                    >
-                      {approved.has(question.id) ? (
-                        <>
-                          <Check size={16} /> 승인됨
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={16} /> 문항 승인
-                        </>
-                      )}
-                    </button>
                   </article>
                 ))}
               </div>
@@ -599,7 +542,7 @@ export function FormativeAssessmentStudio() {
               {
                 number: 4,
                 title: "검수 후 저장",
-                description: "교수가 승인한 문항만 차시에 저장하고 배포합니다.",
+                description: "문항을 검토한 뒤 차시에 저장하고 배포합니다.",
               },
             ]}
             footer={
@@ -661,46 +604,28 @@ export function FormativeAssessmentStudio() {
                 </span>
               </div>
             )}
-            {!result ? (
-              <button
-                className="generate-button primary-btn"
-                type="button"
-                disabled={
-                  !courseId ||
-                  !sourceReady ||
-                  loading ||
-                  (rangeMode === "페이지 선택" && !pageRange.trim())
-                }
-                onClick={generate}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="spin" size={17} />{" "}
-                    {useImages ? "자료와 이미지로 문항 생성 중" : "강의자료로 문항 생성 중"}
-                  </>
-                ) : (
-                  <>
-                    초안 생성 <ArrowRight size={17} />
-                  </>
-                )}
-              </button>
-            ) : savedId ? (
-              <a
-                className="generate-button primary-btn"
-                href={`/professor/artifacts/${savedId}`}
-              >
-                차시에 저장됨 · 문항 검토하기
-              </a>
-            ) : (
-              <button
-                className="generate-button primary-btn"
-                type="button"
-                disabled={!courseId || loading}
-                onClick={saveToCourse}
-              >
-                차시에 저장하고 검토하기
-              </button>
-            )}
+            <button
+              className="generate-button primary-btn"
+              type="button"
+              disabled={
+                !courseId ||
+                !sourceReady ||
+                loading ||
+                (rangeMode === "페이지 선택" && !pageRange.trim())
+              }
+              onClick={generate}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="spin" size={17} />{" "}
+                  {useImages ? "자료와 이미지로 문항 생성 중" : "강의자료로 문항 생성 중"}
+                </>
+              ) : (
+                <>
+                  초안 생성 <ArrowRight size={17} />
+                </>
+              )}
+            </button>
             <p className="summary-note note">
               AI가 만든 초안입니다. 학생 공개 전 교수의 내용 검수가 필요합니다.
             </p>
