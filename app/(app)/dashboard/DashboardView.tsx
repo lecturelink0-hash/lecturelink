@@ -1,137 +1,224 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, FileText, Stethoscope } from 'lucide-react';
 import { KakaoEmailPrompt } from '@/components/auth/KakaoEmailPrompt';
+import cpxCharacterWave from '@/public/dashboard/cpx-character-wave.png';
 
-interface Day { label: string; studied: boolean; isToday: boolean }
-interface Recent { isCorrect: boolean; subTopicName: string; subjectName: string; label: string }
-interface WeakConcept { name: string; subjectName: string; accuracy: number; count: number }
+interface Day {
+  label: string;
+  studied: boolean;
+  isToday: boolean;
+}
+
+interface LearningSet {
+  id: string;
+  fileName: string;
+  fileType: string;
+  questionCount: number;
+  href: string;
+  hasProgress: boolean;
+}
+
+interface NextStep {
+  title: string;
+  description: string;
+  href: string;
+}
 
 export function DashboardView({
   displayName,
-  recent,
   weekSeconds,
   weekCount,
-  weekAccuracy,
   streak,
   weekDays,
   overallAccuracy,
   totalSolved,
-  weakConcept,
+  nextLearningSet,
 }: {
   displayName: string;
-  recent: Recent | null;
   weekSeconds: number;
   weekCount: number;
-  weekAccuracy: number;
   streak: number;
   weekDays: Day[];
   overallAccuracy: number;
   totalSolved: number;
-  weakConcept: WeakConcept | null;
+  nextLearningSet: LearningSet | null;
 }) {
-  const studyTime = weekSeconds < 60 ? `${weekSeconds}초` : weekSeconds < 3600 ? `${Math.floor(weekSeconds / 60)}분` : `${Math.floor(weekSeconds / 3600)}시간 ${Math.floor((weekSeconds % 3600) / 60)}분`;
+  const learnerName = displayName.trim() || '학생';
+  const studyTime = formatStudyTime(weekSeconds);
+  const continuationStep: NextStep[] = nextLearningSet
+    ? [
+        {
+          title: '이어풀기',
+          description: `${materialDisplayTitle(nextLearningSet.fileName)} · ${nextLearningSet.questionCount}문항`,
+          href: nextLearningSet.href,
+        },
+      ]
+    : [];
+  const secondarySteps: NextStep[] = [
+    ...continuationStep,
+    ...(totalSolved > 0
+      ? [
+          {
+            title: '오답 흐름 다시 잡기',
+            description: '틀린 문제를 모아 다시 풀고 유사문제로 이어가세요.',
+            href: '/wrong-notes',
+          },
+          {
+            title: '학습 결과 확인하기',
+            description: '누적 정답률과 취약 영역을 확인해 다음 범위를 정하세요.',
+            href: '/analysis',
+          },
+        ]
+      : [
+          {
+            title: '내 문제집 확인하기',
+            description: '생성한 문제집과 학습 진행 상태를 한곳에서 관리하세요.',
+            href: '/library',
+          },
+          {
+            title: '문제 만드는 법 익히기',
+            description: '자료 업로드부터 문제 생성까지 짧은 안내를 확인하세요.',
+            href: '/tutorial',
+          },
+        ]),
+  ];
 
   return (
-    <div className="ll-dashboard-page content">
-      {/* 카카오(합성 이메일) 사용자 이메일 등록 유도 — 첫 진입 모달 + 이후 하루 1회 배너 */}
+    <div className="ll-dashboard-page student-dashboard content">
       <KakaoEmailPrompt />
-      <section className="welcome-row" aria-labelledby="page-title">
-        <div>
-          <h1 id="page-title">
-            안녕하세요, <span className="text-[#1f5c43]">{displayName}</span>님
-          </h1>
-          <p className="sub">
-            {recent ? `마지막 학습은 ${recent.label}입니다.` : '오늘도 학습을 시작해보세요.'}
-          </p>
-        </div>
-      </section>
 
-      <section className="priority-grid">
-        <article className="card primary-card continue-card">
-          <div className="section-title">
-            <span>지금 이어서 할 학습</span>
-            {recent && <span className="muted">{recent.subjectName} · {recent.label}</span>}
+      <header className="dashboard-greeting" aria-labelledby="page-title">
+        <h1 id="page-title">안녕하세요, {learnerName}님</h1>
+        <p>오늘도 학습을 시작해보세요.</p>
+      </header>
+
+      <section className="dashboard-priority-grid" aria-label="오늘의 우선 학습">
+        <article className="dashboard-card dashboard-next-card">
+          <div className="dashboard-next-copy">
+            <h2>내신 대비 문항 생성하기</h2>
+            <p>강의자료를 올리면 내 시험 범위에 맞는 문항을 만들 수 있어요.</p>
+
+            <div className="dashboard-next-actions">
+              <Link href="/notes" className="dashboard-primary-action">
+                문항 생성하기
+                <ArrowRight aria-hidden="true" />
+              </Link>
+              <Link
+                href="/library"
+                className="dashboard-secondary-action"
+              >
+                내 문제집
+              </Link>
+            </div>
           </div>
-          <div className="topic">
-            {recent?.subTopicName ?? '국시형 임상 문제'}
-          </div>
-          <p className="task-copy">
-            {weekCount > 0 ? `이번 주 정답률 ${weekAccuracy}% · ${weekCount}문항 · 마지막 ${recent?.isCorrect ? '정답' : '오답'}` : '첫 문제를 풀고 나만의 학습 흐름을 시작해보세요.'}
-          </p>
-          <div className="progress-line" aria-label={`진행률 ${weekAccuracy}%`}>
-            <span style={{ width: `${Math.max(weekAccuracy, weekCount ? 4 : 0)}%` }} />
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
-            <Link href="/exam" className="btn btn-focus">
-              이어풀기 <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link href="/wrong-notes" className="btn" style={{ background: 'white', color: 'var(--forest)', border: '1px solid #C9DEBE' }}>
-              오답노트 보기
-            </Link>
-          </div>
+
+          <aside
+            className="dashboard-material-summary"
+            aria-label="강의자료 업로드 안내"
+          >
+            <div className="dashboard-document-visual" aria-hidden="true">
+              <span className="document-sheet document-sheet-back" />
+              <span className="document-sheet document-sheet-front"><FileText /></span>
+              <span className="document-book"><BookOpen /></span>
+            </div>
+            <div className="dashboard-material-copy">
+              <span>내신 대비</span>
+              <strong>강의자료로 문항 만들기</strong>
+              <small>PDF · PPTX · 문서 지원</small>
+            </div>
+          </aside>
         </article>
 
-        <article className="card pad supporting-card">
-          <div className="section-title">
-            <span>이번 주 학습</span>
-            {streak >= 2 && <span className="chip">{streak}일 연속 학습 🔥</span>}
+        <article className="dashboard-card dashboard-cpx-card">
+          <div className="dashboard-cpx-copy">
+            <Stethoscope className="dashboard-cpx-icon" aria-hidden="true" />
+            <h2>CPX 진료 연습</h2>
+            <p>환자 진료 과정을 실전처럼 단계별로 연습하세요.</p>
+            <span className="dashboard-cpx-flow">문진 → 신체진찰 → 환자교육</span>
+            <Link href="/cpx" className="dashboard-cpx-action">
+              CPX 시작하기 <ArrowRight aria-hidden="true" />
+            </Link>
           </div>
-          <p className="muted">이번 주 학습 현황을 확인해보세요.</p>
-          <div className="stats stats-inline">
-            {[[studyTime, '학습 시간'], [`${weekCount}문항`, '푼 문항'], [`${weekAccuracy}%`, '정답률']].map(([value, label]) => (
-              <div key={label} className="stat">
-                <span>{label}</span><strong>{value}</strong>
-              </div>
-            ))}
+          <Image
+            src={cpxCharacterWave}
+            alt="손을 들어 인사하는 CPX 환자 캐릭터"
+            className="dashboard-cpx-character"
+            sizes="(max-width: 720px) 116px, 150px"
+            priority
+          />
+        </article>
+      </section>
+
+      <section className="dashboard-progress-grid" aria-label="학습 기록과 다음 단계">
+        <article className="dashboard-card dashboard-weekly-card">
+          <div className="dashboard-section-heading">
+            <div>
+              <h2>이번 주 학습</h2>
+              <p>{streak > 0 ? `${streak}일 연속 학습 중` : '오늘부터 학습 기록을 만들어보세요'}</p>
+            </div>
+            <Link href="/analysis" className="dashboard-inline-link">
+              상세 분석 <ArrowRight aria-hidden="true" />
+            </Link>
           </div>
-          <div className="week">
-            <div className="muted">주간 학습 기록</div>
-            <div className="week-days">
-              {weekDays.map((day) => (
-                <div key={day.label} className="day">
-                  {day.label}
-                  <span className={`dot ${day.studied ? 'done' : day.isToday ? 'today' : ''}`}>
-                    {day.studied ? <span className="text-xl leading-none">🔥</span> : <span className="text-2xl leading-none">·</span>}
+
+          <dl className="dashboard-metrics">
+            <div><dt>학습 시간</dt><dd>{studyTime}</dd></div>
+            <div><dt>이번 주 풀이</dt><dd>{weekCount}문항</dd></div>
+            <div><dt>누적 정답률</dt><dd>{totalSolved > 0 ? `${overallAccuracy}%` : '—'}</dd></div>
+          </dl>
+
+          <ul className="study-week" aria-label="월요일부터 일요일까지의 학습 기록">
+            {weekDays.map((day) => {
+              const status = day.studied ? '학습 완료' : day.isToday ? '오늘, 아직 학습 전' : '학습 기록 없음';
+              return (
+                <li key={day.label} className="study-day" aria-label={`${day.label}: ${status}`}>
+                  <span aria-hidden="true">{day.label}</span>
+                  <i
+                    aria-hidden="true"
+                    className={day.studied ? 'is-complete' : day.isToday ? 'is-today' : ''}
+                  >
+                    {day.studied && <Check aria-hidden="true" />}
+                  </i>
+                </li>
+              );
+            })}
+          </ul>
+        </article>
+
+        <section className="dashboard-next-queue" aria-labelledby="next-steps-title">
+          <div className="dashboard-queue-heading">
+            <h2 id="next-steps-title">그다음 학습</h2>
+            <p>진행 중인 학습과 다음 단계를 모았습니다.</p>
+          </div>
+          <ol>
+            {secondarySteps.map((step) => (
+              <li key={step.href}>
+                <Link href={step.href}>
+                  <span className="dashboard-step-copy">
+                    <strong>{step.title}</strong>
+                    <small>{step.description}</small>
                   </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section className="section secondary-grid">
-        <div>
-          <h2 className="section-title">나의 학습 분석</h2>
-          <div className="card pad quiet-card">
-            <div className="analysis">
-              {[[`${overallAccuracy}%`, '평균 정답률'], [`${totalSolved}문항`, '누적 학습'], [weakConcept?.name ?? '–', '가장 취약한 개념']].map(([value, label]) => (
-                <div key={label}><strong>{value}</strong><span>{label}</span></div>
-              ))}
-            </div>
-            <div className="analysis-action">
-              최근 학습 기록과 자주 틀린 개념을 확인해보세요.
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="section-title">다른 학습 시작</h2>
-          <div className="mode-grid">
-            <StudyTile href="/notes" variant="tile-upload" title="시험 범위 PDF로 10문항 만들기" copy="강의자료를 올리고 바로 풀 수 있는 짧은 문제집을 만듭니다." cta="문제집 만들기" />
-            <StudyTile href="/exam" variant="tile-book" title="국시형 임상 문제 20분 풀기" copy="과목별 임상형 문제를 짧게 풀고 해설로 정리합니다." cta="국시 문제 풀기" />
-          </div>
-        </div>
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
       </section>
     </div>
   );
 }
 
-function StudyTile({ href, variant, title, copy, cta }: { href: string; variant: string; title: string; copy: string; cta: string }) {
-  return (
-    <Link href={href} className={`card tile quiet-card ${variant}`}>
-      <h3>{title}</h3><p>{copy}</p>
-      <span className="link">{cta} <ArrowRight className="icon" /></span>
-    </Link>
-  );
+function materialDisplayTitle(fileName: string) {
+  return fileName.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim();
+}
+
+function formatStudyTime(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours > 0) return `${hours}시간 ${remainingMinutes}분`;
+  if (minutes > 0) return `${minutes}분`;
+  return '0분';
 }

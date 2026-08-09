@@ -10,16 +10,14 @@
  *
  * 재사용한 기존 컴포넌트/에셋:
  *   - 01 강의자료 기반 섹션 + 문제 프리뷰(MockGenerated) + 커서 클릭 데모 애니메이션: public/landing.html
- *   - 후기 캐러셀(5개 후기 데이터 포함), 요금제(4개 플랜 데이터 포함), 헤더/푸터: public/landing.html
- *   - 국시 CBT 프리뷰 구성: app/(app)/exam/page.tsx 풀이 화면 + 검수 문항
- *     (output/kmle-surgery-general-hardened-20-v2 · 1/20번 문항, 내용 무수정)
+ *   - 후기 캐러셀, 요금제(4개 플랜 데이터 포함), 헤더/푸터: public/landing.html
  *   - CPX 스테이지: components/cpx/CpxPractice.jsx 진료 화면 + Avatar3D
  *     (public/cpx/models/patient_female.glb — 실제 CPX 실전 연습과 동일한 캐릭터)
  */
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowRight,
   BookOpen,
@@ -71,37 +69,15 @@ const problems = [
   },
   {
     number: '04',
-    title: '내신 공부가 국시 공부로 이어지지 않습니다.',
-    description: '내신과 국시 학습 기록이 따로 남아 취약 개념을 연결하기 어렵습니다.',
+    title: '범용 AI만으로는 CPX를 실전처럼 연습하기 어렵습니다.',
+    description: '일관된 환자 역할과 음성 문진, 평가 기준에 따른 피드백을 한 번에 받기 어렵습니다.',
   },
 ];
-
-// 국시 프리뷰 — 검수 문항 산출물(output/kmle-surgery-general-hardened-20-v2)의 실제 1/20번 문항.
-// 문항 내용은 산출물 그대로이며 수정하지 않았다.
-const examPreviewQuestion = {
-  part: '외과 총론',
-  subTopic: '수액, 전해질, 쇼크',
-  index: 1,
-  total: 20,
-  difficulty: 2,
-  stem: '54세 남자가 위출구폐색으로 4일 전부터 하루 2 L가량 구토하여 병원에 왔다. 입이 마르고 소변량이 줄었다고 한다. 혈압 92/58 mmHg, 맥박 108회/분이다. 목정맥은 편평하고 양쪽 폐의 호흡음은 깨끗하다. 심부전과 콩팥병 병력은 없다. 검사 결과는 다음과 같다. 치료는?',
-  labs: [
-    '혈액 pH 7.51',
-    '나트륨 138 mmol/L',
-    '칼륨 3.4 mmol/L',
-    '염소 86 mmol/L',
-    '중탄산염 38 mmol/L',
-    '혈액요소질소/크레아티닌 34/1.4 mg/dL',
-  ],
-  choices: ['5% 포도당수액', '0.9% 생리식염수', '3% 고장성 식염수', '탄산수소나트륨 정맥주사', '알부민과 퓨로세마이드 병용'],
-  selectedIndex: 1,
-};
 
 // 후기 — 기존 랜딩(public/landing.html) 후기 데이터 그대로
 const reviews = [
   { q: '강의록을 올리면 단원별로 문제가 정리돼서 시험 직전 복습이 훨씬 빨라졌어요.', who: '본과 2학년', tag: '순환기' },
   { q: '틀린 문제만 모아 비슷한 유형을 다시 풀 수 있어서 약한 개념을 집중적으로 메웠습니다.', who: '본과 3학년', tag: '호흡기' },
-  { q: '학교 시험을 준비하다 그대로 국시형 문제로 넘어가는 흐름이 정말 좋았어요. 따로 자료를 찾을 필요가 없었습니다.', who: '본과 4학년', tag: '국시 대비' },
   { q: '출제 비중 분석을 보고 어떤 유형을 더 연습해야 할지 감이 잡혀서 공부 계획 세우기가 쉬워졌어요.', who: '본과 2학년', tag: '내분비' },
   { q: '오답노트가 자동으로 정리되니까 시험 전날 약한 개념만 빠르게 훑어볼 수 있었습니다.', who: '본과 3학년', tag: '소화기' },
 ];
@@ -267,7 +243,7 @@ function SectionHeading({
   desc,
   center = true,
 }: {
-  badge: ReactNode;
+  badge?: ReactNode;
   title: string;
   desc?: string;
   center?: boolean;
@@ -275,7 +251,7 @@ function SectionHeading({
   return (
     <div className={`max-w-xl [word-break:keep-all] ${center ? 'mx-auto text-center' : ''}`}>
       {badge}
-      <h2 className="mt-3.5 whitespace-pre-line text-[clamp(24px,3vw,32px)] font-extrabold leading-[1.3] tracking-tight text-[#111827]">
+      <h2 className={`${badge ? 'mt-3.5' : ''} whitespace-pre-line text-[clamp(24px,3vw,32px)] font-extrabold leading-[1.3] tracking-tight text-[#111827]`}>
         {title}
       </h2>
       {desc && <p className="mt-3.5 whitespace-pre-line text-[15px] leading-relaxed text-[#6B7280]">{desc}</p>}
@@ -428,78 +404,7 @@ function MockGenerated() {
 }
 
 /* ============================================================
-   02 국시 필기 대비 — 실제 CBT 풀이 화면(app/(app)/exam/page.tsx) 구성 축약
-   + 검수 문항 산출물의 실제 문항
-   ============================================================ */
-function ExamPreview() {
-  const q = examPreviewQuestion;
-  return (
-    <div className={`rounded-2xl bg-white p-5 ring-1 ring-[#E5E1D8] ${SHADOW_CARD}`}>
-      {/* 진행 상태 — 실제 CBT 진행 헤더의 진행률 바 */}
-      <div className="flex items-center justify-between gap-3">
-        <span className="rounded-md bg-[#1F5C43] px-2.5 py-1 text-[11.5px] font-bold text-white">국가고시형</span>
-        <span className="text-[12.5px] font-bold tabular-nums text-[#9AA1AC]">
-          {q.index} / {q.total}
-        </span>
-      </div>
-      <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-[#DCEBE0]">
-        <div
-          className="ll-bar h-full rounded-full bg-[#1F5C43]"
-          style={{ '--ll-width': `${(q.index / q.total) * 100}%` } as CSSProperties}
-        />
-      </div>
-      {/* 과목·주제·난이도 배지 — 실제 CBT 문제 카드 상단과 동일한 구성 */}
-      <div className="mt-4 flex flex-wrap items-center gap-1.5 text-[12px] font-semibold">
-        <span className="rounded-md bg-[#EAF3ED] px-2 py-0.5 text-[#1F5C43]">{q.part}</span>
-        <span className="rounded-md bg-[#EAF3ED] px-2 py-0.5 text-[#1F5C43]">{q.subTopic}</span>
-        <span className="ml-auto rounded-md bg-[#FBE9E3] px-2 py-0.5 text-[#C0563F]">
-          난이도 {'★'.repeat(q.difficulty)}
-        </span>
-      </div>
-      <p className="mt-4 text-[13.5px] leading-6 text-[#111827]">
-        <strong className="text-[#1F5C43]">{q.index}.</strong> {q.stem}
-      </p>
-      <div className="mt-3 grid gap-x-4 gap-y-1 rounded-lg bg-[#F4F1E8] p-3 text-[12px] font-semibold text-[#6B7280] sm:grid-cols-2">
-        {q.labs.map((item) => (
-          <span key={item}>{item}</span>
-        ))}
-      </div>
-      <div className="mt-3 space-y-1.5">
-        {q.choices.map((choice, i) => {
-          const isSelected = i === q.selectedIndex;
-          return (
-            <div
-              key={choice}
-              className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-[13px] transition-colors ${
-                isSelected
-                  ? 'border-[#2F6A4C] bg-[#E9F2EC] font-semibold text-[#143C2C]'
-                  : 'border-[#E5E1D8] bg-white text-[#6B7280] hover:border-[#93BBA3] hover:bg-[#F3F7F4]'
-              }`}
-            >
-              <span
-                className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] font-bold ${
-                  isSelected ? 'border-[#1F5C43] bg-[#1F5C43] text-white' : 'border-[#A6C7B0] text-[#6B7280]'
-                }`}
-              >
-                {i + 1}
-              </span>
-              {choice}
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-[#E5E1D8] pt-3">
-        <span className="text-[12px] text-[#9AA1AC]">검수 문항 산출물 기반 · CBT 풀이 화면</span>
-        <span className="inline-flex h-8 items-center rounded-lg bg-[#E0743A] px-3 text-[12px] font-bold text-white">
-          제출하고 채점
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   03 CPX 실전 연습 — 실제 진료 화면(components/cpx/CpxPractice.jsx) 구성 축약
+   02 CPX 실전 연습 — 실제 진료 화면(components/cpx/CpxPractice.jsx) 구성 축약
    + 실제 CPX 캐릭터(Avatar3D · patient_female.glb)
    ============================================================ */
 function CpxPreview() {
@@ -766,14 +671,19 @@ export function Landing() {
     <div className="ll-land min-h-screen overflow-x-hidden bg-[#FCFAF4] text-[#111827]">
       {/* 기존 랜딩의 프리뷰 데모 애니메이션(커서 클릭·진행 바·음성 웨이브) — 스코프 유지 */}
       <style>{`
-        .ll-land .llh-1{animation:llh-fade .45s ease both}
-        .ll-land .llh-2{animation:llh-rise .5s cubic-bezier(.22,1,.36,1) .5s both}
-        .ll-land .llh-line{transform-origin:left center;animation:llh-draw 1.1s cubic-bezier(.45,0,.2,1) 1.05s both}
-        .ll-land .llh-3{animation:llh-rise .45s cubic-bezier(.22,1,.36,1) 2.05s both}
-        .ll-land .llh-4{animation:llh-fade .6s ease 2.55s both}
-        .ll-land .llh-5{animation:llh-rise .5s cubic-bezier(.22,1,.36,1) 3s both}
+        /* 히어로 인트로 타임라인 — 잇(0.45s) → 선(0.85s~) → 다(1.8s) → 0.5s 정지 →
+           하단 워드마크(2.55s) → CTA → 안내문구 */
+        .ll-land .llh-1{animation:llh-fade .45s ease-out both}
+        .ll-land .llh-2{animation:llh-rise .3s cubic-bezier(.22,1,.36,1) .45s both}
+        .ll-land .llh-line{transform-origin:left center;animation:llh-draw .95s cubic-bezier(.4,0,.2,1) .85s both}
+        .ll-land .llh-3{animation:llh-rise .25s cubic-bezier(.22,1,.36,1) 1.8s both}
+        .ll-land .llh-4{animation:llh-wordmark .75s cubic-bezier(.22,1,.36,1) 2.55s both}
+        .ll-land .llh-5{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 3.5s both}
+        .ll-land .llh-6{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 3.68s both}
+        .ll-land .llh-7{animation:llh-fade .35s ease-out 3.85s both}
         @keyframes llh-fade{from{opacity:0}to{opacity:1}}
         @keyframes llh-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes llh-wordmark{from{opacity:0;transform:translateY(.13em)}to{opacity:1;transform:translateY(0)}}
         @keyframes llh-draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
         .ll-land .ll-option{background:#fff;box-shadow:inset 0 0 0 1px #E5E1D8;transition:background-color .38s ease,color .38s ease,box-shadow .38s ease,transform .38s ease}
         .ll-land .ll-correct-target svg{opacity:0;transform:scale(.7)}
@@ -784,8 +694,6 @@ export function Landing() {
         .ll-land .ll-play .ll-picked-target>span:first-child{animation:ll-picked-badge 2.25s ease .95s both}
         .ll-land .ll-play .ll-correct-target>span:first-child{animation:ll-correct-badge 1.2s ease 1.8s both}
         .ll-land .ll-play .ll-correct-target svg{animation:ll-check-pop .48s ease 2.08s both}
-        .ll-land .ll-bar{width:0;transition:width 1.05s cubic-bezier(.22,1,.36,1) .35s}
-        .ll-land .ll-play .ll-bar{width:var(--ll-width)}
         .ll-land .cpx-wave{animation:ll-wave 1.05s ease-in-out infinite;transform-origin:center}
         @keyframes ll-cursor-click{0%{opacity:0;transform:translate(-42px,-36px) rotate(-10deg) scale(.94)}24%{opacity:1}54%{opacity:1;transform:translate(0,0) rotate(-10deg) scale(1)}65%{opacity:1;transform:translate(0,0) rotate(-10deg) scale(.88)}76%{opacity:1;transform:translate(0,0) rotate(-10deg) scale(1)}100%{opacity:0;transform:translate(12px,10px) rotate(-10deg) scale(1)}}
         @keyframes ll-picked-answer{0%,28%{background:#fff;color:#6B7280;box-shadow:inset 0 0 0 1px #E5E1D8;transform:scale(1)}44%,100%{background:#FFF0E9;color:#B95035;box-shadow:inset 0 0 0 1px rgba(185,80,53,.26);transform:scale(1.012)}}
@@ -795,59 +703,66 @@ export function Landing() {
         @keyframes ll-check-pop{0%{opacity:0;transform:scale(.7)}70%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
         @keyframes ll-wave{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
         @media (prefers-reduced-motion: reduce){
-          .ll-land .llh-1,.ll-land .llh-2,.ll-land .llh-3,.ll-land .llh-4,.ll-land .llh-5,.ll-land .llh-line{animation:none !important}
+          .ll-land .llh-1,.ll-land .llh-2,.ll-land .llh-3,.ll-land .llh-4,.ll-land .llh-5,.ll-land .llh-6,.ll-land .llh-7,.ll-land .llh-line{animation:none !important}
           .ll-land .ll-demo-cursor{display:none}
           .ll-land .ll-play .ll-picked-target,.ll-land .ll-play .ll-correct-target,.ll-land .ll-play .ll-picked-target>span:first-child,.ll-land .ll-play .ll-correct-target>span:first-child,.ll-land .ll-play .ll-correct-target svg,.ll-land .cpx-wave{animation:none !important}
           .ll-land .ll-correct-target{background:#EAF3ED;color:#1F5C43;box-shadow:inset 0 0 0 1px rgba(31,92,67,.16)}
           .ll-land .ll-correct-target>span:first-child{background:#1F5C43;color:#fff}
           .ll-land .ll-correct-target svg{opacity:1;transform:none}
-          .ll-land .ll-bar{transition:none;width:var(--ll-width)}
         }
       `}</style>
 
       <Header />
 
       <main>
-        {/* ── 히어로 — 브랜드 인트로 모션: "의대 공부의 흐름을 / 잇———다 / 렉처링크" ──
-             페이지 로드 시 1회 재생: 1줄 즉시 → "잇" 등장 → 초록 선이 흐르듯 연결 →
-             선 끝에서 "다" → "렉처링크" 페이드인 → CTA. prefers-reduced-motion 시 정적 표시. */}
-        <section id="top" className="scroll-mt-16 border-b border-[#E5E1D8] bg-white px-5 sm:px-8">
-          <div className="mx-auto max-w-[1140px] pb-16 pt-16 sm:pb-24 sm:pt-24 [word-break:keep-all]">
-            <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_.85fr] lg:gap-14">
-              <h1
-                aria-label="의대 공부의 흐름을 잇다 — 렉처링크"
-                className="text-[clamp(34px,5.5vw,64px)] font-extrabold leading-[1.22] tracking-tight text-[#111827]"
-              >
-                <span className="llh-1 block">의대 공부의 흐름을</span>
-                <span className="mt-[0.08em] flex items-center gap-[0.16em]" aria-hidden="true">
-                  <span className="llh-2 shrink-0 text-[#1F5C43]">잇</span>
-                  <span className="llh-line h-[0.11em] min-w-0 flex-1 rounded-full bg-[#1F5C43]" />
-                  <span className="llh-3 shrink-0 text-[#1F5C43]">다</span>
+        {/* ── 히어로 — 그린 필드 위에 현재 내비게이션과 "잇—다"를 남긴 브랜드 인트로 ── */}
+        <section
+          id="top"
+          className="relative isolate flex min-h-[calc(100svh-60px)] scroll-mt-16 overflow-hidden bg-[#07563A] px-5 sm:px-8"
+        >
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_76%,rgba(28,126,85,.42),transparent_31%),radial-gradient(circle_at_76%_10%,rgba(255,255,255,.08),transparent_26%),linear-gradient(118deg,#063F2D_0%,#07563A_52%,#06452F_100%)]" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-[12%] top-[10%] h-[38vw] w-[38vw] rounded-full border border-white/[0.07]" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-[3%] top-[19%] h-[22vw] w-[22vw] rounded-full border border-white/[0.06]" />
+
+          <div className="relative z-10 mx-auto flex w-full max-w-[1140px] items-center pb-[clamp(3rem,8vw,7rem)] pt-16 sm:pt-20 [word-break:keep-all]">
+            <div className="max-w-[790px]">
+              <h1 aria-label="의대 공부의 흐름을 잇다 — 렉처링크" className="font-extrabold tracking-tight text-white">
+                <span className="llh-1 block text-[clamp(26px,3vw,42px)] leading-[1.25]">의대 공부의 흐름을</span>
+                <span className="mt-[0.1em] flex items-center gap-[0.14em] text-[clamp(68px,9vw,140px)] leading-[.98]" aria-hidden="true">
+                  <span className="llh-2 shrink-0">잇</span>
+                  {/* 잇의 받침에서 다의 ㅏ로 이어지는 선 */}
+                  <span className="min-w-[1.8em] flex-1 translate-y-[0.06em]">
+                    <span className="llh-line block h-[0.075em] w-full rounded-full bg-white" />
+                  </span>
+                  <span className="llh-3 shrink-0">다</span>
                 </span>
               </h1>
-              <p
-                aria-hidden="true"
-                className="llh-4 text-[clamp(34px,5.5vw,64px)] font-extrabold leading-none tracking-tight text-[#1F5C43] lg:text-center"
-              >
-                렉처링크
-              </p>
-            </div>
-            <div className="llh-5 mt-12 sm:mt-14">
-              <div className="flex flex-wrap gap-3">
-                <Link href="/login" className={`${BTN_PRIMARY} group h-[52px] px-6 text-[16px]`}>
+
+              <div className="mt-10 flex flex-wrap gap-3 sm:mt-12">
+                <Link
+                  href="/login"
+                  className="llh-5 group inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-white px-6 text-[16px] font-bold text-[#07563A] shadow-[0_12px_28px_rgba(0,0,0,.16)] transition hover:bg-[#EAF3ED] active:scale-[.98]"
+                >
                   1달 무료체험 시작하기
                   <ArrowRight className="h-[18px] w-[18px] transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <a
                   href="#features"
-                  className="inline-flex h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-6 text-[16px] font-bold text-[#1F5C43] ring-1 ring-[#1F5C43]/40 transition hover:bg-[#EAF3ED] active:scale-[.98]"
+                  className="llh-6 inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-white/[0.08] px-6 text-[16px] font-bold text-white ring-1 ring-inset ring-white/50 transition hover:bg-white/[0.16] active:scale-[.98]"
                 >
                   기능 살펴보기
                 </a>
               </div>
-              <p className="mt-5 text-[13px] font-semibold text-[#9AA1AC]">카드 등록 없이 시작 · 첫 한 달 무료</p>
+              <p className="llh-7 mt-5 text-[13px] font-semibold text-white/65">카드 등록 없이 시작 · 첫 한 달 무료</p>
             </div>
           </div>
+
+          <p
+            aria-hidden="true"
+            className="llh-4 pointer-events-none absolute inset-x-0 bottom-16 z-0 whitespace-nowrap text-center text-[clamp(58px,14.5vw,280px)] font-black leading-[0.78] tracking-[-0.04em] text-white/[0.96] sm:bottom-[-0.075em]"
+          >
+            LECTURELINK
+          </p>
         </section>
 
         {/* ── 문제 공감 — 기존 히어로 카피 (매번 ChatGPT로…) ── */}
@@ -873,9 +788,9 @@ export function Landing() {
             </ScrollReveal>
             <ScrollReveal delay={210}>
               <p className="mx-auto mt-4 text-[18px] font-extrabold leading-relaxed tracking-tight text-[#1F5C43] sm:text-[20px]">
-                내신 대비부터 국시 필기, CPX까지
+                내신 대비부터 CPX까지
                 <br />
-                렉처링크 하나로 준비하세요.
+                렉처링크로 준비하세요.
               </p>
             </ScrollReveal>
           </div>
@@ -930,18 +845,13 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ── 기능 소개 — 01 내신(강의자료 기반) → 02 국시 필기 → 03 CPX ── */}
+        {/* ── 기능 소개 — 01 내신(강의자료 기반) → 02 CPX ── */}
         <section id="features" className="scroll-mt-16 pt-16 sm:pt-20">
           <div className="mx-auto max-w-[1140px] px-5 sm:px-8">
             <ScrollReveal>
               <SectionHeading
-                badge={
-                  <Badge tone="line">
-                    <Sparkles className="h-[13px] w-[13px] text-[#1F5C43]" /> 핵심 기능 · 내신 → 국시 필기 → CPX
-                  </Badge>
-                }
-                title={'강의자료를 공부하는 순간부터\n의사국가시험을 준비하는 순간까지'}
-                desc="각각의 도구를 오가는 대신, 앞선 학습이 다음 학습의 근거가 되는 하나의 흐름을 만듭니다."
+                title={'강의자료 기반 내신 대비부터\nAI 환자와 함께하는 CPX까지'}
+                desc="문제 생성과 복습, CPX 실전 연습을 렉처링크 안에서 이어갈 수 있습니다."
               />
             </ScrollReveal>
           </div>
@@ -961,24 +871,10 @@ export function Landing() {
               }
             />
             <div className="border-t border-[#E5E1D8]" />
-            {/* 02 — 국시 필기 대비 (프리뷰: 실제 CBT 화면 구성 + 검수 문항) */}
+            {/* 02 — CPX 실전 연습 (프리뷰: 실제 진료 화면 구성 + 실제 캐릭터) */}
             <FeatureRow
               flip
               index="02"
-              badge="국시 필기 대비"
-              title={'실제 국가고시와 유사한 방식으로\n연습하세요'}
-              desc="임상 증례 중심의 국시형 문항을 실제 시험과 유사한 CBT 환경에서 풀며 임상적으로 생각하는 연습을 할 수 있습니다."
-              bullets={['임상 증례 중심의 국시형 문항', '실제 시험과 유사한 CBT 화면', '과목별·주제별 문제 풀이', '취약 개념과 반복 오답 확인']}
-              visual={
-                <PlayOnView>
-                  <ExamPreview />
-                </PlayOnView>
-              }
-            />
-            <div className="border-t border-[#E5E1D8]" />
-            {/* 03 — CPX 실전 연습 (프리뷰: 실제 진료 화면 구성 + 실제 캐릭터) */}
-            <FeatureRow
-              index="03"
               badge="CPX 실전 연습"
               title={'AI 환자와 직접 대화하며\nCPX를 연습하세요'}
               desc="렉처링크의 AI 환자와 음성으로 문진하고, 연습이 끝난 뒤 빠뜨린 질문과 표현을 바로 확인할 수 있습니다."
@@ -1015,7 +911,7 @@ export function Landing() {
             <ScrollReveal delay={240}>
               <div className="mt-6 flex items-center justify-center gap-2.5 rounded-2xl bg-[#EAF3ED] px-5 py-4 text-center text-[13.5px] font-semibold text-[#1F5C43] [word-break:keep-all]">
                 <GraduationCap className="h-4 w-4 shrink-0" />
-                국시 필기와 CPX는 원하는 학습 모드를 선택해 바로 시작할 수 있습니다.
+                CPX는 원하는 사례를 선택해 바로 연습할 수 있습니다.
               </div>
             </ScrollReveal>
           </div>
@@ -1064,7 +960,7 @@ export function Landing() {
                   이제 렉처링크 하나로 시작하세요.
                 </h2>
                 <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-white/65">
-                  강의자료 기반 내신 대비부터 국시 필기, CPX 실전 연습까지
+                  강의자료 기반 내신 대비부터 CPX 실전 연습까지
                   <br className="hidden sm:block" /> 한곳에서 시작해보세요.
                 </p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">

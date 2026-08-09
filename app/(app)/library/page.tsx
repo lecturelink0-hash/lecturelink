@@ -433,7 +433,7 @@ export default function LibraryPage() {
 
   return (
     <div className="ll-library-page content">
-      <section className="page-head"><div><span className="eyebrow">내 문제집</span><h1>내신·국시·형성평가 <span className="headline-accent">문제집</span>을<br/>한곳에서 관리하세요</h1><p className="lead">직접 만든 문제와 QR 형성평가 문항을 출처별 폴더에서 이어서 풀 수 있어요.</p></div></section>
+      <section className="page-head"><div><span className="eyebrow">내 문제집</span><h1>만든 문제집을<br/><span className="headline-accent">한곳에서 모아보세요</span></h1><p className="lead">강의자료로 만든 문제집을 확인하고, 풀던 문제를 이어서 학습할 수 있어요.</p></div></section>
 
       {nextSet && (
         <div className="focus-band"><section className="next-action" aria-label="이어풀기 추천">
