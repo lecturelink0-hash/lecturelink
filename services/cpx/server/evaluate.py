@@ -88,6 +88,8 @@ def build_context(case: dict, persona: dict | None = None) -> dict:
         'caseId': case.get('id'),
         'depressionRelated': is_depression_related(case),
         'femalePatient': '여' in str(gender),
+        # 케이스가 명시적으로 false 를 선언한 경우에만 신체진찰 면제 (기본 True)
+        'physicalExamRequired': case.get('physicalExamRequired', True) is not False,
     }
 
 
@@ -100,9 +102,17 @@ def format_transcript(events: list[dict]) -> str:
     return '\n'.join(lines)
 
 
+def rubric_sections_for_context(rubric: dict, context: dict) -> list[dict]:
+    """컨텍스트상 판정 대상인 섹션 — 신체진찰 면제 케이스는 진찰 섹션을 통째로 뺀다."""
+    return [
+        s for s in rubric['sections']
+        if not (s['id'] == 'physical_exam' and context.get('physicalExamRequired', True) is False)
+    ]
+
+
 def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> str:
     sections_desc = []
-    for s in rubric['sections']:
+    for s in rubric_sections_for_context(rubric, context):
         if s['type'] == 'deduction':
             v_lines = []
             for v in s['violationTypes']:
@@ -137,6 +147,13 @@ def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> 
 5. 임상예의 위반 탐지 시: 의료적 필수 인적사항 질문(성별·나이·생년월일·이름·경제수준·학력·직업·키·몸무게)은 절대 위반으로 보고하지 마라. 애매하면 exempt=true로 표시하라.
 6. status는 met(충분히 수행), partial(일부만 수행하거나 안전상 불완전), not_met(근거 없음) 중 하나다. partial은 관련 질문·설명은 했지만 핵심 요소가 빠진 경우에만 쓴다.
 7. 근거가 없으면 status=not_met, satisfied=false, evidence=[]로 하라. 추측으로 인정하지 마라.
+
+[진료 단계 구분 — phases 필드]
+진료는 보통 병력청취 → 신체진찰 → 환자교육(설명·계획) 순서로 진행된다. 각 단계가 시작된 로그 라인 번호(L001 형식의 숫자 부분)를 phases 배열로 보고하라.
+- history_taking: 첫 문진이 시작된 라인 (보통 1).
+- physical_exam: 의사가 처음 진찰을 선언·시행한 라인 ("~진찰하겠습니다", "청진하겠습니다" 등). 진찰이 전혀 없으면 항목을 생략하라.
+- patient_education: 의사가 추정 진단·검사 계획·생활 교육 등 설명을 본격적으로 시작한 라인. 교육이 전혀 없으면 항목을 생략하라.
+각 단계는 최초 시작 라인 1개만 보고한다. 중간에 잠깐 되돌아간 것은 무시하라.
 
 [채점 항목]
 {chr(10).join(sections_desc)}
@@ -177,8 +194,19 @@ RESPONSE_SCHEMA = {
                 'required': ['type', 'evidence'],
             },
         },
+        'phases': {
+            'type': 'ARRAY',
+            'items': {
+                'type': 'OBJECT',
+                'properties': {
+                    'phase': {'type': 'STRING', 'enum': ['history_taking', 'physical_exam', 'patient_education']},
+                    'startLine': {'type': 'INTEGER'},
+                },
+                'required': ['phase', 'startLine'],
+            },
+        },
     },
-    'required': ['items', 'violations'],
+    'required': ['items', 'violations', 'phases'],
 }
 
 
@@ -204,7 +232,7 @@ def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: d
         config=config,
     )
     raw = json.loads(resp.text)
-    valid_ids = {i['id'] for s in rubric['sections'] if s['type'] != 'deduction' for i in s['items']}
+    valid_ids = {i['id'] for s in rubric_sections_for_context(rubric, context) if s['type'] != 'deduction' for i in s['items']}
     items = {}
     for item in raw.get('items', []):
         if item.get('id') in valid_ids:
@@ -220,7 +248,78 @@ def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: d
     # 판정 누락 항목은 미충족 처리 (추측 인정 금지 원칙과 일관)
     for missing in valid_ids - set(items):
         items[missing] = {'satisfied': False, 'status': 'not_met', 'evidence': [], 'confidence': 'low'}
-    return {'items': items, 'violations': raw.get('violations', [])}
+    return {'items': items, 'violations': raw.get('violations', []), 'phases': raw.get('phases', [])}
+
+
+# ── 진료 단계별 소요 시간 (§결과 기록 시간 분석) ────────────────────────────────
+PHASE_ORDER = ['history_taking', 'physical_exam', 'patient_education']
+PHASE_NAMES = {'history_taking': '병력청취', 'physical_exam': '신체진찰', 'patient_education': '환자교육'}
+
+
+def compute_time_analysis(
+    events: list[dict],
+    raw_phases: list[dict] | None,
+    time_limit_seconds: int | None = None,
+    session: dict | None = None,
+    exam_declarations: set[str] | None = None,
+) -> dict | None:
+    """전사 타임스탬프로 단계별 사용 시간을 계산한다 — 결정론적, LLM은 단계 경계만 제공.
+
+    각 단계는 다음 단계 시작 전까지 이어진 것으로 본다(표준 진행 순서 가정).
+    LLM이 신체진찰 경계를 못 찾았으면 진찰 버튼 선언 문구(정확 일치)를 폴백으로 쓴다.
+    """
+    if not events:
+        return None
+    last_ms = max(e['tOffsetMs'] for e in events)
+    total_ms = last_ms
+    # 세션 종료 시각이 있으면 마지막 발화 이후 침묵까지 포함 (비정상 값은 무시)
+    if session and session.get('ended_at') and session.get('started_at'):
+        wall_ms = (session['ended_at'] - session['started_at']) * 1000
+        if last_ms <= wall_ms <= last_ms + 10 * 60 * 1000:
+            total_ms = wall_ms
+
+    starts: dict[str, int] = {}
+    for p in sorted(raw_phases or [], key=lambda x: x.get('startLine') or 0):
+        phase, line = p.get('phase'), p.get('startLine')
+        if phase not in PHASE_NAMES or phase in starts:
+            continue
+        if not isinstance(line, int) or not (1 <= line <= len(events)):
+            continue
+        starts[phase] = events[line - 1]['tOffsetMs']
+    source = 'llm' if starts else 'heuristic'
+    # 폴백: 진찰 버튼 클릭은 선언 문구가 학생 발화로 기록되므로 정확한 시각을 안다
+    if 'physical_exam' not in starts and exam_declarations:
+        for e in events:
+            if e.get('role') == 'student' and e.get('text') in exam_declarations:
+                starts['physical_exam'] = e['tOffsetMs']
+                break
+    if not starts:
+        return {
+            'totalSeconds': round(total_ms / 1000),
+            'timeLimitSeconds': time_limit_seconds,
+            'phases': [],
+            'source': 'unavailable',
+        }
+    # 병력청취 시작은 항상 첫 이벤트로 보정
+    first_ms = events[0]['tOffsetMs']
+    starts['history_taking'] = min(starts.get('history_taking', first_ms), first_ms)
+
+    ordered = sorted(starts.items(), key=lambda kv: kv[1])
+    phases_out = []
+    for i, (phase, start_ms) in enumerate(ordered):
+        end_ms = ordered[i + 1][1] if i + 1 < len(ordered) else max(total_ms, start_ms)
+        phases_out.append({
+            'id': phase,
+            'name': PHASE_NAMES[phase],
+            'startSeconds': round(start_ms / 1000),
+            'seconds': max(0, round((end_ms - start_ms) / 1000)),
+        })
+    return {
+        'totalSeconds': round(total_ms / 1000),
+        'timeLimitSeconds': time_limit_seconds,
+        'phases': phases_out,
+        'source': source,
+    }
 
 
 def build_feedback(rubric: dict, result: dict) -> dict:

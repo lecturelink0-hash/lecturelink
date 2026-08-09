@@ -52,9 +52,12 @@ import {
   type ExtractEmbeddedDiagnostic,
 } from '@/lib/extract/pdf-embedded-images';
 import { extractPdfImageObjects } from '@/lib/extract/pdf-image-objects';
-import { selectExamImages } from '@/lib/extract/select-exam-images';
+import {
+  selectExamImages,
+  type SelectExamImagesDiag,
+} from '@/lib/extract/select-exam-images';
 import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
-import { maskTextRegions } from '@/lib/extract/mask-text';
+import { maskTextRegions, isShortFigureLabel } from '@/lib/extract/mask-text';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -70,17 +73,45 @@ import { runOcr } from '@/lib/ocr/engine';
 const MAX_PDF_PAGES = 100;         // 이미지 검출용 페이지 렌더 상한
 const PDF_RENDER_EDGE_PX = 1280;   // PDF 페이지 렌더 해상도 — 메모리·토큰 절감 (기본 1600 대비 하향)
 const MAX_VISION_SLIDES = 100;     // detectMedicalRegions 대상 슬라이드 수
-const MAX_FEATURED_IMAGES = 8;     // 문항에 투입하는 이미지 상한 — 과다·노이즈 방지(기존 15에서 하향)
+// 문항에 투입하는 이미지 상한의 절대 천장. 실제 상한은 요청 문항 수에 연동해 정한다
+// (featuredBudget). 종전 고정 8은 "주석 텍스트가 정답 단서로 새는 것"을 막으려 15에서
+// 내린 값인데, 그 뒤 좌표 마스킹·재OCR 검증·텍스트 캡처 검열이 들어가 원래 이유가 해소됐다.
+// 상한만 남아 공급을 조르고 있었다 — 실측: 후보 26장 전부 useful 판정인데 면적 상위 8장만
+// 생존, 버려진 18장 중 9장이 진짜 임상영상(CT 5·심초음파 2·X-ray 2).
+const MAX_FEATURED_IMAGES_CAP = 20;
+// 이미지가 필요 없는 요청(이미지형 미선택)에서 쓰는 하한 — 종전 동작 유지용.
+const MIN_FEATURED_IMAGES = 8;
+/**
+ * 이번 요청에서 확보할 문항 이미지 수. 장당 MAX_QUESTIONS_PER_IMAGE 문항까지 쓰므로
+ * desiredCount 장이면 이론상 요청의 2배를 덮어 배치마다 이미지가 돌아가고 다양성도 남는다.
+ */
+function featuredBudget(desiredCount: number): number {
+  return Math.min(MAX_FEATURED_IMAGES_CAP, Math.max(MIN_FEATURED_IMAGES, desiredCount));
+}
+// 동일 이미지 1장을 문항에 연결할 수 있는 상한. 저장 후 정리(초과 연결 제거)뿐 아니라
+// 이미지 배치 예약 수·배치별 최소 이미지 문항 수·보충 배치의 이미지 재투입 판단이 공유한다.
+const MAX_QUESTIONS_PER_IMAGE = 2;
 // 생성에 투입하는 텍스트 상한(자). 유료 티어(대컨텍스트)이므로 상향해 대용량(30~50p) 강의록의
 // 뒷부분 내용이 잘리지 않게 한다. (기존 40,000자 → 30페이지 뒷부분 누락 원인)
 const MAX_GEN_TEXT_CHARS = 150_000;
 const MAX_EMBEDDED_CANDIDATES = 40; // AI 선별에 넣을 후보(추출) 상한
+// 임베드 추출 성공 개수가 이 값 미만이면(이미지형 요청 한정) 페이지 렌더+Vision 검출을
+// 병행해 후보를 보충한다. 슬라이드에 벡터로 그려진 다이어그램·차트는 임베드 래스터
+// 객체가 아니라서 임베드 경로에 안 잡히는데, 종전에는 임베드가 1장이라도 성공하면
+// Vision 을 통째로 생략해 그 자료의 이미지 후보가 그대로 바닥났다.
+const EMBED_SUPPLEMENT_MIN = 4;
+// 임베드 이미지 최소 변(px). 기본 300 은 강의 슬라이드의 중간 크기(200~300px) 임상
+// 사진까지 아이콘으로 오인해 버렸다 — 크기 컷을 낮추고 저품질 여부는 AI 선별에 맡긴다.
+const EMBED_MIN_EDGE_PX = 200;
 const VISION_CONCURRENCY = 6;      // 페이지 vision/OCR 동시 처리 수 — 순차 대비 대용량 대폭 가속
 const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 저해상도
 // crop 단위 OCR 동시 처리 수. OCR 은 슬라이드가 아니라 crop 이미지 1장당 1회 호출이므로
 // crop 을 평탄화해 전역 동시성으로 돌린다. (슬라이드 단위 병렬로는 임베드 이미지 경로처럼
 // 한 슬라이드에 crop 이 몰린 경우 사실상 순차가 되어 수십 초를 잃는다.)
-const OCR_CONCURRENCY = 8;
+// 8 → 14: OCR 은 CPU 가 아니라 네트워크 대기가 지배하는 호출이라 동시성을 올리면
+// 그만큼 줄어든다(실측: 이미지가 많은 20문항 실행에서 OCR 구간 12.4초). 재시도·백오프는
+// 그대로라 레이트리밋에 걸려도 안전하게 물러난다.
+const OCR_CONCURRENCY = 14;
 // 생성 배치당 최대 문항 수. 생성 시간은 배치당 "출력 토큰 수"가 지배하므로 배치를 잘게
 // 쪼개 병렬로 돌리면 체감 시간이 배치 1개 수준으로 줄어든다. 문항당 출력이 1천 토큰대라
 // 4문항 배치는 디코딩만 1분+ 걸림 → 2문항으로 줄여 배치 1개를 ~30초대로.
@@ -89,6 +120,11 @@ const GEN_BATCH_MAX_QUESTIONS = 2;
 // 생성 배치 동시 실행 상한. 20문항(10배치) 요청 시 대형 입력의 동시 요청 폭주로
 // 429(rate limit) 백오프가 걸리면 오히려 벽시계 시간이 늘어나므로 과도한 동시성만 제한.
 const GEN_CONCURRENCY = 8;
+// 배치가 이 시간을 넘기면 같은 슬롯으로 복제 요청을 한 번 더 띄운다(hedged request).
+// 배치는 병렬이라 전체 소요를 "가장 느린 배치 하나"가 지배하는데, 실측에서 다른 배치가
+// 8~14초일 때 한 배치만 29초가 걸린 실행이 있었다(429 백오프로 추정) — 그 한 건이 전체를
+// 10초 이상 늘렸다. 정상 배치(8~14초)에는 발동하지 않도록 그보다 넉넉히 잡는다.
+const GEN_HEDGE_AFTER_MS = 18_000;
 // 요청 수를 못 채웠을 때 빈 슬롯을 다시 채우는 최대 라운드 수.
 // (모델이 요청보다 적게 반환하거나, 이미지 문항이 정제 실패로 삭제되면 부족분이 생긴다.)
 const GEN_BACKFILL_ROUNDS = 2;
@@ -109,9 +145,12 @@ const IMAGE_REFINE_TIMEOUT_MS = 20_000;
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
+  opts: { minSelected?: number } = {},
 ): Promise<number[]> {
   const { createCanvas, loadImage } = await import('canvas');
   const selected: number[] = [];
+  // 임계 미달 페이지의 점수(최소 보장 채움용).
+  const belowThreshold: Array<{ pageIndex: number; score: number }> = [];
   for (const page of pages) {
     try {
       const image = await loadImage(Buffer.from(page.png));
@@ -136,13 +175,30 @@ async function selectLikelyImagePages(
       }
       // Text glyphs mostly disappear at 48px width. Medical photos, radiology,
       // charts, and shaded diagrams retain contiguous dark/color/midtone mass.
-      if (dark / total > 0.025 || colored / total > 0.035 || midtone / total > 0.11) {
-        selected.push(page.pageIndex);
-      }
+      // score > 1 ⇔ 종전 임계(dark 2.5% / colored 3.5% / midtone 11%) 중 하나 초과.
+      const score = Math.max(
+        dark / total / 0.025,
+        colored / total / 0.035,
+        midtone / total / 0.11,
+      );
+      if (score > 1) selected.push(page.pageIndex);
+      else belowThreshold.push({ pageIndex: page.pageIndex, score });
     } catch {
       // A page that cannot be scored is kept so local selection never becomes
       // a silent content-loss mechanism.
       selected.push(page.pageIndex);
+    }
+  }
+  // 최소 보장: 임계 미달이어도 점수 상위 페이지를 minSelected 까지 채운다.
+  // 흰 배경의 회색조 X-ray·얇은 선 다이어그램은 48px 다운샘플에서 잉크 질량이 임계에
+  // 못 미쳐 통째로 탈락하곤 했다 — 그 자료는 이미지 문항이 0이 된다. 최종 판정은
+  // 어차피 페이지별 Vision 검출이 하므로, 여기서는 후보를 조금 후하게 넘긴다.
+  const minSelected = Math.min(opts.minSelected ?? 0, pages.length);
+  if (selected.length < minSelected) {
+    belowThreshold.sort((a, b) => b.score - a.score);
+    for (const s of belowThreshold) {
+      if (selected.length >= minSelected) break;
+      selected.push(s.pageIndex);
     }
   }
   return selected;
@@ -220,6 +276,12 @@ const IMAGE_NOUNS =
 // 그림을 "선언"하는 발문에 쓰이는 명사(표·그래프처럼 본문에 글로 넣을 수 있는 것은 제외).
 const FIGURE_NOUNS =
   '그림|사진|이미지|영상|모식도|도해|도식|개념도|삽화|심전도|ECG|EKG|X-?ray|엑스레이|방사선\\s*사진|CT|MRI|초음파|현미경\\s*사진|병리\\s*소견';
+// 그림 명사와 서술어 사이에 흔히 끼는 명사("초음파 소견이다", "CT 영상이다").
+// 실측 사고: "다음은 복부 초음파 소견이다" 가 이 틈 때문에 '그림 선언'으로 안 잡혀,
+// 이미지가 붙지 않은 채로 학생에게 나갔다.
+// 주의: 조사 목록에 '은/는' 을 넣지 않아 "심전도 소견은 정상이었다"(본문 서술)는 계속 제외된다.
+const FIGURE_TAIL_NOUN = '(?:\\s*(?:소견|사진|영상|결과|이미지))?';
+
 const IMAGE_DEPENDENT_STEM_RE = new RegExp(
   // 지시어와 명사 사이에 수식어가 끼어드는 형태까지 잡는다("아래 흉부 X-ray 를 보고").
   `(?:${IMAGE_DEIXIS})\\s*(?:[가-힣A-Za-z0-9]{1,6}\\s*){0,2}(?:${IMAGE_NOUNS})|` +
@@ -227,7 +289,7 @@ const IMAGE_DEPENDENT_STEM_RE = new RegExp(
     // "다음은 대동맥 박리의 발생 기전에 대한 모식도이다" 처럼 지시어와 그림 명사 사이에
     // 설명이 길게 끼는 선언형. 명사 뒤 조사로 "그림을 가리키는 문장"임을 확인해
     // "심전도 소견은 정상이었다"(본문에 소견을 서술한 경우)와 구분한다.
-    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
+    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
     `판독(?:하|해)|사진\\s*판독`,
   'i',
 );
@@ -247,10 +309,13 @@ function stemDependsOnImage(stem: string): boolean {
  *    "다음 환자의 심전도 소견은 정상이었다"(본문 서술)와 "…모식도이다"(그림 지칭)를 구분한다.
  */
 const FIGURE_DECLARATION_RE = new RegExp(
-  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})` +
+  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}` +
     `\\s*(?:이다|입니다|이며|이고|에서|에는|으로|로|를\\s*보고|을\\s*보고|를\\s*판독|을\\s*판독)`,
   'i',
 );
+
+/** 테스트 전용 재노출 — 런타임 동작에는 영향이 없다. */
+export const stemDeclaresFigureForTest = (stem: string): boolean => stemDeclaresFigure(stem);
 
 function stemDeclaresFigure(stem: string): boolean {
   return FIGURE_DECLARATION_RE.test(String(stem ?? ''));
@@ -318,6 +383,126 @@ function normalizeStemEnding(stem: string): string {
   return s;
 }
 
+/** 판독 대상이 되는 실제 임상 검사 유형. 발문-이미지 정합성 판단의 기준. */
+const CLINICAL_IMAGE_KINDS = new Set([
+  'xray', 'ct', 'mri', 'ecg', 'pathology', 'microscope', 'ultrasound',
+]);
+
+/**
+ * 발문에서 내부 인덱스·메타 문구를 결정론적으로 제거한다.
+ *
+ * 시스템 프롬프트가 "[이미지 N] 같은 내부 번호를 발문에 쓰지 말라"고 명시하는데도
+ * 실측에서 반복적으로 새어나왔다("다음 초음파 영상(이미지 2)에서 …"). 내부 번호는
+ * 0-based 인데 학생 화면 라벨은 1-based 라 그대로 두면 가리키는 그림이 어긋난다.
+ * 또 이미지 문항을 요구받은 모델이 "(이미지 없음)" 같은 자기 메모를 발문에 남기는
+ * 사례도 관찰됐다. 프롬프트로 두 번 실패했으므로 저장 직전에 확정적으로 지운다.
+ */
+export function sanitizeStemArtifacts(stem: string): string {
+  let s = String(stem ?? '');
+  // "(이미지 없음)", "[사진 없음]", "(그림 없음)" 같은 메타 메모 — 괄호째 제거.
+  s = s.replace(/[([{]\s*(?:이미지|사진|그림|영상)\s*(?:없음|미제공|없습니다)\s*[)\]}]/g, '');
+  // "(이미지 2)", "[이미지 0]" — 괄호로 감싼 내부 번호는 괄호째 제거.
+  s = s.replace(/[([{]\s*(?:이미지|그림|사진|영상)\s*\d+\s*[)\]}]/g, '');
+  // 괄호 없이 쓰인 "이미지 1" — 번호만 떼어 "이미지"라는 지시어는 살린다
+  // ("이미지 1에서 보이는" → "이미지에서 보이는").
+  s = s.replace(/(이미지|그림|사진|영상)\s*\d+/g, '$1');
+  // 제거 후 남는 공백·구두점 정리.
+  s = s.replace(/\s{2,}/g, ' ').replace(/\s+([,.?!)\]}])/g, '$1').replace(/([([{])\s+/g, '$1');
+  // 괄호를 들어낸 자리에 조사가 떨어져 나간 경우를 붙인다("흉부 CT (이미지 2)에서" →
+  // "흉부 CT 에서" → "흉부 CT에서"). 조사가 독립 토큰일 때만 붙여 "5 cm 이상" 같은
+  // 정상 띄어쓰기를 건드리지 않는다.
+  s = s.replace(
+    /([A-Za-z0-9)\]])\s+(에서|에는|에도|에|으로|로|을|를|은|는|이|가|의|와|과)(?=[\s,.?!)]|$)/g,
+    '$1$2',
+  );
+  return s.trim();
+}
+
+/** 발문이 명시한 검사 유형들. 여러 개를 언급할 수 있으므로 전부 모은다. */
+const STEM_MODALITY_PATTERNS: Array<[string, RegExp]> = [
+  ['xray', /X-?ray|엑스레이|단순\s*방사선|흉부\s*방사선|흉부\s*단순촬영/i],
+  ['ct', /\bCT\b|전산화\s*단층/i],
+  ['mri', /\bMRI\b|자기공명/i],
+  ['ultrasound', /초음파|심초음파|\becho(?:cardiograph)?/i],
+  ['ecg', /심전도|\bECG\b|\bEKG\b/i],
+  ['pathology', /병리\s*소견|병리\s*사진|생검\s*소견/i],
+  ['microscope', /현미경\s*(?:소견|사진)/i],
+];
+
+/**
+ * 발문이 말하는 검사와 실제로 붙은 이미지가 어긋나는지.
+ *
+ * 실측 사고: 발문은 "흉부 X-ray 에서 종격동 확장이 관찰된다"인데 붙은 이미지는
+ * 심초음파였다 — 학생이 볼 때 발문과 그림이 따로 놀아 풀 수 없다.
+ * 발문이 검사를 특정하지 않았거나(예: "다음 사진에서"), 이미지가 도해·기타 유형이면
+ * 판단 근거가 없으므로 통과시킨다(과도한 연결 해제 방지).
+ */
+export function stemModalityConflict(stem: string, kind: string): boolean {
+  if (!CLINICAL_IMAGE_KINDS.has(kind)) return false;
+  const mentioned = STEM_MODALITY_PATTERNS.filter(([, re]) => re.test(stem)).map(([k]) => k);
+  if (mentioned.length === 0) return false;
+  return !mentioned.includes(kind);
+}
+
+/**
+ * 느린 호출에 복제 요청을 띄워 꼬리를 자른다(hedged request).
+ *
+ * 모델 호출은 편차가 크다 — 실측에서 다른 배치가 8~14초일 때 한 배치만 29초가 걸렸다
+ * (429 백오프로 추정). 배치는 병렬이라 그 한 건이 전체 소요를 지배한다.
+ * afterMs 를 넘기면 같은 호출을 한 번 더 띄우고 **먼저 끝난 쪽**을 채택한다.
+ * afterMs 전에 실패하면 기다리지 않고 즉시 다시 시도하고, 모든 시도가 실패해야 거부한다.
+ *
+ * 주의: 감싸는 대상은 "모델 호출"이어야 한다. 배치 전체(이미지 준비 대기 포함)를 감싸면
+ * 대기 시간까지 임계에 포함돼 정상 배치가 복제를 유발한다(실측: 이미지 게이팅 도입 후
+ * 배치 총시간이 19~24초가 되면서 헤지가 4회 헛발동).
+ */
+function hedgedCall<T>(
+  run: () => Promise<T>,
+  opts: { afterMs: number; onHedge?: () => void; onRetry?: () => void },
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let done = false;
+    let launched = 0;
+    let failed = 0;
+    let firstError: unknown;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const launch = (): void => {
+      launched += 1;
+      run().then(
+        (v) => {
+          if (done) return;
+          done = true;
+          if (timer) clearTimeout(timer);
+          resolve(v); // 먼저 끝난 쪽을 채택. 늦게 끝난 쪽 결과는 버린다.
+        },
+        (e) => {
+          failed += 1;
+          firstError ??= e;
+          if (done) return; // 이미 다른 시도가 성공했다면 실패는 무시한다.
+          if (failed < launched) return; // 아직 대기 중인 시도가 남아 있다.
+          if (timer) {
+            clearTimeout(timer);
+            timer = undefined;
+            opts.onRetry?.();
+            launch();
+            return;
+          }
+          reject(firstError); // 모든 시도가 실패.
+        },
+      );
+    };
+
+    timer = setTimeout(() => {
+      timer = undefined;
+      if (done) return;
+      opts.onHedge?.();
+      launch();
+    }, opts.afterMs);
+    launch();
+  });
+}
+
 export interface PrivateGenerationInput {
   uploadId: string;
   userId: string;
@@ -377,7 +562,12 @@ export interface GenerationDiagnostics {
   /** 추출 세부 수치(페이지 수·후보 수·생략 여부 등). */
   extract: Record<string, unknown>;
   /** 임베드 이미지 경로 진단 — mutool 실행 가능 여부가 여기서 드러난다. */
-  embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+  embedded: ExtractEmbeddedDiagnostic & {
+    selectMs?: number;
+    chosen?: number | null;
+    /** 상한 절삭 전 판정 결과 — chosen(절삭 후)만으론 원인 규명이 안 됐던 문제 대응. */
+    select?: SelectExamImagesDiag & { max?: number };
+  };
   generation: Record<string, unknown>;
   /** 이미지별 정제(인페인팅+검증) 계측 — 어느 이미지가 왜 제외됐고 얼마나 걸렸는지. */
   inpaint: unknown[];
@@ -514,19 +704,34 @@ async function extractFromBuffer(input: {
    * 텍스트가 부족한 스캔 자료는 OCR 이 유일한 내용원이므로 예외로 계속 수행한다.
    */
   wantsImages: boolean;
+  /** 이번 요청에서 확보할 문항 이미지 수(요청 문항 수 연동, featuredBudget). */
+  maxFeatured: number;
   /** 경고 수집 배열(호출자와 공유) — 텍스트 조기 반환 이후에도 계속 쌓을 수 있게 주입받는다. */
   warnings: string[];
   /** 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다. */
   onEarlyText?: (text: string) => void;
+  /**
+   * 크롭이 만들어진 즉시 그 크롭의 OCR 을 시작시키는 훅(스트리밍).
+   * 종전에는 "전체 추출(모든 페이지 Vision) 완료 → 전체 크롭 OCR" 직렬이라 Vision 파도와
+   * OCR 파도가 순서대로 쌓였다. 크롭 확보 즉시 OCR 을 출발시키면 남은 페이지의 Vision 과
+   * 겹쳐 돌아, OCR 완료(=이미지 정제·이미지 배치 출발의 선행 조건)가 앞당겨진다.
+   * 중복 시작은 호출자가 크롭 객체 단위로 막는다.
+   */
+  startOcr?: (slideText: string, pageIndex: number, crop: CroppedImage) => void;
   /** 진단 수집기(선택). 단계별 소요와 세부 수치를 채워 넣는다. */
   diag?: {
     timings: Record<string, number>;
     extract: Record<string, unknown>;
-    embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+    embedded: ExtractEmbeddedDiagnostic & {
+    selectMs?: number;
+    chosen?: number | null;
+    /** 상한 절삭 전 판정 결과 — chosen(절삭 후)만으론 원인 규명이 안 됐던 문제 대응. */
+    select?: SelectExamImagesDiag & { max?: number };
+  };
   };
   onVisionProgress?: (completed: number, total: number) => Promise<void> | void;
 }): Promise<{ slides: ExtractedSlide[] }> {
-  const { buffer, fileType, userIdForLog, wantsImages, warnings } = input;
+  const { buffer, fileType, userIdForLog, wantsImages, warnings, maxFeatured } = input;
   // 이미지 분석(렌더+Vision+크롭) 생략 여부 — 텍스트 확보 후 확정한다.
   let skipImageAnalysis = false;
   let earlyTextSent = false;
@@ -538,6 +743,11 @@ async function extractFromBuffer(input: {
 
   // PDF 임베드 이미지(object dedup) — 있으면 Vision 검출/crop 대신 이걸 우선 사용.
   let pdfEmbeddedCrops: CroppedImage[] | null = null;
+  // 임베드가 소수만 나온 경우(이미지형 요청) 페이지 렌더+Vision 을 병행하는 보충 모드.
+  let supplementVision = false;
+  // 임베드 이미지가 나온 페이지(1-based) — 보충 Vision 에서 같은 그림이 임베드와
+  // 페이지 크롭으로 중복 등재되지 않게 제외한다.
+  const embeddedPagesUsed = new Set<number>();
   let allowWholePageOcrFallback = fileType.startsWith('image/');
 
   // ── 슬라이드 / 페이지 텍스트 + PNG 산출
@@ -577,7 +787,15 @@ async function extractFromBuffer(input: {
             input.diag.extract.pdfPages = result.numpages ?? null;
             input.diag.extract.textChars = (result.text ?? '').trim().length;
           }
-          return (result.text ?? '').trim();
+          const parsed = (result.text ?? '').trim();
+          // ★ 본문 텍스트가 나온 "즉시" 호출자에게 넘긴다.
+          //   종전에는 아래 Promise.all 이 끝난 뒤(= 임베드 추출 + AI 선별까지 마친 뒤)
+          //   전달해서, 텍스트가 5.5초에 준비되는데도 11~14초까지 붙들려 있었다.
+          //   그래서 "텍스트 배치를 먼저 출발시켜 전처리를 숨긴다"는 최적화가 사실상
+          //   작동하지 않았다(실측: 텍스트준비 = 첫배치시작 = 11.3~14.0초, 매번 임베드
+          //   분기 소요와 일치). 여기서 넘기면 텍스트 배치가 6~8초 일찍 출발한다.
+          sendEarlyText(parsed);
+          return parsed;
         } catch (e) {
           warnings.push(
             `PDF 본문 텍스트 추출 실패 — 페이지 이미지만 사용. ${
@@ -606,12 +824,18 @@ async function extractFromBuffer(input: {
           //   부수 효과 — 슬라이드에 겹쳐 그린 손글씨 주석은 이미지 객체에 포함되지 않아
           //   원본 그림만 깨끗하게 얻는다.
           const objDiag: Record<string, unknown> = {};
-          let candidates: { png: Uint8Array; widthPx: number; heightPx: number }[] =
-            await extractPdfImageObjects(pdfBuffer, {
-              maxImages: MAX_EMBEDDED_CANDIDATES,
-              maxOutEdgePx: 1024,
-              diag: objDiag,
-            });
+          let candidates: {
+            png: Uint8Array;
+            widthPx: number;
+            heightPx: number;
+            /** 1-based 출처 페이지(pdfjs 경로만 보유). 보충 Vision 의 중복 페이지 제외용. */
+            pageIndex?: number;
+          }[] = await extractPdfImageObjects(pdfBuffer, {
+            maxImages: MAX_EMBEDDED_CANDIDATES,
+            maxOutEdgePx: 1024,
+            minEdgePx: EMBED_MIN_EDGE_PX,
+            diag: objDiag,
+          });
           if (input.diag) {
             input.diag.extract.pdfImageObjects = objDiag;
             input.diag.timings.imageObjectsMs = Date.now() - tEmbed;
@@ -628,21 +852,33 @@ async function extractFromBuffer(input: {
           if (candidates.length === 0) return null;
           // AI 선별: 로고·장식·표지·순수 도표 제외, 판독 가치 있는 의료 이미지만(개수는 내용에 따라 가변).
           const tSelect = Date.now();
-          const selected = await selectExamImages(candidates, { max: MAX_FEATURED_IMAGES });
+          const selectDiag: SelectExamImagesDiag = {};
+          const selected = await selectExamImages(candidates, {
+            max: maxFeatured,
+            diag: selectDiag,
+          });
           if (input.diag) {
             input.diag.embedded.selectMs = Date.now() - tSelect;
+            // chosen 은 "절삭 후" 수치라 이것만으론 AI 가 몇 장을 통과시켰는지 알 수 없었다
+            // (조사에서 실제로 오진을 유발했다). 절삭 전 판정 수·버려진 수를 함께 남긴다.
             input.diag.embedded.chosen = selected ? selected.length : null;
+            input.diag.embedded.select = { ...selectDiag, max: maxFeatured };
           }
           const chosen =
             selected ??
             // 선별 실패(모델 오류/429) 시 면적 큰 순 폴백.
             candidates
-              .slice(0, MAX_FEATURED_IMAGES)
+              .slice(0, maxFeatured)
               .map((im) => ({ image: im, kind: 'other' as const }));
           warnings.push(
             `임베드 이미지 ${candidates.length}개 추출 → 선별 ${chosen.length}개 사용${selected ? '' : '(선별 실패·폴백)'}.`,
           );
           if (chosen.length === 0) return null;
+          // 보충 Vision 의 중복 방지용 출처 페이지 기록. 프로덕션 경로(pdfjs 추출)만
+          // pageIndex 를 보유한다 — mutool 폴백(로컬 전용)은 페이지 미상이라 기록 없음.
+          for (const { image } of chosen) {
+            if (typeof image.pageIndex === 'number') embeddedPagesUsed.add(image.pageIndex);
+          }
           return chosen.map(({ image, kind }) => ({
             region: { kind, x: 0, y: 0, width: 1, height: 1, confidence: 1 },
             png: image.png,
@@ -662,6 +898,26 @@ async function extractFromBuffer(input: {
       allowWholePageOcrFallback = fullText.length < 1500;
     }
     pdfEmbeddedCrops = embeddedCropsResult;
+    // 임베드가 소수만 나오면 벡터로 그려진 다이어그램·차트(래스터 객체 아님)가 못 잡힌
+    // 자료일 가능성이 높다 — 이미지형 요청에 한해 페이지 렌더+Vision 검출을 병행해
+    // 후보를 보충한다(임베드가 나온 페이지는 제외해 중복 등재 방지).
+    supplementVision =
+      wantsImages &&
+      pdfEmbeddedCrops !== null &&
+      pdfEmbeddedCrops.length > 0 &&
+      pdfEmbeddedCrops.length < EMBED_SUPPLEMENT_MIN;
+    if (supplementVision) {
+      warnings.push(
+        `임베드 이미지 ${pdfEmbeddedCrops?.length}장뿐 — Vision 검출을 병행해 후보 보충.`,
+      );
+    }
+    // ★ OCR 스트리밍: 임베드 크롭도 확보 즉시 OCR 출발(이후의 보충 렌더·Vision 과 겹친다).
+    //   context 는 이 크롭들이 붙는 slides[0] 의 텍스트(본문 슬라이스)와 동일하게 준다.
+    if (pdfEmbeddedCrops) {
+      for (const crop of pdfEmbeddedCrops) {
+        input.startOcr?.(fullText.slice(0, MAX_GEN_TEXT_CHARS), 1, crop);
+      }
+    }
 
     // ★ 텍스트 조기 전달 — 호출자가 이 시점에 텍스트 배치를 먼저 출발시켜
     //   아래 렌더·Vision·OCR 시간을 생성 시간 뒤로 숨긴다.
@@ -675,6 +931,7 @@ async function extractFromBuffer(input: {
       input.diag.extract.skipImageAnalysis = skipImageAnalysis;
       input.diag.extract.allowWholePageOcrFallback = allowWholePageOcrFallback;
       input.diag.extract.embeddedCropsUsed = pdfEmbeddedCrops !== null;
+      input.diag.extract.embeddedSupplementVision = supplementVision;
     }
     if (skipImageAnalysis) {
       warnings.push(
@@ -692,7 +949,7 @@ async function extractFromBuffer(input: {
     //   텍스트가 부족한(스캔/이미지 위주) 자료만 기존 페이지 렌더 + Vision 경로를 탄다.
     let pages: Awaited<ReturnType<typeof renderPdfPages>> = [];
     try {
-      if (!pdfEmbeddedCrops && !skipImageAnalysis) {
+      if ((!pdfEmbeddedCrops || supplementVision) && !skipImageAnalysis) {
         if (allowWholePageOcrFallback) {
           const tAll = Date.now();
           pages = await renderPdfPages(pdfBuffer, {
@@ -710,7 +967,14 @@ async function extractFromBuffer(input: {
             maxEdgePx: PDF_SCAN_EDGE_PX,
           });
           const tScore = Date.now();
-          const candidatePages = await selectLikelyImagePages(scanPages);
+          let candidatePages = await selectLikelyImagePages(scanPages, {
+            // 이미지형 요청은 임계 미달이어도 점수 상위 페이지를 채워 최소 후보를 보장
+            // (흰 배경 회색조 영상·얇은 선 다이어그램의 휴리스틱 탈락 방지).
+            minSelected: wantsImages ? Math.min(6, scanPages.length) : 0,
+          });
+          if (supplementVision) {
+            candidatePages = candidatePages.filter((p) => !embeddedPagesUsed.has(p));
+          }
           const tCand = Date.now();
           if (candidatePages.length > 0) {
             pages = await renderPdfPages(pdfBuffer, {
@@ -867,7 +1131,7 @@ async function extractFromBuffer(input: {
   for (let i = 0; i < slidesData.length; i++) {
     const s = slidesData[i];
     if (
-      !pdfEmbeddedCrops &&
+      (!pdfEmbeddedCrops || supplementVision) &&
       !skipImageAnalysis &&
       s.png.length > 0 &&
       visionIndices.length < MAX_VISION_SLIDES
@@ -918,6 +1182,9 @@ async function extractFromBuffer(input: {
           preprocessed.push({ ...c, ocrOnly: isWholePageFallback }); // 원본 그대로 진행
         }
       }
+        // ★ OCR 스트리밍: 이 페이지의 크롭이 준비된 즉시 OCR 을 출발시켜
+        //   아직 처리 중인 다른 페이지들의 Vision 검출과 겹친다.
+        for (const crop of preprocessed) input.startOcr?.(s.text, s.pageIndex, crop);
         slides[idx] = { pageIndex: s.pageIndex, text: s.text, croppedImages: preprocessed };
       } catch (e) {
         warnings.push(
@@ -941,11 +1208,19 @@ async function extractFromBuffer(input: {
     );
   }
 
-  // PDF 임베드 추출이 있으면 그것을 featured 이미지로 우선 사용(Vision crop 결과는 중복 방지 위해 대체).
+  // PDF 임베드 추출이 있으면 그것을 featured 이미지로 우선 사용.
+  //  - 보충 모드: 임베드(원본 화질·주석 없음)를 앞에 두고 Vision 크롭을 뒤에 유지한다.
+  //    featured 선정이 슬라이드 순회 순서를 따르므로 임베드가 우선 사용되고, 임베드가
+  //    나온 페이지는 후보에서 이미 제외돼 같은 그림이 중복 등재되지 않는다.
+  //  - 단독 모드(종전): Vision crop 결과를 통째로 대체(중복 방지).
   if (pdfEmbeddedCrops && pdfEmbeddedCrops.length > 0 && slides.length > 0) {
-    slides[0].croppedImages = pdfEmbeddedCrops;
-    for (let i = 1; i < slides.length; i++) {
-      if (slides[i]) slides[i].croppedImages = [];
+    if (supplementVision) {
+      slides[0].croppedImages = [...pdfEmbeddedCrops, ...slides[0].croppedImages];
+    } else {
+      slides[0].croppedImages = pdfEmbeddedCrops;
+      for (let i = 1; i < slides.length; i++) {
+        if (slides[i]) slides[i].croppedImages = [];
+      }
     }
   }
 
@@ -1042,7 +1317,12 @@ export async function generatePrivateQuestionsFromUpload(
     const diag: {
       timings: Record<string, number>;
       extract: Record<string, unknown>;
-      embedded: ExtractEmbeddedDiagnostic & { selectMs?: number; chosen?: number | null };
+      embedded: ExtractEmbeddedDiagnostic & {
+    selectMs?: number;
+    chosen?: number | null;
+    /** 상한 절삭 전 판정 결과 — chosen(절삭 후)만으론 원인 규명이 안 됐던 문제 대응. */
+    select?: SelectExamImagesDiag & { max?: number };
+  };
       generation: Record<string, unknown>;
       inpaint: unknown[];
       batches: unknown[];
@@ -1106,6 +1386,54 @@ export async function generatePrivateQuestionsFromUpload(
     const warnings: string[] = [];
     // '이미지형'을 고르지 않았다면 크롭이 문항에 쓰이지 않으므로 이미지 분석을 생략할 수 있다.
     const wantsImages = (input.questionTypes ?? []).includes('이미지형');
+    // 이번 요청의 문항 이미지 상한 — 요청 문항 수에 연동(고정 8이 공급 병목이었다).
+    const featuredCap = featuredBudget(desiredCount);
+
+    // ── 크롭 OCR 스트리밍(이미지 준비 조기화)
+    // 추출이 크롭을 만든 즉시 여기로 넘겨 OCR 을 출발시킨다(남은 페이지 Vision 과 겹침).
+    // 아래 OCR "단계"는 시작 보장 + 완료 대기만 담당하게 된다. 동시성은 종전과 동일하게
+    // OCR_CONCURRENCY 로 제한한다(슬롯 이양 세마포어 — 해제·획득 사이에 새 작업이
+    // 끼어들어 동시성이 초과되지 않게 대기자에게 슬롯을 그대로 넘긴다).
+    let ocrChars = 0;
+    let ocrActive = 0;
+    const ocrWaiters: Array<() => void> = [];
+    const ocrTasks = new Map<CroppedImage, Promise<void>>();
+    const startCropOcr = (slideText: string, pageIndex: number, crop: CroppedImage): void => {
+      if (ocrTasks.has(crop)) return;
+      const task = (async () => {
+        if (ocrActive < OCR_CONCURRENCY) {
+          ocrActive += 1;
+        } else {
+          await new Promise<void>((resolve) => ocrWaiters.push(resolve));
+        }
+        try {
+          const r = await runOcr({
+            png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
+            userIdForLog: input.userId,
+            context: slideText,
+            // 같은 호출에서 텍스트 "위치"까지 받아온다(추가 API 호출 없음).
+            // 이 좌표로 정답 단서 텍스트를 배경색으로 덮어 지운다.
+            withBoxes: true,
+            widthPx: crop.widthPx,
+            heightPx: crop.heightPx,
+          });
+          // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
+          totalCost += r.costUsd;
+          ocrChars += r.text.length;
+          crop.ocrText = r.text; // 주석 텍스트 유무 판정에 사용
+          crop.ocrBoxes = r.boxes; // 마스킹 좌표(없으면 안전 폴백 경로)
+        } catch (e) {
+          warnings.push(
+            `slide ${pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
+          );
+        } finally {
+          const next = ocrWaiters.shift();
+          if (next) next(); // 슬롯 이양 — ocrActive 유지
+          else ocrActive -= 1;
+        }
+      })();
+      ocrTasks.set(crop, task);
+    };
 
     let resolveEarlyText: (text: string) => void = () => {};
     const earlyText = new Promise<string>((resolve) => {
@@ -1118,8 +1446,10 @@ export async function generatePrivateQuestionsFromUpload(
       fileType: upload.file_type,
       userIdForLog: input.userId,
       wantsImages,
+      maxFeatured: featuredCap,
       warnings,
       diag,
+      startOcr: startCropOcr,
       onEarlyText: (text) => {
         diag.timings.textReadyMs = Date.now() - startTime;
         resolveEarlyText(text);
@@ -1214,7 +1544,6 @@ export async function generatePrivateQuestionsFromUpload(
         (i) => i >= 0,
       ),
     );
-    let ocrChars = 0;
     let completedQuestions = 0;
     // 배치 비용 로그용 — 추출 완료 후 채워진다(선발사 배치는 추출 전에 시작하므로 0으로 기록).
     let extractedSlideCount = 0;
@@ -1230,11 +1559,30 @@ export async function generatePrivateQuestionsFromUpload(
     const earlyFullText = await earlyText;
     const canPrefire = batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
     // 조기 출발 폭. 이미지형이라도 "이미지가 실제로 필요한 배치"만 전처리를 기다리면 된다.
-    //   이미지 1장당 최대 2문항(재사용 상한)이므로 필요한 이미지 배치 수는
-    //   ceil(문항 수의 절반 / 배치 크기) 이하로 충분하다. 나머지는 텍스트로 먼저 출발시킨다.
     //   실측 근거: 텍스트는 1.6초에 준비되는데 이미지형은 첫 배치가 10초에야 출발했다.
+    //
+    // 이미지 배치 예약 수는 "이미지 판독 문항 목표 수"에서 역산한다. 종전의 고정 1/3 예약은
+    //   이미지형을 선택해도 문항의 2/3가 이미지를 아예 받을 수 없어(선발사 배치는 이미지
+    //   배정 대상에서 제외) 이미지 문항 비율을 구조적으로 깎았다.
+    //   목표: 이미지형 단독 선택이면 전 문항, 다른 유형과 섞이면 유형 수로 나눈 몫.
+    //   공급 상한(featured 최대 featuredCap장 × 장당 MAX_QUESTIONS_PER_IMAGE문항)으로 캡.
+    //   예약을 늘려도 벽시계 시간은 거의 늘지 않는다 — 이미지 배치들은 어차피 추출·정제
+    //   완료 후에야 출발하고 서로 병렬(GEN_CONCURRENCY)이라, 전체 소요를 지배하는
+    //   "추출→정제→이미지 배치 1개" 경로의 길이는 예약 수와 무관하다.
+    //   최소 1배치는 텍스트 선발사로 남겨 전처리를 생성 뒤로 숨기는 조기 출발을 유지한다.
+    const imageQuestionTarget = wantsImages
+      ? Math.min(
+          selectedTypes.length <= 1
+            ? desiredCount
+            : Math.ceil(desiredCount / selectedTypes.length),
+          featuredCap * MAX_QUESTIONS_PER_IMAGE,
+        )
+      : 0;
     const imageBatchesNeeded = wantsImages
-      ? Math.min(batchSizes.length - 1, Math.max(1, Math.ceil(batchSizes.length / 3)))
+      ? Math.min(
+          batchSizes.length - 1,
+          Math.max(1, Math.ceil(imageQuestionTarget / GEN_BATCH_MAX_QUESTIONS)),
+        )
       : 0;
     const prefireCount = !canPrefire
       ? 0
@@ -1298,6 +1646,9 @@ export async function generatePrivateQuestionsFromUpload(
     diag.generation.batchCount = batchSizes.length;
     diag.generation.prefireCount = prefireCount;
     diag.generation.prefireSegments = prefireSegments;
+    diag.generation.imageQuestionTarget = imageQuestionTarget;
+    diag.generation.imageBatchesNeeded = imageBatchesNeeded;
+    diag.generation.featuredCap = featuredCap;
     diag.timings.firstBatchStartMs = Date.now() - startTime;
     if (prefireCount > 0) {
       warnings.push(
@@ -1329,37 +1680,20 @@ export async function generatePrivateQuestionsFromUpload(
         page_count: slides.length,
       });
     }
-    await mapWithConcurrency(
-      allCrops,
-      OCR_CONCURRENCY,
-      async ({ slide, crop }) => {
-        try {
-          const r = await runOcr({
-            png: crop.ocrPng ?? crop.png, // OCR 은 전처리본, 표시는 원본 색상 유지
-            userIdForLog: input.userId,
-            context: slide.text,
-            // 같은 호출에서 텍스트 "위치"까지 받아온다(추가 API 호출 없음).
-            // 이 좌표로 정답 단서 텍스트를 배경색으로 덮어 지운다.
-            withBoxes: true,
-            widthPx: crop.widthPx,
-            heightPx: crop.heightPx,
-          });
-          // 단일 동기 문장 += 는 JS 이벤트루프 상 원자적이라 병렬 누적에 안전.
-          totalCost += r.costUsd;
-          ocrChars += r.text.length;
-          crop.ocrText = r.text; // 주석 텍스트 유무 판정에 사용
-          crop.ocrBoxes = r.boxes; // 마스킹 좌표(없으면 안전 폴백 경로)
-        } catch (e) {
-          warnings.push(
-            `slide ${slide.pageIndex}: OCR 실패 — ${e instanceof Error ? e.message : String(e)}`,
-          );
-        }
-        return null;
-      },
-      reportOcrProgress
-        ? async (completed, total) => updateProgress('ocr', completed, total)
-        : undefined,
+    // 스트리밍으로 이미 시작된 크롭은 완료만 기다리고, 시작이 누락된 크롭이 있다면
+    // 여기서 방어적으로 시작한다(중복 시작은 crop 객체 단위로 차단됨). 동시성·컨텍스트·
+    // 비용 누적은 전부 startCropOcr 안에 있어 종전과 동일하다.
+    for (const { slide, crop } of allCrops) startCropOcr(slide.text, slide.pageIndex, crop);
+    let ocrDone = 0;
+    await Promise.all(
+      allCrops.map(({ crop }) =>
+        (ocrTasks.get(crop) ?? Promise.resolve()).then(async () => {
+          ocrDone += 1;
+          if (reportOcrProgress) await updateProgress('ocr', ocrDone, allCrops.length);
+        }),
+      ),
     );
+    // 스트리밍이라 이 값은 "Vision 과 겹친 뒤 남은 잔여 대기"만 나타낸다.
     diag.timings.ocrMs = Date.now() - tOcr;
     diag.extract.ocrCalls = allCrops.length;
     diag.extract.ocrChars = ocrChars;
@@ -1469,24 +1803,37 @@ export async function generatePrivateQuestionsFromUpload(
 
     // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
     // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
-    // 텍스트 캡처 검열: OCR 로 읽힌 "의미 있는 글자(문자·숫자)" 수 기준.
-    // 강의록 본문/필기 캡처가 문항 이미지로 쓰이면 이미지 안 텍스트가 정답 단서가
-    // 되므로 결정론적으로 배제한다 (vision 분류 오류에 대한 2차 방어선).
+    // 텍스트 캡처 검열 — 강의록 본문 캡처를 문항 이미지에서 배제한다.
+    //
+    // 판정 기준을 "글자 수"에서 "텍스트가 차지하는 면적 비율"로 바꿨다.
+    //  · 글자 수는 이미지 크기·주석 밀도와 무관한 절대값이라, 라벨이 조금 많은 진짜
+    //    임상영상(설명이 붙은 조영술·초음파)과 글자로 가득 찬 슬라이드를 못 가른다.
+    //  · 이제 정답 단서 유출은 마스킹 후 재검증이 막는다(readResidualText). 그래서 이
+    //    사전 필터의 역할은 "덮고 나면 그림이 남지 않는 이미지"를 걸러내는 것 하나다.
+    //    그 판단에는 글자가 화면을 얼마나 덮고 있는지가 정확한 척도다.
+    //  실측(대동맥 강의록): 그림 크롭 0.0~7.4% vs 텍스트 페이지 28.0~44.1% —
+    //  임계 15%는 양쪽에 2배 이상 여유가 있다.
+    const TEXT_AREA_RATIO_MAX = 0.15;
     const meaningfulOcrLen = (t?: string) =>
       (t ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
-    const CLINICAL_KINDS = new Set([
-      'xray', 'ct', 'mri', 'ecg', 'pathology', 'microscope', 'ultrasound',
-    ]);
+    const textAreaRatio = (c: (typeof slides)[number]['croppedImages'][number]) => {
+      const boxes = c.ocrBoxes ?? [];
+      if (boxes.length === 0) return null;
+      const total = Math.max(1, c.widthPx * c.heightPx);
+      const area = boxes.reduce(
+        (sum, b) => sum + Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0),
+        0,
+      );
+      return area / total;
+    };
     const isTextCapture = (c: (typeof slides)[number]['croppedImages'][number]) => {
       if (c.region.kind === 'text_slide') return true; // vision 이 텍스트 캡처로 분류
+      const ratio = textAreaRatio(c);
+      if (ratio !== null) return ratio >= TEXT_AREA_RATIO_MAX;
+      // 좌표를 못 받은 경우에만 종전 글자 수 기준으로 폴백한다.
       const len = meaningfulOcrLen(c.ocrText);
-      // 실제 임상 영상(X-ray/CT 등)에는 판독 가능한 텍스트가 거의 없다 —
-      // 글자가 많다면 "chest x-ray" 같은 단어 때문에 오분류된 텍스트 캡처다.
-      if (CLINICAL_KINDS.has(c.region.kind) && len >= 80) return true;
-      // 다이어그램류도 글자가 이 정도로 많으면 그림이 아니라 텍스트 슬라이드다
-      // (인페인팅해도 빈 이미지만 남는다).
-      if (len >= 250) return true;
-      return false;
+      if (CLINICAL_IMAGE_KINDS.has(c.region.kind) && len >= 80) return true;
+      return len >= 250;
     };
 
     // gi = 전역 이미지 인덱스. 배치마다 서로 다른 이미지 묶음을 주더라도 인페인팅 캐시와
@@ -1496,11 +1843,23 @@ export async function generatePrivateQuestionsFromUpload(
       // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
       .filter((x) => !x.c.ocrOnly)
       // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
-      .filter((x) => !isTextCapture(x.c))
+      .filter((x) => {
+        const excluded = isTextCapture(x.c);
+        if (excluded) {
+          const ratio = textAreaRatio(x.c);
+          warnings.push(
+            `이미지(슬라이드 ${x.slide}, ${x.c.region.kind}) 텍스트 캡처로 제외 — ` +
+              (ratio !== null
+                ? `텍스트 면적비 ${(ratio * 100).toFixed(1)}%`
+                : `글자 ${meaningfulOcrLen(x.c.ocrText)}자(좌표 없음)`),
+          );
+        }
+        return !excluded;
+      })
       // (예전에는 "인페인팅으로 못 지울 이미지"를 여기서 미리 걸렀다. 마스킹은 좌표를
       //  배경색으로 덮는 방식이라 글자가 많아도 실패하지 않으므로 사전 제외가 필요 없다.
       //  덕분에 문항에 쓸 수 있는 이미지가 늘어난다 — 실측에서 8장 중 3장만 살아남던 문제.)
-      .slice(0, MAX_FEATURED_IMAGES)
+      .slice(0, featuredCap)
       .map((x, gi) => ({ ...x, gi }));
 
     // 사용자가 '이미지형'을 선택하지 않았으면 이미지를 생성 배치에 아예 넣지 않는다.
@@ -1521,8 +1880,65 @@ export async function generatePrivateQuestionsFromUpload(
     // 대상: 다이어그램/일러스트 유형(anatomy_diagram/chart_graph/other) + 주석 텍스트 감지.
     // 실제 임상 사진(xray/ct/mri/ecg/pathology/microscope/ultrasound)은 재생성 위험이라 제외.
     // 생성 모델은 원본(주석 포함)을 보고 문항을 만들고(내용 이해), 학생에게는 정제본이 저장된다.
-    // 인페인팅 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
-    const RESIDUAL_TEXT_MAX = 8;
+    // 정제 결과에 글자가 이보다 많이 남아 있으면 "텍스트 잔존"으로 판단(정답 단서 위험).
+    //
+    // 8 → 2 로 조인다. 잔존 계산에서 짧은 패널 라벨(A~E, 1~5)은 이미 빼고 세므로, 남은
+    // 숫자는 전부 "실제 글자 조각"이다. 실측 사고: 잔존 3자가 통과했는데 그 3자가
+    // 하필 "Int"(Intimal Flap 의 앞부분)라 화면에 그대로 읽혔다 — 진단 단어의 앞부분은
+    // 조각이어도 정답 단서다. 단어 조각을 남기지 않으려면 임계가 한 글자 수준이어야 한다.
+    // 한 글자는 진단명을 드러낼 수 없고(패널 라벨 A~E·1~5 는 애초에 세지 않는다),
+    // OCR 이 질감을 글자로 오독하는 잡음이 대개 한 글자라 여기서 끊는다.
+    // 실측: "In"(2자)이 화면에 그대로 읽혔다 — 두 글자부터는 단어 조각이라 막아야 한다.
+    const RESIDUAL_TEXT_MAX = 1;
+    // 2패스부터의 마스킹은 "앞 패스가 이미 빗나간 자리"를 덮는 작업이라 여백을 넉넉히 잡는다.
+    // (1패스 기본 여백 pad 2px·8% 로는 작은 크롭에서 글자 가장자리가 삐져나왔다.)
+    const SECOND_PASS_MASK_OPTS = { pad: 6, padRatio: 0.3 } as const;
+    // 마스킹→검증 반복 상한. 실측 10장에서 1패스 5·2패스 3·3패스 1로 전부 수렴했다.
+    const MAX_MASK_PASSES = 3;
+
+    /**
+     * 정제(마스킹) 결과에 남은 글자를 다시 읽어 "덮였는지"를 실제로 확인한다.
+     *
+     * 반환하는 len 은 문항 이미지에서 지워져야 할 글자 수 — 의도적으로 남기는 짧은
+     * 패널 라벨(A~E, 1~5 …)은 제외한다. 그것들은 그림의 일부이자 발문이 가리키는
+     * 대상이라 남는 게 정상이고, 세면 멀쩡한 이미지가 과도하게 제외된다.
+     *
+     * OCR 은 원본과 같은 전처리(업스케일·대비 정규화)를 거친 이미지로 수행해야 작은
+     * 크롭의 글자를 놓치지 않는다. 실패하면 len 0 을 돌려 "판단 불가"로 통과시킨다
+     * (검증 실패를 이유로 이미지를 버리면 일시적 API 오류가 공급을 끊는다).
+     */
+    const readResidualText = async (
+      crop: CroppedImage,
+      png: Uint8Array,
+    ): Promise<{ len: number; boxes: NonNullable<Awaited<ReturnType<typeof runOcr>>['boxes']> }> => {
+      try {
+        const forOcr = await preprocessForOcr(png, {
+          grayscale: crop.region.kind === 'ecg' || crop.region.kind === 'xray',
+          normalizeContrast: true,
+        }).catch(() => png);
+        const r = await runOcr({
+          png: forOcr,
+          userIdForLog: input.userId,
+          withBoxes: true,
+          widthPx: crop.widthPx,
+          heightPx: crop.heightPx,
+        });
+        totalCost += r.costUsd;
+        const boxes = (r.boxes ?? []).filter((b) => !isShortFigureLabel(b.text));
+        const len =
+          boxes.length > 0
+            ? boxes.map((b) => b.text).join('').replace(/[^\p{L}\p{N}]/gu, '').length
+            : // 좌표가 없으면 전체 텍스트로 보수적으로 판단(짧은 라벨만 남은 경우는 통과).
+              (r.text ?? '')
+                .split(/\s+/)
+                .filter((t) => !isShortFigureLabel(t))
+                .join('')
+                .replace(/[^\p{L}\p{N}]/gu, '').length;
+        return { len, boxes };
+      } catch {
+        return { len: 0, boxes: [] };
+      }
+    };
 
     // 인페인팅된 이미지를 다시 OCR 하여 남은 "의미 있는 글자(한글·라틴·숫자)" 개수를 센다.
     // OCR 실패 시 0 반환(판단 불가 → 과도한 제외 방지).
@@ -1575,19 +1991,90 @@ export async function generatePrivateQuestionsFromUpload(
           }
 
           if (!legacyInpaint) {
-            if (boxes.length === 0) {
+            let useBoxes = boxes;
+            if (useBoxes.length === 0) {
+              // 좌표 누락은 OCR 응답의 간헐적 실수인 경우가 많다. 바로 버리면 그 문항이
+              // 텍스트 문항으로 치환돼 이미지 비율이 떨어지므로, 좌표 요청 OCR 을 1회
+              // 재시도해 이미지를 살린다. (정제는 생성 전 병렬 구간 + 장당 시간 상한
+              // 안에서 돌므로 전체 소요에 주는 영향은 없다.)
+              try {
+                const retry = await runOcr({
+                  png: fi.c.ocrPng ?? fi.c.png,
+                  userIdForLog: input.userId,
+                  withBoxes: true,
+                  widthPx: fi.c.widthPx,
+                  heightPx: fi.c.heightPx,
+                });
+                totalCost += retry.costUsd;
+                const retryBoxes = retry.boxes ?? [];
+                rec.boxRetry = retryBoxes.length;
+                if (retryBoxes.length > 0) useBoxes = retryBoxes;
+              } catch {
+                // 재시도 실패 → 아래 제외 경로.
+              }
+            }
+            if (useBoxes.length === 0) {
               // 글자는 많은데 위치를 모른다 → 어디를 덮을지 알 수 없다.
               // 정답 단서가 남을 수 있으므로 문항 이미지에서 제외한다(안전 우선).
               warnings.push(`이미지 ${i}: 텍스트 위치를 얻지 못해 문항에서 제외(글자 ${ocrLen}자).`);
               rec.result = 'no_boxes';
               return null;
             }
-            const masked = await maskTextRegions(fi.c.png, boxes);
-            rec.result = 'masked';
-            rec.maskedBoxes = masked.masked;
-            rec.keptBoxes = masked.kept;
-            rec.keptReasons = masked.keptReasons;
-            return masked.png;
+            // ── 마스킹 + 결과 검증
+            //
+            // 마스킹은 "OCR 이 준 좌표"만 덮는다. 그 좌표가 일부 줄을 빠뜨리거나 어긋나면
+            // 글자가 그대로 남는데, 배경이 어두운 영상에서는 빗나간 마스크가 배경색으로
+            // 채워져 눈에 띄지 않아 육안 검수로도 놓친다.
+            // 실측 사고(운영): 심초음파 크롭에서 라벨 7줄 중 2줄만 덮이고 "Intimal Flap"
+            // 등 5줄이 남아 진단명이 이미지에 그대로 노출됐다. 그런데 진단 로그에는
+            // "5개 마스킹"으로 남아 로그만으로는 정상으로 보였다.
+            // 근본 원인은 좌표 품질이 아니라 **검증의 부재**다 — 생성형 인페인팅을 좌표
+            // 마스킹으로 교체할 때(e040e76) 인페인팅 경로에 있던 잔존 텍스트 재검사가
+            // 함께 옮겨지지 않았다. 아래에서 "덮은 뒤 실제로 글자가 사라졌는지"를 확인하고,
+            // 남아 있으면 새로 얻은 좌표로 2차 마스킹, 그래도 남으면 이미지를 제외한다.
+            // 마스킹 → 검증을 잔존 글자가 사라질 때까지 반복한다.
+            //
+            // 왜 반복이 필요한가: OCR 이 주는 박스는 글자보다 좁게 나오는 일이 잦다
+            // (실측: "Aortic Valve" 가 x 7~60 에 있는데 박스는 7~37 — 뒤쪽 "Valve" 가
+            // 그대로 남았다). 남은 조각을 다시 읽어 덮으면 대개 한 번 더로 정리되지만,
+            // 그 조각의 박스도 또 좁을 수 있어 실행에 따라 두 번으로는 부족했다
+            // (운영 실측에서 "Int" → "In" 처럼 한 글자씩만 줄어든 사례).
+            // 실측 10장 기준 1패스 5·2패스 3·3패스 1로 전부 수렴한다.
+            let current = fi.c.png;
+            let boxesToMask = useBoxes;
+            let lastLen = 0;
+            for (let pass = 1; pass <= MAX_MASK_PASSES; pass++) {
+              const m = await maskTextRegions(
+                current,
+                boxesToMask,
+                // 2패스부터는 "앞 패스가 이미 빗나간 자리"를 덮는 작업이라 여백을 넉넉히.
+                pass === 1 ? undefined : SECOND_PASS_MASK_OPTS,
+              );
+              current = m.png;
+              rec[`pass${pass}Masked`] = m.masked;
+              if (pass === 1) {
+                rec.keptBoxes = m.kept;
+                rec.keptReasons = m.keptReasons;
+              }
+
+              const check = await readResidualText(fi.c, current);
+              rec[`pass${pass}Residual`] = check.len;
+              lastLen = check.len;
+              if (check.len <= RESIDUAL_TEXT_MAX) {
+                rec.result = pass === 1 ? 'masked' : `masked_${pass}pass`;
+                rec.passes = pass;
+                return current;
+              }
+              // 글자는 남았는데 위치를 모르면 더 덮을 수 없다.
+              if (check.boxes.length === 0) break;
+              boxesToMask = check.boxes;
+            }
+            warnings.push(
+              `이미지 ${i}: ${MAX_MASK_PASSES}회 마스킹 후에도 글자 ${lastLen}자가 남아 문항에서 제외(정답 단서 위험).`,
+            );
+            rec.result = 'residual_text';
+            rec.passes = MAX_MASK_PASSES;
+            return null;
           }
 
           // ── 폴백: 예전 생성형 인페인팅(옵션)
@@ -1644,6 +2131,14 @@ export async function generatePrivateQuestionsFromUpload(
       contextText: string;
       /** 이 배치에 제시할 이미지. gi 는 전역 인덱스(인페인팅 캐시·Storage 경로 기준). */
       featured: Array<{ slide: number; c: CroppedImage; gi: number }>;
+      /**
+       * 이미지를 "정제 완료를 기다려" 확정하는 경로. 있으면 featured 대신 이걸 쓴다.
+       * 배치가 자기 몫의 정제만 기다리게 해서(배치별 게이팅) 느린 한 장이 다른 배치를
+       * 붙잡지 않게 한다. 반환값에는 정제에 성공한 이미지만 담긴다.
+       */
+      resolveFeatured?: () => Promise<Array<{ slide: number; c: CroppedImage; gi: number }>>;
+      /** 정제 후 확정된 장수로 이미지 문항 최소 수를 다시 계산한다(정제 탈락 반영). */
+      imageQuotaFor?: (featuredLen: number, batchSize: number) => number;
       getDisplayPng: (gi: number) => Promise<Uint8Array | null>;
       /**
        * 429(rate limit) 재시도 대기 상한. 보충 배치는 본 배치들이 방금 끝난 직후에
@@ -1656,7 +2151,20 @@ export async function generatePrivateQuestionsFromUpload(
        * "구간을 스스로 골라 출제하라"는 문구를 쓰지 않는다(이미 구간만 받았으므로).
        */
       segmented?: boolean;
+      /**
+       * 이 배치에서 "이미지를 직접 판독해야 풀 수 있는" 문항의 최소 수.
+       * 시스템 프롬프트의 '확신이 없으면 image_indices 를 빈 배열로' 지시가 이미지형
+       * 요청에서도 모델을 보수적으로 만들어, 이미지를 받은 배치조차 텍스트 문항만
+       * 만드는 일이 잦았다 — 정량 지시로 강제한다. 0 이면 지시하지 않는다.
+       */
+      imageQuota?: number;
     };
+
+    // 진단 카운터. generateAndPersistBatch 가 선발사 경로에서 일찍 호출되므로
+    // const 가 아니라 함수 선언으로 두어 초기화 순서(TDZ) 문제를 피한다.
+    function bumpGenDiag(key: string): void {
+      diag.generation[key] = ((diag.generation[key] as number | undefined) ?? 0) + 1;
+    }
 
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
     // 사용할 수 있다 (참조하는 카탈로그·프롬프트는 모두 4)에서 미리 준비됨).
@@ -1669,12 +2177,20 @@ export async function generatePrivateQuestionsFromUpload(
     ): Promise<BatchResult> {
       const batchSize = slots.length;
       const tBatch = Date.now();
+      // 이 배치에 배정된 이미지의 정제만 기다린다(다른 배치의 느린 이미지와 무관).
+      const tWait = Date.now();
+      const featured = gen.resolveFeatured ? await gen.resolveFeatured() : gen.featured;
+      const imageWaitMs = Date.now() - tWait;
+      const imageQuota = gen.imageQuotaFor
+        ? gen.imageQuotaFor(featured.length, batchSize)
+        : (gen.imageQuota ?? 0);
       const batchDiag: Record<string, unknown> = {
         i: batchIndex,
         size: batchSize,
-        images: gen.featured.length,
+        images: featured.length,
+        imageWaitMs,
       };
-      const validImageIndex = (i: number) => i >= 0 && i < gen.featured.length;
+      const validImageIndex = (i: number) => i >= 0 && i < featured.length;
       const { data: existingBatch, error: existingBatchError } = await admin
         .from('private_questions')
         .select('id, generation_slot')
@@ -1720,14 +2236,14 @@ export async function generatePrivateQuestionsFromUpload(
           },
         } as Anthropic.ImageBlockParam);
       }
-      for (let i = 0; i < gen.featured.length; i++) {
+      for (let i = 0; i < featured.length; i++) {
         userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
         userContent.push({
           type: 'image',
           source: {
             type: 'base64',
             media_type: 'image/png',
-            data: Buffer.from(gen.featured[i].c.png).toString('base64'),
+            data: Buffer.from(featured[i].c.png).toString('base64'),
           },
         } as Anthropic.ImageBlockParam);
       }
@@ -1749,7 +2265,7 @@ export async function generatePrivateQuestionsFromUpload(
       // 이미지를 받지 못한 배치가 발문에서 그림을 가리키면(예: "다음은 …모식도이다")
       // 학생 화면에 그림 없는 문항이 나온다. 배치 단위로 명시 금지한다.
       const noImageDirective =
-        gen.featured.length === 0
+        featured.length === 0
           ? '\n\n이번 묶음에는 의료 이미지가 제공되지 않았습니다. 따라서 ' +
             '"다음은 …모식도이다", "아래 그림에서", "제시된 심전도에서" 처럼 제시되지 않은 그림·사진·' +
             '모식도를 가리키는 표현을 발문에 절대 쓰지 말고, image_indices 는 항상 빈 배열 [] 로 두세요. ' +
@@ -1760,7 +2276,17 @@ export async function generatePrivateQuestionsFromUpload(
             '\n\n**발문과 image_indices 는 반드시 일치시키세요.** ' +
             '"다음 CT에서", "제시된 그림은" 처럼 그림을 가리키는 표현을 쓸 거면 그 이미지 번호를 ' +
             'image_indices 에 반드시 넣고, 번호를 넣지 않을 문항에서는 그림을 가리키는 표현을 쓰지 마세요. ' +
-            '(불일치 문항은 학생이 풀 수 없어 폐기됩니다.)';
+            '(불일치 문항은 학생이 풀 수 없어 폐기됩니다.)' +
+            // 이미지형 요청의 정량 강제. "우선 생성" 같은 정성 지시만으로는 기본 규칙
+            // ('확신이 없으면 빈 배열')에 눌려 이미지를 받은 배치조차 텍스트 문항만
+            // 만드는 일이 잦았다 — 최소 수를 명시해야 이미지 문항 비율이 유지된다.
+            (imageQuota > 0
+              ? `\n\n**이미지 판독 문항 최소 ${imageQuota}문항**: 이번 묶음 ${batchSize}문항 중 ` +
+                `최소 ${imageQuota}문항은 제시된 [이미지 N]을 직접 판독·해석해야 풀 수 있는 문항으로 ` +
+                `만들고, 그 문항의 image_indices 에 해당 번호를 넣으세요. 텍스트 근거와 이미지 근거가 ` +
+                `모두 가능한 내용이면 이미지 판독 문항을 우선하세요. ` +
+                `단, 같은 이미지는 최대 ${MAX_QUESTIONS_PER_IMAGE}문항까지만 사용하세요.`
+              : '');
       // 조합형 빈도 제한(요청에 별도 조건이 없을 때).
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
@@ -1794,7 +2320,16 @@ export async function generatePrivateQuestionsFromUpload(
             : {},
         );
       const tGenCall = Date.now();
-      let response = await callGenerate(genMaxTokens);
+      // 헤지 대상은 "모델 호출"만이다 — 위쪽 이미지 준비 대기는 포함하지 않는다.
+      // 복제 호출의 토큰은 승자 기준으로만 기록된다(패자 응답은 도착하지 않을 수 있다).
+      let response = await hedgedCall(() => callGenerate(genMaxTokens), {
+        afterMs: GEN_HEDGE_AFTER_MS,
+        onHedge: () => {
+          bumpGenDiag('batchHedged');
+          warnings.push(`배치 ${batchIndex + 1} 모델 호출 지연 — 복제 요청으로 꼬리 단축 시도.`);
+        },
+        onRetry: () => bumpGenDiag('batchRetried'),
+      });
       batchDiag.genCallMs = Date.now() - tGenCall;
       let toolUseBlock = response.content.find(
         (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
@@ -1889,7 +2424,7 @@ export async function generatePrivateQuestionsFromUpload(
           user_id: input.userId,
           upload_id: uploadRow.id,
           sub_topic_id: subTopicId,
-          stem: normalizeStemEnding(k.q.stem),
+          stem: normalizeStemEnding(sanitizeStemArtifacts(k.q.stem)),
           choices: k.choices,
           answer_index: k.answerIndex,
           explanation: k.q.explanation,
@@ -1916,7 +2451,7 @@ export async function generatePrivateQuestionsFromUpload(
       // 이미지당 인페인팅(+검증 OCR)이 수십 초씩 걸릴 수 있어 직렬 대신 병렬로 정제·업로드.
       await Promise.all(
         [...usedIndices].map(async (i) => {
-          const gi = gen.featured[i].gi;
+          const gi = featured[i].gi;
           const display = await gen.getDisplayPng(gi);
           if (!display) return; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
           const imgPath = `${uploadRow.user_id}/${uploadRow.id}/crops/q_image_${gi}.png`;
@@ -1940,7 +2475,17 @@ export async function generatePrivateQuestionsFromUpload(
           .map((i, order) => {
             const storagePath = indexToPath.get(i);
             if (!storagePath) return null;
-            const fi = gen.featured[i];
+            const fi = featured[i];
+            // 발문이 말하는 검사와 다른 종류의 이미지는 연결하지 않는다(예: 발문은
+            // 흉부 X-ray 인데 붙은 그림은 심초음파 — 학생이 볼 때 따로 논다).
+            // 연결을 끊으면 이후 "그림을 가리키는데 이미지가 없는 문항" 정리가 받아
+            // 발문이 그림에 의존하면 삭제하고 보충 생성이 채운다.
+            if (stemModalityConflict(sanitizeStemArtifacts(q.stem), fi.c.region.kind)) {
+              warnings.push(
+                `문항 발문과 이미지 종류 불일치(${fi.c.region.kind}) — 이미지 연결 해제.`,
+              );
+              return null;
+            }
             return {
               private_question_id: qId,
               user_id: input.userId,
@@ -2017,39 +2562,51 @@ export async function generatePrivateQuestionsFromUpload(
     // 이제 생성 전에 정제를 끝내고 실패한 이미지는 목록에서 제거한다. 모델은 애초에 쓸 수 있는
     // 이미지만 보므로 사후 삭제·보충이 사라지고, 정제는 이미 출발한 텍스트 배치와 겹쳐 돈다.
     // 장당 시간 상한(IMAGE_REFINE_TIMEOUT_MS)을 둬 느린 한 건이 전체를 붙잡지 못하게 한다.
-    let usableFeatured = featuredImages;
-    if (useImages && featuredImages.length > 0) {
-      const tRefine = Date.now();
-      const withTimeout = (promise: Promise<Uint8Array | null>): Promise<Uint8Array | null> =>
-        Promise.race([
-          promise,
-          new Promise<Uint8Array | null>((resolve) =>
-            setTimeout(() => resolve(null), IMAGE_REFINE_TIMEOUT_MS),
-          ),
-        ]);
+    // ★ 배치별 이미지 준비 게이팅
+    //
+    // 종전에는 여기서 featured 전체의 정제가 끝날 때까지 기다린 뒤(배리어) 배치를
+    // 출발시켰다. 배치마다 쓰는 이미지가 다른데도 "가장 느린 이미지 한 장"이 모든 이미지
+    // 배치를 붙잡았다(실측: 정제 구간이 15.3초까지 커져 앞단에서 번 8초를 상쇄).
+    // 이제 배치는 자기에게 배정된 이미지의 정제만 기다린다. 정제는 이미지별로 독립이고
+    // getDisplayPng 는 gi 단위로 캐시되므로, 배정만 먼저 확정하면 서로 기다릴 이유가 없다.
+    const withRefineTimeout = (
+      promise: Promise<Uint8Array | null>,
+    ): Promise<Uint8Array | null> =>
+      Promise.race([
+        promise,
+        new Promise<Uint8Array | null>((resolve) =>
+          setTimeout(() => resolve(null), IMAGE_REFINE_TIMEOUT_MS),
+        ),
+      ]);
+    diag.extract.featuredBefore = featuredImages.length;
+    // 정제에 성공해 실제로 문항에 쓸 수 있었던 이미지(gi) — 배치들이 채워 나간다.
+    const refinedUsableGis = new Set<number>();
+    /** 배정된 이미지의 정제를 기다려 "쓸 수 있는 것만" 남긴다. 장당 시간 상한 적용. */
+    const resolveRefined = async (
+      list: Array<{ slide: number; c: CroppedImage; gi: number }>,
+    ): Promise<Array<{ slide: number; c: CroppedImage; gi: number }>> => {
+      if (list.length === 0) return [];
       const results = await Promise.all(
-        featuredImages.map(async (fi) => ({
-          fi,
-          png: await withTimeout(getDisplayPng(fi.gi)),
-        })),
+        list.map(async (fi) => ({ fi, png: await withRefineTimeout(getDisplayPng(fi.gi)) })),
       );
-      usableFeatured = results.filter((r) => r.png !== null).map((r) => r.fi);
-      diag.timings.imageRefineMs = Date.now() - tRefine;
-      diag.extract.featuredBefore = featuredImages.length;
-      diag.extract.featuredUsable = usableFeatured.length;
-      if (usableFeatured.length < featuredImages.length) {
+      const usable = results.filter((r) => r.png !== null).map((r) => r.fi);
+      for (const fi of usable) refinedUsableGis.add(fi.gi);
+      if (usable.length < list.length) {
         warnings.push(
-          `이미지 정제 결과 ${usableFeatured.length}/${featuredImages.length}장만 문항에 사용 가능 — 나머지는 생성 전에 제외.`,
+          `이미지 정제 결과 ${usable.length}/${list.length}장만 이 배치에서 사용 가능 — 나머지는 제외.`,
         );
       }
-    }
+      return usable;
+    };
 
     // 배치별 이미지 배정: 같은 이미지를 여러 배치가 각자 문항으로 쓰면 "동일 이미지 최대
     // 2문제" 정리에서 초과분 문항이 삭제된다. 배치마다 겹치지 않는 이미지 묶음을 주면
     // 한 이미지를 참조하는 문항이 배치 크기(≤2) 이하로 제한돼 삭제가 발생하지 않는다.
+    // 배정은 "정제 이전" 목록(featuredImages)으로 한다 — 정제 결과를 기다려 배정하면
+    // 다시 배리어가 생긴다. 정제에 실패한 장은 각 배치가 자기 몫을 기다릴 때 걸러낸다.
     const featuredForBatch = (batchIndex: number, batchCount: number) => {
-      if (!useImages || usableFeatured.length === 0) return [];
-      if (batchCount <= 1) return usableFeatured;
+      if (!useImages || featuredImages.length === 0) return [];
+      if (batchCount <= 1) return featuredImages;
       // 텍스트 선발사로 먼저 출발한 배치는 OCR·이미지 이전에 시작했으므로 이미지를 받을 수
       // 없다. 이미지는 남은 배치들에만 분배해 어떤 이미지도 버려지지 않게 한다.
       const eligible = Array.from(
@@ -2059,20 +2616,47 @@ export async function generatePrivateQuestionsFromUpload(
       if (eligible.length === 0) return [];
       const pos = eligible.indexOf(batchIndex);
       if (pos < 0) return [];
-      const per = Math.ceil(usableFeatured.length / eligible.length);
+      // 균등 분배(나머지를 앞 배치부터 1장씩). 종전 ceil 분배는 앞 배치가 몫을 다 가져가
+      // 꼬리 배치가 0장을 받았다 — 6장·4배치면 [2,2,2,0] 이 되어 마지막 배치 문항이
+      // 통째로 텍스트 문항이 됐다(실측에서 이미지 문항이 8개가 아닌 6개에 그친 직접 원인).
+      // 이제 [2,2,1,1] 로 나눠 자격 있는 배치는 최소 1장을 받는다.
+      const base = Math.floor(featuredImages.length / eligible.length);
+      const remainder = featuredImages.length % eligible.length;
+      const start = pos * base + Math.min(pos, remainder);
+      const count = base + (pos < remainder ? 1 : 0);
       // 이미지 수가 배치 수보다 적으면 뒤쪽 배치는 이미지 없이(텍스트 문항) 생성한다.
-      return usableFeatured.slice(pos * per, pos * per + per);
+      return featuredImages.slice(start, start + count);
     };
 
-    const genFor = (batchIndex: number, batchCount: number): GenContext => ({
-      contextText: segmentForBatch(batchIndex, batchCount),
-      featured: featuredForBatch(batchIndex, batchCount),
-      getDisplayPng,
-      segmented: segmentCount > 1,
-    });
+    // 배치의 "이미지 판독 문항 최소 수". 단독 선택이면 배치 전 문항이 목표, 유형 혼합이면
+    // 유형 비중만큼(최소 1). 배정된 이미지의 재사용 상한(장당 MAX_QUESTIONS_PER_IMAGE)을
+    // 넘는 강제는 하지 않는다 — 초과분은 저장 후 정리에서 삭제돼 오히려 문항을 잃는다.
+    const imageQuotaFor = (featuredLen: number, batchSize: number): number => {
+      if (!wantsImages || featuredLen === 0) return 0;
+      const supplyCap = featuredLen * MAX_QUESTIONS_PER_IMAGE;
+      if (selectedTypes.length <= 1) return Math.min(batchSize, supplyCap);
+      return Math.max(
+        1,
+        Math.min(batchSize, supplyCap, Math.round(batchSize / selectedTypes.length)),
+      );
+    };
+
+    const genFor = (batchIndex: number, batchCount: number): GenContext => {
+      const assigned = featuredForBatch(batchIndex, batchCount);
+      return {
+        contextText: segmentForBatch(batchIndex, batchCount),
+        // 배정만 지금 확정하고, 정제 완료는 배치가 시작할 때 자기 몫만 기다린다.
+        featured: [],
+        resolveFeatured: () => resolveRefined(assigned),
+        imageQuotaFor,
+        getDisplayPng,
+        segmented: segmentCount > 1,
+      };
+    };
 
     const tGen = Date.now();
     const batchFailureReasons: string[] = [];
+
     const batchSettled = await mapWithConcurrency(
       batchSizes,
       GEN_CONCURRENCY,
@@ -2110,6 +2694,8 @@ export async function generatePrivateQuestionsFromUpload(
       },
     );
     diag.timings.batchesMs = Date.now() - tGen;
+    // 배리어를 없앤 대신, 실제로 정제에 성공해 쓰인 이미지 수를 여기서 집계한다.
+    diag.extract.featuredUsable = refinedUsableGis.size;
     const batchResults = batchSettled.filter((r): r is BatchResult => r !== null);
     diag.generation.batchesSucceeded = batchSettled.filter((r) => r !== null).length;
     if (batchResults.length === 0) {
@@ -2128,8 +2714,10 @@ export async function generatePrivateQuestionsFromUpload(
     // 연결될 수 있다. 업로드 전체를 훑어 storage_path 당 문항이 2개를 넘으면 초과분의
     // 이미지 연결을 제거하고, 그 결과 이미지가 하나도 남지 않은(=이미지 판독 전용) 문항은
     // 발문이 실제 이미지 없이 이미지를 참조하게 되므로 통째로 삭제한다.
+    // (함수로 분리: 이미지를 실은 보충 배치가 새 연결을 만들 수 있어 보충 라운드 뒤에도
+    //  같은 정리를 다시 돌린다. 멱등 — 유지 대상 선정이 generation_slot 순이라 반복 호출 안전.)
+    const enforceImageReuseCap = async (): Promise<void> => {
     try {
-      const MAX_QUESTIONS_PER_IMAGE = 2;
       const [{ data: linkRows }, { data: slotRows }] = await Promise.all([
         admin
           .from('private_question_images')
@@ -2187,6 +2775,8 @@ export async function generatePrivateQuestionsFromUpload(
         `이미지 재사용 정리 실패 — ${cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr)}`,
       );
     }
+    };
+    await enforceImageReuseCap();
 
     // ── 부족분 보충: 요청 수를 반드시 채운다.
     // 실제 저장 결과를 DB 에서 다시 읽어(누적 산술이 아니라 사실 기준) 빈 슬롯을 확인하고,
@@ -2200,6 +2790,23 @@ export async function generatePrivateQuestionsFromUpload(
         .eq('upload_id', uploadRow.id)
         .order('generation_slot', { ascending: true });
       return data ?? [];
+    };
+
+    // 이미지별(gi 기준) 현재 문항 연결 수. 보충 배치에 "재사용 상한에 아직 여유가 있는"
+    // 이미지만 다시 실기 위해 저장 경로(crops/q_image_{gi}.png)에서 gi 를 역산한다.
+    const readImageLinkCounts = async (): Promise<Map<number, number>> => {
+      const counts = new Map<number, number>();
+      const { data } = await admin
+        .from('private_question_images')
+        .select('storage_path')
+        .eq('upload_id', uploadRow.id);
+      for (const r of data ?? []) {
+        const m = /\/crops\/q_image_(\d+)\.png$/.exec(r.storage_path ?? '');
+        if (!m) continue;
+        const gi = Number(m[1]);
+        counts.set(gi, (counts.get(gi) ?? 0) + 1);
+      }
+      return counts;
     };
 
     /**
@@ -2228,7 +2835,9 @@ export async function generatePrivateQuestionsFromUpload(
     //   ① 모델이 image_indices 를 비운 채 발문에서만 그림을 언급(프롬프트 위반)
     //   ② 이미지가 정제 실패·재사용 상한으로 빠졌는데 발문 판정이 그림 표현을 놓침
     // 배치 내부 검사로는 ①을 잡을 수 없어(연결이 애초에 없으므로) 저장 결과를 훑어 정리한다.
-    // 삭제한 슬롯은 바로 아래 보충 단계가 텍스트 문항으로 다시 채운다.
+    // 삭제한 슬롯은 바로 아래 보충 단계가 다시 채운다.
+    // (함수로 분리: 이미지를 실은 보충 배치도 ①을 만들 수 있어 보충 라운드 뒤에 재실행.)
+    const removeBrokenFigureQuestions = async (): Promise<void> => {
     try {
       const [{ data: qRows }, { data: imgRows }] = await Promise.all([
         admin.from('private_questions').select('id, stem').eq('upload_id', uploadRow.id),
@@ -2246,13 +2855,18 @@ export async function generatePrivateQuestionsFromUpload(
         warnings.push(
           `그림을 가리키지만 이미지가 없는 문항 ${brokenIds.length}개 삭제 — 보충 생성으로 대체.`,
         );
-        diag.generation.brokenFigureRefsRemoved = brokenIds.length;
+        // 보충 라운드 뒤 재실행에서도 누적되게 더한다.
+        diag.generation.brokenFigureRefsRemoved =
+          ((diag.generation.brokenFigureRefsRemoved as number | undefined) ?? 0) +
+          brokenIds.length;
       }
     } catch (e) {
       warnings.push(
         `깨진 그림 참조 정리 실패 — ${e instanceof Error ? e.message : String(e)}`,
       );
     }
+    };
+    await removeBrokenFigureQuestions();
 
     const tBackfill = Date.now();
     diag.generation.backfillRounds = [];
@@ -2280,6 +2894,41 @@ export async function generatePrivateQuestionsFromUpload(
         missing: missingSlots.length,
         batches: fillBatches.length,
       };
+      // 이미지 재투입: 종전 보충은 무조건 텍스트 전용이라, 이미지 문항이 폐기될 때마다
+      // 텍스트 문항으로 치환돼 최종 이미지 문항 비율이 떨어졌다. 재사용 상한(장당
+      // MAX_QUESTIONS_PER_IMAGE)에 여유가 남은 이미지를 보충 배치에 겹치지 않게 1장씩
+      // 나눠 실어 이미지 문항으로 되채운다. 정제(마스킹)는 이미 생성 전에 끝나 캐시에
+      // 있으므로 추가 지연이 없다.
+      // 배치 슬롯 수 이상 여유가 남은 이미지만 준다 — 모델이 배치의 전 문항에 같은
+      // 이미지를 붙여도 상한을 넘지 않아, 사후 정리로 문항을 또 잃는 순환이 안 생긴다.
+      let fillFeatured: Array<GenContext['featured']> = fillBatches.map(() => []);
+      // 보충에는 "이미 정제에 성공한" 이미지만 쓴다(캐시 히트라 추가 지연이 없고,
+      // 정제 실패분을 다시 실어 문항이 또 삭제되는 순환을 막는다).
+      const refinedPool = featuredImages.filter((fi) => refinedUsableGis.has(fi.gi));
+      if (useImages && refinedPool.length > 0) {
+        try {
+          const linkCounts = await readImageLinkCounts();
+          const pool = refinedPool
+            .map((fi) => ({
+              fi,
+              remaining: MAX_QUESTIONS_PER_IMAGE - (linkCounts.get(fi.gi) ?? 0),
+            }))
+            .filter((x) => x.remaining > 0)
+            .sort((a, b) => b.remaining - a.remaining);
+          fillFeatured = fillBatches.map((slots) => {
+            const pickIdx = pool.findIndex((x) => x.remaining >= slots.length);
+            if (pickIdx < 0) return [];
+            return [pool.splice(pickIdx, 1)[0].fi];
+          });
+        } catch (e) {
+          warnings.push(
+            `보충 이미지 배정 실패 — 텍스트 전용으로 진행. ${e instanceof Error ? e.message : String(e)}`,
+          );
+          fillFeatured = fillBatches.map(() => []);
+        }
+      }
+      const imagesOffered = fillFeatured.reduce((n, f) => n + f.length, 0);
+      roundRec.imagesOffered = imagesOffered;
       await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
         try {
           await generateAndPersistBatch(i, slots, fillBatches.length, {
@@ -2288,8 +2937,10 @@ export async function generatePrivateQuestionsFromUpload(
             // 기본 백오프(최대 45초)를 기다리며 전체 소요를 지배한다(실측 66초 꼬리).
             // → 빈 슬롯이 속한 구간의 컨텍스트만 잘라 싣고, 재시도 대기도 짧게 잡는다.
             contextText: backfillContext(slots[0]),
-            featured: [], // 텍스트 전용 — 이미지 관련 삭제 경로를 원천 차단
-            getDisplayPng: async () => null,
+            featured: [],
+            resolveFeatured: () => resolveRefined(fillFeatured[i]),
+            imageQuotaFor,
+            getDisplayPng, // 정제 캐시가 이미 채워져 있어 재호출 비용 없음
             // 보충은 "빈 칸 한두 개"라 오래 기다릴 이유가 없다. 실측에서 1문항 보충이
             // 27.6초를 써 총 시간을 지배했으므로 대기 상한을 더 조인다.
             retryMaxDelayMs: 3_000,
@@ -2301,6 +2952,12 @@ export async function generatePrivateQuestionsFromUpload(
         }
         return null;
       });
+      // 이미지를 실은 보충이 만들 수 있는 초과 연결·깨진 그림 참조를 라운드 안에서
+      // 정리한다 — 정리로 생긴 빈 슬롯은 다음 라운드가 다시 채운다.
+      if (imagesOffered > 0) {
+        await enforceImageReuseCap();
+        await removeBrokenFigureQuestions();
+      }
       const beforeCount = saved.length;
       saved = await readSaved();
       roundRec.ms = Date.now() - tRound;

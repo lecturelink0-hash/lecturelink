@@ -34,7 +34,10 @@ const PUBLIC_PREFIXES = [
   '/api/public/', // 익명 참여 토큰 기반 공개 API
   '/faculty', // 교수용 공개 서비스 소개
   '/landing.html', // 정적 랜딩 (루트 rewrite 대상 · 직접 접근 허용)
-  '/cpx/models/', // React 랜딩의 CPX 환자 모델 공개
+  // CPX 환자 모델(glb) 정적 에셋 — 랜딩의 CPX 프리뷰가 실제 캐릭터를 렌더링하려면
+  // 비로그인에서도 로드돼야 한다. (이전에는 /login 으로 리다이렉트되어 랜딩에서
+  // 절차적 폴백 아바타가 대신 표시되는 문제가 있었다.)
+  '/cpx/models/',
 ];
 
 const ONBOARDING_REQUIRED_PREFIXES = [
@@ -81,6 +84,23 @@ function toLanding(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
+  const studentPreview =
+    process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_STUDENT_UI_PREVIEW === 'true';
+
+  // UI 연습 모드에서는 원래 학생 페이지를 그대로 보여 준다. 인증과 DB만
+  // 건너뛰고, 페이지가 읽는 데이터는 아래 /api/preview 경로의 예시 데이터로
+  // 돌려 준다. 따라서 실제 화면 구조와 스타일은 바뀌지 않는다.
+  if (studentPreview && request.nextUrl.pathname.startsWith('/api/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/api/preview${request.nextUrl.pathname.slice('/api'.length)}`;
+    return NextResponse.rewrite(url);
+  }
+
+  if (studentPreview && !isPublicPath(request.nextUrl.pathname)) {
+    return NextResponse.next({ request });
+  }
+
   const isRoot = request.nextUrl.pathname === '/';
 
   if (
@@ -91,7 +111,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  // 홈(/): 세션 쿠키가 아예 없는 익명 방문은 app/page.tsx의 React 랜딩을 보여준다.
+  // 홈(/): 세션 쿠키가 아예 없는 익명 방문은 app/page.tsx의 React 랜딩을 그대로 보여준다.
   // 세션 쿠키가 있으면 아래에서 getUser 로 검증 후 로그인 사용자는 /dashboard 로 보낸다(기획서: 기 사용자 바로 홈).
   if (isRoot) {
     const hasAuthCookie = request.cookies

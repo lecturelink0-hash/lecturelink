@@ -101,7 +101,19 @@ async function ocrClaude(input: {
 - 단위(mmHg, mg/dL, bpm 등)는 정확히
 - 표·차트 안의 라벨도 포함
 - 텍스트가 없으면 빈 문자열
-${input.context ? `\n주변 맥락:\n${input.context.slice(0, 500)}` : ''}`;
+- **이미지에 실제로 보이는 글자만 출력한다.** 추측·보완·번역으로 글자를 만들어내지 마라.
+${
+  input.context
+    ? // 맥락은 철자·약어 표기를 맞추는 데만 쓴다. 이 단서가 없으면 모델이 글자가 거의
+      // 없는 영상(조영술·CT 등)에서 맥락 문장을 그대로 복창해 OCR 결과로 내놓는다
+      // (실측: 글자 0자인 대동맥 조영술이 맥락 주입 시 247자로 부풀었고, 그 값이
+      //  '텍스트 캡처' 판정을 넘겨 멀쩡한 임상영상이 문항에서 제외됐다).
+      `- **아래 맥락은 표기(철자·약어) 참고용일 뿐이다. 맥락에 있는 단어라도 이미지에 보이지 않으면 절대 출력하지 마라.**
+
+주변 맥락:
+${input.context.slice(0, 500)}`
+    : ''
+}`;
 
   // 좌표 모드: 같은 호출에서 위치까지 받는다(추가 호출 0). 좌표계는 모델이 학습한
   // 관례를 그대로 쓴다 — [ymin, xmin, ymax, xmax], 0~1000 정규화.
@@ -125,6 +137,10 @@ OCR 결과만 출력. 설명·머리말 금지.`;
     createMessage(client, {
       model,
       max_tokens: 4096,
+      // OCR 은 창작이 아니라 판독이다. 기본 temperature(제공자 기본값 1.0)로 두면 같은
+      // 이미지에서도 실행마다 좌표 묶음이 달라져(실측: 같은 크롭이 5개/7개) 어떤 실행은
+      // 글자를 덜 덮는다. 재현 가능하게 0 으로 고정한다.
+      temperature: 0,
       messages: [
         {
           role: 'user',
@@ -160,7 +176,10 @@ OCR 결과만 출력. 설명·머리말 금지.`;
       boxes = parsed.boxes;
     } else {
       console.warn('[ocr] 좌표 JSON 파싱 실패 — 텍스트만 사용');
+      text = stripStructuredArtifacts(raw);
     }
+  } else {
+    text = stripStructuredArtifacts(raw);
   }
 
   const cost = calculateCost(
@@ -189,6 +208,44 @@ OCR 결과만 출력. 설명·머리말 금지.`;
     durationMs: Date.now() - t0,
     boxes,
   };
+}
+
+/**
+ * 평문 OCR 응답에 섞여 나오는 구조화 출력 잔해를 제거한다.
+ *
+ * 평문 모드로 요청해도 모델이 간헐적으로 코드펜스 + JSON(box_2d / text_content 등)을
+ * 뱉는다. 그대로 두면 실제로는 글자가 없는 이미지가 "글자 60자"로 집계돼 텍스트 캡처
+ * 판정·정제 대상 판정을 왜곡한다(실측: 글자 0자인 조영술이 60자로 잡힘).
+ * 파싱되면 텍스트 필드만 이어 붙이고, 아니면 코드펜스만 벗겨 돌려준다.
+ */
+function stripStructuredArtifacts(raw: string): string {
+  const t = raw.trim();
+  if (!t.startsWith('```') && !/"(?:box_2d|text_content|full_text)"/.test(t)) return raw;
+  const body = t.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  try {
+    const parsed = JSON.parse(body) as unknown;
+    const texts: string[] = [];
+    const walk = (v: unknown): void => {
+      if (Array.isArray(v)) {
+        v.forEach(walk);
+      } else if (v && typeof v === 'object') {
+        for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+          if (typeof val === 'string') {
+            if (k === 'text_content' || k === 't' || k === 'text' || k === 'full_text') {
+              texts.push(val);
+            }
+          } else {
+            walk(val);
+          }
+        }
+      }
+    };
+    walk(parsed);
+    return texts.join('\n').trim();
+  } catch {
+    // JSON 으로 못 읽으면 최소한 코드펜스만 벗긴다.
+    return body;
+  }
 }
 
 /**

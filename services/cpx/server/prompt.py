@@ -67,6 +67,8 @@ def public_case(case: dict) -> dict:
         'peCount': len(case['physicalExamRule']),
         'mustAskCount': len(case['evaluationUse']['mustAsk']),
         'contentStatus': content_status(case),
+        # false 면 신체진찰 없이 진행하는 시나리오 — 채점에서 진찰 영역 제외 (기본 true)
+        'physicalExamRequired': case.get('physicalExamRequired', True) is not False,
     }
 
 
@@ -176,12 +178,24 @@ def build_system_instruction(case_id: str, persona: dict | None = None) -> str:
         }
     persona_block = ''
     if persona:
-        persona_block = (
-            '[인적사항 확정 — 변경 금지]\n'
-            f"당신의 이름은 {persona['name']}, {persona['age']}세 {persona['gender']}이다. "
-            '이 인적사항은 이 세션 동안 고정이며, 이름·나이·성별을 질문받으면 정확히 이대로 답한다. '
-            '다른 이름이나 성별을 지어내지 않는다.'
-        )
+        child = persona.get('child')
+        if child and persona.get('role'):
+            child_word = '남아' if child.get('gender') == '남성' else '여아'
+            persona_block = (
+                '[인적사항 확정 — 변경 금지]\n'
+                f"당신은 {persona['name']}, {persona['age']}세 {persona['gender']}이며, "
+                f"환아 {child['name']}({child.get('ageDetail', '')} {child_word})의 {persona['role']}다. "
+                '아이를 대신해 진료실에 왔고, 대화 내내 보호자로서 말한다. '
+                '당신과 아이의 이름·나이·성별을 질문받으면 정확히 이대로 답하며, 다른 이름이나 성별을 지어내지 않는다. '
+                '아이의 증상·생활은 보호자가 관찰한 사실로서 전달한다.'
+            )
+        else:
+            persona_block = (
+                '[인적사항 확정 — 변경 금지]\n'
+                f"당신의 이름은 {persona['name']}, {persona['age']}세 {persona['gender']}이다. "
+                '이 인적사항은 이 세션 동안 고정이며, 이름·나이·성별을 질문받으면 정확히 이대로 답한다. '
+                '다른 이름이나 성별을 지어내지 않는다.'
+            )
     voice_block = (
         '[음성·말투 연기 — 이 환자 특유의 발성]\n'
         + voice_style_for_case(case) +
@@ -246,6 +260,9 @@ import re
 # 성별별 이름 풀 (SP 대본 관례 수준의 흔한 이름)
 _MALE_NAMES = ['김철수', '이영호', '박민수', '최성진', '정대현', '강호준', '조병철', '윤재석', '임동혁', '한상우']
 _FEMALE_NAMES = ['김영희', '이순자', '박미경', '최은정', '정혜숙', '강민지', '조현아', '윤서연', '임정순', '한지현']
+# 환아 이름 풀 (보호자 동반 케이스 — 최근 흔한 아이 이름)
+_BOY_NAMES = ['김민준', '이서준', '박도윤', '최하준', '정시우', '강지호']
+_GIRL_NAMES = ['김서아', '이하은', '박지우', '최서연', '정하윤', '강다은']
 
 _AGE_KEYWORDS = [
     ('중장년', (45, 65)), ('청년', (20, 35)), ('중년', (40, 59)),
@@ -302,15 +319,60 @@ def _resolve_age(dem: dict, rng: random.Random) -> int:
     return 45
 
 
+def _resolve_child(child_rule: dict, rng: random.Random) -> dict:
+    """demographicsRule.fixed.child → 환아 인적사항. gender '랜덤'은 세션 시드로 확정."""
+    raw_gender = str(child_rule.get('gender', '랜덤'))
+    has_m, has_f = ('남' in raw_gender), ('여' in raw_gender)
+    if has_m and not has_f:
+        gender = '남성'
+    elif has_f and not has_m:
+        gender = '여성'
+    else:
+        gender = rng.choice(['남성', '여성'])
+    try:
+        age = int(child_rule.get('age', 5))
+    except (TypeError, ValueError):
+        age = 5
+    return {
+        'name': rng.choice(_BOY_NAMES if gender == '남성' else _GIRL_NAMES),
+        'age': age,
+        'gender': gender,
+        'ageDetail': str(child_rule.get('ageDetail', f'{age}세')),
+    }
+
+
 def resolve_persona(case: dict, seed: str) -> dict:
-    """세션별 인적사항 확정 — 같은 세션은 항상 같은 인적사항 (seed=sessionId)."""
+    """세션별 인적사항 확정 — 같은 세션은 항상 같은 인적사항 (seed=sessionId).
+
+    보호자 동반 케이스(fixed.role에 '보호자' + fixed.child)는 persona가 화자(보호자)이고
+    child에 환아 인적사항이 붙는다. 프론트는 child가 있으면 환아를 중앙에, 보호자를
+    측면에 렌더하고, 보이스·발화 연기는 persona(화자) 기준으로 유지한다.
+    """
     rng = random.Random(seed)
     dem = case.get('demographicsRule', {}) or {}
     gender = _resolve_gender(dem, rng)
     age = _resolve_age(dem, rng)
     name = rng.choice(_MALE_NAMES if gender == '남성' else _FEMALE_NAMES)
-    return {'name': name, 'age': age, 'gender': gender}
+    persona = {'name': name, 'age': age, 'gender': gender}
+    fixed = dem.get('fixed', {}) or {}
+    role = str(fixed.get('role', '') or '')
+    if '보호자' in role:
+        persona['role'] = role
+    child_rule = fixed.get('child')
+    if isinstance(child_rule, dict):
+        persona['child'] = _resolve_child(child_rule, rng)
+    return persona
 
 
 def voice_for_persona(persona: dict) -> str:
-    return 'Orus' if persona.get('gender') == '남성' else 'Aoede'
+    """화자 기준 보이스. 소아 본인이 화자인 케이스(12세 이하·보호자 아님)는 어린 톤.
+
+    Live API half-cascade 8종(Puck·Charon·Kore·Fenrir·Aoede·Leda·Orus·Zephyr) 중
+    Puck(경쾌·소년톤)/Leda(youthful)를 소아용으로 매핑. 보호자 동반 케이스는 화자가
+    성인 보호자이므로 기존 성인 보이스를 그대로 쓴다.
+    """
+    male = persona.get('gender') == '남성'
+    age = persona.get('age')
+    if isinstance(age, int) and age <= 12 and not persona.get('role'):
+        return 'Puck' if male else 'Leda'
+    return 'Orus' if male else 'Aoede'

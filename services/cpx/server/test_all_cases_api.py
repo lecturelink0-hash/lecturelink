@@ -12,6 +12,7 @@ os.environ["CPX_PROXY_SHARED_SECRET"] = "offline-api-test-secret"
 import db  # noqa: E402
 import evaluate  # noqa: E402
 import main  # noqa: E402
+import prompt  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 
@@ -64,7 +65,9 @@ def run() -> None:
             with TestClient(main.app) as client:
                 case_payload = expect_ok(client.get("/api/cases", headers=HEADERS), "case list")
                 cases = case_payload["cases"]
-                assert len(cases) == 197, f"expected 197 cases, got {len(cases)}"
+                # 케이스는 계속 늘어나므로 개수는 데이터 디렉터리 기준으로 검증한다
+                expected_cases = len(prompt._case_files())
+                assert len(cases) == expected_cases, f"expected {expected_cases} cases, got {len(cases)}"
 
                 first_session_id = None
                 for index, case in enumerate(cases, start=1):
@@ -148,7 +151,7 @@ def run() -> None:
             evaluate.extract_judgments = original_extract
             main.GEMINI_API_KEY = original_api_key
 
-    print("All 197 cases passed the offline API lifecycle test.")
+    print("All cases passed the offline API lifecycle test.")
 
 
 if __name__ == "__main__":

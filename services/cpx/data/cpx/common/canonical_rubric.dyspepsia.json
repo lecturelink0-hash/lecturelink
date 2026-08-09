@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id": "canonical_rubric_dyspepsia_v1",
   "title": "소화불량/만성복통 CPX 종합 채점 루브릭 (정본)",
   "provenance": {
@@ -9,7 +9,8 @@
       "met/partial/not_met 3상태를 보존하고 결과 화면에서 부분 수행을 별도 표시 — 2026-07-16 임상 검수 반영",
       "적신호 확인(ht12)은 채점표에 명시 없으나 배경지식 감별 기준에서 파생 — 검수 대상",
       "영역 가중치 35/15/15/25/10 — 도메인 공통",
-      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)"
+      "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)",
+      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)"
     ],
     "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 18 '소화 불량/만성 복통' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 재작성했으며 교재 문장을 직접 인용하지 않음."
   },
@@ -92,7 +93,7 @@
       "type": "checklist",
       "weightPercent": 15,
       "gradeCutoffs": {
-        "excellent": 5,
+        "excellent": 6,
         "fairMin": 3
       },
       "declarationCountsAsPerformance": true,
@@ -128,8 +129,12 @@
           "text": "진찰 시작 전 '손을 소독하겠습니다' 또는 손 소독 동작을 표현"
         },
         {
-          "id": "pe08",
-          "text": "시행할 신체 검진을 미리 설명하고, 진찰 중/후 '불편하진 않으신가요?' 점검"
+          "id": "pe08a",
+          "text": "시행할 신체 검진을 미리 설명"
+        },
+        {
+          "id": "pe08b",
+          "text": "진찰 중/후 '불편하진 않으신가요?' 점검"
         }
       ]
     },
@@ -139,7 +144,7 @@
       "type": "checklist",
       "weightPercent": 15,
       "gradeCutoffs": {
-        "excellent": 4,
+        "excellent": 5,
         "fairMin": 2
       },
       "items": [
@@ -152,8 +157,12 @@
           "text": "검사 계획(위내시경 등)의 필요성 또는 불필요함을 설명"
         },
         {
-          "id": "ed03",
-          "text": "금연·금주에 대해 교육"
+          "id": "ed03a",
+          "text": "금연에 대해 교육"
+        },
+        {
+          "id": "ed03b",
+          "text": "금주에 대해 교육"
         },
         {
           "id": "ed04",

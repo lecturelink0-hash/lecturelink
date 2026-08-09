@@ -19,16 +19,19 @@
   "contentStatus": "needs_clinical_review",
   "demographicsRule": {
     "fixed": {
-      "gender": "남성",
-      "age": 2
+      "gender": "여성",
+      "role": "보호자(어머니)",
+      "child": {
+        "gender": "남성",
+        "age": 2,
+        "ageDetail": "30개월"
+      }
     },
     "recommended": {
-      "ageDetail": "30개월"
+      "age": "30~40세"
     },
     "randomizable": [
-      "이름",
-      "키",
-      "몸무게"
+      "이름"
     ],
     "mustAbsent": []
   },

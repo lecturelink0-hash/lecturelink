@@ -86,8 +86,31 @@ function toRgba(
 }
 
 /**
+ * 중복 판정 서명: 크기 + 픽셀 서브샘플(최대 4096포인트) FNV-1a 해시.
+ * 종전 "가로x세로"만으로는 같은 크기의 서로 다른 이미지(슬라이드 템플릿의 동일
+ * 플레이스홀더에 배치된 사진들)까지 오폐기해 문항 이미지 후보가 줄었다.
+ * 데이터가 없으면 크기만으로 폴백.
+ */
+function contentSignature(img: {
+  width: number;
+  height: number;
+  data?: Uint8ClampedArray | Uint8Array;
+}): string {
+  const dims = `${img.width}x${img.height}`;
+  const d = img.data;
+  if (!d || d.length === 0) return dims;
+  let h = 0x811c9dc5;
+  const step = Math.max(1, Math.floor(d.length / 4096));
+  for (let i = 0; i < d.length; i += step) {
+    h ^= d[i];
+    h = Math.imul(h, 0x01000193);
+  }
+  return `${dims}:${(h >>> 0).toString(16)}`;
+}
+
+/**
  * PDF 안의 이미지 객체를 추출한다. 실패하면 빈 배열(호출자는 기존 렌더+Vision 경로로 폴백).
- * 같은 이미지가 여러 페이지에 반복되면(워터마크·템플릿) 크기 기준으로 중복을 제거한다.
+ * 같은 이미지가 여러 페이지에 반복되면(워터마크·템플릿) 내용 서명 기준으로 중복을 제거한다.
  */
 export async function extractPdfImageObjects(
   pdfData: ArrayBuffer,
@@ -141,8 +164,8 @@ export async function extractPdfImageObjects(
           if (!img?.width || !img?.height) continue;
           if (Math.min(img.width, img.height) < minEdge) continue;
 
-          const sig = `${img.width}x${img.height}`;
-          if (seen.has(sig)) continue; // 반복 삽입된 동일 이미지(템플릿) 제거
+          const sig = contentSignature(img);
+          if (seen.has(sig)) continue; // 반복 삽입된 동일 이미지(워터마크·템플릿) 제거
           const rgba = toRgba(img);
           if (!rgba) continue;
           seen.add(sig);

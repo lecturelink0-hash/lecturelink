@@ -159,7 +159,7 @@ export default async function DashboardPage() {
       weekDays={weekDays}
       overallAccuracy={overallAccuracy}
       totalSolved={totalSolvedAll}
-      weakCount={weakConcepts.length}
+      weakConcept={weakConcepts[0] ?? null}
     />
   );
 

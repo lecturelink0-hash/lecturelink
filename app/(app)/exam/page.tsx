@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SubjectIcon } from '@/components/SubjectIcon';
+import { QuestionStem } from '@/components/ui/QuestionStem';
 import {
   ChevronDown, ChevronRight, ChevronLeft, CheckCircle2, XCircle, RotateCcw,
   BookmarkPlus, AlertTriangle, BookOpen, Target, GraduationCap, Search, ZoomIn, X,
@@ -616,8 +617,9 @@ export default function ExamPage() {
                     <Badge variant={current.badge.color}>{current.badge.label}</Badge>
                   </div>
 
-                  <div className="text-[17px] leading-8 text-sage-800 mb-6">
-                    <strong className="text-sage-700">{idx + 1}.</strong> {current.stem}
+                  <div className="flex gap-1.5 text-[17px] leading-8 text-sage-800 mb-6">
+                    <strong className="text-sage-700 shrink-0">{idx + 1}.</strong>
+                    <QuestionStem className="flex-1" text={current.stem} />
                   </div>
 
                   {current.imageUrl && (
