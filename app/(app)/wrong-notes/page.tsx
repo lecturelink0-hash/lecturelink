@@ -339,10 +339,11 @@ export default function WrongNotesPage() {
     setLoading(true);
     try {
       const data = await api.get<WrongAnswerItem[]>('/api/wrong-answers');
-      setItems(data);
+      const privateItems = data.filter((item) => item.isPrivate);
+      setItems(privateItems);
       // 전체 보기에서는 처음부터 펼침
       const states: Record<string, QuestionUIState> = {};
-      data.forEach((item) => {
+      privateItems.forEach((item) => {
         states[item.id] = initUIState(false);
       });
       setUiStates(states);

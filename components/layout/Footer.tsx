@@ -20,7 +20,6 @@ const columns: FooterColumn[] = [
     title: '서비스',
     links: [
       { label: '문제 만들기', href: '/notes' },
-      { label: '국시 문제', href: '/exam' },
       { label: '내 문제집', href: '/library' },
       { label: '오답노트', href: '/wrong-notes' },
     ],

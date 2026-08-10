@@ -40,7 +40,6 @@ const GRADE_OPTIONS = [
 
 const PURPOSE_OPTIONS = [
   { value: 'naesin', label: '내신 대비' },
-  { value: 'kmle', label: '국시 대비' },
   { value: 'usmle', label: 'USMLE' },
   { value: 'other', label: '기타' },
 ] as const;
@@ -56,7 +55,7 @@ export default function OnboardingPage() {
   const [selectedSemester, setSelectedSemester] = useState<'spring' | 'fall'>('spring');
   const [selectedYear] = useState(new Date().getFullYear());
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [studyPurpose, setStudyPurpose] = useState<typeof PURPOSE_OPTIONS[number]['value']>('kmle');
+  const [studyPurpose, setStudyPurpose] = useState<typeof PURPOSE_OPTIONS[number]['value']>('naesin');
   const [purposeDetail, setPurposeDetail] = useState(''); // '기타' 선택 시 주관식 입력
   const [displayName, setDisplayName] = useState('');
   const [referralCode, setReferralCode] = useState('');

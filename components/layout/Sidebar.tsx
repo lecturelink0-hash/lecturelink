@@ -7,15 +7,13 @@ import clsx from 'clsx';
 import { Menu, X, LogOut, ChevronDown, CalendarDays, UserCog } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
 
-// 학습 흐름 순서: 내신 대비, 국시 대비, CPX를 각각 독립 메뉴로 제공한다.
+// 학습 흐름 순서: 내신 대비와 CPX를 각각 독립 메뉴로 제공한다.
 const NAV_ITEMS = [
   { label: '홈', href: '/dashboard' },
   { label: '내신 대비', href: '/notes', primary: true },
-  { label: '국시 대비', href: '/exam', primary: true },
   { label: 'CPX', href: '/cpx', primary: true },
   { label: '내 문제집', href: '/library' },
   { label: '오답노트', href: '/wrong-notes' },
-  { label: '모의고사', href: '/mock' },
   { label: '요금제', href: '/plan' },
 ] as const;
 
@@ -92,7 +90,7 @@ export function Sidebar({ user }: SidebarProps) {
   const planLabel: Record<string, string> = {
     free: 'Free',
     lite: '내신 대비',
-    standard: '국가고시 대비',
+    standard: '학습 플랜',
     pro: '통합형',
   };
 

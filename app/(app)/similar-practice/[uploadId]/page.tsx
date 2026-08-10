@@ -94,7 +94,7 @@ export default function SimilarPracticePage() {
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="ll-chip" style={{ width: '2.25rem', height: '2.25rem' }}><BookOpen className="w-4 h-4" strokeWidth={2} /></span>
             <div className="min-w-0">
-              <div className="text-[12px] font-semibold text-sage-600">{question.subject_name ?? '국시대비'}</div>
+              <div className="text-[12px] font-semibold text-sage-600">{question.subject_name ?? '유사문항'}</div>
               <div className="text-[15px] font-bold text-sage-800 tracking-tight truncate">{question.sub_topic_name ?? '오답 유사문항'}</div>
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function SimilarPracticePage() {
       <Card className="mb-4">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
           <div className="flex gap-2 flex-wrap"><Badge>오답 유사문항</Badge><Badge variant="warn">난이도 {'★'.repeat(question.difficulty)}</Badge></div>
-          <Badge variant="curated">국시대비</Badge>
+          <Badge variant="curated">유사문항</Badge>
         </div>
         <div className="flex gap-1.5 text-[17px] leading-8 text-sage-800 mb-6"><strong className="text-sage-700 shrink-0">{index + 1}.</strong><QuestionStem className="flex-1" text={question.stem} /></div>
         <div className="space-y-2">
