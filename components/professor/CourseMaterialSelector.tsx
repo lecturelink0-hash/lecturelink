@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, FileText, Loader2, Plus, Upload, X } from "lucide-react";
+import { readApiResponse } from "@/lib/utils/read-api-response";
 
 type Course = { id: string; title: string; term?: string | null };
 type Material = {
@@ -25,27 +26,62 @@ const PREVIEW_MATERIALS: Material[] = [
 ];
 
 export async function uploadTeachingMaterial(courseId: string, file: File) {
-  const form = new FormData();
-  form.append("courseId", courseId);
-  form.append("file", file);
-  const response = await fetch("/api/professor/teaching-materials", {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  const fileHash = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  const fileType = file.name.toLowerCase().endsWith(".pptx") ? "pptx" : "pdf";
+  const initializeResponse = await fetch("/api/professor/teaching-materials", {
     method: "POST",
-    body: form,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      action: "initialize",
+      courseId,
+      fileName: file.name,
+      fileType,
+      mimeType: file.type || (fileType === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+      fileSizeBytes: file.size,
+      fileHash,
+    }),
   });
-  const payload = await response.json();
-  if (!response.ok || !payload.ok) {
+  const initialized = await readApiResponse<
+    | (Material & { reused: true })
+    | { materialId: string; signedUploadUrl: string; reused: false }
+  >(initializeResponse, "강의자료 업로드를 준비하지 못했습니다.");
+  if (!initializeResponse.ok || !initialized.ok || !initialized.data) {
     throw new Error(
-      payload?.error?.message ?? "강의자료를 저장하지 못했습니다.",
+      initialized?.error?.message ?? "강의자료 업로드를 준비하지 못했습니다.",
     );
   }
-  return payload.data as Material & { reused: boolean };
+  if (initialized.data.reused) return initialized.data;
+
+  const uploadResponse = await fetch(initialized.data.signedUploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+    body: file,
+  });
+  if (!uploadResponse.ok) throw new Error("강의자료 파일을 저장하지 못했습니다.");
+
+  const finalizeResponse = await fetch("/api/professor/teaching-materials", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ action: "finalize", materialId: initialized.data.materialId }),
+  });
+  const finalized = await readApiResponse<Material & { reused: boolean }>(
+    finalizeResponse,
+    "강의자료 처리를 시작하지 못했습니다.",
+  );
+  if (!finalizeResponse.ok || !finalized.ok || !finalized.data) {
+    throw new Error(finalized?.error?.message ?? "강의자료 처리를 시작하지 못했습니다.");
+  }
+  return finalized.data;
 }
 
 export async function waitForTeachingMaterialReady(courseId: string, materialId: string) {
   const deadline = Date.now() + 120_000;
   while (Date.now() < deadline) {
     const response = await fetch(`/api/professor/teaching-materials?courseId=${encodeURIComponent(courseId)}`);
-    const payload = await response.json();
+    const payload = await readApiResponse<Material[]>(response, "자료 처리 상태를 확인하지 못했습니다.");
     if (!response.ok || !payload.ok) throw new Error(payload?.error?.message ?? "자료 처리 상태를 확인하지 못했습니다.");
     const material = (payload.data as Material[]).find((item) => item.id === materialId);
     if (material?.status === "ready") return material;
@@ -96,8 +132,8 @@ export function CourseMaterialSelector({
       return;
     }
     const response = await fetch("/api/professor/courses");
-    const payload = await response.json();
-    if (!payload.ok) return;
+    const payload = await readApiResponse<Course[]>(response, "차시 목록을 불러오지 못했습니다.");
+    if (!payload.ok || !payload.data) return;
     setCourses(payload.data);
     const selectedId = preferredId ?? courseId;
     const selected = payload.data.find(
@@ -123,8 +159,8 @@ export function CourseMaterialSelector({
     const response = await fetch(
       `/api/professor/teaching-materials?courseId=${encodeURIComponent(id)}`,
     );
-    const payload = await response.json();
-    if (payload.ok) {
+    const payload = await readApiResponse<Material[]>(response, "강의자료 목록을 불러오지 못했습니다.");
+    if (payload.ok && payload.data) {
       setMaterials(payload.data);
       const selected = payload.data.find(
         (item: Material) => item.id === materialId,
@@ -172,8 +208,8 @@ export function CourseMaterialSelector({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ title, term }),
       });
-      const payload = await response.json();
-      if (!response.ok || !payload.ok)
+      const payload = await readApiResponse<Course>(response, "차시를 만들지 못했습니다.");
+      if (!response.ok || !payload.ok || !payload.data)
         throw new Error(payload?.error?.message ?? "차시를 만들지 못했습니다.");
       onCourseId(payload.data.id);
       onCourseTitle?.(payload.data.title);
