@@ -3,6 +3,36 @@
   gap: 20px;
 }
 
+.bridge-style-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bridge-style-grid button {
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink-soft);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bridge-style-grid button.is-selected {
+  border-color: var(--forest);
+  background: var(--sage);
+  color: var(--forest-800);
+  box-shadow: inset 0 0 0 1px var(--forest);
+}
+
+.bridge-style-grid span { font-size: 11px; line-height: 1.35; }
+.bridge-style-grid b { font-size: 13px; }
+
 .bridge-controls .segmented {
   height: auto;
   min-height: 42px;
@@ -89,7 +119,44 @@
 
 .bridge-result {
   margin: 0;
+  position: relative;
+  overflow: hidden;
+  --bridge-accent: #315c4b;
+  --bridge-soft: #eef5ef;
 }
+
+.bridge-result.style-hand-drawn { --bridge-accent: #b55d3f; --bridge-soft: #fff4df; background-color: #fffdf7; }
+.bridge-result.style-blueprint { --bridge-accent: #23658a; --bridge-soft: #e9f5fb; }
+.bridge-result.style-editorial { --bridge-accent: #72533d; --bridge-soft: #f5efe7; }
+
+.bridge-logo { position: absolute; top: 23px; right: 0; width: 38px; height: 38px; object-fit: contain; }
+.bridge-topic { display: block; margin: 0 52px 8px 0; color: var(--bridge-accent); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+
+.bridge-lecture-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bridge-lecture-map li { position: relative; min-height: 76px; padding: 13px 11px; border-radius: 13px; background: var(--bridge-soft); color: var(--forest-800); font-size: 12px; font-weight: 680; line-height: 1.45; }
+.bridge-lecture-map li span { display: block; margin-bottom: 7px; color: var(--bridge-accent); font-size: 18px; font-weight: 850; }
+.bridge-hero-visual { margin: 14px 0 0; padding: 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--bridge-soft); }
+.bridge-hero-visual img { display: block; width: 100%; height: auto; object-fit: contain; border-radius: 10px; }
+.bridge-result.has-generated-image > header,
+.bridge-result.has-generated-image > section,
+.bridge-result.has-generated-image > footer { display: none; }
+.bridge-audit { display: flex; align-items: flex-start; gap: 9px; margin-top: 10px; padding: 11px 13px; border-radius: 11px; background: var(--sage); color: var(--forest-800); font-size: 11px; }
+.bridge-audit.needs_review { background: #fff2df; color: #8b511d; }
+.bridge-audit p { margin: 4px 0 0; line-height: 1.45; }
+.bridge-visual-cue { margin: 9px 0; padding: 10px 12px; border-left: 3px solid var(--bridge-accent); background: var(--bridge-soft); color: var(--ink-soft); font-size: 11.5px; line-height: 1.5; }
+.bridge-question { display: grid; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.bridge-question b { color: var(--forest-800); font-size: 12.5px; }
+.bridge-question small { color: var(--ink-faint); font-size: 10.5px; }
+.bridge-sources { display: grid; gap: 3px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 9px; }
+.bridge-sources a { color: inherit; text-decoration: none; overflow-wrap: anywhere; }
 
 .bridge-result-bar {
   display: flex;
@@ -277,6 +344,7 @@
 }
 
 @media (max-width: 560px) {
+  .bridge-style-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bridge-result-bar {
     display: grid;
   }
@@ -292,6 +360,7 @@
 }
 
 @media print {
+  @page { size: A4 portrait; margin: 9mm; }
   .professor-topbar,
   .page-head,
   .studio-main > .studio-section,
@@ -315,5 +384,15 @@
   .bridge-result {
     border: 0;
     box-shadow: none;
+    break-inside: avoid;
+    font-size: 10pt;
   }
+
+  .bridge-result-bar { display: none; }
+  .bridge-result > header { padding-top: 0; }
+  .bridge-result > section { padding: 12px 0; }
+  .bridge-concept { padding: 9px 0; }
+  .bridge-result.has-generated-image { padding: 0; }
+  .bridge-result.has-generated-image .bridge-hero-visual { margin: 0; padding: 0; border: 0; }
+  .bridge-result.has-generated-image .bridge-audit { display: none; }
 }
