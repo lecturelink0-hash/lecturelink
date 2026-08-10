@@ -8,111 +8,24 @@
 @import "./redesign-reference.css";
 @import "tailwindcss";
 
-/* Dashboard primary learning cards — 내신 대비 / CPX 1:1 layout. */
-.student-dashboard .dashboard-main {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+/* 대시보드 토큰 — 아래 규칙들이 var(--dashboard-*) 를 참조하는데 정의가 없어서
+   border 선언이 통째로 무효화되고 색이 상속으로 폴백됐다. 값은 대시보드 루트에
+   이미 걸려 있는 .ll-dashboard-page 스코프 토큰(redesign-reference.css)을 재사용한다. */
+.student-dashboard {
+  --dashboard-ink: var(--ink, #111827);
+  --dashboard-forest: var(--forest, #1f5c43);
+  --dashboard-muted: var(--ink-soft, #6b7280);
+  --dashboard-line: var(--line, #e5e1d8);
+  --dashboard-button: var(--forest-700, #194b37);
 }
 
-.student-dashboard .continue-learning-card {
-  display: flex;
-  min-height: 380px;
-  min-width: 0;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.student-dashboard .school-learning-card {
-  background: linear-gradient(135deg, #fff 0%, #f7fbf8 62%, #edf6f0 100%);
-}
-
-.student-dashboard .cpx-learning-card {
-  border-color: #b9d5c5;
-  background: linear-gradient(135deg, #f8fcf9 0%, #edf6f0 54%, #dcece3 100%);
-}
-
-.student-dashboard .cpx-learning-card .continue-subject {
-  background: #d5e9dd;
-}
-
-.student-dashboard .continue-topic-row h2 {
-  max-width: none;
-  font-size: clamp(23px, 2.35vw, 31px);
-}
-
-.student-dashboard .learning-card-description {
-  display: flex;
-  max-width: 390px;
-  align-items: flex-start;
-  gap: 7px;
-  margin: 10px 0 0;
-  color: var(--dashboard-muted);
-  font-size: 13.5px;
-  font-weight: 540;
-  line-height: 1.6;
-}
-
-.student-dashboard .learning-card-description svg {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-  margin-top: 3px;
-  color: var(--dashboard-button);
-}
-
-.student-dashboard .school-card-content {
-  display: grid;
-  min-height: 0;
-  flex: 1;
-  grid-template-columns: minmax(0, 1fr) minmax(150px, .55fr);
-  gap: 12px;
-}
-
-.student-dashboard .school-card-copy {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.student-dashboard .school-card-copy .continue-topic-row {
-  margin-top: 24px;
-}
-
-.student-dashboard .school-card-copy .continue-actions {
-  margin-top: auto;
-  padding-top: 22px;
-}
-
-.student-dashboard .school-primary-action {
-  max-width: 100%;
-  gap: 6px;
-  padding: 0 9px;
-  font-size: 12.5px;
-  white-space: nowrap;
-}
-
-.student-dashboard .school-card-copy .dashboard-secondary-action {
-  padding: 0 12px;
-  white-space: nowrap;
-}
-
-.student-dashboard .school-material-panel {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding: 16px;
-  border: 1px solid rgba(117, 166, 142, .28);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, .58);
-}
-
-.student-dashboard .school-document-visual {
-  position: relative;
-  width: 104px;
-  height: 112px;
-  align-self: center;
-  margin: 0 0 auto;
+/* 카드 공통 표면. 개별 카드 규칙(.dashboard-next-card 등)이 배경·테두리색을
+   덮어쓸 수 있도록 반드시 그보다 먼저 온다. */
+.student-dashboard .dashboard-card {
+  border: 1px solid var(--dashboard-line);
+  border-radius: 16px;
+  background: var(--card, #fff);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(17, 24, 39, .04), 0 4px 16px -10px rgba(17, 24, 39, .1));
 }
 
 .student-dashboard .document-sheet {
@@ -167,217 +80,9 @@
   stroke-width: 1.8;
 }
 
-.student-dashboard .school-material-copy {
-  display: grid;
-  min-width: 0;
-  gap: 4px;
-}
 
-.student-dashboard .school-material-copy > span {
-  color: #718078;
-  font-size: 10.5px;
-  font-weight: 720;
-}
-
-.student-dashboard .school-material-copy strong {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--dashboard-ink);
-  font-size: 12.5px;
-  font-weight: 740;
-  line-height: 1.4;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.student-dashboard .school-material-copy small {
-  color: var(--dashboard-muted);
-  font-size: 10.5px;
-  font-weight: 540;
-  line-height: 1.4;
-}
-
-.student-dashboard .cpx-card-content {
-  display: grid;
-  min-height: 0;
-  flex: 1;
-  grid-template-columns: minmax(0, 1fr) minmax(154px, .58fr);
-  gap: 4px;
-}
-
-.student-dashboard .cpx-card-copy {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.student-dashboard .cpx-card-copy .continue-topic-row {
-  margin-top: 24px;
-}
-
-.student-dashboard .cpx-practice-points {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 0;
-  margin: 21px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.student-dashboard .cpx-practice-points li {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--dashboard-forest);
-  font-size: 11.5px;
-  font-weight: 680;
-  line-height: 1.3;
-  white-space: nowrap;
-}
-
-.student-dashboard .cpx-practice-points li:not(:last-child)::after {
-  margin: 0 7px;
-  color: #98b5a5;
-  content: '→';
-  font-size: 10px;
-}
-
-.student-dashboard .cpx-practice-points li > span {
-  color: #7b9d8b;
-  font-size: 9px;
-  font-weight: 760;
-  letter-spacing: .04em;
-}
-
-.student-dashboard .cpx-learning-card .continue-actions {
-  margin-top: auto;
-  padding-top: 20px;
-}
-
-.student-dashboard .cpx-learning-card .dashboard-primary-action {
-  min-width: 166px;
-}
-
-.student-dashboard .cpx-character-area {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-
-.student-dashboard .cpx-character-area::before {
-  position: absolute;
-  right: -8px;
-  bottom: 3px;
-  width: 170px;
-  height: 170px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .46);
-  content: '';
-}
-
-.student-dashboard .cpx-speech-bubble {
-  position: absolute;
-  z-index: 2;
-  top: 28px;
-  right: 0;
-  width: max-content;
-  max-width: 132px;
-  padding: 7px 10px;
-  border: 1px solid rgba(117, 166, 142, .26);
-  border-radius: 11px 11px 3px 11px;
-  background: rgba(255, 255, 255, .88);
-  box-shadow: 0 8px 18px -16px rgba(31, 101, 72, .45);
-  color: #52705f;
-  font-size: 10.5px;
-  font-weight: 650;
-  line-height: 1.35;
-  white-space: nowrap;
-}
-
-.student-dashboard .cpx-character-image {
-  position: absolute;
-  z-index: 1;
-  right: -3px;
-  bottom: -28px;
-  width: min(100%, 178px);
-  height: auto;
-  filter: drop-shadow(0 14px 15px rgba(42, 77, 59, .11));
-}
-
-.student-dashboard .summary-card-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  width: fit-content;
-  margin-top: 13px;
-  color: var(--dashboard-forest);
-  font-size: 12.5px;
-  font-weight: 720;
-  text-decoration: none;
-}
-
-.student-dashboard .summary-card-action:hover {
-  color: var(--dashboard-button);
-}
-
-.student-dashboard .summary-card-action svg {
-  width: 14px;
-  height: 14px;
-}
-
-@media (max-width: 920px) {
-  .student-dashboard .dashboard-main {
-    grid-template-columns: 1fr;
-  }
-
-  .student-dashboard .cpx-card-content {
-    grid-template-columns: minmax(0, 1fr) 210px;
-  }
-
-  .student-dashboard .school-card-content {
-    grid-template-columns: minmax(0, 1fr) 220px;
-  }
-
-  .student-dashboard .cpx-character-image {
-    width: 190px;
-  }
-}
-
-@media (max-width: 720px) {
-  .student-dashboard .continue-summary-card {
-    order: -1;
-  }
-}
 
 @media (max-width: 480px) {
-  .student-dashboard .continue-learning-card {
-    min-height: 380px;
-  }
-
-  .student-dashboard .school-card-content {
-    grid-template-columns: minmax(0, 1fr) 118px;
-    gap: 9px;
-  }
-
-  .student-dashboard .school-primary-action {
-    min-height: 54px;
-    padding: 8px 10px;
-    font-size: 11.5px;
-    line-height: 1.3;
-    white-space: normal;
-  }
-
-  .student-dashboard .school-material-panel {
-    padding: 11px;
-    border-radius: 15px;
-  }
-
-  .student-dashboard .school-document-visual {
-    width: 84px;
-    height: 96px;
-  }
 
   .student-dashboard .document-sheet {
     width: 55px;
@@ -387,46 +92,6 @@
   .student-dashboard .document-book {
     width: 32px;
     height: 32px;
-  }
-
-  .student-dashboard .school-material-copy strong {
-    font-size: 11px;
-  }
-
-  .student-dashboard .school-material-copy small {
-    font-size: 9.5px;
-  }
-
-  .student-dashboard .cpx-card-content {
-    grid-template-columns: minmax(0, 1fr) 116px;
-  }
-
-  .student-dashboard .cpx-practice-points {
-    display: grid;
-    gap: 6px;
-  }
-
-  .student-dashboard .cpx-practice-points li:not(:last-child)::after {
-    display: none;
-  }
-
-  .student-dashboard .cpx-character-area::before {
-    right: -24px;
-    width: 130px;
-    height: 130px;
-  }
-
-  .student-dashboard .cpx-speech-bubble {
-    top: 34px;
-    right: -7px;
-    max-width: 118px;
-    padding: 6px 8px;
-    font-size: 9.5px;
-  }
-
-  .student-dashboard .cpx-character-image {
-    right: -12px;
-    width: 132px;
   }
 }
 
@@ -485,7 +150,10 @@
   margin: 0;
   color: var(--dashboard-ink);
   letter-spacing: -.03em;
-  overflow-wrap: anywhere;
+  /* anywhere 는 한국어에서 단어 중간을 끊는다("내신 대비 문 / 항 생성하기").
+     어절 단위로 끊고, 한 어절이 칸을 넘칠 때만 강제 분리한다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .student-dashboard .dashboard-next-copy h2 {
@@ -509,6 +177,56 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 28px;
+}
+
+/* CTA 두 개는 기본 규칙이 없어 평문 링크로 렌더됐다(배경·패딩 0, 화살표 줄바꿈).
+   기하는 .ll-dashboard-page .btn 기준(높이 44 · radius 12 · padding 0 18). */
+.student-dashboard .dashboard-primary-action,
+.student-dashboard .dashboard-secondary-action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+
+.student-dashboard .dashboard-primary-action {
+  min-width: 166px;
+  border: 1px solid transparent;
+  background: var(--dashboard-forest);
+  color: #fff;
+}
+
+.student-dashboard .dashboard-primary-action:hover {
+  background: var(--dashboard-button);
+}
+
+.student-dashboard .dashboard-secondary-action {
+  border: 1px solid color-mix(in srgb, var(--dashboard-forest) 35%, var(--dashboard-line));
+  background: var(--card, #fff);
+  color: var(--dashboard-forest);
+  white-space: nowrap;
+}
+
+.student-dashboard .dashboard-secondary-action:hover {
+  background: var(--sage, #eaf3ed);
+}
+
+.student-dashboard .dashboard-primary-action svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  transition: transform .18s ease;
+}
+
+.student-dashboard .dashboard-primary-action:hover svg {
+  transform: translateX(2px);
 }
 
 .student-dashboard .dashboard-material-summary {
@@ -731,10 +449,54 @@
   line-height: 1.15;
 }
 
+/* 요일 스트립 — display 지정이 없어 월~일이 세로로 쌓였고, 각 날짜 마커(i)는
+   규칙이 하나도 없어 폭 0으로 사라져 '오늘'·'학습 완료'가 표시되지 않았다. */
 .student-dashboard .dashboard-weekly-card .study-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
   margin: 26px 0 0;
-  padding: 0;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--dashboard-line);
   list-style: none;
+}
+
+.student-dashboard .study-day {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: var(--dashboard-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-dashboard .study-day > i {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--dashboard-line);
+  border-radius: 999px;
+  background: var(--card, #fff);
+  color: transparent;
+  font-style: normal;
+}
+
+.student-dashboard .study-day > i svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.6;
+}
+
+.student-dashboard .study-day > i.is-complete {
+  border-color: transparent;
+  background: var(--dashboard-forest);
+  color: #fff;
+}
+
+.student-dashboard .study-day > i.is-today {
+  border-color: var(--dashboard-forest);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dashboard-forest) 14%, transparent);
 }
 
 .student-dashboard .dashboard-next-queue {
@@ -800,6 +562,15 @@
   font-size: 11.5px;
   font-weight: 520;
   line-height: 1.5;
+}
+
+/* 우선 학습 2열은 카드가 600px 이상일 때만 성립한다(텍스트 칼럼 = 카드폭 - 286px:
+   좌우 패딩 64 + 갭 28 + 자료 패널 194). 컷이 960px 이어서 961~1280px 구간에서는
+   텍스트 칼럼이 176px까지 좁아졌다(1002px 실측). */
+@media (max-width: 1280px) {
+  .student-dashboard .dashboard-priority-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 960px) {
