@@ -12,10 +12,10 @@ type AccountType = 'student' | 'professor';
 
 /** 인증 성공 후 이동할 경로 — 보호 경로에서 왔으면 next, 아니면 앱 홈(/dashboard). (/ 는 이제 랜딩) */
 function postAuthDest(): string {
-  if (typeof window === 'undefined') return '/dashboard';
+  if (typeof window === 'undefined') return '/';
   const next = new URLSearchParams(window.location.search).get('next');
   if (next && next.startsWith('/') && !next.startsWith('/login')) return next;
-  return '/dashboard';
+  return '/';
 }
 
 export default function LoginPage() {
