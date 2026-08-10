@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "cpx:smoke": "node scripts/test-cpx-deployment.mjs",
     "cpx:bundle-check": "node scripts/check-cpx-client-bundle.mjs",
+    "deploy:check": "node scripts/assert-production-deploy.mjs",
+    "deploy:prod": "npm run deploy:check && vercel --prod",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",
     "db:types:linked": "supabase gen types typescript --linked > lib/types/database.generated.ts",
     "db:reset": "supabase db reset",
