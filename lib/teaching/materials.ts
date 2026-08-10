@@ -47,7 +47,7 @@ export async function extractTeachingMaterial(file: File): Promise<{
   const type = materialFileType(file);
   const pages = type === 'pptx'
     ? parsePptx(buffer).slides.map((slide) => ({ pageIndex: slide.index, text: slide.text }))
-    : await extractPdfTextPages(buffer);
+    : await extractPdfTextPagesWithFallback(buffer);
   const usable = pages.filter((page) => page.text.trim());
   if (usable.length === 0) {
     throw new ApiException('empty_material', '강의자료에서 읽을 수 있는 텍스트를 찾지 못했습니다.', 400);
@@ -56,6 +56,44 @@ export async function extractTeachingMaterial(file: File): Promise<{
     pages,
     text: pages.map((page) => `[${type === 'pptx' ? '슬라이드' : '페이지'} ${page.pageIndex}] ${page.text}`).join('\n').slice(0, 500_000),
   };
+}
+
+async function extractPdfTextPagesWithFallback(buffer: ArrayBuffer): Promise<CachedMaterialPage[]> {
+  const fallbackErrors: string[] = [];
+
+  try {
+    const { default: pdfParse } = await import('pdf-parse');
+    const pages: CachedMaterialPage[] = [];
+    let pageIndex = 0;
+    await pdfParse(Buffer.from(buffer), {
+      max: 200,
+      pagerender: async (pageData: { getTextContent: (options?: object) => Promise<{ items: Array<{ str?: string }> }> }) => {
+        pageIndex += 1;
+        const content = await pageData.getTextContent({
+          normalizeWhitespace: false,
+          disableCombineTextItems: false,
+        });
+        const text = content.items
+          .map((item) => item.str ?? '')
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        pages.push({ pageIndex, text });
+        return text;
+      },
+    });
+    if (pages.length > 0) return pages;
+    fallbackErrors.push('pdf_parse:no_pages');
+  } catch (error) {
+    fallbackErrors.push(`pdf_parse:${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  try {
+    return await extractPdfTextPages(buffer);
+  } catch (error) {
+    fallbackErrors.push(`pdfjs:${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`pdf_extraction_failed:${fallbackErrors.join(' | ')}`);
+  }
 }
 
 export async function getOwnedTeachingMaterial(materialId: string, professorId: string) {
