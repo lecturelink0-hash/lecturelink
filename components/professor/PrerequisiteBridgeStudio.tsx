@@ -29,17 +29,23 @@ import "./prerequisite-bridge.css";
 type BridgeResult = {
   artifactId: string;
   title: string;
+  topic: string;
+  designStyle: "medical-clean" | "hand-drawn" | "blueprint" | "editorial";
   courseConnection: string;
+  lectureMap: string[];
   estimatedMinutes: number;
   prerequisiteConcepts: Array<{
     name: string;
     whyNeeded: string;
     quickReview: string;
-    sourcePages: number[];
+    visualCue: string;
   }>;
   coreFlow: string[];
   commonConfusions: Array<{ confusion: string; correction: string }>;
   readinessCheck: Array<{ question: string; answer: string }>;
+  externalSources: Array<{ title: string; organization: string; url: string }>;
+  visualDataUrl?: string | null;
+  textAudit?: { status: "passed" | "needs_review"; issues: string[] };
 };
 
 const ACCEPT =
@@ -54,6 +60,14 @@ const LEARNERS = [
   "기타",
 ] as const;
 type LearnerLevel = (typeof LEARNERS)[number];
+const DESIGN_STYLES = [
+  { value: "auto", label: "자동 추천", note: "주제 구조에 맞춰 선택" },
+  { value: "medical-clean", label: "메디컬 클린", note: "해부·임상 흐름" },
+  { value: "hand-drawn", label: "손그림 노트", note: "기억법·핵심 개념" },
+  { value: "blueprint", label: "블루프린트", note: "기전·경로" },
+  { value: "editorial", label: "에디토리얼", note: "비교·전체 개요" },
+] as const;
+type DesignStyle = (typeof DESIGN_STYLES)[number]["value"];
 
 function toPlainText(result: BridgeResult) {
   return [
@@ -88,8 +102,8 @@ export function PrerequisiteBridgeStudio() {
     useState<LearnerLevel>("의학과 2학년");
   const [customLearner, setCustomLearner] = useState("");
   const [reviewLength, setReviewLength] = useState("10분");
+  const [designStyle, setDesignStyle] = useState<DesignStyle>("auto");
   const [emphasis, setEmphasis] = useState("");
-  const [includeReadiness, setIncludeReadiness] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BridgeResult | null>(null);
@@ -139,8 +153,9 @@ export function PrerequisiteBridgeStudio() {
         learnerLevel === "기타" ? customLearner.trim() : learnerLevel,
       );
       form.append("reviewLength", reviewLength);
+      form.append("designStyle", designStyle);
       form.append("emphasis", emphasis);
-      form.append("includeReadiness", String(includeReadiness));
+      form.append("includeReadiness", "true");
       const response = await fetch("/api/professor/bridge/generate", {
         method: "POST",
         body: form,
@@ -326,18 +341,33 @@ export function PrerequisiteBridgeStudio() {
                       maxLength={300}
                     />
                   </label>
-                  <label className="bridge-check-option">
-                    <input
-                      type="checkbox"
-                      checked={includeReadiness}
-                      onChange={(event) =>
-                        setIncludeReadiness(event.target.checked)
-                      }
-                    />
+                  <div className="bridge-check-option">
                     <span>
-                      <b>예습 확인 문항 2개 포함</b>
+                      <b>선수지식 확인 문항 2개 포함</b>
+                      <small>문제 아래에 정답과 짧은 해설이 작게 표시됩니다.</small>
                     </span>
-                  </label>
+                  </div>
+                </div>
+
+                <div className="design-group full">
+                  <div className="design-group-heading">
+                    <h3>인포그래픽 디자인</h3>
+                    <div className="tag"><Badge variant="default">자동 추천</Badge></div>
+                  </div>
+                  <div className="bridge-style-grid" role="radiogroup" aria-label="인포그래픽 디자인">
+                    {DESIGN_STYLES.map((style) => (
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={designStyle === style.value}
+                        className={designStyle === style.value ? "is-selected" : ""}
+                        onClick={() => setDesignStyle(style.value)}
+                        key={style.value}
+                      >
+                        <b>{style.label}</b><span>{style.note}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </section>
@@ -351,7 +381,7 @@ export function PrerequisiteBridgeStudio() {
           )}
 
           {result && (
-            <article className="bridge-result card pad">
+            <article className={`bridge-result bridge-infographic style-${result.designStyle} ${result.visualDataUrl ? "has-generated-image" : ""} card pad`}>
               <div className="bridge-result-bar">
                 <div>
                   <span>AI 초안 · 교수 검토 필요</span>
@@ -369,9 +399,31 @@ export function PrerequisiteBridgeStudio() {
                 </div>
               </div>
               <header>
+                <img className="bridge-logo" src="/lecturelink-mark.png" alt="LectureLink" />
+                <span className="bridge-topic">PRE-CLASS MAP · {result.topic}</span>
                 <h2>{result.title}</h2>
                 <p>{result.courseConnection}</p>
               </header>
+              <section className="bridge-map-section">
+                <h3>오늘 수업 한눈에 보기</h3>
+                <ol className="bridge-lecture-map">
+                  {result.lectureMap.map((item, index) => <li key={item}><span>{index + 1}</span>{item}</li>)}
+                </ol>
+              </section>
+              {result.visualDataUrl && (
+                <figure className="bridge-hero-visual">
+                  <img src={result.visualDataUrl} alt={`${result.topic} 완성형 예습 인포그래픽`} />
+                </figure>
+              )}
+              {result.visualDataUrl && result.textAudit && (
+                <div className={`bridge-audit ${result.textAudit.status}`}>
+                  <ShieldCheck size={15} />
+                  <div>
+                    <b>{result.textAudit.status === "passed" ? "자동 글자·내용 검수 통과" : "교수 검토가 필요한 항목이 있습니다"}</b>
+                    {result.textAudit.issues.length > 0 && <p>{result.textAudit.issues.join(" · ")}</p>}
+                  </div>
+                </div>
+              )}
               <section>
                 <h3>먼저 떠올릴 개념</h3>
                 {result.prerequisiteConcepts.map((item, index) => (
@@ -380,16 +432,11 @@ export function PrerequisiteBridgeStudio() {
                     <div>
                       <h4>{item.name}</h4>
                       <p>{item.quickReview}</p>
+                      <div className="bridge-visual-cue" aria-label="시각 자료 설명">{item.visualCue}</div>
                       <small>
                         <b>이번 수업에 필요한 이유</b>
                         {item.whyNeeded}
                       </small>
-                      <em>
-                        근거{" "}
-                        {item.sourcePages
-                          .map((page) => `${page}쪽`)
-                          .join(" · ")}
-                      </em>
                     </div>
                   </div>
                 ))}
@@ -420,16 +467,20 @@ export function PrerequisiteBridgeStudio() {
                   <h3>예습 확인 문항</h3>
                   <div className="bridge-checks">
                     {result.readinessCheck.map((item, index) => (
-                      <details key={item.question}>
-                        <summary>
-                          {index + 1}. {item.question}
-                        </summary>
-                        <p>{item.answer}</p>
-                      </details>
+                      <div className="bridge-question" key={item.question}>
+                        <b>Q{index + 1}. {item.question}</b>
+                        <small>정답 · {item.answer}</small>
+                      </div>
                     ))}
                   </div>
                 </section>
               )}
+              <footer className="bridge-sources">
+                <b>검증된 외부 의학자료</b>
+                {result.externalSources.map((source, index) => (
+                  <a href={source.url} target="_blank" rel="noreferrer" key={source.url}>{index + 1}. {source.organization} · {source.title}</a>
+                ))}
+              </footer>
             </article>
           )}
         </main>
@@ -503,10 +554,12 @@ export function PrerequisiteBridgeStudio() {
                 <strong>{reviewLength}</strong>
               </div>
               <div className="summary-item">
+                <span>디자인</span>
+                <strong>{DESIGN_STYLES.find((style) => style.value === designStyle)?.label}</strong>
+              </div>
+              <div className="summary-item">
                 <span>확인 문항</span>
-                <strong>
-                  {includeReadiness ? "2문항 포함" : "포함 안 함"}
-                </strong>
+                <strong>선수지식 2문항</strong>
               </div>
             </dl>
             <button
