@@ -9,6 +9,40 @@ import { createServerClient } from '@/lib/db/server';
 import { loadTeachingMaterialFile } from '@/lib/teaching/materials';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_INFOGRAPHIC_BYTES = 1_500_000;
+
+async function optimizeInfographic(dataUrl: string) {
+  const match = dataUrl.match(/^data:image\/(?:png|jpeg|webp);base64,(.+)$/s);
+  if (!match) return dataUrl;
+  const original = Buffer.from(match[1], 'base64');
+  if (original.byteLength <= MAX_INFOGRAPHIC_BYTES) return dataUrl;
+
+  try {
+    const { createCanvas, loadImage } = await import('canvas');
+    const image = await loadImage(original);
+    const maxWidth = 1440;
+    const scale = Math.min(1, maxWidth / image.width);
+    const canvas = createCanvas(
+      Math.max(1, Math.round(image.width * scale)),
+      Math.max(1, Math.round(image.height * scale)),
+    );
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#fffdf7';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    for (const quality of [0.88, 0.78, 0.68, 0.58]) {
+      const compressed = canvas.toBuffer('image/jpeg', { quality, progressive: true });
+      if (compressed.byteLength <= MAX_INFOGRAPHIC_BYTES) {
+        return `data:image/jpeg;base64,${compressed.toString('base64')}`;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
 
 async function generateMedicalArtwork(result: z.infer<typeof resultSchema>) {
   const key = process.env.GEMINI_API_KEY;
@@ -32,10 +66,10 @@ Representative examples:
 ${result.representativeExamples.map((item) => `${item.group}: ${item.examples.join(' / ')}`).join('\n')}
 Exam-eve points:
 ${result.mustRemember.map((item, index) => `${index + 1}. ${item}`).join('\n')}
-Two prerequisite questions:
+${result.readinessCheck.length === 2 ? `Two prerequisite questions:
 Q1. ${result.readinessCheck[0].question}
 Q2. ${result.readinessCheck[1].question}
-Tiny answer line: 정답 1) ${result.readinessCheck[0].answer}  2) ${result.readinessCheck[1].answer}
+Tiny answer line: 정답 1) ${result.readinessCheck[0].answer}  2) ${result.readinessCheck[1].answer}` : 'Do not add any prerequisite questions or answer section.'}
 
 VISUAL DESIGN
 - Vertical 2:3 portrait, high resolution, bright ivory/white background.
@@ -45,7 +79,7 @@ VISUAL DESIGN
 - Visuals must dominate. Use short labels, generous whitespace, and large legible type.
 - Turn classification into a branching map, mechanisms into cause→effect arrows, and comparisons into side-by-side visuals.
 - Add a highlighted handwritten area titled exactly “시험 직전, 이것만은 기억!” containing the exam-eve points.
-- Put the two questions at the bottom; answers must be faint and small.
+${result.readinessCheck.length === 2 ? '- Put the two questions at the bottom; answers must be faint and small.' : '- Do not reserve space for questions or answers.'}
 - Put a small tasteful LectureLink book-and-ECG logo with exact text “LECTURELINK” in one bottom corner.
 
 AVOID
@@ -72,7 +106,7 @@ TEXT ACCURACY IS CRITICAL. Spell every Korean/English term supplied above exactl
     const image = parts.find((part) => part.inlineData?.data || part.inline_data?.data);
     const data = image?.inlineData?.data ?? image?.inline_data?.data;
     const mime = image?.inlineData?.mimeType ?? image?.inline_data?.mime_type ?? 'image/png';
-    return data ? `data:${mime};base64,${data}` : null;
+    return data ? await optimizeInfographic(`data:${mime};base64,${data}`) : null;
   } catch {
     return null;
   }
@@ -162,7 +196,7 @@ const resultSchema = z.object({
   readinessCheck: z.array(z.object({
     question: z.string().min(1),
     answer: z.string().min(1),
-  })).length(2),
+  })).max(2),
   externalSources: z.array(z.object({
     title: z.string().min(1),
     organization: z.string().min(1),
@@ -190,7 +224,7 @@ const outputTool = {
       representativeExamples: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['group', 'examples'], properties: { group: { type: 'string' }, examples: { type: 'array', minItems: 1, maxItems: 4, items: { type: 'string' } } } } },
       mustRemember: { type: 'array', minItems: 4, maxItems: 7, items: { type: 'string' } },
       commonConfusions: { type: 'array', maxItems: 4, items: { type: 'object', required: ['confusion', 'correction'], properties: { confusion: { type: 'string' }, correction: { type: 'string' } } } },
-      readinessCheck: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'object', required: ['question', 'answer'], properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
+      readinessCheck: { type: 'array', maxItems: 2, items: { type: 'object', required: ['question', 'answer'], properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
       externalSources: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['title', 'organization', 'url'], properties: { title: { type: 'string' }, organization: { type: 'string' }, url: { type: 'string' } } } },
     },
   },
@@ -255,7 +289,7 @@ export const POST = withErrorHandling(async (request: Request) => {
 - professorEmphasis에는 별표, 밑줄, 색상 강조, 반복 언급, “중요/주의/금기/시험” 표시가 있는 내용을 우선 수집한다.
 - prerequisiteConcepts는 해부·생리·병태생리·영상 또는 감별에 필요한 3~5개 핵심 선수지식이다.
 - visualCue에는 각 개념을 설명할 정확한 그림/도식 지시를 한 문장으로 쓴다.
-- readinessCheck는 강의록 암기가 아니라 선수지식 이해를 확인하는 문항을 정확히 2개 만든다. 답은 하단에 작게 넣을 수 있도록 한두 문장으로 쓴다.
+- readinessCheck는 사용자가 포함을 선택했을 때만 강의록 암기가 아닌 선수지식 이해 문항을 정확히 2개 만든다. 선택하지 않았다면 반드시 빈 배열로 둔다. 답은 하단에 작게 넣을 수 있도록 한두 문장으로 쓴다.
 - representativeExamples는 분류별 대표 예시만 1~4개 고르고 세부 항목을 전부 나열하지 않는다.
 - mustRemember는 시험 직전 확인할 4~7개의 짧은 문구다. 교수 강조, 금기, 대표 부작용, 비교 포인트, 인과 연결을 우선한다.
 - 외부 근거는 NCBI/NIH, WHO, CDC, 전문학회 공식 가이드라인, Merck Manual Professional 등 검증된 기관 자료만 사용한다. 존재 여부가 불확실한 URL은 만들지 말고 안정적인 공식 페이지 URL만 제시한다.
@@ -265,11 +299,17 @@ export const POST = withErrorHandling(async (request: Request) => {
 - 디자인이 auto이면 주제의 정보 구조에 맞춰 스타일을 선택한다: 기전/경로는 blueprint, 해부/임상 흐름은 medical-clean, 기억법은 hand-drawn, 비교/개요는 editorial.`,
     tools: [outputTool],
     tool_choice: { type: 'tool', name: 'create_prerequisite_bridge' },
-    messages: [{ role: 'user', content: `수업 주제: 강의자료에서 자동 추출\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n디자인: ${settings.designStyle === 'auto' ? '주제에 맞게 자동 추천' : settings.designStyle}\n교수 강조사항: ${settings.emphasis || '없음'}\n선수지식 확인 문항: 정확히 2개\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
+    messages: [{ role: 'user', content: `수업 주제: 강의자료에서 자동 추출\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n디자인: ${settings.designStyle === 'auto' ? '주제에 맞게 자동 추천' : settings.designStyle}\n교수 강조사항: ${settings.emphasis || '없음'}\n선수지식 확인 문항: ${settings.includeReadiness ? '정확히 2개 포함' : '포함하지 않음, readinessCheck는 빈 배열'}\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
   }), { maxAttempts: 3 });
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
   if (!block) throw new ApiException('generation_failed', '선수지식 복습자료 초안을 만들지 못했습니다.', 502);
   const result = resultSchema.parse(block.input);
+  if (settings.includeReadiness && result.readinessCheck.length !== 2) {
+    throw new ApiException('generation_failed', '선수지식 확인 문항 2개를 만들지 못했습니다. 다시 시도해주세요.', 502);
+  }
+  if (!settings.includeReadiness && result.readinessCheck.length !== 0) {
+    result.readinessCheck = [];
+  }
   const trustedHosts = ['ncbi.nlm.nih.gov', 'nih.gov', 'who.int', 'cdc.gov', 'merckmanuals.com', 'heart.org', 'escardio.org', 'thoracic.org', 'radiologyinfo.org'];
   const trustedCandidates = result.externalSources.filter((source) => {
     try {

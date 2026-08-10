@@ -17,11 +17,13 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Segmented } from "@/components/ui/Segmented";
 import { UploadNextSteps } from "@/components/ui/UploadNextSteps";
+import { readApiResponse } from "@/lib/utils/read-api-response";
 import {
   CourseMaterialSelector,
   uploadTeachingMaterial,
   waitForTeachingMaterialReady,
 } from "./CourseMaterialSelector";
+import { ProfessorTaskProgress } from "./ProfessorTaskProgress";
 import "@/components/faculty/formative-studio.css";
 import "./course-material-selector.css";
 import "./prerequisite-bridge.css";
@@ -104,6 +106,7 @@ export function PrerequisiteBridgeStudio() {
   const [reviewLength, setReviewLength] = useState("10분");
   const [designStyle, setDesignStyle] = useState<DesignStyle>("auto");
   const [emphasis, setEmphasis] = useState("");
+  const [includeReadiness, setIncludeReadiness] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BridgeResult | null>(null);
@@ -155,16 +158,20 @@ export function PrerequisiteBridgeStudio() {
       form.append("reviewLength", reviewLength);
       form.append("designStyle", designStyle);
       form.append("emphasis", emphasis);
-      form.append("includeReadiness", "true");
+      form.append("includeReadiness", String(includeReadiness));
       const response = await fetch("/api/professor/bridge/generate", {
         method: "POST",
         body: form,
       });
-      const payload = await response.json();
+      const payload = await readApiResponse<BridgeResult>(
+        response,
+        "예습자료를 만들지 못했습니다.",
+      );
       if (!response.ok || !payload.ok)
         throw new Error(
           payload?.error?.message ?? "예습자료를 만들지 못했습니다.",
         );
+      if (!payload.data) throw new Error("생성된 예습자료를 불러오지 못했습니다.");
       setResult(payload.data);
     } catch (cause) {
       setError(
@@ -341,12 +348,17 @@ export function PrerequisiteBridgeStudio() {
                       maxLength={300}
                     />
                   </label>
-                  <div className="bridge-check-option">
+                  <label className="bridge-check-option">
+                    <input
+                      type="checkbox"
+                      checked={includeReadiness}
+                      onChange={(event) => setIncludeReadiness(event.target.checked)}
+                    />
                     <span>
                       <b>선수지식 확인 문항 2개 포함</b>
                       <small>문제 아래에 정답과 짧은 해설이 작게 표시됩니다.</small>
                     </span>
-                  </div>
+                  </label>
                 </div>
 
                 <div className="design-group full">
@@ -378,6 +390,10 @@ export function PrerequisiteBridgeStudio() {
               <AlertTriangle size={17} />
               {error}
             </div>
+          )}
+
+          {loading && (
+            <ProfessorTaskProgress description="강의자료를 분석하고 한 페이지 예습 인포그래픽을 생성한 뒤 글자와 의학 내용을 검수하고 있습니다." />
           )}
 
           {result && (
@@ -559,7 +575,7 @@ export function PrerequisiteBridgeStudio() {
               </div>
               <div className="summary-item">
                 <span>확인 문항</span>
-                <strong>선수지식 2문항</strong>
+                <strong>{includeReadiness ? "선수지식 2문항" : "포함 안 함"}</strong>
               </div>
             </dl>
             <button

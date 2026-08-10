@@ -16,11 +16,13 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Segmented } from "@/components/ui/Segmented";
 import { UploadNextSteps } from "@/components/ui/UploadNextSteps";
+import { readApiResponse } from "@/lib/utils/read-api-response";
 import {
   CourseMaterialSelector,
   uploadTeachingMaterial,
   waitForTeachingMaterialReady,
 } from "./CourseMaterialSelector";
+import { ProfessorTaskProgress } from "./ProfessorTaskProgress";
 import "@/components/faculty/formative-studio.css";
 import "./course-material-selector.css";
 import "./material-improvement.css";
@@ -110,12 +112,16 @@ export function MaterialImprovementStudio() {
         method: "POST",
         body: form,
       });
-      const payload = await response.json();
+      const payload = await readApiResponse<Review>(
+        response,
+        "자료를 분석하지 못했습니다.",
+      );
       if (!response.ok || !payload.ok) {
         throw new Error(
           payload?.error?.message ?? "자료를 분석하지 못했습니다.",
         );
       }
+      if (!payload.data) throw new Error("분석 결과를 불러오지 못했습니다.");
       setReview(payload.data);
     } catch (cause) {
       setError(
@@ -322,6 +328,10 @@ export function MaterialImprovementStudio() {
               <AlertTriangle size={17} />
               {error}
             </div>
+          )}
+
+          {loading && (
+            <ProfessorTaskProgress description="페이지별 정보 밀도와 흐름을 분석하고, 원문을 보존한 개선안을 만들고 있습니다." />
           )}
 
           {review && (

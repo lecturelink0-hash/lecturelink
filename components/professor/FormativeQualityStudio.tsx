@@ -16,6 +16,8 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { UploadDropZone } from '@/components/ui/UploadDropZone';
 import { UploadNextSteps } from '@/components/ui/UploadNextSteps';
+import { readApiResponse } from '@/lib/utils/read-api-response';
+import { ProfessorTaskProgress } from './ProfessorTaskProgress';
 import '@/components/faculty/formative-studio.css';
 import './formative-quality.css';
 
@@ -65,8 +67,9 @@ export function FormativeQualityStudio() {
 
     try {
       const response = await fetch('/api/professor/quality/analyze', { method: 'POST', body: form });
-      const payload = await response.json();
+      const payload = await readApiResponse<Review>(response, '문항 검토를 완료하지 못했습니다.');
       if (!response.ok || !payload.ok) throw new Error(payload?.error?.message ?? '문항 검토를 완료하지 못했습니다.');
+      if (!payload.data) throw new Error('문항 검토 결과를 불러오지 못했습니다.');
       setReview(payload.data);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '문항 검토를 완료하지 못했습니다.');
@@ -166,6 +169,10 @@ export function FormativeQualityStudio() {
           )}
 
           {error && <div className="studio-error" role="alert"><AlertTriangle size={17} />{error}</div>}
+
+          {loading && (
+            <ProfessorTaskProgress description="문항의 위험 신호를 확인하고, 강의자료가 있으면 수업 범위와의 정렬까지 검토하고 있습니다." />
+          )}
 
           {review && (
             <section className="quality-results card pad">
