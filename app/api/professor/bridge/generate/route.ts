@@ -7,6 +7,7 @@ import { parsePptx } from '@/lib/extract/pptx';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import { createServerClient } from '@/lib/db/server';
 import { loadTeachingMaterialFile } from '@/lib/teaching/materials';
+import { findVerifiedPubMedSources } from '@/lib/medical-sources/pubmed';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_INFOGRAPHIC_BYTES = 1_500_000;
@@ -168,6 +169,24 @@ const requestSchema = z.object({
   includeReadiness: z.enum(['true', 'false']).transform((value) => value === 'true'),
 });
 
+const sourcePlanSchema = z.object({
+  topicEnglish: z.string().min(2).max(120),
+  searchQueries: z.array(z.string().min(2).max(160)).min(2).max(4),
+});
+
+const sourcePlanTool = {
+  name: 'plan_verified_medical_sources',
+  description: 'Plan precise English PubMed searches for prerequisite medical knowledge needed before a lecture.',
+  input_schema: {
+    type: 'object',
+    required: ['topicEnglish', 'searchQueries'],
+    properties: {
+      topicEnglish: { type: 'string' },
+      searchQueries: { type: 'array', minItems: 2, maxItems: 4, items: { type: 'string' } },
+    },
+  },
+} as const;
+
 const resultSchema = z.object({
   title: z.string().min(1),
   topic: z.string().min(1),
@@ -197,11 +216,12 @@ const resultSchema = z.object({
     question: z.string().min(1),
     answer: z.string().min(1),
   })).max(2),
+  sourceSearchQueries: z.array(z.string().min(2)).min(2).max(4),
   externalSources: z.array(z.object({
     title: z.string().min(1),
     organization: z.string().min(1),
     url: z.string().url(),
-  })).min(2).max(5),
+  })).max(5).default([]),
 });
 
 const outputTool = {
@@ -209,7 +229,7 @@ const outputTool = {
   description: 'Create a concise pre-class prerequisite review handout grounded in lecture material.',
   input_schema: {
     type: 'object',
-    required: ['title', 'topic', 'examScope', 'designStyle', 'courseConnection', 'lectureMap', 'professorEmphasis', 'estimatedMinutes', 'prerequisiteConcepts', 'coreFlow', 'representativeExamples', 'mustRemember', 'commonConfusions', 'readinessCheck', 'externalSources'],
+    required: ['title', 'topic', 'examScope', 'designStyle', 'courseConnection', 'lectureMap', 'professorEmphasis', 'estimatedMinutes', 'prerequisiteConcepts', 'coreFlow', 'representativeExamples', 'mustRemember', 'commonConfusions', 'readinessCheck', 'sourceSearchQueries'],
     properties: {
       title: { type: 'string' },
       topic: { type: 'string' },
@@ -225,7 +245,8 @@ const outputTool = {
       mustRemember: { type: 'array', minItems: 4, maxItems: 7, items: { type: 'string' } },
       commonConfusions: { type: 'array', maxItems: 4, items: { type: 'object', required: ['confusion', 'correction'], properties: { confusion: { type: 'string' }, correction: { type: 'string' } } } },
       readinessCheck: { type: 'array', maxItems: 2, items: { type: 'object', required: ['question', 'answer'], properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
-      externalSources: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['title', 'organization', 'url'], properties: { title: { type: 'string' }, organization: { type: 'string' }, url: { type: 'string' } } } },
+      sourceSearchQueries: { type: 'array', minItems: 2, maxItems: 4, items: { type: 'string' } },
+      externalSources: { type: 'array', maxItems: 5, items: { type: 'object', required: ['title', 'organization', 'url'], properties: { title: { type: 'string' }, organization: { type: 'string' }, url: { type: 'string' } } } },
     },
   },
 } as const;
@@ -276,6 +297,34 @@ export const POST = withErrorHandling(async (request: Request) => {
     includeReadiness: form.get('includeReadiness') ?? 'true',
   });
   const material = cached?.extracted_text || await extractMaterial(file);
+  const sourcePlanResponse = await withRetry(() => createMessage(getAnthropic(), {
+    model: MODELS.verification(),
+    max_tokens: 900,
+    system: `You are a medical librarian. Identify the lecture topic and write 2–4 concise English PubMed queries for the prerequisite anatomy, physiology, pathophysiology, imaging, or differential-diagnosis knowledge a medical student must review before this lecture. Do not search for the lecture's drug list or minor details. Return only the tool call.`,
+    tools: [sourcePlanTool],
+    tool_choice: { type: 'tool', name: 'plan_verified_medical_sources' },
+    messages: [{ role: 'user', content: `File: ${file.name}\n\nLecture material:\n${material.slice(0, 40_000)}` }],
+  }), { maxAttempts: 2 });
+  const sourcePlanBlock = sourcePlanResponse.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
+  if (!sourcePlanBlock) {
+    throw new ApiException('source_verification_failed', '외부 의학자료 검색 주제를 정하지 못했습니다. 다시 생성해주세요.', 502);
+  }
+  const sourcePlan = sourcePlanSchema.parse(sourcePlanBlock.input);
+  let pubMedEvidence = [] as Awaited<ReturnType<typeof findVerifiedPubMedSources>>;
+  try {
+    pubMedEvidence = await findVerifiedPubMedSources(sourcePlan.searchQueries, 5);
+  } catch (error) {
+    console.error('[bridge-generation]', {
+      stage: 'pubmed_source_lookup_failed',
+      cause: error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300),
+    });
+  }
+  if (pubMedEvidence.length < 2) {
+    throw new ApiException('source_verification_failed', '검증된 외부 의학자료를 충분히 확인하지 못했습니다. 다시 생성해주세요.', 502);
+  }
+  const groundedEvidence = pubMedEvidence.map((source, index) =>
+    `[${index + 1}] ${source.title}\n기관/저널: ${source.organization}\nURL: ${source.url}\n초록 근거: ${source.evidence}`,
+  ).join('\n\n');
   const response = await withRetry(() => createMessage(getAnthropic(), {
     model: MODELS.generation(),
     max_tokens: 6000,
@@ -293,49 +342,36 @@ export const POST = withErrorHandling(async (request: Request) => {
 - representativeExamples는 분류별 대표 예시만 1~4개 고르고 세부 항목을 전부 나열하지 않는다.
 - mustRemember는 시험 직전 확인할 4~7개의 짧은 문구다. 교수 강조, 금기, 대표 부작용, 비교 포인트, 인과 연결을 우선한다.
 - 외부 근거는 NCBI/NIH, WHO, CDC, 전문학회 공식 가이드라인, Merck Manual Professional 등 검증된 기관 자료만 사용한다. 존재 여부가 불확실한 URL은 만들지 말고 안정적인 공식 페이지 URL만 제시한다.
+- sourceSearchQueries에는 각 선수지식을 검증할 수 있는 PubMed 검색어를 간결한 영어로 2~4개 작성한다. 질환명만 쓰지 말고 anatomy, physiology, pathophysiology, imaging, differential diagnosis처럼 실제 선수지식 주제를 포함한다.
+- 아래에 제공된 PubMed 초록 근거만 외부 선수지식의 사실 근거로 사용한다. 초록이 뒷받침하지 않는 수치·기전·진단 기준을 새로 만들지 않는다.
+- externalSources에는 제공된 검증 완료 목록의 제목·기관·URL을 그대로 복사한다. URL을 새로 만들거나 바꾸지 않는다.
 - 업로드 자료의 페이지를 외부 선수지식의 근거인 것처럼 표시하지 않는다.
 - 강의자료에 없는 내용을 임의로 추가하지 않는다. PDF의 표현과 범위를 우선한다. 외부 자료는 선수지식 사실 확인에만 사용하고 이미지 본문에 새로운 범위를 더하지 않는다.
 - 간결하고 정확한 한국어를 사용하며 1페이지 이미지에 들어갈 양만 선별한다.
 - 디자인이 auto이면 주제의 정보 구조에 맞춰 스타일을 선택한다: 기전/경로는 blueprint, 해부/임상 흐름은 medical-clean, 기억법은 hand-drawn, 비교/개요는 editorial.`,
     tools: [outputTool],
     tool_choice: { type: 'tool', name: 'create_prerequisite_bridge' },
-    messages: [{ role: 'user', content: `수업 주제: 강의자료에서 자동 추출\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n디자인: ${settings.designStyle === 'auto' ? '주제에 맞게 자동 추천' : settings.designStyle}\n교수 강조사항: ${settings.emphasis || '없음'}\n선수지식 확인 문항: ${settings.includeReadiness ? '정확히 2개 포함' : '포함하지 않음, readinessCheck는 빈 배열'}\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
+    messages: [{ role: 'user', content: `수업 주제: 강의자료에서 자동 추출\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n디자인: ${settings.designStyle === 'auto' ? '주제에 맞게 자동 추천' : settings.designStyle}\n교수 강조사항: ${settings.emphasis || '없음'}\n선수지식 확인 문항: ${settings.includeReadiness ? '정확히 2개 포함' : '포함하지 않음, readinessCheck는 빈 배열'}\nPubMed 검색어(sourceSearchQueries에 그대로 사용): ${sourcePlan.searchQueries.join(' | ')}\n\n검증 완료된 외부 의학 근거:\n${groundedEvidence}\n\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
   }), { maxAttempts: 3 });
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
   if (!block) throw new ApiException('generation_failed', '선수지식 복습자료 초안을 만들지 못했습니다.', 502);
-  const result = resultSchema.parse(block.input);
+  const result = resultSchema.parse({
+    ...(block.input as Record<string, unknown>),
+    sourceSearchQueries: sourcePlan.searchQueries,
+  });
   if (settings.includeReadiness && result.readinessCheck.length !== 2) {
     throw new ApiException('generation_failed', '선수지식 확인 문항 2개를 만들지 못했습니다. 다시 시도해주세요.', 502);
   }
   if (!settings.includeReadiness && result.readinessCheck.length !== 0) {
     result.readinessCheck = [];
   }
-  const trustedHosts = ['ncbi.nlm.nih.gov', 'nih.gov', 'who.int', 'cdc.gov', 'merckmanuals.com', 'heart.org', 'escardio.org', 'thoracic.org', 'radiologyinfo.org'];
-  const trustedCandidates = result.externalSources.filter((source) => {
-    try {
-      const host = new URL(source.url).hostname.toLowerCase();
-      return trustedHosts.some((trusted) => host === trusted || host.endsWith(`.${trusted}`));
-    } catch {
-      return false;
-    }
+  const externalSources = pubMedEvidence.map(({ evidence: _evidence, ...source }) => source);
+  console.info('[bridge-generation]', {
+    stage: 'source_verification_complete',
+    searchQueryCount: sourcePlan.searchQueries.length,
+    pubMedCount: pubMedEvidence.length,
+    selectedCount: externalSources.length,
   });
-  const sourceChecks = await Promise.all(trustedCandidates.map(async (source) => {
-    try {
-      const response = await fetch(source.url, {
-        method: 'GET',
-        redirect: 'follow',
-        signal: AbortSignal.timeout(8_000),
-        headers: { 'User-Agent': 'LectureLink-Medical-Source-Validator/1.0' },
-      });
-      return response.ok ? source : null;
-    } catch {
-      return null;
-    }
-  }));
-  const externalSources = sourceChecks.filter((source): source is z.infer<typeof resultSchema>['externalSources'][number] => source !== null);
-  if (externalSources.length < 2) {
-    throw new ApiException('source_verification_failed', '검증된 외부 의학자료를 충분히 확인하지 못했습니다. 다시 생성해주세요.', 502);
-  }
   const verifiedResult = { ...result, externalSources };
   const visualDataUrl = await generateMedicalArtwork(verifiedResult);
   const textAudit = await auditInfographic(verifiedResult, visualDataUrl);
