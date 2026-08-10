@@ -19,7 +19,10 @@ import {
   Upload,
 } from "lucide-react";
 import "@/components/faculty/formative-studio.css";
-import { uploadTeachingMaterial } from "./CourseMaterialSelector";
+import {
+  isRetryableTeachingMaterialFailure,
+  uploadTeachingMaterial,
+} from "./CourseMaterialSelector";
 import "./course-workspace.css";
 
 type Course = {
@@ -432,9 +435,14 @@ export function CourseDetail({ courseId }: { courseId: string }) {
       .then((p) => p.ok && setData(p.data));
   }, [courseId, localPreview]);
   useEffect(() => {
-    if (localPreview || !data?.materials.some((material) => material.status === "processing")) return;
+    if (
+      localPreview ||
+      !data?.materials.some(
+        (material) => material.status === "processing" || isRetryableTeachingMaterialFailure(material),
+      )
+    ) return;
     const timer = window.setInterval(() => {
-      fetch(`/api/professor/courses/${courseId}`)
+      fetch(`/api/professor/courses/${courseId}`, { cache: "no-store" })
         .then((response) => response.json())
         .then((payload) => payload.ok && setData(payload.data));
     }, 2500);

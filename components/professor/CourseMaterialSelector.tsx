@@ -16,6 +16,22 @@ type Material = {
   error_message?: string | null;
 };
 
+const RETRYABLE_MATERIAL_ERROR_CODES = [
+  "database_failed",
+  "storage_failed",
+  "extraction_timeout",
+] as const;
+
+export function isRetryableTeachingMaterialFailure(material: Pick<Material, "status" | "error_message">) {
+  if (material.status !== "failed") return false;
+  const errorMessage = material.error_message?.toLowerCase() ?? "";
+  return RETRYABLE_MATERIAL_ERROR_CODES.some((code) => errorMessage.includes(code));
+}
+
+function teachingMaterialFailureMessage(material: Pick<Material, "error_message">) {
+  return material.error_message?.split(":").slice(1).join(":") || "강의자료 처리에 실패했습니다.";
+}
+
 const PREVIEW_COURSES: Course[] = [
   { id: "preview-cardiology", title: "순환기학", term: "2026년 2학기" },
   { id: "preview-arrhythmia", title: "부정맥 약물", term: "임상약리학" },
@@ -79,14 +95,42 @@ export async function uploadTeachingMaterial(courseId: string, file: File) {
 
 export async function waitForTeachingMaterialReady(courseId: string, materialId: string) {
   const deadline = Date.now() + 120_000;
+  let recoveryRequested = false;
+  let lastRetryableFailure = "";
   while (Date.now() < deadline) {
-    const response = await fetch(`/api/professor/teaching-materials?courseId=${encodeURIComponent(courseId)}`);
+    const response = await fetch(
+      `/api/professor/teaching-materials?courseId=${encodeURIComponent(courseId)}`,
+      { cache: "no-store" },
+    );
     const payload = await readApiResponse<Material[]>(response, "자료 처리 상태를 확인하지 못했습니다.");
     if (!response.ok || !payload.ok) throw new Error(payload?.error?.message ?? "자료 처리 상태를 확인하지 못했습니다.");
     const material = (payload.data as Material[]).find((item) => item.id === materialId);
     if (material?.status === "ready") return material;
-    if (material?.status === "failed") throw new Error(material.error_message?.split(":").slice(1).join(":") || "강의자료 처리에 실패했습니다.");
+    if (material?.status === "failed") {
+      if (!isRetryableTeachingMaterialFailure(material)) {
+        throw new Error(teachingMaterialFailureMessage(material));
+      }
+
+      lastRetryableFailure = teachingMaterialFailureMessage(material);
+      if (!recoveryRequested) {
+        recoveryRequested = true;
+        const retryResponse = await fetch(
+          `/api/professor/teaching-materials/${encodeURIComponent(materialId)}/process`,
+          { method: "POST" },
+        );
+        const retryPayload = await readApiResponse<{ id: string; status: string }>(
+          retryResponse,
+          "자료 저장을 다시 시도하지 못했습니다.",
+        );
+        if (!retryResponse.ok || !retryPayload.ok) {
+          throw new Error(retryPayload?.error?.message ?? lastRetryableFailure);
+        }
+      }
+    }
     await new Promise((resolve) => window.setTimeout(resolve, 2000));
+  }
+  if (lastRetryableFailure) {
+    throw new Error(`${lastRetryableFailure} 자동 재시도 후에도 완료되지 않았습니다. 잠시 후 다시 시도해주세요.`);
   }
   throw new Error("자료 처리 시간이 길어지고 있습니다. 통합 관리에서 상태를 확인한 뒤 다시 시도해주세요.");
 }
