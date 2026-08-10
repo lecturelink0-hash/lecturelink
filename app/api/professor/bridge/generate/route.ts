@@ -10,24 +10,151 @@ import { loadTeachingMaterialFile } from '@/lib/teaching/materials';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
+async function generateMedicalArtwork(result: z.infer<typeof resultSchema>) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key || process.env.ENABLE_BRIDGE_ARTWORK === '0') return null;
+  const model = process.env.GEMINI_IMAGE_MODEL ?? 'gemini-3-pro-image-preview';
+  const prompt = `Create a complete, fully rendered Korean medical-study infographic as ONE finished raster image. This is not supporting artwork, not a website, not a PDF layout, and not a mockup.
+
+GOAL
+A medical student should understand the conceptual structure by scanning illustrations and arrows for 1–2 minutes. Prioritize: 전체 구조 → 핵심 기전 → 대표 예시 → 시험 포인트. Do not force every detail into the page.
+
+CONTENT — use these Korean strings accurately and do not invent facts:
+Title: ${result.title}
+Topic: ${result.topic}
+Exam scope: ${result.examScope}
+Lecture map: ${result.lectureMap.join(' → ')}
+Prerequisites:
+${result.prerequisiteConcepts.map((item, index) => `${index + 1}. ${item.name}: ${item.quickReview} | visual: ${item.visualCue}`).join('\n')}
+Core relationship:
+${result.coreFlow.join(' → ')}
+Representative examples:
+${result.representativeExamples.map((item) => `${item.group}: ${item.examples.join(' / ')}`).join('\n')}
+Exam-eve points:
+${result.mustRemember.map((item, index) => `${index + 1}. ${item}`).join('\n')}
+Two prerequisite questions:
+Q1. ${result.readinessCheck[0].question}
+Q2. ${result.readinessCheck[1].question}
+Tiny answer line: 정답 1) ${result.readinessCheck[0].answer}  2) ${result.readinessCheck[1].answer}
+
+VISUAL DESIGN
+- Vertical 2:3 portrait, high resolution, bright ivory/white background.
+- Premium medical textbook illustration mixed with elegant hand-drawn study notes, similar in spirit to a polished NotebookLM learning infographic.
+- Style direction: ${result.designStyle}.
+- Use a central medically accurate anatomical/physiologic illustration, direct labels with leader lines, mini graphs, pathways, color-coded mechanisms, curved arrows, icons, and highlighting strokes.
+- Visuals must dominate. Use short labels, generous whitespace, and large legible type.
+- Turn classification into a branching map, mechanisms into cause→effect arrows, and comparisons into side-by-side visuals.
+- Add a highlighted handwritten area titled exactly “시험 직전, 이것만은 기억!” containing the exam-eve points.
+- Put the two questions at the bottom; answers must be faint and small.
+- Put a small tasteful LectureLink book-and-ECG logo with exact text “LECTURELINK” in one bottom corner.
+
+AVOID
+- Repetitive rectangular text cards, PowerPoint slide appearance, dense prose, tiny text, tables filling the page, equal emphasis for every fact, pseudo-Korean, garbled Hangul, duplicated sections, invented drug names, citations, watermarks.
+- If space becomes tight, remove decoration rather than shrinking text.
+
+TEXT ACCURACY IS CRITICAL. Spell every Korean/English term supplied above exactly. Do not introduce any content outside the analyzed lecture scope.`;
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ['IMAGE'],
+          imageConfig: { aspectRatio: '2:3' },
+        },
+      }),
+      signal: AbortSignal.timeout(90_000),
+    });
+    if (!response.ok) return null;
+    const json = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { mimeType?: string; data?: string }; inline_data?: { mime_type?: string; data?: string } }> } }> };
+    const parts = json.candidates?.[0]?.content?.parts ?? [];
+    const image = parts.find((part) => part.inlineData?.data || part.inline_data?.data);
+    const data = image?.inlineData?.data ?? image?.inline_data?.data;
+    const mime = image?.inlineData?.mimeType ?? image?.inline_data?.mime_type ?? 'image/png';
+    return data ? `data:${mime};base64,${data}` : null;
+  } catch {
+    return null;
+  }
+}
+
+const auditSchema = z.object({
+  status: z.enum(['passed', 'needs_review']),
+  issues: z.array(z.string()).max(12),
+});
+
+const auditTool = {
+  name: 'audit_infographic',
+  description: 'Audit generated Korean medical infographic text and content against the approved source plan.',
+  input_schema: {
+    type: 'object',
+    required: ['status', 'issues'],
+    properties: {
+      status: { type: 'string', enum: ['passed', 'needs_review'] },
+      issues: { type: 'array', maxItems: 12, items: { type: 'string' } },
+    },
+  },
+} as const;
+
+async function auditInfographic(result: z.infer<typeof resultSchema>, visualDataUrl: string | null) {
+  if (!visualDataUrl) return { status: 'needs_review' as const, issues: ['완성형 이미지가 생성되지 않았습니다.'] };
+  const match = visualDataUrl.match(/^data:(image\/(?:png|jpeg|webp));base64,(.+)$/s);
+  if (!match) return { status: 'needs_review' as const, issues: ['이미지 형식을 검수할 수 없습니다.'] };
+  try {
+    const expected = [
+      result.title, result.examScope,
+      ...result.lectureMap,
+      ...result.prerequisiteConcepts.flatMap((item) => [item.name, item.quickReview]),
+      ...result.representativeExamples.flatMap((item) => [item.group, ...item.examples]),
+      ...result.mustRemember,
+      ...result.readinessCheck.flatMap((item) => [item.question, item.answer]),
+    ].join('\n');
+    const response = await withRetry(() => createMessage(getAnthropic(), {
+      model: MODELS.vision(),
+      max_tokens: 1800,
+      tools: [auditTool],
+      tool_choice: { type: 'tool', name: 'audit_infographic' },
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } },
+        { type: 'text', text: `당신은 생성 AI와 독립적으로 결과물을 검수하는 의학교육 편집자다. 이미지 속 모든 한글과 의학용어를 읽고 아래 승인 원문과 대조하라. 글자 깨짐, 오탈자, 누락, 중복, 잘못된 화살표, 의학적 모순, 강의 범위 밖 내용, 너무 작은 글씨가 하나라도 있으면 needs_review다. 장식적 축약은 허용하지만 의미 변화는 허용하지 않는다.\n\n승인 원문:\n${expected}` },
+      ] }],
+    }), { maxAttempts: 2 });
+    const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
+    return block ? auditSchema.parse(block.input) : { status: 'needs_review' as const, issues: ['검수 응답을 해석하지 못했습니다.'] };
+  } catch {
+    return { status: 'needs_review' as const, issues: ['자동 글자 검수를 완료하지 못했습니다. 교수 검토가 필요합니다.'] };
+  }
+}
+
 const requestSchema = z.object({
   learnerLevel: z.string().trim().min(2).max(100),
   reviewLength: z.enum(['5분', '10분', '15분']),
+  designStyle: z.enum(['auto', 'medical-clean', 'hand-drawn', 'blueprint', 'editorial']),
   emphasis: z.string().trim().max(300).default(''),
   includeReadiness: z.enum(['true', 'false']).transform((value) => value === 'true'),
 });
 
 const resultSchema = z.object({
   title: z.string().min(1),
+  topic: z.string().min(1),
+  examScope: z.string().min(1),
+  designStyle: z.enum(['medical-clean', 'hand-drawn', 'blueprint', 'editorial']),
   courseConnection: z.string().min(1),
+  lectureMap: z.array(z.string().min(1)).min(3).max(5),
+  professorEmphasis: z.array(z.string().min(1)).max(6),
   estimatedMinutes: z.number().int().min(3).max(20),
   prerequisiteConcepts: z.array(z.object({
     name: z.string().min(1),
     whyNeeded: z.string().min(1),
     quickReview: z.string().min(1),
-    sourcePages: z.array(z.number().int().min(1)).max(4),
+    visualCue: z.string().min(1),
   })).min(2).max(5),
   coreFlow: z.array(z.string().min(1)).min(2).max(6),
+  representativeExamples: z.array(z.object({
+    group: z.string().min(1),
+    examples: z.array(z.string().min(1)).min(1).max(4),
+  })).min(2).max(5),
+  mustRemember: z.array(z.string().min(1)).min(4).max(7),
   commonConfusions: z.array(z.object({
     confusion: z.string().min(1),
     correction: z.string().min(1),
@@ -35,7 +162,12 @@ const resultSchema = z.object({
   readinessCheck: z.array(z.object({
     question: z.string().min(1),
     answer: z.string().min(1),
-  })).max(2),
+  })).length(2),
+  externalSources: z.array(z.object({
+    title: z.string().min(1),
+    organization: z.string().min(1),
+    url: z.string().url(),
+  })).min(2).max(5),
 });
 
 const outputTool = {
@@ -43,15 +175,23 @@ const outputTool = {
   description: 'Create a concise pre-class prerequisite review handout grounded in lecture material.',
   input_schema: {
     type: 'object',
-    required: ['title', 'courseConnection', 'estimatedMinutes', 'prerequisiteConcepts', 'coreFlow', 'commonConfusions', 'readinessCheck'],
+    required: ['title', 'topic', 'examScope', 'designStyle', 'courseConnection', 'lectureMap', 'professorEmphasis', 'estimatedMinutes', 'prerequisiteConcepts', 'coreFlow', 'representativeExamples', 'mustRemember', 'commonConfusions', 'readinessCheck', 'externalSources'],
     properties: {
       title: { type: 'string' },
+      topic: { type: 'string' },
+      examScope: { type: 'string' },
+      designStyle: { type: 'string', enum: ['medical-clean', 'hand-drawn', 'blueprint', 'editorial'] },
       courseConnection: { type: 'string' },
+      lectureMap: { type: 'array', minItems: 3, maxItems: 5, items: { type: 'string' } },
+      professorEmphasis: { type: 'array', maxItems: 6, items: { type: 'string' } },
       estimatedMinutes: { type: 'integer', minimum: 3, maximum: 20 },
-      prerequisiteConcepts: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['name', 'whyNeeded', 'quickReview', 'sourcePages'], properties: { name: { type: 'string' }, whyNeeded: { type: 'string' }, quickReview: { type: 'string' }, sourcePages: { type: 'array', items: { type: 'integer', minimum: 1 }, maxItems: 4 } } } },
+      prerequisiteConcepts: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['name', 'whyNeeded', 'quickReview', 'visualCue'], properties: { name: { type: 'string' }, whyNeeded: { type: 'string' }, quickReview: { type: 'string' }, visualCue: { type: 'string' } } } },
       coreFlow: { type: 'array', minItems: 2, maxItems: 6, items: { type: 'string' } },
+      representativeExamples: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['group', 'examples'], properties: { group: { type: 'string' }, examples: { type: 'array', minItems: 1, maxItems: 4, items: { type: 'string' } } } } },
+      mustRemember: { type: 'array', minItems: 4, maxItems: 7, items: { type: 'string' } },
       commonConfusions: { type: 'array', maxItems: 4, items: { type: 'object', required: ['confusion', 'correction'], properties: { confusion: { type: 'string' }, correction: { type: 'string' } } } },
-      readinessCheck: { type: 'array', maxItems: 2, items: { type: 'object', required: ['question', 'answer'], properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
+      readinessCheck: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'object', required: ['question', 'answer'], properties: { question: { type: 'string' }, answer: { type: 'string' } } } },
+      externalSources: { type: 'array', minItems: 2, maxItems: 5, items: { type: 'object', required: ['title', 'organization', 'url'], properties: { title: { type: 'string' }, organization: { type: 'string' }, url: { type: 'string' } } } },
     },
   },
 } as const;
@@ -74,7 +214,7 @@ async function extractMaterial(file: File) {
   throw new ApiException('unsupported_file', 'PPTX 또는 PDF 파일만 지원합니다.', 400);
 }
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export const POST = withErrorHandling(async (request: Request) => {
   const session = await requireSession();
@@ -97,6 +237,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   const settings = requestSchema.parse({
     learnerLevel: form.get('learnerLevel'),
     reviewLength: form.get('reviewLength'),
+    designStyle: form.get('designStyle') ?? 'auto',
     emphasis: form.get('emphasis'),
     includeReadiness: form.get('includeReadiness') ?? 'true',
   });
@@ -104,18 +245,65 @@ export const POST = withErrorHandling(async (request: Request) => {
   const response = await withRetry(() => createMessage(getAnthropic(), {
     model: MODELS.generation(),
     max_tokens: 6000,
-    system: `당신은 의과대학 수업의 예습자료를 설계하는 교육 조교다. 제공된 강의자료에서 이번 수업의 주제를 먼저 파악하고, 이를 이해하는 데 실제로 필요한 기초의학 개념만 선별한다. 학생이 이미 배웠지만 잊었을 가능성이 높은 내용을 짧게 회복시키는 것이 목적이다. 새로운 강의를 만들거나 불필요한 범위를 넓히지 않는다. 모든 의학적 설명은 자료에 근거하고, 근거 슬라이드 또는 페이지를 표시한다. 결과는 수업 전 1페이지 예습자료로 읽을 수 있는 간결한 한국어로 작성한다.`,
+    system: `당신은 의과대학 수업용 1페이지 예습 인포그래픽을 설계하는 의학교육 전문가다.
+
+강의자료는 '오늘 무엇을 배울지'를 파악하는 데 사용한다. 본문은 강의 요약이 아니라 그 수업을 이해하기 전에 반드시 회복해야 할 선수지식으로 구성한다. 예를 들어 부정맥 약물 수업이면 부정맥 분류, 심장 전도계, 활동전위와 이온채널을 먼저 설명하고 약물 강의로 연결한다. 흉수 수업이면 흉막 구조, 정상 흉부영상, 흉수와 기흉의 구별을 먼저 설명한다.
+
+규칙:
+- lectureMap은 이번 수업의 전체 개요를 한눈에 보여주는 3~5단계 지도다.
+- examScope에는 강의자료에 명시된 시험 범위만 쓴다. “여기까지 시험 범위” 같은 표시는 절대 놓치지 않는다.
+- professorEmphasis에는 별표, 밑줄, 색상 강조, 반복 언급, “중요/주의/금기/시험” 표시가 있는 내용을 우선 수집한다.
+- prerequisiteConcepts는 해부·생리·병태생리·영상 또는 감별에 필요한 3~5개 핵심 선수지식이다.
+- visualCue에는 각 개념을 설명할 정확한 그림/도식 지시를 한 문장으로 쓴다.
+- readinessCheck는 강의록 암기가 아니라 선수지식 이해를 확인하는 문항을 정확히 2개 만든다. 답은 하단에 작게 넣을 수 있도록 한두 문장으로 쓴다.
+- representativeExamples는 분류별 대표 예시만 1~4개 고르고 세부 항목을 전부 나열하지 않는다.
+- mustRemember는 시험 직전 확인할 4~7개의 짧은 문구다. 교수 강조, 금기, 대표 부작용, 비교 포인트, 인과 연결을 우선한다.
+- 외부 근거는 NCBI/NIH, WHO, CDC, 전문학회 공식 가이드라인, Merck Manual Professional 등 검증된 기관 자료만 사용한다. 존재 여부가 불확실한 URL은 만들지 말고 안정적인 공식 페이지 URL만 제시한다.
+- 업로드 자료의 페이지를 외부 선수지식의 근거인 것처럼 표시하지 않는다.
+- 강의자료에 없는 내용을 임의로 추가하지 않는다. PDF의 표현과 범위를 우선한다. 외부 자료는 선수지식 사실 확인에만 사용하고 이미지 본문에 새로운 범위를 더하지 않는다.
+- 간결하고 정확한 한국어를 사용하며 1페이지 이미지에 들어갈 양만 선별한다.
+- 디자인이 auto이면 주제의 정보 구조에 맞춰 스타일을 선택한다: 기전/경로는 blueprint, 해부/임상 흐름은 medical-clean, 기억법은 hand-drawn, 비교/개요는 editorial.`,
     tools: [outputTool],
     tool_choice: { type: 'tool', name: 'create_prerequisite_bridge' },
-    messages: [{ role: 'user', content: `수업 주제: 강의자료에서 자동 추출\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n교수 강조사항: ${settings.emphasis || '없음'}\n예습 확인 문항: ${settings.includeReadiness ? '자료 내용에 근거한 짧은 확인 문항을 정확히 2개 생성' : '생성하지 말고 readinessCheck를 빈 배열로 반환'}\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
+    messages: [{ role: 'user', content: `수업 주제: 강의자료에서 자동 추출\n학습자: ${settings.learnerLevel}\n목표 복습시간: ${settings.reviewLength}\n디자인: ${settings.designStyle === 'auto' ? '주제에 맞게 자동 추천' : settings.designStyle}\n교수 강조사항: ${settings.emphasis || '없음'}\n선수지식 확인 문항: 정확히 2개\n파일명: ${file.name}\n\n강의자료:\n${material}` }],
   }), { maxAttempts: 3 });
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
   if (!block) throw new ApiException('generation_failed', '선수지식 복습자료 초안을 만들지 못했습니다.', 502);
   const result = resultSchema.parse(block.input);
+  const trustedHosts = ['ncbi.nlm.nih.gov', 'nih.gov', 'who.int', 'cdc.gov', 'merckmanuals.com', 'heart.org', 'escardio.org', 'thoracic.org', 'radiologyinfo.org'];
+  const trustedCandidates = result.externalSources.filter((source) => {
+    try {
+      const host = new URL(source.url).hostname.toLowerCase();
+      return trustedHosts.some((trusted) => host === trusted || host.endsWith(`.${trusted}`));
+    } catch {
+      return false;
+    }
+  });
+  const sourceChecks = await Promise.all(trustedCandidates.map(async (source) => {
+    try {
+      const response = await fetch(source.url, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(8_000),
+        headers: { 'User-Agent': 'LectureLink-Medical-Source-Validator/1.0' },
+      });
+      return response.ok ? source : null;
+    } catch {
+      return null;
+    }
+  }));
+  const externalSources = sourceChecks.filter((source): source is z.infer<typeof resultSchema>['externalSources'][number] => source !== null);
+  if (externalSources.length < 2) {
+    throw new ApiException('source_verification_failed', '검증된 외부 의학자료를 충분히 확인하지 못했습니다. 다시 생성해주세요.', 502);
+  }
+  const verifiedResult = { ...result, externalSources };
+  const visualDataUrl = await generateMedicalArtwork(verifiedResult);
+  const textAudit = await auditInfographic(verifiedResult, visualDataUrl);
+  const artifactContent = { ...verifiedResult, visualDataUrl, textAudit };
   const db = await createServerClient() as any;
   const { data: course } = await db.from('courses').select('id').eq('id', courseId).eq('professor_id', session.userId).maybeSingle();
   if (!course) throw new ApiException('course_not_found', '선택한 차시를 찾을 수 없습니다.', 404);
-  const { data: artifact, error } = await db.from('learning_artifacts').insert({ course_id: courseId, created_by: session.userId, material_id: cached?.id ?? null, type: 'preview', title: result.title, status: 'review', source_name: file.name, summary: result.courseConnection, content: result }).select('id').single();
+  const { data: artifact, error } = await db.from('learning_artifacts').insert({ course_id: courseId, created_by: session.userId, material_id: cached?.id ?? null, type: 'preview', title: verifiedResult.title, status: 'review', source_name: file.name, summary: verifiedResult.courseConnection, content: artifactContent }).select('id').single();
   if (error) throw new ApiException('artifact_save_failed', '예습자료를 차시에 저장하지 못했습니다.', 500);
-  return ok({ ...result, artifactId: artifact.id });
+  return ok({ ...artifactContent, artifactId: artifact.id });
 });
