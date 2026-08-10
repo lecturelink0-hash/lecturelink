@@ -59,7 +59,12 @@ export async function processTeachingMaterial(materialId: string, professorId: s
       status: 'ready', page_count: extracted.pages.length, extracted_text: extracted.text,
       extracted_pages: extracted.pages, error_message: null, updated_at: new Date().toISOString(),
     }).eq('id', materialId).eq('professor_id', professorId).select('*').single();
-    if (updateError || !ready) throw new Error('database_failed');
+    if (updateError || !ready) {
+      const detail = updateError
+        ? [updateError.code, updateError.message, updateError.details, updateError.hint].filter(Boolean).join(' | ')
+        : 'update_returned_no_row';
+      throw new Error(`database_failed:${detail}`);
+    }
     console.info('[teaching-material]', { stage: 'processing_complete', materialId, fileType: material.file_type });
     return ready as TeachingMaterialRow;
   } catch (error) {

@@ -48,14 +48,26 @@ export async function extractTeachingMaterial(file: File): Promise<{
   const pages = type === 'pptx'
     ? parsePptx(buffer).slides.map((slide) => ({ pageIndex: slide.index, text: slide.text }))
     : await extractPdfTextPagesWithFallback(buffer);
-  const usable = pages.filter((page) => page.text.trim());
+  const normalizedPages = pages.map((page) => ({
+    ...page,
+    text: sanitizeDatabaseText(page.text),
+  }));
+  const usable = normalizedPages.filter((page) => page.text.trim());
   if (usable.length === 0) {
     throw new ApiException('empty_material', '강의자료에서 읽을 수 있는 텍스트를 찾지 못했습니다.', 400);
   }
   return {
-    pages,
-    text: pages.map((page) => `[${type === 'pptx' ? '슬라이드' : '페이지'} ${page.pageIndex}] ${page.text}`).join('\n').slice(0, 500_000),
+    pages: normalizedPages,
+    text: normalizedPages.map((page) => `[${type === 'pptx' ? '슬라이드' : '페이지'} ${page.pageIndex}] ${page.text}`).join('\n').slice(0, 500_000),
   };
+}
+
+function sanitizeDatabaseText(value: string) {
+  return value
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ')
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
 }
 
 async function extractPdfTextPagesWithFallback(buffer: ArrayBuffer): Promise<CachedMaterialPage[]> {
