@@ -625,7 +625,8 @@ async function extractMaterial(file: File) {
 export const maxDuration = 300;
 
 export const POST = withErrorHandling(async (request: Request) => {
-  const generationStartedAt = Date.now();
+  try {
+    const generationStartedAt = Date.now();
   const session = await requireSession();
   if (session.profile.accountType !== 'professor' && session.role !== 'admin') {
     throw new ApiException('professor_only', '교수 계정에서만 사용할 수 있습니다.', 403);
@@ -834,5 +835,20 @@ export const POST = withErrorHandling(async (request: Request) => {
     artworkMode: generatedArtwork ? 'ai' : 'fallback_svg',
     artifactId: savedArtifactId,
   });
-  return ok({ ...artifactContent, artifactId: savedArtifactId });
+    return ok({ ...artifactContent, artifactId: savedArtifactId });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('[bridge-generation]', {
+        stage: 'unexpected_schema_validation_failed',
+        fields: error.issues.map((issue) => issue.path.join('.')).filter(Boolean),
+        issueCodes: error.issues.map((issue) => issue.code),
+      });
+      throw new ApiException(
+        'bridge_generation_validation_failed',
+        '예습자료 생성 결과의 형식을 정리하지 못했습니다. 입력값 문제가 아니며, 잠시 후 다시 생성해주세요.',
+        502,
+      );
+    }
+    throw error;
+  }
 });
