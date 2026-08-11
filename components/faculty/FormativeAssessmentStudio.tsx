@@ -51,6 +51,52 @@ type GenerateResponse = {
 const ACCEPT =
   ".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
+const PREVIEW_QUESTIONS = [
+  {
+    stem: "다음 중 이 강의에서 설명한 핵심 개념으로 가장 적절한 것은?",
+    choices: ["핵심 개념에 대한 첫 번째 설명", "서로 관련이 적은 두 번째 설명", "강의 범위를 벗어난 세 번째 설명", "반대 의미를 가진 네 번째 설명", "추가 확인이 필요한 다섯 번째 설명"],
+    answerIndex: 0,
+    explanation: "첫 번째 선택지는 강의자료의 핵심 내용을 정확하게 요약합니다. 나머지 선택지는 범위가 다르거나 핵심 개념과 일치하지 않습니다.",
+    objective: "강의의 핵심 개념을 구분하고 설명할 수 있다.",
+  },
+  {
+    stem: "강의에서 제시한 내용을 실제 상황에 적용한 예로 가장 적절한 것은?",
+    choices: ["조건을 일부만 반영한 사례", "핵심 조건을 모두 반영한 사례", "결과와 원인을 반대로 연결한 사례", "자료에서 다루지 않은 사례", "판단에 필요한 정보가 부족한 사례"],
+    answerIndex: 1,
+    explanation: "두 번째 사례는 강의에서 제시한 조건과 판단 순서를 모두 반영하고 있어 가장 적절합니다.",
+    objective: "학습한 원리를 간단한 상황에 적용할 수 있다.",
+  },
+  {
+    stem: "다음 설명 중 강의자료의 내용과 일치하지 않는 것은?",
+    choices: ["주요 정의에 관한 설명", "기본 원리에 관한 설명", "판단 순서에 관한 설명", "강의 내용과 반대되는 설명", "주의사항에 관한 설명"],
+    answerIndex: 3,
+    explanation: "네 번째 선택지는 강의에서 설명한 방향과 반대이므로 옳지 않습니다.",
+    objective: "핵심 설명과 잘못된 설명을 구분할 수 있다.",
+  },
+] as const;
+
+function createPreviewResult(count: number): GenerateResponse {
+  return {
+    title: "형성평가 검토하기",
+    materialSummary: "선택한 강의자료를 바탕으로 만든 스타일 확인용 초안입니다. 실제 API나 저장 기능은 사용하지 않습니다.",
+    objectives: ["핵심 개념 확인", "내용 적용", "오개념 구분"],
+    questions: Array.from({ length: Math.max(1, count) }, (_, index) => {
+      const sample = PREVIEW_QUESTIONS[index % PREVIEW_QUESTIONS.length];
+      return {
+        id: `preview-question-${index + 1}`,
+        ...sample,
+        choices: [...sample.choices],
+        sourcePages: [index + 2, index + 3],
+        cognitiveLevel: "이해" as Question["cognitiveLevel"],
+        qualityFlags: index === 2 ? ["교수 검토가 필요한 예시 표시"] : [],
+        imageDataUrl: null,
+      };
+    }),
+    reviewSummary: "미리보기 문항의 형식과 기본 구성을 확인했습니다. 문항 내용은 화면 확인을 위한 예시입니다.",
+    imageAnalysis: { requested: false, candidateCount: 0, warnings: [] },
+  };
+}
+
 export function FormativeAssessmentStudio() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -67,8 +113,7 @@ export function FormativeAssessmentStudio() {
   const [useImages, setUseImages] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  // 생성 결과는 별도 검토 페이지로 즉시 이동하므로 이 화면에는 표시하지 않는다.
-  const [result] = useState<GenerateResponse | null>(null);
+  const [result, setResult] = useState<GenerateResponse | null>(null);
   const [courseId, setCourseId] = useState(searchParams.get("course") ?? "");
   const [courseTitle, setCourseTitle] = useState("");
   const [materialId, setMaterialId] = useState(
@@ -97,6 +142,15 @@ export function FormativeAssessmentStudio() {
     }
     if (rangeMode === "페이지 선택" && !pageRange.trim()) {
       setError("출제할 페이지 범위를 입력해 주세요.");
+      return;
+    }
+    if (process.env.NODE_ENV === "development") {
+      setError("");
+      sessionStorage.setItem(
+        "lecturelink-formative-preview",
+        JSON.stringify(createPreviewResult(count)),
+      );
+      router.push("/professor/artifacts/preview");
       return;
     }
     setLoading(true);

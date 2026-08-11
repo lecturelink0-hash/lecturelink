@@ -17,6 +17,10 @@ const NAV_ITEMS = [
   { label: '요금제', href: '/plan' },
 ] as const;
 
+// 해당 기능은 유지하되 학생용 메뉴에서만 임시로 숨긴다.
+// 재공개할 때 이 목록에서 경로를 제거하면 된다.
+const HIDDEN_STUDENT_NAV_HREFS = new Set(['/exam', '/mock']);
+
 const ONBOARDING_NAV = {
   label: '온보딩',
   href: '/onboarding',
@@ -94,7 +98,8 @@ export function Sidebar({ user }: SidebarProps) {
     pro: '통합형',
   };
 
-  const navItems = user.onboarded ? NAV_ITEMS : [ONBOARDING_NAV, ...NAV_ITEMS];
+  const visibleNavItems = NAV_ITEMS.filter((item) => !HIDDEN_STUDENT_NAV_HREFS.has(item.href));
+  const navItems = user.onboarded ? visibleNavItems : [ONBOARDING_NAV, ...visibleNavItems];
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 

@@ -333,8 +333,10 @@ def _resolve_child(child_rule: dict, rng: random.Random) -> dict:
         age = int(child_rule.get('age', 5))
     except (TypeError, ValueError):
         age = 5
+    # 시나리오 본문이 환아 이름을 지칭하는 케이스(예: '우리 서연이')는 name을 고정할 수 있다.
+    fixed_name = str(child_rule.get('name') or '').strip()
     return {
-        'name': rng.choice(_BOY_NAMES if gender == '남성' else _GIRL_NAMES),
+        'name': fixed_name or rng.choice(_BOY_NAMES if gender == '남성' else _GIRL_NAMES),
         'age': age,
         'gender': gender,
         'ageDetail': str(child_rule.get('ageDetail', f'{age}세')),

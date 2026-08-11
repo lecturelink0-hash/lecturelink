@@ -8,26 +8,31 @@
   margin: 24px auto 0;
   padding: 20px;
   background: #fff;
-  border: 1px solid #dce2db;
-  border-radius: 16px;
+  border: 1px solid var(--student-line);
+  border-radius: 15px;
   display: grid;
   gap: 12px;
 }
 
 .save-panel p {
   margin: 0;
-  color: #53665e;
+  color: var(--student-muted);
   font-weight: 500;
 }
 
 .save-panel button,
 .save-panel a {
   border: 0;
-  border-radius: 10px;
-  background: #1f5c43;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: var(--student-forest);
   color: #fff;
-  padding: 14px 22px;
-  font-weight: 800;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: 700;
   text-decoration: none;
 }
 
