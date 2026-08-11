@@ -121,6 +121,23 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
     return null;
   }
 
+  // Closed beta: honor the professor type selected at signup before the
+  // database migration reaches production, including existing pending users.
+  if (profile && user.user_metadata?.requested_account_type === 'professor' && profile.account_type !== 'professor') {
+    const approvedAt = new Date().toISOString();
+    const { error: promotionError } = await createAdminClient()
+      .from('users')
+      .update({ account_type: 'professor', faculty_status: 'approved', faculty_approved_at: approvedAt, faculty_approved_by: null })
+      .eq('id', user.id);
+
+    if (promotionError) {
+      console.error('[auth] closed beta professor promotion failed:', promotionError);
+    } else {
+      profile.account_type = 'professor';
+      profile.faculty_status = 'approved';
+    }
+  }
+
   // profile 이 없으면 (auth.users 만 있고 public.users 미생성) 최소 정보로 반환
   const userProfile: UserProfile = profile
     ? {

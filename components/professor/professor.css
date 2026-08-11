@@ -534,3 +534,16 @@
  ){font-size:32px}
  .professor-app :is(.studio-section,.material-panel,.quality-input,.quality-context,.bridge-section){padding:18px}
 }
+/* Closed beta feature availability */
+.professor-nav-locked{display:inline-flex;align-items:center;gap:5px;padding:8px 10px;color:var(--p-muted);font-size:13.5px;font-weight:600;white-space:nowrap;cursor:not-allowed;opacity:.68}
+.professor-nav-locked svg{flex:0 0 auto}
+.professor-mobile-nav-locked{display:grid;gap:3px;padding:12px;color:var(--p-muted);cursor:not-allowed;opacity:.72}
+.professor-mobile-nav-locked>span{display:flex;align-items:center;gap:7px;font-weight:700}
+.professor-mobile-nav-locked small{font-size:11px;line-height:1.4}
+.professor-beta-locked{min-height:calc(100vh - 190px);display:grid;place-items:center;padding:56px 0}
+.professor-beta-locked>section{max-width:600px;padding:40px;text-align:center;border:1px solid var(--p-line);border-radius:var(--radius-lg);background:#fff;box-shadow:var(--shadow-card)}
+.professor-beta-locked svg{color:var(--p-forest)}
+.professor-beta-locked h1{margin:18px 0 10px;font-size:clamp(28px,4vw,38px);letter-spacing:-.035em}
+.professor-beta-locked p{margin:0;color:var(--p-muted);font-size:15px;line-height:1.7}
+.professor-beta-locked a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;margin-top:24px;padding:0 16px;border-radius:10px;background:var(--p-forest);color:#fff;font-size:14px;font-weight:700}
+@media(max-width:560px){.professor-beta-locked{padding:32px 0}.professor-beta-locked>section{padding:30px 20px}.professor-beta-locked p br{display:none}}

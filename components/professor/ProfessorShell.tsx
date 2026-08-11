@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
+import { ChevronDown, Lock, LogOut, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createBrowserClient } from '@/lib/db/browser';
 import './professor.css';
@@ -10,7 +10,6 @@ import './professor.css';
 const NAV = [
   { href: '/professor', label: '홈' },
   { href: '/professor/courses', label: '통합 관리' },
-  { href: '/professor/materials', label: '자료 개선' },
   { href: '/professor/bridge', label: '예습자료' },
   { href: '/professor/formative', label: '형성평가' },
   { href: '/professor/quality', label: '문항 검토' },
@@ -44,7 +43,10 @@ export function ProfessorShell({ children, displayName, schoolName }: { children
     <div className="professor-app">
       <header className="professor-topbar"><div className="professor-topbar-inner">
         {logo}
-        <nav className="professor-topnav" aria-label="교수 메뉴">{NAV.map((item) => <Link className={active(item.href) ? 'is-active' : ''} href={item.href} key={item.href}>{item.label}</Link>)}</nav>
+        <nav className="professor-topnav" aria-label="교수 메뉴">
+          {NAV.map((item) => <Link className={active(item.href) ? 'is-active' : ''} href={item.href} key={item.href}>{item.label}</Link>)}
+          <span className="professor-nav-locked" aria-disabled="true" title="베타테스트 이후 공개됩니다">자료 개선 <Lock size={12} aria-hidden="true" /></span>
+        </nav>
         <div className="professor-top-account" ref={accountRef}>
           <button type="button" onClick={() => setAccountOpen((value) => !value)} aria-expanded={accountOpen} aria-haspopup="menu">
             <span>{displayName.charAt(0)}</span><span><b>{displayName}</b><small>{schoolName ?? '교수 계정'}</small></span><ChevronDown size={18} />
@@ -55,7 +57,10 @@ export function ProfessorShell({ children, displayName, schoolName }: { children
       </div></header>
       {open && <><button className="professor-menu-backdrop" type="button" onClick={() => setOpen(false)} aria-label="메뉴 닫기" /><aside className="professor-mobile-menu">
         <div>{logo}<button type="button" onClick={() => setOpen(false)} aria-label="메뉴 닫기"><X size={24} /></button></div>
-        <nav>{NAV.map((item) => <Link className={active(item.href) ? 'is-active' : ''} href={item.href} key={item.href}>{item.label}</Link>)}</nav>
+        <nav>
+          {NAV.map((item) => <Link className={active(item.href) ? 'is-active' : ''} href={item.href} key={item.href}>{item.label}</Link>)}
+          <span className="professor-mobile-nav-locked" aria-disabled="true"><span>자료 개선 <Lock size={15} aria-hidden="true" /></span><small>베타테스트 이후 공개됩니다</small></span>
+        </nav>
         <div className="professor-mobile-account"><span>{displayName.charAt(0)}</span><div><b>{displayName}</b><small>{schoolName ?? '교수 계정'}</small></div><button type="button" onClick={logout}><LogOut size={19} />로그아웃</button></div>
       </aside></>}
       <main className="professor-content">{children}</main>
