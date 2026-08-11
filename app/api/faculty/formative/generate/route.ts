@@ -238,6 +238,123 @@ const verifiedAssessmentSchema = generatedAssessmentSchema.extend({
   reviewSummary: z.string().min(1),
 });
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function normalizeStringList(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
+  return values
+    .map((item) => {
+      if (typeof item === 'string' || typeof item === 'number') return String(item).trim();
+      const record = asRecord(item);
+      return typeof record.text === 'string' ? record.text.trim() : '';
+    })
+    .filter(Boolean);
+}
+
+function normalizePageList(value: unknown): number[] {
+  const values = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.match(/\d+/g) ?? []
+      : [];
+  return [...new Set(values
+    .map((item) => Number(item))
+    .filter((item) => Number.isInteger(item) && item >= 1))]
+    .sort((a, b) => a - b);
+}
+
+function normalizeCognitiveLevel(value: unknown): '회상' | '이해' | '적용' {
+  const text = String(value ?? '').trim();
+  if (text === '회상' || text === '기억') return '회상';
+  if (text === '적용' || text === '응용') return '적용';
+  return '이해';
+}
+
+/**
+ * 구조화 출력 모델이 빈 선택 필드나 숫자 문자열처럼 의미상 동일한 값을 반환해도
+ * 전체 생성을 폐기하지 않도록 스키마 검증 전에 보수적으로 정규화한다.
+ */
+function normalizeAnswerIndex(value: unknown): unknown {
+  if (typeof value === 'number' && Number.isInteger(value)) return value;
+  const text = String(value ?? '').trim();
+  if (/^\d+$/.test(text)) return Number(text);
+  const numbered = text.match(/^([1-5])\s*번$/);
+  return numbered ? Number(numbered[1]) - 1 : value;
+}
+
+function normalizeAssessmentInput(
+  input: unknown,
+  includeReviewSummary: boolean,
+  imageCount: number,
+) {
+  const assessment = asRecord(input);
+  const rawQuestions = Array.isArray(assessment.questions) ? assessment.questions : [];
+  const questions = rawQuestions.map((value) => {
+    const question = asRecord(value);
+    const numericImage = question.imageIndex === null || question.imageIndex === '' || question.imageIndex === -1
+      ? null
+      : Number(question.imageIndex);
+    return {
+      ...question,
+      stem: String(question.stem ?? '').trim(),
+      choices: normalizeStringList(question.choices),
+      answerIndex: normalizeAnswerIndex(question.answerIndex),
+      explanation: String(question.explanation ?? '').trim(),
+      objective: String(question.objective ?? '').trim() || '강의자료의 핵심 내용을 확인한다.',
+      sourcePages: normalizePageList(question.sourcePages),
+      cognitiveLevel: normalizeCognitiveLevel(question.cognitiveLevel),
+      qualityFlags: normalizeStringList(question.qualityFlags).slice(0, 3),
+      imageIndex: numericImage !== null
+        && Number.isInteger(numericImage)
+        && numericImage >= 0
+        && numericImage < imageCount
+        ? numericImage
+        : null,
+    };
+  });
+  const objectives = normalizeStringList(assessment.objectives);
+  const normalized: Record<string, unknown> = {
+    ...assessment,
+    title: String(assessment.title ?? '').trim() || '형성평가',
+    materialSummary: String(assessment.materialSummary ?? '').trim()
+      || '선택한 강의자료를 바탕으로 생성한 형성평가입니다.',
+    objectives: objectives.length > 0
+      ? objectives
+      : [...new Set(questions.map((question) => question.objective))],
+    questions,
+  };
+  if (includeReviewSummary) {
+    normalized.reviewSummary = String(assessment.reviewSummary ?? '').trim()
+      || '문항 수, 선택지, 정답, 해설과 근거 페이지를 자동 검토했습니다.';
+  }
+  return normalized;
+}
+
+function balanceAnswerPositions<T extends z.infer<typeof generatedAssessmentSchema>>(result: T): T {
+  if (result.questions.length < 5) return result;
+  const counts = Array.from({ length: 5 }, () => 0);
+  result.questions.forEach((question) => { counts[question.answerIndex] += 1; });
+  if (Math.max(...counts) <= Math.ceil(result.questions.length * 0.4)) return result;
+
+  return {
+    ...result,
+    questions: result.questions.map((question, index) => {
+      const target = index % 5;
+      if (target === question.answerIndex) return question;
+      const choices = [...question.choices];
+      [choices[target], choices[question.answerIndex]] = [
+        choices[question.answerIndex],
+        choices[target],
+      ];
+      return { ...question, choices, answerIndex: target };
+    }),
+  };
+}
+
 function createVerificationTool(count: number) {
   return {
     ...createOutputSchema(count),
@@ -517,7 +634,9 @@ ${material.text}`;
       generationFeedback = 'create_formative_assessment 도구 호출이 누락됨';
       continue;
     }
-    const parsedDraft = generatedAssessmentSchema.safeParse(block.input);
+    const parsedDraft = generatedAssessmentSchema.safeParse(
+      normalizeAssessmentInput(block.input, false, material.images.length),
+    );
     if (!parsedDraft.success) {
       generationFeedback = summarizeSchemaIssues(parsedDraft.error);
       console.warn('[formative] invalid draft output:', generationFeedback);
@@ -528,7 +647,7 @@ ${material.text}`;
       console.warn('[formative] draft count mismatch:', generationFeedback);
       continue;
     }
-    draft = parsedDraft.data;
+    draft = balanceAnswerPositions(parsedDraft.data);
   }
   if (!draft) {
     throw new ApiException(
@@ -572,8 +691,8 @@ ${JSON.stringify(draft)}`,
   let verificationFeedback = '';
   for (let attempt = 0; attempt < 3 && !verified; attempt += 1) {
     const verification = await withRetry(() => createMessage(client, {
-      model: MODELS.generation(),
-      max_tokens: 7000,
+      model: MODELS.verification(),
+      max_tokens: 12000,
       system: VERIFICATION_SYSTEM,
       tools: [createVerificationTool(settings.count)],
       tool_choice: { type: 'tool', name: 'verify_formative_assessment' },
@@ -598,7 +717,9 @@ ${JSON.stringify(draft)}`,
       verificationFeedback = 'verify_formative_assessment 도구 호출이 누락됨';
       continue;
     }
-    const parsedVerification = verifiedAssessmentSchema.safeParse(verificationBlock.input);
+    const parsedVerification = verifiedAssessmentSchema.safeParse(
+      normalizeAssessmentInput(verificationBlock.input, true, material.images.length),
+    );
     if (!parsedVerification.success) {
       verificationFeedback = summarizeSchemaIssues(parsedVerification.error);
       console.warn('[formative] invalid verification output:', verificationFeedback);
@@ -606,23 +727,46 @@ ${JSON.stringify(draft)}`,
     }
     try {
       assertAssessmentIntegrity(
-        parsedVerification.data,
+        balanceAnswerPositions(parsedVerification.data),
         settings.count,
         material.allowedPages,
         material.images.length,
       );
-      verified = parsedVerification.data;
+      verified = balanceAnswerPositions(parsedVerification.data);
     } catch (error) {
       verificationFeedback = error instanceof Error ? error.message : '최종 무결성 검사 실패';
       console.warn('[formative] verification integrity failure:', verificationFeedback);
     }
   }
   if (!verified) {
-    throw new ApiException(
-      'verification_invalid_output',
-      '문항 검수 결과를 자동으로 교정하지 못했습니다. 잠시 후 다시 생성해주세요.',
-      502,
-    );
+    // 2차 검수 모델의 출력 형식만 실패한 경우, 이미 만들어진 초안을 구조·범위
+    // 검사한 뒤 살린다. 검수 서비스의 일시적 형식 흔들림 때문에 교수의 작업 전체가
+    // 사라지는 것을 막되, 무결성에 실패한 초안은 절대 통과시키지 않는다.
+    try {
+      const recoverableDraft = balanceAnswerPositions(draft);
+      assertAssessmentIntegrity(
+        recoverableDraft,
+        settings.count,
+        material.allowedPages,
+        material.images.length,
+      );
+      console.warn('[formative] verification output unavailable; using integrity-checked draft:', verificationFeedback);
+      verified = {
+        ...recoverableDraft,
+        reviewSummary: '2차 AI 검수 응답을 사용할 수 없어 문항 구조와 근거 범위를 자동 점검한 초안을 제공합니다. 학생 공개 전 내용을 확인해주세요.',
+      };
+    } catch (error) {
+      const fallbackFailure = error instanceof Error ? error.message : '초안 무결성 검사 실패';
+      console.error('[formative] verification exhausted:', {
+        verificationFeedback,
+        fallbackFailure,
+      });
+      throw new ApiException(
+        'verification_invalid_output',
+        '문항 검수 과정이 완료되지 않았습니다. 잠시 후 다시 생성해주세요.',
+        502,
+      );
+    }
   }
   return ok({
     ...verified,
