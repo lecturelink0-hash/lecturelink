@@ -3,6 +3,7 @@
 // 환자 아바타 렌더러.
 // public/models/ 에 GLB가 있으면 그것을 로드하고, 없으면 절차적 로우폴리로 폴백한다.
 //   - /models/patient_{male|female}_old.glb    (60세 이상 케이스에서 최우선)
+//   - /models/patient_{male|female}_infant.glb (2세 이하 — 18~24개월 걸음마기 체형)
 //   - /models/patient_{male|female}_child.glb  (12세 이하 케이스에서 최우선)
 //   - /models/patient_{male|female}.glb        (성별 전용)
 //   - /models/patient.glb                      (공용)
@@ -62,9 +63,22 @@ const CHILD_EXAM_REGION_FRAC = {
   foot: 0.05,
 }
 
-// bodyH로 성인/소아 비율표 선택 (소아 렌더 키는 항상 1.5 미만)
+// 유아(_infant, 18~24개월) 체형은 머리가 신장의 ~42%(턱이 지면 기준 57% 높이),
+// 무릎 관절이 10% 높이 — CPU 스키닝 실측 기반 보정표.
+const INFANT_EXAM_REGION_FRAC = {
+  head: 0.79,
+  neck: 0.56,
+  chest: 0.47,
+  abdomen: 0.33,
+  pelvis: 0.2,
+  legs: 0.13,
+  knee: 0.09,
+  foot: 0.03,
+}
+
+// bodyH로 성인/소아/유아 비율표 선택 (소아 렌더 키 <1.5, 유아 <1.0)
 const regionFrac = (bodyH, examTarget) =>
-  (bodyH < 1.5 ? CHILD_EXAM_REGION_FRAC : EXAM_REGION_FRAC)[examTarget]
+  (bodyH < 1.0 ? INFANT_EXAM_REGION_FRAC : bodyH < 1.5 ? CHILD_EXAM_REGION_FRAC : EXAM_REGION_FRAC)[examTarget]
 
 function ExamBed() {
   const { top: T, length: L, width: W } = BED
@@ -412,17 +426,20 @@ function FaceOverlay({ anchors, speaking, audioLevel }) {
 }
 
 // ── 소아 렌더 키 ─────────────────────────────────────────────
-// 12세 이하는 _child 모델 + 나이대별 목표 키. 성인·노인은 기존 1.55 유지.
+// 2세 이하는 _infant(걸음마기 체형), 3~12세는 _child 모델 + 나이대별 목표 키.
+// 성인·노인은 기존 1.55 유지. 실제 신장 근사: 18개월 ~82cm, 30개월 ~90cm.
 function targetHeightForAge(age) {
   const a = Number(age)
   if (!Number.isFinite(a) || a > 12) return 1.55
+  if (a <= 1) return 0.82
+  if (a <= 2) return 0.9
   if (a <= 3) return 0.95
   if (a <= 8) return 1.15
   return 1.3
 }
 
-// _child GLB는 본 스케일 수술(머리·어깨 배율)이 들어 있어 바인드 박스와 실제
-// 포즈 크기가 다르다 → CPU 스키닝(applyBoneTransform)으로 실측한다.
+// _child·_infant GLB는 본 스케일 수술(머리·어깨·다리 배율)이 들어 있어 바인드
+// 박스와 실제 포즈 크기가 다르다 → CPU 스키닝(applyBoneTransform)으로 실측한다.
 // 로우폴리(정점 수천 개) 1회 순회라 비용 미미. 실패 시 null(바인드 박스 폴백).
 function measurePosedBounds(root) {
   try {
@@ -466,7 +483,7 @@ function GlbPatient({ url, targetH = 1.55, ...motion }) {
   // Hair는 제외: 뒷머리 뭉치를 접촉 기준으로 삼으면 몸통이 침대에서 떠 보인다(머리카락은 눌린다고 가정).
   // _child 모델은 본 스케일이 바인드 박스에 안 잡히므로 포즈 실측 바운드를 우선 사용.
   const { scale, offsetY, minZ } = useMemo(() => {
-    const posed = url.includes('_child') ? measurePosedBounds(clone) : null
+    const posed = url.includes('_child') || url.includes('_infant') ? measurePosedBounds(clone) : null
     const box = posed ? posed.box : new THREE.Box3().setFromObject(clone)
     const h = box.max.y - box.min.y || 1
     const s = targetH / h
@@ -623,6 +640,7 @@ function useResolvedModel(gender, age) {
     const a = Number(age)
     const candidates = [
       ...(a >= 60 ? [`/cpx/models/patient_${g}_old.glb`] : []),
+      ...(a <= 2 ? [`/cpx/models/patient_${g}_infant.glb`] : []),
       ...(a <= 12 ? [`/cpx/models/patient_${g}_child.glb`] : []),
       `/cpx/models/patient_${g}.glb`,
     ]
