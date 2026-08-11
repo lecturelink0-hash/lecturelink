@@ -166,13 +166,80 @@ const requestSchema = z.object({
   reviewLength: z.enum(['5분', '10분', '15분']),
   designStyle: z.enum(['auto', 'medical-clean', 'hand-drawn', 'blueprint', 'editorial']),
   emphasis: z.string().trim().max(300).default(''),
-  includeReadiness: z.enum(['true', 'false']).transform((value) => value === 'true'),
+  includeReadiness: z.boolean(),
 });
 
 const sourcePlanSchema = z.object({
   topicEnglish: z.string().min(2).max(120),
   searchQueries: z.array(z.string().min(2).max(160)).min(2).max(4),
 });
+
+function readTextField(form: FormData, name: string) {
+  const value = form.get(name);
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function parseBridgeSettings(form: FormData) {
+  const learnerLevel = readTextField(form, 'learnerLevel') || '의학과 2학년';
+  const reviewInput = readTextField(form, 'reviewLength').replace(/\s+/g, '');
+  const reviewMinutes = reviewInput.match(/^(5|10|15)(?:분|min(?:ute)?s?)?$/i)?.[1] ?? '10';
+  const reviewLength = `${reviewMinutes}분`;
+  const designInput = readTextField(form, 'designStyle');
+  const designStyle = ['auto', 'medical-clean', 'hand-drawn', 'blueprint', 'editorial'].includes(designInput)
+    ? designInput
+    : 'auto';
+  const readinessInput = readTextField(form, 'includeReadiness').toLowerCase();
+
+  const parsed = requestSchema.safeParse({
+    learnerLevel,
+    reviewLength,
+    designStyle,
+    emphasis: readTextField(form, 'emphasis').slice(0, 300),
+    includeReadiness: !['false', '0', 'off', 'no'].includes(readinessInput),
+  });
+  if (!parsed.success) {
+    console.error('[bridge-generation]', {
+      stage: 'request_validation_failed',
+      fields: parsed.error.issues.map((issue) => issue.path.join('.')).filter(Boolean),
+    });
+    throw new ApiException('invalid_bridge_settings', '예습자료 설정을 확인해주세요.', 400);
+  }
+  return parsed.data;
+}
+
+function normalizeSourcePlan(input: unknown, fileName: string) {
+  const record = input && typeof input === 'object' ? input as Record<string, unknown> : {};
+  const rawTopic = typeof record.topicEnglish === 'string' ? record.topicEnglish.trim() : '';
+  const rawQueries = Array.isArray(record.searchQueries) ? record.searchQueries : [];
+  const searchQueries = Array.from(new Set(
+    rawQueries
+      .filter((query): query is string => typeof query === 'string')
+      .map((query) => query.replace(/\s+/g, ' ').trim().slice(0, 160))
+      .filter((query) => query.length >= 2),
+  )).slice(0, 4);
+  const fallbackTopic = rawTopic.slice(0, 120)
+    || searchQueries[0]?.replace(/\b(anatomy|physiology|pathophysiology|imaging|differential diagnosis)\b/gi, '').trim().slice(0, 120)
+    || fileName.replace(/\.(pdf|pptx)$/i, '').trim().slice(0, 120);
+
+  for (const suffix of ['anatomy physiology', 'pathophysiology differential diagnosis']) {
+    if (searchQueries.length >= 2) break;
+    const fallbackQuery = `${fallbackTopic} ${suffix}`.replace(/\s+/g, ' ').trim().slice(0, 160);
+    if (fallbackQuery.length >= 2 && !searchQueries.includes(fallbackQuery)) searchQueries.push(fallbackQuery);
+  }
+
+  const parsed = sourcePlanSchema.safeParse({
+    topicEnglish: fallbackTopic,
+    searchQueries,
+  });
+  if (!parsed.success) {
+    console.error('[bridge-generation]', {
+      stage: 'source_plan_validation_failed',
+      fields: parsed.error.issues.map((issue) => issue.path.join('.')).filter(Boolean),
+    });
+    throw new ApiException('source_verification_failed', '외부 의학자료 검색 계획을 정리하지 못했습니다. 다시 생성해주세요.', 502);
+  }
+  return parsed.data;
+}
 
 const sourcePlanTool = {
   name: 'plan_verified_medical_sources',
@@ -289,13 +356,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   if (!(file instanceof File)) throw new ApiException('file_required', '강의자료를 선택해주세요.', 400);
   if (!z.string().uuid().safeParse(courseId).success) throw new ApiException('course_required', '저장할 차시를 선택해주세요.', 400);
   if (file.size > MAX_FILE_BYTES) throw new ApiException('file_too_large', '파일은 25MB 이하만 업로드할 수 있습니다.', 400);
-  const settings = requestSchema.parse({
-    learnerLevel: form.get('learnerLevel'),
-    reviewLength: form.get('reviewLength'),
-    designStyle: form.get('designStyle') ?? 'auto',
-    emphasis: form.get('emphasis'),
-    includeReadiness: form.get('includeReadiness') ?? 'true',
-  });
+  const settings = parseBridgeSettings(form);
   const material = cached?.extracted_text || await extractMaterial(file);
   const sourcePlanResponse = await withRetry(() => createMessage(getAnthropic(), {
     model: MODELS.verification(),
@@ -309,7 +370,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   if (!sourcePlanBlock) {
     throw new ApiException('source_verification_failed', '외부 의학자료 검색 주제를 정하지 못했습니다. 다시 생성해주세요.', 502);
   }
-  const sourcePlan = sourcePlanSchema.parse(sourcePlanBlock.input);
+  const sourcePlan = normalizeSourcePlan(sourcePlanBlock.input, file.name);
   let pubMedEvidence = [] as Awaited<ReturnType<typeof findVerifiedPubMedSources>>;
   try {
     pubMedEvidence = await findVerifiedPubMedSources(sourcePlan.searchQueries, 5);
@@ -355,10 +416,18 @@ export const POST = withErrorHandling(async (request: Request) => {
   }), { maxAttempts: 3 });
   const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
   if (!block) throw new ApiException('generation_failed', '선수지식 복습자료 초안을 만들지 못했습니다.', 502);
-  const result = resultSchema.parse({
+  const parsedResult = resultSchema.safeParse({
     ...(block.input as Record<string, unknown>),
     sourceSearchQueries: sourcePlan.searchQueries,
   });
+  if (!parsedResult.success) {
+    console.error('[bridge-generation]', {
+      stage: 'generated_result_validation_failed',
+      fields: parsedResult.error.issues.map((issue) => issue.path.join('.')).filter(Boolean),
+    });
+    throw new ApiException('generation_format_invalid', '생성된 예습자료의 형식을 정리하지 못했습니다. 다시 생성해주세요.', 502);
+  }
+  const result = parsedResult.data;
   if (settings.includeReadiness && result.readinessCheck.length !== 2) {
     throw new ApiException('generation_failed', '선수지식 확인 문항 2개를 만들지 못했습니다. 다시 시도해주세요.', 502);
   }
