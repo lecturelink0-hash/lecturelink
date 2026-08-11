@@ -378,14 +378,14 @@ export default function LibraryPage() {
 
   // ── 파생 데이터 (문제집 그리드 · 통계) ────────────────────────────────────
 
-  // 내신대비, 국시 오답 기반 유사문항, QR 형성평가를 출처별로 나눈다.
-  // 국시대비 폴더에는 원본 국시 문항이 아니라 generated/similar 문항만 들어간다.
+  // 내신대비 문제집과 QR 형성평가만 사용자 문제집에 표시한다.
+  // generated/similar 문항은 데이터에 유지하되 국시 비노출 기간에는 목록에서 제외한다.
   const nationalSimilarUploads = uploads.filter((upload) => upload.file_type === 'generated/similar');
   const formativeUploads = uploads.filter((upload) => upload.file_type === 'formative/live');
   const schoolUploads = uploads.filter(
     (upload) => upload.file_type !== 'generated/similar' && upload.file_type !== 'formative/live',
   );
-  const libraryUploads = [...schoolUploads, ...nationalSimilarUploads, ...formativeUploads];
+  const libraryUploads = [...schoolUploads, ...formativeUploads];
   const setItems: SetItem[] = libraryUploads.map((u) => {
     const qs = allPrivateQuestions.filter((q) => q.upload_id === u.id);
     const p = progressByUpload[u.id];
@@ -773,8 +773,8 @@ export default function LibraryPage() {
 
               <div className="border-t border-[var(--color-border)] my-1.5" />
 
-              {/* 국시대비: 국시 전체 문항이 아닌, 오답을 바탕으로 만든 유사문항만 표시 */}
-              <div>
+              {/* 국시 오답 기반 유사문항은 데이터만 유지하고 사용자 화면에서는 숨긴다. */}
+              <div className="hidden">
                 <button
                   onClick={() => toggle('folder_national')}
                   className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[var(--color-sage-100)] text-left transition-colors"
@@ -907,10 +907,10 @@ export default function LibraryPage() {
                   </span>
                   <div className="text-lg font-bold text-sage-800 mb-1">생성한 문제집이 없습니다</div>
                   <div className="text-sm text-[var(--color-muted)] max-w-sm mb-5">
-                    내신대비에서 문제를 생성하거나, 국시 오답 기반 유사문항을 만들어 보세요.
+                    강의자료를 올려 내 시험 범위에 맞는 문제집을 만들어 보세요.
                   </div>
-                  <Link href="/wrong-notes">
-                    <Button variant="accent" size="md">오답노트에서 유사문항 만들기 →</Button>
+                  <Link href="/notes">
+                    <Button variant="accent" size="md">강의자료 올리기 →</Button>
                   </Link>
                 </Card>
               ) : visibleSets.length === 0 ? (
@@ -926,8 +926,7 @@ export default function LibraryPage() {
               )}
 
               <p className="mt-5 text-[12px] text-[var(--color-muted)] leading-relaxed">
-                <span className="font-semibold text-sage-700">내신대비</span>에는 학습자료로 생성한 문제집이,
-                <span className="font-semibold text-sage-700"> 국시대비</span>에는 오답 기반 유사문항만 표시돼요.
+                <span className="font-semibold text-sage-700">내신대비</span>에서 학습자료로 생성한 문제집을 표시해요.
               </p>
             </div>
           )}
@@ -1079,11 +1078,6 @@ function NationalContent({
             {active.name}
           </h2>
         </div>
-        <Link href="/exam">
-          <Button variant="accent" size="md">
-            국시 대비에서 이어 풀기 →
-          </Button>
-        </Link>
       </div>
 
       {questions.length === 0 ? (
@@ -1234,7 +1228,7 @@ function PrivateExamSession({
       <Card className="mb-4">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
           <div className="flex gap-2 flex-wrap"><Badge>문제집 문항</Badge><Badge variant="warn">난이도 {'★'.repeat(current.difficulty)}</Badge></div>
-          <Badge variant="curated">내신·국시 대비</Badge>
+          <Badge variant="curated">내신 대비</Badge>
         </div>
         <div className="flex gap-1.5 text-[17px] leading-8 text-sage-800 mb-6">
           <strong className="text-sage-700 shrink-0">{index + 1}.</strong>

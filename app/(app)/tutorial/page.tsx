@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
-import { ArrowRight, Upload, BookOpen, FileCheck2, RotateCcw, GraduationCap } from 'lucide-react';
+import { ArrowRight, Upload, RotateCcw, GraduationCap } from 'lucide-react';
 
 /** 학습 튜토리얼 — 서비스 사용법 안내(기획서: [학습 튜토리얼 페이지]). */
 export default function TutorialPage() {
@@ -31,27 +31,13 @@ export default function TutorialPage() {
           </div>
         </Card>
 
-        <Card icon={<BookOpen className="w-5 h-5" strokeWidth={1.9} />} title="3. 국시 문제 풀이" action={<TutorialLink href="/exam" />}>
-          <ul className="list-disc pl-5 space-y-1.5 text-sm text-sage-800 leading-relaxed">
-            <li>과목 → 세부주제를 고르면 바로 문제를 풀 수 있어요.</li>
-            <li>한 문제를 풀면 즉시 채점되고(정답 초록·오답 빨강) 해설이 표시돼요.</li>
-            <li>세부주제를 다 풀면 전체 채점 후, 체크한 문제만 골라 <b>오답노트</b>에 담을 수 있어요.</li>
-          </ul>
-        </Card>
-
-        <Card icon={<RotateCcw className="w-5 h-5" strokeWidth={1.9} />} title="4. 오답노트 · 반복 학습" action={<TutorialLink href="/wrong-notes" />}>
+        <Card icon={<RotateCcw className="w-5 h-5" strokeWidth={1.9} />} title="3. 오답노트 · 반복 학습" action={<TutorialLink href="/wrong-notes" />}>
           <ul className="list-disc pl-5 space-y-1.5 text-sm text-sage-800 leading-relaxed">
             <li><b>요약 보기</b>/<b>전체 보기</b> 중 원하는 방식으로 오답을 복습해요.</li>
             <li>틀린 문제는 <b>다시 풀기</b>로 재도전하거나, <b>유사문제 생성</b>으로 비슷한 문제를 더 풀 수 있어요.</li>
           </ul>
         </Card>
 
-        <Card icon={<FileCheck2 className="w-5 h-5" strokeWidth={1.9} />} title="5. 모의고사(CBT)" action={<TutorialLink href="/mock" />}>
-          <ul className="list-disc pl-5 space-y-1.5 text-sm text-sage-800 leading-relaxed">
-            <li>과목을 골라 실제 국시 CBT와 유사한 환경에서 모의고사를 볼 수 있어요.</li>
-            <li>표시(체크)·메모·계산기 등 CBT 도구를 그대로 사용해요. (국가고시 대비 이상 요금제)</li>
-          </ul>
-        </Card>
       </div>
 
     </div>
