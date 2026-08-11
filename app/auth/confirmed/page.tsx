@@ -21,7 +21,7 @@ export default function EmailConfirmedPage() {
           이제 렉처링크를 이용할 수 있어요.
         </p>
         <a
-          href="/dashboard"
+          href="/"
           className="inline-flex items-center justify-center h-12 px-8 rounded-[14px] bg-sage-700 text-white font-bold hover:bg-sage-800 transition-colors"
         >
           시작하기

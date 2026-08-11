@@ -8,6 +8,7 @@
 import { NextResponse } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createServerClient } from '@/lib/db/server';
+import { createAdminClient } from '@/lib/db/admin';
 import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
@@ -36,8 +37,22 @@ export async function GET(request: Request) {
     const pending = cookieStore.get('lecturelink_account_type')?.value;
     if (pending === 'professor' || pending === 'student') {
       await supabase.auth.updateUser({ data: { requested_account_type: pending } });
+      if (pending === 'professor') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await createAdminClient()
+            .from('users')
+            .update({
+              account_type: 'professor',
+              faculty_status: 'approved',
+              faculty_approved_at: new Date().toISOString(),
+              faculty_approved_by: null,
+            })
+            .eq('id', user.id);
+        }
+      }
       cookieStore.delete('lecturelink_account_type');
-      return fallback;
+      return pending === 'professor' ? '/professor' : fallback;
     }
     await supabase.auth.getUser();
     return fallback;

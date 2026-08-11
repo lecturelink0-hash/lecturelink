@@ -286,7 +286,7 @@ export default function LoginPage() {
               <p className="text-base text-[var(--color-muted)] mb-6 leading-relaxed">
                 {mode === 'login'
                   ? '이메일과 비밀번호로 로그인하세요.'
-                  : '이메일로 가입하세요. 학교 이메일을 쓰면 학생 인증이 자동 적용됩니다.'}
+                  : '가입 유형을 선택하세요. 클로즈드 베타 기간에는 교수 계정도 별도 승인 없이 바로 이용할 수 있습니다.'}
               </p>
 
               <label className="block text-sm font-semibold text-sage-800 mb-2">이메일</label>
@@ -332,6 +332,11 @@ export default function LoginPage() {
                         </button>
                       ))}
                     </div>
+                    {accountType === 'professor' && (
+                      <p className="mt-2 text-xs leading-relaxed text-sage-700">
+                        교수 계정으로 가입하면 인증 완료 후 교수 도구로 바로 이동합니다.
+                      </p>
+                    )}
                   </fieldset>
                   <label className="block text-sm font-semibold text-sage-800 mb-2">비밀번호 확인</label>
                   <div className="relative mb-5">
