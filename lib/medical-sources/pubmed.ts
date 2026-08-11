@@ -19,6 +19,19 @@ type PubMedSummaryResponse = {
   result?: Record<string, PubMedSummary | string[]>;
 };
 
+type EuropePmcSearchResponse = {
+  resultList?: {
+    result?: Array<{
+      id?: string;
+      pmid?: string;
+      source?: string;
+      title?: string;
+      journalTitle?: string;
+      abstractText?: string;
+    }>;
+  };
+};
+
 const EUTILS_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
 function cleanSearchQuery(query: string) {
@@ -29,28 +42,41 @@ function cleanSearchQuery(query: string) {
     .slice(0, 160);
 }
 
+async function fetchPubMed(url: URL, accept: string) {
+  let lastError = 'pubmed_request_failed';
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: accept,
+          'User-Agent': 'LectureLink-Medical-Education/1.0 (PubMed source verification)',
+        },
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (response.ok) return response;
+      lastError = `pubmed_http_${response.status}`;
+      if (response.status !== 429 && response.status < 500) break;
+      const retryAfterSeconds = Number.parseInt(response.headers.get('retry-after') ?? '', 10);
+      if (attempt < 3) {
+        const retryDelay = Number.isFinite(retryAfterSeconds)
+          ? Math.min(retryAfterSeconds * 1000, 3_000)
+          : attempt * 450;
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? `${error.name}:${error.message}` : String(error);
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 450));
+    }
+  }
+  throw new Error(lastError.slice(0, 240));
+}
+
 async function fetchJson<T>(url: URL): Promise<T> {
-  const response = await fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      'User-Agent': 'LectureLink-Medical-Education/1.0 (PubMed source verification)',
-    },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!response.ok) throw new Error(`pubmed_http_${response.status}`);
-  return response.json() as Promise<T>;
+  return (await fetchPubMed(url, 'application/json')).json() as Promise<T>;
 }
 
 async function fetchText(url: URL): Promise<string> {
-  const response = await fetch(url, {
-    headers: {
-      Accept: 'application/xml,text/xml',
-      'User-Agent': 'LectureLink-Medical-Education/1.0 (PubMed source verification)',
-    },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!response.ok) throw new Error(`pubmed_http_${response.status}`);
-  return response.text();
+  return (await fetchPubMed(url, 'application/xml,text/xml')).text();
 }
 
 function decodeXmlText(value: string) {
@@ -79,7 +105,7 @@ function extractAbstracts(xml: string) {
   return abstracts;
 }
 
-export async function findVerifiedPubMedSources(
+async function findNlmPubMedSources(
   searchQueries: string[],
   limit = 5,
 ): Promise<VerifiedMedicalSource[]> {
@@ -87,12 +113,13 @@ export async function findVerifiedPubMedSources(
   if (queries.length === 0) return [];
 
   const topicTerm = `(${queries.map((query) => `(${query})`).join(' OR ')})`;
+  const candidateLimit = Math.max(8, Math.min(limit * 2, 12));
   const searchIds = async (term: string) => {
     const searchUrl = new URL(`${EUTILS_BASE}/esearch.fcgi`);
     searchUrl.search = new URLSearchParams({
       db: 'pubmed',
       retmode: 'json',
-      retmax: String(Math.max(2, Math.min(limit, 5))),
+      retmax: String(candidateLimit),
       sort: 'relevance',
       term,
     }).toString();
@@ -101,10 +128,19 @@ export async function findVerifiedPubMedSources(
   };
 
   const preferredIds = await searchIds(`${topicTerm} AND (review[Publication Type] OR guideline[Publication Type] OR practice guideline[Publication Type]) AND humans[MeSH Terms]`);
-  const broaderIds = preferredIds.length >= limit
+  const broaderIds = preferredIds.length >= candidateLimit
     ? []
     : await searchIds(`${topicTerm} AND humans[MeSH Terms]`);
-  const ids = Array.from(new Set([...preferredIds, ...broaderIds])).slice(0, limit);
+  const collectedIds = Array.from(new Set([...preferredIds, ...broaderIds]));
+  for (const query of queries) {
+    if (collectedIds.length >= candidateLimit) break;
+    const individualIds = await searchIds(`(${query}) AND humans[MeSH Terms]`);
+    for (const id of individualIds) {
+      if (!collectedIds.includes(id)) collectedIds.push(id);
+      if (collectedIds.length >= candidateLimit) break;
+    }
+  }
+  const ids = collectedIds.slice(0, candidateLimit);
   if (ids.length === 0) return [];
 
   const summaryUrl = new URL(`${EUTILS_BASE}/esummary.fcgi`);
@@ -134,5 +170,65 @@ export async function findVerifiedPubMedSources(
       url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`,
       evidence,
     }];
-  });
+  }).slice(0, limit);
+}
+
+async function findEuropePmcSources(searchQueries: string[], limit: number) {
+  const queries = Array.from(new Set(searchQueries.map(cleanSearchQuery).filter(Boolean))).slice(0, 4);
+  if (!queries.length) return [];
+  const url = new URL('https://www.ebi.ac.uk/europepmc/webservices/rest/search');
+  url.search = new URLSearchParams({
+    query: `(${queries.map((query) => `(${query})`).join(' OR ')}) AND SRC:MED AND HAS_ABSTRACT:Y`,
+    resultType: 'core',
+    format: 'json',
+    pageSize: String(Math.max(5, Math.min(limit * 2, 12))),
+  }).toString();
+  const response = await fetchJson<EuropePmcSearchResponse>(url);
+  return (response.resultList?.result ?? []).flatMap((item) => {
+    const title = item.title?.trim().replace(/\.$/, '') ?? '';
+    const evidence = item.abstractText?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 3_000) ?? '';
+    const pmid = item.pmid?.trim() ?? '';
+    const source = item.source?.trim() || 'MED';
+    const id = item.id?.trim() || pmid;
+    if (!title || evidence.length < 80 || (!pmid && !id)) return [];
+    return [{
+      title,
+      organization: item.journalTitle?.trim()
+        ? `Europe PMC · ${item.journalTitle.trim()}`
+        : 'Europe PMC · EMBL-EBI',
+      url: /^\d+$/.test(pmid)
+        ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`
+        : `https://europepmc.org/article/${encodeURIComponent(source)}/${encodeURIComponent(id)}`,
+      evidence,
+    }];
+  }).slice(0, limit) satisfies VerifiedMedicalSource[];
+}
+
+export async function findVerifiedPubMedSources(
+  searchQueries: string[],
+  limit = 5,
+): Promise<VerifiedMedicalSource[]> {
+  let primary: VerifiedMedicalSource[] = [];
+  try {
+    primary = await findNlmPubMedSources(searchQueries, limit);
+  } catch (error) {
+    console.warn('[medical-sources]', {
+      stage: 'nlm_lookup_failed',
+      cause: error instanceof Error ? error.message.slice(0, 180) : String(error).slice(0, 180),
+    });
+  }
+  if (primary.length >= Math.min(2, limit)) return primary;
+
+  try {
+    const fallback = await findEuropePmcSources(searchQueries, limit);
+    return [...primary, ...fallback]
+      .filter((source, index, all) => all.findIndex((candidate) => candidate.url === source.url) === index)
+      .slice(0, limit);
+  } catch (error) {
+    console.warn('[medical-sources]', {
+      stage: 'europe_pmc_lookup_failed',
+      cause: error instanceof Error ? error.message.slice(0, 180) : String(error).slice(0, 180),
+    });
+    return primary;
+  }
 }

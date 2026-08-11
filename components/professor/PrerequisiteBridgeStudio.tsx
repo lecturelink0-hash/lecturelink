@@ -149,6 +149,7 @@ export function PrerequisiteBridgeStudio() {
         setMaterialName(stored.file_name);
       }
       const form = new FormData();
+      form.append("requestId", crypto.randomUUID());
       form.append("materialId", selectedMaterialId);
       form.append("courseId", courseId);
       form.append(
@@ -159,10 +160,22 @@ export function PrerequisiteBridgeStudio() {
       form.append("designStyle", designStyle);
       form.append("emphasis", emphasis);
       form.append("includeReadiness", String(includeReadiness));
-      const response = await fetch("/api/professor/bridge/generate", {
-        method: "POST",
-        body: form,
-      });
+      let response: Response | null = null;
+      let lastNetworkError: unknown;
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          response = await fetch("/api/professor/bridge/generate", {
+            method: "POST",
+            body: form,
+          });
+          if (![408, 425, 429, 500, 502, 503, 504].includes(response.status) || attempt === 2) break;
+        } catch (networkError) {
+          lastNetworkError = networkError;
+          if (attempt === 2) throw networkError;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 900));
+      }
+      if (!response) throw lastNetworkError ?? new Error("예습자료 생성 서버에 연결하지 못했습니다.");
       const payload = await readApiResponse<BridgeResult>(
         response,
         "예습자료를 만들지 못했습니다.",
