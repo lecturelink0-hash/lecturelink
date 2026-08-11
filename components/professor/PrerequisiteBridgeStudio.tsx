@@ -104,6 +104,7 @@ export function PrerequisiteBridgeStudio() {
   const [reviewLength, setReviewLength] = useState("10분");
   const [designStyle, setDesignStyle] = useState<DesignStyle>("auto");
   const [emphasis, setEmphasis] = useState("");
+  const [includeReadiness, setIncludeReadiness] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BridgeResult | null>(null);
@@ -155,7 +156,7 @@ export function PrerequisiteBridgeStudio() {
       form.append("reviewLength", reviewLength);
       form.append("designStyle", designStyle);
       form.append("emphasis", emphasis);
-      form.append("includeReadiness", "true");
+      form.append("includeReadiness", String(includeReadiness));
       const response = await fetch("/api/professor/bridge/generate", {
         method: "POST",
         body: form,
@@ -341,12 +342,17 @@ export function PrerequisiteBridgeStudio() {
                       maxLength={300}
                     />
                   </label>
-                  <div className="bridge-check-option">
+                  <label className="bridge-check-option">
+                    <input
+                      type="checkbox"
+                      checked={includeReadiness}
+                      onChange={(event) => setIncludeReadiness(event.target.checked)}
+                    />
                     <span>
                       <b>선수지식 확인 문항 2개 포함</b>
                       <small>문제 아래에 정답과 짧은 해설이 작게 표시됩니다.</small>
                     </span>
-                  </div>
+                  </label>
                 </div>
 
                 <div className="design-group full">
@@ -559,7 +565,7 @@ export function PrerequisiteBridgeStudio() {
               </div>
               <div className="summary-item">
                 <span>확인 문항</span>
-                <strong>선수지식 2문항</strong>
+                <strong>{includeReadiness ? "선수지식 2문항" : "포함 안 함"}</strong>
               </div>
             </dl>
             <button
