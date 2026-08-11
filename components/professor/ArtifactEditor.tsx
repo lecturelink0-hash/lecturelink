@@ -176,16 +176,20 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
       <header className="professor-welcome">
         <div>
           <p className="flow-eyebrow">교수 도구 · 검토 후 배포</p>
-          {artifactId === "preview" ? (
+          {artifactId === "preview" && data.title === DEFAULT_PREVIEW_ARTIFACT.title ? (
             <h1 className="artifact-title artifact-preview-title">
               <span>형성평가</span> 검토하기
             </h1>
           ) : (
-            <input
-              className="artifact-title"
-              value={data.title}
-              onChange={(event) => setData({ ...data, title: event.target.value })}
-            />
+            <div className="artifact-title-composite">
+              <input
+                aria-label="형성평가 제목"
+                className="artifact-title"
+                value={data.title}
+                onChange={(event) => setData({ ...data, title: event.target.value })}
+              />
+              <span className="artifact-title-suffix">형성평가</span>
+            </div>
           )}
           <p className="flow-lead">
             생성된 문항과 정답·해설을 확인하고 필요한 내용을 수정한 뒤 학생에게
