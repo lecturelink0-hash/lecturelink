@@ -26,10 +26,10 @@
 | patient_female_old.glb | 〃 OldClassy_Female | 패킹 + 실크햇 프리미티브 제거 |
 | patient_male_child.glb | patient_male.glb 파생 | 소아 비율 본 스케일 수술: Head ×1.18, Shoulder.L/R ×0.85 (전 애니메이션 scale 트랙 포함) |
 | patient_female_child.glb | patient_female.glb 파생 | 소아 비율 본 스케일 수술: Head ×1.26, Shoulder.L/R ×0.85 (〃) |
-| patient_male_infant.glb | patient_male.glb 파생 | 유아(18~24개월) 비율 수술: Head ×1.50, Neck ×0.72, Shoulder ×0.75, Abdomen ×1.12(Torso 역보정), UpperLeg ×0.68 + Body 본 하강 0.272 (전 애니 scale·translation 트랙 포함) |
-| patient_female_infant.glb | patient_female.glb 파생 | 〃 (Head ×1.55) |
+| patient_male_infant.glb | patient_male.glb 파생 | 유아(18~24개월) 비율 수술: Head ×1.00, Neck ×0.72, Shoulder ×0.75, Abdomen ×1.15(Torso 역보정), UpperLeg y×0.68·xz×0.86 + Body 본 하강 0.272 (전 애니 scale·translation 트랙 포함) |
+| patient_female_infant.glb | patient_female.glb 파생 | 〃 (Head ×1.03) |
 
 원본 팩: https://quaternius.com/packs/ultimatedanimatedcharacter.html (팩 동봉 License.txt로 CC0 확인, 2026-07-08)
 소아 파생: 2026-08-02, 수술 스크립트는 데스크톱 저장소 `tools/avatar/child_glb.py` (다리·발 IK 본은 분리 위험이 있어 머리·어깨 체인만 조정).
-유아 파생: 2026-08-11, 수술 스크립트는 데스크톱 저장소 `tools/avatar/toddler_glb.py` — 다리는 본 단축+Body 하강으로 처리(발 IK 본은 그대로, 지면 접점 유지). 실측 등신비: 남 1.84·여 1.91(머리카락 포함 메트릭, 소아 2.28·성인 2.52 대비) — 실제 18~24개월 4.5등신을 이 팩의 스타일 체계(실제 대비 ×0.336)로 환산한 값.
+유아 파생: 2026-08-11, 수술 스크립트는 데스크톱 저장소 `tools/avatar/toddler_glb.py` — 다리는 본 단축+Body 하강으로 처리(발 IK 본은 그대로, 지면 접점 유지). 실측 등신비: 남 2.31·여 2.42(머리카락 포함 메트릭, 소아 2.28·성인 2.52 대비). 초기안은 실제 18~24개월 4.5등신의 스타일 환산값(등신비 ~1.9, Head ×1.50)이었으나 사용자 피드백으로 머리를 2/3로 축소 확정 — 체형 구분은 짧은 다리·올챙이배·좁은 어깨·렌더 키(0.82m)가 담당.
 상세 대장: 데스크톱 저장소 `~/Desktop/lecturelink-cpx/docs/asset-license-ledger.md`

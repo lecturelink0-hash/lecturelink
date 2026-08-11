@@ -63,16 +63,16 @@ const CHILD_EXAM_REGION_FRAC = {
   foot: 0.05,
 }
 
-// 유아(_infant, 18~24개월) 체형은 머리가 신장의 ~54%(턱이 지면 기준 46% 높이),
-// 무릎 관절이 8% 높이 — CPU 스키닝 실측 기반 보정표.
+// 유아(_infant, 18~24개월) 체형은 머리가 신장의 ~42%(턱이 지면 기준 57% 높이),
+// 무릎 관절이 10% 높이 — CPU 스키닝 실측 기반 보정표.
 const INFANT_EXAM_REGION_FRAC = {
-  head: 0.75,
-  neck: 0.45,
-  chest: 0.38,
-  abdomen: 0.28,
-  pelvis: 0.19,
-  legs: 0.11,
-  knee: 0.08,
+  head: 0.79,
+  neck: 0.56,
+  chest: 0.47,
+  abdomen: 0.33,
+  pelvis: 0.2,
+  legs: 0.13,
+  knee: 0.09,
   foot: 0.03,
 }
 
