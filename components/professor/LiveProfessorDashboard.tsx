@@ -1,29 +1,30 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Download, Link2, Play, Square, UserX } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle2, Download, ExternalLink, FileText, Link2, Medal, Play, Square, Users, UserX } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { createBrowserClient } from '@/lib/db/browser';
 import './live-assessment.css';
 import './live-assessment-progress.css';
+import './live-assessment-results.css';
 import '../formative/formative-flow.css';
 
 const previewQuestions = [
-  { id: 'preview-q1', stem: '다음 중 강의에서 설명한 핵심 개념으로 가장 적절한 것은?', choices: ['핵심 개념을 정확히 설명한 선택지', '일부 조건만 포함한 선택지', '강의 범위를 벗어난 선택지', '반대 의미의 선택지', '근거가 부족한 선택지'], answerIndex: 0 },
-  { id: 'preview-q2', stem: '학습한 원리를 실제 상황에 적용한 예로 가장 적절한 것은?', choices: ['조건을 일부만 반영한 사례', '핵심 조건을 모두 반영한 사례', '원인과 결과를 반대로 연결한 사례', '자료에서 다루지 않은 사례', '판단 정보가 부족한 사례'], answerIndex: 1 },
-  { id: 'preview-q3', stem: '다음 설명 중 강의자료의 내용과 일치하지 않는 것은?', choices: ['주요 정의에 관한 설명', '기본 원리에 관한 설명', '판단 순서에 관한 설명', '강의 내용과 반대되는 설명', '주의사항에 관한 설명'], answerIndex: 3 },
+  { id: 'preview-q1', stem: '다음 중 강의에서 설명한 핵심 개념으로 가장 적절한 것은?', choices: ['핵심 개념을 정확히 설명한 선택지', '일부 조건만 포함한 선택지', '강의 범위를 벗어난 선택지', '반대 의미의 선택지', '근거가 부족한 선택지'], answerIndex: 0, explanation: '핵심 조건을 모두 포함한 설명이 정답입니다.', objective: '핵심 개념 구분', sourcePages: [4] },
+  { id: 'preview-q2', stem: '학습한 원리를 실제 상황에 적용한 예로 가장 적절한 것은?', choices: ['조건을 일부만 반영한 사례', '핵심 조건을 모두 반영한 사례', '원인과 결과를 반대로 연결한 사례', '자료에서 다루지 않은 사례', '판단 정보가 부족한 사례'], answerIndex: 1, explanation: '원리를 적용할 때는 제시된 핵심 조건을 모두 확인해야 합니다.', objective: '원리의 실제 적용', sourcePages: [7, 8] },
+  { id: 'preview-q3', stem: '다음 설명 중 강의자료의 내용과 일치하지 않는 것은?', choices: ['주요 정의에 관한 설명', '기본 원리에 관한 설명', '판단 순서에 관한 설명', '강의 내용과 반대되는 설명', '주의사항에 관한 설명'], answerIndex: 3, explanation: '4번은 강의에서 설명한 방향과 반대되는 진술입니다.', objective: '강의 핵심 내용 판별', sourcePages: [11] },
 ];
 
 const previewJoinedAt = '2026-08-10T09:00:00.000Z';
 
 const previewParticipants = [
-  { id: 'p1', name: '김민준', status: 'submitted', score: 3, total: 3, joined_at: previewJoinedAt, live_assessment_answers: [{ item_id: 'preview-q1', selected_index: 0 }, { item_id: 'preview-q2', selected_index: 1 }, { item_id: 'preview-q3', selected_index: 3 }] },
-  { id: 'p2', name: '이서연', status: 'submitted', score: 2, total: 3, joined_at: previewJoinedAt, live_assessment_answers: [{ item_id: 'preview-q1', selected_index: 0 }, { item_id: 'preview-q2', selected_index: 2 }, { item_id: 'preview-q3', selected_index: 3 }] },
+  { id: 'p1', name: '김민준', status: 'submitted', score: 3, total: 3, joined_at: previewJoinedAt, submitted_at: '2026-08-10T09:04:15.000Z', live_assessment_answers: [{ item_id: 'preview-q1', selected_index: 0 }, { item_id: 'preview-q2', selected_index: 1 }, { item_id: 'preview-q3', selected_index: 3 }] },
+  { id: 'p2', name: '이서연', status: 'submitted', score: 2, total: 3, joined_at: previewJoinedAt, submitted_at: '2026-08-10T09:03:42.000Z', live_assessment_answers: [{ item_id: 'preview-q1', selected_index: 0 }, { item_id: 'preview-q2', selected_index: 2 }, { item_id: 'preview-q3', selected_index: 3 }] },
   { id: 'p3', name: '박지훈', status: 'joined', score: null, total: 3, joined_at: previewJoinedAt, live_assessment_answers: [{ item_id: 'preview-q1', selected_index: 1 }] },
 ];
 
 const previewData = {
-  session: { id: 'preview', title: '순환기학 형성평가', status: 'lobby', join_code: '482731', question_snapshot: previewQuestions },
+  session: { id: 'preview', title: '부정맥 약물 형성평가', status: 'lobby', join_code: '482731', question_snapshot: previewQuestions },
   participants: previewParticipants,
 };
 
@@ -31,6 +32,8 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
   const isPreview = sessionId === 'preview' && process.env.NODE_ENV === 'development';
   const [data, setData] = useState<any>(isPreview ? previewData : undefined);
   const [error, setError] = useState('');
+  const [resultTab, setResultTab] = useState<'responses' | 'weaknesses'>('responses');
+  const [evidenceQuestion, setEvidenceQuestion] = useState<any>(null);
   const qr = useRef<HTMLCanvasElement>(null);
 
   const load = useCallback(() => {
@@ -56,10 +59,15 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
   const questions = data?.session.question_snapshot ?? [];
   const participants = data?.participants ?? [];
   const submitted = participants.filter((participant: any) => participant.status === 'submitted').length;
+  const submissionPercent = participants.length ? Math.round(submitted / participants.length * 100) : 0;
   const stats = useMemo(() => questions.map((question: any) => {
     const responses = participants.flatMap((participant: any) => participant.live_assessment_answers ?? []).filter((answer: any) => answer.item_id === question.id);
     return { ...question, count: responses.length, correct: responses.filter((answer: any) => answer.selected_index === question.answerIndex).length, choiceCounts: question.choices.map((_: any, index: number) => responses.filter((answer: any) => answer.selected_index === index).length) };
   }), [questions, participants]);
+  const rankedParticipants = useMemo(() => [...participants]
+    .filter((participant: any) => participant.status === 'submitted')
+    .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0) || new Date(a.submitted_at ?? 8640000000000000).getTime() - new Date(b.submitted_at ?? 8640000000000000).getTime()), [participants]);
+  const weakQuestions = useMemo(() => [...stats].sort((a: any, b: any) => (a.count ? a.correct / a.count : 0) - (b.count ? b.correct / b.count : 0)), [stats]);
 
   async function action(next: 'start' | 'end') {
     if (next === 'end' && !confirm(`아직 제출하지 않은 학생은 ${participants.length - submitted}명입니다. 미응답은 오답 처리하고 종료할까요?`)) return;
@@ -81,6 +89,29 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
       ? '학생 제출 현황을 실시간으로 확인하고 필요한 시점에 평가를 종료하세요.'
       : '문항별 응답 분포와 학생별 결과를 확인해 수업 이해도를 살펴보세요.';
 
+  if (evidenceQuestion) {
+    const questionIndex = questions.findIndex((question: any) => question.id === evidenceQuestion.id);
+    const sourcePage = evidenceQuestion.sourcePages?.[0];
+    const sourceUrl = data.sourceMaterial?.url && sourcePage ? `${data.sourceMaterial.url}#page=${sourcePage}` : data.sourceMaterial?.url;
+    return <main className="live-shell ll-formative-flow ll-live-professor evidence-view">
+      <button type="button" className="evidence-back" onClick={() => setEvidenceQuestion(null)}><ArrowLeft />형성평가 결과로 돌아가기</button>
+      <header className="evidence-head">
+        <div><span>문항 {questionIndex + 1} 출제 근거</span><h1>{data.sourceMaterial?.fileName ?? '강의자료'}</h1></div>
+        {sourceUrl && <a href={sourceUrl} target="_blank" rel="noreferrer">새 창에서 열기 <ExternalLink /></a>}
+      </header>
+      <section className="evidence-document" aria-label="출제 근거 자료">
+        {sourceUrl && data.sourceMaterial?.fileType === 'pdf'
+          ? <iframe src={sourceUrl} title={`문항 ${questionIndex + 1} 근거자료 ${sourcePage ? `${sourcePage}쪽` : ''}`} />
+          : <div className="evidence-unavailable"><FileText /><strong>{sourcePage ? `${sourcePage}쪽` : '근거 페이지'}</strong><p>브라우저에서 바로 표시할 PDF 자료가 없습니다. 아래 문항 정보에서 출제 근거를 확인해주세요.</p></div>}
+      </section>
+      <section className="evidence-question">
+        <div className="evidence-question-title"><span>{questionIndex + 1}</span><div><small>문제 원문</small><h2>{evidenceQuestion.stem}</h2></div></div>
+        <ol>{evidenceQuestion.choices.map((choice: string, index: number) => <li className={index === evidenceQuestion.answerIndex ? 'is-answer' : ''} key={index}><span>{index + 1}</span><p>{choice}</p>{index === evidenceQuestion.answerIndex && <b>정답</b>}</li>)}</ol>
+        <dl><div><dt>정답</dt><dd>{evidenceQuestion.answerIndex + 1}번</dd></div><div><dt>해설</dt><dd>{evidenceQuestion.explanation || '등록된 해설이 없습니다.'}</dd></div><div><dt>근거 페이지</dt><dd>{evidenceQuestion.sourcePages?.length ? `${evidenceQuestion.sourcePages.join(', ')}쪽` : '페이지 정보 없음'}</dd></div></dl>
+      </section>
+    </main>;
+  }
+
   return <main className="live-shell ll-formative-flow ll-live-professor">
     <header className="live-head">
       <div>
@@ -88,7 +119,7 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
         {session.status === 'lobby' ? (
           <h1>QR 코드를 통해 <span className="live-title-accent">형성평가</span>에 참여하세요</h1>
         ) : (
-          <h1>{session.title}</h1>
+          <h1>{subjectName || session.title} <span className="live-title-accent">형성평가</span></h1>
         )}
         <p className="flow-lead">{statusDescription}</p>
       </div>
@@ -109,7 +140,7 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
         </div>
         {session.status === 'live' && (
           <div className="live-head-actions">
-            <button className="danger" onClick={() => action('end')}><Square /> 평가 종료</button>
+            <button className="danger live-end-action" onClick={() => action('end')}><Square /> 평가 종료</button>
           </div>
         )}
       </div>
@@ -151,7 +182,47 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
         </div>
       </section>
     )}
-    {session.status === 'live' && <section className="live-progress-card"><div className="live-progress-illustration"><BookOpen /><i /><i /><i /></div><p>형성평가가 진행 중입니다</p><h2>{submitted}/{participants.length} 제출 완료</h2><span>학생들이 답안을 제출하면 실시간으로 현황이 반영됩니다.</span></section>}
-    {session.status === 'ended' && <><section className="metric-row"><div><small>전체 참여</small><b>{participants.length}</b></div><div><small>제출 완료</small><b>{submitted}</b></div><div><small>평균 점수</small><b>{participants.length ? Math.round(participants.reduce((sum: number, participant: any) => sum + (participant.score ?? 0), 0) / participants.length) : '—'}</b></div></section><section className="analysis-card"><h2>문항별 응답 현황</h2>{stats.map((question: any, index: number) => <article key={question.id}><div><b><span className="analysis-question-number" aria-hidden="true">{index + 1}</span>{question.stem}</b><span>{question.count}/{participants.length} 응답 · 정답률 {question.count ? Math.round(question.correct / question.count * 100) : 0}%</span></div><div className="bar-row">{question.choices.map((_: string, choiceIndex: number) => <span className={choiceIndex === question.answerIndex ? 'is-correct-choice' : ''} key={choiceIndex} style={{ flex: question.choiceCounts[choiceIndex] + 1 }}>{choiceIndex + 1}번 {question.choiceCounts[choiceIndex]}</span>)}</div></article>)}</section><section className="analysis-card student-results-card"><h2>학생별 결과</h2>{[...participants].sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0)).map((participant: any) => <div className="result-line" key={participant.id}><span>{participant.name}{participant.auto_submitted ? ' · 자동 제출' : ''}</span><b>{participant.score}/{participant.total}</b></div>)}</section></>}
+    {session.status === 'live' && (
+      <section className="live-progress-card" aria-labelledby="live-progress-title">
+        <div className="live-progress-main">
+          <div className="live-progress-copy">
+            <div className="live-progress-brand" aria-label="LectureLink">
+              <span><BookOpen aria-hidden="true" /></span>
+              <b>LectureLink</b>
+            </div>
+            <p className="live-progress-status"><i aria-hidden="true" />형성평가 진행 중</p>
+            <h2 id="live-progress-title"><strong>{submitted}</strong><span> / {participants.length}명 제출 완료</span></h2>
+            <div className="live-submission-track" role="progressbar" aria-label="답안 제출률" aria-valuemin={0} aria-valuemax={100} aria-valuenow={submissionPercent}>
+              <i style={{ transform: `scaleX(${submissionPercent / 100})` }} />
+            </div>
+            <p className="live-progress-description">학생들이 답안을 제출하면 현황이 바로 반영됩니다. 제출 상태를 확인한 뒤 적절한 시점에 평가를 종료하세요.</p>
+          </div>
+          <div className="live-progress-visual" aria-hidden="true">
+            {/* A project-owned raster illustration is intentional here: the previous loose SVG shapes did not communicate one coherent scene. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/formative/live-assessment-progress.png" alt="" width={768} height={576} />
+          </div>
+        </div>
+        <div className="live-progress-footer">
+          <div className="live-progress-stat">
+            <Users aria-hidden="true" />
+            <span><small>참여 학생</small><b>{participants.length}명</b></span>
+          </div>
+          <div className="live-progress-stat">
+            <CheckCircle2 aria-hidden="true" />
+            <span><small>제출 완료</small><b>{submitted}명</b></span>
+          </div>
+          <p>형성평가가 끝난 후 로그인하면 문항을 저장할 수 있어요.</p>
+        </div>
+      </section>
+    )}
+    {session.status === 'ended' && <>
+      <section className="metric-row"><div><small>전체 참여</small><b>{participants.length}</b></div><div><small>제출 완료</small><b>{submitted}</b></div><div><small>평균 점수</small><b>{participants.length ? Math.round(participants.reduce((sum: number, participant: any) => sum + (participant.score ?? 0), 0) / participants.length) : '—'}</b></div></section>
+      {rankedParticipants.length > 0 && <section className="result-podium" aria-labelledby="podium-title"><div><h2 id="podium-title">이번 평가 상위 학생</h2><p>정답 수가 같으면 먼저 제출한 학생이 앞섭니다.</p></div><ol>{rankedParticipants.slice(0, 3).map((participant: any, index: number) => <li key={participant.id}><span><Medal aria-hidden="true" />{index + 1}위</span><strong>{participant.name}</strong><small>{participant.score}/{participant.total} · {participant.submitted_at ? new Date(participant.submitted_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '제출 시각 없음'}</small></li>)}</ol></section>}
+      <div className="result-tabs" role="tablist" aria-label="평가 결과 분석"><button type="button" role="tab" aria-selected={resultTab === 'responses'} onClick={() => setResultTab('responses')}>문항별 응답</button><button type="button" role="tab" aria-selected={resultTab === 'weaknesses'} onClick={() => setResultTab('weaknesses')}>학생들이 취약했던 부분</button></div>
+      {resultTab === 'responses' ? <section className="analysis-card"><div className="analysis-section-head"><div><h2>문항별 응답 현황</h2><p>막대 길이로 선지별 선택 비율을 비교할 수 있습니다.</p></div></div>{stats.map((question: any, index: number) => <article key={question.id}><div><b><span className="analysis-question-number" aria-hidden="true">{index + 1}</span>{question.stem}</b><span>{question.count}/{participants.length} 응답 · 정답률 {question.count ? Math.round(question.correct / question.count * 100) : 0}%</span></div><div className="choice-chart">{question.choices.map((choice: string, choiceIndex: number) => { const percent = question.count ? Math.round(question.choiceCounts[choiceIndex] / question.count * 100) : 0; return <div className={choiceIndex === question.answerIndex ? 'is-correct-choice' : ''} key={choiceIndex}><span>{choiceIndex + 1}</span><p title={choice}>{choice}</p><i><b style={{ width: `${percent}%` }} /></i><strong>{question.choiceCounts[choiceIndex]}명 <small>{percent}%</small></strong></div>; })}</div><button type="button" className="evidence-button" onClick={() => setEvidenceQuestion(question)}><FileText />근거자료{question.sourcePages?.length ? ` · ${question.sourcePages.join(', ')}쪽` : ''}</button></article>)}</section>
+      : <section className="analysis-card weakness-card"><div className="analysis-section-head"><div><h2>학생들이 취약했던 부분</h2><p>정답률이 낮은 문항부터 수업 보완 우선순위를 정리했습니다.</p></div></div>{weakQuestions.map((question: any, index: number) => { const accuracy = question.count ? Math.round(question.correct / question.count * 100) : 0; return <article key={question.id}><div className="weakness-rank"><span>보완 {index + 1}</span><strong>정답률 {accuracy}%</strong></div><h3>{question.objective || question.stem}</h3><p>{accuracy < 40 ? '핵심 개념을 짧게 다시 설명한 뒤, 오답 선지가 왜 틀렸는지 비교하는 활동을 권장합니다.' : accuracy < 70 ? '대표 사례를 하나 더 제시하고 판단 기준을 학생이 직접 말로 설명하게 해보세요.' : '대부분 이해했지만 헷갈린 선지를 중심으로 짧게 확인하면 좋습니다.'}</p><button type="button" className="evidence-button" onClick={() => setEvidenceQuestion(question)}><FileText />문항과 근거 확인</button></article>; })}</section>}
+      <section className="analysis-card student-results-card"><h2>학생별 결과</h2>{rankedParticipants.map((participant: any, index: number) => <div className="result-line" key={participant.id}><span><small>{index + 1}</small>{participant.name}{participant.auto_submitted ? ' · 자동 제출' : ''}</span><b>{participant.score}/{participant.total}</b></div>)}</section>
+    </>}
   </main>;
 }

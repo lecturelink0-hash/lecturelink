@@ -8,7 +8,10 @@ export const GET=withErrorHandling(async(_r:Request,c:{params:Promise<{sessionId
  const user=await requireProfessor();const {sessionId}=await c.params;const db=await createServerClient() as any;
  const {data:s}=await db.from('live_assessment_sessions').select('*').eq('id',sessionId).eq('professor_id',user.userId).single();if(!s)throw new ApiException('not_found','세션을 찾을 수 없습니다.',404);
  const {data:p}=await db.from('live_assessment_participants').select('id,name,status,auto_submitted,score,total,joined_at,submitted_at,live_assessment_answers(item_id,selected_index,is_correct)').eq('session_id',sessionId).neq('status','removed').order('joined_at');
- return ok({session:s,participants:p??[]});
+ const {data:artifact}=await db.from('learning_artifacts').select('material_id,teaching_materials(file_name,file_type,storage_path)').eq('id',s.artifact_id).single();
+ let sourceMaterial:any=null;const material=artifact?.teaching_materials;
+ if(material?.storage_path){const {data:signed}=await db.storage.from('teaching-materials').createSignedUrl(material.storage_path,3600);sourceMaterial={fileName:material.file_name,fileType:material.file_type,url:signed?.signedUrl??null};}
+ return ok({session:s,participants:p??[],sourceMaterial});
 });
 export const PATCH=withErrorHandling(async(r:Request,c:{params:Promise<{sessionId:string}>})=>{
  const user=await requireProfessor();const {sessionId}=await c.params;const input=patch.parse(await r.json());const db=await createServerClient() as any;
