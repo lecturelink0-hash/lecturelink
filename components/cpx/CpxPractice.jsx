@@ -11,7 +11,6 @@ import { startMic } from './mic';
 import { sanitizePatientText } from './sanitize';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 
 // 실전은 12분. 시험장 긴장으로 늦어질 것에 대비해 30초·1분 짧게 연습하는 옵션 제공.
 const TIME_LIMIT_OPTIONS = [
@@ -401,14 +400,21 @@ export default function CpxPractice() {
     return [...regions.values()];
   }, [buttons]);
 
-  return <div className="ll-system-page space-y-7">
-    <section className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
-      <div><span className="ll-eyebrow"><Stethoscope className="h-3.5 w-3.5" /> CPX 실전 연습</span><h1 className="mt-2 text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와 실제처럼 진료하세요</h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
-      <div className="flex flex-wrap items-center gap-2"><Badge>{caseCatalog.cases.length}개 증례</Badge>
+  const recommendedCase = caseCatalog.cases[0] ?? null;
+  const isCpxHome = phase === 'ready' && !activePart && !searchResults;
+
+  return <div className={`ll-system-page space-y-7 ${isCpxHome ? 'cpx-home' : ''}`}>
+    {isCpxHome ? <section className="cpx-home-head flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <div><h1 className="text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와<br className="hidden sm:block" /> <span>실제처럼 진료해보세요</span></h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
+      <div className="flex flex-wrap items-center gap-2">
+      <button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`cpx-voice-toggle inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'is-on' : ''}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button>
       {/* 제한시간 선택 — 실전 12분 외 11:30·11:00 단축 연습. 세션 시작 후에는 잠금. */}
       <div role="group" aria-label="제한시간 선택" title="실전(12분)보다 짧게 설정해 시간 압박에 대비할 수 있어요" className="inline-flex h-9 items-center gap-0.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-1.5"><Clock3 className="h-4 w-4 text-[var(--color-muted)]" />{TIME_LIMIT_OPTIONS.map((opt) => <button key={opt.seconds} type="button" onClick={() => setLimitSeconds(opt.seconds)} disabled={phase !== 'ready'} aria-pressed={limitSeconds === opt.seconds} className={`tnum h-7 rounded-[calc(var(--radius-md)-3px)] px-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-55 ${limitSeconds === opt.seconds ? 'bg-[var(--color-primary)] text-white disabled:opacity-100' : 'text-[var(--color-muted)] hover:text-[var(--color-primary)]'}`}>{opt.label}</button>)}</div>
-      <button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'border-[var(--color-warn)] bg-[var(--color-warn)] text-white hover:opacity-90' : 'border-[var(--color-warn)] bg-white text-[var(--color-warn)] hover:bg-[var(--color-warn-bg)]'}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button><Link href="/cpx/history" className="inline-flex h-9 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm font-bold text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">나의 기록 <ChevronRight className="h-4 w-4" /></Link></div>
-    </section>
+      <Link href="/cpx/history" className="cpx-history-link inline-flex h-9 items-center gap-1 px-1 text-sm font-bold text-[var(--color-primary)]">나의 CPX 기록 <ChevronRight className="h-4 w-4" /></Link></div>
+    </section> : <section className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
+      <div><span className="ll-eyebrow"><Stethoscope className="h-3.5 w-3.5" /> CPX 실전 연습</span><h1 className="mt-2 text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와 실제처럼 진료하세요</h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
+      <div className="flex flex-wrap items-center gap-2"><div role="group" aria-label="제한시간 선택" title="실전(12분)보다 짧게 설정해 시간 압박에 대비할 수 있어요" className="inline-flex h-9 items-center gap-0.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-1.5"><Clock3 className="h-4 w-4 text-[var(--color-muted)]" />{TIME_LIMIT_OPTIONS.map((opt) => <button key={opt.seconds} type="button" onClick={() => setLimitSeconds(opt.seconds)} disabled={phase !== 'ready'} aria-pressed={limitSeconds === opt.seconds} className={`tnum h-7 rounded-[calc(var(--radius-md)-3px)] px-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-55 ${limitSeconds === opt.seconds ? 'bg-[var(--color-primary)] text-white disabled:opacity-100' : 'text-[var(--color-muted)] hover:text-[var(--color-primary)]'}`}>{opt.label}</button>)}</div><button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'border-[var(--color-warn)] bg-[var(--color-warn)] text-white hover:opacity-90' : 'border-[var(--color-warn)] bg-white text-[var(--color-warn)] hover:bg-[var(--color-warn-bg)]'}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button><Link href="/cpx/history" className="inline-flex h-9 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm font-bold text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">나의 기록 <ChevronRight className="h-4 w-4" /></Link></div>
+    </section>}
 
     {/* 세션 진입 전: 파트 선택 → (좌 주호소 리스트 / 우 시나리오 리스트) → 연습 시작 */}
     {phase === 'ready' && (
@@ -416,6 +422,14 @@ export default function CpxPractice() {
         <div className="ll-card py-20 text-center text-[var(--color-muted)]">승인 증례를 불러오는 중…</div>
       ) : (
       <div className="space-y-4">
+        {!activePart && !searchResults && recommendedCase && <section className="cpx-featured-case" aria-labelledby="cpx-featured-title">
+          <div className="cpx-featured-main">
+            <div className="cpx-featured-label"><Stethoscope className="h-4 w-4" />오늘의 추천 증례</div>
+            <h2 id="cpx-featured-title">{recommendedCase.title}</h2>
+            <div className="cpx-featured-actions"><Button size="lg" onClick={() => start(recommendedCase)} loading={phase === 'starting' && caseId === recommendedCase.id}>추천 증례 시작하기 <ChevronRight className="h-4 w-4" /></Button><button type="button" onClick={() => document.getElementById('cpx-parts')?.scrollIntoView({ behavior: 'smooth' })}>다른 증례 고르기</button></div>
+          </div>
+          <aside className="cpx-session-guide" aria-label="CPX 연습 진행 과정"><h3>한 세션에서 이렇게 연습해요</h3><ol><li><b>01</b><span><strong>문진</strong>환자에게 직접 질문하기</span></li><li><b>02</b><span><strong>신체진찰</strong>필요한 진찰 선택하기</span></li><li><b>03</b><span><strong>피드백</strong>영역별 근거 확인하기</span></li></ol></aside>
+        </section>}
         {/* 통합 검색창 (우측 상단) — 주호소·시나리오 키워드로 바로 찾기 */}
         <div className="flex justify-end">
           <div className="relative w-full sm:max-w-md">
@@ -472,15 +486,15 @@ export default function CpxPractice() {
             </>)}
           </div>
         ) : !activePart ? (
-        <section className="cpx-parts space-y-4">
-          <div className="grid-note text-right">먼저 연습할 파트를 선택하거나, 위에서 주호소·시나리오를 검색하세요.</div>
-          <section className="cpx-part-grid">
+        <section id="cpx-parts" className="cpx-parts space-y-4">
+          <div className="cpx-parts-heading"><div><h2>전체 파트에서 찾아보기</h2><p>연습하려는 주호소나 시나리오를 선택하세요.</p></div></div>
+          <section className="cpx-home-part-list">
             {partGroups.map((g) => (
               <button
                 key={g.id}
                 type="button"
                 onClick={() => { setSelectedPart(g.id); setSelectedCategory(g.cats[0] ?? ''); }}
-                className="cpx-part-card"
+                className="cpx-home-part-row"
               >
                 <div className="cpx-part-head">
                   <span className="cpx-part-icon"><g.Icon className="w-6 h-6" strokeWidth={1.9} /></span>
