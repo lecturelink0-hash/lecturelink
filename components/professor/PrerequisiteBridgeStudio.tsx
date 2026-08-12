@@ -48,6 +48,7 @@ type BridgeResult = {
   externalSources: Array<{ title: string; organization: string; url: string }>;
   visualDataUrl?: string | null;
   textAudit?: { status: "passed" | "needs_review"; issues: string[] };
+  textRepair?: { applied: boolean; patchCount: number; regenerated: boolean };
 };
 
 const ACCEPT =
@@ -448,7 +449,13 @@ export function PrerequisiteBridgeStudio() {
                 <div className={`bridge-audit ${result.textAudit.status}`}>
                   <ShieldCheck size={15} />
                   <div>
-                    <b>{result.textAudit.status === "passed" ? "자동 글자·내용 검수 통과" : "교수 검토가 필요한 항목이 있습니다"}</b>
+                    <b>{result.textAudit.status === "passed"
+                      ? result.textRepair?.applied
+                        ? `깨진 글자 ${result.textRepair.patchCount}곳 자동 교정 · 재검수 통과`
+                        : result.textRepair?.regenerated
+                          ? "필수 요소를 포함해 다시 생성 · 자동 검수 통과"
+                          : "자동 글자·내용 검수 통과"
+                      : "교수 검토가 필요한 항목이 있습니다"}</b>
                     {result.textAudit.issues.length > 0 && <p>{result.textAudit.issues.join(" · ")}</p>}
                   </div>
                 </div>
