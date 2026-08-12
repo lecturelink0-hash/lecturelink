@@ -671,16 +671,16 @@ export function Landing() {
     <div className="ll-land min-h-screen overflow-x-hidden bg-[#FCFAF4] text-[#111827]">
       {/* 기존 랜딩의 프리뷰 데모 애니메이션(커서 클릭·진행 바·음성 웨이브) — 스코프 유지 */}
       <style>{`
-        /* 히어로 인트로 타임라인 — 잇(0.45s) → 선(0.85s~) → 다(1.8s) → 0.5s 정지 →
-           하단 워드마크(2.55s) → CTA → 안내문구 */
+        /* 히어로 인트로 타임라인 — 핵심 메시지 → CTA → 안내문구 → 저대비 워드마크.
+           브랜드 타이포보다 무료체험 행동이 먼저 인지되도록 순서를 잡는다. */
         .ll-land .llh-1{animation:llh-fade .45s ease-out both}
         .ll-land .llh-2{animation:llh-rise .3s cubic-bezier(.22,1,.36,1) .45s both}
         .ll-land .llh-line{transform-origin:left center;animation:llh-draw .95s cubic-bezier(.4,0,.2,1) .85s both}
         .ll-land .llh-3{animation:llh-rise .25s cubic-bezier(.22,1,.36,1) 1.8s both}
-        .ll-land .llh-4{animation:llh-wordmark .75s cubic-bezier(.22,1,.36,1) 2.55s both}
-        .ll-land .llh-5{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 3.5s both}
-        .ll-land .llh-6{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 3.68s both}
-        .ll-land .llh-7{animation:llh-fade .35s ease-out 3.85s both}
+        .ll-land .llh-5{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 2.3s both}
+        .ll-land .llh-6{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 2.46s both}
+        .ll-land .llh-7{animation:llh-fade .35s ease-out 2.68s both}
+        .ll-land .llh-4{animation:llh-wordmark .75s cubic-bezier(.22,1,.36,1) 3.05s both}
         @keyframes llh-fade{from{opacity:0}to{opacity:1}}
         @keyframes llh-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes llh-wordmark{from{opacity:0;transform:translateY(.13em)}to{opacity:1;transform:translateY(0)}}
@@ -726,40 +726,40 @@ export function Landing() {
 
           <div className="relative z-10 mx-auto flex w-full max-w-[1140px] items-center pb-[clamp(3rem,8vw,7rem)] pt-16 sm:pt-20 [word-break:keep-all]">
             <div className="max-w-[790px]">
-              <h1 aria-label="의대 공부의 흐름을 잇다 — 렉처링크" className="font-extrabold tracking-tight text-white">
+              <h1 aria-label="의대 공부의 흐름을 잇다 — 렉처링크" className="font-extrabold tracking-tight text-[#FCFAF4]">
                 <span className="llh-1 block text-[clamp(26px,3vw,42px)] leading-[1.25]">의대 공부의 흐름을</span>
                 <span className="mt-[0.1em] flex items-center gap-[0.14em] text-[clamp(68px,9vw,140px)] leading-[.98]" aria-hidden="true">
                   <span className="llh-2 shrink-0">잇</span>
                   {/* 잇의 받침에서 다의 ㅏ로 이어지는 선 */}
                   <span className="min-w-[1.8em] flex-1 translate-y-[0.06em]">
-                    <span className="llh-line block h-[0.075em] w-full rounded-full bg-white" />
+                    <span className="llh-line block h-[0.075em] w-full rounded-full bg-[#FCFAF4]" />
                   </span>
                   <span className="llh-3 shrink-0">다</span>
                 </span>
               </h1>
 
-              <div className="mt-10 flex flex-wrap gap-3 sm:mt-12">
+              <div className="mt-7 flex flex-wrap gap-3 sm:mt-8">
                 <Link
                   href="/login"
-                  className="llh-5 group inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-white px-6 text-[16px] font-bold text-[#07563A] shadow-[0_12px_28px_rgba(0,0,0,.16)] transition hover:bg-[#EAF3ED] active:scale-[.98]"
+                  className="llh-5 group inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-[#FCFAF4] px-6 text-[16px] font-bold text-[#07563A] shadow-[0_12px_28px_rgba(0,0,0,.16)] transition hover:bg-[#F4F1E8] active:scale-[.98]"
                 >
                   1달 무료체험 시작하기
                   <ArrowRight className="h-[18px] w-[18px] transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <a
                   href="#features"
-                  className="llh-6 inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-white/[0.08] px-6 text-[16px] font-bold text-white ring-1 ring-inset ring-white/50 transition hover:bg-white/[0.16] active:scale-[.98]"
+                  className="llh-6 inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-[#FCFAF4]/[0.08] px-6 text-[16px] font-bold text-[#FCFAF4] ring-1 ring-inset ring-[#FCFAF4]/40 transition hover:bg-[#FCFAF4]/[0.15] active:scale-[.98]"
                 >
                   기능 살펴보기
                 </a>
               </div>
-              <p className="llh-7 mt-5 text-[13px] font-semibold text-white/65">카드 등록 없이 시작 · 첫 한 달 무료</p>
+              <p className="llh-7 mt-4 text-[13px] font-semibold text-[#F4F1E8]/70">카드 등록 없이 시작 · 첫 한 달 무료</p>
             </div>
           </div>
 
           <p
             aria-hidden="true"
-            className="llh-4 pointer-events-none absolute inset-x-0 bottom-16 z-0 whitespace-nowrap text-center text-[clamp(58px,14.5vw,280px)] font-black leading-[0.78] tracking-[-0.04em] text-white/[0.96] sm:bottom-[-0.075em]"
+            className="llh-4 pointer-events-none absolute inset-x-0 bottom-[-0.16em] z-0 select-none whitespace-nowrap text-center text-[clamp(58px,14.5vw,280px)] font-black leading-[0.78] tracking-[-0.04em] text-[#F4F1E8]/[0.16]"
           >
             LECTURELINK
           </p>
