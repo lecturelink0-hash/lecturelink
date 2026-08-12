@@ -517,9 +517,9 @@ export default function CpxPractice() {
           {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
         </section>
       ) : (
-        <section className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <button type="button" onClick={() => { setSelectedPart(''); setSelectedCategory(''); }} className="inline-flex items-center gap-1 text-sm font-bold text-[var(--color-muted)] hover:text-[var(--color-primary)]">
+        <section className="cpx-selected-part space-y-4">
+          <div className="cpx-selected-toolbar flex items-center justify-between gap-3">
+            <button type="button" onClick={() => { setSelectedPart(''); setSelectedCategory(''); }} className="inline-flex items-center gap-1 text-sm font-bold text-[var(--color-primary)]">
               <ChevronLeft className="w-4 h-4" /> 파트 다시 선택
             </button>
             <h2 className="inline-flex items-center gap-2 text-lg font-bold text-[var(--color-text)]"><activePart.Icon className="w-5 h-5 text-[var(--color-primary)]" strokeWidth={2} /> {activePart.label}</h2>
