@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Menu, X, LogOut, ChevronDown, CalendarDays, UserCog } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
+import './mobile-drawer.css';
 
 // 학습 흐름 순서: 내신 대비와 CPX를 각각 독립 메뉴로 제공한다.
 const NAV_ITEMS = [
@@ -48,6 +49,18 @@ export function Sidebar({ user }: SidebarProps) {
     setOpen(false);
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
 
   // 프로필 드롭다운: 바깥 클릭 / ESC 로 닫기
   useEffect(() => {
@@ -239,39 +252,41 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* 모바일 드로어 */}
       {open && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/40 z-40"
+        <button
+          type="button"
+          className="ll-mobile-drawer-backdrop ll-student-mobile-drawer"
           onClick={() => setOpen(false)}
-          aria-hidden
+          aria-label="메뉴 닫기"
         />
       )}
       <aside
         className={clsx(
-          'md:hidden fixed inset-y-0 right-0 w-72 bg-white border-l border-[var(--color-border)] z-50 flex flex-col transition-transform duration-200',
-          open ? 'translate-x-0' : 'translate-x-full',
+          'll-mobile-drawer ll-student-mobile-drawer',
+          open && 'is-open',
         )}
+        aria-label="학생 모바일 메뉴"
+        aria-hidden={!open}
+        inert={!open}
       >
-        <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--color-border)]">
+        <div className="ll-mobile-drawer-header">
           <Logo />
           <button
             onClick={() => setOpen(false)}
             aria-label="메뉴 닫기"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-sage-800 hover:bg-[var(--color-sage-100)]"
+            className="ll-mobile-drawer-close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-3 overflow-y-auto">
+        <nav className="ll-mobile-drawer-nav">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={clsx(
-                'block px-3 py-2.5 rounded-lg mb-0.5 text-[14px] transition-colors',
-                isActive(item.href)
-                  ? 'text-sage-800 font-bold bg-[var(--color-sage-100)]'
-                  : 'text-[var(--color-muted)] font-medium hover:bg-[var(--color-sage-100)]',
+                'll-mobile-drawer-link',
+                isActive(item.href) && 'is-active',
               )}
             >
               {item.label}
@@ -279,16 +294,15 @@ export function Sidebar({ user }: SidebarProps) {
           ))}
         </nav>
 
-        <div className="p-3 mt-auto space-y-2 border-t border-[var(--color-border)]">
-          <div className="flex items-center gap-2.5 px-1 py-2">
-            <div className="w-8 h-8 rounded-full bg-sage-600 text-white flex items-center justify-center text-[12px] font-bold">
+        <div className="ll-mobile-drawer-account">
+            <div className="ll-mobile-drawer-avatar">
               {avatarInitial}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-semibold text-sage-800 truncate">{displayName}</div>
-              <div className="text-[10px] text-[var(--color-muted)] truncate">{subtitle}</div>
+            <div className="ll-mobile-drawer-identity">
+              <b>{displayName}</b>
+              <small>{subtitle}</small>
             </div>
-          </div>
+          <div className="ll-mobile-drawer-actions">
           {MENU_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
@@ -296,13 +310,11 @@ export function Sidebar({ user }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={clsx(
-                  'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[14px] transition-colors',
-                  pathname === item.href
-                    ? 'text-sage-800 font-bold bg-[var(--color-sage-100)]'
-                    : 'text-sage-800 font-medium hover:bg-[var(--color-sage-100)]',
+                  'll-mobile-drawer-action',
+                  pathname === item.href && 'is-active',
                 )}
               >
-                <Icon className="w-4 h-4 text-sage-600" />
+                <Icon className="w-4 h-4" />
                 {item.label}
               </Link>
             );
@@ -310,11 +322,12 @@ export function Sidebar({ user }: SidebarProps) {
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="w-full flex items-center justify-center gap-2 h-9 rounded-lg border border-[var(--color-border)] text-[12px] font-medium text-[var(--color-muted)] hover:text-sage-800 hover:bg-[var(--color-sage-100)] transition-colors disabled:opacity-50"
+            className="ll-mobile-drawer-logout"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-4 h-4" />
             {loggingOut ? '로그아웃 중...' : '로그아웃'}
           </button>
+          </div>
         </div>
       </aside>
     </header>
