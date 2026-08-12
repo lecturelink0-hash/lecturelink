@@ -174,6 +174,7 @@ export default function CpxPractice() {
   const micRef = useRef(null);
   const voiceBusyRef = useRef(false);
   const bufferRef = useRef([]);
+  const usageRef = useRef([]); // Live 턴별 usageMetadata 버퍼 (원가 실측)
   const startedAtRef = useRef(0);
   const autoEndedRef = useRef(false); // 시간 종료 자동 채점은 세션당 1회만
   const finishRef = useRef(null);
@@ -201,12 +202,24 @@ export default function CpxPractice() {
     }
   }, [sessionId]);
 
+  // Live API가 턴마다 돌려주는 토큰 사용량을 서버에 기록 — CPX 회당 원가 실측용.
+  const flushUsage = useCallback(async () => {
+    if (!sessionId || !usageRef.current.length) return;
+    const events = usageRef.current.splice(0);
+    try {
+      await request(`/sessions/${sessionId}/usage`, { method: 'POST', body: JSON.stringify(events), keepalive: true });
+    } catch {
+      usageRef.current.unshift(...events);
+    }
+  }, [sessionId]);
+
   useEffect(() => {
     if (phase !== 'live') return undefined;
     const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAtRef.current) / 1000)), 1000);
     const saver = window.setInterval(flush, 3000);
-    return () => { window.clearInterval(timer); window.clearInterval(saver); };
-  }, [phase, flush]);
+    const usageSaver = window.setInterval(flushUsage, 3000);
+    return () => { window.clearInterval(timer); window.clearInterval(saver); window.clearInterval(usageSaver); };
+  }, [phase, flush, flushUsage]);
 
   // 채점(finishing) 중 원형 게이지를 95%까지 점점 느려지게 채운다.
   // 실제 채점은 단일 API 호출(진행률 이벤트 없음)이라 예상 소요시간 기반으로 시뮬레이션하며,
@@ -266,6 +279,7 @@ export default function CpxPractice() {
     if (caseId !== target.id) setCaseId(target.id);
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
+    usageRef.current = [];
     try {
       const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: target.id, timeLimitSeconds: limitSeconds }) });
       setSessionId(created.sessionId); setPersona(created.persona); startedAtRef.current = Date.now(); setElapsed(0);
@@ -275,6 +289,7 @@ export default function CpxPractice() {
         onPatientText: (text) => push('patient', sanitizePatientText(text)),
         onInputText: (text, meta) => { if (meta?.final) push('student', text); },
         onAudioLevel: setAudioLevel,
+        onUsage: (usage) => { usageRef.current.push({ ...usage, tOffsetMs: Math.max(0, Date.now() - startedAtRef.current) }); },
       });
       liveRef.current = live;
       await live.connect(token);
@@ -326,7 +341,7 @@ export default function CpxPractice() {
     if (!sessionId || phase !== 'live') return;
     setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
     try {
-      micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush();
+      micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush(); await flushUsage();
       await request(`/sessions/${sessionId}/end`, { method: 'POST' });
       const evaluation = await request(`/sessions/${sessionId}/evaluate`, { method: 'POST' });
       setResult(evaluation); setPhase('ended'); setStatus('채점 완료');

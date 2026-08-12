@@ -121,23 +121,6 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
     return null;
   }
 
-  // Closed beta: honor the professor type selected at signup before the
-  // database migration reaches production, including existing pending users.
-  if (profile && user.user_metadata?.requested_account_type === 'professor' && profile.account_type !== 'professor') {
-    const approvedAt = new Date().toISOString();
-    const { error: promotionError } = await createAdminClient()
-      .from('users')
-      .update({ account_type: 'professor', faculty_status: 'approved', faculty_approved_at: approvedAt, faculty_approved_by: null })
-      .eq('id', user.id);
-
-    if (promotionError) {
-      console.error('[auth] closed beta professor promotion failed:', promotionError);
-    } else {
-      profile.account_type = 'professor';
-      profile.faculty_status = 'approved';
-    }
-  }
-
   // profile 이 없으면 (auth.users 만 있고 public.users 미생성) 최소 정보로 반환
   const userProfile: UserProfile = profile
     ? {
@@ -163,11 +146,8 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
         currentYear: profile.current_year,
         planTier: profile.plan_tier as PlanTier,
         onboardedAt: profile.onboarded_at,
-        accountType:
-          profile.account_type === 'professor' ||
-          (!('account_type' in profile) && user.user_metadata?.account_type === 'professor')
-            ? 'professor'
-            : 'student',
+        // 권한은 사용자가 수정할 수 있는 user_metadata 가 아니라 DB 프로필만 신뢰한다.
+        accountType: profile.account_type === 'professor' ? 'professor' : 'student',
         facultyStatus: ('faculty_status' in profile && profile.faculty_status
           ? profile.faculty_status
           : profile.account_type === 'professor'
@@ -183,8 +163,9 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
         currentYear: null,
         planTier: 'free',
         onboardedAt: null,
-        accountType: user.user_metadata?.account_type === 'professor' ? 'professor' : 'student',
-        facultyStatus: user.user_metadata?.account_type === 'professor' ? 'approved' : 'not_requested',
+        // 프로필 생성 실패를 권한 상승으로 바꾸지 않도록 안전한 기본값을 사용한다.
+        accountType: 'student',
+        facultyStatus: 'not_requested',
       };
 
   const role: 'user' | 'admin' =

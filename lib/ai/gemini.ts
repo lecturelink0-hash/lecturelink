@@ -23,7 +23,10 @@ export function isGeminiProvider(): boolean {
   return (process.env.AI_PROVIDER ?? 'gemini').toLowerCase() === 'gemini';
 }
 
-const GEMINI_TIMEOUT_MS = parseInt(process.env.ANTHROPIC_TIMEOUT_MS ?? '60000', 10);
+const GEMINI_TIMEOUT_MS = parseInt(
+  process.env.GEMINI_TIMEOUT_MS ?? process.env.ANTHROPIC_TIMEOUT_MS ?? '60000',
+  10,
+);
 
 /** 429 응답 본문의 RetryInfo.retryDelay("36s" / "1.5s") → ms. 없으면 undefined. */
 function parseGeminiRetryDelayMs(body: string): number | undefined {

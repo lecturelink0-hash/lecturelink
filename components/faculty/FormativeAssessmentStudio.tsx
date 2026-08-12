@@ -113,6 +113,7 @@ export function FormativeAssessmentStudio() {
   const [useImages, setUseImages] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [errorTitle, setErrorTitle] = useState("초안을 만들지 못했습니다.");
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [courseId, setCourseId] = useState(searchParams.get("course") ?? "");
   const [courseTitle, setCourseTitle] = useState("");
@@ -155,6 +156,7 @@ export function FormativeAssessmentStudio() {
     }
     setLoading(true);
     setError("");
+    setErrorTitle("초안을 만들지 못했습니다.");
     try {
       let selectedMaterialId = materialId;
       if (file) {
@@ -181,7 +183,17 @@ export function FormativeAssessmentStudio() {
         method: "POST",
         body: form,
       });
-      const payload = await response.json();
+      const responseText = await response.text();
+      let payload: { ok?: boolean; data?: unknown; error?: { message?: string } };
+      try {
+        payload = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          response.status >= 500
+            ? "AI 생성 서버의 응답이 지연되거나 중단되었습니다. 잠시 후 다시 시도해주세요."
+            : "생성 서버의 응답을 확인하지 못했습니다.",
+        );
+      }
       if (!response.ok || !payload.ok) {
         throw new Error(
           payload?.error?.message ?? "형성평가를 생성하지 못했습니다.",
@@ -203,9 +215,21 @@ export function FormativeAssessmentStudio() {
           }),
         },
       );
-      const saved = await saveResponse.json();
+      const saveText = await saveResponse.text();
+      let saved: { ok?: boolean; data?: { id?: string }; error?: { message?: string } };
+      try {
+        saved = JSON.parse(saveText);
+      } catch {
+        setErrorTitle("초안 저장을 완료하지 못했습니다.");
+        throw new Error("생성된 문항의 저장 응답을 확인하지 못했습니다. 다시 시도해주세요.");
+      }
       if (!saveResponse.ok || !saved.ok) {
+        setErrorTitle("초안 저장을 완료하지 못했습니다.");
         throw new Error(saved?.error?.message ?? "생성한 문항을 저장하지 못했습니다.");
+      }
+      if (!saved.data?.id) {
+        setErrorTitle("초안 저장을 완료하지 못했습니다.");
+        throw new Error("저장된 형성평가의 식별 정보를 확인하지 못했습니다.");
       }
       router.push(`/professor/artifacts/${saved.data.id}`);
     } catch (cause) {
@@ -653,7 +677,7 @@ export function FormativeAssessmentStudio() {
               <div className="summary-generate-error" role="alert">
                 <AlertTriangle size={18} />
                 <span>
-                  <b>초안을 만들지 못했습니다.</b>
+                  <b>{errorTitle}</b>
                   {error}
                 </span>
               </div>

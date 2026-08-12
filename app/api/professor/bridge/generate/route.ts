@@ -7,6 +7,7 @@ import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import { createServerClient } from '@/lib/db/server';
 import { extractTeachingMaterial, loadTeachingMaterialFile } from '@/lib/teaching/materials';
 import { findVerifiedPubMedSources } from '@/lib/medical-sources/pubmed';
+import { repairInfographicText, type InfographicTextPatch } from '@/lib/ai/infographic-text-repair';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_INFOGRAPHIC_BYTES = 900_000;
@@ -198,25 +199,73 @@ TEXT ACCURACY IS CRITICAL. Spell every Korean/English term supplied above exactl
 const auditSchema = z.object({
   status: z.enum(['passed', 'needs_review']),
   issues: z.array(z.string()).max(12),
+  requiredElementsPresent: z.boolean(),
+  repairable: z.boolean(),
+  patches: z.array(z.object({
+    observedText: z.string().max(120),
+    replacementText: z.string().max(120),
+    confidence: z.number().min(0).max(1),
+    backgroundComplexity: z.enum(['simple', 'complex']),
+    box: z.object({
+      x: z.number().min(0).max(1000),
+      y: z.number().min(0).max(1000),
+      width: z.number().min(0).max(1000),
+      height: z.number().min(0).max(1000),
+    }),
+  })).max(8),
 });
 
 const auditTool = {
   name: 'audit_infographic',
-  description: 'Audit generated Korean medical infographic text and content against the approved source plan.',
+  description: 'Audit Korean infographic text, required elements, and return exact repair boxes for malformed glyphs.',
   input_schema: {
     type: 'object',
-    required: ['status', 'issues'],
+    required: ['status', 'issues', 'requiredElementsPresent', 'repairable', 'patches'],
     properties: {
       status: { type: 'string', enum: ['passed', 'needs_review'] },
       issues: { type: 'array', maxItems: 12, items: { type: 'string' } },
+      requiredElementsPresent: { type: 'boolean' },
+      repairable: { type: 'boolean' },
+      patches: {
+        type: 'array',
+        maxItems: 8,
+        items: {
+          type: 'object',
+          required: ['observedText', 'replacementText', 'confidence', 'backgroundComplexity', 'box'],
+          properties: {
+            observedText: { type: 'string' },
+            replacementText: { type: 'string' },
+            confidence: { type: 'number', minimum: 0, maximum: 1 },
+            backgroundComplexity: { type: 'string', enum: ['simple', 'complex'] },
+            box: {
+              type: 'object',
+              required: ['x', 'y', 'width', 'height'],
+              properties: {
+                x: { type: 'number', minimum: 0, maximum: 1000 },
+                y: { type: 'number', minimum: 0, maximum: 1000 },
+                width: { type: 'number', minimum: 0, maximum: 1000 },
+                height: { type: 'number', minimum: 0, maximum: 1000 },
+              },
+            },
+          },
+        },
+      },
     },
   },
 } as const;
 
+const failedAudit = (issue: string) => ({
+  status: 'needs_review' as const,
+  issues: [issue],
+  requiredElementsPresent: false,
+  repairable: false,
+  patches: [] as InfographicTextPatch[],
+});
+
 async function auditInfographic(result: z.infer<typeof resultSchema>, visualDataUrl: string | null) {
-  if (!visualDataUrl) return { status: 'needs_review' as const, issues: ['완성형 이미지가 생성되지 않았습니다.'] };
+  if (!visualDataUrl) return failedAudit('완성형 이미지가 생성되지 않았습니다.');
   const match = visualDataUrl.match(/^data:(image\/(?:png|jpeg|webp));base64,(.+)$/s);
-  if (!match) return { status: 'needs_review' as const, issues: ['이미지 형식을 검수할 수 없습니다.'] };
+  if (!match) return failedAudit('이미지 형식을 검수할 수 없습니다.');
   try {
     const expected = [
       result.title, result.examScope,
@@ -225,6 +274,8 @@ async function auditInfographic(result: z.infer<typeof resultSchema>, visualData
       ...result.representativeExamples.flatMap((item) => [item.group, ...item.examples]),
       ...result.mustRemember,
       ...result.readinessCheck.flatMap((item) => [item.question, item.answer]),
+      '시험 직전, 이것만은 기억!',
+      'LECTURELINK',
     ].join('\n');
     const response = await withRetry(() => createMessage(getAnthropic(), {
       model: MODELS.vision(),
@@ -233,14 +284,67 @@ async function auditInfographic(result: z.infer<typeof resultSchema>, visualData
       tool_choice: { type: 'tool', name: 'audit_infographic' },
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } },
-        { type: 'text', text: `당신은 생성 AI와 독립적으로 결과물을 검수하는 의학교육 편집자다. 이미지 속 모든 한글과 의학용어를 읽고 아래 승인 원문과 대조하라. 글자 깨짐, 오탈자, 누락, 중복, 잘못된 화살표, 의학적 모순, 강의 범위 밖 내용, 너무 작은 글씨가 하나라도 있으면 needs_review다. 장식적 축약은 허용하지만 의미 변화는 허용하지 않는다.\n\n승인 원문:\n${expected}` },
+        { type: 'text', text: `당신은 생성 AI와 독립적으로 결과물을 검수하는 의학교육 편집자이자 OCR 교정자다. 이미지 속 모든 한글과 의학용어를 읽고 아래 승인 원문과 대조하라.
+
+검수 규칙:
+- 글자 깨짐, 가짜 한글, 한자/특수문자 혼입, 오탈자, 누락, 중복, 잘못된 화살표, 의학적 모순, 범위 밖 내용, 너무 작은 글씨가 있으면 needs_review다.
+- 제목, "시험 직전, 이것만은 기억!", 설정된 확인문항과 정답, 책+심전도 로고와 "LECTURELINK"는 필수다. 모두 있으면 requiredElementsPresent=true다.
+- patches에는 실제 이미지에 보이는 잘못된 글자만 넣는다. 누락 문구 전체나 의미 변경은 패치하지 않는다.
+- 각 box는 이미지 전체를 0..1000으로 정규화한 x,y,width,height다. 잘못된 문자열의 글자 영역에 딱 맞게 잡는다.
+- observedText는 이미지에서 읽힌 문자열, replacementText는 승인 원문에 따른 정확한 대체 문자열이다.
+- 단색/옅은 종이/빈 카드 배경이면 simple, 그림·선·화살표·복잡한 질감 위면 complex다.
+- simple 배경의 확실한 오류가 1~4개이고 필수 요소가 모두 있으면 repairable=true다. 그 외에는 false다.
+- 정상 글자는 절대 patches에 넣지 않는다. 장식적 축약은 허용하지만 의미 변화는 허용하지 않는다.
+
+승인 원문:
+${expected}` },
       ] }],
     }), { maxAttempts: 2 });
     const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
-    return block ? auditSchema.parse(block.input) : { status: 'needs_review' as const, issues: ['검수 응답을 해석하지 못했습니다.'] };
+    return block ? auditSchema.parse(block.input) : failedAudit('검수 응답을 해석하지 못했습니다.');
   } catch {
-    return { status: 'needs_review' as const, issues: ['자동 글자 검수를 완료하지 못했습니다. 교수 검토가 필요합니다.'] };
+    return failedAudit('자동 글자 검수를 완료하지 못했습니다. 교수 검토가 필요합니다.');
   }
+}
+
+async function auditAndRepairArtwork(
+  result: z.infer<typeof resultSchema>,
+  generatedArtwork: string,
+  deadlineAt: number,
+) {
+  let visualDataUrl = generatedArtwork;
+  let textAudit = await auditInfographic(result, visualDataUrl);
+  let textRepair = { applied: false, patchCount: 0, regenerated: false };
+
+  if (visualDataUrl && textAudit.status === 'needs_review' && textAudit.requiredElementsPresent
+      && textAudit.repairable && textAudit.patches.length > 0) {
+    const patchCount = textAudit.patches.length;
+    const corrected = await repairInfographicText(visualDataUrl, textAudit.patches);
+    const optimized = corrected ? await optimizeInfographic(corrected) : null;
+    if (optimized && Date.now() < deadlineAt - 25_000) {
+      const correctedAudit = await auditInfographic(result, optimized);
+      const improved = correctedAudit.status === 'passed'
+        || (correctedAudit.requiredElementsPresent && correctedAudit.issues.length < textAudit.issues.length);
+      if (improved) {
+        visualDataUrl = optimized;
+        textAudit = correctedAudit;
+        textRepair = { applied: true, patchCount, regenerated: false };
+      }
+    }
+  } else if (textAudit.status === 'needs_review' && !textAudit.requiredElementsPresent
+      && Date.now() < deadlineAt - 75_000) {
+    const regenerated = await generateMedicalArtwork(result, deadlineAt - 20_000);
+    if (regenerated) {
+      const regeneratedAudit = Date.now() < deadlineAt - 25_000
+        ? await auditInfographic(result, regenerated)
+        : failedAudit('필수 요소를 포함해 다시 생성했으며 시간 제한으로 재검수를 건너뛰었습니다.');
+      visualDataUrl = regenerated;
+      textAudit = regeneratedAudit;
+      textRepair = { applied: false, patchCount: 0, regenerated: true };
+    }
+  }
+
+  return { visualDataUrl, textAudit, textRepair };
 }
 
 const requestSchema = z.object({
@@ -767,19 +871,19 @@ export const POST = withErrorHandling(async (request: Request) => {
   });
   const verifiedResult = { ...result, externalSources };
   const generatedArtwork = await generateMedicalArtwork(verifiedResult, generationStartedAt + 235_000);
-  const visualDataUrl = generatedArtwork ?? generateFallbackInfographic(verifiedResult);
-  const textAudit = !generatedArtwork
-    ? {
-        status: 'needs_review' as const,
-        issues: ['AI 이미지 생성이 완료되지 않아 자동 구성한 대체 시각자료를 사용했습니다. 교수 검토가 필요합니다.'],
-      }
-    : Date.now() - generationStartedAt < 220_000
-      ? await auditInfographic(verifiedResult, visualDataUrl)
-      : {
-        status: 'needs_review' as const,
-        issues: ['전체 생성 시간을 지키기 위해 자동 글자 검수를 건너뛰었습니다. 교수 검토가 필요합니다.'],
-      };
-  const artifactContent = { ...verifiedResult, visualDataUrl, textAudit };
+  let visualDataUrl = generatedArtwork ?? generateFallbackInfographic(verifiedResult);
+  let textAudit: z.infer<typeof auditSchema> = !generatedArtwork
+    ? failedAudit('AI 이미지 생성이 완료되지 않아 자동 구성한 대체 시각자료를 사용했습니다. 교수 검토가 필요합니다.')
+    : failedAudit('전체 생성 시간을 지키기 위해 자동 글자 검수를 건너뛰었습니다. 교수 검토가 필요합니다.');
+  let textRepair = { applied: false, patchCount: 0, regenerated: false };
+  if (generatedArtwork && Date.now() - generationStartedAt < 205_000) {
+    ({ visualDataUrl, textAudit, textRepair } = await auditAndRepairArtwork(
+      verifiedResult,
+      generatedArtwork,
+      generationStartedAt + 235_000,
+    ));
+  }
+  const artifactContent = { ...verifiedResult, visualDataUrl, textAudit, textRepair };
   const db = await createServerClient() as any;
   let courseFound = false;
   for (let attempt = 1; attempt <= 2; attempt += 1) {

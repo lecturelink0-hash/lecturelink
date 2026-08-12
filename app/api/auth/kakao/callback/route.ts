@@ -44,6 +44,7 @@ export async function GET(request: Request) {
     const res = NextResponse.redirect(`${base}/login?error=${reason}`);
     res.cookies.delete('kakao_oauth_state');
     res.cookies.delete('kakao_oauth_next');
+    res.cookies.delete('lecturelink_account_type');
     return res;
   };
 
@@ -106,11 +107,20 @@ export async function GET(request: Request) {
 
   // 4) Supabase 사용자 조회/생성 — 카카오 id 기반 합성 이메일(수신 불가 도메인)
   const email = `kakao_${kakaoId}@kakao.users.lecturelink.kro.kr`;
+  const requestedAccountType = readCookie(request, 'lecturelink_account_type') === 'professor'
+    ? 'professor'
+    : 'student';
   const admin = createAdminClient();
   const { error: createErr } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
-    user_metadata: { display_name: nickname, kakao_id: kakaoId, provider: 'kakao' },
+    // 계정 유형은 신규 생성 시점에만 반영한다. 기존 계정은 쿠키로 승격하지 않는다.
+    user_metadata: {
+      display_name: nickname,
+      kakao_id: kakaoId,
+      provider: 'kakao',
+      requested_account_type: requestedAccountType,
+    },
     app_metadata: { provider: 'kakao', kakao_id: kakaoId },
   });
   if (createErr && !/registered|already|exists/i.test(createErr.message)) {
@@ -134,5 +144,6 @@ export async function GET(request: Request) {
   );
   res.cookies.delete('kakao_oauth_state');
   res.cookies.delete('kakao_oauth_next');
+  res.cookies.delete('lecturelink_account_type');
   return res;
 }

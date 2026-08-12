@@ -232,6 +232,20 @@ def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: d
         config=config,
     )
     raw = json.loads(resp.text)
+    # 채점 호출 토큰 사용량 — 세션 원가 실측(usage_events)에 기록된다. 실패해도 채점은 계속.
+    usage = None
+    meta = getattr(resp, 'usage_metadata', None)
+    if meta is not None:
+        prompt_tokens = int(getattr(meta, 'prompt_token_count', 0) or 0)
+        candidates = int(getattr(meta, 'candidates_token_count', 0) or 0)
+        thoughts = int(getattr(meta, 'thoughts_token_count', 0) or 0)  # thinking도 출력 단가로 청구됨
+        usage = {
+            'promptTokens': prompt_tokens,
+            'responseTokens': candidates + thoughts,
+            'totalTokens': int(getattr(meta, 'total_token_count', 0) or 0),
+            'promptTextTokens': prompt_tokens,
+            'responseTextTokens': candidates + thoughts,
+        }
     valid_ids = {i['id'] for s in rubric_sections_for_context(rubric, context) if s['type'] != 'deduction' for i in s['items']}
     items = {}
     for item in raw.get('items', []):
@@ -248,7 +262,7 @@ def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: d
     # 판정 누락 항목은 미충족 처리 (추측 인정 금지 원칙과 일관)
     for missing in valid_ids - set(items):
         items[missing] = {'satisfied': False, 'status': 'not_met', 'evidence': [], 'confidence': 'low'}
-    return {'items': items, 'violations': raw.get('violations', []), 'phases': raw.get('phases', [])}
+    return {'items': items, 'violations': raw.get('violations', []), 'phases': raw.get('phases', []), 'usage': usage}
 
 
 # ── 진료 단계별 소요 시간 (§결과 기록 시간 분석) ────────────────────────────────

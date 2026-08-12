@@ -26,6 +26,7 @@ const resultSchema = z.object({
     application: z.number().int().min(0),
   }),
   coverageNotes: z.array(z.string()).max(6),
+  revisedQuestions: z.string().min(1),
   items: z.array(z.object({
     number: z.number().int().min(1),
     verdict: z.enum(['통과', '수정 권장', '검토 필요']),
@@ -44,7 +45,7 @@ const outputTool = {
   description: 'Review formative assessment items and provide evidence-based revision suggestions.',
   input_schema: {
     type: 'object',
-    required: ['overallVerdict', 'summary', 'distribution', 'coverageNotes', 'items'],
+    required: ['overallVerdict', 'summary', 'distribution', 'coverageNotes', 'items', 'revisedQuestions'],
     properties: {
       overallVerdict: { type: 'string', enum: ['양호', '수정 권장', '검토 필요'] },
       summary: { type: 'string' },
@@ -54,6 +55,7 @@ const outputTool = {
         properties: { recall: { type: 'integer' }, understanding: { type: 'integer' }, application: { type: 'integer' } },
       },
       coverageNotes: { type: 'array', items: { type: 'string' }, maxItems: 6 },
+      revisedQuestions: { type: 'string', description: '검토를 반영해 다시 작성한 전체 문항. 모든 문항의 문항 번호, 질문 본문, 전체 선지, 정답을 빠짐없이 포함한다.' },
       items: {
         type: 'array',
         minItems: 1,
@@ -161,7 +163,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   const response = await withRetry(() => createMessage(getAnthropic(), {
     model: MODELS.generation(),
     max_tokens: 7000,
-    system: `당신은 의학교육 형성평가 문항을 함께 검토하는 교수지원 조교다. 교수나 문항을 평가하지 말고 학생 학습을 방해할 수 있는 위험 신호와 실행 가능한 수정 제안을 제공한다. 항상 복수정답 가능성, 모호한 표현, 정답 단서, 선택지 구성, 인지 수준 편중, 문항 중복을 보수적으로 살핀다. 수업자료가 제공된 경우에만 수업 범위, 학습목표 정렬, 내용 편중, 근거 페이지를 추가로 검토한다. 수업자료가 없으면 범위 밖이나 목표 불일치를 단정하지 않는다. 최신성은 확실한 근거가 없으면 '최신성 확인'으로만 표시한다.`,
+    system: `당신은 의학교육 형성평가 문항을 함께 검토하는 교수지원 조교다. 교수나 문항을 평가하지 말고 학생 학습을 방해할 수 있는 위험 신호와 실행 가능한 수정 제안을 제공한다. 항상 복수정답 가능성, 모호한 표현, 정답 단서, 선택지 구성, 인지 수준 편중, 문항 중복을 보수적으로 살핀다. 수업자료가 제공된 경우에만 수업 범위, 학습목표 정렬, 내용 편중, 근거 페이지를 추가로 검토한다. 수업자료가 없으면 범위 밖이나 목표 불일치를 단정하지 않는다. 최신성은 확실한 근거가 없으면 '최신성 확인'으로만 표시한다. 결과 문구는 교수자의 전문성을 존중하는 협력적 어조로 작성한다. '위험 신호를 보입니다', '문제가 있습니다'처럼 단정하지 말고, '학생의 해석이 갈릴 수 있어 수정을 권장합니다', '조금 더 명확히 다듬어 보시길 권합니다'처럼 관찰 근거와 권고를 부드럽게 표현한다. 각 flag의 message에는 제안의 원인과 근거만, suggestion에는 실제 수정 방법만 작성해 두 내용을 섞지 않는다. revisedQuestions에는 검토 결과를 반영한 전체 문항을 다시 제공한다. 원문에 포함된 모든 문항에 대해 문항 번호, 질문 본문, 전체 선지와 정답을 빠짐없이 포함하고 바로 복사해 사용할 수 있는 일반 텍스트 형식으로 작성한다.`,
     tools: [outputTool],
     tool_choice: { type: 'tool', name: 'review_formative_items' },
     messages: [{

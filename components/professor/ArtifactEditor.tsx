@@ -1,14 +1,15 @@
 "use client";
 
-import { Pencil, Plus, QrCode, Save, Trash2 } from "lucide-react";
+import { ClipboardList, Info, Pencil, Plus, QrCode, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./artifact-editor-extra.css";
 import "../formative/formative-flow.css";
 
 const DEFAULT_PREVIEW_ARTIFACT = {
   id: "preview",
   title: "형성평가 검토하기",
+  source_name: "순환기학_부정맥_강의자료.pdf",
   status: "교수 검토 중",
   analytics: { submittedCount: 0, averagePercent: null },
   formative_items: [
@@ -51,6 +52,8 @@ const DEFAULT_PREVIEW_ARTIFACT = {
 export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   const [data, setData] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const reviewLayoutRef = useRef<HTMLDivElement>(null);
+  const reviewHelperRef = useRef<HTMLElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -94,6 +97,72 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
         });
       });
   }, [artifactId]);
+
+  useEffect(() => {
+    const layout = reviewLayoutRef.current;
+    const helper = reviewHelperRef.current;
+    if (!layout || !helper) return;
+
+    const compactLayout = window.matchMedia("(max-width: 900px)");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let targetPosition = 0;
+    let currentPosition = 0;
+    let animationFrame = 0;
+
+    const renderPosition = () => {
+      const distance = targetPosition - currentPosition;
+      currentPosition = reducedMotion.matches
+        ? targetPosition
+        : currentPosition + distance * 0.16;
+      if (Math.abs(targetPosition - currentPosition) < 0.15) {
+        currentPosition = targetPosition;
+      }
+      helper.style.transform = `translate3d(0, ${currentPosition.toFixed(2)}px, 0)`;
+      helper.classList.toggle("is-following", currentPosition > 4);
+      if (Math.abs(targetPosition - currentPosition) >= 0.15) {
+        animationFrame = window.requestAnimationFrame(renderPosition);
+      } else {
+        animationFrame = 0;
+      }
+    };
+
+    const updateTarget = () => {
+      if (compactLayout.matches) {
+        targetPosition = 0;
+        currentPosition = 0;
+        helper.style.transform = "";
+        helper.classList.remove("is-following");
+        return;
+      }
+      const layoutTop = layout.getBoundingClientRect().top + window.scrollY;
+      const availableTravel = Math.max(0, layout.offsetHeight - helper.offsetHeight);
+      targetPosition = Math.min(
+        availableTravel,
+        Math.max(0, window.scrollY + 84 - layoutTop),
+      );
+      if (!animationFrame) {
+        animationFrame = window.requestAnimationFrame(renderPosition);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(updateTarget);
+    resizeObserver.observe(layout);
+    resizeObserver.observe(helper);
+    window.addEventListener("scroll", updateTarget, { passive: true });
+    window.addEventListener("resize", updateTarget, { passive: true });
+    compactLayout.addEventListener("change", updateTarget);
+    reducedMotion.addEventListener("change", updateTarget);
+    updateTarget();
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("scroll", updateTarget);
+      window.removeEventListener("resize", updateTarget);
+      compactLayout.removeEventListener("change", updateTarget);
+      reducedMotion.removeEventListener("change", updateTarget);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [data?.formative_items?.length]);
 
   if (!data) {
     return <div className="professor-empty">문항을 불러오는 중입니다.</div>;
@@ -171,6 +240,21 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   }
 
   const canDistribute = data.formative_items.length > 0;
+  const answerCounts = data.formative_items.reduce((counts: number[], item: any) => {
+    counts[item.answer_index] = (counts[item.answer_index] ?? 0) + 1;
+    return counts;
+  }, []);
+  const [mostCommonAnswerIndex, mostCommonAnswerCount] = answerCounts.reduce(
+    (mostCommon: [number, number], count: number, index: number) =>
+      count > mostCommon[1] ? [index, count] : mostCommon,
+    [0, 0],
+  );
+  const isAnswerSkewed =
+    mostCommonAnswerCount >= 2 &&
+    mostCommonAnswerCount / data.formative_items.length >= 0.5;
+  const answerBalanceLabel = isAnswerSkewed
+    ? `불균형함 (${mostCommonAnswerIndex + 1}번 편중)`
+    : "고르게 분포";
   return (
     <div className="professor-dashboard ll-formative-flow ll-formative-review">
       <header className="professor-welcome">
@@ -223,14 +307,18 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
       </header>
 
       {message && <div className="editor-message">{message}</div>}
-      <div className="editor-list">
-        {data.formative_items.map((item: any, index: number) => (
+      <div className="artifact-review-layout" ref={reviewLayoutRef}>
+        <div className="editor-list">
+          {data.formative_items.map((item: any, index: number) => (
           <article className="editor-card" key={item.id}>
             <div className="editor-card-head">
-              <b>
-                <span aria-hidden="true">{index + 1}</span>
-              </b>
-              <button className="editor-delete" type="button" onClick={() => deleteQuestion(item.id)}>
+              <b>문항 {index + 1}</b>
+              <button
+                className="editor-delete"
+                type="button"
+                aria-label={`문항 ${index + 1} 삭제`}
+                onClick={() => deleteQuestion(item.id)}
+              >
                 <Trash2 size={15} /> 문항 삭제
               </button>
             </div>
@@ -282,10 +370,54 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
               </div>
             </label>
           </article>
-        ))}
-        <button className="editor-add" type="button" onClick={addQuestion}>
-          <Plus size={17} /> 직접 문항 추가하기
-        </button>
+          ))}
+          <button className="editor-add" type="button" onClick={addQuestion}>
+            <Plus size={17} /> 직접 문항 추가하기
+          </button>
+        </div>
+
+        <aside
+          className="artifact-review-helper"
+          aria-labelledby="artifact-review-helper-title"
+          ref={reviewHelperRef}
+        >
+          <header>
+            <div>
+              <h2 id="artifact-review-helper-title">검토 도우미</h2>
+              <p>배포 전 전체 구성을 한눈에 확인하세요.</p>
+            </div>
+            <ClipboardList size={21} aria-hidden="true" />
+          </header>
+          <dl>
+            <div>
+              <dt>문항 수</dt>
+              <dd>{data.formative_items.length}문항</dd>
+            </div>
+            <div>
+              <dt>사용한 자료</dt>
+              <dd>{data.source_name || "직접 입력"}</dd>
+            </div>
+            <div>
+              <dt>정답 위치 분포</dt>
+              <dd className={isAnswerSkewed ? "is-skewed" : "is-balanced"} aria-live="polite">
+                <span aria-hidden="true" />
+                {answerBalanceLabel}
+              </dd>
+            </div>
+          </dl>
+          <p className="artifact-review-helper-note">
+            <Info size={15} aria-hidden="true" />
+            정답이 특정 번호에 몰리면 배포 전에 알려드립니다.
+          </p>
+          <div className="artifact-review-helper-actions">
+            <button type="button" onClick={save}>
+              <Save size={16} /> 수정사항 저장
+            </button>
+            <button type="button" disabled={!canDistribute} onClick={createLiveSession}>
+              <QrCode size={16} /> 학생에게 QR로 배포하기
+            </button>
+          </div>
+        </aside>
       </div>
     </div>
   );
