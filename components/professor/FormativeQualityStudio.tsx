@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
-  SearchCheck,
   ShieldCheck,
   X,
 } from 'lucide-react';
@@ -36,6 +35,12 @@ type Review = {
 
 const QUESTION_ACCEPT = '.pdf,.docx,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MATERIAL_ACCEPT = '.pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+function softenReviewSummary(summary: string) {
+  return summary
+    .replace(/위험 신호를 보입니다/g, '수정을 권장합니다')
+    .replace(/위험 신호가 있습니다/g, '수정을 권장합니다');
+}
 
 export function FormativeQualityStudio() {
   const questionInputRef = useRef<HTMLInputElement>(null);
@@ -175,17 +180,17 @@ export function FormativeQualityStudio() {
           )}
 
           {review && (
-            <section className="quality-results card pad">
+            <section className="quality-results card pad" aria-labelledby="quality-results-title">
+              <span className="studio-step-number" aria-hidden="true">4</span>
               <div className="quality-summary">
-                <div><span className={`quality-verdict is-${review.overallVerdict.replace(' ', '-')}`}>{review.overallVerdict}</span><h2>문항 검토 결과</h2><p>{review.summary}</p></div>
+                <div className="quality-summary-copy">
+                  <h2 id="quality-results-title">문항 검토 결과</h2>
+                  <p>{softenReviewSummary(review.summary)}</p>
+                </div>
+                <span className={`quality-verdict is-${review.overallVerdict.replace(' ', '-')}`}>{review.overallVerdict}</span>
                 <dl><div><dt>문항</dt><dd>{review.items.length}</dd></div><div><dt>발견 항목</dt><dd>{issueCount}</dd></div></dl>
               </div>
-              <div className="quality-distribution">
-                <h3>인지 수준 분포</h3>
-                <div><span>회상 <b>{review.distribution.recall}</b></span><span>이해 <b>{review.distribution.understanding}</b></span><span>적용 <b>{review.distribution.application}</b></span></div>
-                {review.coverageNotes.map((note) => <p key={note}><SearchCheck size={15} />{note}</p>)}
-              </div>
-              <div className="quality-ledger">{review.items.map((item) => <article key={item.number}><div className="quality-item-no"><span>{item.number}</span><small>{item.verdict}</small></div><div><h3>{item.testedObjective}</h3>{item.flags.length === 0 ? <p className="quality-pass"><CheckCircle2 size={16} />뚜렷한 위험 신호를 찾지 못했습니다.</p> : item.flags.map((flag, index) => <div className="quality-flag" key={`${flag.category}-${index}`}><header><b>{flag.category}</b><span>{flag.severity}</span></header><p>{flag.message}</p><small><b>수정 제안</b>{flag.suggestion}</small></div>)}</div></article>)}</div>
+              <div className="quality-ledger">{review.items.map((item) => <article key={item.number}><div className="quality-item-no"><span>{item.number}번</span><small>{item.verdict}</small></div><div className="quality-item-content">{item.flags.length === 0 ? <p className="quality-pass"><CheckCircle2 size={16} />별도로 수정이 필요한 부분을 찾지 못했습니다.</p> : item.flags.map((flag, index) => <div className="quality-flag" key={`${flag.category}-${index}`}><header><b>{flag.category}</b><span>{flag.severity}</span></header><p>{flag.message}</p><div className="quality-suggestion"><b>수정 제안</b><span>{flag.suggestion}</span></div></div>)}</div></article>)}</div>
             </section>
           )}
         </main>
