@@ -69,7 +69,10 @@ export async function recordAiCost(input: {
   outputTokens: number;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
-  if (input.costUsd <= 0) return;
+  // 토큰이 있는데 단가표 미등록으로 cost 가 0 이 되는 호출(모델 교체 직후 등)도 행으로
+  // 남긴다 — 예전엔 통째로 스킵돼 "모델을 바꾸면 비용이 조용히 사라지는" 사각지대였다.
+  // 토큰조차 없는 0원 기록만 스킵 (진단 저장 등은 직접 insert 경로 사용).
+  if (input.costUsd <= 0 && input.inputTokens <= 0 && input.outputTokens <= 0) return;
   const admin = createAdminClient();
   const { error } = await admin.from('ai_cost_log').insert({
     user_id: input.userId,
