@@ -39,6 +39,24 @@ CREATE TABLE IF NOT EXISTS review_notes (
     UNIQUE(session_id, item_id)
 );
 CREATE INDEX IF NOT EXISTS idx_review_case ON review_notes(case_id, created_at);
+
+-- Live API 턴별 usageMetadata + 채점 호출 토큰 (세션 원가 실측 — API가 주는 값을 그대로 기록)
+CREATE TABLE IF NOT EXISTS usage_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL REFERENCES sessions(id),
+    kind TEXT NOT NULL DEFAULT 'live_turn',   -- live_turn | evaluate
+    prompt_tokens INTEGER NOT NULL DEFAULT 0,
+    response_tokens INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    prompt_text_tokens INTEGER NOT NULL DEFAULT 0,
+    prompt_audio_tokens INTEGER NOT NULL DEFAULT 0,
+    response_text_tokens INTEGER NOT NULL DEFAULT 0,
+    response_audio_tokens INTEGER NOT NULL DEFAULT 0,
+    model TEXT,
+    t_offset_ms INTEGER NOT NULL DEFAULT 0,
+    created_at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_usage_session ON usage_events(session_id, id);
 """
 
 
@@ -135,6 +153,49 @@ def get_review_notes(user_id: str, case_id: str | None = None, limit: int = 200)
     args += (limit,)
     with connect() as conn:
         rows = conn.execute(q, args).fetchall()
+    return [dict(r) for r in rows]
+
+
+def add_usage_events(session_id: str, user_id: str, events: list[dict], kind: str, model: str | None) -> int:
+    """Live 턴별 usageMetadata(kind=live_turn) 또는 채점 호출 토큰(kind=evaluate) 기록."""
+    now = time.time()
+    with connect() as conn:
+        if not conn.execute('SELECT 1 FROM sessions WHERE id = ? AND user_id = ?', (session_id, user_id)).fetchone():
+            return 0
+        conn.executemany(
+            'INSERT INTO usage_events (session_id, kind, prompt_tokens, response_tokens, total_tokens, '
+            'prompt_text_tokens, prompt_audio_tokens, response_text_tokens, response_audio_tokens, model, '
+            't_offset_ms, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [(
+                session_id, kind,
+                int(e.get('promptTokens', 0)), int(e.get('responseTokens', 0)), int(e.get('totalTokens', 0)),
+                int(e.get('promptTextTokens', 0)), int(e.get('promptAudioTokens', 0)),
+                int(e.get('responseTextTokens', 0)), int(e.get('responseAudioTokens', 0)),
+                model, int(e.get('tOffsetMs', 0)), now,
+            ) for e in events],
+        )
+    return len(events)
+
+
+def get_usage_events(session_id: str, user_id: str) -> list[dict]:
+    with connect() as conn:
+        if not conn.execute('SELECT 1 FROM sessions WHERE id = ? AND user_id = ?', (session_id, user_id)).fetchone():
+            return []
+        rows = conn.execute(
+            'SELECT * FROM usage_events WHERE session_id = ? ORDER BY id', (session_id,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def list_usage_sessions(user_id: str, limit: int = 20) -> list[dict]:
+    """usage 기록이 있는 세션 목록 (최근순) — 세션별 원가 요약용."""
+    with connect() as conn:
+        rows = conn.execute(
+            'SELECT DISTINCT s.id, s.case_id, s.started_at, s.ended_at FROM sessions s '
+            'JOIN usage_events u ON u.session_id = s.id WHERE s.user_id = ? '
+            'ORDER BY s.started_at DESC LIMIT ?',
+            (user_id, limit),
+        ).fetchall()
     return [dict(r) for r in rows]
 
 

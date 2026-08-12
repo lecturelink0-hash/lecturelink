@@ -167,6 +167,71 @@ def add_events(session_id: str, events: list[TranscriptEvent], user_id: str = De
     return {'saved': n}
 
 
+class UsageEvent(BaseModel):
+    """Live API가 턴마다 돌려주는 usageMetadata (클라이언트 live.js가 수집)."""
+    promptTokens: int = 0
+    responseTokens: int = 0
+    totalTokens: int = 0
+    promptTextTokens: int = 0
+    promptAudioTokens: int = 0
+    responseTextTokens: int = 0
+    responseAudioTokens: int = 0
+    tOffsetMs: int = 0
+
+
+@app.post('/api/sessions/{session_id}/usage')
+def add_usage(session_id: str, events: list[UsageEvent], user_id: str = Depends(current_user_id)):
+    """Live 턴별 토큰 사용량 기록 — CPX 회당 원가 실측의 원천 데이터."""
+    if not db.get_session(session_id, user_id):
+        raise HTTPException(404, '세션 없음')
+    n = db.add_usage_events(session_id, user_id, [e.model_dump() for e in events], kind='live_turn', model=LIVE_MODEL)
+    return {'saved': n}
+
+
+@app.get('/api/sessions/{session_id}/usage')
+def session_usage(session_id: str, user_id: str = Depends(current_user_id)):
+    """세션의 턴별 사용량 + 원가 요약 (단가표: usage.py)."""
+    import usage as usage_mod
+
+    if not db.get_session(session_id, user_id):
+        raise HTTPException(404, '세션 없음')
+    rows = db.get_usage_events(session_id, user_id)
+    return {'sessionId': session_id, 'events': rows, 'summary': usage_mod.summarize(rows)}
+
+
+@app.get('/api/usage/summary')
+def usage_summary(limit: int = 20, user_id: str = Depends(current_user_id)):
+    """사용자 세션별 원가 요약 (최근순) — CPX 회당 원가 실측 집계."""
+    import usage as usage_mod
+
+    sessions = []
+    total_usd = 0.0
+    live_costs = []
+    for s in db.list_usage_sessions(user_id, limit=max(1, min(limit, 100))):
+        summary = usage_mod.summarize(db.get_usage_events(s['id'], user_id))
+        total_usd += summary['usd']
+        if summary['turns'] > 0:
+            live_costs.append(summary['usd'])
+        sessions.append({
+            'sessionId': s['id'],
+            'caseId': s['case_id'],
+            'startedAt': s['started_at'],
+            'endedAt': s['ended_at'],
+            'summary': summary,
+        })
+    rate = usage_mod.usd_krw_rate()
+    mean_usd = sum(live_costs) / len(live_costs) if live_costs else 0.0
+    return {
+        'sessions': sessions,
+        'count': len(sessions),
+        'totalUsd': round(total_usd, 6),
+        'totalKrw': round(total_usd * rate, 1),
+        'meanLiveSessionUsd': round(mean_usd, 6),
+        'meanLiveSessionKrw': round(mean_usd * rate, 1),
+        'usdKrwRate': rate,
+    }
+
+
 class ExamRequest(BaseModel):
     buttonId: str
     tOffsetMs: int
@@ -283,6 +348,11 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
             raise HTTPException(429, '무료 티어 채점 쿼터를 모두 사용했습니다. 잠시 후(또는 다음 날) 다시 시도하거나 유료 플랜으로 전환해주세요.')
         raise HTTPException(502, f'근거 추출 실패: {msg}')
 
+    # 채점 호출 토큰 → usage_events(kind=evaluate) 기록. scoring 입력에서는 분리.
+    eval_usage = judgments.pop('usage', None)
+    if eval_usage:
+        db.add_usage_events(session_id, user_id, [eval_usage], kind='evaluate', model=ev.EVAL_MODEL)
+
     result = scoring.score_session(rubric, judgments, context)
     result['feedback'] = ev.build_feedback(rubric, result)
     result['judgments'] = judgments['items']  # 항목별 근거 인용 (§4.4-3)
@@ -299,6 +369,9 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
     result['itemTexts'] = {
         i['id']: i['text'] for s in rubric['sections'] if s['type'] != 'deduction' for i in s['items']
     }
+    # 세션 원가 실측 요약 — 결과 JSON에 실어 Supabase 미러(cpx_sessions.result)에도 자동 반영
+    import usage as usage_mod
+    result['usage'] = usage_mod.summarize(db.get_usage_events(session_id, user_id))
 
     db.set_result(session_id, user_id, _json.dumps(result, ensure_ascii=False))
     return result
