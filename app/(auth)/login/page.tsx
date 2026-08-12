@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { AlertCircle, BookOpen, GraduationCap, Mail, Lock, CheckCircle } from 'lucide-react';
+import { AlertCircle, BookOpen, Mail, Lock, CheckCircle } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
 import { authErrorMessage, isExistingAccountError } from '@/lib/auth/auth-error-message';
 import {
@@ -13,6 +14,7 @@ import {
   PASSWORD_MIN_LENGTH,
 } from '@/lib/auth/password-policy';
 import { Button } from '@/components/ui/Button';
+import loginBrandVisual from '@/public/login-brand-visual.png';
 
 type Mode = 'login' | 'signup';
 type AccountType = 'student' | 'professor';
@@ -206,34 +208,35 @@ export default function LoginPage() {
       </header>
 
       <main style={{ placeItems: 'start center' }}>
-        <section className="auth-wrap" aria-label="Lecturelink 로그인 및 회원가입">
+        <section className="auth-wrap" aria-label="LectureLink 통합 로그인">
           <div className="intro">
-            <span className="eyebrow">
-              <CheckCircle className="icon" /> 학생과 교수를 위한 의학 교육 플랫폼
-            </span>
-            <h1>
-              <span>의대 공부의 흐름</span>을<br />하나로 잇습니다
-            </h1>
-            <p className="lead">
-              Lecturelink는 수업 준비부터 문제 풀이와 복습까지, 의학 교육의 전 과정을 한 흐름으로 연결합니다.
-            </p>
-            <div className="proofs">
-              <div className="proof"><span className="proof-icon"><BookOpen className="icon" /></span><div><strong>학생용</strong><p>강의자료로 예상문제를 풀고, 오답과 취약 개념을 이어서 복습합니다.</p></div></div>
-              <div className="proof"><span className="proof-icon"><GraduationCap className="icon" /></span><div><strong>교수용</strong><p>수업자료를 관리하고 형성평가 문항을 만들어 학습을 점검합니다.</p></div></div>
+            <div className="brand-copy-sr-only">
+              <h1>
+                <span>의학 교육의 흐름을</span><br />
+                하나로 연결합니다
+              </h1>
+              <p className="lead">
+                LectureLink는 수업 준비부터 문제 풀이와 복습까지,<br className="desktop-break" />
+                의학 교육의 전 과정을 한 흐름으로 연결합니다.
+              </p>
             </div>
+
+            <Image
+              src={loginBrandVisual}
+              alt="학생과 교수를 위한 의학 교육 플랫폼. 의학 교육의 흐름을 하나로 연결합니다. 손을 들어 인사하는 CPX 환자 캐릭터 주변에 강의자료, 문제 생성, 학습 분석, 복습 완료가 하나의 흐름으로 연결되어 있습니다."
+              className="brand-reference-image"
+              sizes="(max-width: 900px) calc(100vw - 36px), 636px"
+              priority
+            />
           </div>
 
-      <div>
+      <div className="login-column">
 
         {/* Card */}
         <section className="auth-card">
           <div className="card-head">
-            <h2>Lecturelink {mode === 'signup' ? '회원가입' : '로그인'}</h2>
-            <p>
-              {mode === 'signup'
-                ? '학생 또는 교수로 계정을 만들고 의학 교육의 흐름을 이어가세요.'
-                : '카카오 계정으로 빠르게 접속하고 학습을 이어갈 수 있습니다.'}
-            </p>
+            <h2>LectureLink 로그인</h2>
+            <p>학생과 교수 모두 LectureLink에서 시작하세요.</p>
           </div>
           {!emailOpen && status !== 'sent' && errorMsg && (
             <div role="alert" aria-live="polite" className="mb-5 flex items-start gap-2.5 rounded-lg bg-[var(--color-warn-bg)] p-3.5 text-sm leading-relaxed text-[var(--color-warn)]">
@@ -243,12 +246,6 @@ export default function LoginPage() {
           )}
           {!emailOpen && status !== 'sent' && (
             <>
-              <div className="auth-note">
-                <strong>{mode === 'signup' ? '간편하게 계정을 만들어 보세요' : '간편 로그인으로 학습 기록을 이어갑니다'}</strong>
-                {mode === 'signup'
-                  ? '카카오로 시작하거나 이메일로 가입할 수 있습니다.'
-                  : '카카오 로그인 후 업로드한 자료, 생성한 문제집, 오답 복습 기록을 한 계정에서 관리합니다.'}
-              </div>
               <button
                 type="button"
                 onClick={handleKakao}
@@ -256,10 +253,26 @@ export default function LoginPage() {
                 className="kakao"
               >
                 <svg width="19" height="19" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path fill="#191600" d="M9 1.5C4.86 1.5 1.5 4.13 1.5 7.38c0 2.1 1.4 3.94 3.5 4.98-.15.53-.56 1.99-.64 2.3-.1.38.14.38.3.27.12-.08 1.95-1.32 2.74-1.86.39.06.79.08 1.2.08 4.14 0 7.5-2.63 7.5-5.87C16.5 4.13 13.14 1.5 9 1.5Z" /></svg>
-                {mode === 'signup' ? '카카오로 시작하기' : '카카오로 로그인'}
+                카카오로 계속하기
               </button>
+
+              <div className="login-divider" aria-hidden="true">
+                <span />
+                <b>또는</b>
+                <span />
+              </div>
+
+              <button type="button" onClick={() => { switchMode('login'); setEmailOpen(true); }} className="email-entry">
+                <Mail aria-hidden="true" />
+                이메일로 로그인
+              </button>
+
+              <p className="signup-entry">
+                처음이신가요?
+                <button type="button" onClick={() => { switchMode('signup'); setEmailOpen(true); }}>회원가입</button>
+              </p>
+
               <p className="terms">계속 진행하면 <Link href="/terms">이용약관</Link> 및 <Link href="/privacy">개인정보 처리방침</Link>에 동의한 것으로 간주됩니다.</p>
-              <button type="button" onClick={() => setEmailOpen(true)} className="mt-5 w-full text-center text-[13px] font-semibold text-[#1f5c43] underline underline-offset-4">이메일로 로그인 또는 회원가입</button>
             </>
           )}
 
