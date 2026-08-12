@@ -1,14 +1,14 @@
 import Link from 'next/link';
-import { ArrowRight, BarChart3, BookOpen, ClipboardCheck, FileText, GraduationCap, Layers3, Plus } from 'lucide-react';
+import { ArrowRight, BarChart3, BookOpen, ClipboardCheck, FileText, GraduationCap, Layers3, LockKeyhole, Plus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 type Course = { id: string; title: string; term: string | null; created_at: string };
 
-const TOOLS: Array<{ title: string; description: string; href: string; icon: LucideIcon }> = [
-  { title: '강의자료 개선', description: '슬라이드에서 보완할 부분을 찾아 정리합니다.', href: '/professor/materials', icon: FileText },
+const TOOLS: Array<{ title: string; description: string; href: string; icon: LucideIcon; locked?: boolean }> = [
   { title: '예습자료 만들기', description: '다음 수업에 필요한 기초 내용을 준비합니다.', href: '/professor/bridge', icon: Layers3 },
   { title: '형성평가 만들기', description: '강의자료를 바탕으로 복습 문제를 만듭니다.', href: '/professor/formative', icon: GraduationCap },
   { title: '문항 검토하기', description: '문제와 정답이 알맞은지 확인합니다.', href: '/professor/quality', icon: ClipboardCheck },
+  { title: '강의자료 가독성 개선', description: '슬라이드에서 보완할 부분을 찾아 정리합니다.', href: '/professor/materials', icon: FileText, locked: true },
 ];
 
 export function ProfessorHome({ displayName, courses }: { displayName: string; courses: Course[] }) {
@@ -32,7 +32,12 @@ export function ProfessorHome({ displayName, courses }: { displayName: string; c
       <section className="professor-home-section" aria-labelledby="faculty-tools-title">
         <div className="professor-section-head"><div><h2 id="faculty-tools-title">원하는 작업을 선택하세요</h2></div></div>
         <div className="professor-tool-list">
-          {TOOLS.map(({ title, description, href, icon: Icon }) => (
+          {TOOLS.map(({ title, description, href, icon: Icon, locked }) => locked ? (
+            <div className="professor-tool is-locked" key={title} aria-disabled="true">
+              <div className="professor-tool-icon"><Icon size={26} /></div>
+              <h3>{title}</h3><p>{description}</p><span><LockKeyhole size={17} /> 준비 중</span>
+            </div>
+          ) : (
             <Link href={href} className="professor-tool" key={title}>
               <div className="professor-tool-icon"><Icon size={26} /></div>
               <h3>{title}</h3><p>{description}</p><span>시작하기 <ArrowRight size={19} /></span>

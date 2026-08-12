@@ -260,7 +260,7 @@
 .course-card-new-badge{justify-self:end;padding:5px 9px;border-radius:999px;background:var(--p-forest);color:#fff;font-size:14px;font-weight:700;white-space:nowrap}
 .course-card h3{position:relative;z-index:1;margin:19px 0 6px;color:var(--p-forest-dark);font-size:18px;font-weight:800;letter-spacing:-.025em}
 .course-card p{position:relative;z-index:1;margin:0;color:var(--p-muted);font-size:12.5px;line-height:1.55}
-.course-card-link{position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;margin-top:auto;color:var(--p-forest);font-size:13px;font-weight:750}
+.course-card-link{position:absolute;left:20px;bottom:22px;z-index:1;display:inline-flex;align-items:center;gap:6px;color:var(--p-forest);font-size:13px;font-weight:750}
 .course-card-delete{position:absolute;right:17px;bottom:15px;z-index:3;display:inline-flex;align-items:center;gap:5px;padding:8px 10px;border:0;border-radius:9px;background:transparent;color:#9f3f3f;font-family:var(--font-body);font-size:14px;font-weight:700;cursor:pointer}
 .course-card-delete:hover:not(:disabled){background:#fff0f0;color:#842e2e}.course-card-delete:focus-visible{outline:3px solid rgba(159,63,63,.2);outline-offset:2px}.course-card-delete:disabled{color:#aa9696;cursor:wait}
 .course-library .course-card h3{margin:22px 0 0;font-size:26px;line-height:1.3;letter-spacing:-.035em}
@@ -304,6 +304,17 @@
 .professor-home .professor-tool>span{
  bottom:19px;font-size:11px;font-weight:800;
 }
+.professor-home .professor-tool.is-locked{
+ cursor:not-allowed;background:var(--p-cream-deep);box-shadow:none;
+}
+.professor-home .professor-tool.is-locked:hover{
+ border-color:var(--p-line);transform:none;box-shadow:none;
+}
+.professor-home .professor-tool.is-locked:after{opacity:.16}
+.professor-home .professor-tool.is-locked .professor-tool-icon{
+ background:#8d9993;color:#fff;
+}
+.professor-home .professor-tool.is-locked>span{color:var(--p-muted)}
 .professor-home .professor-course-grid>a{
  position:relative;overflow:hidden;min-height:172px;padding:20px;border-radius:var(--radius-lg);
  font-family:var(--font-body);background-color:#fff;
