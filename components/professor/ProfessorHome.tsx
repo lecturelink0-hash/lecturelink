@@ -3,7 +3,6 @@ import { ArrowRight, BarChart3, BookOpen, ClipboardCheck, FileText, GraduationCa
 import type { LucideIcon } from 'lucide-react';
 
 type Course = { id: string; title: string; term: string | null; created_at: string };
-type Artifact = { id: string; course_id: string; type: string; title: string; status: string; created_at: string };
 
 const TOOLS: Array<{ title: string; description: string; href: string; icon: LucideIcon }> = [
   { title: '강의자료 개선', description: '슬라이드에서 보완할 부분을 찾아 정리합니다.', href: '/professor/materials', icon: FileText },
@@ -12,11 +11,7 @@ const TOOLS: Array<{ title: string; description: string; href: string; icon: Luc
   { title: '문항 검토하기', description: '문제와 정답이 알맞은지 확인합니다.', href: '/professor/quality', icon: ClipboardCheck },
 ];
 
-const TYPE_LABEL: Record<string, string> = { formative: '형성평가', preview: '예습자료', material_review: '강의자료 개선' };
-const STATUS_LABEL: Record<string, string> = { draft: '작성 중', review: '검토 필요', approved: '승인 완료', published: '학생에게 배포됨' };
-
-export function ProfessorHome({ displayName, courses, recentArtifacts }: { displayName: string; courses: Course[]; recentArtifacts: Artifact[] }) {
-  const courseNames = new Map(courses.map((course) => [course.id, course.title]));
+export function ProfessorHome({ displayName, courses }: { displayName: string; courses: Course[] }) {
   const professorName = displayName.replace(/\s*교수(?:님)?$/, '').trim() || displayName;
 
   return (
@@ -45,21 +40,6 @@ export function ProfessorHome({ displayName, courses, recentArtifacts }: { displ
           ))}
         </div>
       </section>
-
-      {recentArtifacts.length > 0 && (
-        <section className="professor-home-section" aria-labelledby="recent-work-title">
-          <div className="professor-section-head"><div><h2 id="recent-work-title">최근 작업</h2></div></div>
-          <div className="professor-recent-list">
-            {recentArtifacts.map((artifact) => (
-              <Link href={artifact.type === 'formative' ? `/professor/artifacts/${artifact.id}` : `/professor/courses/${artifact.course_id}`} key={artifact.id}>
-                <span className="professor-recent-icon">{artifact.type === 'formative' ? <ClipboardCheck size={22} /> : <FileText size={22} />}</span>
-                <span><small>{courseNames.get(artifact.course_id) ?? TYPE_LABEL[artifact.type] ?? '수업 자료'}</small><b>{artifact.title}</b></span>
-                <em>{STATUS_LABEL[artifact.status] ?? artifact.status}</em><ArrowRight size={20} />
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {courses.length > 0 && (
         <section className="professor-home-section" aria-labelledby="course-workspace-title">

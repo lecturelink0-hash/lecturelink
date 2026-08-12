@@ -140,7 +140,7 @@
 .professor-topbar{background:color-mix(in srgb,var(--color-bg) 92%,transparent)}
 .professor-top-logo>img{width:40px;height:40px;object-fit:contain}
 .professor-top-logo>span{display:none}
-.professor-tool,.professor-preview-card,.professor-next,.artifact-group,.professor-recent-list,.professor-course-grid>a{
+.professor-tool,.professor-preview-card,.professor-next,.artifact-group,.professor-course-grid>a{
  border-radius:var(--radius-lg);box-shadow:var(--shadow-card);
 }
 
@@ -159,12 +159,6 @@
 .professor-home-art>i:nth-of-type(1){width:92px;margin-top:105px}.professor-home-art>i:nth-of-type(2){margin-top:14px}.professor-home-art>i:nth-of-type(3){width:118px;margin-top:14px}
 .professor-home-section{padding:42px 0 0}
 .professor-text-link{display:inline-flex;align-items:center;gap:5px;color:var(--p-forest);font-size:12px;font-weight:750}
-.professor-recent-list{overflow:hidden;border:1px solid var(--p-line);background:#fff}
-.professor-recent-list>a{display:grid;grid-template-columns:38px minmax(0,1fr) auto 18px;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--p-line);color:var(--p-ink)}
-.professor-recent-list>a:last-child{border-bottom:0}.professor-recent-list>a:hover{background:var(--p-sage)}
-.professor-recent-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:var(--p-sage);color:var(--p-forest)}
-.professor-recent-list>a>span:nth-child(2){display:grid;gap:3px}.professor-recent-list small{color:var(--p-muted);font-size:10px}.professor-recent-list b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
-.professor-recent-list em{padding:5px 8px;border-radius:var(--radius-sm);background:var(--p-cream-deep);color:var(--p-forest);font-size:10px;font-style:normal;font-weight:700}
 .professor-course-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
 .professor-course-grid>a{min-height:150px;display:grid;align-content:start;gap:7px;padding:18px;border:1px solid var(--p-line);background:#fff;color:var(--p-ink)}
 .professor-course-grid>a:hover{border-color:var(--color-line-strong);transform:translateY(-1px)}
@@ -189,7 +183,6 @@
 }
 @media(max-width:520px){
  .professor-home-hero h1{font-size:32px}.professor-home-section{padding-top:34px}
- .professor-recent-list>a{grid-template-columns:36px minmax(0,1fr) 16px}.professor-recent-list em{display:none}
  .faculty-landing-nav>a:not(.faculty-landing-cta){display:none}.faculty-landing-nav .faculty-landing-cta{padding:0 11px;font-size:11px}
 }
 
@@ -353,11 +346,6 @@
 .professor-home .professor-tool p{font-size:17px;line-height:1.65}
 .professor-home .professor-tool>span{bottom:23px;font-size:17px}
 .professor-text-link{font-size:17px}
-.professor-recent-list>a{grid-template-columns:48px minmax(0,1fr) auto 24px;gap:16px;padding:19px 20px}
-.professor-recent-icon{width:46px;height:46px}
-.professor-recent-list small{font-size:14px}
-.professor-recent-list b{font-size:18px}
-.professor-recent-list em{font-size:14px}
 .professor-home .professor-course-grid>a{min-height:215px;padding:24px}
 .professor-home .professor-course-grid>a>span{width:48px;height:48px}
 .professor-home .professor-course-grid small{font-size:15px}
