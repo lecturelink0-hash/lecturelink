@@ -14,7 +14,6 @@ export default async function ProfessorHomePage() {
           { id: 'preview-cardiology', title: '순환기학', term: '2026년 2학기', created_at: '2026-07-20T00:00:00.000Z' },
           { id: 'preview-arrhythmia', title: '부정맥 정리', term: '임상 정리반', created_at: '2026-07-18T00:00:00.000Z' },
         ]}
-        recentArtifacts={[]}
       />
     );
   }
@@ -27,16 +26,5 @@ export default async function ProfessorHomePage() {
     .order('created_at', { ascending: false });
 
   const courseList = courses ?? [];
-  let recentArtifacts: any[] = [];
-  if (courseList.length > 0) {
-    const { data } = await db
-      .from('learning_artifacts')
-      .select('id,course_id,type,title,status,created_at')
-      .in('course_id', courseList.map((course: any) => course.id))
-      .order('created_at', { ascending: false })
-      .limit(4);
-    recentArtifacts = data ?? [];
-  }
-
-  return <ProfessorHome displayName={session.profile.displayName ?? '교수님'} courses={courseList} recentArtifacts={recentArtifacts} />;
+  return <ProfessorHome displayName={session.profile.displayName ?? '교수님'} courses={courseList} />;
 }
