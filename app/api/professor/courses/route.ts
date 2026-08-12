@@ -3,7 +3,11 @@ import { requireProfessor } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
 
-const createSchema = z.object({ title: z.string().trim().min(1).max(120), term: z.string().trim().max(60).optional() });
+const createSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  note: z.string().trim().max(60).optional(),
+  term: z.string().trim().max(60).optional(),
+});
 
 export const GET = withErrorHandling(async () => {
   const session = await requireProfessor();
@@ -17,7 +21,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   const session = await requireProfessor();
   const input = createSchema.parse(await request.json());
   const db = await createServerClient() as any;
-  const { data, error } = await db.from('courses').insert({ professor_id: session.userId, title: input.title, term: input.term || null }).select('id,title,code,term,status,created_at').single();
+  const { data, error } = await db.from('courses').insert({ professor_id: session.userId, title: input.title, term: input.note || input.term || null }).select('id,title,code,term,status,created_at').single();
   if (error) throw new ApiException('course_create_failed', '강의를 만들지 못했습니다.', 500);
   return ok(data, 201);
 });

@@ -253,11 +253,11 @@
  background-repeat:no-repeat;background-position:right 4px bottom 2px;background-size:140px 120px;
 }
 .course-card:hover{border-color:#9fc2aa;transform:translateY(-2px);box-shadow:0 16px 34px -26px rgba(20,60,44,.42)}
-.course-card-open{position:relative;z-index:1;min-height:205px;display:flex;flex:1;flex-direction:column;padding:20px 92px 20px 20px;color:inherit}
-.course-card-top{position:relative;z-index:1;display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px}
+.course-card-open{position:relative;z-index:1;min-height:205px;display:flex;flex:1;flex-direction:column;padding:20px 20px 68px;color:inherit}
+.course-card-top{position:relative;z-index:1;display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:10px}
 .course-card-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:11px;background:var(--p-sage);color:var(--p-forest)}
 .course-card-top small{color:var(--p-muted);font-size:12px;font-weight:650}
-.course-card-top>b{color:#b8c3bc;font-size:11px;font-variant-numeric:tabular-nums}
+.course-card-new-badge{justify-self:end;padding:5px 9px;border-radius:999px;background:var(--p-forest);color:#fff;font-size:14px;font-weight:700;white-space:nowrap}
 .course-card h3{position:relative;z-index:1;margin:19px 0 6px;color:var(--p-forest-dark);font-size:18px;font-weight:800;letter-spacing:-.025em}
 .course-card p{position:relative;z-index:1;margin:0;color:var(--p-muted);font-size:12.5px;line-height:1.55}
 .course-card-link{position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;margin-top:auto;color:var(--p-forest);font-size:13px;font-weight:750}
@@ -269,7 +269,6 @@
 .course-create-message>span{width:42px;height:42px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:var(--p-forest);color:#fff}
 .course-create-message>div{display:grid;gap:2px}.course-create-message b{font-size:17px}.course-create-message small{color:var(--p-muted);font-size:14px}
 .course-card.is-new{border:2px solid #74a985;background-color:#f5fbf6;animation:course-card-added 1.1s ease-out}
-.course-card.is-new:after{content:"새로 추가됨";position:absolute;right:16px;bottom:16px;z-index:2;padding:5px 9px;border-radius:999px;background:var(--p-forest);color:#fff;font-size:14px;font-weight:700}
 @keyframes course-message-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes course-card-added{0%{box-shadow:0 0 0 0 rgba(31,92,67,.35);transform:translateY(8px)}45%{box-shadow:0 0 0 10px rgba(31,92,67,.08);transform:translateY(0)}100%{box-shadow:var(--shadow-card)}}
 @media(max-width:900px){
@@ -498,7 +497,6 @@
  font-size:12px!important;line-height:1;transform:translateY(-.5px)
 }
 .professor-app :is(
- .course-card-top>b,
  .course-create-copy>span,
  .course-workflow-copy>span,
  .course-library-list .professor-section-head>div>span,

@@ -74,7 +74,7 @@ const LOCAL_PREVIEW_COURSES: Course[] = [
     id: "preview-cardiology",
     title: "순환기학",
     code: "CARDIO",
-    term: "2026년 2학기",
+    term: "8주차 · 심전도 실습 전",
     status: "active",
     created_at: "2026-07-20T00:00:00.000Z",
   },
@@ -82,7 +82,7 @@ const LOCAL_PREVIEW_COURSES: Course[] = [
     id: "preview-arrhythmia",
     title: "부정맥 약물",
     code: "RHYTHM",
-    term: "임상약리학",
+    term: "중간고사 전 복습",
     status: "active",
     created_at: "2026-07-18T00:00:00.000Z",
   },
@@ -145,7 +145,7 @@ export function CourseList() {
     localPreview ? LOCAL_PREVIEW_COURSES : [],
   );
   const [title, setTitle] = useState("");
-  const [term, setTerm] = useState("");
+  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
   const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
@@ -186,14 +186,14 @@ export function CourseList() {
         id: `preview-${Date.now()}`,
         title: title.trim(),
         code: "PREVIEW",
-        term: term.trim() || null,
+        term: note.trim() || null,
         status: "active",
         created_at: new Date().toISOString(),
       };
       setCourses((current) => [createdCourse, ...current]);
       showCreated(createdCourse);
       setTitle("");
-      setTerm("");
+      setNote("");
       return;
     }
     setBusy(true);
@@ -201,7 +201,7 @@ export function CourseList() {
       const response = await fetch("/api/professor/courses", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title, term }),
+        body: JSON.stringify({ title, note }),
       });
       const payload = await response.json();
       if (!response.ok || !payload.ok) {
@@ -209,7 +209,7 @@ export function CourseList() {
         return;
       }
       setTitle("");
-      setTerm("");
+      setNote("");
       await load();
       showCreated(payload.data);
     } finally {
@@ -285,12 +285,13 @@ export function CourseList() {
               />
             </label>
             <label>
-              <span>학기</span>
+              <span>간단 메모 <small>(선택)</small></span>
               <input
-                aria-label="학기"
-                placeholder="예: 2026년 2학기"
-                value={term}
-                onChange={(event) => setTerm(event.target.value)}
+                aria-label="간단 메모"
+                placeholder="예: 8주차 · 심전도 실습 전"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                maxLength={60}
               />
             </label>
             <button
@@ -367,7 +368,7 @@ export function CourseList() {
           </div>
         )}
         <div className="course-card-grid">
-          {courses.map((course, index) => (
+          {courses.map((course) => (
             <article
               className={`course-card${course.id === createdCourseId ? " is-new" : ""}`}
               key={course.id}
@@ -377,8 +378,10 @@ export function CourseList() {
                   <span className="course-card-icon">
                     <BookOpen size={19} />
                   </span>
-                  <small>{course.term || "학기 미지정"}</small>
-                  <b>{String(index + 1).padStart(2, "0")}</b>
+                  <small>{course.term || "메모 없음"}</small>
+                  {course.id === createdCourseId && (
+                    <span className="course-card-new-badge">새로 추가됨</span>
+                  )}
                 </div>
                 <h3>{course.title}</h3>
                 <span className="course-card-link">

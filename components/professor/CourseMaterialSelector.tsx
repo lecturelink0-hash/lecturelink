@@ -33,8 +33,8 @@ function teachingMaterialFailureMessage(material: Pick<Material, "error_message"
 }
 
 const PREVIEW_COURSES: Course[] = [
-  { id: "preview-cardiology", title: "순환기학", term: "2026년 2학기" },
-  { id: "preview-arrhythmia", title: "부정맥 약물", term: "임상약리학" },
+  { id: "preview-cardiology", title: "순환기학", term: "8주차 · 심전도 실습 전" },
+  { id: "preview-arrhythmia", title: "부정맥 약물", term: "중간고사 전 복습" },
 ];
 const PREVIEW_MATERIALS: Material[] = [
   { id: "preview-material-1", course_id: "preview-cardiology", file_name: "순환기학_부정맥_강의자료.pdf", file_type: "pdf", file_size_bytes: 6920000, status: "ready", page_count: 38 },
@@ -165,7 +165,7 @@ export function CourseMaterialSelector({
   const [mode, setMode] = useState<"library" | "upload">("library");
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
-  const [term, setTerm] = useState("");
+  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -233,7 +233,7 @@ export function CourseMaterialSelector({
         const course: Course = {
           id: `preview-course-${Date.now()}`,
           title: title.trim(),
-          term: term.trim() || null,
+          term: note.trim() || null,
         };
         setCourses((current) => [...current, course]);
         onCourseId(course.id);
@@ -244,13 +244,13 @@ export function CourseMaterialSelector({
         setMode("upload");
         setCreating(false);
         setTitle("");
-        setTerm("");
+        setNote("");
         return;
       }
       const response = await fetch("/api/professor/courses", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title, term }),
+        body: JSON.stringify({ title, note }),
       });
       const payload = await readApiResponse<Course>(response, "차시를 만들지 못했습니다.");
       if (!response.ok || !payload.ok || !payload.data)
@@ -259,7 +259,7 @@ export function CourseMaterialSelector({
       onCourseTitle?.(payload.data.title);
       setCreating(false);
       setTitle("");
-      setTerm("");
+      setNote("");
       await loadCourses(payload.data.id);
     } catch (cause) {
       setError(
@@ -342,11 +342,12 @@ export function CourseMaterialSelector({
             />
           </label>
           <label>
-            <span>학기</span>
+            <span>간단 메모 <small>(선택)</small></span>
             <input
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              placeholder="선택 입력"
+              aria-label="간단 메모"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="예: 8주차 · 심전도 실습 전"
               maxLength={60}
             />
           </label>
