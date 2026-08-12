@@ -741,14 +741,14 @@ export function Landing() {
               <div className="mt-7 flex flex-wrap gap-3 sm:mt-8">
                 <Link
                   href="/login"
-                  className="llh-5 group inline-flex h-[58px] items-center justify-center gap-2.5 rounded-[14px] bg-[#FCFAF4] px-7 text-[17px] font-bold text-[#07563A] shadow-[0_14px_32px_rgba(0,0,0,.18)] transition hover:bg-[#F4F1E8] active:scale-[.98] sm:h-[62px] sm:px-8 sm:text-[18px]"
+                  className="llh-5 group inline-flex h-[58px] items-center justify-center gap-2.5 rounded-[14px] bg-[#FCFAF4] px-7 text-[17px] font-extrabold text-[#07563A] shadow-[0_14px_32px_rgba(0,0,0,.18)] transition hover:bg-[#F4F1E8] active:scale-[.98] sm:h-[62px] sm:px-8 sm:text-[18px]"
                 >
                   1달 무료체험 시작하기
                   <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <a
                   href="#features"
-                  className="llh-6 inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-[#FCFAF4]/[0.08] px-6 text-[16px] font-bold text-[#FCFAF4] ring-1 ring-inset ring-[#FCFAF4]/40 transition hover:bg-[#FCFAF4]/[0.15] active:scale-[.98]"
+                  className="llh-6 inline-flex h-[58px] items-center justify-center gap-2.5 rounded-[14px] bg-[#FCFAF4]/[0.08] px-7 text-[17px] font-bold text-[#FCFAF4] ring-1 ring-inset ring-[#FCFAF4]/40 transition hover:bg-[#FCFAF4]/[0.15] active:scale-[.98] sm:h-[62px] sm:px-8 sm:text-[18px]"
                 >
                   기능 살펴보기
                 </a>
