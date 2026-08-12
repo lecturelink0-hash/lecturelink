@@ -7,6 +7,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/db/browser';
+import { authErrorMessage } from '@/lib/auth/auth-error-message';
+import {
+  isValidPassword,
+  PASSWORD_ERROR,
+  PASSWORD_HINT,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '@/lib/auth/password-policy';
 import { Button } from '@/components/ui/Button';
 import { BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -51,8 +59,8 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg('');
-    if (password.length < 8) {
-      setErrorMsg('비밀번호는 8자 이상이어야 합니다.');
+    if (!isValidPassword(password)) {
+      setErrorMsg(PASSWORD_ERROR);
       return;
     }
     if (password !== confirm) {
@@ -60,15 +68,16 @@ export default function ResetPasswordPage() {
       return;
     }
     setStatus('saving');
-    const supabase = createBrowserClient();
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
+    try {
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      setStatus('done');
+      setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+    } catch (error) {
       setStatus('error');
-      setErrorMsg('비밀번호 변경에 실패했습니다. 링크가 만료되었을 수 있어요.');
-      return;
+      setErrorMsg(authErrorMessage(error));
     }
-    setStatus('done');
-    setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
   }
 
   return (
@@ -122,7 +131,15 @@ export default function ResetPasswordPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="8자 이상"
+                  required
+                  minLength={PASSWORD_MIN_LENGTH}
+                  maxLength={PASSWORD_MAX_LENGTH}
+                  pattern={`(?=.*[A-Za-z]).{${PASSWORD_MIN_LENGTH},${PASSWORD_MAX_LENGTH}}`}
+                  title={PASSWORD_ERROR}
+                  aria-invalid={Boolean(errorMsg)}
+                  aria-describedby={errorMsg ? 'reset-password-error' : undefined}
+                  autoComplete="new-password"
+                  placeholder={PASSWORD_HINT}
                   className={`${inputClass} mb-5`}
                 />
                 <label className="block text-sm font-semibold text-sage-800 mb-2">새 비밀번호 확인</label>
@@ -130,12 +147,19 @@ export default function ResetPasswordPage() {
                   type="password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
+                  required
+                  minLength={PASSWORD_MIN_LENGTH}
+                  maxLength={PASSWORD_MAX_LENGTH}
+                  aria-invalid={Boolean(errorMsg)}
+                  aria-describedby={errorMsg ? 'reset-password-error' : undefined}
+                  autoComplete="new-password"
                   placeholder="비밀번호 다시 입력"
                   className={`${inputClass} mb-5`}
                 />
                 {errorMsg && (
-                  <div className="text-sm text-[var(--color-warn)] bg-[var(--color-warn-bg)] rounded-lg p-3.5 mb-5">
-                    {errorMsg}
+                  <div id="reset-password-error" role="alert" aria-live="polite" className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-warn)] bg-[var(--color-warn-bg)] rounded-lg p-3.5 mb-5">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>{errorMsg}</span>
                   </div>
                 )}
                 <Button type="submit" fullWidth size="lg" loading={status === 'saving'}>
