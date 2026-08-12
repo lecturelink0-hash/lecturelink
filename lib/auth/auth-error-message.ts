@@ -13,15 +13,15 @@ interface AuthLikeError {
 }
 
 const BY_CODE: Record<string, string> = {
-  invalid_credentials: '이메일 또는 비밀번호가 올바르지 않습니다.',
+  invalid_credentials: '이메일 또는 비밀번호를 확인해 주세요.',
   email_not_confirmed: '이메일 인증이 완료되지 않았습니다. 받은 편지함의 인증 메일을 확인해 주세요.',
-  user_already_exists: '이미 가입된 이메일입니다. 로그인해 주세요.',
-  email_exists: '이미 가입된 이메일입니다. 로그인해 주세요.',
-  user_not_found: '계정을 찾을 수 없습니다.',
-  weak_password: '비밀번호가 너무 약합니다. 더 길고 복잡하게 설정해 주세요.',
+  user_already_exists: '가입 요청을 확인했습니다. 받은 편지함을 확인해 주세요.',
+  email_exists: '가입 요청을 확인했습니다. 받은 편지함을 확인해 주세요.',
+  user_not_found: '이메일 또는 비밀번호를 확인해 주세요.',
+  weak_password: '비밀번호가 안전 기준을 충족하지 않습니다. 다른 비밀번호를 사용해 주세요.',
   same_password: '기존 비밀번호와 다른 비밀번호를 입력해 주세요.',
-  over_email_send_rate_limit: '메일 발송 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.',
-  over_request_rate_limit: '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.',
+  over_email_send_rate_limit: '요청이 잠시 몰렸습니다. 잠시 후 다시 시도해 주세요.',
+  over_request_rate_limit: '요청이 잠시 몰렸습니다. 잠시 후 다시 시도해 주세요.',
   email_address_invalid: '유효하지 않은 이메일 주소입니다.',
   validation_failed: '입력값을 다시 확인해 주세요.',
   signup_disabled: '현재 회원가입이 비활성화되어 있습니다.',
@@ -33,16 +33,26 @@ const BY_CODE: Record<string, string> = {
 
 // code 가 없는 구버전 응답 대비 — message 부분 문자열 매핑.
 const BY_MESSAGE: Array<[RegExp, string]> = [
-  [/invalid login credentials/i, '이메일 또는 비밀번호가 올바르지 않습니다.'],
+  [/invalid login credentials|user not found/i, '이메일 또는 비밀번호를 확인해 주세요.'],
   [/email not confirmed/i, '이메일 인증이 완료되지 않았습니다. 받은 편지함의 인증 메일을 확인해 주세요.'],
-  [/user already registered|already registered/i, '이미 가입된 이메일입니다. 로그인해 주세요.'],
-  [/email rate limit exceeded|rate limit/i, '메일 발송 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.'],
-  [/password should be at least|weak password/i, '비밀번호가 너무 약합니다. 더 길고 복잡하게 설정해 주세요.'],
+  [/user already registered|already registered/i, '가입 요청을 확인했습니다. 받은 편지함을 확인해 주세요.'],
+  [/email rate limit exceeded|rate limit/i, '요청이 잠시 몰렸습니다. 잠시 후 다시 시도해 주세요.'],
+  [/password should be at least|weak password/i, '비밀번호가 안전 기준을 충족하지 않습니다. 다른 비밀번호를 사용해 주세요.'],
   [/unable to validate email|invalid format|invalid email/i, '유효하지 않은 이메일 주소입니다.'],
   [/error sending confirmation email/i, '인증 메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.'],
 ];
 
-const FALLBACK = '오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+const FALLBACK = '지금은 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+
+export function isExistingAccountError(error: unknown): boolean {
+  if (!error) return false;
+  const e = error as AuthLikeError;
+  return (
+    e.code === 'user_already_exists' ||
+    e.code === 'email_exists' ||
+    Boolean(e.message && /user already registered|already registered/i.test(e.message))
+  );
+}
 
 export function authErrorMessage(error: unknown): string {
   if (!error) return FALLBACK;
