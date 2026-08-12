@@ -1,12 +1,14 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Check,
+  Copy,
   FileText,
   Loader2,
   ShieldCheck,
@@ -25,6 +27,7 @@ type Review = {
   summary: string;
   distribution: { recall: number; understanding: number; application: number };
   coverageNotes: string[];
+  revisedQuestions: string;
   items: Array<{
     number: number;
     verdict: '통과' | '수정 권장' | '검토 필요';
@@ -38,13 +41,14 @@ const MATERIAL_ACCEPT = '.pdf,.pptx,application/pdf,application/vnd.openxmlforma
 
 function softenReviewSummary(summary: string) {
   return summary
-    .replace(/위험 신호를 보입니다/g, '수정을 권장합니다')
-    .replace(/위험 신호가 있습니다/g, '수정을 권장합니다');
+    .replace(/위험 신호를 보입니다/g, '조금 더 명확히 다듬어 보시길 권합니다')
+    .replace(/위험 신호가 있습니다/g, '조금 더 명확히 다듬을 부분이 있습니다');
 }
 
 export function FormativeQualityStudio() {
   const questionInputRef = useRef<HTMLInputElement>(null);
   const materialInputRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLElement>(null);
   const [questionFile, setQuestionFile] = useState<File | null>(null);
   const [materialFile, setMaterialFile] = useState<File | null>(null);
   const [questions, setQuestions] = useState('');
@@ -54,8 +58,26 @@ export function FormativeQualityStudio() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [review, setReview] = useState<Review | null>(null);
+  const [revisedQuestions, setRevisedQuestions] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const hasQuestions = Boolean(questionFile || questions.trim().length >= 20);
+
+  useEffect(() => {
+    if (!review) return;
+    setRevisedQuestions(review.revisedQuestions);
+    setCopied(false);
+    const frame = window.requestAnimationFrame(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [review]);
+
+  async function copyRevisedQuestions() {
+    await navigator.clipboard.writeText(revisedQuestions);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
 
   async function analyze() {
     if (!hasQuestions) return;
@@ -82,8 +104,6 @@ export function FormativeQualityStudio() {
       setLoading(false);
     }
   }
-
-  const issueCount = review?.items.reduce((sum, item) => sum + item.flags.length, 0) ?? 0;
 
   return (
     <div className="faculty-studio quality-studio ll-upload-page">
@@ -180,17 +200,19 @@ export function FormativeQualityStudio() {
           )}
 
           {review && (
-            <section className="quality-results card pad" aria-labelledby="quality-results-title">
+            <section ref={resultsRef} className="quality-results card pad" aria-labelledby="quality-results-title" tabIndex={-1}>
               <span className="studio-step-number" aria-hidden="true">4</span>
               <div className="quality-summary">
                 <div className="quality-summary-copy">
                   <h2 id="quality-results-title">문항 검토 결과</h2>
                   <p>{softenReviewSummary(review.summary)}</p>
                 </div>
-                <span className={`quality-verdict is-${review.overallVerdict.replace(' ', '-')}`}>{review.overallVerdict}</span>
-                <dl><div><dt>문항</dt><dd>{review.items.length}</dd></div><div><dt>발견 항목</dt><dd>{issueCount}</dd></div></dl>
               </div>
-              <div className="quality-ledger">{review.items.map((item) => <article key={item.number}><div className="quality-item-no"><span>{item.number}번</span><small>{item.verdict}</small></div><div className="quality-item-content">{item.flags.length === 0 ? <p className="quality-pass"><CheckCircle2 size={16} />별도로 수정이 필요한 부분을 찾지 못했습니다.</p> : item.flags.map((flag, index) => <div className="quality-flag" key={`${flag.category}-${index}`}><header><b>{flag.category}</b><span>{flag.severity}</span></header><p>{flag.message}</p><div className="quality-suggestion"><b>수정 제안</b><span>{flag.suggestion}</span></div></div>)}</div></article>)}</div>
+              <div className="quality-ledger">{review.items.map((item) => <article key={item.number}><div className="quality-item-no"><span>{item.number}번</span></div><div className="quality-item-content">{item.flags.length === 0 ? <p className="quality-pass"><CheckCircle2 size={18} />별도로 수정이 필요한 부분을 찾지 못했습니다.</p> : item.flags.map((flag, index) => <section className="quality-flag" key={`${flag.category}-${index}`}><header><h3>{flag.category}</h3><span className={`quality-severity is-${flag.severity}`}>{flag.severity}</span></header><div className="quality-detail"><h4>제안 원인</h4><p>{flag.message}</p></div><div className="quality-detail"><h4>수정 제안</h4><p>{flag.suggestion}</p></div></section>)}</div></article>)}</div>
+              <section className="quality-revised" aria-labelledby="quality-revised-title">
+                <div className="quality-revised-head"><div><h3 id="quality-revised-title">최종 수정 문항</h3><p>검토 내용을 반영한 문항과 선지입니다. 필요하면 직접 편집한 뒤 복사해 사용하세요.</p></div><button type="button" className="quality-copy-button" onClick={copyRevisedQuestions} disabled={!revisedQuestions.trim()}>{copied ? <Check size={17} /> : <Copy size={17} />}{copied ? '복사 완료' : '전체 복사'}</button></div>
+                <textarea aria-label="최종 수정 문항 편집" value={revisedQuestions} onChange={(event) => { setRevisedQuestions(event.target.value); setCopied(false); }} spellCheck={false} />
+              </section>
             </section>
           )}
         </main>
