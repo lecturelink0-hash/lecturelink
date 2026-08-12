@@ -6,7 +6,7 @@ import { GoogleGenAI, Modality } from '@google/genai'
 import { sanitizePatientText } from './sanitize'
 
 export class GeminiLivePatient {
-  constructor({ onStatus, onPatientText, onInputText, onAudioLevel, onAudioStart, onLog } = {}) {
+  constructor({ onStatus, onPatientText, onInputText, onAudioLevel, onAudioStart, onUsage, onLog } = {}) {
     this.session = null
     this.ready = false
     this.connecting = false
@@ -20,10 +20,12 @@ export class GeminiLivePatient {
     this.onInputText = onInputText || (() => {})
     this.onAudioLevel = onAudioLevel || (() => {})
     this.onAudioStart = onAudioStart || (() => {})
+    this.onUsage = onUsage || (() => {})
     this.log = onLog || ((tag, data) => console.debug('[live]', tag, data || ''))
     this.audioContext = null
     this.playTime = 0
     this.lastConfig = null
+    this.lastUsageKey = ''
   }
 
   async connect({ token, model, locked = true, systemInstruction, voice }) {
@@ -148,6 +150,7 @@ export class GeminiLivePatient {
     this.outputText = ''
     this.outputAudioParts = []
     this.inputText = ''
+    this.lastUsageKey = ''
     if (this.pending) {
       this.pending.reject(new Error('Live session disconnected.'))
       this.pending = null
@@ -213,6 +216,10 @@ export class GeminiLivePatient {
 
   handleMessage(msg) {
     if (!msg) return
+    // 턴별 토큰 사용량 — Live API가 누적 컨텍스트를 매 턴 재과금하므로(공식),
+    // usageMetadata를 그대로 합산하면 세션 실청구량이 된다. 서버 usage_events에 기록.
+    const usage = msg.usageMetadata || msg.usage_metadata
+    if (usage) this.emitUsage(usage)
     const serverContent = msg.serverContent || {}
     if (serverContent.interrupted) {
       this.outputText = ''
@@ -272,6 +279,36 @@ export class GeminiLivePatient {
         setTimeout(() => pending.resolve(text), 320)
       }
     }
+  }
+
+  emitUsage(usage) {
+    const byModality = (details) => {
+      const out = { text: 0, audio: 0 }
+      for (const d of details || []) {
+        const kind = String(d?.modality || '').toUpperCase()
+        const count = Number(d?.tokenCount ?? d?.token_count ?? 0) || 0
+        if (kind === 'TEXT') out.text += count
+        else if (kind === 'AUDIO') out.audio += count
+      }
+      return out
+    }
+    const prompt = byModality(usage.promptTokensDetails || usage.prompt_tokens_details)
+    const response = byModality(usage.responseTokensDetails || usage.response_tokens_details)
+    const event = {
+      promptTokens: Number(usage.promptTokenCount ?? usage.prompt_token_count ?? 0) || 0,
+      responseTokens: Number(usage.responseTokenCount ?? usage.response_token_count ?? 0) || 0,
+      totalTokens: Number(usage.totalTokenCount ?? usage.total_token_count ?? 0) || 0,
+      promptTextTokens: prompt.text,
+      promptAudioTokens: prompt.audio,
+      responseTextTokens: response.text,
+      responseAudioTokens: response.audio,
+    }
+    if (!event.promptTokens && !event.responseTokens && !event.totalTokens) return
+    // 같은 턴의 usageMetadata가 여러 메시지에 반복 실려 올 수 있어 동일 수치는 한 번만 보고
+    const key = `${event.promptTokens}|${event.responseTokens}|${event.totalTokens}`
+    if (key === this.lastUsageKey) return
+    this.lastUsageKey = key
+    this.onUsage(event)
   }
 
   // 음성 OFF(텍스트 전용) 모드: 환자 오디오 재생을 끈다. 전사(텍스트)는 계속 수신.

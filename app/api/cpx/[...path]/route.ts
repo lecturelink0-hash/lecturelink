@@ -7,7 +7,7 @@ import { persistCpxExchange } from '@/lib/cpx/persistence';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const ALLOWED_ROOTS = new Set(['cases', 'sessions', 'exam-buttons', 'history', 'review-notes']);
+const ALLOWED_ROOTS = new Set(['cases', 'sessions', 'exam-buttons', 'history', 'review-notes', 'usage']);
 
 async function persistedHistory(userId: string) {
   const supabase = await createServerClient();
