@@ -671,16 +671,16 @@ export function Landing() {
     <div className="ll-land min-h-screen overflow-x-hidden bg-[#FCFAF4] text-[#111827]">
       {/* 기존 랜딩의 프리뷰 데모 애니메이션(커서 클릭·진행 바·음성 웨이브) — 스코프 유지 */}
       <style>{`
-        /* 히어로 인트로 타임라인 — 핵심 메시지 → CTA → 안내문구 → 저대비 워드마크.
-           브랜드 타이포보다 무료체험 행동이 먼저 인지되도록 순서를 잡는다. */
+        /* 히어로 인트로 타임라인 — 핵심 메시지 → 저대비 워드마크 → CTA → 안내문구.
+           "잇—다"가 완성된 뒤 브랜드를 연결하고, 마지막에 무료체험 행동을 제안한다. */
         .ll-land .llh-1{animation:llh-fade .45s ease-out both}
         .ll-land .llh-2{animation:llh-rise .3s cubic-bezier(.22,1,.36,1) .45s both}
         .ll-land .llh-line{transform-origin:left center;animation:llh-draw .95s cubic-bezier(.4,0,.2,1) .85s both}
         .ll-land .llh-3{animation:llh-rise .25s cubic-bezier(.22,1,.36,1) 1.8s both}
-        .ll-land .llh-5{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 2.3s both}
-        .ll-land .llh-6{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 2.46s both}
-        .ll-land .llh-7{animation:llh-fade .35s ease-out 2.68s both}
-        .ll-land .llh-4{animation:llh-wordmark .75s cubic-bezier(.22,1,.36,1) 3.05s both}
+        .ll-land .llh-4{animation:llh-wordmark .55s cubic-bezier(.22,1,.36,1) 2.25s both}
+        .ll-land .llh-5{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 2.9s both}
+        .ll-land .llh-6{animation:llh-rise .4s cubic-bezier(.22,1,.36,1) 3.04s both}
+        .ll-land .llh-7{animation:llh-fade .35s ease-out 3.24s both}
         @keyframes llh-fade{from{opacity:0}to{opacity:1}}
         @keyframes llh-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes llh-wordmark{from{opacity:0;transform:translateY(.13em)}to{opacity:1;transform:translateY(0)}}
@@ -741,10 +741,10 @@ export function Landing() {
               <div className="mt-7 flex flex-wrap gap-3 sm:mt-8">
                 <Link
                   href="/login"
-                  className="llh-5 group inline-flex h-[54px] items-center justify-center gap-2 rounded-xl bg-[#FCFAF4] px-6 text-[16px] font-bold text-[#07563A] shadow-[0_12px_28px_rgba(0,0,0,.16)] transition hover:bg-[#F4F1E8] active:scale-[.98]"
+                  className="llh-5 group inline-flex h-[58px] items-center justify-center gap-2.5 rounded-[14px] bg-[#FCFAF4] px-7 text-[17px] font-bold text-[#07563A] shadow-[0_14px_32px_rgba(0,0,0,.18)] transition hover:bg-[#F4F1E8] active:scale-[.98] sm:h-[62px] sm:px-8 sm:text-[18px]"
                 >
                   1달 무료체험 시작하기
-                  <ArrowRight className="h-[18px] w-[18px] transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <a
                   href="#features"
