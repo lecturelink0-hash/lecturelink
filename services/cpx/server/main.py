@@ -285,6 +285,15 @@ def history(user_id: str = Depends(current_user_id)):
     for s in db.list_scored_sessions(user_id):
         result = _json.loads(s['result'])
         persona = _json.loads(s['persona']) if s.get('persona') else None
+        scored_sections = [
+            section for section in result.get('sections', [])
+            if section.get('weightPercent', 0) > 0 and 'violationCount' not in section
+        ]
+        weakest = min(
+            scored_sections,
+            key=lambda section: section.get('score', 0) / section['weightPercent'],
+            default=None,
+        )
         out.append({
             'sessionId': s['id'],
             'caseId': s['case_id'],
@@ -292,6 +301,12 @@ def history(user_id: str = Depends(current_user_id)):
             'persona': persona,
             'totalScore': result.get('totalScore'),
             'gradeLabel': result.get('overallGradeLabel'),
+            'weakestSection': ({
+                'id': weakest.get('id'),
+                'name': weakest.get('name'),
+                'score': weakest.get('score'),
+                'weightPercent': weakest.get('weightPercent'),
+            } if weakest else None),
         })
     return {'sessions': out}
 

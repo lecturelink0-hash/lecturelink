@@ -9,6 +9,25 @@ export const runtime = 'nodejs';
 
 const ALLOWED_ROOTS = new Set(['cases', 'sessions', 'exam-buttons', 'history', 'review-notes', 'usage']);
 
+function weakestSection(result: Record<string, unknown>) {
+  const sections = Array.isArray(result.sections) ? result.sections : [];
+  return sections
+    .filter((section): section is Record<string, unknown> => {
+      if (!section || typeof section !== 'object' || Array.isArray(section)) return false;
+      const score = Number((section as Record<string, unknown>).score);
+      const weight = Number((section as Record<string, unknown>).weightPercent);
+      return Number.isFinite(score) && Number.isFinite(weight) && weight > 0
+        && !('violationCount' in (section as Record<string, unknown>));
+    })
+    .map((section) => ({
+      id: String(section.id ?? ''),
+      name: String(section.name ?? ''),
+      score: Number(section.score),
+      weightPercent: Number(section.weightPercent),
+    }))
+    .sort((a, b) => (a.score / a.weightPercent) - (b.score / b.weightPercent))[0] ?? null;
+}
+
 async function persistedHistory(userId: string) {
   const supabase = await createServerClient();
   const { data, error } = await supabase
@@ -34,6 +53,7 @@ async function persistedHistory(userId: string) {
         persona: row.persona,
         totalScore: result.totalScore,
         gradeLabel: result.overallGradeLabel,
+        weakestSection: weakestSection(result),
       };
     }),
   }, { headers: { 'cache-control': 'no-store' } });
