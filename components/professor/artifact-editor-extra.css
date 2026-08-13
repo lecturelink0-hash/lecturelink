@@ -1,10 +1,66 @@
-.editor-field textarea {
+.professor-app .ll-formative-review {
+  width: 100%;
+  max-width: 1180px;
+  padding: 34px 0 18px;
+  color: var(--p-ink);
+  font-family: var(--font-body);
+}
+
+.professor-app .ll-formative-review .formative-review-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 32px;
+  margin: 0;
+  padding: 38px 0 32px;
+  border-bottom: 1px solid var(--p-line);
+}
+
+.professor-app .ll-formative-review .formative-review-head h1 {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: var(--p-ink);
+  font-size: clamp(34px, 3.4vw, 44px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.04em;
+}
+
+.professor-app .ll-formative-review .formative-review-head .headline-accent {
+  color: var(--p-forest);
+}
+
+.professor-app .ll-formative-review .formative-review-head .lead {
+  max-width: 680px;
+  margin: 14px 0 0;
+  color: var(--p-muted);
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.professor-app .ll-formative-review .flow-header-tools {
+  display: block;
+  align-self: start;
+  padding-top: 4px;
+}
+
+.professor-app .ll-formative-review .editor-field textarea {
   min-height: 120px;
   line-height: 1.65;
 }
 
 .choice-edit textarea { width:100%;min-height:54px;max-height:220px;resize:vertical;overflow-y:auto;line-height:1.55; }
-.artifact-course-back { white-space: nowrap; }
+.professor-app .ll-formative-review .artifact-course-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--p-muted);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.professor-app .ll-formative-review .artifact-course-back:hover { color: var(--p-forest); }
 
 .editor-delete,
 .editor-add {
@@ -26,32 +82,111 @@
 .editor-add { min-height: 52px; border-style: dashed; color: var(--p-forest); background: rgba(255,255,255,.72); }
 .editor-add:hover { border-color: #a6c7b0; background: var(--p-sage); }
 
-.artifact-review-layout {
+.professor-app .ll-formative-review .artifact-review-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(270px, 1fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 2.15fr) minmax(290px, .85fr);
+  gap: 28px;
+  scroll-margin-top: 84px;
   align-items: start;
+  padding-top: 28px;
 }
 
-.artifact-review-layout > .editor-list {
+.professor-app .ll-formative-review .artifact-review-main {
+  display: grid;
   min-width: 0;
+  gap: 18px;
 }
 
-.artifact-review-helper {
+.professor-app .ll-formative-review .artifact-title-panel {
+  display: grid;
+  gap: 7px;
+  padding: 20px 22px;
+  border: 1px solid var(--p-line);
+  border-radius: 15px;
+  background: #fff;
+}
+
+.professor-app .ll-formative-review .artifact-title-panel label {
+  color: var(--p-forest-dark);
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.professor-app .ll-formative-review .artifact-title-panel input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--p-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--p-ink);
+  font-size: 17px;
+  font-weight: 650;
+  outline: none;
+}
+
+.professor-app .ll-formative-review .artifact-title-panel input:focus {
+  border-color: #8eb39a;
+  box-shadow: 0 0 0 3px rgba(31, 92, 67, .13);
+}
+
+.professor-app .ll-formative-review .artifact-title-panel p {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.professor-app .ll-formative-review .artifact-review-main > .editor-list {
+  min-width: 0;
+  gap: 18px;
+  padding-top: 0;
+}
+
+.professor-app .ll-formative-review .editor-card {
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid var(--p-line);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, .025);
+}
+
+.professor-app .ll-formative-review .editable-stem > textarea {
+  border-color: var(--p-line);
+  background: var(--p-cream);
+}
+
+.professor-app .ll-formative-review .choice-edit {
+  border-color: var(--p-line);
+  background: #fff;
+}
+
+.professor-app .ll-formative-review .choice-edit:has(input[type="radio"]:checked) {
+  border-color: #b9d1bf;
+  background: var(--p-sage);
+}
+
+.professor-app .ll-formative-review .editor-field {
+  border-color: var(--p-line);
+  background: var(--p-cream);
+}
+
+.professor-app .ll-formative-review .artifact-review-helper {
   position: relative;
   align-self: start;
   overflow: hidden;
-  padding: 22px;
-  border: 1px solid var(--color-border);
+  padding: 22px 20px;
+  border: 1px solid var(--p-line);
   border-radius: 15px;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, .025);
   transition: border-color 240ms ease, box-shadow 240ms ease;
 }
 
-.artifact-review-helper.is-following {
+.professor-app .ll-formative-review .artifact-review-helper.is-following {
   border-color: var(--color-line-strong);
-  box-shadow: var(--shadow-menu);
+  box-shadow: 0 12px 30px -26px rgba(17, 24, 39, .32);
   will-change: transform;
 }
 
@@ -177,8 +312,21 @@
 .artifact-review-helper-actions button:disabled { cursor: not-allowed; opacity: .46; }
 
 @media (max-width: 900px) {
-  .artifact-review-layout { grid-template-columns: 1fr; }
-  .artifact-review-helper { grid-row: 1; transform: none !important; }
+  .professor-app .ll-formative-review .formative-review-head { grid-template-columns: 1fr; gap: 20px; }
+  .professor-app .ll-formative-review .flow-header-tools { padding-top: 0; }
+  .professor-app .ll-formative-review .artifact-review-layout { grid-template-columns: 1fr; }
+  .professor-app .ll-formative-review .artifact-review-helper { grid-row: 1; transform: none !important; }
+}
+
+@media (max-width: 560px) {
+  .professor-app .ll-formative-review { padding-top: 24px; }
+  .professor-app .ll-formative-review .formative-review-head { padding: 30px 0 24px; }
+  .professor-app .ll-formative-review .formative-review-head h1 { font-size: 32px; }
+  .professor-app .ll-formative-review .formative-review-head .lead { font-size: 16px; }
+  .professor-app .ll-formative-review .artifact-review-layout { gap: 20px; padding-top: 22px; }
+  .professor-app .ll-formative-review .artifact-title-panel,
+  .professor-app .ll-formative-review .editor-card,
+  .professor-app .ll-formative-review .artifact-review-helper { padding: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -152,7 +152,7 @@ export function FormativeAssessmentStudio() {
         "lecturelink-formative-preview",
         JSON.stringify(createPreviewResult(count)),
       );
-      router.push("/professor/artifacts/preview");
+      router.push("/professor/artifacts/preview#generation-result");
       return;
     }
     setLoading(true);
@@ -232,7 +232,7 @@ export function FormativeAssessmentStudio() {
         setErrorTitle("초안 저장을 완료하지 못했습니다.");
         throw new Error("저장된 형성평가의 식별 정보를 확인하지 못했습니다.");
       }
-      router.push(`/professor/artifacts/${saved.data.id}`);
+      router.push(`/professor/artifacts/${saved.data.id}#generation-result`);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -414,18 +414,17 @@ export function FormativeAssessmentStudio() {
                             setUseImages(event.target.checked)
                           }
                         />
-                        <span>
-                          <b>강의자료 이미지 사용</b>
-                          <small>
-                            자료 속 X-ray, CT, ECG, 병리 이미지 등을 분석해
-                            이미지 문항에 활용합니다.
-                          </small>
+                        <span className="image-option-copy">
+                          <strong className="image-option-title">
+                            강의자료 이미지 사용
+                          </strong>
+                          <span className="image-option-description">
+                            자료 속 X-ray, CT, ECG, 병리 이미지 등을 분석해 이미지 문항에 활용합니다.
+                          </span>
+                          <span className="image-option-note">
+                            이미지를 사용하면 생성 시간이 조금 더 오래 걸릴 수 있지만, 시각 자료의 임상 맥락을 반영해 문항의 퀄리티를 높일 수 있습니다.
+                          </span>
                         </span>
-                      </span>
-                      <span className="image-option-note">
-                        이미지를 사용하면 생성 시간이 조금 더 오래 걸릴 수
-                        있지만, 시각 자료의 임상 맥락을 반영해 문항의 퀄리티를
-                        높일 수 있습니다.
                       </span>
                     </label>
                   </div>

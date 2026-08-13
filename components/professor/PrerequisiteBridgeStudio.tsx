@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -119,7 +119,21 @@ export function PrerequisiteBridgeStudio() {
     searchParams.get("material") ?? "",
   );
   const [materialName, setMaterialName] = useState("");
+  const resultRef = useRef<HTMLElement>(null);
   const sourceReady = Boolean(file || materialId);
+
+  useEffect(() => {
+    if (!result) return;
+    const frame = window.requestAnimationFrame(() => {
+      resultRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [result]);
 
   function chooseFile(next: File | null | undefined) {
     if (!next) {
@@ -412,10 +426,22 @@ export function PrerequisiteBridgeStudio() {
           )}
 
           {result && (
-            <article className={`bridge-result bridge-infographic style-${result.designStyle} ${result.visualDataUrl ? "has-generated-image" : ""} card pad`}>
+            <article
+              ref={resultRef}
+              className={`studio-section bridge-result bridge-infographic style-${result.designStyle} ${result.visualDataUrl ? "has-generated-image" : ""} card pad`}
+              aria-labelledby="bridge-result-title"
+            >
+              <span className="studio-step-number" aria-hidden="true">
+                3
+              </span>
+              <div className="card-head bridge-result-heading">
+                <div>
+                  <h2 id="bridge-result-title">생성 결과</h2>
+                  <p>완성된 예습자료를 바로 확인하고 저장하거나 인쇄할 수 있습니다.</p>
+                </div>
+              </div>
               <div className="bridge-result-bar">
                 <div>
-                  <span>AI 초안 · 교수 검토 필요</span>
                   <b>{result.estimatedMinutes}분 복습</b>
                 </div>
                 <div>
@@ -456,7 +482,7 @@ export function PrerequisiteBridgeStudio() {
                         : result.textRepair?.regenerated
                           ? "필수 요소를 포함해 다시 생성 · 자동 검수 통과"
                           : "자동 글자·내용 검수 통과"
-                      : "교수 검토가 필요한 항목이 있습니다"}</b>
+                      : "추가 확인이 필요한 항목이 있습니다"}</b>
                     {result.textAudit.issues.length > 0 && <p>{result.textAudit.issues.join(" · ")}</p>}
                   </div>
                 </div>

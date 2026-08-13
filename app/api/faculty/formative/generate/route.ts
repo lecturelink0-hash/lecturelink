@@ -132,10 +132,7 @@ async function selectVisualPdfPages(
         userIdForLog: userId,
       });
       const regions = detection.regions.filter(
-        (region) =>
-          region.kind !== 'text_slide' &&
-          region.kind !== 'other' &&
-          region.confidence >= 0.7,
+        (region) => region.kind !== 'text_slide',
       );
       const cropped = await cropRegions(page.png, regions);
       for (const image of cropped) {
@@ -492,6 +489,7 @@ function assertAssessmentIntegrity(
   count: number,
   allowedPages: number[],
   imageCount: number,
+  requireImageQuestion = false,
 ) {
   if (result.questions.length !== count) {
     throw new ApiException('generation_count_mismatch', '요청한 문항 수를 충족하지 못했습니다. 다시 생성해주세요.', 502);
@@ -522,6 +520,13 @@ function assertAssessmentIntegrity(
   }
   if (count >= 5 && Math.max(...answerPositionCounts) > Math.ceil(count * 0.4)) {
     throw new ApiException('unbalanced_answers', '정답 위치가 한 번호에 지나치게 편중되어 생성을 중단했습니다.', 502);
+  }
+  if (requireImageQuestion && !result.questions.some((question) => question.imageIndex !== null)) {
+    throw new ApiException(
+      'missing_image_question',
+      '사용 가능한 강의자료 이미지가 있지만 이미지 문항이 생성되지 않았습니다.',
+      502,
+    );
   }
 }
 
@@ -572,6 +577,7 @@ export const POST = withErrorHandling(async (request: Request) => {
     settings.range,
     `${settings.objective} ${settings.additionalPrompt}`,
   );
+  const requireImageQuestion = settings.useImages && material.images.length > 0;
   const client = getAnthropic();
   const emphasizedQuestionCount = Math.min(2, settings.count);
   const userText = `파일명: ${file.name}
@@ -586,6 +592,9 @@ export const POST = withErrorHandling(async (request: Request) => {
 추가 요청: ${settings.additionalPrompt || '없음'}
 이미지 사용: ${settings.useImages ? `사용(후보 ${material.images.length}개)` : '사용 안 함'}
 이미지 처리 참고: ${material.imageWarnings.join(' ') || '이상 없음'}
+이미지 문항 규칙: ${requireImageQuestion
+    ? '제공된 이미지 후보를 직접 판독해야 풀 수 있는 문항을 최소 1개 만들고, 해당 문항의 imageIndex를 반드시 지정한다.'
+    : '사용 가능한 이미지 후보가 없으므로 모든 문항의 imageIndex를 null로 둔다.'}
 
 강의자료:
 ${material.text}`;
@@ -668,6 +677,9 @@ ${material.text}`;
     ? `해당 내용 중심 문항은 1~${emphasizedQuestionCount}개만 허용하고, 나머지는 자료의 다른 핵심 내용을 평가`
     : '별도 강조 주제 없음'}
 제외 내용: ${settings.excluded || '없음'}
+이미지 문항 규칙: ${requireImageQuestion
+    ? '최종 문항에도 이미지를 직접 판독해야 풀 수 있는 문항을 최소 1개 유지하고 올바른 imageIndex를 지정한다.'
+    : '모든 문항의 imageIndex를 null로 둔다.'}
 
 강의자료:
 ${material.text}
@@ -731,6 +743,7 @@ ${JSON.stringify(draft)}`,
         settings.count,
         material.allowedPages,
         material.images.length,
+        requireImageQuestion,
       );
       verified = balanceAnswerPositions(parsedVerification.data);
     } catch (error) {
@@ -749,6 +762,7 @@ ${JSON.stringify(draft)}`,
         settings.count,
         material.allowedPages,
         material.images.length,
+        requireImageQuestion,
       );
       console.warn('[formative] verification output unavailable; using integrity-checked draft:', verificationFeedback);
       verified = {

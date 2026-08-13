@@ -501,29 +501,44 @@
   display: flex;
   align-items: flex-start;
   gap: 11px;
+  width: 100%;
 }
 
 .image-option-control input {
   width: 18px;
   height: 18px;
-  margin-top: 2px;
+  margin-top: 4px;
   accent-color: var(--forest);
 }
 
-.image-option-control span {
+.image-option-copy {
   display: grid;
-  gap: 3px;
+  flex: 1;
+  gap: 5px;
+  min-width: 0;
 }
 
-.image-option-control small,
-.image-option-note {
+.professor-app .faculty-studio .image-option-title {
+  display: block;
+  color: var(--forest-dark);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.professor-app .faculty-studio .image-option-description,
+.professor-app .faculty-studio .image-option-note {
+  display: block;
   color: var(--ink-muted);
-  font-size: 12px;
-  line-height: 1.55;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  word-break: keep-all;
 }
 
-.image-option-note {
-  padding-left: 29px;
+.professor-app .faculty-studio .image-option-note {
+  padding-left: 0;
 }
 
 .formative-question-image {

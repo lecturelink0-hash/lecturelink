@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { readApiResponse } from "@/lib/utils/read-api-response";
 import { GuideLabel } from "@/components/ui/GuideLabel";
-import "./artifact-editor-extra.css";
 import "../formative/formative-flow.css";
+import "./artifact-editor-extra.css";
 
 const DEFAULT_PREVIEW_ARTIFACT = {
   id: "preview",
@@ -61,6 +61,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   const [creatingSession, setCreatingSession] = useState(false);
   const reviewLayoutRef = useRef<HTMLDivElement>(null);
   const reviewHelperRef = useRef<HTMLElement>(null);
+  const hasScrolledToGeneratedResult = useRef(false);
   const router = useRouter();
   const resizeChoice = (element: HTMLTextAreaElement) => {
     element.style.height = "auto";
@@ -113,6 +114,25 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
       })
       .catch((cause) => setLoadError(cause instanceof Error ? cause.message : "문항을 불러오지 못했습니다."));
   }, [artifactId]);
+
+  useEffect(() => {
+    if (
+      !data ||
+      hasScrolledToGeneratedResult.current ||
+      window.location.hash !== "#generation-result"
+    )
+      return;
+    hasScrolledToGeneratedResult.current = true;
+    const frame = window.requestAnimationFrame(() => {
+      reviewLayoutRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [data]);
 
   useEffect(() => {
     const layout = reviewLayoutRef.current;
@@ -282,7 +302,6 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   }
 
   const canDistribute = data.formative_items.length > 0;
-  const titleHasType = /형성평가\s*$/.test(data.title.trim());
   const answerCounts = data.formative_items.reduce((counts: number[], item: any) => {
     counts[item.answer_index] = (counts[item.answer_index] ?? 0) + 1;
     return counts;
@@ -304,21 +323,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
       <header className="page-head formative-review-head">
         <div>
           <p className="eyebrow">교수 도구 · 검토 후 배포</p>
-          {artifactId === "preview" && data.title === DEFAULT_PREVIEW_ARTIFACT.title ? (
-            <h1 className="artifact-title artifact-preview-title">
-              <span>형성평가</span> 검토하기
-            </h1>
-          ) : (
-            <div className="artifact-title-composite">
-              <input
-                aria-label="형성평가 제목"
-                className="artifact-title"
-                value={data.title}
-                onChange={(event) => setData({ ...data, title: event.target.value })}
-              />
-              {!titleHasType && <span className="artifact-title-suffix">형성평가</span>}
-            </div>
-          )}
+          <h1><span className="headline-accent">형성평가</span> 검토하기</h1>
           <p className="lead">
             생성된 문항과 정답·해설을 확인하고 필요한 내용을 수정한 뒤 학생에게
             배포하세요.
@@ -339,22 +344,24 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
               </ol>
             </div>
           </div>
-          <div className="editor-actions">
-            <button className="professor-primary" disabled={saving || creatingSession} onClick={save}>
-              <Save size={16} /> {saving ? "저장 중" : "저장"}
-            </button>
-            <button className="professor-primary" disabled={!canDistribute || saving || creatingSession} onClick={createLiveSession}>
-              <QrCode size={16} /> {creatingSession ? "평가실 만드는 중" : "학생에게 QR로 배포하기"}
-            </button>
-          </div>
         </div>
       </header>
 
       {message && <div className="editor-message" role="status" aria-live="polite">{message}</div>}
-      <div className="artifact-review-layout" ref={reviewLayoutRef}>
-        <div className="editor-list">
-          {data.formative_items.map((item: any, index: number) => (
-          <article className="editor-card" key={item.id}>
+      <div id="generation-result" className="artifact-review-layout" ref={reviewLayoutRef}>
+        <main className="artifact-review-main">
+          <section className="artifact-title-panel" aria-labelledby="artifact-title-label">
+            <label id="artifact-title-label" htmlFor="artifact-title-input">평가 제목</label>
+            <input
+              id="artifact-title-input"
+              value={data.title}
+              onChange={(event) => setData({ ...data, title: event.target.value })}
+            />
+            <p>학생 화면과 QR 평가실에 표시되는 이름입니다.</p>
+          </section>
+          <div className="editor-list">
+            {data.formative_items.map((item: any, index: number) => (
+            <article className="editor-card" key={item.id}>
             <div className="editor-card-head">
               <b>문항 {index + 1}</b>
               <button
@@ -417,12 +424,13 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
                 <Pencil className="edit-cue" aria-hidden="true" />
               </div>
             </label>
-          </article>
-          ))}
-          <button className="editor-add" type="button" onClick={addQuestion}>
-            <Plus size={17} /> 직접 문항 추가하기
-          </button>
-        </div>
+            </article>
+            ))}
+            <button className="editor-add" type="button" onClick={addQuestion}>
+              <Plus size={17} /> 직접 문항 추가하기
+            </button>
+          </div>
+        </main>
 
         <aside
           className="artifact-review-helper"

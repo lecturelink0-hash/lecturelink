@@ -306,19 +306,21 @@
 }
 .professor-home .professor-tool.is-locked{
  cursor:not-allowed;
- border-color:color-mix(in oklch,var(--p-line) 72%,var(--p-sage));
- background:color-mix(in oklch,var(--p-sage) 52%,var(--color-surface));
+ border-color:#dfe3e8;
+ background:#f3f4f6;
  box-shadow:none;
 }
 .professor-home .professor-tool.is-locked:hover{
- border-color:var(--p-line);transform:none;box-shadow:none;
+ border-color:#dfe3e8;transform:none;box-shadow:none;
 }
-.professor-home .professor-tool.is-locked:after{opacity:.22}
+.professor-home .professor-tool.is-locked:after{background:#dfe3e8;opacity:.55}
 .professor-home .professor-tool.is-locked .professor-tool-icon{
- background:color-mix(in oklch,var(--p-forest) 62%,var(--p-muted));color:#fff;
+ background:#9ca3af;color:#fff;
 }
+.professor-home .professor-tool.is-locked h3{color:#4b5563}
+.professor-home .professor-tool.is-locked p{color:#6b7280}
 .professor-home .professor-tool.is-locked>span{
- color:color-mix(in oklch,var(--p-forest) 62%,var(--p-muted));
+ color:#6b7280;
 }
 .professor-home .professor-course-grid>a{
  position:relative;overflow:hidden;min-height:172px;padding:20px;border-radius:var(--radius-lg);
