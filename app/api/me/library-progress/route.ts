@@ -35,11 +35,11 @@ export const GET = withErrorHandling(async () => {
   if (aErr) throw aErr;
 
   const uploadOf = new Map<string, string>();
-  const byUpload: Record<string, { total: number; attempted: number; correct: number }> = {};
+  const byUpload: Record<string, { total: number; attempted: number; correct: number; lastAttemptedQuestionId: string | null }> = {};
   for (const pq of pqs ?? []) {
     const uid = pq.upload_id as string;
     uploadOf.set(pq.id as string, uid);
-    if (!byUpload[uid]) byUpload[uid] = { total: 0, attempted: 0, correct: 0 };
+    if (!byUpload[uid]) byUpload[uid] = { total: 0, attempted: 0, correct: 0, lastAttemptedQuestionId: null };
     byUpload[uid].total += 1;
   }
 
@@ -48,6 +48,10 @@ export const GET = withErrorHandling(async () => {
   const byQuestion: Record<string, { selectedIndex: number; isCorrect: boolean }> = {};
   for (const a of atts ?? []) {
     const pid = a.private_question_id as string;
+    const uploadId = uploadOf.get(pid);
+    if (uploadId && byUpload[uploadId].lastAttemptedQuestionId === null) {
+      byUpload[uploadId].lastAttemptedQuestionId = pid;
+    }
     if (!latestCorrect.has(pid)) {
       latestCorrect.set(pid, a.is_correct as boolean);
       byQuestion[pid] = {
