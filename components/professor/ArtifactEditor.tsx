@@ -3,6 +3,7 @@
 import { ClipboardList, Info, Pencil, Plus, QrCode, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { readApiResponse } from "@/lib/utils/read-api-response";
 import "./artifact-editor-extra.css";
 import "../formative/formative-flow.css";
 
@@ -52,6 +53,9 @@ const DEFAULT_PREVIEW_ARTIFACT = {
 export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   const [data, setData] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [creatingSession, setCreatingSession] = useState(false);
   const reviewLayoutRef = useRef<HTMLDivElement>(null);
   const reviewHelperRef = useRef<HTMLElement>(null);
   const router = useRouter();
@@ -85,17 +89,22 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
       setData(DEFAULT_PREVIEW_ARTIFACT);
       return;
     }
+    setLoadError("");
     fetch(`/api/professor/artifacts/${artifactId}`)
-      .then((response) => response.json())
-      .then((payload) => {
-        if (!payload.ok) return;
+      .then(async (response) => ({ response, payload: await readApiResponse<any>(response, "문항을 불러오지 못했습니다.") }))
+      .then(({ response, payload }) => {
+        if (!response.ok || !payload.ok || !payload.data) {
+          setLoadError(payload.error?.message ?? "문항을 불러오지 못했습니다.");
+          return;
+        }
         setData({
           ...payload.data,
           formative_items: [...payload.data.formative_items].sort(
             (a: any, b: any) => a.position - b.position,
           ),
         });
-      });
+      })
+      .catch((cause) => setLoadError(cause instanceof Error ? cause.message : "문항을 불러오지 못했습니다."));
   }, [artifactId]);
 
   useEffect(() => {
@@ -164,6 +173,9 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
     };
   }, [data?.formative_items?.length]);
 
+  if (loadError) {
+    return <div className="professor-empty" role="alert"><p>{loadError}</p><button type="button" className="professor-secondary" onClick={() => window.location.reload()}>다시 시도</button></div>;
+  }
   if (!data) {
     return <div className="professor-empty">문항을 불러오는 중입니다.</div>;
   }
@@ -178,10 +190,14 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   }
 
   async function save() {
+    if (saving) return false;
     if (artifactId === "preview" && process.env.NODE_ENV === "development") {
       setMessage("미리보기 초안의 수정사항을 임시로 반영했습니다.");
       return true;
     }
+    setSaving(true);
+    setMessage("");
+    try {
     const response = await fetch(`/api/professor/artifacts/${artifactId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
@@ -197,20 +213,39 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
         })),
       }),
     });
-    setMessage(response.ok ? "수정사항을 저장했습니다." : "저장하지 못했습니다.");
-    return response.ok;
+    const payload = await readApiResponse<{ saved: boolean }>(response, "수정사항을 저장하지 못했습니다.");
+    if (!response.ok || !payload.ok) {
+      setMessage(payload.error?.message ?? "수정사항을 저장하지 못했습니다.");
+      return false;
+    }
+    setMessage("수정사항을 저장했습니다.");
+    return true;
+    } catch (cause) {
+      setMessage(cause instanceof Error ? cause.message : "수정사항을 저장하지 못했습니다.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function createLiveSession() {
+    if (creatingSession) return;
+    setCreatingSession(true);
+    try {
     if (!(await save())) return;
     if (artifactId === "preview" && process.env.NODE_ENV === "development") {
       window.location.href = "/professor/live/preview";
       return;
     }
     const response=await fetch(`/api/professor/artifacts/${artifactId}/sessions`,{method:'POST'});
-    const payload=await response.json();
-    if(payload.ok) router.push(`/professor/live/${payload.data.id}`);
+    const payload=await readApiResponse<{id:string}>(response,'평가 세션을 만들지 못했습니다.');
+    if(response.ok && payload.ok && payload.data) router.push(`/professor/live/${payload.data.id}`);
     else setMessage(payload.error?.message ?? '평가 세션을 만들지 못했습니다.');
+    } catch (cause) {
+      setMessage(cause instanceof Error ? cause.message : '평가 세션을 만들지 못했습니다.');
+    } finally {
+      setCreatingSession(false);
+    }
   }
 
   function addQuestion() {
@@ -296,17 +331,17 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
             </div>
           </div>
           <div className="editor-actions">
-            <button className="professor-primary" onClick={save}>
-              <Save size={16} /> 저장
+            <button className="professor-primary" disabled={saving || creatingSession} onClick={save}>
+              <Save size={16} /> {saving ? "저장 중" : "저장"}
             </button>
-            <button className="professor-primary" disabled={!canDistribute} onClick={createLiveSession}>
-              <QrCode size={16} /> 학생에게 QR로 배포하기
+            <button className="professor-primary" disabled={!canDistribute || saving || creatingSession} onClick={createLiveSession}>
+              <QrCode size={16} /> {creatingSession ? "평가실 만드는 중" : "학생에게 QR로 배포하기"}
             </button>
           </div>
         </div>
       </header>
 
-      {message && <div className="editor-message">{message}</div>}
+      {message && <div className="editor-message" role="status" aria-live="polite">{message}</div>}
       <div className="artifact-review-layout" ref={reviewLayoutRef}>
         <div className="editor-list">
           {data.formative_items.map((item: any, index: number) => (
@@ -339,6 +374,8 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
               <div className="choice-edit" key={choiceIndex}>
                 <input
                   type="radio"
+                  name={`question-${item.id}-answer`}
+                  aria-label={`문항 ${index + 1}의 ${choiceIndex + 1}번 선택지를 정답으로 지정`}
                   checked={item.answer_index === choiceIndex}
                   onChange={() => change(index, "answer_index", choiceIndex)}
                 />
@@ -410,11 +447,11 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
             정답이 특정 번호에 몰리면 배포 전에 알려드립니다.
           </p>
           <div className="artifact-review-helper-actions">
-            <button type="button" onClick={save}>
-              <Save size={16} /> 수정사항 저장
+            <button type="button" disabled={saving || creatingSession} onClick={save}>
+              <Save size={16} /> {saving ? "저장 중" : "수정사항 저장"}
             </button>
-            <button type="button" disabled={!canDistribute} onClick={createLiveSession}>
-              <QrCode size={16} /> 학생에게 QR로 배포하기
+            <button type="button" disabled={!canDistribute || saving || creatingSession} onClick={createLiveSession}>
+              <QrCode size={16} /> {creatingSession ? "평가실 만드는 중" : "학생에게 QR로 배포하기"}
             </button>
           </div>
         </aside>

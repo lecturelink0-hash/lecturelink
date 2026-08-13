@@ -15,15 +15,14 @@
 
 import { resolve } from 'node:path';
 
-// pdfjs 3.x 를 Node 환경에서 쓸 때 worker 경로 설정.
-// 3.x 는 worker 를 require() 로 로드하므로 file:// URL 이 아니라 absolute path 가 필요.
-// (5.x 때 file:// URL 로 줬다가 "Cannot find module 'file:///...'" 에러로 회귀)
+// pdfjs 4.x legacy ESM 빌드를 Node 환경에서 사용한다.
+// workerSrc 는 file:// URL 이 아니라 배포 산출물에 포함되는 absolute path 를 사용한다.
 // 이 lib 은 server-only 코드(API route 에서만 호출)라 정적 import 로 안전하다.
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 const PDF_WORKER_PATH = resolve(
   process.cwd(),
-  'node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+  'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
 );
 (pdfjsLib as unknown as { GlobalWorkerOptions: { workerSrc: string } })
   .GlobalWorkerOptions.workerSrc = PDF_WORKER_PATH;
@@ -153,8 +152,7 @@ export async function renderPdfPages(
     const ctx = canvas.getContext('2d');
 
     await page.render({
-      // @ts-expect-error pdfjs Node canvas 호환
-      canvasContext: ctx,
+      canvasContext: ctx as unknown as Parameters<typeof page.render>[0]['canvasContext'],
       viewport: scaled,
     }).promise;
 

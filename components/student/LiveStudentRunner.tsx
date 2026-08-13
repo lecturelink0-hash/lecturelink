@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, BookOpenCheck, ClipboardCheck } from 'lucide-reac
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@/lib/db/browser';
+import { readApiResponse } from '@/lib/utils/read-api-response';
 import './live-student.css';
 import './live-student-save.css';
 import '../formative/formative-flow.css';
@@ -44,6 +45,7 @@ export function LiveStudentRunner() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [savedUploadId, setSavedUploadId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { if (!isPreview) createBrowserClient().auth.getUser().then(({ data: auth }) => setLoggedIn(Boolean(auth.user))); }, [isPreview]);
   useEffect(() => { if (isPreview || !initialCode) return; const raw = localStorage.getItem(storageKey(initialCode)); if (!raw) return; try { const saved = JSON.parse(raw); setSessionId(saved.sessionId); setToken(saved.token); } catch { localStorage.removeItem(storageKey(initialCode)); } }, [initialCode, isPreview]);
@@ -87,10 +89,21 @@ export function LiveStudentRunner() {
   }
 
   async function submit() {
+    if (submitting) return;
     const missing = data.questions.length - Object.keys(answers).length;
     if (!confirm(missing ? `미응답 문항이 ${missing}개 있습니다. 제출할까요?` : '제출 후에는 답안을 수정할 수 없습니다. 제출할까요?')) return;
     if (isPreview) { setData((current: any) => ({ ...current, participant: { ...current.participant, status: 'submitted' } })); return; }
-    await fetch(`/api/public/live-assessments/${sessionId}/submit`, { method: 'POST', headers: { authorization: `Bearer ${token}` } }); load();
+    setSubmitting(true); setError('');
+    try {
+      const response = await fetch(`/api/public/live-assessments/${sessionId}/submit`, { method: 'POST', headers: { authorization: `Bearer ${token}` } });
+      const payload = await readApiResponse<{ submitted: boolean }>(response, '답안을 제출하지 못했습니다.');
+      if (!response.ok || !payload.ok) { setError(payload.error?.message ?? '답안을 제출하지 못했습니다.'); return; }
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '답안을 제출하지 못했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const root = 'student-live ll-student-formative-flow';
@@ -101,5 +114,5 @@ export function LiveStudentRunner() {
   if (participant.status === 'submitted' && session.status !== 'ended') return <main className={`${root} submitted-page`}><div className="submitted-shell"><Link className="join-brand" href="/" aria-label="LectureLink 홈으로"><span aria-hidden="true"><BookOpen /></span><b>LectureLink</b></Link><section className="waiting submitted-card"><div className="submitted-illustration" aria-hidden="true"><span><ClipboardCheck /></span><i /><i /></div><span className="waiting-badge">제출 완료</span><h1><span>형성평가가</span><br />제출되었습니다.</h1><p className="submitted-copy">교수님이 평가를 종료하면<br />결과를 확인할 수 있습니다.</p><p className="submitted-save-note">형성평가 종료 후 로그인하면 형성평가 문항과 결과를 저장할 수 있어요.</p></section></div></main>;
   if (session.status === 'ended') { const correct = data.questions.filter((question: any) => answers[question.id] === question.answerIndex).length, score = participant.score ?? correct, total = participant.total ?? data.questions.length; return <main className={`${root} result-page`}><section className="result-hero"><p>평가 결과</p><h1>{score} / {total}</h1><span>정답률 {Math.round(score / Math.max(1, total) * 100)}%</span><div className="save-panel">{saveState === 'saved' ? <><strong>형성평가 문제집에 저장했습니다.</strong><Link href={`/library?set=${savedUploadId}`}>저장한 문항 복습하기</Link></> : <><p>문항과 정답을 내 문제집에 보관하고 언제든 다시 복습하세요.</p><button disabled={saveState === 'saving'} onClick={saveToLibrary}>{saveState === 'saving' ? '저장하는 중…' : loggedIn ? '내 문제집에 저장하기' : '로그인하고 문항 저장하기'}</button></>}{error && <div className="live-error">{error}</div>}</div></section><section className="review-list">{data.questions.map((question: any, questionIndex: number) => <article key={question.id}><b><span aria-hidden="true">{questionIndex + 1}</span>{question.stem}</b>{question.choices.map((choice: string, choiceIndex: number) => <div className={choiceIndex === question.answerIndex ? 'correct' : answers[question.id] === choiceIndex ? 'wrong' : ''} key={choiceIndex}>{choiceIndex + 1}. {choice}{answers[question.id] === choiceIndex ? ' · 내 선택' : ''}</div>)}<p><strong>해설</strong> {question.explanation}</p></article>)}</section></main>; }
   const question = data.questions[index];
-  return <main className={`${root} runner`}><header><span>{session.title}</span><b>{index + 1} / {data.questions.length}</b></header><div className="progress"><i style={{ width: `${(index + 1) / data.questions.length * 100}%` }} /></div><article><h1>{question.stem}</h1>{question.imageDataUrl && <img src={question.imageDataUrl} alt="문항 참고 자료" />}<div>{question.choices.map((choice: string, choiceIndex: number) => <button className={answers[question.id] === choiceIndex ? 'selected' : ''} onClick={() => choose(question.id, choiceIndex)} key={choiceIndex}><b>{choiceIndex + 1}</b>{choice}</button>)}</div></article><footer><button disabled={index === 0} onClick={() => setIndex(index - 1)}>이전</button>{index < data.questions.length - 1 ? <button className="runner-next" onClick={() => setIndex(index + 1)}><span>다음</span><ArrowRight aria-hidden="true" /></button> : <button className="submit" onClick={submit}>제출 완료</button>}</footer>{error && <div className="toast">{error}</div>}</main>;
+  return <main className={`${root} runner`}><header><span>{session.title}</span><b>{index + 1} / {data.questions.length}</b></header><div className="progress"><i style={{ width: `${(index + 1) / data.questions.length * 100}%` }} /></div><article><h1>{question.stem}</h1>{question.imageDataUrl && <img src={question.imageDataUrl} alt="문항 참고 자료" />}<div>{question.choices.map((choice: string, choiceIndex: number) => <button className={answers[question.id] === choiceIndex ? 'selected' : ''} onClick={() => choose(question.id, choiceIndex)} key={choiceIndex}><b>{choiceIndex + 1}</b>{choice}</button>)}</div></article><footer><button disabled={index === 0 || submitting} onClick={() => setIndex(index - 1)}>이전</button>{index < data.questions.length - 1 ? <button className="runner-next" disabled={submitting} onClick={() => setIndex(index + 1)}><span>다음</span><ArrowRight aria-hidden="true" /></button> : <button className="submit" disabled={submitting} onClick={submit}>{submitting ? '제출 중…' : '제출 완료'}</button>}</footer>{error && <div className="toast" role="alert">{error}</div>}</main>;
 }
