@@ -229,7 +229,7 @@ export default function LoginPage() {
           {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
           <Link href="/" className="logo">
             <span className="logo-mark"><BookOpen className="icon" /></span>
-            <span className="logo-text">Lecturelink</span>
+            <span className="logo-text">LectureLink</span>
           </Link>
           <Link href="/" className="header-link">홈으로</Link>
         </div>
@@ -338,7 +338,7 @@ export default function LoginPage() {
               </p>
               <div className="mt-4 rounded-lg bg-[var(--color-sage-100)] px-4 py-3 text-sm text-sage-800 leading-relaxed">
                 메일이 몇 분 내에 오지 않으면 <b>스팸함·프로모션함</b>을 확인하거나 로그인을 시도해 보세요.
-                발신: <b>렉처링크 &lt;fornerdsofficial@gmail.com&gt;</b>
+                발신: <b>LectureLink &lt;fornerdsofficial@gmail.com&gt;</b>
               </div>
               {errorMsg && (
                 <div role="alert" aria-live="polite" className="mt-4 flex items-start gap-2.5 rounded-lg bg-[var(--color-warn-bg)] p-3.5 text-left text-sm leading-relaxed text-[var(--color-warn)]">
@@ -542,7 +542,7 @@ export default function LoginPage() {
       </main>
       <footer className="site-footer">
         <div className="footer-inner">
-          <p className="m-0">Lecturelink는 학습 보조 도구이며, 생성된 문항과 해설은 검토 후 활용해주세요.</p>
+          <p className="m-0">LectureLink는 학습 보조 도구이며, 생성된 문항과 해설은 검토 후 활용해주세요.</p>
           <div className="footer-links"><Link href="/terms">이용약관</Link><Link href="/privacy">개인정보처리방침</Link><Link href="/contact">문의하기</Link></div>
         </div>
       </footer>

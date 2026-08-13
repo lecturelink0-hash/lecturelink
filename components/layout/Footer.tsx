@@ -30,8 +30,8 @@ const columns: FooterColumn[] = [
       // 카카오톡 문의는 전용 페이지(/contact)에서 채널로 연결 — 채널 URL은 KAKAO_CHANNEL_URL(런타임 env).
       { label: '카카오톡 문의', href: '/contact' },
       { label: '문의하기', href: '/contact' },
-      { label: '오류 신고', href: 'mailto:lecturelink0@gmail.com?subject=렉처링크 오류 신고', external: true, notice: '오류 신고를 위해 이메일 화면으로 이동합니다.' },
-      { label: '피드백 보내기', href: 'mailto:lecturelink0@gmail.com?subject=렉처링크 피드백', external: true, notice: '피드백을 보내기 위해 이메일 화면으로 이동합니다.' },
+      { label: '오류 신고', href: 'mailto:lecturelink0@gmail.com?subject=LectureLink 오류 신고', external: true, notice: '오류 신고를 위해 이메일 화면으로 이동합니다.' },
+      { label: '피드백 보내기', href: 'mailto:lecturelink0@gmail.com?subject=LectureLink 피드백', external: true, notice: '피드백을 보내기 위해 이메일 화면으로 이동합니다.' },
     ],
   },
   {
@@ -47,19 +47,19 @@ export function Footer({ variant = 'student' }: { variant?: 'student' | 'faculty
   const footerColumns: FooterColumn[] = variant === 'faculty'
     ? [
         {
-          title: '교수 도구',
+          title: '수업 준비',
           links: [
-            { label: '대시보드', href: '/professor' },
-            { label: '내 강의실', href: '/professor/courses' },
+            { label: '교수 홈', href: '/professor' },
+            { label: '통합 관리', href: '/professor/courses' },
+            { label: '예습자료', href: '/professor/bridge' },
             { label: '형성평가', href: '/professor/formative' },
-            { label: '자료 개선', href: '/professor/materials' },
           ],
         },
         {
-          title: '교육 지원',
+          title: '검토 및 지원',
           links: [
-            { label: '예습자료', href: '/professor/bridge' },
             { label: '문항 검토', href: '/professor/quality' },
+            { label: '마이페이지', href: '/professor/mypage' },
             { label: '교수 서비스 소개', href: '/faculty' },
             { label: '문의하기', href: '/contact' },
           ],
@@ -75,7 +75,7 @@ export function Footer({ variant = 'student' }: { variant?: 'student' | 'faculty
           {/* 좌측 — 로고 + 한줄 설명 */}
           <div className="footer-brand">
             <Link className="logo" href={variant === 'faculty' ? '/professor' : '/dashboard'}>
-              <span className="logo-mark"><BookIcon /></span><span className="logo-text">렉쳐링크</span>
+              <span className="logo-mark"><BookIcon /></span><span className="logo-text">LectureLink</span>
             </Link>
             <p>
               {variant === 'faculty'
@@ -123,8 +123,8 @@ export function Footer({ variant = 'student' }: { variant?: 'student' | 'faculty
 
         {/* 하단 카피 */}
         <div className="footer-bottom">
-          <p>렉쳐링크는 학습 보조 도구이며, 생성된 문항과 해설은 검토 후 학습에 활용해주세요.</p>
-          <p>© 2026 렉쳐링크. All rights reserved.</p>
+          <p>LectureLink는 학습 보조 도구이며, 생성된 문항과 해설은 검토 후 학습에 활용해주세요.</p>
+          <p>© 2026 LectureLink. All rights reserved.</p>
         </div>
       </div>
     </footer>

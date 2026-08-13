@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: '이용약관 — 렉처링크' };
+export const metadata: Metadata = { title: '이용약관 — LectureLink' };
 
 export default function TermsPage() {
   return (
@@ -9,7 +9,7 @@ export default function TermsPage() {
       <p className="text-xs text-[var(--color-muted)] mb-8">시행일: 2026년 6월 26일</p>
 
       <Section title="제1조 (목적)">
-        본 약관은 렉처링크(이하 &ldquo;회사&rdquo;)가 제공하는 의료 교육 특화 AI 학습 서비스(이하
+        본 약관은 LectureLink(이하 &ldquo;회사&rdquo;)가 제공하는 의료 교육 특화 AI 학습 서비스(이하
         &ldquo;서비스&rdquo;)의 이용과 관련하여 회사와 이용자 간의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.
       </Section>
 

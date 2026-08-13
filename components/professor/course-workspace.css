@@ -233,7 +233,8 @@
 }
 
 .course-row-actions a,
-.course-row-actions button {
+.course-row-actions button,
+.course-row-actions .course-material-locked {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -248,6 +249,10 @@
   font-weight: 700;
   white-space: nowrap;
 }
+
+.course-material-locked { color:var(--ink-faint) !important;background:#f4f3ef !important;cursor:not-allowed; }
+.course-row-menu,.course-card-menu{position:relative}.course-row-menu summary,.course-card-menu summary{display:grid;width:40px;height:40px;place-items:center;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink-muted);cursor:pointer;list-style:none}.course-row-menu summary::-webkit-details-marker,.course-card-menu summary::-webkit-details-marker{display:none}.course-row-menu[open]>button,.course-card-menu[open]>button{position:absolute;right:0;top:calc(100% + 6px);z-index:8;display:flex;align-items:center;gap:7px;width:max-content;min-height:40px;padding:0 12px;border:1px solid #ecc0bd;border-radius:10px;background:#fff;color:#a33b32;box-shadow:0 12px 28px -20px rgba(17,24,39,.5)}
+.course-card-menu{position:absolute;right:14px;bottom:14px;z-index:4}.course-card-date{display:block;margin-top:5px;color:var(--ink-faint);font-size:12px}
 
 .course-row-actions a:hover,
 .course-row-actions button:hover {
@@ -456,6 +461,7 @@
 .course-output-row:hover {
   background: var(--sage-50, #f6faf7);
 }
+.course-output-row.is-unavailable{cursor:default}.course-output-row.is-unavailable:hover{background:rgba(255,255,255,.68)}
 
 .course-output-row > div {
   display: grid;
@@ -491,6 +497,8 @@
   font-size: 14px;
   line-height: 1.55;
 }
+.course-output-empty p{margin:0}.course-output-empty a{display:inline-flex;align-items:center;gap:5px;margin-top:10px;color:var(--forest);font-weight:750}
+.course-analytics-entry{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px;border:1px solid var(--line);border-radius:15px;background:#fff}.course-analytics-entry>div{display:flex;align-items:center;gap:12px;color:var(--forest)}.course-analytics-entry span{display:grid;gap:3px}.course-analytics-entry small{color:var(--ink-muted)}.course-analytics-entry>a{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 14px;border-radius:10px;background:var(--forest);color:#fff;font-weight:750}
 
 /* Keep secondary information readable in the professor workspace. */
 .course-head-status > span,
@@ -560,6 +568,7 @@
     grid-column: 2;
     padding-left: 0;
   }
+  .course-analytics-entry{align-items:flex-start;flex-direction:column}.course-analytics-entry>a{width:100%;justify-content:center}
 
 }
 

@@ -63,7 +63,7 @@ export function ProfessorShell({ children, displayName, schoolName }: { children
   }
 
   const active = (href: string) => pathname === href || (href !== '/professor' && pathname.startsWith(`${href}/`));
-  const logo = <Link href="/professor" className="professor-top-logo">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/lecturelink-mark.png" alt="" /><b>Lecturelink</b><small>FACULTY</small></Link>;
+  const logo = <Link href="/professor" className="professor-top-logo">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/lecturelink-mark.png" alt="" /><b>LectureLink</b><small>FACULTY</small></Link>;
 
   return (
     <div className="professor-app">

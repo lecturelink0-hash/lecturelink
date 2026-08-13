@@ -18,7 +18,7 @@ export const GET = withErrorHandling(async () => {
 // ───────────── PATCH ─────────────
 
 const patchSchema = z.object({
-  display_name: z.string().min(1).max(50).optional(),
+  display_name: z.string().trim().min(1).max(50).optional(),
 });
 
 export const PATCH = withErrorHandling(async (request: Request) => {

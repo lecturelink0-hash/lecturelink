@@ -1,6 +1,7 @@
 "use client";
 
-import { ClipboardList, Info, Pencil, Plus, QrCode, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, Info, Pencil, Plus, QrCode, Save, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { readApiResponse } from "@/lib/utils/read-api-response";
@@ -59,6 +60,10 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   const reviewLayoutRef = useRef<HTMLDivElement>(null);
   const reviewHelperRef = useRef<HTMLElement>(null);
   const router = useRouter();
+  const resizeChoice = (element: HTMLTextAreaElement) => {
+    element.style.height = "auto";
+    element.style.height = `${element.scrollHeight}px`;
+  };
 
   useEffect(() => {
     if (artifactId === "preview" && process.env.NODE_ENV === "development") {
@@ -275,6 +280,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
   }
 
   const canDistribute = data.formative_items.length > 0;
+  const titleHasType = /형성평가\s*$/.test(data.title.trim());
   const answerCounts = data.formative_items.reduce((counts: number[], item: any) => {
     counts[item.answer_index] = (counts[item.answer_index] ?? 0) + 1;
     return counts;
@@ -292,6 +298,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
     : "고르게 분포";
   return (
     <div className="professor-dashboard ll-formative-flow ll-formative-review">
+      {data.course_id && <Link className="back artifact-course-back" href={`/professor/courses/${data.course_id}`}><ArrowLeft size={16} />차시로 돌아가기</Link>}
       <header className="professor-welcome">
         <div>
           <p className="flow-eyebrow">교수 도구 · 검토 후 배포</p>
@@ -307,7 +314,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
                 value={data.title}
                 onChange={(event) => setData({ ...data, title: event.target.value })}
               />
-              <span className="artifact-title-suffix">형성평가</span>
+              {!titleHasType && <span className="artifact-title-suffix">형성평가</span>}
             </div>
           )}
           <p className="flow-lead">
@@ -379,9 +386,10 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
                   checked={item.answer_index === choiceIndex}
                   onChange={() => change(index, "answer_index", choiceIndex)}
                 />
-                <input
+                <textarea
                   aria-label={`문항 ${index + 1} 선택지 ${choiceIndex + 1}`}
                   value={choice}
+                  rows={2}
                   onChange={(event) =>
                     change(
                       index,
@@ -391,6 +399,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
                       ),
                     )
                   }
+                  onInput={(event) => resizeChoice(event.currentTarget)}
                 />
                 <Pencil className="edit-cue" aria-hidden="true" />
               </div>

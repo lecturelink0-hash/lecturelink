@@ -275,7 +275,7 @@ function Logo({ light = false }: { light?: boolean }) {
       <span className={`grid h-9 w-9 place-items-center rounded-xl shadow-sm ${light ? 'bg-white/15' : 'bg-[#1F5C43]'}`}>
         <BookOpen className="h-[19px] w-[19px] text-white" strokeWidth={1.9} />
       </span>
-      <span className={`text-[20px] font-extrabold tracking-tight ${light ? 'text-white' : 'text-[#111827]'}`}>렉처링크</span>
+      <span className={`text-[20px] font-extrabold tracking-tight ${light ? 'text-white' : 'text-[#111827]'}`}>LectureLink</span>
     </span>
   );
 }
@@ -285,7 +285,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#E5E1D8] bg-[#FCFAF4]/90 backdrop-blur-md">
       <div className="mx-auto flex h-[60px] max-w-[1140px] items-center justify-between px-5 sm:px-8">
-        <a href="#top" aria-label="렉처링크 홈">
+        <a href="#top" aria-label="LectureLink 홈">
           <Logo />
         </a>
         <nav className="hidden items-center gap-1 md:flex" aria-label="주요 메뉴">
@@ -726,7 +726,7 @@ export function Landing() {
 
           <div className="relative z-10 mx-auto flex w-full max-w-[1140px] items-center pb-[clamp(3rem,8vw,7rem)] pt-16 sm:pt-20 [word-break:keep-all]">
             <div className="max-w-[790px]">
-              <h1 aria-label="의대 공부의 흐름을 잇다 — 렉처링크" className="font-extrabold tracking-tight text-[#FCFAF4]">
+              <h1 aria-label="의대 공부의 흐름을 잇다 — LectureLink" className="font-extrabold tracking-tight text-[#FCFAF4]">
                 <span className="llh-1 block text-[clamp(26px,3vw,42px)] leading-[1.25]">의대 공부의 흐름을</span>
                 <span className="mt-[0.1em] flex items-center gap-[0.14em] text-[clamp(68px,9vw,140px)] leading-[.98]" aria-hidden="true">
                   <span className="llh-2 shrink-0">잇</span>
@@ -761,7 +761,7 @@ export function Landing() {
             aria-hidden="true"
             className="llh-4 pointer-events-none absolute inset-x-0 bottom-[-0.16em] z-0 select-none whitespace-nowrap text-center text-[clamp(58px,14.5vw,280px)] font-black leading-[0.78] tracking-[-0.04em] text-[#F4F1E8]/[0.16]"
           >
-            LECTURELINK
+            LectureLink
           </p>
         </section>
 
@@ -790,7 +790,7 @@ export function Landing() {
               <p className="mx-auto mt-4 text-[18px] font-extrabold leading-relaxed tracking-tight text-[#1F5C43] sm:text-[20px]">
                 내신 대비부터 CPX까지
                 <br />
-                렉처링크로 준비하세요.
+                LectureLink로 준비하세요.
               </p>
             </ScrollReveal>
           </div>
@@ -802,7 +802,7 @@ export function Landing() {
             <div className="[word-break:keep-all]">
               <ScrollReveal>
                 <Badge tone="line">
-                  <Sparkles className="h-[13px] w-[13px] text-[#1F5C43]" /> 왜 렉처링크인가요
+                  <Sparkles className="h-[13px] w-[13px] text-[#1F5C43]" /> 왜 LectureLink인가요
                 </Badge>
               </ScrollReveal>
               <ScrollReveal delay={70}>
@@ -851,7 +851,7 @@ export function Landing() {
             <ScrollReveal>
               <SectionHeading
                 title={'강의자료 기반 내신 대비부터\nAI 환자와 함께하는 CPX까지'}
-                desc="문제 생성과 복습, CPX 실전 연습을 렉처링크 안에서 이어갈 수 있습니다."
+                desc="문제 생성과 복습, CPX 실전 연습을 LectureLink 안에서 이어갈 수 있습니다."
               />
             </ScrollReveal>
           </div>
@@ -877,7 +877,7 @@ export function Landing() {
               index="02"
               badge="CPX 실전 연습"
               title={'AI 환자와 직접 대화하며\nCPX를 연습하세요'}
-              desc="렉처링크의 AI 환자와 음성으로 문진하고, 연습이 끝난 뒤 빠뜨린 질문과 표현을 바로 확인할 수 있습니다."
+              desc="LectureLink의 AI 환자와 음성으로 문진하고, 연습이 끝난 뒤 빠뜨린 질문과 표현을 바로 확인할 수 있습니다."
               bullets={['AI 가상 환자와 음성 문진', '병력 청취와 환자 교육 연습', '빠뜨린 질문과 표현 확인', '대화 종료 후 즉시 피드백']}
               visual={<CpxPreview />}
             />
@@ -957,7 +957,7 @@ export function Landing() {
                 <h2 className="mt-5 text-[clamp(24px,3.4vw,36px)] font-extrabold leading-[1.3] tracking-tight text-white">
                   의대 공부에 필요한 모든 준비,
                   <br />
-                  이제 렉처링크 하나로 시작하세요.
+                  이제 LectureLink 하나로 시작하세요.
                 </h2>
                 <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-white/65">
                   강의자료 기반 내신 대비부터 CPX 실전 연습까지
@@ -1034,9 +1034,9 @@ export function Landing() {
           </div>
           <div className="mt-8 flex flex-col gap-2 border-t border-white/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[12px] text-white/45">
-              렉처링크는 학습 보조 도구이며, 생성된 문항과 해설은 검토 후 학습에 활용해주세요.
+              LectureLink는 학습 보조 도구이며, 생성된 문항과 해설은 검토 후 학습에 활용해주세요.
             </p>
-            <p className="text-[12px] text-white/40">© 2026 렉처링크. All rights reserved.</p>
+            <p className="text-[12px] text-white/40">© 2026 LectureLink. All rights reserved.</p>
           </div>
         </div>
       </footer>

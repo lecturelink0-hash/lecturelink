@@ -43,7 +43,15 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
     return fetch(`/api/professor/live-sessions/${sessionId}`)
       .then(async (response) => ({ response, payload: await readApiResponse<any>(response, '평가실 상태를 불러오지 못했습니다.') }))
       .then(({ response, payload }) => {
-        if (response.ok && payload.ok && payload.data) { setData(payload.data); setError(''); }
+        if (response.ok && payload.ok && payload.data) {
+          setData((current: any) => ({
+            ...payload.data,
+            sourceMaterial: current?.sourceMaterial?.url && current.sourceMaterial.fileName === payload.data.sourceMaterial?.fileName
+              ? current.sourceMaterial
+              : payload.data.sourceMaterial,
+          }));
+          setError('');
+        }
         else setError(payload.error?.message ?? '평가실 상태를 불러오지 못했습니다.');
       })
       .catch((cause) => setError(cause instanceof Error ? cause.message : '평가실 상태를 불러오지 못했습니다.'));
@@ -74,10 +82,25 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
     .filter((participant: any) => participant.status === 'submitted')
     .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0) || new Date(a.submitted_at ?? 8640000000000000).getTime() - new Date(b.submitted_at ?? 8640000000000000).getTime()), [participants]);
   const weakQuestions = useMemo(() => [...stats].sort((a: any, b: any) => (a.count ? a.correct / a.count : 0) - (b.count ? b.correct / b.count : 0)), [stats]);
+  const weakGroups = useMemo(() => {
+    const grouped = new Map<string, any>();
+    weakQuestions.forEach((question: any, index: number) => {
+      const key = question.objective?.trim() || question.stem;
+      const current = grouped.get(key) ?? { ...question, objective: key, correct: 0, count: 0, questionNumbers: [] };
+      current.correct += question.correct;
+      current.count += question.count;
+      current.questionNumbers.push(questions.findIndex((item: any) => item.id === question.id) + 1 || index + 1);
+      grouped.set(key, current);
+    });
+    return [...grouped.values()].sort((a, b) => (a.count ? a.correct / a.count : 0) - (b.count ? b.correct / b.count : 0));
+  }, [questions, weakQuestions]);
 
   async function action(next: 'start' | 'end') {
     if (actionPending) return;
-    if (next === 'end' && !confirm(`아직 제출하지 않은 학생은 ${participants.length - submitted}명입니다. 미응답은 오답 처리하고 종료할까요?`)) return;
+    const pending = participants.length - submitted;
+    if (next === 'end' && !confirm(pending > 0
+      ? `아직 제출하지 않은 학생이 ${pending}명 있습니다. 응답한 문항까지만 집계하고 평가를 종료할까요?`
+      : '모든 학생이 제출했습니다. 평가를 종료하고 결과를 확인할까요?')) return;
     if (isPreview) {
       setData((current: any) => ({ ...current, session: { ...current.session, status: next === 'start' ? 'live' : 'ended' } }));
       return;
@@ -248,8 +271,8 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
       {rankedParticipants.length > 0 && <section className="result-podium" aria-labelledby="podium-title"><div><h2 id="podium-title">이번 평가 상위 학생</h2><p>정답 수가 같으면 먼저 제출한 학생이 앞섭니다.</p></div><ol>{rankedParticipants.slice(0, 3).map((participant: any, index: number) => <li key={participant.id}><span><Medal aria-hidden="true" />{index + 1}위</span><strong>{participant.name}</strong><small>{participant.score}/{participant.total} · {participant.submitted_at ? new Date(participant.submitted_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '제출 시각 없음'}</small></li>)}</ol></section>}
       <div className="result-tabs" role="tablist" aria-label="평가 결과 분석"><button type="button" role="tab" aria-selected={resultTab === 'responses'} onClick={() => setResultTab('responses')}>문항별 응답</button><button type="button" role="tab" aria-selected={resultTab === 'weaknesses'} onClick={() => setResultTab('weaknesses')}>학생들이 취약했던 부분</button></div>
       {resultTab === 'responses' ? <section className="analysis-card"><div className="analysis-section-head"><div><h2>문항별 응답 현황</h2><p>막대 길이로 선지별 선택 비율을 비교할 수 있습니다.</p></div></div>{stats.map((question: any, index: number) => <article key={question.id}><div><b><span className="analysis-question-number" aria-hidden="true">{index + 1}</span>{question.stem}</b><span>{question.count}/{participants.length} 응답 · 정답률 {question.count ? Math.round(question.correct / question.count * 100) : 0}%</span></div><div className="choice-chart">{question.choices.map((choice: string, choiceIndex: number) => { const percent = question.count ? Math.round(question.choiceCounts[choiceIndex] / question.count * 100) : 0; return <div className={choiceIndex === question.answerIndex ? 'is-correct-choice' : ''} key={choiceIndex}><span>{choiceIndex + 1}</span><p title={choice}>{choice}</p><i><b style={{ width: `${percent}%` }} /></i><strong>{question.choiceCounts[choiceIndex]}명 <small>{percent}%</small></strong></div>; })}</div><button type="button" className="evidence-button" onClick={() => setEvidenceQuestion(question)}><FileText />근거자료{question.sourcePages?.length ? ` · ${question.sourcePages.join(', ')}쪽` : ''}</button></article>)}</section>
-      : <section className="analysis-card weakness-card"><div className="analysis-section-head"><div><h2>학생들이 취약했던 부분</h2><p>정답률이 낮은 문항부터 수업 보완 우선순위를 정리했습니다.</p></div></div>{weakQuestions.map((question: any, index: number) => { const accuracy = question.count ? Math.round(question.correct / question.count * 100) : 0; return <article key={question.id}><div className="weakness-rank"><span>보완 {index + 1}</span><strong>정답률 {accuracy}%</strong></div><h3>{question.objective || question.stem}</h3><p>{accuracy < 40 ? '핵심 개념을 짧게 다시 설명한 뒤, 오답 선지가 왜 틀렸는지 비교하는 활동을 권장합니다.' : accuracy < 70 ? '대표 사례를 하나 더 제시하고 판단 기준을 학생이 직접 말로 설명하게 해보세요.' : '대부분 이해했지만 헷갈린 선지를 중심으로 짧게 확인하면 좋습니다.'}</p><button type="button" className="evidence-button" onClick={() => setEvidenceQuestion(question)}><FileText />문항과 근거 확인</button></article>; })}</section>}
-      <section className="analysis-card student-results-card"><h2>학생별 결과</h2>{rankedParticipants.map((participant: any, index: number) => <div className="result-line" key={participant.id}><span><small>{index + 1}</small>{participant.name}{participant.auto_submitted ? ' · 자동 제출' : ''}</span><b>{participant.score}/{participant.total}</b></div>)}</section>
+      : <section className="analysis-card weakness-card"><div className="analysis-section-head"><div><h2>학생들이 취약했던 부분</h2><p>같은 학습목표의 문항은 묶고, 응답한 문항의 정답률을 기준으로 정리했습니다.</p></div></div>{weakGroups.map((group: any, index: number) => { const accuracy = group.count ? Math.round(group.correct / group.count * 100) : 0; return <article key={group.objective}><div className="weakness-rank"><span>보완 {index + 1} · 문항 {group.questionNumbers.join(', ')}</span><strong>{group.count ? `정답률 ${accuracy}%` : '응답 없음'}</strong></div><h3>{group.objective}</h3><p>{accuracy < 40 ? '핵심 정의와 판단 기준을 먼저 다시 짚고, 해당 문항의 오답 선지를 근거별로 비교해보세요.' : accuracy < 70 ? '대표 사례를 하나 더 제시한 뒤 학생이 선택 근거를 직접 설명하게 해보세요.' : '대부분 이해했습니다. 혼동이 있었던 선지만 짧게 대조하면 충분합니다.'}</p><button type="button" className="evidence-button" onClick={() => setEvidenceQuestion(group)}><FileText />대표 문항과 근거 확인</button></article>; })}</section>}
+      <section className="analysis-card student-results-card"><h2>학생별 결과</h2>{participants.map((participant: any, index: number) => { const answered = participant.live_assessment_answers?.length ?? 0; const unanswered = Math.max(0, questions.length - answered); return <div className="result-line" key={participant.id}><span><small>{index + 1}</small>{participant.name}{participant.auto_submitted ? ' · 종료 시 자동 제출' : ''}{unanswered > 0 ? ` · 미응답 ${unanswered}문항` : ''}</span><b>{participant.score ?? 0}/{questions.length}</b></div>; })}</section>
     </>}
   </main>;
 }

@@ -9,7 +9,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
           <Link href="/" className="flex items-center gap-2 text-sage-700 font-bold">
             <Stethoscope className="w-5 h-5" strokeWidth={2.2} />
-            렉처링크
+            LectureLink
           </Link>
           <Link
             href="/"
