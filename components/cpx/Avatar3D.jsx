@@ -714,6 +714,7 @@ function useContextLossRecovery() {
   const [epoch, setEpoch] = useState(0)
   const aliveRef = useRef(true)
   const pendingRef = useRef(false)
+  const canvasRef = useRef(null)
   useEffect(() => {
     aliveRef.current = true
     return () => {
@@ -721,7 +722,12 @@ function useContextLossRecovery() {
     }
   }, [])
   const bind = (gl) => {
+    canvasRef.current = gl.domElement
     gl.domElement.addEventListener('webglcontextlost', (event) => {
+      // key 변경(페르소나 확정·에폭 증가)으로 버려진 옛 캔버스에도 R3F가 언마운트
+      // 500ms 뒤 forceContextLoss()를 걸어 이 이벤트가 다시 온다. 현재 캔버스가
+      // 아니면 무시해야 리마운트가 리마운트를 부르는 무한 루프가 안 생긴다.
+      if (event.target !== canvasRef.current) return
       event.preventDefault()
       if (pendingRef.current) return
       pendingRef.current = true
