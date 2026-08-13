@@ -26,6 +26,33 @@ export interface AuthSession {
 export const getCurrentSession = cache(async (): Promise<AuthSession | null> => {
   if (
     process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_STUDENT_UI_PREVIEW === 'true'
+  ) {
+    return {
+      userId: '00000000-0000-4000-8000-000000000003',
+      email: 'student.preview@lecturelink.local',
+      role: 'user',
+      profile: {
+        id: '00000000-0000-4000-8000-000000000003',
+        displayName: '백원기',
+        school: {
+          id: '00000000-0000-4000-8000-000000000002',
+          name: 'LectureLink 의과대학',
+          shortName: '렉처링크 의대',
+        },
+        grade: null,
+        currentSemester: null,
+        currentYear: null,
+        planTier: 'free',
+        onboardedAt: new Date(0).toISOString(),
+        accountType: 'student',
+        facultyStatus: 'not_requested',
+      },
+    };
+  }
+
+  if (
+    process.env.NODE_ENV === 'development' &&
     process.env.LOCAL_FACULTY_UI_PREVIEW === 'true'
   ) {
     return {

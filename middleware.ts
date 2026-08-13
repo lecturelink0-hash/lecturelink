@@ -91,14 +91,25 @@ export async function middleware(request: NextRequest) {
   // UI 연습 모드에서는 원래 학생 페이지를 그대로 보여 준다. 인증과 DB만
   // 건너뛰고, 페이지가 읽는 데이터는 아래 /api/preview 경로의 예시 데이터로
   // 돌려 준다. 따라서 실제 화면 구조와 스타일은 바뀌지 않는다.
-  if (studentPreview && request.nextUrl.pathname.startsWith('/api/')) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/api/preview${request.nextUrl.pathname.slice('/api'.length)}`;
-    return NextResponse.rewrite(url);
-  }
+  if (studentPreview) {
+    if (request.nextUrl.pathname.startsWith('/api/preview/cpx')) {
+      return NextResponse.next({ request });
+    }
 
-  if (studentPreview && !isPublicPath(request.nextUrl.pathname)) {
-    return NextResponse.next({ request });
+    if (request.nextUrl.pathname.startsWith('/api/cpx')) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/api/preview${request.nextUrl.pathname.slice('/api'.length)}`;
+      return NextResponse.rewrite(url);
+    }
+
+    if (request.nextUrl.pathname === '/cpx' || isPublicPath(request.nextUrl.pathname)) {
+      return NextResponse.next({ request });
+    }
+
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('next', request.nextUrl.pathname);
+    return NextResponse.redirect(url);
   }
 
   const isRoot = request.nextUrl.pathname === '/';

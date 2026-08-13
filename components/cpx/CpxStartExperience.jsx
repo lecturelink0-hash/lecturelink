@@ -188,7 +188,8 @@ export default function CpxStartExperience({
   return <div className="cpx-start-experience">
     <header className="cpx-start-header">
       <div>
-        <h1>어떤 방식으로 연습할까요?</h1>
+        <h1>환자 연습을 통해 CPX를 연습해보세요</h1>
+        <p>복습이 필요한 증례부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
       </div>
       <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ChevronRight aria-hidden /></Link>
     </header>
@@ -208,19 +209,19 @@ export default function CpxStartExperience({
             <p>추천을 만들려면 나의 CPX 기록을 다시 불러와야 해요.</p>
             <button type="button" onClick={onRetryHistory}>다시 불러오기</button>
           </div> : recommendation ? <>
-            <div className="cpx-recommendation-result">
-              <span>지난 연습에서</span>
-              {recommendation.weakest?.name && recommendation.weakestScore !== null
-                ? <p><strong>{recommendation.target.category}</strong>의 <strong>{recommendation.weakest.name}</strong> 점수가 <strong>{recommendation.weakestScore}점</strong>으로 가장 낮았어요</p>
-                : <p><strong>{recommendation.target.category}</strong> 증례의 총점이 {recommendation.totalScore !== null && <><strong>{recommendation.totalScore}점</strong>으로 </>}가장 낮았어요</p>}
-            </div>
+            <p className="cpx-card-description">지난 연습에서 가장 낮았던 증례예요.</p>
             <div className="cpx-recommendation-case">
               <h3>{recommendation.target.category}</h3>
-              <p>{caseSubtitle(recommendation.target)}</p>
+              <p>
+                {caseSubtitle(recommendation.target)}
+                {recommendation.weakest?.name && recommendation.weakestScore !== null
+                  ? <> · {recommendation.weakest.name} 점수 {recommendation.weakestScore}점</>
+                  : recommendation.totalScore !== null ? <> · 총점 {recommendation.totalScore}점</> : null}
+              </p>
             </div>
-            <Button type="button" size="lg" onClick={() => openSetup(recommendation.target, 'recommendation')}>
+            <button type="button" className="cpx-quick-cta" onClick={() => openSetup(recommendation.target, 'recommendation')}>
               다시 연습하기 <ArrowRight aria-hidden />
-            </Button>
+            </button>
           </> : <div className="cpx-recommendation-empty">
             <h3>아직 분석할 연습 기록이 없어요</h3>
             <p>첫 CPX를 완료하면 실제 점수를 바탕으로 보완할 증례를 추천해 드려요.</p>
@@ -230,13 +231,13 @@ export default function CpxStartExperience({
 
         <article className="cpx-random-panel">
           <div className="cpx-action-title"><Shuffle aria-hidden /><span>랜덤 실전</span></div>
-          <div>
+          <div className="cpx-random-copy">
             <h3>증례 정보 없이 바로 시작</h3>
             <p>시험처럼 증례를 무작위로 진행해요.</p>
           </div>
-          <Button type="button" variant="secondary" size="lg" onClick={openRandomSetup} disabled={!cases.length}>
+          <button type="button" className="cpx-quick-cta" onClick={openRandomSetup} disabled={!cases.length}>
             시작하기 <ArrowRight aria-hidden />
-          </Button>
+          </button>
         </article>
       </div>
     </section>
@@ -327,7 +328,7 @@ export default function CpxStartExperience({
               role="radio"
               aria-checked={limitSeconds === option.seconds}
               onClick={() => onLimitChange(option.seconds)}
-            >{option.label}{option.seconds === 720 && <span>실전</span>}</button>)}
+            ><span className="cpx-time-value">{option.label}</span><span className="cpx-time-note" aria-hidden>{option.seconds === 720 ? '실전' : '\u00A0'}</span></button>)}
           </div>
         </div>
         <button type="button" role="switch" aria-checked={voiceOn} aria-describedby="cpx-voice-description" className="cpx-setting-group cpx-voice-setting" onClick={() => onVoiceChange(!voiceOn)}>
@@ -339,7 +340,7 @@ export default function CpxStartExperience({
           <span>음성 문진 {voiceOn ? 'ON' : 'OFF'}</span>
           {setup.mode === 'random' && <span>증례 비공개</span>}
         </div>
-        <Button ref={startButtonRef} type="button" size="lg" fullWidth onClick={confirmStart}>
+        <Button ref={startButtonRef} type="button" size="lg" fullWidth className="cpx-start-session-button" onClick={confirmStart}>
           진료 시작 <ArrowRight aria-hidden />
         </Button>
       </section>
