@@ -1,26 +1,28 @@
-import { Stethoscope, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
+import './legal.css';
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      <header className="border-b border-[var(--color-border)] bg-white">
-        <div className="max-w-3xl mx-auto px-5 h-14 flex items-center justify-between">
+    <div className="legal-shell">
+      <header className="legal-topbar">
+        <div className="legal-topbar-inner">
           {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
-          <Link href="/" className="flex items-center gap-2 text-sage-700 font-bold">
-            <Stethoscope className="w-5 h-5" strokeWidth={2.2} />
-            LectureLink
+          <Link href="/" className="legal-brand" aria-label="LectureLink 홈">
+            <Image src="/lecturelink-mark.png" alt="" width={40} height={40} priority />
+            <b>LectureLink</b>
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-sm text-[var(--color-muted)] hover:text-sage-700 transition-colors"
+            className="legal-back-link"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft aria-hidden="true" />
             홈으로
           </Link>
         </div>
       </header>
-      <main className="max-w-3xl mx-auto px-5 py-10">{children}</main>
+      <main className="legal-content">{children}</main>
     </div>
   );
 }
