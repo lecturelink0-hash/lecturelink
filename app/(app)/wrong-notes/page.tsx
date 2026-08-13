@@ -279,7 +279,7 @@ function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange
             <span className="text-sm font-bold text-sage-800">AI 유사문제</span>
             <Badge variant={state.similarQ.badge.color}>{state.similarQ.badge.label}</Badge>
           </div>
-          <div className="text-sm text-sage-800 leading-6 mb-4">{state.similarQ.stem}</div>
+          <div className="whitespace-pre-line text-sm text-sage-800 leading-6 mb-4">{state.similarQ.stem}</div>
           <Choices
             choices={state.similarQ.choices}
             selected={state.similarSelected}
@@ -548,7 +548,7 @@ export default function WrongNotesPage() {
 
         {/* Stem preview */}
         {q ? (
-          <><p className="question">{q.stem}</p><div className="answer-grid"><div className="answer wrong"><div className="answer-label">내 답</div><div className="answer-text">{myAnswer}</div></div><div className="answer correct"><div className="answer-label">정답</div><div className="answer-text">{correctAnswer}</div></div></div></>
+          <><p className="question whitespace-pre-line">{q.stem}</p><div className="answer-grid"><div className="answer wrong"><div className="answer-label">내 답</div><div className="answer-text">{myAnswer}</div></div><div className="answer correct"><div className="answer-label">정답</div><div className="answer-text">{correctAnswer}</div></div></div></>
         ) : (
           <p className="text-sm text-[var(--color-muted)] mb-3">문제를 불러올 수 없습니다.</p>
         )}

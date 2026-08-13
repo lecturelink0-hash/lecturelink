@@ -189,7 +189,7 @@ export default function PracticePage() {
           <Badge variant={current.badge.color}>{current.badge.label}</Badge>
         </div>
 
-        <div className="text-[15px] leading-7 text-sage-800 mb-4">
+        <div className="whitespace-pre-line text-[15px] leading-7 text-sage-800 mb-4">
           <strong>{currentIdx + 1}.</strong> {current.stem}
         </div>
 

@@ -363,7 +363,7 @@ export default function MockExamPage() {
                       </Button>
                     ))}
                 </div>
-                <div className="text-[15px] leading-7 text-sage-800 mb-3">{q.stem}</div>
+                <div className="whitespace-pre-line text-[15px] leading-7 text-sage-800 mb-3">{q.stem}</div>
                 <div className="space-y-1.5">
                   {q.choices.map((c, ci) => {
                     const isCorrect = ci === correct;

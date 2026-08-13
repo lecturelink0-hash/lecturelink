@@ -573,7 +573,7 @@ export default function ExamPage() {
                     <Badge variant={current.badge.color}>{current.badge.label}</Badge>
                   </div>
 
-                  <div className="text-[17px] leading-8 text-sage-800 mb-6">
+                  <div className="whitespace-pre-line text-[17px] leading-8 text-sage-800 mb-6">
                     <strong className="text-sage-700">{idx + 1}.</strong> {current.stem}
                   </div>
 

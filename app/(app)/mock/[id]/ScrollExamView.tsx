@@ -43,7 +43,7 @@ export function ScrollExamView({ title, questions, answers, flagged, remaining, 
             {questions.map((question, qi) => (
               <article className="question-card" id={`question-${qi + 1}`} key={question.id}>
                 <div className="question-top"><div className="q-meta"><span className="chip">{question.subTopicName}</span><span className="chip warn">난이도 {'★'.repeat(question.difficulty)}</span></div><span className="q-number">{qi + 1} / {questions.length}</span></div>
-                <p className="question-text"><strong>{qi + 1}.</strong> {question.stem}</p>
+                <p className="question-text whitespace-pre-line"><strong>{qi + 1}.</strong> {question.stem}</p>
                 {question.imageUrl && <div className="question-image"><img src={question.imageUrl} alt={question.imageType ?? '문항 이미지'} /></div>}
                 <div className="options">
                   {question.choices.map((choice, ci) => <button type="button" key={ci} onClick={() => onChoose(qi, ci)} className={answers[qi] === ci ? 'option selected' : 'option'}><span className="bubble">{ci + 1}</span>{choice}</button>)}
