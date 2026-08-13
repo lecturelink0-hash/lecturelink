@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Activity, Baby, Brain, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock3, Ear, Eye, Heart, MessageCircle, Mic, MicOff, MinusCircle, PersonStanding, RotateCcw, Search, Send, Shield, ShieldAlert, Sparkles, Stethoscope, UserRound, Utensils, Wind, XCircle } from 'lucide-react';
 import Avatar3D from './Avatar3D';
+import CpxStartExperience from './CpxStartExperience';
 import CpxTimeAnalysis from './CpxTimeAnalysis';
 import CpxTranscriptView from './CpxTranscriptView';
 import { GeminiLivePatient } from './live';
@@ -13,11 +14,11 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PRIVACY_VERSION } from '@/lib/legal/config';
 
-// 실전은 12분. 시험장 긴장으로 늦어질 것에 대비해 30초·1분 짧게 연습하는 옵션 제공.
+// 진료 시간은 짧은 순서로 제시하며, 실전 기준은 12분이다.
 const TIME_LIMIT_OPTIONS = [
-  { seconds: 12 * 60, label: '12:00' },
-  { seconds: 11 * 60 + 30, label: '11:30' },
-  { seconds: 11 * 60, label: '11:00' },
+  { seconds: 11 * 60, label: '11분' },
+  { seconds: 11 * 60 + 30, label: '11분 30초' },
+  { seconds: 12 * 60, label: '12분' },
 ];
 
 // 시나리오 작성 시 나눴던 파트 기준 그룹. 주호소(카테고리)를 대분류로 묶어 먼저 제시한다.
@@ -98,19 +99,9 @@ export default function CpxPractice() {
   const [caseId, setCaseId] = useState('');
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState('');
+  const [historySessions, setHistorySessions] = useState(null);
+  const [historyError, setHistoryError] = useState('');
   const selected = useMemo(() => caseCatalog.cases.find((item) => item.id === caseId) ?? null, [caseCatalog, caseId]);
-  // 파트(대분류) → 주호소(카테고리) → 증례 3단계. 세션 진입 전(phase==='ready')에만 노출.
-  const [selectedPart, setSelectedPart] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [query, setQuery] = useState(''); // 주호소·시나리오 통합 검색어
-  const casesByCategory = useMemo(() => {
-    const grouped = {};
-    for (const item of caseCatalog.cases) {
-      if (!item?.category) continue;
-      (grouped[item.category] ||= []).push(item);
-    }
-    return grouped;
-  }, [caseCatalog]);
   // 실제 데이터가 있는 카테고리만 각 파트에 배치. 어느 파트에도 없는 카테고리는 '기타' 파트로.
   const partGroups = useMemo(() => {
     const present = new Set(caseCatalog.categories);
@@ -125,31 +116,8 @@ export default function CpxPractice() {
     if (others.length) groups.push({ id: 'other', label: '기타 주호소', emoji: '📋', desc: '그 외 주호소', cats: others });
     return groups;
   }, [caseCatalog]);
-  const activePart = useMemo(() => partGroups.find((g) => g.id === selectedPart) ?? null, [partGroups, selectedPart]);
-  const partCaseCount = (g) => g.cats.reduce((sum, c) => sum + (casesByCategory[c]?.length ?? 0), 0);
-  // 주호소(카테고리) → 소속 파트 id. 검색 결과에서 주호소를 누르면 해당 파트로 점프.
-  const categoryToPart = useMemo(() => {
-    const map = {};
-    for (const g of partGroups) for (const c of g.cats) if (!(c in map)) map[c] = g.id;
-    return map;
-  }, [partGroups]);
-  // 통합 검색 결과 — 공백 제거·소문자 정규화 후 부분일치.
-  const norm = (s) => (s || '').toString().replace(/\s+/g, '').toLowerCase();
-  const searchResults = useMemo(() => {
-    const q = norm(query);
-    if (!q) return null;
-    const cats = (caseCatalog.categories || []).filter((c) => norm(c).includes(q));
-    const cases = (caseCatalog.cases || []).filter((it) =>
-      norm(`${it.title}${it.description || ''}${it.variant || ''}${it.category || ''}`).includes(q),
-    );
-    return { cats, cases };
-  }, [query, caseCatalog]);
-  const openCategory = (cat) => {
-    setSelectedPart(categoryToPart[cat] ?? '');
-    setSelectedCategory(cat);
-    setQuery('');
-  };
   const [phase, setPhase] = useState('ready');
+  const [practiceMode, setPracticeMode] = useState('direct');
   const [status, setStatus] = useState('증례를 선택하고 진료를 시작하세요.');
   const [error, setError] = useState('');
   const [sessionId, setSessionId] = useState('');
@@ -171,7 +139,7 @@ export default function CpxPractice() {
   // 환자 인적사항 공개 여부 — 학생이 직접 물어봤을 때만 해당 항목을 노출한다.
   const [revealed, setRevealed] = useState({ name: false, age: false, gender: false });
   // 연습용 시간제한(초) — 세션 시작 전에만 변경 가능, 세션 생성 시 서버에 함께 저장된다.
-  const [limitSeconds, setLimitSeconds] = useState(TIME_LIMIT_OPTIONS[0].seconds);
+  const [limitSeconds, setLimitSeconds] = useState(12 * 60);
   const liveRef = useRef(null);
   const micRef = useRef(null);
   const voiceBusyRef = useRef(false);
@@ -259,6 +227,21 @@ export default function CpxPractice() {
     return () => { active = false; };
   }, []);
 
+  const loadHistory = useCallback(() => {
+    setHistoryError('');
+    setHistorySessions(null);
+    request('/history')
+      .then((data) => setHistorySessions(Array.isArray(data.sessions) ? data.sessions : []))
+      .catch((nextError) => {
+        setHistorySessions([]);
+        setHistoryError(nextError instanceof Error ? nextError.message : 'CPX 기록을 불러오지 못했습니다.');
+      });
+  }, []);
+
+  useEffect(() => {
+    if (phase === 'ready') loadHistory();
+  }, [phase, loadHistory]);
+
   useEffect(() => {
     if (!selected) {
       setButtons([]);
@@ -275,7 +258,7 @@ export default function CpxPractice() {
       .catch(() => setButtons([]));
   }, [selected]);
 
-  const start = async (overrideCase) => {
+  const start = async (overrideCase, startOptions = {}) => {
     const target = overrideCase && overrideCase.id ? overrideCase : selected;
     if (!target || phase === 'starting') return;
     if (!processingNoticeAccepted) {
@@ -283,6 +266,7 @@ export default function CpxPractice() {
       return;
     }
     if (caseId !== target.id) setCaseId(target.id);
+    setPracticeMode(startOptions.mode || 'direct');
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     usageRef.current = [];
@@ -431,10 +415,10 @@ export default function CpxPractice() {
   }, [buttons]);
 
   const recommendedCase = caseCatalog.cases[0] ?? null;
-  const isCpxHome = phase === 'ready' && !activePart && !searchResults;
+  const isCpxHome = false;
 
   return <div className={`ll-system-page space-y-7 ${isCpxHome ? 'cpx-home' : ''}`}>
-    {isCpxHome ? <section className="cpx-home-head flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
+    {phase !== 'ready' && (isCpxHome ? <section className="cpx-home-head flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
       <div><h1 className="text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와<br className="hidden sm:block" /> <span>실제처럼 진료해보세요</span></h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
       <div className="flex flex-wrap items-center gap-2">
       <button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`cpx-voice-toggle inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'is-on' : ''}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button>
@@ -444,7 +428,32 @@ export default function CpxPractice() {
     </section> : <section className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
       <div><span className="ll-eyebrow"><Stethoscope className="h-3.5 w-3.5" /> CPX 실전 연습</span><h1 className="mt-2 text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와 실제처럼 진료하세요</h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
       <div className="flex flex-wrap items-center gap-2"><div role="group" aria-label="제한시간 선택" title="실전(12분)보다 짧게 설정해 시간 압박에 대비할 수 있어요" className="inline-flex h-9 items-center gap-0.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-1.5"><Clock3 className="h-4 w-4 text-[var(--color-muted)]" />{TIME_LIMIT_OPTIONS.map((opt) => <button key={opt.seconds} type="button" onClick={() => setLimitSeconds(opt.seconds)} disabled={phase !== 'ready'} aria-pressed={limitSeconds === opt.seconds} className={`tnum h-7 rounded-[calc(var(--radius-md)-3px)] px-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-55 ${limitSeconds === opt.seconds ? 'bg-[var(--color-primary)] text-white disabled:opacity-100' : 'text-[var(--color-muted)] hover:text-[var(--color-primary)]'}`}>{opt.label}</button>)}</div><button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'border-[var(--color-warn)] bg-[var(--color-warn)] text-white hover:opacity-90' : 'border-[var(--color-warn)] bg-white text-[var(--color-warn)] hover:bg-[var(--color-warn-bg)]'}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button><Link href="/cpx/history" className="inline-flex h-9 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm font-bold text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">나의 기록 <ChevronRight className="h-4 w-4" /></Link></div>
-    </section>}
+    </section>)}
+
+    {phase === 'ready' && (
+      catalogLoading ? (
+        <div className="ll-card py-20 text-center text-[var(--color-muted)]">승인 증례를 불러오는 중…</div>
+      ) : (
+        <>
+          <CpxStartExperience
+            caseCatalog={caseCatalog}
+            rawPartGroups={partGroups}
+            historySessions={historySessions}
+            historyLoading={historySessions === null}
+            historyError={historyError}
+            onRetryHistory={loadHistory}
+            timeOptions={TIME_LIMIT_OPTIONS}
+            limitSeconds={limitSeconds}
+            onLimitChange={setLimitSeconds}
+            voiceOn={voiceOn}
+            onVoiceChange={setVoiceOn}
+            onStart={start}
+          />
+          {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
+          {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
+        </>
+      )
+    )}
 
     {phase === 'ready' && (
       <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-4" aria-labelledby="cpx-processing-notice-title">
@@ -467,7 +476,7 @@ export default function CpxPractice() {
     )}
 
     {/* 세션 진입 전: 파트 선택 → (좌 주호소 리스트 / 우 시나리오 리스트) → 연습 시작 */}
-    {phase === 'ready' && (
+    {false && phase === 'ready' && (
       catalogLoading ? (
         <div className="ll-card py-20 text-center text-[var(--color-muted)]">승인 증례를 불러오는 중…</div>
       ) : (
@@ -632,7 +641,7 @@ export default function CpxPractice() {
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,.9fr)]">
       <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]"><div className="absolute left-4 top-4 z-10 rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="font-bold">{selected?.category}</div></div><div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white"><Wave active={phase === 'live'} />{status}</div>{examTarget && phase === 'live' && <button type="button" onClick={() => setExamTarget(null)} className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-[var(--color-primary)] shadow-lg transition hover:bg-white"><PersonStanding className="h-4 w-4" /> 환자 앉히기</button>}<div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} child={persona?.child || null} speaking={audioLevel > 0.02} audioLevel={audioLevel} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} category={selected?.category || ''} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="space-y-2">{transcript.length ? transcript.slice(-3).map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}{transcript.length > 3 && <p className="pt-1 text-center text-[11px] text-[var(--color-muted)]">실제 시험처럼 최근 대화만 표시됩니다 · 전체 기록은 채점에 반영됩니다</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
 
-      <div className="space-y-6"><Card title="환자 정보" icon={<UserRound className="h-5 w-5" />}><div className="space-y-2 text-sm">{persona ? (<>{persona.child && <p className="text-xs font-bold text-[var(--color-primary)]">보호자 (대화 상대)</p>}<div className="space-y-1.5">{[['이름', revealed.name ? persona.name : null], ['나이', revealed.age ? `${persona.age}세` : null], ['성별', revealed.gender ? persona.gender : null]].map(([label, val]) => <div key={label} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div>{persona.child && (<><p className="pt-1 text-xs font-bold text-[var(--color-primary)]">환아</p><div className="space-y-1.5">{[['이름', revealed.name ? persona.child.name : null], ['나이', revealed.age ? (persona.child.ageDetail || `${persona.child.age}세`) : null], ['성별', revealed.gender ? persona.child.gender : null]].map(([label, val]) => <div key={`child-${label}`} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div></>)}{(!revealed.name || !revealed.age || !revealed.gender) && <p className="text-xs text-[var(--color-muted)]">{persona.child ? '보호자에게 환아의 이름·나이·성별을 직접 확인하세요.' : '환자에게 이름·나이·성별을 직접 여쭤보세요.'}</p>}</>) : <p className="font-bold text-[var(--color-text)]">진료 시작 시 환자 정보가 확정됩니다.</p>}<p className="text-[var(--color-muted)]">{selected?.title}</p><p className="text-[var(--color-muted)]">{selected?.variant}</p></div></Card><Card title="남은 시간" icon={<Clock3 className="h-5 w-5" />} action={<span className={`tnum text-2xl font-bold ${remaining < 120 ? 'text-[var(--color-warn)]' : 'text-[var(--color-primary)]'}`}>{formatTime(remaining)}</span>}><Button fullWidth variant="accent" onClick={finish} disabled={phase !== 'live'}><Activity className="h-4 w-4" />진료 종료 및 채점</Button></Card>
+      <div className="space-y-6"><Card title="환자 정보" icon={<UserRound className="h-5 w-5" />}><div className="space-y-2 text-sm">{persona ? (<>{persona.child && <p className="text-xs font-bold text-[var(--color-primary)]">보호자 (대화 상대)</p>}<div className="space-y-1.5">{[['이름', revealed.name ? persona.name : null], ['나이', revealed.age ? `${persona.age}세` : null], ['성별', revealed.gender ? persona.gender : null]].map(([label, val]) => <div key={label} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div>{persona.child && (<><p className="pt-1 text-xs font-bold text-[var(--color-primary)]">환아</p><div className="space-y-1.5">{[['이름', revealed.name ? persona.child.name : null], ['나이', revealed.age ? (persona.child.ageDetail || `${persona.child.age}세`) : null], ['성별', revealed.gender ? persona.child.gender : null]].map(([label, val]) => <div key={`child-${label}`} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div></>)}{(!revealed.name || !revealed.age || !revealed.gender) && <p className="text-xs text-[var(--color-muted)]">{persona.child ? '보호자에게 환아의 이름·나이·성별을 직접 확인하세요.' : '환자에게 이름·나이·성별을 직접 여쭤보세요.'}</p>}</>) : <p className="font-bold text-[var(--color-text)]">진료 시작 시 환자 정보가 확정됩니다.</p>}{practiceMode === 'random' ? <div className="rounded-[var(--radius-md)] bg-[var(--color-sage-100)] p-3"><p className="font-bold text-[var(--color-text)]">무작위 실전 증례</p><p className="mt-1 text-xs text-[var(--color-muted)]">진단과 시나리오 정보는 채점 전까지 공개되지 않습니다.</p></div> : <><p className="text-[var(--color-muted)]">{selected?.title}</p><p className="text-[var(--color-muted)]">{selected?.variant}</p></>}</div></Card><Card title="남은 시간" icon={<Clock3 className="h-5 w-5" />} action={<span className={`tnum text-2xl font-bold ${remaining < 120 ? 'text-[var(--color-warn)]' : 'text-[var(--color-primary)]'}`}>{formatTime(remaining)}</span>}><Button fullWidth variant="accent" onClick={finish} disabled={phase !== 'live'}><Activity className="h-4 w-4" />진료 종료 및 채점</Button></Card>
       {/* 신체진찰 — 전체 화면에서 우측 빈 공간(환자정보·남은시간 아래)에 배치.
           신체진찰 면제 시나리오는 버튼 대신 안내만 보여주고, 채점에서도 진찰 영역이 제외된다. */}
       {selected?.physicalExamRequired === false ? (
@@ -716,7 +725,7 @@ export default function CpxPractice() {
           <Button variant="secondary" size="lg" onClick={() => setShowTranscript((current) => !current)} aria-expanded={showTranscript}>
             <MessageCircle className="h-4 w-4" /> {showTranscript ? '전체 대화록 닫기' : '전체 대화록'}
           </Button>
-          <Button variant="accent" size="lg" onClick={() => { setPhase('ready'); setSelectedPart(''); setSelectedCategory(''); setCaseId(''); setResult(null); setTranscript([]); setFindings([]); setShowTranscript(false); setSessionId(''); setPersona(null); setStatus('증례를 선택하고 진료를 시작하세요.'); setError(''); }}>
+          <Button variant="accent" size="lg" onClick={() => { setPhase('ready'); setPracticeMode('direct'); setCaseId(''); setResult(null); setTranscript([]); setFindings([]); setShowTranscript(false); setSessionId(''); setPersona(null); setStatus('증례를 선택하고 진료를 시작하세요.'); setError(''); }}>
             <RotateCcw className="h-4 w-4" /> 다른 증례로 다시 연습
           </Button>
         </div>
