@@ -3,7 +3,18 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AlertCircle, BookOpen, Mail, Lock, CheckCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  BookOpen,
+  ChartNoAxesCombined,
+  CircleCheck,
+  FileText,
+  Mail,
+  Lock,
+  PencilLine,
+  CheckCircle,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
 import { authErrorMessage, isExistingAccountError } from '@/lib/auth/auth-error-message';
 import {
@@ -14,10 +25,27 @@ import {
   PASSWORD_MIN_LENGTH,
 } from '@/lib/auth/password-policy';
 import { Button } from '@/components/ui/Button';
-import loginBrandVisual from '@/public/login-brand-visual.png';
+import loginCpxCharacter from '@/public/login-cpx-character-v2.png';
 
 type Mode = 'login' | 'signup';
 type AccountType = 'student' | 'professor';
+
+function LearningFlowNode({
+  icon: Icon,
+  label,
+  className,
+}: {
+  icon: LucideIcon;
+  label: string;
+  className: string;
+}) {
+  return (
+    <div className={`learning-flow-node ${className}`}>
+      <Icon aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  );
+}
 
 /** 인증 성공 후 이동할 경로 — 보호 경로에서 왔으면 next, 아니면 루트에서 계정 유형별 홈을 판별한다. */
 function postAuthDest(): string {
@@ -210,7 +238,11 @@ export default function LoginPage() {
       <main style={{ placeItems: 'start center' }}>
         <section className="auth-wrap" aria-label="LectureLink 통합 로그인">
           <div className="intro">
-            <div className="brand-copy-sr-only">
+            <div className="login-brand-copy">
+              <div className="login-brand-badge">
+                <CheckCircle aria-hidden="true" />
+                <span>학생과 교수를 위한 의학 교육 플랫폼</span>
+              </div>
               <h1>
                 <span>의학 교육의 흐름을</span><br />
                 하나로 연결합니다
@@ -221,13 +253,29 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <Image
-              src={loginBrandVisual}
-              alt="학생과 교수를 위한 의학 교육 플랫폼. 의학 교육의 흐름을 하나로 연결합니다. 손을 들어 인사하는 CPX 환자 캐릭터 주변에 강의자료, 문제 생성, 학습 분석, 복습 완료가 하나의 흐름으로 연결되어 있습니다."
-              className="brand-reference-image"
-              sizes="(max-width: 900px) calc(100vw - 36px), 636px"
-              priority
-            />
+            <div className="login-brand-scene" aria-label="강의자료부터 복습 완료까지 이어지는 LectureLink 학습 흐름">
+              <div className="login-brand-landscape" aria-hidden="true" />
+              <svg className="login-brand-route" viewBox="0 0 720 270" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M-20 160 C 82 92, 136 226, 230 178 S 382 88, 470 166 S 620 235, 742 126" />
+              </svg>
+
+              <div className="login-brand-greeting" aria-hidden="true">반가워요!</div>
+              <div className="login-brand-wave-lines" aria-hidden="true"><i /><i /><i /></div>
+              <div className="login-brand-stars" aria-hidden="true"><i /><i /><i /></div>
+
+              <LearningFlowNode icon={FileText} label="강의자료" className="learning-flow-material" />
+              <LearningFlowNode icon={PencilLine} label="문제 생성" className="learning-flow-generate" />
+              <LearningFlowNode icon={ChartNoAxesCombined} label="학습 분석" className="learning-flow-analysis" />
+              <LearningFlowNode icon={CircleCheck} label="복습 완료" className="learning-flow-review" />
+
+              <Image
+                src={loginCpxCharacter}
+                alt="손을 들어 인사하는 LectureLink CPX 환자 캐릭터"
+                className="login-cpx-character"
+                sizes="(max-width: 430px) 132px, (max-width: 560px) 146px, (max-width: 900px) 210px, 226px"
+                priority
+              />
+            </div>
           </div>
 
       <div className="login-column">
