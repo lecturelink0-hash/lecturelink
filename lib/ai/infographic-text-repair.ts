@@ -40,20 +40,42 @@ function sampleBackground(
   const data = context.getImageData(sx, sy, sw, sh).data;
   const samples: Array<[number, number, number]> = [];
   const step = Math.max(1, Math.round(Math.min(sw, sh) / 18));
+  const innerLeft = x - sx;
+  const innerTop = y - sy;
 
   for (let py = 0; py < sh; py += step) {
     for (let px = 0; px < sw; px += step) {
-      const inside = px >= margin && px <= margin + width && py >= margin && py <= margin + height;
+      const inside =
+        px >= innerLeft &&
+        px <= innerLeft + width &&
+        py >= innerTop &&
+        py <= innerTop + height;
       if (inside) continue;
       const index = (py * sw + px) * 4;
       const rgb: [number, number, number] = [data[index], data[index + 1], data[index + 2]];
-      if (Math.max(...rgb) > 145) samples.push(rgb);
+      samples.push(rgb);
     }
   }
 
   if (samples.length === 0) return [248, 246, 235] as const;
-  samples.sort((a, b) => (a[0] + a[1] + a[2]) - (b[0] + b[1] + b[2]));
-  return samples[Math.floor(samples.length * 0.65)] ?? [248, 246, 235];
+  const buckets = new Map<string, { count: number; red: number; green: number; blue: number }>();
+  for (const [red, green, blue] of samples) {
+    const key = `${Math.round(red / 16)}:${Math.round(green / 16)}:${Math.round(blue / 16)}`;
+    const bucket = buckets.get(key) ?? { count: 0, red: 0, green: 0, blue: 0 };
+    bucket.count += 1;
+    bucket.red += red;
+    bucket.green += green;
+    bucket.blue += blue;
+    buckets.set(key, bucket);
+  }
+  const dominant = [...buckets.values()].sort((a, b) => b.count - a.count)[0];
+  return dominant
+    ? [
+        Math.round(dominant.red / dominant.count),
+        Math.round(dominant.green / dominant.count),
+        Math.round(dominant.blue / dominant.count),
+      ] as const
+    : [248, 246, 235] as const;
 }
 
 function drawFittedText(
@@ -94,13 +116,12 @@ export async function repairInfographicText(
   context.drawImage(image, 0, 0);
 
   const safePatches = patches.filter((patch) =>
-    patch.confidence >= 0.82
-    && patch.backgroundComplexity === 'simple'
+    patch.confidence >= 0.72
     && patch.replacementText.trim().length > 0
-    && patch.replacementText.length <= 80
+    && patch.replacementText.length <= 120
     && patch.box.width > 8
     && patch.box.height > 5
-  ).slice(0, 4);
+  ).slice(0, 8);
 
   for (const patch of safePatches) {
     const x = Math.max(0, Math.round((patch.box.x / 1000) * canvas.width));
@@ -112,7 +133,7 @@ export async function repairInfographicText(
     const [red, green, blue] = sampleBackground(context, x, y, width, height);
     const padding = Math.max(2, Math.round(height * 0.12));
     context.save();
-    context.fillStyle = `rgba(${red}, ${green}, ${blue}, 0.94)`;
+    context.fillStyle = `rgb(${red}, ${green}, ${blue})`;
     context.beginPath();
     context.roundRect(
       Math.max(0, x - padding),
@@ -127,6 +148,9 @@ export async function repairInfographicText(
   }
 
   return safePatches.length > 0
-    ? `data:image/png;base64,${canvas.toBuffer('image/png').toString('base64')}`
+    ? {
+        dataUrl: `data:image/png;base64,${canvas.toBuffer('image/png').toString('base64')}`,
+        appliedCount: safePatches.length,
+      }
     : null;
 }

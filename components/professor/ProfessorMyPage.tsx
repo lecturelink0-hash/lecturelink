@@ -177,9 +177,7 @@ export function ProfessorMyPage({
         <div>
           <span className="eyebrow">교수 도구 · 마이페이지</span>
           <h1>
-            교수 계정 정보를
-            <br />
-            <span className="headline-accent">한곳에서</span> 관리하세요
+            <span className="headline-accent">회원 정보</span> 수정
           </h1>
           <p className="lead">
             강의 화면과 학생에게 표시되는 이름, 로그인 정보와 소속을 확인합니다.

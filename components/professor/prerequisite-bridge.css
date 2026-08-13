@@ -120,9 +120,18 @@
 .bridge-result {
   margin: 0;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  scroll-margin-top: 84px;
   --bridge-accent: #315c4b;
   --bridge-soft: #eef5ef;
+}
+
+.bridge-result-heading {
+  margin-bottom: 18px;
+}
+
+.bridge-result-heading h2 {
+  color: var(--forest-800);
 }
 
 .bridge-result.style-hand-drawn { --bridge-accent: #b55d3f; --bridge-soft: #fff4df; background-color: #fffdf7; }

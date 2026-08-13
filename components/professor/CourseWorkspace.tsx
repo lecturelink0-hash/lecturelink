@@ -18,7 +18,6 @@ import {
   Trash2,
   Upload,
   Lock,
-  MoreHorizontal,
 } from "lucide-react";
 import "@/components/faculty/formative-studio.css";
 import {
@@ -68,9 +67,9 @@ type MaterialUploadState = {
   message: string;
 };
 const TYPES = {
-  formative: { label: "형성평가", icon: ClipboardCheck },
-  preview: { label: "예습자료", icon: BookOpen },
-  material_review: { label: "자료 개선", icon: FileCheck2 },
+  formative: { label: "형성평가", emptyMessage: "아직 만든 형성평가가 없습니다.", icon: ClipboardCheck },
+  preview: { label: "예습자료", emptyMessage: "아직 만든 예습자료가 없습니다.", icon: BookOpen },
+  material_review: { label: "자료 개선", emptyMessage: "아직 만든 자료 개선이 없습니다.", icon: FileCheck2 },
 } as const;
 
 const formatDate = (value: string) => new Intl.DateTimeFormat("ko-KR", {
@@ -735,12 +734,9 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                       </button>
                     )}
                     <span className="course-material-locked" aria-disabled="true" title="베타테스트 이후 공개됩니다">자료 개선 <Lock size={14} /></span>
-                    <details className="course-row-menu">
-                      <summary aria-label={`${material.file_name} 자료 메뉴`}><MoreHorizontal size={18} /></summary>
-                      <button type="button" className="course-material-delete" disabled={deletingId === material.id} onClick={() => void removeMaterial(material)}>
-                        <Trash2 size={16} /> {deletingId === material.id ? "삭제 중" : "강의자료 삭제"}
-                      </button>
-                    </details>
+                    <button type="button" className="course-material-delete" disabled={deletingId === material.id} onClick={() => void removeMaterial(material)}>
+                      <Trash2 size={16} /> {deletingId === material.id ? "삭제 중" : "강의자료 삭제"}
+                    </button>
                   </div>
                 </article>
               ))}
@@ -808,7 +804,7 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                                 <b>{item.title}</b>
                                 <small>{formatDate(item.created_at)} · {artifactStatus(item)}</small>
                               </div>
-                              <span className="course-output-open">열람하기 <ArrowRight size={15} /></span>
+                              <ArrowRight size={15} />
                             </Link>
                           );
                         }
@@ -821,7 +817,7 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                       })}
                       {!items.length && (
                         <div className="course-output-empty">
-                          <p>아직 만든 {meta.label}가 없습니다.</p>
+                          <p>{meta.emptyMessage}</p>
                           {type === "formative" && data.materials.some((material) => material.status === "ready") && (
                             <Link href={`/professor/formative?course=${courseId}&material=${data.materials.find((material) => material.status === "ready")?.id}`}>형성평가 만들기 <ArrowRight size={14} /></Link>
                           )}

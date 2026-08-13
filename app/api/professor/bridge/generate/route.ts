@@ -104,7 +104,7 @@ function generateFallbackInfographic(result: z.infer<typeof resultSchema>) {
     ${svgText(reminderLines, 120, 1220, { size: 23, color: '#5F4A15', width: 64, lineHeight: 34 })}
     ${questions.length ? `<rect x="80" y="1400" width="1040" height="245" rx="34" fill="#F4EFE8"/>${svgText('선수지식 확인', 120, 1460, { size: 30, weight: 900, color: '#6B4D3A', width: 30 })}${svgText(questionLines, 120, 1520, { size: 23, width: 65, lineHeight: 34 })}${svgText(questions.map((item, index) => `${index + 1}) ${item.answer}`).join('   '), 120, 1610, { size: 17, color: '#8B8178', width: 80, lineHeight: 24 })}</rect>` : ''}
     <text x="80" y="1735" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="22" font-weight="900" fill="#173943">LectureLink</text>
-    <text x="1120" y="1735" text-anchor="end" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="18" fill="#7A898E">AI 이미지 대체 시각자료 · 교수 검토 필요</text>
+    <text x="1120" y="1735" text-anchor="end" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="18" fill="#7A898E">자동 구성 시각자료</text>
   </svg>`;
   return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
 }
@@ -303,7 +303,7 @@ ${expected}` },
     const block = response.content.find((item): item is Anthropic.ToolUseBlock => item.type === 'tool_use');
     return block ? auditSchema.parse(block.input) : failedAudit('검수 응답을 해석하지 못했습니다.');
   } catch {
-    return failedAudit('자동 글자 검수를 완료하지 못했습니다. 교수 검토가 필요합니다.');
+    return failedAudit('자동 글자 검수를 완료하지 못해 추가 확인이 필요합니다.');
   }
 }
 
@@ -316,22 +316,7 @@ async function auditAndRepairArtwork(
   let textAudit = await auditInfographic(result, visualDataUrl);
   let textRepair = { applied: false, patchCount: 0, regenerated: false };
 
-  if (visualDataUrl && textAudit.status === 'needs_review' && textAudit.requiredElementsPresent
-      && textAudit.repairable && textAudit.patches.length > 0) {
-    const patchCount = textAudit.patches.length;
-    const corrected = await repairInfographicText(visualDataUrl, textAudit.patches);
-    const optimized = corrected ? await optimizeInfographic(corrected) : null;
-    if (optimized && Date.now() < deadlineAt - 25_000) {
-      const correctedAudit = await auditInfographic(result, optimized);
-      const improved = correctedAudit.status === 'passed'
-        || (correctedAudit.requiredElementsPresent && correctedAudit.issues.length < textAudit.issues.length);
-      if (improved) {
-        visualDataUrl = optimized;
-        textAudit = correctedAudit;
-        textRepair = { applied: true, patchCount, regenerated: false };
-      }
-    }
-  } else if (textAudit.status === 'needs_review' && !textAudit.requiredElementsPresent
+  if (textAudit.status === 'needs_review' && !textAudit.requiredElementsPresent
       && Date.now() < deadlineAt - 75_000) {
     const regenerated = await generateMedicalArtwork(result, deadlineAt - 20_000);
     if (regenerated) {
@@ -341,6 +326,31 @@ async function auditAndRepairArtwork(
       visualDataUrl = regenerated;
       textAudit = regeneratedAudit;
       textRepair = { applied: false, patchCount: 0, regenerated: true };
+    }
+  }
+
+  if (visualDataUrl && textAudit.status === 'needs_review' && textAudit.patches.length > 0) {
+    const corrected = await repairInfographicText(visualDataUrl, textAudit.patches);
+    const optimized = corrected ? await optimizeInfographic(corrected.dataUrl) : null;
+    if (optimized && corrected) {
+      visualDataUrl = optimized;
+      textRepair = {
+        applied: true,
+        patchCount: corrected.appliedCount,
+        regenerated: textRepair.regenerated,
+      };
+
+      if (Date.now() < deadlineAt - 25_000) {
+        textAudit = await auditInfographic(result, optimized);
+      } else {
+        textAudit = {
+          ...textAudit,
+          issues: [
+            `깨진 글자 ${corrected.appliedCount}곳을 승인된 문구로 교정했습니다.`,
+            ...textAudit.issues,
+          ].slice(0, 12),
+        };
+      }
     }
   }
 
@@ -870,17 +880,18 @@ export const POST = withErrorHandling(async (request: Request) => {
     selectedCount: externalSources.length,
   });
   const verifiedResult = { ...result, externalSources };
-  const generatedArtwork = await generateMedicalArtwork(verifiedResult, generationStartedAt + 235_000);
+  // 전체 실행 시간 중 마지막 구간은 글자 검수와 픽셀 단위 교정에 확보한다.
+  const generatedArtwork = await generateMedicalArtwork(verifiedResult, generationStartedAt + 205_000);
   let visualDataUrl = generatedArtwork ?? generateFallbackInfographic(verifiedResult);
   let textAudit: z.infer<typeof auditSchema> = !generatedArtwork
-    ? failedAudit('AI 이미지 생성이 완료되지 않아 자동 구성한 대체 시각자료를 사용했습니다. 교수 검토가 필요합니다.')
-    : failedAudit('전체 생성 시간을 지키기 위해 자동 글자 검수를 건너뛰었습니다. 교수 검토가 필요합니다.');
+    ? failedAudit('AI 이미지 생성이 완료되지 않아 자동 구성한 대체 시각자료를 사용했습니다.')
+    : failedAudit('전체 생성 시간을 지키기 위해 자동 글자 검수를 건너뛰었습니다.');
   let textRepair = { applied: false, patchCount: 0, regenerated: false };
-  if (generatedArtwork && Date.now() - generationStartedAt < 205_000) {
+  if (generatedArtwork) {
     ({ visualDataUrl, textAudit, textRepair } = await auditAndRepairArtwork(
       verifiedResult,
       generatedArtwork,
-      generationStartedAt + 235_000,
+      generationStartedAt + 285_000,
     ));
   }
   const artifactContent = { ...verifiedResult, visualDataUrl, textAudit, textRepair };
