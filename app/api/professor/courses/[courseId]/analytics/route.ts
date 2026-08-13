@@ -19,7 +19,7 @@ export const GET = withErrorHandling(async (
 
   const { data: publications } = await db
     .from('artifact_publications')
-    .select('id,artifact_id,learning_artifacts(id,title),formative_attempts(id,score,total,status,student_id,formative_answers(item_id,is_correct))')
+    .select('id,artifact_id,learning_artifacts(id,title,formative_items(id,position,stem)),formative_attempts(id,score,total,status,student_id,formative_answers(item_id,is_correct))')
     .eq('course_id', courseId);
   const attempts = (publications ?? [])
     .flatMap((publication: any) => publication.formative_attempts ?? [])
@@ -54,6 +54,17 @@ export const GET = withErrorHandling(async (
         : null,
     };
   });
+  const itemDetails = new Map<string, { stem: string; position: number; artifactId: string; artifactTitle: string }>();
+  for (const publication of publications ?? []) {
+    for (const item of publication.learning_artifacts?.formative_items ?? []) {
+      itemDetails.set(item.id, {
+        stem: item.stem,
+        position: item.position,
+        artifactId: publication.artifact_id ?? publication.learning_artifacts?.id,
+        artifactTitle: publication.learning_artifacts?.title ?? '형성평가',
+      });
+    }
+  }
 
   return ok({
     course,
@@ -64,6 +75,7 @@ export const GET = withErrorHandling(async (
     items: [...itemMap.entries()]
       .map(([itemId, value]) => ({
         itemId,
+        ...itemDetails.get(itemId),
         ...value,
         correctPercent: Math.round((value.correct / value.answers) * 100),
       }))

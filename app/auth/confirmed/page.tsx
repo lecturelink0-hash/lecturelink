@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2, Stethoscope } from 'lucide-react';
+import Link from 'next/link';
 
 /** 이메일 인증 완료 안내. 확인 메일의 링크 → /auth/callback → 여기로 이동. */
 export default function EmailConfirmedPage() {
@@ -20,12 +21,12 @@ export default function EmailConfirmedPage() {
         <p className="text-[15px] text-[var(--color-muted)] leading-relaxed mb-8">
           이제 렉처링크를 이용할 수 있어요.
         </p>
-        <a
+        <Link
           href="/"
           className="inline-flex items-center justify-center h-12 px-8 rounded-[14px] bg-sage-700 text-white font-bold hover:bg-sage-800 transition-colors"
         >
           시작하기
-        </a>
+        </Link>
       </div>
     </div>
   );

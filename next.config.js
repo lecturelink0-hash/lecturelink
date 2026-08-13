@@ -18,42 +18,42 @@ const nextConfig = {
   // 명시 포함시켜 PDF 처리 라우트에서 require() 가능하도록 지정한다.
   outputFileTracingIncludes: {
     '/api/uploads/analyze': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],
     '/api/uploads/[id]/process': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],
     '/api/queue/process-upload': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],
     '/api/professor/teaching-materials': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],
     '/api/professor/teaching-materials/[materialId]/process': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],
     '/api/queue/process-teaching-material': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],
     '/api/professor/bridge/generate': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],
     '/api/faculty/formative/generate': [
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       './node_modules/pdfjs-dist/cmaps/**/*',
       './node_modules/pdfjs-dist/standard_fonts/**/*',
     ],

@@ -227,11 +227,11 @@ export default function LoginPage() {
       <header className="header">
         <div className="header-inner">
           {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
-          <a href="/" className="logo">
+          <Link href="/" className="logo">
             <span className="logo-mark"><BookOpen className="icon" /></span>
             <span className="logo-text">Lecturelink</span>
-          </a>
-          <a href="/" className="header-link">홈으로</a>
+          </Link>
+          <Link href="/" className="header-link">홈으로</Link>
         </div>
       </header>
 
