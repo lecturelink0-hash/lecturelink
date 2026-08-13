@@ -61,7 +61,6 @@ export function Footer({ variant = 'student' }: { variant?: 'student' | 'faculty
           links: [
             { label: '문항 검토', href: '/professor/quality' },
             { label: '마이페이지', href: '/professor/mypage' },
-            { label: '교수 서비스 소개', href: '/faculty' },
             { label: '문의하기', href: '/contact' },
           ],
         },

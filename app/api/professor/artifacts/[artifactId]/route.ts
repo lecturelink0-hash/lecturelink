@@ -9,8 +9,8 @@ const schema = z.object({ title:z.string().trim().min(1).max(160), items:z.array
   .refine((value)=>new Set(value.items.map((entry)=>entry.id)).size===value.items.length,{message:'중복된 문항이 있습니다.',path:['items']});
 
 export const GET = withErrorHandling(async (_request:Request, context:{params:Promise<{artifactId:string}>})=>{
-  await requireProfessor(); const {artifactId}=await context.params; const db=await createServerClient() as any;
-  const {data,error}=await db.from('learning_artifacts').select('id,course_id,title,status,source_name,summary,objectives,formative_items(id,position,stem,choices,answer_index,explanation,objective,source_pages,cognitive_level,quality_flags,image_data_url,approved)').eq('id',artifactId).single();
+  const session=await requireProfessor(); const {artifactId}=await context.params; const db=await createServerClient() as any;
+  const {data,error}=await db.from('learning_artifacts').select('id,course_id,type,title,status,source_name,summary,objectives,content,formative_items(id,position,stem,choices,answer_index,explanation,objective,source_pages,cognitive_level,quality_flags,image_data_url,approved)').eq('id',artifactId).eq('created_by',session.userId).single();
   if(error||!data)throw new ApiException('artifact_not_found','결과를 찾을 수 없습니다.',404);
   const { data: publication } = await db
     .from('artifact_publications')

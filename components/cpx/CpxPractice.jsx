@@ -475,6 +475,26 @@ export default function CpxPractice() {
       </section>
     )}
 
+    {phase === 'ready' && (
+      <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-4" aria-labelledby="cpx-processing-notice-title">
+        <div className="flex items-start gap-3">
+          <Shield className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-primary)]" />
+          <div className="min-w-0 flex-1">
+            <h2 id="cpx-processing-notice-title" className="text-sm font-bold text-[var(--color-text)]">음성·대화 처리 안내</h2>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted)]">
+              연습 중 마이크 음성과 입력 문장은 Google Gemini에 실시간 전송되어 가상 환자 응답과 전사·AI 채점에 사용됩니다. 대화록과 평가 결과는 연습 기록 제공을 위해 저장되므로 실제 환자 이름·주민번호 등 개인정보를 말하지 마세요.
+            </p>
+            <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm font-semibold text-[var(--color-text)]">
+              <input type="checkbox" checked={processingNoticeAccepted} onChange={(event) => { setProcessingNoticeAccepted(event.target.checked); setError(''); }} className="mt-0.5 h-4 w-4 accent-[var(--color-primary)]" />
+              위 처리 내용을 확인했습니다. (필수)
+            </label>
+            <p className="mt-2 text-xs text-[var(--color-muted)]"><Link href="/privacy" target="_blank" className="underline">개인정보처리방침 자세히 보기</Link> · AI 결과는 학습 보조용이며 의료행위 또는 공식 시험 판정이 아닙니다.</p>
+            {error && <p role="alert" className="mt-2 text-sm font-semibold text-[var(--color-warn)]">{error}</p>}
+          </div>
+        </div>
+      </section>
+    )}
+
     {/* 세션 진입 전: 파트 선택 → (좌 주호소 리스트 / 우 시나리오 리스트) → 연습 시작 */}
     {false && phase === 'ready' && (
       catalogLoading ? (

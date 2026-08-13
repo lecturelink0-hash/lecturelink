@@ -8,6 +8,7 @@
 import { NextResponse } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createServerClient } from '@/lib/db/server';
+import { createAdminClient } from '@/lib/db/admin';
 
 export async function GET(request: Request) {
   const { searchParams, origin: reqOrigin } = new URL(request.url);
@@ -33,12 +34,37 @@ export async function GET(request: Request) {
   async function accountDestination(fallback: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return fallback;
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('users')
-      .select('account_type')
+      .select('account_type, faculty_status, onboarded_at')
       .eq('id', user.id)
       .maybeSingle();
-    if (profile?.account_type === 'professor') return '/professor';
+
+    const requestedProfessor =
+      user.user_metadata?.requested_account_type === 'professor' ||
+      user.user_metadata?.account_type === 'professor';
+
+    // 일부 운영 DB의 이전 가입 트리거는 교수 선택값을 faculty_status=pending 으로만 남겼다.
+    // 인증 직후 원래 요청값을 기준으로 교수 계정을 확정해 학생 온보딩으로 잘못 보내지 않게 한다.
+    if (requestedProfessor && profile?.account_type !== 'professor') {
+      const admin = createAdminClient();
+      const { data: repaired, error: repairError } = await admin
+        .from('users')
+        .update({
+          account_type: 'professor',
+          faculty_status: 'approved',
+          faculty_approved_at: new Date().toISOString(),
+          faculty_approved_by: null,
+        })
+        .eq('id', user.id)
+        .select('account_type, faculty_status, onboarded_at')
+        .single();
+      if (!repairError) profile = repaired;
+    }
+
+    if (profile?.account_type === 'professor') {
+      return profile.onboarded_at ? '/professor' : '/professor-onboarding';
+    }
     return fallback;
   }
 

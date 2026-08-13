@@ -67,8 +67,6 @@ export async function GET(request: Request) {
     && Number.isFinite(acceptedAtMs)
     && Date.now() - acceptedAtMs >= 0
     && Date.now() - acceptedAtMs <= 10 * 60 * 1000;
-  if (!consentIsCurrent) return fail('legal_consent_required');
-
   const clientId = process.env.KAKAO_CLIENT_ID;
   const clientSecret = process.env.KAKAO_CLIENT_SECRET;
   if (!clientId) return fail('kakao_not_configured');
@@ -129,27 +127,49 @@ export async function GET(request: Request) {
     ? 'professor'
     : 'student';
   const admin = createAdminClient();
+  let existingUser = false;
+  let page = 1;
+  const perPage = 1000;
+  while (true) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      console.error('[kakao] existing user lookup failed:', error.message);
+      return fail('kakao_user');
+    }
+    if (data.users.some((user) => user.email === email)) {
+      existingUser = true;
+      break;
+    }
+    if (data.users.length < perPage) break;
+    page += 1;
+  }
+
+  // 로그인은 기존 계정에 재동의를 요구하지 않는다. 신규 계정 생성에만 현재 약관 동의가 필요하다.
+  if (!existingUser && !consentIsCurrent) return fail('legal_consent_required');
+
   const recordedAt = new Date().toISOString();
-  const { error: createErr } = await admin.auth.admin.createUser({
-    email,
-    email_confirm: true,
-    // 계정 유형은 신규 생성 시점에만 반영한다. 기존 계정은 쿠키로 승격하지 않는다.
-    user_metadata: {
-      display_name: nickname,
-      kakao_id: kakaoId,
-      provider: 'kakao',
-      requested_account_type: requestedAccountType,
-      terms_version: TERMS_VERSION,
-      terms_accepted_at: recordedAt,
-      privacy_notice_version: PRIVACY_VERSION,
-      privacy_noticed_at: recordedAt,
-      age_over_14_confirmed_at: recordedAt,
-    },
-    app_metadata: { provider: 'kakao', kakao_id: kakaoId },
-  });
-  if (createErr && !/registered|already|exists/i.test(createErr.message)) {
-    console.error('[kakao] createUser failed:', createErr.message);
-    return fail('kakao_user');
+  if (!existingUser) {
+    const { error: createErr } = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      // 계정 유형과 법적 동의는 신규 생성 시점에만 반영한다. 기존 계정은 쿠키로 승격하지 않는다.
+      user_metadata: {
+        display_name: nickname,
+        kakao_id: kakaoId,
+        provider: 'kakao',
+        requested_account_type: requestedAccountType,
+        terms_version: TERMS_VERSION,
+        terms_accepted_at: recordedAt,
+        privacy_notice_version: PRIVACY_VERSION,
+        privacy_noticed_at: recordedAt,
+        age_over_14_confirmed_at: recordedAt,
+      },
+      app_metadata: { provider: 'kakao', kakao_id: kakaoId },
+    });
+    if (createErr) {
+      console.error('[kakao] createUser failed:', createErr.message);
+      return fail('kakao_user');
+    }
   }
 
   // 5) magiclink 발급 → /auth/callback 에서 verifyOtp 로 세션 성립

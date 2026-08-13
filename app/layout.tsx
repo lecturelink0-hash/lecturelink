@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import '../components/account/legal-consent.css';
 
 export const metadata: Metadata = {
   title: 'LectureLink — 의료 교육 특화 AI 학습',

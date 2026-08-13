@@ -28,6 +28,7 @@ const PUBLIC_PREFIXES = [
   '/api/queue/',
   '/terms',
   '/privacy',
+  '/refund',
   '/faq',
   '/contact', // 문의하기 (비로그인도 접근 가능)
   '/join', // 회원가입 없는 실시간 형성평가 참여
@@ -106,7 +107,9 @@ export async function middleware(request: NextRequest) {
   if (
     process.env.NODE_ENV === 'development' &&
     process.env.LOCAL_FACULTY_UI_PREVIEW === 'true' &&
-    request.nextUrl.pathname.startsWith('/professor')
+    (request.nextUrl.pathname.startsWith('/professor') ||
+      request.nextUrl.pathname === '/legal-consent' ||
+      (process.env.LOCAL_FACULTY_ONBOARDING_PREVIEW === 'true' && request.nextUrl.pathname === '/api/schools'))
   ) {
     return NextResponse.next({ request });
   }

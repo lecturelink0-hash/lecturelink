@@ -4,7 +4,7 @@
 }
 
 .choice-edit textarea { width:100%;min-height:54px;max-height:220px;resize:vertical;overflow-y:auto;line-height:1.55; }
-.artifact-course-back { margin-top:24px; }
+.artifact-course-back { white-space: nowrap; }
 
 .editor-delete,
 .editor-add {
@@ -42,17 +42,16 @@
   align-self: start;
   overflow: hidden;
   padding: 22px;
-  border: 1px solid #cfe1d4;
+  border: 1px solid var(--color-border);
   border-radius: 15px;
-  background:
-    radial-gradient(circle at 92% 0%, rgba(166, 199, 176, .34), transparent 35%),
-    linear-gradient(135deg, #fff 0%, #f2f8f4 52%, #e3f1e7 100%);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   transition: border-color 240ms ease, box-shadow 240ms ease;
 }
 
 .artifact-review-helper.is-following {
-  border-color: #b8d3c0;
-  box-shadow: 0 18px 38px -28px rgba(31, 92, 67, .46);
+  border-color: var(--color-line-strong);
+  box-shadow: var(--shadow-menu);
   will-change: transform;
 }
 
@@ -90,7 +89,7 @@
   justify-content: space-between;
   gap: 14px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(207, 225, 212, .86);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .artifact-review-helper dl > div:last-child {
@@ -139,7 +138,7 @@
   gap: 7px;
   margin: 18px 0 0;
   padding-top: 15px;
-  border-top: 1px solid rgba(207, 225, 212, .86);
+  border-top: 1px solid var(--color-border);
   color: var(--p-muted);
   font-size: 12.5px;
   line-height: 1.55;

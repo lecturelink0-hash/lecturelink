@@ -5,6 +5,7 @@ import { ArrowLeft, BookOpen, CheckCircle2, Download, ExternalLink, FileText, Li
 import { QRCodeCanvas } from 'qrcode.react';
 import { createBrowserClient } from '@/lib/db/browser';
 import { readApiResponse } from '@/lib/utils/read-api-response';
+import { GuideLabel } from '@/components/ui/GuideLabel';
 import './live-assessment.css';
 import './live-assessment-progress.css';
 import './live-assessment-results.css';
@@ -177,7 +178,7 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
         <div className="formative-guide">
           <button type="button" className="formative-guide-trigger">
             <span className="formative-guide-icon">?</span>
-            사용 설명서
+            <GuideLabel />
           </button>
           <div className="formative-guide-panel">
             <h2>어떻게 사용하나요?</h2>

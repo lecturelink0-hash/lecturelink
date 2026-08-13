@@ -13,6 +13,8 @@ import {
   Lock,
   PencilLine,
   CheckCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
@@ -25,7 +27,7 @@ import {
   PASSWORD_MIN_LENGTH,
 } from '@/lib/auth/password-policy';
 import { Button } from '@/components/ui/Button';
-import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal/config';
+import { PRIVACY_VERSION, SUPPORT_EMAIL, TERMS_VERSION } from '@/lib/legal/config';
 import loginCpxCharacter from '@/public/login-cpx-character-v2.png';
 
 type Mode = 'login' | 'signup';
@@ -67,6 +69,8 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   // 랜딩의 "무료체험" CTA 등에서 /login?mode=signup 으로 오면 가입 탭을 기본 선택.
   useEffect(() => {
@@ -81,7 +85,7 @@ export default function LoginPage() {
         authError === 'kakao_denied'
           ? '카카오 로그인이 취소되었습니다.'
           : authError === 'legal_consent_required'
-            ? '가입 또는 카카오 로그인을 계속하려면 필수 이용약관에 동의해 주세요.'
+            ? '처음 카카오로 가입하려면 회원가입 화면에서 필수 항목에 동의해 주세요.'
           : authError === 'callback_failed'
             ? '인증 링크가 만료되었거나 이미 사용되었습니다. 다시 시도해 주세요.'
             : '카카오 로그인 연결을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -98,6 +102,8 @@ export default function LoginPage() {
     setStatus('idle');
     setPassword('');
     setConfirm('');
+    setPasswordVisible(false);
+    setConfirmVisible(false);
     if (next === 'login') { setTermsAccepted(false); setAgeConfirmed(false); }
   }
 
@@ -232,25 +238,25 @@ export default function LoginPage() {
 
   function handleKakao() {
     setErrorMsg('');
-    if (!termsAccepted) {
-      setErrorMsg('카카오로 계속하려면 필수 이용약관에 동의해 주세요.');
-      return;
-    }
-    if (!ageConfirmed) {
-      setErrorMsg('카카오로 계속하려면 만 14세 이상 여부를 확인해 주세요.');
-      return;
+    if (mode === 'signup') {
+      if (!termsAccepted) {
+        setErrorMsg('카카오로 시작하려면 필수 이용약관에 동의해 주세요.');
+        return;
+      }
+      if (!ageConfirmed) {
+        setErrorMsg('카카오로 시작하려면 만 14세 이상 여부를 확인해 주세요.');
+        return;
+      }
+      document.cookie = `lecturelink_account_type=${accountType}; Path=/; Max-Age=600; SameSite=Lax`;
+      const legalConsent = encodeURIComponent(JSON.stringify({
+        termsVersion: TERMS_VERSION,
+        privacyVersion: PRIVACY_VERSION,
+        acceptedAt: new Date().toISOString(),
+        ageOver14: true,
+      }));
+      document.cookie = `lecturelink_legal_consent=${legalConsent}; Path=/; Max-Age=600; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
     }
     setStatus('sending');
-    if (mode === 'signup') {
-      document.cookie = `lecturelink_account_type=${accountType}; Path=/; Max-Age=600; SameSite=Lax`;
-    }
-    const legalConsent = encodeURIComponent(JSON.stringify({
-      termsVersion: TERMS_VERSION,
-      privacyVersion: PRIVACY_VERSION,
-      acceptedAt: new Date().toISOString(),
-      ageOver14: true,
-    }));
-    document.cookie = `lecturelink_legal_consent=${legalConsent}; Path=/; Max-Age=600; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
     // Supabase 내장 카카오 provider 는 account_email 을 강제 요청해 KOE205 를 유발한다(비즈앱 필요).
     // 이메일을 요구하지 않는 커스텀 카카오 로그인(/api/auth/kakao/start)으로 개시한다.
     const next = new URLSearchParams(window.location.search).get('next');
@@ -330,24 +336,28 @@ export default function LoginPage() {
           )}
           {!emailOpen && status !== 'sent' && (
             <>
-              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm leading-relaxed text-sage-800">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(event) => setTermsAccepted(event.target.checked)}
-                  className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]"
-                />
-                <span>
-                  <Link href="/terms" target="_blank" className="font-semibold underline">이용약관</Link>에 동의합니다. (필수)
-                  <span className="mt-1 block text-xs text-[var(--color-muted)]">
-                    <Link href="/privacy" target="_blank" className="underline">개인정보처리방침</Link>도 확인해 주세요.
-                  </span>
-                </span>
-              </label>
-              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm font-semibold text-sage-800">
-                <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]" />
-                <span>만 14세 이상입니다. (필수)</span>
-              </label>
+              {mode === 'signup' && (
+                <>
+                  <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm leading-relaxed text-sage-800">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(event) => setTermsAccepted(event.target.checked)}
+                      className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]"
+                    />
+                    <span>
+                      <Link href="/terms" target="_blank" className="font-semibold underline">이용약관</Link>에 동의합니다. (필수)
+                      <span className="mt-1 block text-xs text-[var(--color-muted)]">
+                        <Link href="/privacy" target="_blank" className="underline">개인정보처리방침</Link>도 확인해 주세요.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm font-semibold text-sage-800">
+                    <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]" />
+                    <span>만 14세 이상입니다. (필수)</span>
+                  </label>
+                </>
+              )}
               <button
                 type="button"
                 onClick={handleKakao}
@@ -374,7 +384,6 @@ export default function LoginPage() {
                 <button type="button" onClick={() => { switchMode('signup'); setEmailOpen(true); }}>회원가입</button>
               </p>
 
-              <p className="terms">동의 여부와 관계없이 <Link href="/terms">이용약관</Link> 및 <Link href="/privacy">개인정보처리방침</Link>을 언제든 확인할 수 있습니다.</p>
             </>
           )}
 
@@ -392,7 +401,7 @@ export default function LoginPage() {
               </p>
               <div className="mt-4 rounded-lg bg-[var(--color-sage-100)] px-4 py-3 text-sm text-sage-800 leading-relaxed">
                 메일이 몇 분 내에 오지 않으면 <b>스팸함·프로모션함</b>을 확인하거나 로그인을 시도해 보세요.
-                발신: <b>LectureLink &lt;fornerdsofficial@gmail.com&gt;</b>
+                발신: <b>LectureLink &lt;{SUPPORT_EMAIL}&gt;</b>
               </div>
               {errorMsg && (
                 <div role="alert" aria-live="polite" className="mt-4 flex items-start gap-2.5 rounded-lg bg-[var(--color-warn-bg)] p-3.5 text-left text-sm leading-relaxed text-[var(--color-warn)]">
@@ -440,12 +449,6 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              <p className="text-base text-[var(--color-muted)] mb-6 leading-relaxed">
-                {mode === 'login'
-                  ? '이메일과 비밀번호로 로그인하세요.'
-                  : '가입 유형을 선택하세요.'}
-              </p>
-
               <label className="block text-sm font-semibold text-sage-800 mb-2">이메일</label>
               <div className="relative mb-5">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-muted)]" />
@@ -468,7 +471,8 @@ export default function LoginPage() {
               <div className="relative mb-5">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-muted)]" />
                 <input
-                  type="password"
+                  id="password"
+                  type={passwordVisible ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -480,9 +484,20 @@ export default function LoginPage() {
                   aria-describedby={errorMsg ? 'auth-error' : undefined}
                   autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   disabled={status === 'sending'}
-                  className="w-full h-12 pl-11 pr-3.5 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base"
+                  className="w-full h-12 pl-11 pr-12 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base"
                   placeholder={mode === 'signup' ? PASSWORD_HINT : '비밀번호'}
                 />
+                <button
+                  type="button"
+                  onClick={() => setPasswordVisible((visible) => !visible)}
+                  disabled={status === 'sending'}
+                  aria-controls="password"
+                  aria-label={passwordVisible ? '비밀번호 숨기기' : '비밀번호 표시하기'}
+                  aria-pressed={passwordVisible}
+                  className="absolute right-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-sage-100)] hover:text-sage-800 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sage-600 disabled:opacity-50"
+                >
+                  {passwordVisible ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+                </button>
               </div>
 
               {mode === 'signup' && (
@@ -491,7 +506,8 @@ export default function LoginPage() {
                   <div className="relative mb-5">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-muted)]" />
                     <input
-                      type="password"
+                      id="password-confirm"
+                      type={confirmVisible ? 'text' : 'password'}
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
                       required
@@ -501,9 +517,20 @@ export default function LoginPage() {
                       aria-describedby={errorMsg ? 'auth-error' : undefined}
                       autoComplete="new-password"
                       disabled={status === 'sending'}
-                      className="w-full h-12 pl-11 pr-3.5 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base"
+                      className="w-full h-12 pl-11 pr-12 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base"
                       placeholder="비밀번호 다시 입력"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setConfirmVisible((visible) => !visible)}
+                      disabled={status === 'sending'}
+                      aria-controls="password-confirm"
+                      aria-label={confirmVisible ? '비밀번호 확인 숨기기' : '비밀번호 확인 표시하기'}
+                      aria-pressed={confirmVisible}
+                      className="absolute right-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-sage-100)] hover:text-sage-800 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sage-600 disabled:opacity-50"
+                    >
+                      {confirmVisible ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+                    </button>
                   </div>
                   <fieldset className="mb-5">
                     <legend className="block text-sm font-semibold text-sage-800 mb-2">가입 유형</legend>
