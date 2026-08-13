@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   Trash2,
   Upload,
+  Lock,
+  MoreHorizontal,
 } from "lucide-react";
 import "@/components/faculty/formative-studio.css";
 import {
@@ -41,6 +43,7 @@ type Artifact = {
   source_name: string | null;
   summary?: string | null;
   created_at: string;
+  published_at?: string | null;
 };
 type Material = {
   id: string;
@@ -69,6 +72,13 @@ const TYPES = {
   preview: { label: "예습자료", icon: BookOpen },
   material_review: { label: "자료 개선", icon: FileCheck2 },
 } as const;
+
+const formatDate = (value: string) => new Intl.DateTimeFormat("ko-KR", {
+  year: "numeric", month: "short", day: "numeric",
+}).format(new Date(value));
+
+const artifactStatus = (artifact: Artifact) => artifact.published_at || artifact.status === "published"
+  ? "배포됨" : artifact.status === "approved" ? "검토 완료" : "초안";
 const LOCAL_PREVIEW_COURSES: Course[] = [
   {
     id: "preview-cardiology",
@@ -219,7 +229,7 @@ export function CourseList() {
 
   async function removeCourse(course: Course) {
     const confirmed = window.confirm(
-      `‘${course.title}’ 작업공간을 삭제하시겠습니까?\n\n저장된 강의자료, 생성 결과, 배포한 형성평가와 학생 제출 결과가 함께 삭제됩니다.`,
+      `‘${course.title}’ 차시를 삭제하시겠습니까?\n\n저장된 강의자료, 생성 결과, 배포한 형성평가와 학생 제출 결과가 함께 삭제되며 복구할 수 없습니다.`,
     );
     if (!confirmed) return;
 
@@ -235,13 +245,13 @@ export function CourseList() {
         const payload = await response.json();
         if (!response.ok || !payload.ok) {
           setCreateMessage(
-            payload?.error?.message ?? "작업공간을 삭제하지 못했습니다.",
+            payload?.error?.message ?? "차시를 삭제하지 못했습니다.",
           );
           return;
         }
       }
       setCourses((current) => current.filter((item) => item.id !== course.id));
-      setCreateMessage(`‘${course.title}’ 작업공간을 삭제했습니다.`);
+      setCreateMessage(`‘${course.title}’ 차시를 삭제했습니다.`);
     } finally {
       setDeletingCourseId(null);
     }
@@ -384,20 +394,17 @@ export function CourseList() {
                   )}
                 </div>
                 <h3>{course.title}</h3>
+                <small className="course-card-date">{formatDate(course.created_at)} 생성</small>
                 <span className="course-card-link">
                   차시 열기 <ArrowRight size={15} />
                 </span>
               </Link>
-              <button
-                type="button"
-                className="course-card-delete"
-                aria-label={`${course.title} 작업공간 삭제`}
-                disabled={deletingCourseId === course.id}
-                onClick={() => void removeCourse(course)}
-              >
-                <Trash2 size={16} />
-                {deletingCourseId === course.id ? "삭제 중" : "삭제"}
-              </button>
+              <details className="course-card-menu">
+                <summary aria-label={`${course.title} 차시 메뉴`}><MoreHorizontal size={18} /></summary>
+                <button type="button" disabled={deletingCourseId === course.id} onClick={() => void removeCourse(course)}>
+                  <Trash2 size={16} /> {deletingCourseId === course.id ? "삭제 중" : "차시 삭제"}
+                </button>
+              </details>
             </article>
           ))}
           {!courses.length && (
@@ -544,7 +551,7 @@ export function CourseDetail({ courseId }: { courseId: string }) {
   }
 
   async function removeMaterial(material: Material) {
-    if (!window.confirm(`‘${material.file_name}’ 파일을 서버에서 삭제하시겠습니까?`)) return;
+    if (!window.confirm(`‘${material.file_name}’ 강의자료를 LectureLink에서 완전히 삭제하시겠습니까?\n\n저장된 파일도 함께 삭제되며 복구할 수 없습니다.`)) return;
     setDeletingId(material.id);
     try {
       if (!localPreview) {
@@ -682,20 +689,13 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                         <RotateCcw size={16} /> {material.status === "processing" ? "처리 상태 확인" : "다시 처리"}
                       </button>
                     )}
-                    <Link
-                      href={`/professor/materials?course=${courseId}&material=${material.id}`}
-                    >
-                      자료 개선하기 <ArrowRight size={15} />
-                    </Link>
-                    <button
-                      type="button"
-                      className="course-material-delete"
-                      disabled={deletingId === material.id}
-                      onClick={() => void removeMaterial(material)}
-                    >
-                      <Trash2 size={16} />
-                      {deletingId === material.id ? "삭제 중" : "삭제"}
-                    </button>
+                    <span className="course-material-locked" aria-disabled="true" title="베타테스트 이후 공개됩니다">자료 개선 <Lock size={14} /></span>
+                    <details className="course-row-menu">
+                      <summary aria-label={`${material.file_name} 자료 메뉴`}><MoreHorizontal size={18} /></summary>
+                      <button type="button" className="course-material-delete" disabled={deletingId === material.id} onClick={() => void removeMaterial(material)}>
+                        <Trash2 size={16} /> {deletingId === material.id ? "삭제 중" : "강의자료 삭제"}
+                      </button>
+                    </details>
                   </div>
                 </article>
               ))}
@@ -744,32 +744,37 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                       </div>
                     </header>
                     <div>
-                      {items.map((item) => (
-                        <Link
-                          href={
-                            type === "formative"
-                              ? `/professor/artifacts/${item.id}`
-                              : "#"
-                          }
-                          className="course-output-row"
-                          key={item.id}
-                        >
+                      {items.map((item) => type === "formative" ? (
+                        <Link href={`/professor/artifacts/${item.id}`} className="course-output-row" key={item.id}>
                           <div>
                             <b>{item.title}</b>
+                            <small>{formatDate(item.created_at)} · {artifactStatus(item)}</small>
                           </div>
                           <ArrowRight size={15} />
                         </Link>
+                      ) : (
+                        <div className="course-output-row is-unavailable" key={item.id}>
+                          <div><b>{item.title}</b><small>{formatDate(item.created_at)} · {artifactStatus(item)}</small></div>
+                          <span>열람 준비 중</span>
+                        </div>
                       ))}
                       {!items.length && (
-                        <p className="course-output-empty">
-                          아직 만든 {meta.label}가 없습니다.
-                        </p>
+                        <div className="course-output-empty">
+                          <p>아직 만든 {meta.label}가 없습니다.</p>
+                          {type === "formative" && data.materials.some((material) => material.status === "ready") && (
+                            <Link href={`/professor/formative?course=${courseId}&material=${data.materials.find((material) => material.status === "ready")?.id}`}>형성평가 만들기 <ArrowRight size={14} /></Link>
+                          )}
+                        </div>
                       )}
                     </div>
                   </section>
                 );
               })}
             </div>
+          </section>
+          <section className="course-analytics-entry">
+            <div><BarChart3 size={22} /><span><b>학습 결과</b><small>학생 응답, 정답률과 취약 문항을 확인합니다.</small></span></div>
+            <Link href={`/professor/courses/${courseId}/analytics`}>학습 결과 보기 <ArrowRight size={15} /></Link>
           </section>
         </main>
       </div>
@@ -787,6 +792,7 @@ export function CourseAnalytics({ courseId }: { courseId: string }) {
     return <div className="professor-empty">분석을 불러오는 중입니다.</div>;
   return (
     <div className="professor-dashboard">
+      <Link href={`/professor/courses/${courseId}`} className="back"><ArrowLeft size={16} />{data.course.title} 차시로</Link>
       <header className="professor-welcome">
         <div>
           <p>차시 분석 리포트</p>

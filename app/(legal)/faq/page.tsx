@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: '자주 묻는 질문 — 렉처링크' };
+export const metadata: Metadata = { title: '자주 묻는 질문 — LectureLink' };
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: '렉처링크는 어떤 서비스인가요?',
+    q: 'LectureLink는 어떤 서비스인가요?',
     a: '의대생을 위한 의료 교육 특화 AI 학습 플랫폼입니다. KMLE(국가고시) 가이드라인 기반 문항 풀이, 학교별 시험 범위 필터, 강의자료 업로드 기반 AI 문항 생성, 오답노트·모의고사 기능을 제공합니다.',
   },
   {

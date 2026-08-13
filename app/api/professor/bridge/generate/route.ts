@@ -103,7 +103,7 @@ function generateFallbackInfographic(result: z.infer<typeof resultSchema>) {
     ${svgText('시험 직전, 이것만은 기억!', 120, 1160, { size: 34, weight: 900, color: '#7A4C00', width: 35 })}
     ${svgText(reminderLines, 120, 1220, { size: 23, color: '#5F4A15', width: 64, lineHeight: 34 })}
     ${questions.length ? `<rect x="80" y="1400" width="1040" height="245" rx="34" fill="#F4EFE8"/>${svgText('선수지식 확인', 120, 1460, { size: 30, weight: 900, color: '#6B4D3A', width: 30 })}${svgText(questionLines, 120, 1520, { size: 23, width: 65, lineHeight: 34 })}${svgText(questions.map((item, index) => `${index + 1}) ${item.answer}`).join('   '), 120, 1610, { size: 17, color: '#8B8178', width: 80, lineHeight: 24 })}</rect>` : ''}
-    <text x="80" y="1735" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="22" font-weight="900" fill="#173943">LECTURELINK</text>
+    <text x="80" y="1735" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="22" font-weight="900" fill="#173943">LectureLink</text>
     <text x="1120" y="1735" text-anchor="end" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="18" fill="#7A898E">AI 이미지 대체 시각자료 · 교수 검토 필요</text>
   </svg>`;
   return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
@@ -145,7 +145,7 @@ VISUAL DESIGN
 - Turn classification into a branching map, mechanisms into cause→effect arrows, and comparisons into side-by-side visuals.
 - Add a highlighted handwritten area titled exactly “시험 직전, 이것만은 기억!” containing the exam-eve points.
 ${result.readinessCheck.length === 2 ? '- Put the two questions at the bottom; answers must be faint and small.' : '- Do not reserve space for questions or answers.'}
-- Put a small tasteful LectureLink book-and-ECG logo with exact text “LECTURELINK” in one bottom corner.
+- Put a small tasteful LectureLink book-and-ECG logo with exact text “LectureLink” in one bottom corner.
 
 AVOID
 - Repetitive rectangular text cards, PowerPoint slide appearance, dense prose, tiny text, tables filling the page, equal emphasis for every fact, pseudo-Korean, garbled Hangul, duplicated sections, invented drug names, citations, watermarks.
@@ -275,7 +275,7 @@ async function auditInfographic(result: z.infer<typeof resultSchema>, visualData
       ...result.mustRemember,
       ...result.readinessCheck.flatMap((item) => [item.question, item.answer]),
       '시험 직전, 이것만은 기억!',
-      'LECTURELINK',
+      'LectureLink',
     ].join('\n');
     const response = await withRetry(() => createMessage(getAnthropic(), {
       model: MODELS.vision(),
@@ -288,7 +288,7 @@ async function auditInfographic(result: z.infer<typeof resultSchema>, visualData
 
 검수 규칙:
 - 글자 깨짐, 가짜 한글, 한자/특수문자 혼입, 오탈자, 누락, 중복, 잘못된 화살표, 의학적 모순, 범위 밖 내용, 너무 작은 글씨가 있으면 needs_review다.
-- 제목, "시험 직전, 이것만은 기억!", 설정된 확인문항과 정답, 책+심전도 로고와 "LECTURELINK"는 필수다. 모두 있으면 requiredElementsPresent=true다.
+- 제목, "시험 직전, 이것만은 기억!", 설정된 확인문항과 정답, 책+심전도 로고와 "LectureLink"는 필수다. 모두 있으면 requiredElementsPresent=true다.
 - patches에는 실제 이미지에 보이는 잘못된 글자만 넣는다. 누락 문구 전체나 의미 변경은 패치하지 않는다.
 - 각 box는 이미지 전체를 0..1000으로 정규화한 x,y,width,height다. 잘못된 문자열의 글자 영역에 딱 맞게 잡는다.
 - observedText는 이미지에서 읽힌 문자열, replacementText는 승인 원문에 따른 정확한 대체 문자열이다.

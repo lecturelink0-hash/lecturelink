@@ -1,7 +1,10 @@
 .editor-field textarea {
-  min-height: 190px;
+  min-height: 120px;
   line-height: 1.65;
 }
+
+.choice-edit textarea { width:100%;min-height:54px;max-height:220px;resize:vertical;overflow-y:auto;line-height:1.55; }
+.artifact-course-back { margin-top:24px; }
 
 .editor-delete,
 .editor-add {

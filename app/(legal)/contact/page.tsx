@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { MessageCircle, Mail } from 'lucide-react';
 
-export const metadata: Metadata = { title: '문의하기 — 렉처링크' };
+export const metadata: Metadata = { title: '문의하기 — LectureLink' };
 
 // 카카오톡 채널(플러스친구) 링크. 운영에서 채널을 만든 뒤 --env-file 에
 // KAKAO_CHANNEL_URL 만 넣고 재시작하면 연결됨(재빌드 불필요, 런타임 env).
@@ -52,7 +52,7 @@ export default function ContactPage() {
 
       {/* 이메일 대체 수단 */}
       <a
-        href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('렉처링크 문의')}`}
+        href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('LectureLink 문의')}`}
         className="mt-3 flex items-center justify-center gap-2.5 h-12 w-full rounded-[14px] border border-[var(--color-border)] bg-white text-sage-800 font-semibold text-[15px] hover:border-sage-400 transition-colors"
       >
         <Mail className="w-4.5 h-4.5" strokeWidth={2} />

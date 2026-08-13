@@ -30,7 +30,7 @@ export function CompleteEmailForm({ displayName }: { displayName: string | null 
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-3">
             <Stethoscope className="w-7 h-7 text-sage-700" strokeWidth={2.2} />
-            <h1 className="text-2xl font-bold text-sage-700">렉처링크</h1>
+            <h1 className="text-2xl font-bold text-sage-700">LectureLink</h1>
           </div>
           <h2 className="text-[1.35rem] font-bold text-sage-800 mt-6 tracking-[-0.02em]">
             이메일을 입력해주세요

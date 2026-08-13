@@ -113,7 +113,7 @@ export function FormativeQualityStudio() {
         <div>
           <p className="eyebrow">교수 도구 · 문항 검토</p>
           <h1>학생에게 전달하기 전,<br /><span className="headline-accent">문항</span>을 한 번 더 살펴보세요</h1>
-          <p className="lead">문항 자체의 위험 신호를 확인하고, 강의자료가 있으면 수업 범위와의 정렬까지 함께 살펴봅니다.</p>
+          <p className="lead">문항 자체의 위험 신호를 확인하고, 강의자료가 있으면 수업 범위와의 정렬까지 함께 살펴봅니다. 검토 결과는 차시에 저장되지 않는 1회성 결과입니다.</p>
         </div>
         <div className="guide">
           <button type="button" className="guide-trigger"><span className="guide-icon">?</span>사용 설명서</button>
@@ -205,7 +205,7 @@ export function FormativeQualityStudio() {
               <div className="quality-summary">
                 <div className="quality-summary-copy">
                   <h2 id="quality-results-title">문항 검토 결과</h2>
-                  <p>{softenReviewSummary(review.summary)}</p>
+                  <p>{softenReviewSummary(review.summary)}</p><small>이 결과는 현재 화면에서만 확인할 수 있으며 차시에 저장되지 않습니다.</small>
                 </div>
               </div>
               <div className="quality-ledger">{review.items.map((item) => <article key={item.number}><div className="quality-item-no"><span>{item.number}번</span></div><div className="quality-item-content">{item.flags.length === 0 ? <p className="quality-pass"><CheckCircle2 size={18} />별도로 수정이 필요한 부분을 찾지 못했습니다.</p> : item.flags.map((flag, index) => <section className="quality-flag" key={`${flag.category}-${index}`}><header><h3>{flag.category}</h3><span className={`quality-severity is-${flag.severity}`}>{flag.severity}</span></header><div className="quality-detail"><h4>제안 원인</h4><p>{flag.message}</p></div><div className="quality-detail"><h4>수정 제안</h4><p>{flag.suggestion}</p></div></section>)}</div></article>)}</div>
@@ -236,7 +236,7 @@ export function FormativeQualityStudio() {
             <button className="generate-button primary-btn" type="button" disabled={!hasQuestions || loading} onClick={analyze}>
               {loading ? <><Loader2 className="spin" size={17} />문항 검토 중</> : <>문항 검토 시작 <ArrowRight size={17} /></>}
             </button>
-            <p className="summary-note note"><ShieldCheck size={14} />AI 결과는 교수 검토를 돕는 의견이며 자동 판정이나 학생 공개로 이어지지 않습니다.</p>
+            <p className="summary-note note"><ShieldCheck size={14} />AI 결과는 교수 검토를 돕는 1회성 의견이며 차시 저장, 자동 판정이나 학생 공개로 이어지지 않습니다.</p>
           </aside>
         )}
       </div>

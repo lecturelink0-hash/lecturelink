@@ -18,7 +18,7 @@ export function ProfessorHome({ displayName, courses }: { displayName: string; c
     <div className="professor-home">
       <section className="professor-home-hero">
         <div>
-          <span className="professor-badge">LECTURELINK FACULTY</span>
+          <span className="professor-badge">LectureLink FACULTY</span>
           <h1>안녕하세요, <em>{professorName}</em> 교수님.<br />무엇을 준비할까요?</h1>
           <p>수업 준비에 필요한 작업을 아래에서 바로 시작할 수 있습니다.</p>
           <div className="professor-hero-actions">
@@ -55,7 +55,7 @@ export function ProfessorHome({ displayName, courses }: { displayName: string; c
           <div className="professor-course-grid">
             {courses.slice(0, 3).map((course) => (
               <Link href={`/professor/courses/${course.id}`} key={course.id}>
-                <span><BookOpen size={22} /></span><small>{course.term ?? '학기 미지정'}</small><b>{course.title}</b><em>강의실 열기 <ArrowRight size={18} /></em>
+                <span><BookOpen size={22} /></span><small>{course.term ?? '메모 없음'}</small><b>{course.title}</b><em>강의실 열기 <ArrowRight size={18} /></em>
               </Link>
             ))}
           </div>

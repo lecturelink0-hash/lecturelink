@@ -10,7 +10,7 @@ export default function TutorialPage() {
   return (
     <div className="ll-system-page max-w-3xl mx-auto">
       <PageHeader
-        title="렉처링크 이용 가이드"
+        title="LectureLink 이용 가이드"
         description="주요 기능과 학습 방법을 빠르게 확인해 보세요."
       />
 

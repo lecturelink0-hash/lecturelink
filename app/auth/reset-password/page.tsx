@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
           {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
           <Link href="/" className="logo">
             <span className="logo-mark"><BookOpen className="icon" /></span>
-            <span className="logo-text">Lecturelink</span>
+            <span className="logo-text">LectureLink</span>
           </Link>
           <Link href="/login" className="header-link">로그인</Link>
         </div>

@@ -11,7 +11,7 @@ export default function FacultyLandingPage() {
           <Link href="/" className="professor-top-logo" aria-label="LectureLink 홈">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/lecturelink-mark.png" alt="" />
-            <b>Lecturelink</b>
+            <b>LectureLink</b>
             <small>FACULTY</small>
           </Link>
           <nav className="faculty-landing-nav" aria-label="교수 서비스 소개">

@@ -10,7 +10,7 @@ export default function EmailConfirmedPage() {
       <div className="w-full max-w-md text-center">
         <div className="inline-flex items-center gap-2.5 mb-8">
           <Stethoscope className="w-7 h-7 text-sage-700" strokeWidth={2.2} />
-          <span className="text-2xl font-bold text-sage-700">렉처링크</span>
+          <span className="text-2xl font-bold text-sage-700">LectureLink</span>
         </div>
         <div className="flex justify-center mb-5">
           <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-curated-bg)] text-sage-700">
@@ -19,7 +19,7 @@ export default function EmailConfirmedPage() {
         </div>
         <h1 className="text-2xl font-bold text-sage-800 mb-2">이메일 인증이 완료됐어요</h1>
         <p className="text-[15px] text-[var(--color-muted)] leading-relaxed mb-8">
-          이제 렉처링크를 이용할 수 있어요.
+          이제 LectureLink를 이용할 수 있어요.
         </p>
         <Link
           href="/"
