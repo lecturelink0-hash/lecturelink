@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
@@ -270,8 +270,16 @@ export default function LibraryPage() {
   }, [requestedUploadId, requestedReset, requestedResume, uploads, allPrivateQuestions, progressByUpload]);
 
   // 문제집을 연 뒤 실제 풀이 영역을 화면 상단에 보여준다.
+  // 채점 때마다 진행도 재조회(loadProgress)가 위 ?set= 이펙트를 통해 active 를 새 객체로
+  // 재설정해 이 이펙트가 재발화하므로, 같은 문제집이 열려 있는 동안에는 다시 스크롤하지 않는다.
+  const scrolledUploadIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (active?.kind !== 'upload') return;
+    if (active?.kind !== 'upload') {
+      scrolledUploadIdRef.current = null;
+      return;
+    }
+    if (scrolledUploadIdRef.current === active.uploadId) return;
+    scrolledUploadIdRef.current = active.uploadId;
     const frame = window.requestAnimationFrame(() => {
       const resumeTarget = document.querySelector<HTMLElement>('[data-library-resume-target="true"]');
       (resumeTarget ?? document.getElementById('library-solve'))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1184,7 +1192,11 @@ function PrivateExamSession({
     });
   }, [questions, priorAttempts]);
 
+  // 이어풀기 위치 복원은 세션을 여는 시점의 일 — 채점 후 진행도 재조회가 priorAttempts·
+  // resumeFromQuestionId 를 갱신해도, 풀이를 시작한 사용자를 보던 문항(해설)에서 이탈시키지 않는다.
+  const interactedRef = useRef(false);
   useEffect(() => {
+    if (interactedRef.current) return;
     if (!resumeFromQuestionId || questions.length === 0) return;
     const lastIndex = questions.findIndex((question) => question.id === resumeFromQuestionId);
     const ordered = lastIndex >= 0
@@ -1213,6 +1225,7 @@ function PrivateExamSession({
 
   function goToQuestion(nextIndex: number) {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
+    interactedRef.current = true;
     setIndex(nextIndex);
     setShowQuestionGrid(false);
   }
@@ -1230,11 +1243,13 @@ function PrivateExamSession({
 
   function selectChoice(choiceIndex: number) {
     if (submitted) return;
+    interactedRef.current = true;
     setSelections((previous) => ({ ...previous, [current.id]: choiceIndex }));
   }
 
   function submitCurrent() {
     if (selected === null || submitted) return;
+    interactedRef.current = true;
     const correct = selected === current.answer_index;
     setAnswers((previous) => ({ ...previous, [current.id]: { selected, correct } }));
     api
