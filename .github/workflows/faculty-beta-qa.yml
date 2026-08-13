@@ -1,0 +1,31 @@
+name: Faculty beta QA
+
+on:
+  pull_request:
+    paths:
+      - 'app/api/professor/**'
+      - 'app/api/public/live-assessments/**'
+      - 'app/professor/**'
+      - 'components/professor/**'
+      - 'lib/**'
+      - 'supabase/migrations/**'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high

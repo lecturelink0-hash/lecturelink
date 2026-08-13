@@ -14,11 +14,11 @@
  */
 
 import { resolve } from 'node:path';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 const PDF_WORKER_PATH = resolve(
   process.cwd(),
-  'node_modules/pdfjs-dist/legacy/build/pdf.worker.js',
+  'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
 );
 (pdfjsLib as unknown as { GlobalWorkerOptions: { workerSrc: string } })
   .GlobalWorkerOptions.workerSrc = PDF_WORKER_PATH;

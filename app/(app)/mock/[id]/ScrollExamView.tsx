@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock, Send, Flag } from 'lucide-react';
+import Link from 'next/link';
 import { QuestionStem } from '@/components/ui/QuestionStem';
 
 export interface ScrollQuestion {
@@ -32,7 +33,7 @@ export function ScrollExamView({ title, questions, answers, flagged, remaining, 
   return (
     <div className="ll-exam-session-page content">
         <section className="page-head">
-          <div><a className="back" href="/mock">← 과목 선택</a><span className="eyebrow">국시 대비 · {questions[0]?.subjectName ?? '모의고사'}</span><h1><span>{questions[0]?.subjectName ?? title}</span> 임상추론</h1><p className="lead">문제를 하나씩 선택하며 아래로 이어서 풀어보세요. 마지막 문항까지 내려가면 결과 보기가 나타납니다.</p></div>
+          <div><Link className="back" href="/mock">← 과목 선택</Link><span className="eyebrow">국시 대비 · {questions[0]?.subjectName ?? '모의고사'}</span><h1><span>{questions[0]?.subjectName ?? title}</span> 임상추론</h1><p className="lead">문제를 하나씩 선택하며 아래로 이어서 풀어보세요. 마지막 문항까지 내려가면 결과 보기가 나타납니다.</p></div>
           <aside className="summary-card" aria-label="풀이 진행률"><div className="summary-row"><span>진행도</span><strong>{answered} / {questions.length}</strong></div><div className="bar"><span style={{ width: `${questions.length ? Math.round(answered / questions.length * 100) : 0}%` }} /></div><div className="summary-row"><span>{minutes ? '남은 시간' : '예상 소요'}</span><strong>{minutes ?? `${questions.length + 2}분`}</strong></div></aside>
         </section>
         <div className="layout">

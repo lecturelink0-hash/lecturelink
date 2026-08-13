@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, CheckCircle2, Download, ExternalLink, FileText, Link2, Medal, Play, Square, Users, UserX } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { createBrowserClient } from '@/lib/db/browser';
+import { readApiResponse } from '@/lib/utils/read-api-response';
 import './live-assessment.css';
 import './live-assessment-progress.css';
 import './live-assessment-results.css';
@@ -32,6 +33,7 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
   const isPreview = sessionId === 'preview' && process.env.NODE_ENV === 'development';
   const [data, setData] = useState<any>(isPreview ? previewData : undefined);
   const [error, setError] = useState('');
+  const [actionPending, setActionPending] = useState<'start' | 'end' | 'remove' | null>(null);
   const [resultTab, setResultTab] = useState<'responses' | 'weaknesses'>('responses');
   const [evidenceQuestion, setEvidenceQuestion] = useState<any>(null);
   const qr = useRef<HTMLCanvasElement>(null);
@@ -39,8 +41,12 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
   const load = useCallback(() => {
     if (isPreview) return Promise.resolve();
     return fetch(`/api/professor/live-sessions/${sessionId}`)
-      .then((response) => response.json())
-      .then((payload) => payload.ok ? setData(payload.data) : setError(payload.error?.message));
+      .then(async (response) => ({ response, payload: await readApiResponse<any>(response, '평가실 상태를 불러오지 못했습니다.') }))
+      .then(({ response, payload }) => {
+        if (response.ok && payload.ok && payload.data) { setData(payload.data); setError(''); }
+        else setError(payload.error?.message ?? '평가실 상태를 불러오지 못했습니다.');
+      })
+      .catch((cause) => setError(cause instanceof Error ? cause.message : '평가실 상태를 불러오지 못했습니다.'));
   }, [isPreview, sessionId]);
 
   useEffect(() => {
@@ -70,13 +76,33 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
   const weakQuestions = useMemo(() => [...stats].sort((a: any, b: any) => (a.count ? a.correct / a.count : 0) - (b.count ? b.correct / b.count : 0)), [stats]);
 
   async function action(next: 'start' | 'end') {
+    if (actionPending) return;
     if (next === 'end' && !confirm(`아직 제출하지 않은 학생은 ${participants.length - submitted}명입니다. 미응답은 오답 처리하고 종료할까요?`)) return;
     if (isPreview) {
       setData((current: any) => ({ ...current, session: { ...current.session, status: next === 'start' ? 'live' : 'ended' } }));
       return;
     }
-    await fetch(`/api/professor/live-sessions/${sessionId}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: next, confirm: true }) });
-    load();
+    setActionPending(next); setError('');
+    try {
+      const response=await fetch(`/api/professor/live-sessions/${sessionId}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: next, confirm: true }) });
+      const payload=await readApiResponse<{status:string}>(response, next === 'start' ? '평가를 시작하지 못했습니다.' : '평가를 종료하지 못했습니다.');
+      if(!response.ok || !payload.ok) { setError(payload.error?.message ?? '요청을 완료하지 못했습니다.'); return; }
+      await load();
+    } catch(cause) { setError(cause instanceof Error ? cause.message : '요청을 완료하지 못했습니다.'); }
+    finally { setActionPending(null); }
+  }
+
+  async function removeParticipant(participant: any) {
+    if (actionPending) return;
+    if (isPreview) { setData((current: any) => ({ ...current, participants: current.participants.filter((item: any) => item.id !== participant.id) })); return; }
+    setActionPending('remove'); setError('');
+    try {
+      const response=await fetch(`/api/professor/live-sessions/${sessionId}?participantId=${participant.id}`, { method: 'DELETE' });
+      const payload=await readApiResponse<{removed:boolean}>(response, '학생을 내보내지 못했습니다.');
+      if(!response.ok || !payload.ok) setError(payload.error?.message ?? '학생을 내보내지 못했습니다.');
+      else await load();
+    } catch(cause) { setError(cause instanceof Error ? cause.message : '학생을 내보내지 못했습니다.'); }
+    finally { setActionPending(null); }
   }
 
   if (!data) return <main className="live-shell ll-formative-flow ll-live-professor">{error || '평가실을 준비하고 있습니다.'}</main>;
@@ -113,6 +139,7 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
   }
 
   return <main className="live-shell ll-formative-flow ll-live-professor">
+    {error && <div className="studio-error" role="alert">{error}</div>}
     <header className="live-head">
       <div>
         <p className="flow-eyebrow">교수 도구 · 실시간 형성평가 · {statusLabel}</p>
@@ -140,7 +167,7 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
         </div>
         {session.status === 'live' && (
           <div className="live-head-actions">
-            <button className="danger live-end-action" onClick={() => action('end')}><Square /> 평가 종료</button>
+            <button className="danger live-end-action" disabled={Boolean(actionPending)} onClick={() => action('end')}><Square /> {actionPending === 'end' ? '종료 중' : '평가 종료'}</button>
           </div>
         )}
       </div>
@@ -157,8 +184,8 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
             <button className="qr-secondary-action" onClick={() => { const link = document.createElement('a'); link.download = `${session.join_code}-qr.png`; link.href = qr.current!.toDataURL(); link.click(); }}>
               <Download />QR 저장
             </button>
-            <button className="qr-start-action" onClick={() => action('start')}>
-              <Play />평가 시작
+            <button className="qr-start-action" disabled={Boolean(actionPending)} onClick={() => action('start')}>
+              <Play />{actionPending === 'start' ? '시작 중' : '평가 시작'}
             </button>
           </div>
         </div>
@@ -172,7 +199,7 @@ export function LiveProfessorDashboard({ sessionId }: { sessionId: string }) {
               <div className="people-row" key={participant.id}>
                 <span>{participant.name}</span>
                 <small>{new Date(participant.joined_at).toLocaleTimeString()}</small>
-                <button aria-label={`${participant.name} 내보내기`} onClick={async () => { if (isPreview) { setData((current: any) => ({ ...current, participants: current.participants.filter((item: any) => item.id !== participant.id) })); return; } await fetch(`/api/professor/live-sessions/${sessionId}?participantId=${participant.id}`, { method: 'DELETE' }); load(); }}>
+                <button disabled={Boolean(actionPending)} aria-label={`${participant.name} 내보내기`} onClick={() => void removeParticipant(participant)}>
                   <UserX />
                 </button>
               </div>

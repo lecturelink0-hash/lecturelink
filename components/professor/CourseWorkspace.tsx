@@ -823,10 +823,12 @@ export function CourseAnalytics({ courseId }: { courseId: string }) {
             <div className="professor-tool" key={x.itemId}>
               <span className="professor-tool-order">{i + 1}</span>
               <div>
-                <h3>문항 응답 {x.answers}건</h3>
+                <small>{x.artifactTitle ?? "형성평가"} · 문항 {(x.position ?? i) + 1}</small>
+                <h3>{x.stem ?? `문항 응답 ${x.answers}건`}</h3>
                 <p>
                   정답 {x.correct}건 · 오답 {x.answers - x.correct}건
                 </p>
+                {x.artifactId && <Link href={`/professor/artifacts/${x.artifactId}`}>문항 검토하기 <ArrowRight size={14} /></Link>}
               </div>
               <small>{x.correctPercent}%</small>
             </div>
