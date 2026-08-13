@@ -139,7 +139,8 @@ def run():
     assert r['overallGradeLabel'] == '미흡', r
     assert r['safetyGate']['triggered'][0]['missingItemIds'] == [ml_miss], r['safetyGate']
 
-    # 13. 전 루브릭 회귀: 세분화 이후에도 만점 100·빈 판정 10(임상예의만)·전 영역 등급 정합
+    # 13. 전 루브릭 회귀: 세분화 이후에도 만점 100·빈 판정=감점영역 기본점 합·전 영역 등급 정합
+    #     (임상예의 영역이 있는 루브릭은 10, 실배점 정합화로 제거된 루브릭은 0)
     ctx_all = {'depressionRelated': True, 'femalePatient': True}
     checked = 0
     for path in sorted(DATA_DIR.glob('canonical_rubric.*.json')):
@@ -148,9 +149,28 @@ def run():
         assert full['totalScore'] == 100.0, (path.name, full['totalScore'])
         assert all(s['grade'] == 2 for s in full['sections']), path.name
         empty = score_session(rub, {'items': {}, 'violations': []}, ctx_all)
-        assert empty['totalScore'] == 10.0, (path.name, empty['totalScore'])
+        deduction_weight = sum(
+            s['weightPercent'] for s in rub['sections'] if s['type'] == 'deduction'
+        )
+        assert empty['totalScore'] == float(deduction_weight), (path.name, empty['totalScore'])
         checked += 1
     assert checked >= 54, checked
+
+    # 13b. 실제 CPX 배점 정합화 파일럿(물질 오남용): 병력+진찰+교육 70 / PPI 30, 임상예의 영역 없음
+    sm = json.loads((DATA_DIR / 'canonical_rubric.substance_misuse.json').read_text())
+    sm_weights = {s['id']: s['weightPercent'] for s in sm['sections']}
+    assert sm_weights == {
+        'history_taking': 38, 'physical_exam': 16, 'patient_education': 16, 'ppi': 30,
+    }, sm_weights
+    assert sm_weights['history_taking'] + sm_weights['physical_exam'] + sm_weights['patient_education'] == 70
+    assert all(s['type'] != 'deduction' for s in sm['sections']), '임상예의 감점 영역이 남아 있음'
+    sm_full = score_session(sm, all_met_judgments(sm), ctx_all)
+    assert sm_full['totalScore'] == 100.0, sm_full['totalScore']
+    sm_empty = score_session(sm, {'items': {}, 'violations': []}, ctx_all)
+    assert sm_empty['totalScore'] == 0.0, sm_empty['totalScore']
+    # 위반이 보고돼도 감점 영역이 없으므로 총점에 영향 없음 (정보로만 표시)
+    sm_viol = score_session(sm, {'items': {}, 'violations': [{'type': 'et02'}] * 3}, ctx_all)
+    assert sm_viol['totalScore'] == 0.0, sm_viol['totalScore']
 
     # 14. 신체진찰 면제(physicalExamRequired=False): 진찰 영역 제외 + 나머지 85 → 100 재정규화
     ctx_no_pe = {'depressionRelated': True, 'physicalExamRequired': False}
