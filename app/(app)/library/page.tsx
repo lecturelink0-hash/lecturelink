@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
+import { findNextUnansweredQuestionId } from '@/lib/library-progress';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -208,10 +209,14 @@ export default function LibraryPage() {
   const [privateQuestions, setPrivateQuestions] = useState<PrivateQuestion[]>([]);
   const [allPrivateQuestions, setAllPrivateQuestions] = useState<PrivateQuestion[]>([]);
   const [loadingRight, setLoadingRight] = useState(false);
+  const [privateQuestionsError, setPrivateQuestionsError] = useState<string | null>(null);
+  const [privateQuestionsReloadKey, setPrivateQuestionsReloadKey] = useState(0);
 
   // 세트별 진행도/정답률 (업로드 id → {total, attempted, correct})
   const [progressByUpload, setProgressByUpload] = useState<Record<string, UploadProgress>>({});
   const [overallProgress, setOverallProgress] = useState<{ attempted: number; correct: number } | null>(null);
+  const [progressLoaded, setProgressLoaded] = useState(false);
+  const [progressError, setProgressError] = useState<string | null>(null);
   // 문항별 최신 풀이(이어풀기 시 이전 답 복원용) — private_question_id → {selectedIndex, isCorrect}
   const [attemptsByQuestion, setAttemptsByQuestion] = useState<Record<string, { selectedIndex: number; isCorrect: boolean }>>({});
   // 다시풀기(완료 세트) 로 열었는지 — true 면 이전 답 복원 없이 빈 상태로.
@@ -221,6 +226,16 @@ export default function LibraryPage() {
   // 학습 상태 필터 · 검색어 (우측 문제집 그리드용)
   const [statusFilter, setStatusFilter] = useState<SetStatus | 'all'>('all');
   const [query, setQuery] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deletingSet, setDeletingSet] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!deleteNotice) return;
+    const timer = window.setTimeout(() => setDeleteNotice(null), 3500);
+    return () => window.clearTimeout(timer);
+  }, [deleteNotice]);
 
   // ── 초기 로드 ──────────────────────────────────────────────────────────────
 
@@ -293,6 +308,8 @@ export default function LibraryPage() {
   useEffect(() => {
     if (!activeUploadId) return;
     let cancelled = false;
+    setLoadingRight(true);
+    setPrivateQuestionsError(null);
     (async () => {
       try {
         const collected: PrivateQuestion[] = [];
@@ -308,15 +325,22 @@ export default function LibraryPage() {
         }
         if (!cancelled) setPrivateQuestions(collected);
       } catch {
-        // 실패해도 openUpload 가 넣어둔 전역 캐시 필터 결과로 계속 동작한다.
+        if (!cancelled) {
+          setPrivateQuestions([]);
+          setPrivateQuestionsError('문항을 불러오지 못했어요. 다시 시도해주세요.');
+        }
+      } finally {
+        if (!cancelled) setLoadingRight(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [activeUploadId]);
+  }, [activeUploadId, privateQuestionsReloadKey]);
 
-  const loadProgress = useCallback(() => {
+  const loadProgress = useCallback((showLoading = false) => {
+    if (showLoading) setProgressLoaded(false);
+    setProgressError(null);
     api
       .get<{
         overall: { attempted: number; correct: number };
@@ -328,11 +352,12 @@ export default function LibraryPage() {
         setOverallProgress(res.overall ?? null);
         setAttemptsByQuestion(res.byQuestion ?? {});
       })
-      .catch(() => {});
+      .catch(() => setProgressError('진행도를 불러오지 못했어요. 다시 시도해주세요.'))
+      .finally(() => setProgressLoaded(true));
   }, []);
 
   useEffect(() => {
-    loadProgress();
+    loadProgress(true);
   }, [loadProgress]);
 
   // ── 토글 ──────────────────────────────────────────────────────────────────
@@ -389,15 +414,11 @@ export default function LibraryPage() {
 
   function openUpload(upload: Upload, reset = false) {
     setActive({ kind: 'upload', uploadId: upload.id, fileName: upload.file_name });
-    setLoadingRight(false);
+    setLoadingRight(true);
+    setPrivateQuestionsError(null);
     setPublicQuestions([]);
     setSolveReset(reset); // 다시풀기 = 이전 답 복원 없이 빈 상태로 시작
-    const filtered = allPrivateQuestions.filter((q) => q.upload_id === upload.id);
-    setPrivateQuestions((previous) => {
-      // 같은 세트를 다시 여는 경우(진행도 갱신 등) 서버에서 받아둔 전체 목록을 캐시 부분집합으로 되돌리지 않는다.
-      const samePreviousSet = previous.length > 0 && previous.every((q) => q.upload_id === upload.id);
-      return samePreviousSet && previous.length >= filtered.length ? previous : filtered;
-    });
+    setPrivateQuestions([]);
   }
 
   function selectFilter(key: SetStatus | 'all') {
@@ -405,28 +426,40 @@ export default function LibraryPage() {
     closeActive();
   }
 
-  async function handleDeleteSet(uploadId: string, fileName: string) {
-    if (!confirm(`"${fileName}" 문제집을 삭제할까요?\n이 자료로 생성된 문항이 모두 함께 삭제됩니다.`)) return;
+  function handleDeleteSet(uploadId: string, fileName: string) {
+    setDeleteError(null);
+    setDeleteNotice(null);
+    setDeleteTarget({ id: uploadId, name: fileName });
+  }
+
+  async function confirmDeleteSet() {
+    if (!deleteTarget || deletingSet) return;
+    const { id: uploadId } = deleteTarget;
+    setDeletingSet(true);
+    setDeleteError(null);
     try {
       await api.delete(`/api/uploads/${uploadId}`);
       setUploads((prev) => prev.filter((u) => u.id !== uploadId));
       setAllPrivateQuestions((prev) => prev.filter((q) => q.upload_id !== uploadId));
       if (active?.kind === 'upload' && active.uploadId === uploadId) setActive(null);
-    } catch (e) {
-      alert(e instanceof ApiError ? e.message : '삭제에 실패했습니다.');
+      setDeleteTarget(null);
+      setDeleteNotice('문제집을 삭제했어요.');
+    } catch {
+      setDeleteError('문제집을 삭제하지 못했어요. 다시 시도해주세요.');
+    } finally {
+      setDeletingSet(false);
     }
   }
 
   // ── 파생 데이터 (문제집 그리드 · 통계) ────────────────────────────────────
 
-  // 내신대비 문제집과 QR 형성평가만 사용자 문제집에 표시한다.
-  // generated/similar 문항은 데이터에 유지하되 국시 비노출 기간에는 목록에서 제외한다.
+  // 내신대비, QR 형성평가, 오답노트에서 자동 저장된 유사문제집을 한곳에 표시한다.
   const nationalSimilarUploads = uploads.filter((upload) => upload.file_type === 'generated/similar');
   const formativeUploads = uploads.filter((upload) => upload.file_type === 'formative/live');
   const schoolUploads = uploads.filter(
     (upload) => upload.file_type !== 'generated/similar' && upload.file_type !== 'formative/live',
   );
-  const libraryUploads = [...schoolUploads, ...formativeUploads];
+  const libraryUploads = [...schoolUploads, ...formativeUploads, ...nationalSimilarUploads];
   const setItems: SetItem[] = libraryUploads.map((u) => {
     const qs = allPrivateQuestions.filter((q) => q.upload_id === u.id);
     const p = progressByUpload[u.id];
@@ -434,7 +467,7 @@ export default function LibraryPage() {
     const attempted = p?.attempted ?? 0;
     const correct = p?.correct ?? 0;
     const status = attempted > 0 ? realStatus(total, attempted, correct) : deriveStatus(qs);
-    return { upload: u, count: qs.length, status, attempted, correct, progressTotal: total };
+    return { upload: u, count: total, status, attempted, correct, progressTotal: total };
   });
 
   const overallAccuracy =
@@ -455,6 +488,7 @@ export default function LibraryPage() {
       (q === '' || s.upload.file_name.toLowerCase().includes(q)),
   );
   const nextSet = setItems.find((item) => item.status === 'inprogress') ?? setItems[0] ?? null;
+  const nextSetDone = Boolean(nextSet && nextSet.progressTotal > 0 && nextSet.attempted >= nextSet.progressTotal);
 
   const currentFilterLabel =
     STATUS_FILTERS.find((f) => f.key === statusFilter)?.label ?? '전체 문제집';
@@ -481,13 +515,13 @@ export default function LibraryPage() {
         <div className="focus-band"><section className="next-action" aria-label="이어풀기 추천">
           <div>
             <h2 className="next-title">{nextSet.upload.file_name}</h2>
-            <p className="next-copy">마지막으로 학습하던 문제집입니다. 여기서 바로 이어가면 가장 빠르게 학습을 재개할 수 있어요.</p>
+            <p className="next-copy">{nextSetDone ? '완료한 문제집입니다. 처음부터 다시 풀며 복습할 수 있어요.' : '마지막으로 학습하던 문제집입니다. 다음 미풀이 문항부터 바로 이어갈 수 있어요.'}</p>
           </div>
           <div className="next-panel">
             <div className="next-panel-row"><span>진행도</span><strong>{nextSet.attempted}/{nextSet.progressTotal || nextSet.count}</strong></div>
             <div className="bar"><span style={{ width: `${Math.min(100, Math.round((nextSet.attempted / Math.max(1, nextSet.progressTotal || nextSet.count)) * 100))}%` }} /></div>
             <div className="next-panel-row"><span>최근 정답률</span><strong>{nextSet.attempted ? Math.round((nextSet.correct / nextSet.attempted) * 100) : 0}%</strong></div>
-            <button className="hero-cta" type="button" onClick={() => continueUpload(nextSet.upload)}>이어풀기</button>
+            <button className="hero-cta" type="button" onClick={() => continueUpload(nextSet.upload, nextSetDone)}>{nextSetDone ? '다시 풀기' : nextSet.attempted > 0 ? '이어풀기' : '문제 풀기'}</button>
           </div>
         </section></div>
       )}
@@ -905,9 +939,15 @@ export default function LibraryPage() {
                   key={`${active.uploadId}-${solveReset ? 'reset' : 'resume'}`}
                   active={active}
                   questions={privateQuestions}
-                  onAnswered={loadProgress}
+                  onAnswered={() => loadProgress(false)}
                   priorAttempts={solveReset ? undefined : attemptsByQuestion}
                   resumeFromQuestionId={solveReset ? undefined : resumeFromQuestionId}
+                  progressLoaded={progressLoaded}
+                  loading={loadingRight}
+                  loadError={privateQuestionsError}
+                  progressError={solveReset ? null : progressError}
+                  onRetryQuestions={() => setPrivateQuestionsReloadKey((value) => value + 1)}
+                  onRetryProgress={() => loadProgress(true)}
                 />
               )}
             </div>
@@ -968,12 +1008,37 @@ export default function LibraryPage() {
               )}
 
               <p className="mt-5 text-[12px] text-[var(--color-muted)] leading-relaxed">
-                <span className="font-semibold text-sage-700">내신대비</span>에서 학습자료로 생성한 문제집을 표시해요.
+                내신대비에서 만든 문제집, 저장한 형성평가, 오답노트에서 생성한 유사문제를 함께 표시해요.
               </p>
             </div>
           )}
         </section>
       </div>
+
+      {deleteTarget && (
+        <DeleteSetDialog
+          fileName={deleteTarget.name}
+          loading={deletingSet}
+          error={deleteError}
+          onCancel={() => {
+            if (deletingSet) return;
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }}
+          onConfirm={confirmDeleteSet}
+        />
+      )}
+
+      {deleteNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-5 left-1/2 z-[130] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-4 py-3 text-sm font-semibold text-sage-900 shadow-[0_12px_32px_rgba(17,38,29,0.16)]"
+        >
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
+          {deleteNotice}
+        </div>
+      )}
     </div>
   );
 }
@@ -992,6 +1057,94 @@ function StatTile({ label, value, unit }: { label: string; value: string | numbe
   );
 }
 
+function DeleteSetDialog({
+  fileName,
+  loading,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  fileName: string;
+  loading: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    cancelRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      if (previouslyFocused?.isConnected) previouslyFocused.focus();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !loading) onCancel();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [loading, onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-[#17251f]/45 px-4 py-8"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !loading) onCancel();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-set-title"
+        aria-describedby="delete-set-description"
+        className="w-full max-w-[400px] rounded-2xl bg-white p-5 shadow-[0_24px_64px_rgba(17,38,29,0.24)] sm:p-6"
+        onKeyDown={(event) => {
+          if (event.key !== 'Tab') return;
+          if (event.shiftKey && document.activeElement === cancelRef.current) {
+            event.preventDefault();
+            confirmRef.current?.focus();
+          } else if (!event.shiftKey && document.activeElement === confirmRef.current) {
+            event.preventDefault();
+            cancelRef.current?.focus();
+          }
+        }}
+      >
+        <h2 id="delete-set-title" className="text-lg font-bold text-sage-900">이 문제집을 삭제할까요?</h2>
+        <p className="mt-3 break-words rounded-xl bg-[var(--color-surface-muted)] px-3.5 py-3 text-sm font-semibold leading-5 text-sage-800">
+          {fileName}
+        </p>
+        <p id="delete-set-description" className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
+          삭제한 문제집은 다시 복구할 수 없어요.
+        </p>
+
+        {error && (
+          <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-700">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-6 grid grid-cols-2 gap-2">
+          <Button ref={cancelRef} type="button" variant="secondary" onClick={onCancel} disabled={loading} fullWidth className="order-2 min-w-0 px-3">
+            취소
+          </Button>
+          <Button ref={confirmRef} type="button" variant="danger" onClick={onConfirm} loading={loading} fullWidth className="library-delete-danger order-1 min-w-0 px-3">
+            {loading ? '삭제 중...' : '삭제하기'}
+          </Button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ─── 문제집(업로드) 카드 ─────────────────────────────────────────────────────
 
 function SetCard({
@@ -1006,7 +1159,7 @@ function SetCard({
   const { upload, count, status, attempted, correct } = item;
   const badge = STATUS_BADGE[status];
   const sourceLabel = upload.file_type === 'generated/similar'
-    ? '국시 오답 기반'
+    ? '오답노트에서 생성'
     : upload.file_type === 'formative/live'
       ? '형성평가 저장'
       : '내신대비 생성';
@@ -1029,6 +1182,7 @@ function SetCard({
             type="button"
             onClick={() => onDelete(upload.id, upload.file_name)}
             aria-label="문제집 삭제"
+            aria-haspopup="dialog"
             title="문제집 삭제"
             className="trash"
           >
@@ -1078,7 +1232,7 @@ function SetCard({
           onClick={() => onOpen(upload, isDone)}
           className="primary"
         >
-          {isDone ? '다시풀기' : '이어풀기'}
+          {isDone ? '다시 풀기' : attempted > 0 ? '이어풀기' : '문제 풀기'}
         </button>
         <Link
           href="/wrong-notes"
@@ -1155,12 +1309,24 @@ function PrivateExamSession({
   onAnswered,
   priorAttempts,
   resumeFromQuestionId,
+  progressLoaded,
+  loading,
+  loadError,
+  progressError,
+  onRetryQuestions,
+  onRetryProgress,
 }: {
   active: { kind: 'upload'; uploadId: string; fileName: string };
   questions: PrivateQuestion[];
   onAnswered?: () => void;
   priorAttempts?: Record<string, { selectedIndex: number; isCorrect: boolean }>;
   resumeFromQuestionId?: string | null;
+  progressLoaded: boolean;
+  loading: boolean;
+  loadError: string | null;
+  progressError: string | null;
+  onRetryQuestions: () => void;
+  onRetryProgress: () => void;
 }) {
   // 이전 풀이 복원은 반드시 "현재 세트 문항"으로 한정한다 — priorAttempts 는 전체 문제집에 걸친
   // 풀이 기록이라, 그대로 시드하면 다른 세트 기록이 섞여 완료 판정(allAnswered)이 영영 참이 되지 않는다.
@@ -1176,6 +1342,8 @@ function PrivateExamSession({
   const [index, setIndex] = useState(0);
   const [showQuestionGrid, setShowQuestionGrid] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // 문항 목록이 뒤늦게 도착·보강되는 경우(세트 전체 fetch)에도 그 문항들의 이전 풀이를 복원한다.
   useEffect(() => {
@@ -1197,17 +1365,33 @@ function PrivateExamSession({
   // 이어풀기 위치 복원은 세션을 여는 시점의 일 — 채점 후 진행도 재조회가 priorAttempts·
   // resumeFromQuestionId 를 갱신해도, 풀이를 시작한 사용자를 보던 문항(해설)에서 이탈시키지 않는다.
   const interactedRef = useRef(false);
+  const didResolveInitialPosition = useRef(false);
   useEffect(() => {
-    if (interactedRef.current) return;
-    if (!resumeFromQuestionId || questions.length === 0) return;
-    const lastIndex = questions.findIndex((question) => question.id === resumeFromQuestionId);
-    const ordered = lastIndex >= 0
-      ? [...questions.slice(lastIndex + 1), ...questions.slice(0, lastIndex + 1)]
-      : questions;
-    const resumeQuestion = ordered.find((question) => !priorAttempts?.[question.id]);
-    const resumeIndex = questions.findIndex((question) => question.id === (resumeQuestion?.id ?? resumeFromQuestionId));
-    if (resumeIndex >= 0) setIndex(resumeIndex);
-  }, [priorAttempts, questions, resumeFromQuestionId]);
+    if (interactedRef.current || didResolveInitialPosition.current) return;
+    if (!progressLoaded || questions.length === 0) return;
+    const resumeQuestionId = findNextUnansweredQuestionId(
+      questions.map((question) => question.id),
+      Object.keys(priorAttempts ?? {}),
+      resumeFromQuestionId,
+    );
+    const resumeIndex = questions.findIndex((question) => question.id === resumeQuestionId);
+    setIndex(resumeIndex >= 0 ? resumeIndex : 0);
+    didResolveInitialPosition.current = true;
+  }, [priorAttempts, progressLoaded, questions, resumeFromQuestionId]);
+
+  if (loading || !progressLoaded) {
+    return <Card className="py-16 text-center text-[var(--color-muted)]">문제집 진행도를 불러오는 중입니다...</Card>;
+  }
+
+  if (loadError || progressError) {
+    const message = loadError ?? progressError;
+    return (
+      <Card className="py-12 text-center flex flex-col items-center gap-4">
+        <p role="alert" className="text-sm text-[var(--color-warn)]">{message}</p>
+        <Button variant="secondary" onClick={loadError ? onRetryQuestions : onRetryProgress}>다시 시도</Button>
+      </Card>
+    );
+  }
 
   if (questions.length === 0) {
     return (
@@ -1249,15 +1433,21 @@ function PrivateExamSession({
     setSelections((previous) => ({ ...previous, [current.id]: choiceIndex }));
   }
 
-  function submitCurrent() {
-    if (selected === null || submitted) return;
+  async function submitCurrent() {
+    if (selected === null || submitted || submitting) return;
     interactedRef.current = true;
+    setSubmitting(true);
+    setSubmitError(null);
     const correct = selected === current.answer_index;
-    setAnswers((previous) => ({ ...previous, [current.id]: { selected, correct } }));
-    api
-      .post('/api/attempts', { question_id: current.id, selected_index: selected, track: 'lecture_note' })
-      .then(() => onAnswered?.())
-      .catch(() => {});
+    try {
+      await api.post('/api/attempts', { question_id: current.id, selected_index: selected, track: 'lecture_note' });
+      setAnswers((previous) => ({ ...previous, [current.id]: { selected, correct } }));
+      onAnswered?.();
+    } catch {
+      setSubmitError('답안을 저장하지 못했어요. 다시 시도해주세요.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (finished) {
@@ -1334,7 +1524,7 @@ function PrivateExamSession({
             const isCorrect = submitted && choiceIndex === current.answer_index;
             const isWrong = submitted && choiceIndex === selected && !submitted.correct;
             const isSelected = !submitted && choiceIndex === selected;
-            return <button key={choiceIndex} type="button" disabled={!!submitted} onClick={() => selectChoice(choiceIndex)} className={`w-full text-left p-3.5 px-4 rounded-xl border flex items-center gap-3 transition-all ${isCorrect ? 'bg-[var(--color-curated-bg)] border-sage-600' : isWrong ? 'bg-[var(--color-warn-bg)] border-[var(--color-warn)]' : isSelected ? 'bg-[var(--color-sage-100)] border-sage-600' : 'bg-white border-[var(--color-border)] hover:border-sage-400 hover:bg-[var(--color-sage-50)]'}`}>
+            return <button key={choiceIndex} type="button" disabled={!!submitted || submitting} onClick={() => selectChoice(choiceIndex)} className={`w-full text-left p-3.5 px-4 rounded-xl border flex items-center gap-3 transition-all ${isCorrect ? 'bg-[var(--color-curated-bg)] border-sage-600' : isWrong ? 'bg-[var(--color-warn-bg)] border-[var(--color-warn)]' : isSelected ? 'bg-[var(--color-sage-100)] border-sage-600' : 'bg-white border-[var(--color-border)] hover:border-sage-400 hover:bg-[var(--color-sage-50)]'}`}>
               <span className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${isCorrect || isSelected ? 'bg-sage-700 text-white border-sage-700' : isWrong ? 'bg-[var(--color-warn)] text-white border-[var(--color-warn)]' : 'border-[var(--color-sage-400)] text-[var(--color-muted)]'}`}>{choiceIndex + 1}</span>
               <span className="text-[15px] text-sage-800 flex-1">{choice}</span>
               {isCorrect && <CheckCircle2 className="w-5 h-5 text-sage-700 flex-shrink-0" />}{isWrong && <XCircle className="w-5 h-5 text-[var(--color-warn)] flex-shrink-0" />}
@@ -1344,9 +1534,10 @@ function PrivateExamSession({
         {submitted && current.explanation && <div className="mt-5 ll-tint rounded-2xl p-5 border border-[var(--color-border)]"><span className="ll-eyebrow mb-3">해설</span><div className="text-sm text-sage-800 leading-relaxed whitespace-pre-line">{current.explanation}</div></div>}
       </Card>
 
+      {submitError && <p role="alert" className="mb-3 text-right text-sm text-[var(--color-warn)]">{submitError}</p>}
       <div className="flex justify-end gap-2 mb-5">
         {!submitted ? (
-          <Button variant="accent" onClick={submitCurrent} disabled={selected === null}>제출하고 채점</Button>
+          <Button variant="accent" onClick={submitCurrent} disabled={selected === null} loading={submitting}>제출하고 채점</Button>
         ) : (
           <>
             {index < questions.length - 1 && (
