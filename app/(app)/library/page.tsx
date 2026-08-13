@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { AiGeneratedNotice } from '@/components/ui/AiGeneratedNotice';
 import {
   Heart, Wind, Utensils, Droplet, Droplets, Bug, Activity, Flower2,
   Ribbon, Bone, Scissors, Baby, Brain, Ear, Eye, Fingerprint, Shield, Scale,
@@ -474,6 +475,7 @@ export default function LibraryPage() {
   return (
     <div className="ll-library-page content">
       <section className="page-head"><div><span className="eyebrow">내 문제집</span><h1>만든 문제집을<br/><span className="headline-accent">한곳에서 모아보세요</span></h1><p className="lead">강의자료로 만든 문제집을 확인하고, 풀던 문제를 이어서 학습할 수 있어요.</p></div></section>
+      <AiGeneratedNotice className="mb-5" />
 
       {nextSet && (
         <div className="focus-band"><section className="next-action" aria-label="이어풀기 추천">

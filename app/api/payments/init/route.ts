@@ -19,7 +19,7 @@ import {
   CREDIT_PRICES,
   type CreditKind,
 } from '@/lib/payment/toss';
-import { ok, withErrorHandling } from '@/lib/utils/api';
+import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import type { PlanTier } from '@/lib/types/database';
 
 const bodySchema = z.discriminatedUnion('kind', [
@@ -34,6 +34,9 @@ const bodySchema = z.discriminatedUnion('kind', [
 ]);
 
 export const POST = withErrorHandling(async (request: Request) => {
+  if (process.env.PAID_SALES_ENABLED !== 'true') {
+    throw new ApiException('paid_sales_disabled', '현재 무료 베타 운영 중이며 유료 결제를 받지 않습니다.', 503);
+  }
   const session = await requireSession();
   const body = bodySchema.parse(await request.json());
 

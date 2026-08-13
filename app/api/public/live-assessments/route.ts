@@ -3,7 +3,8 @@ import { createHash } from 'node:crypto';
 import { createAdminClient } from '@/lib/db/admin';
 import { newAccessToken, tokenHash } from '@/lib/live-assessment';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
-const schema=z.object({code:z.string().trim().length(6),name:z.string().trim().min(1).max(40)});
+import { PRIVACY_VERSION } from '@/lib/legal/config';
+const schema=z.object({code:z.string().trim().length(6),name:z.string().trim().min(1).max(40),privacyAccepted:z.literal(true),privacyVersion:z.literal(PRIVACY_VERSION)});
 const MAX_PARTICIPANTS = 300;
 
 function clientAddress(request: Request) {
@@ -37,5 +38,18 @@ export const POST=withErrorHandling(async(r:Request)=>{
   if(joinResult?.error==='session_full')throw new ApiException('session_full','참여 인원이 가득 찼습니다. 교수자에게 문의해주세요.',409);
   if(joinResult?.error==='closed')throw new ApiException('closed','이미 시작된 평가입니다. 새로 참여할 수 없습니다.',409);
   if(!joinResult?.participant_id)throw new ApiException('join_failed','참여하지 못했습니다.',500);
+  const {error:consentError}=await db.from('legal_consents').insert({
+    user_id:null,
+    subject_reference:joinResult.participant_id,
+    document_type:'live_assessment_privacy',
+    document_version:i.privacyVersion,
+    action:'acknowledged',
+    source:'public_live_assessment',
+    evidence:{session_id:s.id,client_address_hash:createHash('sha256').update(address).digest('hex')},
+  });
+  if(consentError){
+    await db.from('live_assessment_participants').delete().eq('id',joinResult.participant_id);
+    throw new ApiException('privacy_record_failed','개인정보 안내 확인을 기록하지 못해 참여를 중단했습니다.',503);
+  }
   return ok({sessionId:s.id,participantId:joinResult.participant_id,token,title:s.title,status:s.status});
 });

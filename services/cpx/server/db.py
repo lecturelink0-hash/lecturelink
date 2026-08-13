@@ -208,3 +208,21 @@ def get_transcript(session_id: str, user_id: str) -> list[dict]:
             (session_id,),
         ).fetchall()
     return [{'role': r['role'], 'text': r['text'], 'tOffsetMs': r['t_offset_ms']} for r in rows]
+
+
+def delete_user_data(user_id: str) -> int:
+    """Delete every CPX record owned by a LectureLink account."""
+    with connect() as conn:
+        session_ids = [
+            row['id'] for row in conn.execute(
+                'SELECT id FROM sessions WHERE user_id = ?', (user_id,),
+            ).fetchall()
+        ]
+        if not session_ids:
+            return 0
+        placeholders = ','.join('?' for _ in session_ids)
+        conn.execute(f'DELETE FROM review_notes WHERE session_id IN ({placeholders})', session_ids)
+        conn.execute(f'DELETE FROM usage_events WHERE session_id IN ({placeholders})', session_ids)
+        conn.execute(f'DELETE FROM transcript_events WHERE session_id IN ({placeholders})', session_ids)
+        conn.execute('DELETE FROM sessions WHERE user_id = ?', (user_id,))
+        return len(session_ids)

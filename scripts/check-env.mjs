@@ -194,6 +194,36 @@ const RULES = [
     purpose: '미설정 시 100 USD 캡 적용.',
   },
 
+  // 운영자·개인정보 국외이전 고지는 실제 운영값이 없으면 공개할 수 없다.
+  ...[
+    ['LEGAL_BUSINESS_NAME', '서비스 운영 주체명'],
+    ['LEGAL_REPRESENTATIVE', '대표자명'],
+    ['LEGAL_BUSINESS_ADDRESS', '사업장 주소'],
+    ['LEGAL_SUPPORT_EMAIL', '이용자·개인정보 문의 이메일'],
+    ['LEGAL_PRIVACY_OFFICER', '개인정보 보호책임자'],
+    ['LEGAL_SUPABASE_REGION', 'Supabase 개인정보 처리 국가'],
+    ['LEGAL_VERCEL_REGION', 'Vercel 개인정보 처리 국가'],
+    ['LEGAL_GOOGLE_REGION', 'Google AI 개인정보 처리 국가'],
+    ['LEGAL_ANTHROPIC_REGION', 'Anthropic 개인정보 처리 국가'],
+    ['LEGAL_VOYAGE_REGION', 'Voyage AI 개인정보 처리 국가'],
+    ['LEGAL_UPSTASH_REGION', 'Upstash 개인정보 처리 국가'],
+    ['LEGAL_CPX_REGION', 'CPX 서비스 개인정보 처리 국가'],
+  ].map(([name, purpose]) => ({
+    name,
+    kind: isProd ? 'required' : 'optional',
+    placeholders: ['등록 전', '정보 등록 전'],
+    purpose: `${purpose}. 운영 고지에 실제 값 필요.`,
+  })),
+  ...[
+    ['LEGAL_BUSINESS_REGISTRATION_NUMBER', '사업자등록번호'],
+    ['LEGAL_MAIL_ORDER_NUMBER', '통신판매업 신고번호'],
+    ['LEGAL_SUPPORT_PHONE', '고객지원 전화번호'],
+  ].map(([name, purpose]) => ({
+    name,
+    kind: isProd && env.PAID_SALES_ENABLED === 'true' ? 'required' : 'optional',
+    purpose: `${purpose}. 유료 판매 개시 전에 필요.`,
+  })),
+
   // 개발 모드 우회 — production 에서 켜져 있으면 보안 사고
   {
     name: 'ALLOW_UNSIGNED_TOSS_WEBHOOK',

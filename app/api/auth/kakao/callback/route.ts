@@ -10,6 +10,7 @@
  */
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/db/admin';
+import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal/config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,11 +46,28 @@ export async function GET(request: Request) {
     res.cookies.delete('kakao_oauth_state');
     res.cookies.delete('kakao_oauth_next');
     res.cookies.delete('lecturelink_account_type');
+    res.cookies.delete('lecturelink_legal_consent');
     return res;
   };
 
   if (kakaoError) return fail('kakao_denied');
   if (!code || !state || !cookieState || state !== cookieState) return fail('kakao_state');
+
+  let legalConsent: { termsVersion?: string; privacyVersion?: string; acceptedAt?: string; ageOver14?: boolean } | null = null;
+  try {
+    const rawConsent = readCookie(request, 'lecturelink_legal_consent');
+    legalConsent = rawConsent ? JSON.parse(decodeURIComponent(rawConsent)) : null;
+  } catch {
+    legalConsent = null;
+  }
+  const acceptedAtMs = legalConsent?.acceptedAt ? Date.parse(legalConsent.acceptedAt) : Number.NaN;
+  const consentIsCurrent = legalConsent?.termsVersion === TERMS_VERSION
+    && legalConsent?.privacyVersion === PRIVACY_VERSION
+    && legalConsent?.ageOver14 === true
+    && Number.isFinite(acceptedAtMs)
+    && Date.now() - acceptedAtMs >= 0
+    && Date.now() - acceptedAtMs <= 10 * 60 * 1000;
+  if (!consentIsCurrent) return fail('legal_consent_required');
 
   const clientId = process.env.KAKAO_CLIENT_ID;
   const clientSecret = process.env.KAKAO_CLIENT_SECRET;
@@ -111,6 +129,7 @@ export async function GET(request: Request) {
     ? 'professor'
     : 'student';
   const admin = createAdminClient();
+  const recordedAt = new Date().toISOString();
   const { error: createErr } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
@@ -120,6 +139,11 @@ export async function GET(request: Request) {
       kakao_id: kakaoId,
       provider: 'kakao',
       requested_account_type: requestedAccountType,
+      terms_version: TERMS_VERSION,
+      terms_accepted_at: recordedAt,
+      privacy_notice_version: PRIVACY_VERSION,
+      privacy_noticed_at: recordedAt,
+      age_over_14_confirmed_at: recordedAt,
     },
     app_metadata: { provider: 'kakao', kakao_id: kakaoId },
   });
@@ -145,5 +169,6 @@ export async function GET(request: Request) {
   res.cookies.delete('kakao_oauth_state');
   res.cookies.delete('kakao_oauth_next');
   res.cookies.delete('lecturelink_account_type');
+  res.cookies.delete('lecturelink_legal_consent');
   return res;
 }

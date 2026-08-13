@@ -6,6 +6,7 @@ import { api, ApiError } from '@/lib/api/client';
 import { createBrowserClient } from '@/lib/db/browser';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { AccountDeletion } from '@/components/account/AccountDeletion';
 import {
   CheckCircle2,
   AlertCircle,
@@ -405,6 +406,8 @@ export default function ProfilePage() {
             변경사항 저장
           </Button>
         </div>
+
+        <AccountDeletion />
       </div>
     </div>
   );

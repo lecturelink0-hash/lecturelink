@@ -399,12 +399,18 @@ export function CourseList() {
                   차시 열기 <ArrowRight size={15} />
                 </span>
               </Link>
-              <details className="course-card-menu">
-                <summary aria-label={`${course.title} 차시 메뉴`}><MoreHorizontal size={18} /></summary>
-                <button type="button" disabled={deletingCourseId === course.id} onClick={() => void removeCourse(course)}>
-                  <Trash2 size={16} /> {deletingCourseId === course.id ? "삭제 중" : "차시 삭제"}
-                </button>
-              </details>
+              <button
+                type="button"
+                className="course-card-delete"
+                aria-label={`${course.title} 차시 삭제`}
+                title="차시 삭제"
+                disabled={deletingCourseId === course.id}
+                onClick={() => void removeCourse(course)}
+              >
+                {deletingCourseId === course.id
+                  ? <Loader2 className="is-spinning" size={19} aria-hidden="true" />
+                  : <Trash2 size={19} aria-hidden="true" />}
+              </button>
             </article>
           ))}
           {!courses.length && (

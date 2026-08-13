@@ -86,6 +86,11 @@ def health():
     return {'ok': True, 'hasApiKey': bool(GEMINI_API_KEY), 'model': LIVE_MODEL}
 
 
+@app.delete('/api/account-data')
+def delete_account_data(user_id: str = Depends(current_user_id)):
+    return {'deletedSessions': db.delete_user_data(user_id)}
+
+
 @app.get('/api/cases')
 def cases(_user_id: str = Depends(current_user_id)):
     return {

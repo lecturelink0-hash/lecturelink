@@ -11,6 +11,7 @@ import { startMic } from './mic';
 import { sanitizePatientText } from './sanitize';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { PRIVACY_VERSION } from '@/lib/legal/config';
 
 // 실전은 12분. 시험장 긴장으로 늦어질 것에 대비해 30초·1분 짧게 연습하는 옵션 제공.
 const TIME_LIMIT_OPTIONS = [
@@ -166,6 +167,7 @@ export default function CpxPractice() {
   const [showTranscript, setShowTranscript] = useState(false); // 채점 후 [전체 대화록] 패널 토글
   const [gradingProgress, setGradingProgress] = useState(0); // 채점 로딩 원형 게이지(%)
   const [voiceOn, setVoiceOn] = useState(true); // 음성 on/off (off 시 텍스트 전용)
+  const [processingNoticeAccepted, setProcessingNoticeAccepted] = useState(false);
   // 환자 인적사항 공개 여부 — 학생이 직접 물어봤을 때만 해당 항목을 노출한다.
   const [revealed, setRevealed] = useState({ name: false, age: false, gender: false });
   // 연습용 시간제한(초) — 세션 시작 전에만 변경 가능, 세션 생성 시 서버에 함께 저장된다.
@@ -276,11 +278,24 @@ export default function CpxPractice() {
   const start = async (overrideCase) => {
     const target = overrideCase && overrideCase.id ? overrideCase : selected;
     if (!target || phase === 'starting') return;
+    if (!processingNoticeAccepted) {
+      setError('음성·대화 처리 안내를 확인해 주세요.');
+      return;
+    }
     if (caseId !== target.id) setCaseId(target.id);
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     usageRef.current = [];
     try {
+      const noticeResponse = await fetch('/api/me/legal-consents', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          documentType: 'cpx_processing_notice',
+          documentVersion: PRIVACY_VERSION,
+        }),
+      });
+      if (!noticeResponse.ok) throw new Error('처리 안내 확인을 기록하지 못했습니다. 잠시 후 다시 시도해 주세요.');
       const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: target.id, timeLimitSeconds: limitSeconds }) });
       setSessionId(created.sessionId); setPersona(created.persona); startedAtRef.current = Date.now(); setElapsed(0);
       const token = await request(`/sessions/${created.sessionId}/live-token`, { method: 'POST' });
@@ -430,6 +445,26 @@ export default function CpxPractice() {
       <div><span className="ll-eyebrow"><Stethoscope className="h-3.5 w-3.5" /> CPX 실전 연습</span><h1 className="mt-2 text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와 실제처럼 진료하세요</h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
       <div className="flex flex-wrap items-center gap-2"><div role="group" aria-label="제한시간 선택" title="실전(12분)보다 짧게 설정해 시간 압박에 대비할 수 있어요" className="inline-flex h-9 items-center gap-0.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-1.5"><Clock3 className="h-4 w-4 text-[var(--color-muted)]" />{TIME_LIMIT_OPTIONS.map((opt) => <button key={opt.seconds} type="button" onClick={() => setLimitSeconds(opt.seconds)} disabled={phase !== 'ready'} aria-pressed={limitSeconds === opt.seconds} className={`tnum h-7 rounded-[calc(var(--radius-md)-3px)] px-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-55 ${limitSeconds === opt.seconds ? 'bg-[var(--color-primary)] text-white disabled:opacity-100' : 'text-[var(--color-muted)] hover:text-[var(--color-primary)]'}`}>{opt.label}</button>)}</div><button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'border-[var(--color-warn)] bg-[var(--color-warn)] text-white hover:opacity-90' : 'border-[var(--color-warn)] bg-white text-[var(--color-warn)] hover:bg-[var(--color-warn-bg)]'}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button><Link href="/cpx/history" className="inline-flex h-9 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm font-bold text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">나의 기록 <ChevronRight className="h-4 w-4" /></Link></div>
     </section>}
+
+    {phase === 'ready' && (
+      <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-4" aria-labelledby="cpx-processing-notice-title">
+        <div className="flex items-start gap-3">
+          <Shield className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-primary)]" />
+          <div className="min-w-0 flex-1">
+            <h2 id="cpx-processing-notice-title" className="text-sm font-bold text-[var(--color-text)]">음성·대화 처리 안내</h2>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted)]">
+              연습 중 마이크 음성과 입력 문장은 Google Gemini에 실시간 전송되어 가상 환자 응답과 전사·AI 채점에 사용됩니다. 대화록과 평가 결과는 연습 기록 제공을 위해 저장되므로 실제 환자 이름·주민번호 등 개인정보를 말하지 마세요.
+            </p>
+            <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm font-semibold text-[var(--color-text)]">
+              <input type="checkbox" checked={processingNoticeAccepted} onChange={(event) => { setProcessingNoticeAccepted(event.target.checked); setError(''); }} className="mt-0.5 h-4 w-4 accent-[var(--color-primary)]" />
+              위 처리 내용을 확인했습니다. (필수)
+            </label>
+            <p className="mt-2 text-xs text-[var(--color-muted)]"><Link href="/privacy" target="_blank" className="underline">개인정보처리방침 자세히 보기</Link> · AI 결과는 학습 보조용이며 의료행위 또는 공식 시험 판정이 아닙니다.</p>
+            {error && <p role="alert" className="mt-2 text-sm font-semibold text-[var(--color-warn)]">{error}</p>}
+          </div>
+        </div>
+      </section>
+    )}
 
     {/* 세션 진입 전: 파트 선택 → (좌 주호소 리스트 / 우 시나리오 리스트) → 연습 시작 */}
     {phase === 'ready' && (
@@ -637,6 +672,7 @@ export default function CpxPractice() {
       </Card>
     )}
 
+    {result && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">AI 생성 평가</b> · 학습 보조 결과이며 오류가 있을 수 있습니다. 항목별 근거를 확인하고 공식 평가나 의료 판단에 사용하지 마세요.</div>}
     {result && <Card title="CPX 결과" description="영역 카드를 누르면 항목별 상세 채점 근거가 펼쳐집니다." icon={<Sparkles className="h-5 w-5" />}><div className="grid gap-5 md:grid-cols-[auto_1fr]"><div className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-7 py-5 text-center text-white self-start"><div className="text-xs text-white/70">총점</div><div className="tnum mt-1 text-5xl font-bold">{result.totalScore}</div><div className="mt-1 text-sm">{result.overallGradeLabel}</div></div>
       <div className="space-y-3">
         <CpxTimeAnalysis analysis={result.timeAnalysis} excludedSections={result.excludedSections} />

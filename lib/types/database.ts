@@ -101,6 +101,19 @@ export type PaymentStatus =
   | 'cancelled'
   | 'refunded';
 
+export type LegalConsentRow = {
+  id: string;
+  user_id: string | null;
+  subject_reference: string | null;
+  document_type: 'terms' | 'privacy_notice' | 'cpx_processing_notice' | 'live_assessment_privacy';
+  document_version: string;
+  action: 'accepted' | 'acknowledged';
+  source: string;
+  evidence: Record<string, unknown>;
+  recorded_at: string;
+  retain_until: string;
+};
+
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export type OpenImageSource =
@@ -647,6 +660,12 @@ export interface Database {
           FK<'payments', 'user_id', 'users'>,
           FK<'payments', 'subscription_id', 'subscriptions'>,
         ];
+      };
+      legal_consents: {
+        Row: LegalConsentRow;
+        Insert: Insert<LegalConsentRow>;
+        Update: Update<LegalConsentRow>;
+        Relationships: [];
       };
       ai_cost_log: {
         Row: AiCostLogRow;

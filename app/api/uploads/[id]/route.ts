@@ -82,7 +82,11 @@ export const DELETE = withErrorHandling(async (
       .from(STORAGE_BUCKET)
       .remove([upload.storage_path]);
     if (removeErr) {
-      console.warn('[uploads] storage remove failed:', removeErr.message);
+      throw new ApiException(
+        'upload_file_delete_failed',
+        '원본 파일을 삭제하지 못해 자료 삭제를 중단했습니다. 잠시 후 다시 시도해 주세요.',
+        503,
+      );
     }
   }
 
@@ -97,7 +101,11 @@ export const DELETE = withErrorHandling(async (
       .from(STORAGE_BUCKET)
       .remove(cropImgs.map((r) => r.storage_path));
     if (cropErr) {
-      console.warn('[uploads] crop remove failed:', cropErr.message);
+      throw new ApiException(
+        'upload_image_delete_failed',
+        '연결된 이미지를 삭제하지 못해 자료 삭제를 중단했습니다. 잠시 후 다시 시도해 주세요.',
+        503,
+      );
     }
   }
 

@@ -25,6 +25,7 @@ import {
   PASSWORD_MIN_LENGTH,
 } from '@/lib/auth/password-policy';
 import { Button } from '@/components/ui/Button';
+import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal/config';
 import loginCpxCharacter from '@/public/login-cpx-character-v2.png';
 
 type Mode = 'login' | 'signup';
@@ -64,6 +65,8 @@ export default function LoginPage() {
   const [emailOpen, setEmailOpen] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   // 랜딩의 "무료체험" CTA 등에서 /login?mode=signup 으로 오면 가입 탭을 기본 선택.
   useEffect(() => {
@@ -77,6 +80,8 @@ export default function LoginPage() {
       setErrorMsg(
         authError === 'kakao_denied'
           ? '카카오 로그인이 취소되었습니다.'
+          : authError === 'legal_consent_required'
+            ? '가입 또는 카카오 로그인을 계속하려면 필수 이용약관에 동의해 주세요.'
           : authError === 'callback_failed'
             ? '인증 링크가 만료되었거나 이미 사용되었습니다. 다시 시도해 주세요.'
             : '카카오 로그인 연결을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -93,6 +98,7 @@ export default function LoginPage() {
     setStatus('idle');
     setPassword('');
     setConfirm('');
+    if (next === 'login') { setTermsAccepted(false); setAgeConfirmed(false); }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -100,6 +106,14 @@ export default function LoginPage() {
     setErrorMsg('');
 
     if (mode === 'signup') {
+      if (!termsAccepted) {
+        setErrorMsg('필수 이용약관에 동의해 주세요.');
+        return;
+      }
+      if (!ageConfirmed) {
+        setErrorMsg('만 14세 이상 여부를 확인해 주세요.');
+        return;
+      }
       if (!isValidPassword(password)) {
         setErrorMsg(PASSWORD_ERROR);
         return;
@@ -121,7 +135,14 @@ export default function LoginPage() {
           email: submittedEmail,
           password,
           options: {
-            data: { requested_account_type: accountType },
+            data: {
+              requested_account_type: accountType,
+              terms_version: TERMS_VERSION,
+              terms_accepted_at: new Date().toISOString(),
+              privacy_notice_version: PRIVACY_VERSION,
+              privacy_noticed_at: new Date().toISOString(),
+              age_over_14_confirmed_at: new Date().toISOString(),
+            },
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
@@ -211,10 +232,25 @@ export default function LoginPage() {
 
   function handleKakao() {
     setErrorMsg('');
+    if (!termsAccepted) {
+      setErrorMsg('카카오로 계속하려면 필수 이용약관에 동의해 주세요.');
+      return;
+    }
+    if (!ageConfirmed) {
+      setErrorMsg('카카오로 계속하려면 만 14세 이상 여부를 확인해 주세요.');
+      return;
+    }
     setStatus('sending');
     if (mode === 'signup') {
       document.cookie = `lecturelink_account_type=${accountType}; Path=/; Max-Age=600; SameSite=Lax`;
     }
+    const legalConsent = encodeURIComponent(JSON.stringify({
+      termsVersion: TERMS_VERSION,
+      privacyVersion: PRIVACY_VERSION,
+      acceptedAt: new Date().toISOString(),
+      ageOver14: true,
+    }));
+    document.cookie = `lecturelink_legal_consent=${legalConsent}; Path=/; Max-Age=600; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
     // Supabase 내장 카카오 provider 는 account_email 을 강제 요청해 KOE205 를 유발한다(비즈앱 필요).
     // 이메일을 요구하지 않는 커스텀 카카오 로그인(/api/auth/kakao/start)으로 개시한다.
     const next = new URLSearchParams(window.location.search).get('next');
@@ -294,6 +330,24 @@ export default function LoginPage() {
           )}
           {!emailOpen && status !== 'sent' && (
             <>
+              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm leading-relaxed text-sage-800">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(event) => setTermsAccepted(event.target.checked)}
+                  className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]"
+                />
+                <span>
+                  <Link href="/terms" target="_blank" className="font-semibold underline">이용약관</Link>에 동의합니다. (필수)
+                  <span className="mt-1 block text-xs text-[var(--color-muted)]">
+                    <Link href="/privacy" target="_blank" className="underline">개인정보처리방침</Link>도 확인해 주세요.
+                  </span>
+                </span>
+              </label>
+              <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm font-semibold text-sage-800">
+                <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]" />
+                <span>만 14세 이상입니다. (필수)</span>
+              </label>
               <button
                 type="button"
                 onClick={handleKakao}
@@ -320,7 +374,7 @@ export default function LoginPage() {
                 <button type="button" onClick={() => { switchMode('signup'); setEmailOpen(true); }}>회원가입</button>
               </p>
 
-              <p className="terms">계속 진행하면 <Link href="/terms">이용약관</Link> 및 <Link href="/privacy">개인정보 처리방침</Link>에 동의한 것으로 간주됩니다.</p>
+              <p className="terms">동의 여부와 관계없이 <Link href="/terms">이용약관</Link> 및 <Link href="/privacy">개인정보처리방침</Link>을 언제든 확인할 수 있습니다.</p>
             </>
           )}
 
@@ -467,6 +521,25 @@ export default function LoginPage() {
                       </p>
                     )}
                   </fieldset>
+                  <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm leading-relaxed text-sage-800">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(event) => setTermsAccepted(event.target.checked)}
+                      required
+                      className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]"
+                    />
+                    <span>
+                      <Link href="/terms" target="_blank" className="font-semibold underline">이용약관</Link>에 동의합니다. (필수)
+                      <span className="mt-1 block text-xs text-[var(--color-muted)]">
+                        <Link href="/privacy" target="_blank" className="underline">개인정보처리방침</Link>을 확인했습니다.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-white p-3.5 text-sm font-semibold text-sage-800">
+                    <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} required className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-sage-700)]" />
+                    <span>만 14세 이상입니다. (필수)</span>
+                  </label>
                 </>
               )}
 
@@ -529,8 +602,9 @@ export default function LoginPage() {
               </button>
 
               <p className="text-sm text-[var(--color-muted)] text-center mt-6 leading-relaxed">
-                계속 진행하면 <a href="/terms" className="underline">이용약관</a> 및{' '}
-                <a href="/privacy" className="underline">개인정보 처리방침</a>에 동의하는 것으로 간주됩니다.
+                <Link href="/terms" className="underline">이용약관</Link>,{' '}
+                <Link href="/privacy" className="underline">개인정보처리방침</Link>,{' '}
+                <Link href="/refund" className="underline">환불정책</Link>
               </p>
             </form>
           )}
@@ -543,7 +617,7 @@ export default function LoginPage() {
       <footer className="site-footer">
         <div className="footer-inner">
           <p className="m-0">LectureLink는 학습 보조 도구이며, 생성된 문항과 해설은 검토 후 활용해주세요.</p>
-          <div className="footer-links"><Link href="/terms">이용약관</Link><Link href="/privacy">개인정보처리방침</Link><Link href="/contact">문의하기</Link></div>
+          <div className="footer-links"><Link href="/terms">이용약관</Link><Link href="/privacy">개인정보처리방침</Link><Link href="/refund">환불정책</Link><Link href="/contact">문의하기</Link></div>
         </div>
       </footer>
     </div>
