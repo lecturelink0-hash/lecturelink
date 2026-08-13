@@ -25,6 +25,14 @@
   padding: var(--space-6) 0 0;
 }
 
+@media (min-width: 901px) {
+  .ll-auth-page .intro {
+    position: sticky;
+    top: var(--space-6);
+    align-self: start;
+  }
+}
+
 .ll-auth-page .login-brand-copy {
   width: min(100%, 636px);
   margin: 0 auto;
@@ -2824,4 +2832,49 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 @media (prefers-reduced-motion: reduce) {
   .cpx-loading-bar { animation: none; }
+}
+
+/* Shared guide trigger label: stable on desktop, intentional split on narrow phones. */
+:is(.guide-trigger, .formative-guide-trigger) {
+  width: max-content;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.guide-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .25em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.guide-label-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .ll-upload-page .guide-trigger,
+  .professor-app .ll-formative-flow .formative-guide-trigger {
+    height: auto;
+    min-height: 48px;
+    padding-block: 6px;
+  }
+
+  .guide-label {
+    display: inline-grid;
+    gap: 1px;
+    line-height: 1.12;
+    white-space: normal;
+    text-align: left;
+  }
 }

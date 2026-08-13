@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { UploadDropZone } from '@/components/ui/UploadDropZone';
 import { UploadNextSteps } from '@/components/ui/UploadNextSteps';
+import { GuideLabel } from '@/components/ui/GuideLabel';
 import { readApiResponse } from '@/lib/utils/read-api-response';
 import { ProfessorTaskProgress } from './ProfessorTaskProgress';
 import '@/components/faculty/formative-studio.css';
@@ -116,7 +117,7 @@ export function FormativeQualityStudio() {
           <p className="lead">문항 자체의 위험 신호를 확인하고, 강의자료가 있으면 수업 범위와의 정렬까지 함께 살펴봅니다. 검토 결과는 차시에 저장되지 않는 1회성 결과입니다.</p>
         </div>
         <div className="guide">
-          <button type="button" className="guide-trigger"><span className="guide-icon">?</span>사용 설명서</button>
+          <button type="button" className="guide-trigger"><span className="guide-icon">?</span><GuideLabel /></button>
           <div className="guide-panel">
             <h2>어떻게 사용하나요?</h2>
             <ol>

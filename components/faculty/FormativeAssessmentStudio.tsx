@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { UploadNextSteps } from "@/components/ui/UploadNextSteps";
 import { Segmented } from "@/components/ui/Segmented";
+import { GuideLabel } from "@/components/ui/GuideLabel";
 import {
   CourseMaterialSelector,
   uploadTeachingMaterial,
@@ -263,7 +264,7 @@ export function FormativeAssessmentStudio() {
         </div>
         <div className="guide">
           <button type="button" className="guide-trigger">
-            <span className="guide-icon">?</span>사용 설명서
+            <span className="guide-icon">?</span><GuideLabel />
           </button>
           <div className="guide-panel">
             <h2>어떻게 사용하나요?</h2>

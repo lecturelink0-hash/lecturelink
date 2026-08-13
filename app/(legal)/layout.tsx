@@ -1,6 +1,6 @@
-import { ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { LegalBackButton } from './LegalBackButton';
 import './legal.css';
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
@@ -13,13 +13,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <Image src="/lecturelink-mark.png" alt="" width={40} height={40} priority />
             <b>LectureLink</b>
           </Link>
-          <Link
-            href="/"
-            className="legal-back-link"
-          >
-            <ArrowLeft aria-hidden="true" />
-            홈으로
-          </Link>
+          <LegalBackButton />
         </div>
       </header>
       <main className="legal-content">{children}</main>

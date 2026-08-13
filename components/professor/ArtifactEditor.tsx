@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { readApiResponse } from "@/lib/utils/read-api-response";
+import { GuideLabel } from "@/components/ui/GuideLabel";
 import "./artifact-editor-extra.css";
 import "../formative/formative-flow.css";
 
 const DEFAULT_PREVIEW_ARTIFACT = {
   id: "preview",
+  course_id: "preview-cardiology",
   title: "형성평가 검토하기",
   source_name: "순환기학_부정맥_강의자료.pdf",
   status: "교수 검토 중",
@@ -297,11 +299,11 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
     ? `불균형함 (${mostCommonAnswerIndex + 1}번 편중)`
     : "고르게 분포";
   return (
-    <div className="professor-dashboard ll-formative-flow ll-formative-review">
+    <div className="professor-dashboard ll-formative-flow ll-formative-review ll-upload-page">
       {data.course_id && <Link className="back artifact-course-back" href={`/professor/courses/${data.course_id}`}><ArrowLeft size={16} />차시로 돌아가기</Link>}
-      <header className="professor-welcome">
+      <header className="page-head formative-review-head">
         <div>
-          <p className="flow-eyebrow">교수 도구 · 검토 후 배포</p>
+          <p className="eyebrow">교수 도구 · 검토 후 배포</p>
           {artifactId === "preview" && data.title === DEFAULT_PREVIEW_ARTIFACT.title ? (
             <h1 className="artifact-title artifact-preview-title">
               <span>형성평가</span> 검토하기
@@ -317,7 +319,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
               {!titleHasType && <span className="artifact-title-suffix">형성평가</span>}
             </div>
           )}
-          <p className="flow-lead">
+          <p className="lead">
             생성된 문항과 정답·해설을 확인하고 필요한 내용을 수정한 뒤 학생에게
             배포하세요.
           </p>
@@ -326,7 +328,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
           <div className="formative-guide">
             <button type="button" className="formative-guide-trigger">
               <span className="formative-guide-icon">?</span>
-              사용 설명서
+              <GuideLabel />
             </button>
             <div className="formative-guide-panel">
               <h2>어떻게 사용하나요?</h2>

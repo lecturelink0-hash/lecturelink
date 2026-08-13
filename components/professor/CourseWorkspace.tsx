@@ -148,6 +148,45 @@ const LOCAL_PREVIEW_DETAIL: CourseDetailData = {
   ],
 };
 
+const LOCAL_PREVIEW_ANALYTICS = {
+  course: { id: "preview-cardiology", title: "순환기학" },
+  publicationCount: 3,
+  submittedCount: 42,
+  averagePercent: 76,
+  items: [
+    {
+      itemId: "preview-item-1",
+      artifactId: "preview-artifact-1",
+      artifactTitle: "부정맥 감별 형성평가",
+      position: 3,
+      stem: "심방세동 환자의 초기 평가에서 가장 먼저 확인해야 하는 항목은 무엇인가요?",
+      answers: 42,
+      correct: 21,
+      correctPercent: 50,
+    },
+    {
+      itemId: "preview-item-2",
+      artifactId: "preview-artifact-1",
+      artifactTitle: "부정맥 감별 형성평가",
+      position: 1,
+      stem: "규칙적인 빈맥과 불규칙한 빈맥을 구분하는 심전도 소견으로 가장 적절한 것은?",
+      answers: 42,
+      correct: 27,
+      correctPercent: 64,
+    },
+    {
+      itemId: "preview-item-3",
+      artifactId: "preview-artifact-1",
+      artifactTitle: "부정맥 감별 형성평가",
+      position: 4,
+      stem: "항응고 치료 시작 여부를 판단할 때 함께 고려해야 하는 임상 정보는 무엇인가요?",
+      answers: 42,
+      correct: 31,
+      correctPercent: 74,
+    },
+  ],
+};
+
 export function CourseList() {
   const localPreview =
     process.env.NEXT_PUBLIC_LOCAL_FACULTY_UI_PREVIEW === "true";
@@ -750,20 +789,36 @@ export function CourseDetail({ courseId }: { courseId: string }) {
                       </div>
                     </header>
                     <div>
-                      {items.map((item) => type === "formative" ? (
-                        <Link href={`/professor/artifacts/${item.id}`} className="course-output-row" key={item.id}>
-                          <div>
-                            <b>{item.title}</b>
-                            <small>{formatDate(item.created_at)} · {artifactStatus(item)}</small>
+                      {items.map((item) => {
+                        if (type === "formative") {
+                          return (
+                            <Link href={`/professor/artifacts/${item.id}`} className="course-output-row" key={item.id}>
+                              <div>
+                                <b>{item.title}</b>
+                                <small>{formatDate(item.created_at)} · {artifactStatus(item)}</small>
+                              </div>
+                              <ArrowRight size={15} />
+                            </Link>
+                          );
+                        }
+                        if (type === "preview") {
+                          return (
+                            <Link href={`/professor/artifacts/${item.id}/preview`} className="course-output-row" key={item.id}>
+                              <div>
+                                <b>{item.title}</b>
+                                <small>{formatDate(item.created_at)} · {artifactStatus(item)}</small>
+                              </div>
+                              <span className="course-output-open">열람하기 <ArrowRight size={15} /></span>
+                            </Link>
+                          );
+                        }
+                        return (
+                          <div className="course-output-row is-unavailable" key={item.id}>
+                            <div><b>{item.title}</b><small>{formatDate(item.created_at)} · {artifactStatus(item)}</small></div>
+                            <span>열람 준비 중</span>
                           </div>
-                          <ArrowRight size={15} />
-                        </Link>
-                      ) : (
-                        <div className="course-output-row is-unavailable" key={item.id}>
-                          <div><b>{item.title}</b><small>{formatDate(item.created_at)} · {artifactStatus(item)}</small></div>
-                          <span>열람 준비 중</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {!items.length && (
                         <div className="course-output-empty">
                           <p>아직 만든 {meta.label}가 없습니다.</p>
@@ -788,65 +843,88 @@ export function CourseDetail({ courseId }: { courseId: string }) {
   );
 }
 export function CourseAnalytics({ courseId }: { courseId: string }) {
-  const [data, setData] = useState<any>(null);
+  const localPreview =
+    process.env.NEXT_PUBLIC_LOCAL_FACULTY_UI_PREVIEW === "true";
+  const [data, setData] = useState<any>(
+    localPreview
+      ? {
+          ...LOCAL_PREVIEW_ANALYTICS,
+          course: {
+            ...LOCAL_PREVIEW_ANALYTICS.course,
+            id: courseId,
+          },
+        }
+      : null,
+  );
   useEffect(() => {
+    if (localPreview) return;
     fetch(`/api/professor/courses/${courseId}/analytics`)
       .then((r) => r.json())
       .then((p) => p.ok && setData(p.data));
-  }, [courseId]);
+  }, [courseId, localPreview]);
   if (!data)
-    return <div className="professor-empty">분석을 불러오는 중입니다.</div>;
+    return (
+      <div className="professor-dashboard course-analytics-page">
+        <div className="course-analytics-loading" role="status">
+          <Loader2 className="is-spinning" size={20} aria-hidden="true" />
+          분석을 불러오는 중입니다.
+        </div>
+      </div>
+    );
   return (
-    <div className="professor-dashboard">
+    <div className="professor-dashboard course-analytics-page ll-upload-page">
       <Link href={`/professor/courses/${courseId}`} className="back"><ArrowLeft size={16} />{data.course.title} 차시로</Link>
-      <header className="professor-welcome">
+      <header className="page-head course-analytics-head">
         <div>
-          <p>차시 분석 리포트</p>
-          <h1>
-            {data.course.title}
-            <br />
-            학생 이해도
-          </h1>
+          <p className="eyebrow">차시 분석 리포트</p>
+          <h1><span className="headline-accent">{data.course.title}</span> 학생 이해도</h1>
+          <p className="lead">학생 제출 현황과 정답률을 확인하고 우선 검토할 문항을 살펴보세요.</p>
         </div>
       </header>
-      <section className="analytics-grid">
-        <div>
+      <section className="course-analytics-summary" aria-label="학습 결과 요약">
+        <div className="course-analytics-stat">
           <small>배포한 평가</small>
-          <b>{data.publicationCount}</b>
+          <p><b>{data.publicationCount}</b><span>개</span></p>
         </div>
-        <div>
+        <div className="course-analytics-stat">
           <small>제출 학생</small>
-          <b>{data.submittedCount}</b>
+          <p><b>{data.submittedCount}</b><span>명</span></p>
         </div>
-        <div>
+        <div className="course-analytics-stat">
           <small>평균 정답률</small>
-          <b>
+          <p><b>
             {data.averagePercent === null ? "—" : `${data.averagePercent}%`}
-          </b>
+          </b></p>
         </div>
       </section>
-      <section className="professor-tools">
-        <div className="professor-section-head">
-          <h2>취약 문항</h2>
-          <p>정답률이 낮은 순서입니다.</p>
+      <section className="course-analytics-section">
+        <div className="course-analytics-section-head">
+          <div>
+            <h2>취약 문항</h2>
+            <p>정답률이 낮은 문항부터 확인할 수 있습니다.</p>
+          </div>
+          <span>총 {data.items.length}문항</span>
         </div>
-        <div className="professor-tool-list">
+        <div className="course-analytics-list">
           {data.items.map((x: any, i: number) => (
-            <div className="professor-tool" key={x.itemId}>
-              <span className="professor-tool-order">{i + 1}</span>
-              <div>
+            <article className="course-analytics-item" key={x.itemId}>
+              <span className="course-analytics-rank">{i + 1}</span>
+              <div className="course-analytics-item-copy">
                 <small>{x.artifactTitle ?? "형성평가"} · 문항 {(x.position ?? i) + 1}</small>
                 <h3>{x.stem ?? `문항 응답 ${x.answers}건`}</h3>
-                <p>
-                  정답 {x.correct}건 · 오답 {x.answers - x.correct}건
-                </p>
-                {x.artifactId && <Link href={`/professor/artifacts/${x.artifactId}`}>문항 검토하기 <ArrowRight size={14} /></Link>}
+                <p>정답 {x.correct}건 · 오답 {x.answers - x.correct}건</p>
               </div>
-              <small>{x.correctPercent}%</small>
-            </div>
+              <div className="course-analytics-rate">
+                <small>정답률</small>
+                <strong>{x.correctPercent}%</strong>
+              </div>
+              {x.artifactId && <Link href={`/professor/artifacts/${x.artifactId}`}>문항 검토하기 <ArrowRight size={15} /></Link>}
+            </article>
           ))}
           {!data.items.length && (
-            <div className="professor-empty">
+            <div className="course-analytics-empty">
+              <BarChart3 size={24} aria-hidden="true" />
+              <strong>아직 분석할 학습 결과가 없습니다.</strong>
               학생 제출이 쌓이면 문항별 이해도가 표시됩니다.
             </div>
           )}

@@ -63,14 +63,30 @@
 .legal-back-link {
   min-height: 44px;
   gap: 7px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
   color: var(--legal-muted);
+  font-family: inherit;
   font-size: 14px;
-  font-weight: 650;
-  transition: color var(--dur-short) var(--ease-out);
+  font-weight: 640;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-short) var(--ease-out),
+    color var(--dur-short) var(--ease-out);
 }
 
 .legal-back-link:hover {
+  background: var(--legal-sage);
   color: var(--legal-forest);
+}
+
+.legal-back-link:focus-visible {
+  outline: 3px solid color-mix(in oklch, var(--legal-forest) 18%, transparent);
+  outline-offset: 2px;
 }
 
 .legal-back-link svg {
@@ -228,8 +244,7 @@
   gap: 12px;
 }
 
-.legal-primary-button,
-.legal-secondary-button {
+.legal-primary-button {
   display: inline-flex;
   min-height: 54px;
   align-items: center;
@@ -258,20 +273,93 @@
   transform: translateY(-1px);
 }
 
-.legal-secondary-button {
-  border: 1px solid var(--legal-line);
-  background: #fff;
+.legal-email-copy-wrap {
+  min-width: 0;
+}
+
+.legal-email-copy {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 2px;
+  border: 0;
+  border-top: 1px solid var(--legal-line);
+  border-bottom: 1px solid var(--legal-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--legal-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--dur-short) var(--ease-out);
+}
+
+.legal-email-copy:hover {
   color: var(--legal-forest);
 }
 
-.legal-secondary-button:hover {
-  border-color: #aac5b2;
-  background: var(--legal-sage);
-  transform: translateY(-1px);
+.legal-email-copy > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--legal-forest);
+  stroke-width: 2;
+}
+
+.legal-email-copy > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.legal-email-copy small {
+  color: var(--legal-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.legal-email-copy strong {
+  overflow-wrap: anywhere;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 720;
+  line-height: 1.45;
+}
+
+.legal-email-copy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--legal-forest);
+  font-size: 13px;
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+.legal-email-copy-label svg {
+  width: 15px;
+  height: 15px;
+}
+
+.legal-email-copy-status {
+  min-height: 24px;
+  margin: 7px 0 0 34px;
+  color: var(--legal-muted);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.6;
+}
+
+.legal-email-copy-status.is-copied {
+  color: var(--legal-forest);
+}
+
+.legal-email-copy-status.is-error {
+  color: #913b3b;
 }
 
 .legal-primary-button svg,
-.legal-secondary-button svg,
 .legal-contact-pending svg {
   width: 19px;
   height: 19px;
@@ -351,11 +439,20 @@
   .legal-section + .legal-section {
     margin-top: 30px;
   }
+
+  .legal-email-copy {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .legal-email-copy-label {
+    grid-column: 2;
+    justify-self: start;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .legal-primary-button,
-  .legal-secondary-button,
+  .legal-email-copy,
   .legal-back-link {
     transition-duration: 1ms;
   }

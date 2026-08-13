@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { MessageCircle, Mail } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { legalOperator } from '@/lib/legal/config';
+import { EmailCopyAction } from './EmailCopyAction';
 
 export const metadata: Metadata = { title: '문의하기 — LectureLink' };
 
@@ -55,13 +56,7 @@ export default function ContactPage() {
         )}
 
         {/* 이메일 대체 수단 */}
-        <a
-          href={emailHref}
-          className="legal-secondary-button"
-        >
-          <Mail aria-hidden="true" />
-          이메일로 문의하기
-        </a>
+        <EmailCopyAction email={supportEmail} />
       </div>
 
       <p className="legal-contact-help">

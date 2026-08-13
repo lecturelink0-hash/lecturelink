@@ -7,7 +7,7 @@ export default async function HomePage() {
 
   if (session) {
     if (session.profile.accountType === 'professor') {
-      redirect('/professor');
+      redirect(session.profile.onboardedAt ? '/professor' : '/professor-onboarding');
     }
     if (!session.profile.onboardedAt) {
       redirect('/onboarding');

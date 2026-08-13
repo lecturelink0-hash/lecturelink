@@ -72,9 +72,13 @@ export default function OnboardingPage() {
     Promise.all([
       api.get<School[]>('/api/schools'),
       api.get<Subject[]>('/api/subjects'),
-      api.get<{ displayName: string | null }>('/api/me').catch(() => null),
+      api.get<{ displayName: string | null; accountType: 'student' | 'professor' }>('/api/me').catch(() => null),
     ])
       .then(([sch, subs, me]) => {
+        if (me?.accountType === 'professor') {
+          window.location.replace('/professor-onboarding');
+          return;
+        }
         setSchools(sch);
         setSubjects(subs);
         if (subs.length > 0) setSelectedSubject(subs[0].id);

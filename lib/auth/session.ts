@@ -44,7 +44,9 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
         currentSemester: null,
         currentYear: null,
         planTier: 'free',
-        onboardedAt: new Date(0).toISOString(),
+        onboardedAt: process.env.LOCAL_FACULTY_ONBOARDING_PREVIEW === 'true'
+          ? null
+          : new Date(0).toISOString(),
         accountType: 'professor',
         facultyStatus: 'approved',
       },
@@ -119,6 +121,29 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
   if (profileError) {
     console.error('[auth] profile fetch error:', profileError);
     return null;
+  }
+
+  // 이전 교수 가입 트리거는 요청을 pending 상태의 학생 계정으로 저장했다.
+  // 폐쇄 베타에서는 교수 자가가입을 허용하므로 이 조합을 발견하면 서버 권한으로 복구한다.
+  if (profile?.account_type === 'student' && profile.faculty_status === 'pending') {
+    const admin = createAdminClient();
+    const { error: repairError } = await admin
+      .from('users')
+      .update({
+        account_type: 'professor',
+        faculty_status: 'approved',
+        faculty_approved_at: new Date().toISOString(),
+        faculty_approved_by: null,
+      })
+      .eq('id', user.id)
+      .eq('faculty_status', 'pending');
+
+    if (!repairError) {
+      profile.account_type = 'professor';
+      profile.faculty_status = 'approved';
+    } else {
+      console.error('[auth] professor account repair failed:', repairError);
+    }
   }
 
   // profile 이 없으면 (auth.users 만 있고 public.users 미생성) 최소 정보로 반환

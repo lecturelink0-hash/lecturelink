@@ -8,6 +8,17 @@ import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling } from '@/lib/utils/api';
 
 export const GET = withErrorHandling(async (request: Request) => {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_FACULTY_ONBOARDING_PREVIEW === 'true'
+  ) {
+    return ok([
+      { id: '00000000-0000-4000-8000-000000000002', name: '경북대학교 의과대학', short_name: '경북대', type: 'medical' },
+      { id: '00000000-0000-4000-8000-000000000003', name: '계명대학교 의과대학', short_name: '계명대', type: 'medical' },
+      { id: '00000000-0000-4000-8000-000000000004', name: '영남대학교 의과대학', short_name: '영남대', type: 'medical' },
+    ]);
+  }
+
   const supabase = await createServerClient();
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') ?? 'medical';
