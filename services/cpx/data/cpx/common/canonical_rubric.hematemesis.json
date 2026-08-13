@@ -9,7 +9,8 @@
       "교재 채점표 다단계 판정은 플랫폼 정책(이진 판정)으로 변환 — 파생 규칙, 사용자 검수 대상",
       "영역 가중치 35/15/15/25/10 — 도메인 공통",
       "컷오프는 수면·두통 정본 비율 준용해 파생 (원문에 컷오프 없음)",
-      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)"
+      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)",
+      "2026-08-13 실제 CPX 배점 정합화(전 시나리오 확산, 사용자 요청): 실제 CPX는 채점 체크리스트 영역 합 70 + PPI 30이며 임상예의 별도 점수가 없음 — 체크리스트 영역 가중치 35/15/15 → 38/16/16(70으로 비례 환산, 최대잔여 정수 반올림), PPI 25→30, 임상예의 감점 영역 제거(위반 탐지·표시는 채점 외 정보로만 유지)"
     ],
     "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 22 '토혈' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 재작성했으며 교재 문장을 직접 인용하지 않음."
   },
@@ -28,7 +29,7 @@
       "id": "history_taking",
       "name": "병력청취",
       "type": "checklist",
-      "weightPercent": 35,
+      "weightPercent": 38,
       "gradeCutoffs": {
         "excellent": 13,
         "fairMin": 7
@@ -114,7 +115,7 @@
       "id": "physical_exam",
       "name": "신체진찰",
       "type": "checklist",
-      "weightPercent": 15,
+      "weightPercent": 16,
       "gradeCutoffs": {
         "excellent": 8,
         "fairMin": 5
@@ -176,7 +177,7 @@
       "id": "patient_education",
       "name": "환자교육",
       "type": "checklist",
-      "weightPercent": 15,
+      "weightPercent": 16,
       "gradeCutoffs": {
         "excellent": 7,
         "fairMin": 4
@@ -224,7 +225,7 @@
       "id": "ppi",
       "name": "PPI (환자의사관계)",
       "type": "passfail",
-      "weightPercent": 25,
+      "weightPercent": 30,
       "gradeCutoffs": {
         "excellent": 4,
         "fairMin": 2
@@ -249,35 +250,6 @@
         {
           "id": "ppi05",
           "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
-        }
-      ]
-    },
-    {
-      "id": "etiquette",
-      "name": "임상예의",
-      "type": "deduction",
-      "weightPercent": 10,
-      "baseScore": 10,
-      "deductionPerViolation": 2,
-      "floor": 0,
-      "gradeCutoffs": {
-        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
-        "excellentMaxViolations": 0,
-        "fairMaxViolations": 2
-      },
-      "violationTypes": [
-        {
-          "id": "et01",
-          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
-          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
-        },
-        {
-          "id": "et02",
-          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
-        },
-        {
-          "id": "et03",
-          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
         }
       ]
     }
