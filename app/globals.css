@@ -2878,3 +2878,264 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
     text-align: left;
   }
 }
+
+/* ── 요금 안내: 기존 카드 언어를 유지한 3개 플랜 비교 구조 ── */
+.ll-plan-page .page-head {
+  max-width: none;
+  margin: 0 0 24px;
+  text-align: left;
+}
+.ll-plan-page .page-head h1 { margin-top: 0; }
+.ll-plan-page .page-head .lead {
+  max-width: 680px;
+  margin: 12px 0 0;
+}
+.ll-plan-page .notice {
+  max-width: none;
+  margin: 0;
+  text-align: left;
+}
+.ll-plan-page .plan-content-flow {
+  display: grid;
+  gap: 18px;
+}
+.ll-plan-page .plan-selection {
+  display: grid;
+  gap: 0;
+}
+.ll-plan-page .plan-selection.has-trial {
+  gap: 22px;
+}
+.ll-plan-page .plans {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.ll-plan-page .plan {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-width: 0;
+  min-height: 438px;
+  padding: 18px 22px;
+}
+.ll-plan-page .plan.integrated {
+  border: 2px solid var(--forest);
+  background: linear-gradient(180deg, #eef8f0 0%, #f8fcf9 58%, #ffffff 100%);
+  box-shadow: 0 18px 38px -26px rgba(31, 92, 67, 0.48);
+}
+.ll-plan-page .plan-heading-row {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ll-plan-page .plan-title-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.ll-plan-page .current-state,
+.ll-plan-page .ribbon {
+  position: static;
+  display: inline-flex;
+  min-height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1;
+}
+.ll-plan-page .current-state {
+  border: 1px solid var(--sage-200);
+  background: var(--sage);
+  color: var(--forest-800);
+}
+.ll-plan-page .ribbon,
+.ll-plan-page .integrated .ribbon,
+.ll-plan-page .plan.current .ribbon {
+  border: 1px solid #ead89d;
+  background: var(--gold-soft);
+  color: #7a5917;
+}
+.ll-plan-page .plan-summary {
+  min-height: 94px;
+}
+.ll-plan-page .plan-name,
+.ll-plan-page .integrated .plan-name {
+  margin: 0;
+  color: var(--forest-800);
+  font-size: 24px;
+  font-weight: 820;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+.ll-plan-page .price {
+  align-items: baseline;
+  margin: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ll-plan-page .price strong,
+.ll-plan-page .integrated .price strong {
+  color: var(--forest-800);
+  font-size: clamp(36px, 3.6vw, 42px);
+  letter-spacing: -0.03em;
+}
+.ll-plan-page .price span,
+.ll-plan-page .integrated .price span {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.ll-plan-page .plan-sub,
+.ll-plan-page .integrated .plan-sub {
+  margin-top: 12px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+.ll-plan-page .features {
+  margin: 0;
+  gap: 7px;
+}
+.ll-plan-page .features li,
+.ll-plan-page .integrated .features li,
+.ll-plan-page .integrated .features li span {
+  color: var(--forest-800);
+  font-size: 13.5px;
+  font-weight: 540;
+}
+.ll-plan-page .feature-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.ll-plan-page .feature-copy small,
+.ll-plan-page .integrated .feature-copy small {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 560;
+  line-height: 1.45;
+}
+.ll-plan-page .plan-action {
+  margin-top: 24px;
+}
+.ll-plan-page .plan-action-button {
+  border-color: transparent;
+  border-radius: 12px;
+  background: var(--sage);
+  color: var(--forest-800);
+  box-shadow: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.ll-plan-page .plan-action-button:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--sage-200);
+  color: var(--forest-800);
+}
+.ll-plan-page .plan-current-button {
+  border-color: transparent;
+  border-radius: 12px;
+  background: #f2f7f3;
+  color: var(--forest-700);
+  font-weight: 600;
+}
+.ll-plan-page .cpx-pass-button {
+  box-shadow: none;
+  cursor: pointer;
+}
+.ll-plan-page .cpx-pass {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 20px 22px;
+}
+.ll-plan-page .cpx-pass-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--forest);
+}
+.ll-plan-page .cpx-pass-heading h2 {
+  margin: 0;
+  color: var(--forest-800);
+  font-size: 15px;
+  font-weight: 780;
+}
+.ll-plan-page .cpx-pass-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: 7px 0 0;
+  color: var(--forest-800);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+.ll-plan-page .cpx-pass-price strong { font-weight: 780; }
+.ll-plan-page .cpx-pass-copy > p:last-child {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+.ll-plan-page .cpx-pass > button { min-width: 210px; }
+.ll-plan-page .limit-notice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  border: 1px solid var(--sage-200);
+  border-radius: 14px;
+  background: var(--sage);
+  padding: 14px 16px;
+  color: var(--forest-800);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ll-plan-page .limit-notice strong { font-weight: 760; }
+.ll-plan-page .limit-notice span { color: var(--forest-700); }
+.ll-plan-page .usage { margin-top: 0; }
+
+@media (min-width: 681px) and (max-width: 1080px) {
+  .ll-plan-page .plans {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ll-plan-page .plan { min-height: 438px; }
+  .ll-plan-page .plan:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc((100% - 16px) / 2);
+    justify-self: center;
+  }
+}
+
+@media (max-width: 680px) {
+  .ll-plan-page .plans { grid-template-columns: 1fr; }
+  .ll-plan-page .plan {
+    min-height: 0;
+    padding: 18px 20px;
+  }
+  .ll-plan-page .plan-summary { min-height: 0; }
+  .ll-plan-page .plan-action { margin-top: 24px; }
+  .ll-plan-page .price strong { font-size: clamp(34px, 10vw, 40px); }
+  .ll-plan-page .cpx-pass {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 18px;
+  }
+  .ll-plan-page .cpx-pass > button {
+    width: 100%;
+    min-width: 0;
+  }
+}
