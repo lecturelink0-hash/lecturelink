@@ -49,7 +49,7 @@ type BridgeResult = {
   externalSources: Array<{ title: string; organization: string; url: string }>;
   visualDataUrl?: string | null;
   textAudit?: { status: "passed" | "needs_review"; issues: string[] };
-  textRepair?: { applied: boolean; patchCount: number; regenerated: boolean };
+  textRepair?: { applied: boolean; patchCount: number; regenerated: boolean; passCount?: number };
 };
 
 const ACCEPT =
@@ -478,7 +478,7 @@ export function PrerequisiteBridgeStudio() {
                   <div>
                     <b>{result.textAudit.status === "passed"
                       ? result.textRepair?.applied
-                        ? `깨진 글자 ${result.textRepair.patchCount}곳 자동 교정 · 재검수 통과`
+                        ? `깨진 글자 ${result.textRepair.patchCount}곳 자동 교정${result.textRepair.passCount && result.textRepair.passCount > 1 ? ` · ${result.textRepair.passCount}회 교정` : ""} · 재검수 통과`
                         : result.textRepair?.regenerated
                           ? "필수 요소를 포함해 다시 생성 · 자동 검수 통과"
                           : "자동 글자·내용 검수 통과"
@@ -600,9 +600,14 @@ export function PrerequisiteBridgeStudio() {
                 <span>저장할 차시</span>
                 <strong>{courseTitle || "차시 선택 필요"}</strong>
               </div>
-              <div className="summary-item">
-                <span>자료</span>
-                <strong>{materialName || file?.name || "선택 전"}</strong>
+              <div className="summary-item summary-material">
+                <span className="summary-material-label">자료</span>
+                <strong
+                  className="summary-material-name"
+                  title={materialName || file?.name || "선택 전"}
+                >
+                  {materialName || file?.name || "선택 전"}
+                </strong>
               </div>
               <div className="summary-item">
                 <span>학습자</span>

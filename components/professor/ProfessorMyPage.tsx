@@ -17,6 +17,7 @@ import {
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { createBrowserClient } from "@/lib/db/browser";
 import { authErrorMessage } from "@/lib/auth/auth-error-message";
+import { AccountDeletion } from "@/components/account/AccountDeletion";
 import {
   isValidPassword,
   PASSWORD_ERROR,
@@ -296,6 +297,8 @@ export function ProfessorMyPage({
           </Link>
         </aside>
       </div>
+
+      <AccountDeletion />
     </div>
   );
 }

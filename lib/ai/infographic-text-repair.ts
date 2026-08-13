@@ -9,6 +9,8 @@ export type InfographicTextPatch = {
   box: { x: number; y: number; width: number; height: number };
 };
 
+export const MAX_INFOGRAPHIC_TEXT_PATCHES_PER_PASS = 24;
+
 let fontRegistered = false;
 
 function ensureKoreanFont() {
@@ -121,7 +123,7 @@ export async function repairInfographicText(
     && patch.replacementText.length <= 120
     && patch.box.width > 8
     && patch.box.height > 5
-  ).slice(0, 8);
+  ).slice(0, MAX_INFOGRAPHIC_TEXT_PATCHES_PER_PASS);
 
   for (const patch of safePatches) {
     const x = Math.max(0, Math.round((patch.box.x / 1000) * canvas.width));

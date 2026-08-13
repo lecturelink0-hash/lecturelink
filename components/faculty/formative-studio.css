@@ -440,6 +440,16 @@
 .summary-generate-error > span { display: grid; gap: 2px; }
 .summary-generate-error b { font-size: 15px; }
 
+.ll-upload-page .summary-item > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.ll-upload-page .summary-item > strong {
+  min-width: 0;
+}
+
 .ll-upload-page .summary-material {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
