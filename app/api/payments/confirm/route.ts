@@ -295,6 +295,9 @@ async function applyFullReconciliation(
 }
 
 export const POST = withErrorHandling(async (request: Request) => {
+  if (process.env.PAID_SALES_ENABLED !== 'true') {
+    throw new ApiException('paid_sales_disabled', '현재 무료 베타 운영 중이며 결제를 승인하지 않습니다.', 503);
+  }
   const session = await requireSession();
   const body = bodySchema.parse(await request.json());
 

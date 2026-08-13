@@ -164,7 +164,8 @@
   font-weight: 720;
 }
 
-.legal-section a {
+.legal-section a,
+.legal-note a {
   color: var(--legal-forest);
   font-weight: 700;
   text-decoration: underline;

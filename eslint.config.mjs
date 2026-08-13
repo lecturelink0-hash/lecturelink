@@ -8,6 +8,6 @@ const compat = new FlatCompat({ baseDirectory: root });
 export default [
   ...compat.extends('next/core-web-vitals'),
   {
-    ignores: ['.next/**', 'node_modules/**', 'coverage/**', 'public/**'],
+    ignores: ['.next/**', '.codex-preview-*/**', 'node_modules/**', 'coverage/**', 'public/**'],
   },
 ];

@@ -641,7 +641,7 @@ function PlanCard({ name, price, sub, feats, primary = false, badge }: Plan) {
       <div className={`mt-1 text-[12.5px] ${primary ? 'text-white/60' : 'text-[#9AA1AC]'}`}>{sub}</div>
       <div className="mt-4 flex items-baseline gap-1">
         <span className="text-[26px] font-extrabold tracking-tight">{price}</span>
-        <span className={`text-[12.5px] ${primary ? 'text-white/60' : 'text-[#9AA1AC]'}`}>원 / 월</span>
+        <span className={`text-[12.5px] ${primary ? 'text-white/60' : 'text-[#9AA1AC]'}`}>원 / 월 예정</span>
       </div>
       <ul className="mt-4 flex-1 space-y-2">
         {feats.map((f) => (
@@ -657,8 +657,9 @@ function PlanCard({ name, price, sub, feats, primary = false, badge }: Plan) {
           primary ? 'bg-[#F3C64E] text-[#143C2C] hover:bg-[#D9A82F]' : 'bg-[#F4F1E8] text-[#111827] hover:bg-[#EAF3ED]'
         }`}
       >
-        시작하기
+        무료 베타 시작
       </Link>
+      <p className={`mt-2 text-center text-[11px] ${primary ? 'text-white/55' : 'text-[#9AA1AC]'}`}>현재 결제·자동전환 없음</p>
     </div>
   );
 }
@@ -743,7 +744,7 @@ export function Landing() {
                   href="/login"
                   className="llh-5 group inline-flex h-[58px] items-center justify-center gap-2.5 rounded-[14px] bg-[#FCFAF4] px-7 text-[17px] font-extrabold text-[#07563A] shadow-[0_14px_32px_rgba(0,0,0,.18)] transition hover:bg-[#F4F1E8] active:scale-[.98] sm:h-[62px] sm:px-8 sm:text-[18px]"
                 >
-                  1달 무료체험 시작하기
+                  무료 베타 시작하기
                   <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <a
@@ -753,7 +754,7 @@ export function Landing() {
                   기능 살펴보기
                 </a>
               </div>
-              <p className="llh-7 mt-4 text-[13px] font-semibold text-[#F4F1E8]/70">카드 등록 없이 시작 · 첫 한 달 무료</p>
+              <p className="llh-7 mt-4 text-[13px] font-semibold text-[#F4F1E8]/70">카드 등록 없음 · 자동 유료 전환 없음</p>
             </div>
           </div>
 
@@ -917,18 +918,18 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ── 요금 안내 — 기존 랜딩 요금제 복원 + 무료 체험 안내 ── */}
+        {/* ── 요금 안내 — 무료 베타 및 출시 예정가 안내 ── */}
         <section id="pricing" className="scroll-mt-16 border-t border-[#E5E1D8] bg-[#F4F1E8]/50 px-5 py-16 sm:px-8 sm:py-20">
           <div className="mx-auto max-w-[1140px]">
             <ScrollReveal>
               <SectionHeading
                 badge={
                   <Badge tone="gold">
-                    <Sparkles className="h-[13px] w-[13px]" /> 첫 한 달 무료 체험
+                    <Sparkles className="h-[13px] w-[13px]" /> 무료 베타 운영 중
                   </Badge>
                 }
                 title="학습 목표에 맞게 선택하세요"
-                desc={'한 달 동안 직접 사용해보세요.\n학교 시험만, 국시만, 또는 둘 다 — 필요한 학습 흐름에 맞춰 요금제를 고를 수 있습니다.'}
+                desc={'현재 결제수단을 받지 않으며 자동 유료 전환도 없습니다.\n아래 금액과 구성은 정식 출시 예정안으로, 판매 시작 전 확정 조건을 다시 안내합니다.'}
               />
             </ScrollReveal>
             <ScrollReveal delay={100}>
@@ -940,9 +941,6 @@ export function Landing() {
             </ScrollReveal>
           </div>
         </section>
-
-        {/* ── 후기 — 기존 랜딩 캐러셀 복원 ── */}
-        <Reviews />
 
         {/* ── CTA — 기존 랜딩 마감 패널 스타일 ── */}
         <section className="border-t border-[#E5E1D8] px-5 py-16 sm:px-8 sm:py-20">
@@ -968,7 +966,7 @@ export function Landing() {
                     href="/login"
                     className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#F3C64E] px-7 text-[15px] font-bold text-[#143C2C] transition hover:bg-[#D9A82F] active:scale-[.98]"
                   >
-                    1달 무료체험 시작하기
+                    무료 베타 시작하기
                     <ArrowRight className="h-[17px] w-[17px] transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <a
@@ -1015,6 +1013,7 @@ export function Landing() {
                 l: [
                   { label: '이용약관', href: '/terms' },
                   { label: '개인정보처리방침', href: '/privacy' },
+                  { label: '환불·해지 정책', href: '/refund' },
                 ],
               },
             ].map((c) => (

@@ -44,6 +44,15 @@
   outline: none;
 }
 .join-panel input:focus { border-color: #a6c7b0; box-shadow: 0 0 0 3px rgba(166, 199, 176, .18); }
+.join-panel .join-privacy { grid-template-columns: auto 1fr; align-items: start; gap: 10px; margin-top: 20px; padding: 13px; border: 1px solid var(--student-line); border-radius: 10px; background: #f8faf8; cursor: pointer; }
+.join-panel .join-privacy input { width: 17px; min-height: 17px; height: 17px; margin-top: 3px; padding: 0; accent-color: var(--student-forest); }
+.join-panel .join-privacy span { display: grid; gap: 3px; }
+.join-panel .join-privacy b { font-size: 14px; }
+.join-panel .join-privacy small { color: var(--student-muted); font-size: 12px; font-weight: 500; line-height: 1.55; }
+.join-panel .join-privacy a { color: var(--student-forest); text-decoration: underline; }
+.join-assessment-owner { display: grid; gap: 2px; margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--student-sage); color: var(--student-forest-dark); }
+.join-assessment-owner b { font-size: 14px; }
+.join-assessment-owner span { font-size: 12px; }
 .join-panel button,
 .runner footer button {
   min-height: 48px;

@@ -9,6 +9,7 @@ import { readApiResponse } from '@/lib/utils/read-api-response';
 import './live-student.css';
 import './live-student-save.css';
 import '../formative/formative-flow.css';
+import { PRIVACY_VERSION } from '@/lib/legal/config';
 
 const storageKey = (code: string) => `lecturelink-live:${code}`;
 const previewQuestions = [
@@ -46,8 +47,20 @@ export function LiveStudentRunner() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [savedUploadId, setSavedUploadId] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [assessmentNotice, setAssessmentNotice] = useState<{ title: string; professorName: string; institutionName: string | null } | null>(null);
 
   useEffect(() => { if (!isPreview) createBrowserClient().auth.getUser().then(({ data: auth }) => setLoggedIn(Boolean(auth.user))); }, [isPreview]);
+  useEffect(() => {
+    if (isPreview || code.length !== 6 || sessionId) { setAssessmentNotice(null); setPrivacyAccepted(false); return; }
+    const timer = window.setTimeout(async () => {
+      const response = await fetch('/api/public/live-assessments/notice', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+      const payload = await response.json().catch(() => null);
+      if (response.ok && payload?.ok) { setAssessmentNotice(payload.data); setError(''); }
+      else { setAssessmentNotice(null); setPrivacyAccepted(false); setError(payload?.error?.message ?? '평가 안내를 확인하지 못했습니다.'); }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [code, isPreview, sessionId]);
   useEffect(() => { if (isPreview || !initialCode) return; const raw = localStorage.getItem(storageKey(initialCode)); if (!raw) return; try { const saved = JSON.parse(raw); setSessionId(saved.sessionId); setToken(saved.token); } catch { localStorage.removeItem(storageKey(initialCode)); } }, [initialCode, isPreview]);
 
   const load = useCallback(async () => {
@@ -75,7 +88,8 @@ export function LiveStudentRunner() {
 
   async function join() {
     setError('');
-    const response = await fetch('/api/public/live-assessments', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, name }) });
+    if (!privacyAccepted) { setError('개인정보 수집·공유 안내를 확인해 주세요.'); return; }
+    const response = await fetch('/api/public/live-assessments', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, name, privacyAccepted, privacyVersion: PRIVACY_VERSION }) });
     const payload = await response.json();
     if (!payload.ok) { setError(payload.error?.message); return; }
     localStorage.setItem(storageKey(code.toUpperCase()), JSON.stringify(payload.data)); setSessionId(payload.data.sessionId); setToken(payload.data.token);
@@ -107,7 +121,7 @@ export function LiveStudentRunner() {
   }
 
   const root = 'student-live ll-student-formative-flow';
-  if (!sessionId) return <main className={`${root} join-page`}><div className="join-shell"><Link className="join-brand" href="/" aria-label="LectureLink 홈으로"><span aria-hidden="true"><BookOpen /></span><b>LectureLink</b></Link><section className="join-panel"><div className="join-intro"><div className="join-heading"><p className="join-eyebrow">LectureLink 실시간 평가</p><h1><span>형성평가</span>에 참여하세요</h1></div><div className="join-illustration" aria-hidden="true"><span><BookOpenCheck /></span><i /><i /><i /></div></div><p className="join-description">교수자가 안내한 참여 코드와 이름을 입력해주세요.</p><form onSubmit={(event) => { event.preventDefault(); void join(); }}><label><span>참여 코드</span><input value={code} maxLength={6} inputMode="numeric" autoComplete="one-time-code" onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="6자리 코드" /></label><label><span>이름</span><input value={name} maxLength={40} autoComplete="name" onChange={(event) => setName(event.target.value)} placeholder="이름을 입력하세요" /></label>{error && <div className="live-error" role="alert">{error}</div>}<button type="submit" disabled={code.length !== 6 || !name.trim()}><span>참여하기</span><i className="join-button-icon" aria-hidden="true"><ArrowRight /></i></button></form><p className="join-save-note">형성평가 종료 후 로그인하면 형성평가 문항과 결과를 저장할 수 있어요.</p></section><p className="join-footer">강의와 학습을 연결하는 LectureLink</p></div></main>;
+  if (!sessionId) return <main className={`${root} join-page`}><div className="join-shell"><Link className="join-brand" href="/" aria-label="LectureLink 홈으로"><span aria-hidden="true"><BookOpen /></span><b>LectureLink</b></Link><section className="join-panel"><div className="join-intro"><div className="join-heading"><p className="join-eyebrow">LectureLink 실시간 평가</p><h1><span>형성평가</span>에 참여하세요</h1></div><div className="join-illustration" aria-hidden="true"><span><BookOpenCheck /></span><i /><i /><i /></div></div><p className="join-description">교수자가 안내한 참여 코드와 이름을 입력해주세요.</p><form onSubmit={(event) => { event.preventDefault(); void join(); }}><label><span>참여 코드</span><input value={code} maxLength={6} inputMode="text" autoComplete="one-time-code" onChange={(event) => setCode(event.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase())} placeholder="6자리 코드" /></label><label><span>이름</span><input value={name} maxLength={40} autoComplete="name" onChange={(event) => setName(event.target.value)} placeholder="이름을 입력하세요" /></label>{assessmentNotice && <div className="join-assessment-owner"><b>{assessmentNotice.title}</b><span>{[assessmentNotice.institutionName, assessmentNotice.professorName].filter(Boolean).join(' · ')}</span></div>}<label className="join-privacy"><input type="checkbox" checked={privacyAccepted} disabled={!assessmentNotice} onChange={(event) => { setPrivacyAccepted(event.target.checked); setError(''); }} /><span><b>개인정보 수집·공유 안내를 확인했습니다. (필수)</b><small>이름, 답안, 점수와 접속 기록은 평가 운영·결과 제공을 위해 수집되어 위 평가 개설자에게 제공되며, 평가 종료 후 1년간 보관됩니다. 동의하지 않으면 평가에 참여할 수 없습니다. <Link href="/privacy" target="_blank">자세히 보기</Link></small></span></label>{error && <div className="live-error" role="alert">{error}</div>}<button type="submit" disabled={code.length !== 6 || !name.trim() || !privacyAccepted || !assessmentNotice}><span>참여하기</span><i className="join-button-icon" aria-hidden="true"><ArrowRight /></i></button></form><p className="join-save-note">형성평가 종료 후 로그인하면 형성평가 문항과 결과를 저장할 수 있어요.</p></section><p className="join-footer">강의와 학습을 연결하는 LectureLink</p></div></main>;
   if (!data) return <main className={root}><section className="join-panel">참여 정보를 불러오는 중입니다.</section></main>;
   const session = data.session, participant = data.participant;
   if (session.status === 'lobby') return <main className={`${root} lobby-page`}><section className="waiting lobby-waiting"><span className="waiting-badge">입장 완료</span><h1>{session.title}</h1><p>{participant.name}님, 교수님이 평가를 시작할 때까지<br />기다려주세요.</p><div className="pulse" /></section></main>;

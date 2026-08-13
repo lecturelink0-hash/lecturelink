@@ -10,6 +10,10 @@ function fail(message) {
 }
 
 try {
+  execFileSync(process.execPath, ['scripts/check-env.mjs', '--file', '.env.production.local', '--prod'], {
+    encoding: 'utf8',
+    stdio: 'inherit',
+  });
   const branch = git('branch', '--show-current');
   if (branch !== 'main') fail(`current branch is "${branch || 'detached HEAD'}", not "main".`);
 

@@ -1,30 +1,32 @@
 import type { Metadata } from 'next';
 import { MessageCircle, Mail } from 'lucide-react';
+import { legalOperator } from '@/lib/legal/config';
 
 export const metadata: Metadata = { title: '문의하기 — LectureLink' };
 
-// 카카오톡 채널(플러스친구) 링크. 운영에서 채널을 만든 뒤 --env-file 에
-// KAKAO_CHANNEL_URL 만 넣고 재시작하면 연결됨(재빌드 불필요, 런타임 env).
-// (빌드타임 baked 되는 NEXT_PUBLIC 값도 폴백으로 허용.)
+const LECTURELINK_KAKAO_CHANNEL_URL = 'https://pf.kakao.com/_DQwiX/chat';
+
+// 운영 환경에서 링크를 교체할 수 있고, 별도 설정이 없으면 현재 LectureLink 채널로 연결합니다.
 function channelUrl(): string {
   return (
     process.env.KAKAO_CHANNEL_URL ||
     process.env.NEXT_PUBLIC_KAKAO_CHANNEL_URL ||
-    ''
+    LECTURELINK_KAKAO_CHANNEL_URL
   ).trim();
 }
 
-const SUPPORT_EMAIL = 'goodwood0202@gmail.com';
-
 export default function ContactPage() {
   const kakao = channelUrl();
+  const { representative, phone, supportEmail } = legalOperator();
+  const phoneHref = `tel:${phone.replace(/[^+\d]/g, '')}`;
+  const emailHref = `mailto:${supportEmail}?subject=${encodeURIComponent('LectureLink 문의')}`;
 
   return (
     <article className="legal-document legal-contact">
       <header className="legal-page-head">
         <h1>무엇이든 <span>문의해 주세요</span></h1>
         <p>
-          궁금한 점이나 불편한 점이 있으면 편하게 알려주세요. 보통 영업일 기준 하루 안에 답변드립니다.
+          문의는 언제든 남겨 주세요. 카카오톡·전화·이메일로 접수하며, 확인 후 1일 이내 답변드립니다.
         </p>
       </header>
 
@@ -54,7 +56,7 @@ export default function ContactPage() {
 
         {/* 이메일 대체 수단 */}
         <a
-          href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('LectureLink 문의')}`}
+          href={emailHref}
           className="legal-secondary-button"
         >
           <Mail aria-hidden="true" />
@@ -63,6 +65,9 @@ export default function ContactPage() {
       </div>
 
       <p className="legal-contact-help">
+        대표자 {representative} · 전화 <a href={phoneHref}>{phone}</a> · 이메일{' '}
+        <a href={emailHref}>{supportEmail}</a>
+        <br />
         오류 신고나 기능 제안도 같은 채널로 받고 있어요. 자주 묻는 질문은{' '}
         <a href="/faq">
           FAQ

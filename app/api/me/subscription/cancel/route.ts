@@ -34,10 +34,13 @@ export const POST = withErrorHandling(async () => {
   }
 
   const admin = createAdminClient();
-  await admin
+  const { error: cancelError } = await admin
     .from('subscriptions')
     .update({ auto_renew: false })
     .eq('id', sub.id);
+  if (cancelError) {
+    throw new ApiException('subscription_cancel_failed', '자동 갱신을 해제하지 못했습니다.', 503);
+  }
 
   return ok({ cancelled: true });
 });

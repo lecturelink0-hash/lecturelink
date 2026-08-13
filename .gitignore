@@ -98,3 +98,5 @@ keys/
 .pnpm-store/
 .next-stalled-*/
 .vercel
+.env*
+.codex-preview-*/

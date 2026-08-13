@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { api, ApiError } from '@/lib/api/client';
+import { api } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
-import { Check, X, Gift, BarChart3 } from 'lucide-react';
+import { Check, X, BarChart3 } from 'lucide-react';
+import { SUPPORT_EMAIL } from '@/lib/legal/config';
 
 interface QuotaSnapshot {
   plan_tier: 'free' | 'lite' | 'standard' | 'pro';
@@ -85,7 +86,6 @@ const PLANS: Plan[] = [
 
 export default function PlanPage() {
   const [quota, setQuota] = useState<QuotaSnapshot | null>(null);
-  const [loading, setLoading] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
 
   useEffect(() => {
@@ -94,46 +94,6 @@ export default function PlanPage() {
       setLimitReached(new URLSearchParams(window.location.search).has('limit'));
     }
   }, []);
-
-  async function handlePurchase(plan: Plan) {
-    if (plan.displayOnly) {
-      window.location.href = '/contact';
-      return;
-    }
-    // 통합형 무제한(unlimited)은 결제 tier enum(lite/standard/pro)에 없어 서버 결제 초기화 대상이
-    // 아니므로, 다른 유료 플랜과 동일한 결제(데모) 플로우를 직접 노출한다.
-    if (plan.tier === 'unlimited') {
-      alert(
-        `결제 초기화 완료\n플랜: 통합형 무제한\n금액: ₩${plan.price.toLocaleString()}\n\n(데모) 실제 토스 위젯 연결은 운영 단계에서 추가됩니다.`,
-      );
-      return;
-    }
-    setLoading(plan.tier);
-    try {
-      const res = await api.post<{
-        order_id: string;
-        amount: number;
-        order_name: string;
-        customer_email: string;
-        success_url: string;
-        fail_url: string;
-        client_key: string;
-      }>('/api/payments/init', {
-        kind: 'subscription',
-        plan_tier: plan.tier as 'lite' | 'standard' | 'pro',
-      });
-
-      // 실제 토스 SDK 로딩 및 결제 위젯 호출은 다음 단계에서 통합
-      alert(
-        `결제 초기화 완료\n주문 ID: ${res.order_id}\n금액: ₩${res.amount.toLocaleString()}\n\n(데모) 실제 토스 위젯 연결은 운영 단계에서 추가됩니다.`,
-      );
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : '결제 초기화 실패';
-      alert(msg);
-    } finally {
-      setLoading(null);
-    }
-  }
 
   return (
     <div className="ll-plan-page content">
@@ -147,14 +107,14 @@ export default function PlanPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => handlePurchase({ tier: 'lite', name: '추가 크레딧', price: 0, desc: '', features: [] } as unknown as Plan)}
-              className="text-left rounded-[14px] border border-[var(--color-border)] bg-white p-4 hover:border-sage-400 transition-colors"
+              disabled
+              className="text-left rounded-[14px] border border-[var(--color-border)] bg-white p-4 opacity-70"
             >
-              <div className="text-sm font-bold text-sage-800 mb-1">추가 크레딧 결제</div>
-              <div className="text-[12px] text-[var(--color-muted)]">지금 요금제를 유지하고 문제 수만 추가로 충전</div>
+              <div className="text-sm font-bold text-sage-800 mb-1">추가 크레딧 준비 중</div>
+              <div className="text-[12px] text-[var(--color-muted)]">결제 기능을 정식으로 열기 전에는 구매되지 않습니다.</div>
             </button>
             <a
-              href="mailto:goodwood0202@gmail.com?subject=통합형 무제한 문의"
+              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('통합형 무제한 문의')}`}
               className="text-left rounded-[14px] border border-sage-700 bg-sage-700 text-white p-4 hover:bg-sage-800 transition-colors"
             >
               <div className="text-sm font-bold mb-1">통합형 무제한으로 전환</div>
@@ -167,9 +127,9 @@ export default function PlanPage() {
       <section className="page-head"><span className="eyebrow">요금 안내</span><h1><span className="headline-accent">학습 방식</span>에 맞는<br/>플랜을 선택하세요</h1><p className="lead">내신 대비, 국시 대비 또는 두 기능을 모두 이용할 수 있는 플랜을 선택할 수 있어요.</p></section>
 
       <div className="space-y-8">
-        {/* 첫 달 무료 배너 — 통합형 요금제 한정(기획서) */}
+        {/* 무료 베타 운영 안내 */}
         <div className="notice">
-          <strong>첫 달 무료 체험</strong><span>모든 기능을 한 달 동안 무료로 이용하고, 언제든 해지할 수 있어요.</span>
+          <strong>무료 베타 운영 중</strong><span>현재 결제수단을 받지 않으며, 자동으로 유료 전환하거나 청구하지 않습니다.</span>
         </div>
 
         {/* 요금제 카드 */}
@@ -212,12 +172,10 @@ export default function PlanPage() {
                   <div className="price">
                     <strong>
                       ₩{plan.price.toLocaleString()}
-                    </strong><span>/월</span>
+                    </strong><span>/월 출시 예정가</span>
                   </div>
                   <p className="desc">
-                    {plan.tier === 'pro' || plan.tier === 'unlimited'
-                      ? `첫 달 무료 후 월 ₩${plan.price.toLocaleString()}`
-                      : '무료체험은 통합형부터'}
+                    정식 유료 판매 전 별도 고지하며 현재는 결제되지 않습니다.
                   </p>
 
                   {/* 기능 목록 */}
@@ -263,24 +221,19 @@ export default function PlanPage() {
                     ) : featured ? (
                       <button
                         type="button"
-                        onClick={() => handlePurchase(plan)}
-                        disabled={loading === plan.tier}
-                        className="w-full h-[52px] rounded-lg inline-flex items-center justify-center gap-2 text-base font-bold bg-[var(--color-gold)] text-sage-900 hover:bg-[var(--color-gold-dark)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        disabled
+                        className="w-full h-[52px] rounded-lg inline-flex items-center justify-center gap-2 text-base font-bold bg-[var(--color-gold)] text-sage-900 disabled:opacity-70 disabled:cursor-not-allowed"
                       >
-                        {loading === plan.tier && (
-                          <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        )}
-                        결제하기
+                        유료 판매 준비 중
                       </button>
                     ) : (
                       <Button
                         fullWidth
                         size="lg"
                         variant="secondary"
-                        onClick={() => handlePurchase(plan)}
-                        loading={loading === plan.tier}
+                        disabled
                       >
-                        {plan.displayOnly ? '문의하기' : '결제하기'}
+                        유료 판매 준비 중
                       </Button>
                     )}
                   </div>
@@ -290,7 +243,7 @@ export default function PlanPage() {
           </section>
 
           <p className="text-center text-xs text-[var(--color-muted)] mt-5">
-            추가 크레딧 결제 시 문제 수 추가 가능
+            표시 가격과 구성은 정식 출시 전에 변경될 수 있습니다.
           </p>
         </div>
 

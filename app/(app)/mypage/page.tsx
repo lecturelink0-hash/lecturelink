@@ -177,6 +177,7 @@ export default function MyPage() {
   const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
 
   // Calendar navigation
   const now = new Date();
@@ -267,6 +268,26 @@ export default function MyPage() {
   const nextBillingDate = subscription?.subscription?.expires_at
     ? subscription.subscription.expires_at.slice(0, 10).replace(/-/g, '.')
     : '—';
+  const activeSubscription = subscription?.subscription?.status === 'active'
+    ? subscription.subscription
+    : null;
+
+  async function cancelSubscription() {
+    if (!activeSubscription?.auto_renew || cancellingSubscription) return;
+    if (!confirm('자동 갱신을 해제할까요? 이용 기간이 남아 있다면 만료일까지 사용할 수 있습니다.')) return;
+    setCancellingSubscription(true);
+    try {
+      await api.post('/api/me/subscription/cancel', {});
+      setSubscription((current) => current?.subscription ? {
+        ...current,
+        subscription: { ...current.subscription, auto_renew: false },
+      } : current);
+    } catch (cause) {
+      alert(cause instanceof ApiError ? cause.message : '자동 갱신을 해제하지 못했습니다.');
+    } finally {
+      setCancellingSubscription(false);
+    }
+  }
 
   // Calendar grid
   const totalDays = daysInMonth(viewYear, viewMonth);
@@ -440,7 +461,7 @@ export default function MyPage() {
               <p className="text-[11px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
             </div>
             <p className="text-right flex-shrink-0">
-              {plan.price > 0 ? (
+              {activeSubscription && plan.price > 0 ? (
                 <>
                   <span className="text-[16px] font-bold tnum">
                     {plan.price.toLocaleString()}원
@@ -448,7 +469,7 @@ export default function MyPage() {
                   <span className="text-[12px] text-white/70"> / 월</span>
                 </>
               ) : (
-                <span className="text-[15px] font-bold">무료</span>
+                <span className="text-[15px] font-bold">무료 베타</span>
               )}
             </p>
           </div>
@@ -469,9 +490,14 @@ export default function MyPage() {
 
           {/* Next billing */}
           <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[12px]">
-            <span className="text-[var(--color-muted)]">다음 결제일</span>
-            <span className="font-semibold text-sage-800 tnum">{nextBillingDate}</span>
+            <span className="text-[var(--color-muted)]">{activeSubscription?.auto_renew ? '다음 결제 예정일' : activeSubscription ? '이용 만료일' : '자동 결제'}</span>
+            <span className="font-semibold text-sage-800 tnum">{activeSubscription ? nextBillingDate : '없음'}</span>
           </div>
+          {activeSubscription?.auto_renew && (
+            <button type="button" onClick={cancelSubscription} disabled={cancellingSubscription} className="mt-2 text-left text-xs font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50">
+              {cancellingSubscription ? '해지 처리 중...' : '자동 갱신 해제'}
+            </button>
+          )}
         </div>
       </div>
 

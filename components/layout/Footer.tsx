@@ -39,6 +39,7 @@ const columns: FooterColumn[] = [
     links: [
       { label: '이용약관', href: '/terms' },
       { label: '개인정보처리방침', href: '/privacy' },
+      { label: '환불·해지 정책', href: '/refund' },
     ],
   },
 ];
