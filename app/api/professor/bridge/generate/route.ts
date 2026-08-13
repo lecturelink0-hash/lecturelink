@@ -7,10 +7,15 @@ import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
 import { createServerClient } from '@/lib/db/server';
 import { extractTeachingMaterial, loadTeachingMaterialFile } from '@/lib/teaching/materials';
 import { findVerifiedPubMedSources } from '@/lib/medical-sources/pubmed';
-import { repairInfographicText, type InfographicTextPatch } from '@/lib/ai/infographic-text-repair';
+import {
+  MAX_INFOGRAPHIC_TEXT_PATCHES_PER_PASS,
+  repairInfographicText,
+  type InfographicTextPatch,
+} from '@/lib/ai/infographic-text-repair';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_INFOGRAPHIC_BYTES = 900_000;
+const MAX_INFOGRAPHIC_REPAIR_PASSES = 3;
 
 function sleep(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -121,7 +126,7 @@ A medical student should understand the conceptual structure by scanning illustr
 CONTENT — use these Korean strings accurately and do not invent facts:
 Title: ${result.title}
 Topic: ${result.topic}
-Exam scope: ${result.examScope}
+${result.examScope ? `Exam scope explicitly stated in the lecture material: ${result.examScope}` : 'No explicit exam scope was found. Do not add an exam-scope label or section.'}
 Lecture map: ${result.lectureMap.join(' → ')}
 Prerequisites:
 ${result.prerequisiteConcepts.map((item, index) => `${index + 1}. ${item.name}: ${item.quickReview} | visual: ${item.visualCue}`).join('\n')}
@@ -212,7 +217,7 @@ const auditSchema = z.object({
       width: z.number().min(0).max(1000),
       height: z.number().min(0).max(1000),
     }),
-  })).max(8),
+  })).max(MAX_INFOGRAPHIC_TEXT_PATCHES_PER_PASS),
 });
 
 const auditTool = {
@@ -228,7 +233,7 @@ const auditTool = {
       repairable: { type: 'boolean' },
       patches: {
         type: 'array',
-        maxItems: 8,
+        maxItems: MAX_INFOGRAPHIC_TEXT_PATCHES_PER_PASS,
         items: {
           type: 'object',
           required: ['observedText', 'replacementText', 'confidence', 'backgroundComplexity', 'box'],
@@ -276,10 +281,10 @@ async function auditInfographic(result: z.infer<typeof resultSchema>, visualData
       ...result.readinessCheck.flatMap((item) => [item.question, item.answer]),
       '시험 직전, 이것만은 기억!',
       'LectureLink',
-    ].join('\n');
+    ].filter(Boolean).join('\n');
     const response = await withRetry(() => createMessage(getAnthropic(), {
       model: MODELS.vision(),
-      max_tokens: 1800,
+      max_tokens: 3600,
       tools: [auditTool],
       tool_choice: { type: 'tool', name: 'audit_infographic' },
       messages: [{ role: 'user', content: [
@@ -314,7 +319,7 @@ async function auditAndRepairArtwork(
 ) {
   let visualDataUrl = generatedArtwork;
   let textAudit = await auditInfographic(result, visualDataUrl);
-  let textRepair = { applied: false, patchCount: 0, regenerated: false };
+  let textRepair = { applied: false, patchCount: 0, regenerated: false, passCount: 0 };
 
   if (textAudit.status === 'needs_review' && !textAudit.requiredElementsPresent
       && Date.now() < deadlineAt - 75_000) {
@@ -325,32 +330,53 @@ async function auditAndRepairArtwork(
         : failedAudit('필수 요소를 포함해 다시 생성했으며 시간 제한으로 재검수를 건너뛰었습니다.');
       visualDataUrl = regenerated;
       textAudit = regeneratedAudit;
-      textRepair = { applied: false, patchCount: 0, regenerated: true };
+      textRepair = { applied: false, patchCount: 0, regenerated: true, passCount: 0 };
     }
   }
 
-  if (visualDataUrl && textAudit.status === 'needs_review' && textAudit.patches.length > 0) {
+  for (let pass = 1; pass <= MAX_INFOGRAPHIC_REPAIR_PASSES; pass += 1) {
+    if (!visualDataUrl || textAudit.status !== 'needs_review' || textAudit.patches.length === 0) break;
+    if (Date.now() >= deadlineAt - 25_000) {
+      textAudit = {
+        ...textAudit,
+        issues: [
+          `자동 글자 교정을 ${textRepair.passCount}회 진행한 뒤 시간 제한으로 추가 교정을 종료했습니다.`,
+          ...textAudit.issues,
+        ].slice(0, 12),
+      };
+      break;
+    }
+
     const corrected = await repairInfographicText(visualDataUrl, textAudit.patches);
     const optimized = corrected ? await optimizeInfographic(corrected.dataUrl) : null;
-    if (optimized && corrected) {
-      visualDataUrl = optimized;
-      textRepair = {
-        applied: true,
-        patchCount: corrected.appliedCount,
-        regenerated: textRepair.regenerated,
-      };
+    if (!optimized || !corrected) break;
 
-      if (Date.now() < deadlineAt - 25_000) {
-        textAudit = await auditInfographic(result, optimized);
-      } else {
-        textAudit = {
-          ...textAudit,
-          issues: [
-            `깨진 글자 ${corrected.appliedCount}곳을 승인된 문구로 교정했습니다.`,
-            ...textAudit.issues,
-          ].slice(0, 12),
-        };
-      }
+    visualDataUrl = optimized;
+    textRepair = {
+      applied: true,
+      patchCount: textRepair.patchCount + corrected.appliedCount,
+      regenerated: textRepair.regenerated,
+      passCount: pass,
+    };
+
+    console.info('[bridge-generation]', {
+      stage: 'infographic_text_repair_pass_complete',
+      pass,
+      appliedCount: corrected.appliedCount,
+      totalAppliedCount: textRepair.patchCount,
+    });
+
+    if (Date.now() < deadlineAt - 25_000) {
+      textAudit = await auditInfographic(result, optimized);
+    } else {
+      textAudit = {
+        ...textAudit,
+        issues: [
+          `깨진 글자 ${textRepair.patchCount}곳을 ${pass}회에 걸쳐 교정했으며 시간 제한으로 재검수를 종료했습니다.`,
+          ...textAudit.issues,
+        ].slice(0, 12),
+      };
+      break;
     }
   }
 
@@ -501,7 +527,7 @@ const sourcePlanTool = {
 const resultSchema = z.object({
   title: z.string().min(1),
   topic: z.string().min(1),
-  examScope: z.string().min(1),
+  examScope: z.string().default(''),
   designStyle: z.enum(['medical-clean', 'hand-drawn', 'blueprint', 'editorial']),
   courseConnection: z.string().min(1),
   lectureMap: z.array(z.string().min(1)).min(3).max(5),
@@ -670,7 +696,7 @@ function normalizeGeneratedResult(
   const parsed = resultSchema.safeParse({
     title: cleanGeneratedText(raw.title, `${fileTopic} 예습 핵심 지도`),
     topic: cleanGeneratedText(raw.topic, fileTopic),
-    examScope: cleanGeneratedText(raw.examScope, '강의자료에 별도로 표시된 시험 범위를 우선 확인하세요.'),
+    examScope: cleanGeneratedText(raw.examScope),
     designStyle,
     courseConnection: cleanGeneratedText(raw.courseConnection, '핵심 선수지식에서 이번 강의의 전체 흐름으로 연결합니다.'),
     lectureMap,
@@ -700,7 +726,7 @@ const outputTool = {
   description: 'Create a concise pre-class prerequisite review handout grounded in lecture material.',
   input_schema: {
     type: 'object',
-    required: ['title', 'topic', 'examScope', 'designStyle', 'courseConnection', 'lectureMap', 'professorEmphasis', 'estimatedMinutes', 'prerequisiteConcepts', 'coreFlow', 'representativeExamples', 'mustRemember', 'commonConfusions', 'readinessCheck', 'sourceSearchQueries'],
+    required: ['title', 'topic', 'designStyle', 'courseConnection', 'lectureMap', 'professorEmphasis', 'estimatedMinutes', 'prerequisiteConcepts', 'coreFlow', 'representativeExamples', 'mustRemember', 'commonConfusions', 'readinessCheck', 'sourceSearchQueries'],
     properties: {
       title: { type: 'string' },
       topic: { type: 'string' },
@@ -840,7 +866,7 @@ export const POST = withErrorHandling(async (request: Request) => {
 
 규칙:
 - lectureMap은 이번 수업의 전체 개요를 한눈에 보여주는 3~5단계 지도다.
-- examScope에는 강의자료에 명시된 시험 범위만 쓴다. “여기까지 시험 범위” 같은 표시는 절대 놓치지 않는다.
+- examScope는 선택 항목이다. 강의자료에 “시험 범위”, “여기까지 출제”처럼 범위가 명시된 경우에만 원문에 근거해 쓰고, 명시되지 않았다면 추측하거나 안내 문구를 만들지 말고 빈 문자열로 둔다.
 - professorEmphasis에는 별표, 밑줄, 색상 강조, 반복 언급, “중요/주의/금기/시험” 표시가 있는 내용을 우선 수집한다.
 - prerequisiteConcepts는 해부·생리·병태생리·영상 또는 감별에 필요한 3~5개 핵심 선수지식이다.
 - visualCue에는 각 개념을 설명할 정확한 그림/도식 지시를 한 문장으로 쓴다.
@@ -886,7 +912,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   let textAudit: z.infer<typeof auditSchema> = !generatedArtwork
     ? failedAudit('AI 이미지 생성이 완료되지 않아 자동 구성한 대체 시각자료를 사용했습니다.')
     : failedAudit('전체 생성 시간을 지키기 위해 자동 글자 검수를 건너뛰었습니다.');
-  let textRepair = { applied: false, patchCount: 0, regenerated: false };
+  let textRepair = { applied: false, patchCount: 0, regenerated: false, passCount: 0 };
   if (generatedArtwork) {
     ({ visualDataUrl, textAudit, textRepair } = await auditAndRepairArtwork(
       verifiedResult,

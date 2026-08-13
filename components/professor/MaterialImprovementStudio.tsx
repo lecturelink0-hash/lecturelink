@@ -455,9 +455,14 @@ export function MaterialImprovementStudio() {
                 <span>저장할 차시</span>
                 <strong>{courseTitle || "차시 선택 필요"}</strong>
               </div>
-              <div className="summary-item">
-                <span>자료</span>
-                <strong>{materialName || file?.name || "선택 전"}</strong>
+              <div className="summary-item summary-material">
+                <span className="summary-material-label">자료</span>
+                <strong
+                  className="summary-material-name"
+                  title={materialName || file?.name || "선택 전"}
+                >
+                  {materialName || file?.name || "선택 전"}
+                </strong>
               </div>
               <div className="summary-item">
                 <span>사용 목적</span>

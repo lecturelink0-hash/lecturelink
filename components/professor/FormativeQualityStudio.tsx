@@ -229,8 +229,18 @@ export function FormativeQualityStudio() {
           <aside className="faculty-summary summary summary-hero card pad">
             <div className="card-head"><div><h2>문항 검토 요약</h2><p>분석 범위를 확인하고 검토를 시작하세요.</p></div></div>
             <dl className="summary-list">
-              <div className="summary-item"><span>문항 입력</span><strong>{questionFile ? questionFile.name : '직접 붙여넣기'}</strong></div>
-              <div className="summary-item"><span>수업자료</span><strong>{materialFile ? materialFile.name : '없음'}</strong></div>
+              <div className="summary-item summary-material">
+                <span className="summary-material-label">문항 입력</span>
+                <strong className="summary-material-name" title={questionFile ? questionFile.name : '직접 붙여넣기'}>
+                  {questionFile ? questionFile.name : '직접 붙여넣기'}
+                </strong>
+              </div>
+              <div className="summary-item summary-material">
+                <span className="summary-material-label">수업자료</span>
+                <strong className="summary-material-name" title={materialFile ? materialFile.name : '없음'}>
+                  {materialFile ? materialFile.name : '없음'}
+                </strong>
+              </div>
               <div className="summary-item"><span>분석 범위</span><strong>{materialFile ? '문항 + 수업 정렬' : '문항 자체'}</strong></div>
               <div className="summary-item"><span>기본 기준</span><strong>6개 전체</strong></div>
             </dl>
