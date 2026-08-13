@@ -48,19 +48,24 @@ def run():
     assert r['totalScore'] == 100.0, r['totalScore']
     assert all(s['grade'] == 2 for s in r['sections'])
 
-    # 2. 전 항목 미충족 + 위반 0 → 임상예의 10점만 (감점 없음)
+    # 2. 전 항목 미충족 + 위반 0 → 0점 (실배점 정합화로 임상예의 기본 지급 소멸)
     r = score_session(RUBRIC, judg(set()), ctx_dep)
-    assert r['totalScore'] == 10.0, r['totalScore']
-    assert section(r, 'etiquette')['grade'] == 2
+    assert r['totalScore'] == 0.0, r['totalScore']
+    assert all(s['id'] != 'etiquette' for s in r['sections'])
 
-    # 3. 임상예의 감점 하한: 위반 6회 → 10-12 → 0점 (floor)
-    r = score_session(RUBRIC, judg(set(), [{'type': 'et02'}] * 6), ctx_dep)
-    assert section(r, 'etiquette')['score'] == 0.0
-    assert section(r, 'etiquette')['grade'] == 0
+    # 3·4. 감점 엔진 회귀(합성 루브릭): 운영 루브릭에선 임상예의 영역이 제거됐지만
+    #      scoring.py의 deduction 분기는 과거 캐시 결과 재현용으로 유지 — 하한·절대 예외 동작 고정
+    syn_ded = {
+        'sections': [{
+            'id': 'etiquette', 'name': '임상예의', 'type': 'deduction', 'weightPercent': 10,
+            'baseScore': 10, 'deductionPerViolation': 2, 'floor': 0,
+            'gradeCutoffs': {'excellentMaxViolations': 0, 'fairMaxViolations': 2},
+        }],
+    }
+    r = score_session(syn_ded, {'items': {}, 'violations': [{'type': 'et02'}] * 6}, ctx_dep)
+    assert section(r, 'etiquette')['score'] == 0.0 and section(r, 'etiquette')['grade'] == 0
     assert r['totalScore'] == 0.0
-
-    # 4. 절대 예외(§4.4-4): exempt 위반은 감점 제외
-    r = score_session(RUBRIC, judg(set(), [{'type': 'et01', 'exempt': True}, {'type': 'et02'}]), ctx_dep)
+    r = score_session(syn_ded, {'items': {}, 'violations': [{'type': 'et01', 'exempt': True}, {'type': 'et02'}]}, ctx_dep)
     assert section(r, 'etiquette')['violationCount'] == 1
     assert section(r, 'etiquette')['score'] == 8.0
 
@@ -82,11 +87,11 @@ def run():
     ed_all_but_05 = {'ed01', 'ed02', 'ed03', 'ed04', 'ed06'}
     r_plain = score_session(RUBRIC, judg(ed_all_but_05), ctx_plain)
     s = section(r_plain, 'patient_education')
-    assert s['applicableCount'] == 5 and s['score'] == 15.0 and s['grade'] == 2, s
-    # 같은 판정을 우울 연관 증례로 채점하면 분모 6 → 12.5점, 5/6은 우수(≥4)
+    assert s['applicableCount'] == 5 and s['score'] == 16.0 and s['grade'] == 2, s
+    # 같은 판정을 우울 연관 증례로 채점하면 분모 6 → 5/6×16 = 13.3점, 5/6은 우수(≥4)
     r_dep = score_session(RUBRIC, judg(ed_all_but_05), ctx_dep)
     s = section(r_dep, 'patient_education')
-    assert s['applicableCount'] == 6 and s['score'] == 12.5 and s['grade'] == 2, s
+    assert s['applicableCount'] == 6 and s['score'] == 13.3 and s['grade'] == 2, s
     # 비우울 5항목 기준 컷오프: 3개 충족 → 우수(≥3), 2개 → 보통
     assert section(score_session(RUBRIC, judg({'ed01', 'ed02', 'ed04'}), ctx_plain), 'patient_education')['grade'] == 2
     assert section(score_session(RUBRIC, judg({'ed01', 'ed02'}), ctx_plain), 'patient_education')['grade'] == 1
@@ -139,32 +144,54 @@ def run():
     assert r['overallGradeLabel'] == '미흡', r
     assert r['safetyGate']['triggered'][0]['missingItemIds'] == [ml_miss], r['safetyGate']
 
-    # 13. 전 루브릭 회귀: 세분화 이후에도 만점 100·빈 판정 10(임상예의만)·전 영역 등급 정합
+    # 13. 전 루브릭 회귀 — 실제 CPX 배점 불변식: 체크리스트 영역 합 70 + PPI 30 = 100,
+    #     임상예의 감점 영역 없음, 만점 100, 빈 판정 0(기본 지급 소멸), 전 영역 등급 정합
     ctx_all = {'depressionRelated': True, 'femalePatient': True}
     checked = 0
     for path in sorted(DATA_DIR.glob('canonical_rubric.*.json')):
         rub = json.loads(path.read_text())
+        assert all(s['type'] != 'deduction' for s in rub['sections']), path.name
+        ppi_w = next(s['weightPercent'] for s in rub['sections'] if s['id'] == 'ppi')
+        checklist_w = sum(s['weightPercent'] for s in rub['sections'] if s['id'] != 'ppi')
+        assert ppi_w == 30, (path.name, ppi_w)
+        assert checklist_w == 70, (path.name, checklist_w)
         full = score_session(rub, all_met_judgments(rub), ctx_all)
         assert full['totalScore'] == 100.0, (path.name, full['totalScore'])
         assert all(s['grade'] == 2 for s in full['sections']), path.name
         empty = score_session(rub, {'items': {}, 'violations': []}, ctx_all)
-        assert empty['totalScore'] == 10.0, (path.name, empty['totalScore'])
+        assert empty['totalScore'] == 0.0, (path.name, empty['totalScore'])
         checked += 1
     assert checked >= 54, checked
 
-    # 14. 신체진찰 면제(physicalExamRequired=False): 진찰 영역 제외 + 나머지 85 → 100 재정규화
+    # 13b. 실제 CPX 배점 정합화 파일럿(물질 오남용): 병력+진찰+교육 70 / PPI 30, 임상예의 영역 없음
+    sm = json.loads((DATA_DIR / 'canonical_rubric.substance_misuse.json').read_text())
+    sm_weights = {s['id']: s['weightPercent'] for s in sm['sections']}
+    assert sm_weights == {
+        'history_taking': 38, 'physical_exam': 16, 'patient_education': 16, 'ppi': 30,
+    }, sm_weights
+    assert sm_weights['history_taking'] + sm_weights['physical_exam'] + sm_weights['patient_education'] == 70
+    assert all(s['type'] != 'deduction' for s in sm['sections']), '임상예의 감점 영역이 남아 있음'
+    sm_full = score_session(sm, all_met_judgments(sm), ctx_all)
+    assert sm_full['totalScore'] == 100.0, sm_full['totalScore']
+    sm_empty = score_session(sm, {'items': {}, 'violations': []}, ctx_all)
+    assert sm_empty['totalScore'] == 0.0, sm_empty['totalScore']
+    # 위반이 보고돼도 감점 영역이 없으므로 총점에 영향 없음 (정보로만 표시)
+    sm_viol = score_session(sm, {'items': {}, 'violations': [{'type': 'et02'}] * 3}, ctx_all)
+    assert sm_viol['totalScore'] == 0.0, sm_viol['totalScore']
+
+    # 14. 신체진찰 면제(physicalExamRequired=False): 진찰 영역 제외 + 나머지 84 → 100 재정규화
     ctx_no_pe = {'depressionRelated': True, 'physicalExamRequired': False}
     r = score_session(RUBRIC, judg(set(ALL_ITEM_IDS)), ctx_no_pe)
     assert r['totalScore'] == 100.0, r['totalScore']
     assert all(s['id'] != 'physical_exam' for s in r['sections']), '진찰 영역이 sections에 남음'
-    assert r['excludedSections'][0]['id'] == 'physical_exam' and r['excludedSections'][0]['weightPercent'] == 15
-    # 병력만 전부 충족(35) + 임상예의(10) = 45 → ×100/85 = 52.9
+    assert r['excludedSections'][0]['id'] == 'physical_exam' and r['excludedSections'][0]['weightPercent'] == 16
+    # 병력만 전부 충족(38) → ×100/84 = 45.2
     ht_ids = {i['id'] for s in RUBRIC['sections'] if s['id'] == 'history_taking' for i in s['items']}
     r = score_session(RUBRIC, judg(ht_ids), ctx_no_pe)
-    assert r['totalScore'] == 52.9, r['totalScore']
+    assert r['totalScore'] == 45.2, r['totalScore']
     # 플래그 없으면(기본) 기존 산식 그대로 — 진찰 미수행이 그대로 감점
     r = score_session(RUBRIC, judg(ht_ids), ctx_dep)
-    assert r['totalScore'] == 45.0, r['totalScore']
+    assert r['totalScore'] == 38.0, r['totalScore']
     assert 'excludedSections' not in r
 
     print('전체', 14, '개 테스트 그룹 통과 ✅ (전 루브릭', checked, '종 회귀 포함)')

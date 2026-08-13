@@ -458,7 +458,13 @@ export function stemModalityConflict(stem: string, kind: string): boolean {
  */
 function hedgedCall<T>(
   run: () => Promise<T>,
-  opts: { afterMs: number; onHedge?: () => void; onRetry?: () => void },
+  opts: {
+    afterMs: number;
+    onHedge?: () => void;
+    onRetry?: () => void;
+    /** 승자 채택 후 늦게 도착한 응답 — 결과는 버리지만 토큰은 청구되므로 비용 기록용. */
+    onLoser?: (value: T) => void;
+  },
 ): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let done = false;
@@ -471,7 +477,10 @@ function hedgedCall<T>(
       launched += 1;
       run().then(
         (v) => {
-          if (done) return;
+          if (done) {
+            opts.onLoser?.(v);
+            return;
+          }
           done = true;
           if (timer) clearTimeout(timer);
           resolve(v); // 먼저 끝난 쪽을 채택. 늦게 끝난 쪽 결과는 버린다.
@@ -856,6 +865,7 @@ async function extractFromBuffer(input: {
           const selected = await selectExamImages(candidates, {
             max: maxFeatured,
             diag: selectDiag,
+            userIdForLog,
           });
           if (input.diag) {
             input.diag.embedded.selectMs = Date.now() - tSelect;
@@ -2321,7 +2331,9 @@ export async function generatePrivateQuestionsFromUpload(
         );
       const tGenCall = Date.now();
       // 헤지 대상은 "모델 호출"만이다 — 위쪽 이미지 준비 대기는 포함하지 않는다.
-      // 복제 호출의 토큰은 승자 기준으로만 기록된다(패자 응답은 도착하지 않을 수 있다).
+      // 패자 응답도 provider 는 청구하므로, 늦게 도착하면 hedgeLoser 로 별도 기록한다
+      // (배치 완료 후 비동기 도착일 수 있어 totalCost 합산에는 넣지 않는다 — 일일 캡은
+      // ai_cost_log 합산이라 기록만으로 반영된다).
       let response = await hedgedCall(() => callGenerate(genMaxTokens), {
         afterMs: GEN_HEDGE_AFTER_MS,
         onHedge: () => {
@@ -2329,6 +2341,23 @@ export async function generatePrivateQuestionsFromUpload(
           warnings.push(`배치 ${batchIndex + 1} 모델 호출 지연 — 복제 요청으로 꼬리 단축 시도.`);
         },
         onRetry: () => bumpGenDiag('batchRetried'),
+        onLoser: (late) => {
+          void recordAiCost({
+            userId: input.userId,
+            endpoint: 'private.generate',
+            model: modelUsed,
+            costUsd: calculateCost(
+              modelUsed,
+              late.usage.input_tokens,
+              late.usage.output_tokens,
+              late.usage.cache_read_input_tokens ?? 0,
+              late.usage.cache_creation_input_tokens ?? 0,
+            ),
+            inputTokens: late.usage.input_tokens,
+            outputTokens: late.usage.output_tokens,
+            metadata: { uploadId: uploadRow.id, batch: batchIndex + 1, hedgeLoser: true },
+          }).catch(() => undefined);
+        },
       });
       batchDiag.genCallMs = Date.now() - tGenCall;
       let toolUseBlock = response.content.find(
@@ -2340,6 +2369,26 @@ export async function generatePrivateQuestionsFromUpload(
         console.warn(
           `[private-gen] tool_use 누락 → 재시도 (batch=${batchIndex + 1}, stop=${response.stop_reason})`,
         );
+        // 버리는 첫 응답도 청구된 호출 — 폐기 사유와 함께 기록하고 합계에도 반영한다.
+        const discardedCost = calculateCost(
+          modelUsed,
+          response.usage.input_tokens,
+          response.usage.output_tokens,
+          response.usage.cache_read_input_tokens ?? 0,
+          response.usage.cache_creation_input_tokens ?? 0,
+        );
+        totalCost += discardedCost;
+        aggInputTokens += response.usage.input_tokens;
+        aggOutputTokens += response.usage.output_tokens;
+        await recordAiCost({
+          userId: input.userId,
+          endpoint: 'private.generate',
+          model: modelUsed,
+          costUsd: discardedCost,
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+          metadata: { uploadId: uploadRow.id, batch: batchIndex + 1, discarded: 'tool_use_missing' },
+        });
         const tRetry = Date.now();
         response = await callGenerate(Math.min(30000, genMaxTokens * 2));
         batchDiag.genRetryMs = Date.now() - tRetry;

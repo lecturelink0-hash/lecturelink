@@ -704,6 +704,36 @@ function GuardianFigure({ gender, age, speaking, audioLevel, pose }) {
   )
 }
 
+// WebGL 컨텍스트 손실(창 급격한 리사이즈·GPU 메모리 회수 등) 복구.
+// 손실 시 오류 경계가 절차적 폴백/생략으로 넘어간 뒤 GLB로 되돌아올 경로가 없으므로,
+// 캔버스 요소에서 webglcontextlost를 감지해 잠시 후 에폭을 올려 Canvas를 통째로
+// 리마운트한다(새 캔버스 = 새 컨텍스트, 오류 경계·GLB 씬 전부 초기화).
+// preventDefault는 브라우저의 컨텍스트 복원 시도를 허용하기 위한 표준 절차.
+const CONTEXT_RECOVERY_DELAY_MS = 700
+function useContextLossRecovery() {
+  const [epoch, setEpoch] = useState(0)
+  const aliveRef = useRef(true)
+  const pendingRef = useRef(false)
+  useEffect(() => {
+    aliveRef.current = true
+    return () => {
+      aliveRef.current = false
+    }
+  }, [])
+  const bind = (gl) => {
+    gl.domElement.addEventListener('webglcontextlost', (event) => {
+      event.preventDefault()
+      if (pendingRef.current) return
+      pendingRef.current = true
+      setTimeout(() => {
+        pendingRef.current = false
+        if (aliveRef.current) setEpoch((n) => n + 1)
+      }, CONTEXT_RECOVERY_DELAY_MS)
+    })
+  }
+  return [epoch, bind]
+}
+
 // examTarget: 누운 상태가 필수인 신체진찰 시 카메라·조명이 향할 부위 키 (EXAM_REGION_FRAC 참조)
 // child: persona.child (보호자 동반 케이스). 있으면 중앙 인물=환아(진찰 대상),
 //        gender/age(화자=보호자)는 측면 인물로 서고 발화 연기도 보호자가 한다.
@@ -711,12 +741,16 @@ export default function Avatar3D({ gender = '남성', age, child = null, speakin
   const motionProfile = MOTION_PROFILE_BY_CATEGORY[category] || null
   const patient = child ? { gender: child.gender || '남성', age: child.age } : { gender, age }
   const patientH = targetHeightForAge(patient.age)
+  const [glEpoch, bindContextRecovery] = useContextLossRecovery()
   return (
     <Canvas
-      key={`${gender}-${age}-${child ? `${child.gender}-${child.age}` : 'solo'}`}
+      key={`${gender}-${age}-${child ? `${child.gender}-${child.age}` : 'solo'}-gl${glEpoch}`}
       shadows="percentage"
       camera={{ position: [0, 1.35, 3.1], fov: 40 }}
-      onCreated={({ camera }) => camera.lookAt(0, 0.75, 0)}
+      onCreated={({ camera, gl }) => {
+        camera.lookAt(0, 0.75, 0)
+        bindContextRecovery(gl)
+      }}
       dpr={[1, 2]}
     >
       <ambientLight intensity={0.55} />

@@ -9,7 +9,8 @@
  */
 
 import type Anthropic from '@anthropic-ai/sdk';
-import { getAnthropic, MODELS, withRetry, createMessage } from '@/lib/ai/client';
+import { calculateCost, getAnthropic, MODELS, withRetry, createMessage } from '@/lib/ai/client';
+import { recordAiCost } from '@/lib/ai/cost-cap';
 import type { MedicalImageKind } from './crop-medical-images';
 import type { EmbeddedImage } from './pdf-embedded-images';
 
@@ -147,7 +148,12 @@ function pickDiverse<T>(
  */
 export async function selectExamImages<T extends EmbeddedImage>(
   candidates: T[],
-  opts: { max?: number; thumbEdgePx?: number; diag?: SelectExamImagesDiag } = {},
+  opts: {
+    max?: number;
+    thumbEdgePx?: number;
+    diag?: SelectExamImagesDiag;
+    userIdForLog?: string;
+  } = {},
 ): Promise<{ image: T; kind: MedicalImageKind }[] | null> {
   if (candidates.length === 0) return [];
   const max = opts.max ?? 15;
@@ -198,10 +204,11 @@ export async function selectExamImages<T extends EmbeddedImage>(
     });
 
     const client = getAnthropic();
+    const model = MODELS.verification();
     const response = await withRetry(
       () =>
         createMessage(client, {
-          model: MODELS.verification(),
+          model,
           max_tokens: 4000,
           system: SELECT_SYSTEM,
           tools: [SELECT_TOOL],
@@ -210,6 +217,22 @@ export async function selectExamImages<T extends EmbeddedImage>(
         }),
       { maxAttempts: 4 },
     );
+    // 이 호출은 그동안 ai_cost_log 에 잡히지 않던 사각지대였다 — 묶음별로 기록.
+    await recordAiCost({
+      userId: opts.userIdForLog ?? null,
+      endpoint: 'extract.select-images',
+      model,
+      costUsd: calculateCost(
+        model,
+        response.usage.input_tokens,
+        response.usage.output_tokens,
+        response.usage.cache_read_input_tokens ?? 0,
+        response.usage.cache_creation_input_tokens ?? 0,
+      ),
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      metadata: { chunkStart: start, images: end - start },
+    });
     const tool = response.content.find(
       (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
     );

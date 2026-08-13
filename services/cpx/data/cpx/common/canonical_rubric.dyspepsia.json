@@ -10,7 +10,9 @@
       "적신호 확인(ht12)은 채점표에 명시 없으나 배경지식 감별 기준에서 파생 — 검수 대상",
       "영역 가중치 35/15/15/25/10 — 도메인 공통",
       "source_type: derived_platform_rubric; review_status: clinician-review-revision-applied (최종 임상 승인 대기)",
-      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)"
+      "2026-08-02 채점 세분화: 복수 조건 나열 항목을 조건별 세부 기준으로 분할(하위 id 접미사 a,b,…), 등급 컷오프는 항목 수 비율로 재조정 (파생 규칙)",
+      "2026-08-13 2차 세분화(사용자 요청, 병력청취 중심 확장): 1차 세분화 후에도 복수 조건이 남은 나열 항목 2개를 조건별 세부 기준으로 분할(병력청취 12→14, 신체진찰 9→10), 분할 id는 접미사로 대체·기존 id 재사용 없음, 등급 컷오프는 항목 수 비례 half-up 재조정",
+      "2026-08-13 실제 CPX 배점 정합화(전 시나리오 확산, 사용자 요청): 실제 CPX는 채점 체크리스트 영역 합 70 + PPI 30이며 임상예의 별도 점수가 없음 — 체크리스트 영역 가중치 35/15/15 → 38/16/16(70으로 비례 환산, 최대잔여 정수 반올림), PPI 25→30, 임상예의 감점 영역 제거(위반 탐지·표시는 채점 외 정보로만 유지)"
     ],
     "classificationStandard": "주호소 분류 근거: 국시원 공개 CPX 진료문항 항목표 CPX 18 '소화 불량/만성 복통' (국가시험 공개 표준 분류). 채점 항목은 임상 표준 진료에 근거해 자체 재작성했으며 교재 문장을 직접 인용하지 않음."
   },
@@ -29,10 +31,10 @@
       "id": "history_taking",
       "name": "병력청취",
       "type": "checklist",
-      "weightPercent": 35,
+      "weightPercent": 38,
       "gradeCutoffs": {
-        "excellent": 8,
-        "fairMin": 5
+        "excellent": 9,
+        "fairMin": 6
       },
       "items": [
         {
@@ -82,8 +84,16 @@
           "text": "가족력(위장관 암 등) 질문"
         },
         {
-          "id": "ht12",
-          "text": "적신호 증상(흑색변·토혈, 삼킴 곤란, 황달) 확인"
+          "id": "ht12a",
+          "text": "흑색변·토혈 등 출혈 적신호 확인"
+        },
+        {
+          "id": "ht12b",
+          "text": "삼킴 곤란 확인"
+        },
+        {
+          "id": "ht12c",
+          "text": "황달 확인"
         }
       ]
     },
@@ -91,9 +101,9 @@
       "id": "physical_exam",
       "name": "신체진찰",
       "type": "checklist",
-      "weightPercent": 15,
+      "weightPercent": 16,
       "gradeCutoffs": {
-        "excellent": 6,
+        "excellent": 7,
         "fairMin": 3
       },
       "declarationCountsAsPerformance": true,
@@ -121,8 +131,12 @@
           "text": "복부 촉진 — 4분면을 나누어 압통·종괴 확인"
         },
         {
-          "id": "pe06",
-          "text": "타진 및 간·비장 종대 확인"
+          "id": "pe06a",
+          "text": "복부 타진"
+        },
+        {
+          "id": "pe06b",
+          "text": "간·비장 종대 확인"
         },
         {
           "id": "pe07",
@@ -142,7 +156,7 @@
       "id": "patient_education",
       "name": "환자교육",
       "type": "checklist",
-      "weightPercent": 15,
+      "weightPercent": 16,
       "gradeCutoffs": {
         "excellent": 5,
         "fairMin": 2
@@ -178,7 +192,7 @@
       "id": "ppi",
       "name": "PPI (환자의사관계)",
       "type": "passfail",
-      "weightPercent": 25,
+      "weightPercent": 30,
       "gradeCutoffs": {
         "excellent": 4,
         "fairMin": 2
@@ -203,35 +217,6 @@
         {
           "id": "ppi05",
           "text": "매끄러운 진행: 문진→진찰→교육 전환 시 양해를 구하는 안내 멘트를 사용했는가"
-        }
-      ]
-    },
-    {
-      "id": "etiquette",
-      "name": "임상예의",
-      "type": "deduction",
-      "weightPercent": 10,
-      "baseScore": 10,
-      "deductionPerViolation": 2,
-      "floor": 0,
-      "gradeCutoffs": {
-        "note": "감점제 원문에 등급 없음 — 파생 규칙: 위반 0회 우수, 1~2회 보통, 3회+ 미흡",
-        "excellentMaxViolations": 0,
-        "fairMaxViolations": 2
-      },
-      "violationTypes": [
-        {
-          "id": "et01",
-          "text": "환자의 사생활을 불필요하게 침해하는 불쾌한 질문",
-          "absoluteException": "성별, 나이, 생년월일, 이름, 경제적 수준, 학력 수준, 직업, 키, 몸무게 관련 질문은 문맥과 무관하게 절대 사생활 침해로 간주하지 않음 (예외 규칙 4)"
-        },
-        {
-          "id": "et02",
-          "text": "반말 사용 또는 부적절한 비속어·은어 사용"
-        },
-        {
-          "id": "et03",
-          "text": "환자의 말을 끊거나 무시하는 등 환자를 불쾌하게 만든 정황"
         }
       ]
     }

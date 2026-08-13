@@ -13,7 +13,7 @@ import {
   Ribbon, Bone, Scissors, Baby, Brain, Ear, Eye, Fingerprint, Shield, Scale,
   Stethoscope, ChevronLeft, ChevronDown, ChevronRight, AlertTriangle, FileText,
   FolderOpen, Folder, Upload, BookOpen, Search, ArrowLeft, Trash2, type LucideIcon,
-  CheckCircle2, XCircle,
+  CheckCircle2, XCircle, BookmarkPlus,
 } from 'lucide-react';
 import { QuestionStem } from '@/components/ui/QuestionStem';
 
@@ -242,10 +242,10 @@ export default function LibraryPage() {
       .catch(() => setSubTopicCounts({}));
   }, []);
 
-  // private-questions 를 한 번만 전체 로드해 upload_id 기준으로 필터링
+  // private-questions 전역 캐시(서버 상한 100) — 목록 즉시 표시용. 세트를 열면 별도 효과가 그 세트 전 문항을 받는다.
   useEffect(() => {
     api
-      .get<unknown>('/api/private-questions?limit=50')
+      .get<unknown>('/api/private-questions?limit=100')
       .then((res) => {
         const arr: PrivateQuestion[] = Array.isArray(res)
           ? (res as PrivateQuestion[])
@@ -278,6 +278,34 @@ export default function LibraryPage() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [active, privateQuestions, resumeFromQuestionId]);
+
+  // 연 문제집의 문항 전체 로드 — 전역 캐시(100개 컷)에 안 담긴 세트도 전 문항이 보이도록 서버에서 다시 받는다.
+  const activeUploadId = active?.kind === 'upload' ? active.uploadId : null;
+  useEffect(() => {
+    if (!activeUploadId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const collected: PrivateQuestion[] = [];
+        let offset = 0;
+        for (;;) {
+          const res = await api.get<{ items?: PrivateQuestion[]; total: number }>(
+            `/api/private-questions?upload_id=${activeUploadId}&limit=100&offset=${offset}`,
+          );
+          const items = res.items ?? [];
+          collected.push(...items);
+          offset += items.length;
+          if (items.length === 0 || offset >= res.total) break;
+        }
+        if (!cancelled) setPrivateQuestions(collected);
+      } catch {
+        // 실패해도 openUpload 가 넣어둔 전역 캐시 필터 결과로 계속 동작한다.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeUploadId]);
 
   const loadProgress = useCallback(() => {
     api
@@ -356,7 +384,11 @@ export default function LibraryPage() {
     setPublicQuestions([]);
     setSolveReset(reset); // 다시풀기 = 이전 답 복원 없이 빈 상태로 시작
     const filtered = allPrivateQuestions.filter((q) => q.upload_id === upload.id);
-    setPrivateQuestions(filtered);
+    setPrivateQuestions((previous) => {
+      // 같은 세트를 다시 여는 경우(진행도 갱신 등) 서버에서 받아둔 전체 목록을 캐시 부분집합으로 되돌리지 않는다.
+      const samePreviousSet = previous.length > 0 && previous.every((q) => q.upload_id === upload.id);
+      return samePreviousSet && previous.length >= filtered.length ? previous : filtered;
+    });
   }
 
   function selectFilter(key: SetStatus | 'all') {
@@ -1120,16 +1152,37 @@ function PrivateExamSession({
   priorAttempts?: Record<string, { selectedIndex: number; isCorrect: boolean }>;
   resumeFromQuestionId?: string | null;
 }) {
-  const [answers, setAnswers] = useState<Record<string, { selected: number; correct: boolean }>>(() =>
-    Object.fromEntries(
+  // 이전 풀이 복원은 반드시 "현재 세트 문항"으로 한정한다 — priorAttempts 는 전체 문제집에 걸친
+  // 풀이 기록이라, 그대로 시드하면 다른 세트 기록이 섞여 완료 판정(allAnswered)이 영영 참이 되지 않는다.
+  const [answers, setAnswers] = useState<Record<string, { selected: number; correct: boolean }>>(() => {
+    const questionIds = new Set(questions.map((question) => question.id));
+    return Object.fromEntries(
       Object.entries(priorAttempts ?? {})
-        .filter(([, answer]) => answer.selectedIndex >= 0)
+        .filter(([questionId, answer]) => questionIds.has(questionId) && answer.selectedIndex >= 0)
         .map(([questionId, answer]) => [questionId, { selected: answer.selectedIndex, correct: answer.isCorrect }]),
-    ),
-  );
+    );
+  });
   const [selections, setSelections] = useState<Record<string, number>>({});
   const [index, setIndex] = useState(0);
   const [showQuestionGrid, setShowQuestionGrid] = useState(false);
+  const [finished, setFinished] = useState(false);
+
+  // 문항 목록이 뒤늦게 도착·보강되는 경우(세트 전체 fetch)에도 그 문항들의 이전 풀이를 복원한다.
+  useEffect(() => {
+    if (!priorAttempts) return;
+    setAnswers((previous) => {
+      let added = false;
+      const next = { ...previous };
+      for (const question of questions) {
+        const prior = priorAttempts[question.id];
+        if (!next[question.id] && prior && prior.selectedIndex >= 0) {
+          next[question.id] = { selected: prior.selectedIndex, correct: prior.isCorrect };
+          added = true;
+        }
+      }
+      return added ? next : previous;
+    });
+  }, [questions, priorAttempts]);
 
   useEffect(() => {
     if (!resumeFromQuestionId || questions.length === 0) return;
@@ -1156,13 +1209,23 @@ function PrivateExamSession({
   const submitted = answers[current.id];
   const selected = submitted?.selected ?? selections[current.id] ?? null;
   const completedQuestionIds = new Set(Object.keys(answers));
-  const correctCount = Object.values(answers).filter((answer) => answer.correct).length;
-  const allAnswered = completedQuestionIds.size === questions.length;
+  const allAnswered = questions.every((question) => answers[question.id]);
 
   function goToQuestion(nextIndex: number) {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
     setIndex(nextIndex);
     setShowQuestionGrid(false);
+  }
+
+  function scrollToSolveArea() {
+    window.requestAnimationFrame(() => {
+      document.getElementById('library-solve')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function showResult() {
+    setFinished(true);
+    scrollToSolveArea();
   }
 
   function selectChoice(choiceIndex: number) {
@@ -1178,6 +1241,20 @@ function PrivateExamSession({
       .post('/api/attempts', { question_id: current.id, selected_index: selected, track: 'lecture_note' })
       .then(() => onAnswered?.())
       .catch(() => {});
+  }
+
+  if (finished) {
+    return (
+      <PrivateExamResult
+        fileName={active.fileName}
+        questions={questions}
+        answers={answers}
+        onBack={() => {
+          setFinished(false);
+          scrollToSolveArea();
+        }}
+      />
+    );
   }
 
   return (
@@ -1250,325 +1327,205 @@ function PrivateExamSession({
         {submitted && current.explanation && <div className="mt-5 ll-tint rounded-2xl p-5 border border-[var(--color-border)]"><span className="ll-eyebrow mb-3">해설</span><div className="text-sm text-sage-800 leading-relaxed whitespace-pre-line">{current.explanation}</div></div>}
       </Card>
 
-      <div className="flex justify-end mb-5">
-        {!submitted ? <Button variant="accent" onClick={submitCurrent} disabled={selected === null}>제출하고 채점</Button> : index < questions.length - 1 ? <Button onClick={() => goToQuestion(index + 1)}>다음 문항 <ChevronRight className="w-4 h-4" /></Button> : <Button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>결과 보기</Button>}
+      <div className="flex justify-end gap-2 mb-5">
+        {!submitted ? (
+          <Button variant="accent" onClick={submitCurrent} disabled={selected === null}>제출하고 채점</Button>
+        ) : (
+          <>
+            {index < questions.length - 1 && (
+              <Button variant={allAnswered ? 'secondary' : 'primary'} onClick={() => goToQuestion(index + 1)}>다음 문항 <ChevronRight className="w-4 h-4" /></Button>
+            )}
+            {(allAnswered || index === questions.length - 1) && (
+              <Button variant="accent" onClick={showResult}>결과 보기</Button>
+            )}
+          </>
+        )}
       </div>
-
-      {allAnswered && <Card className="mb-5"><div className="flex items-center justify-between gap-3"><div className="text-lg font-bold text-sage-800">전체 채점 결과</div><Badge variant={correctCount / questions.length >= 0.6 ? 'curated' : 'warn'}>정답률 {Math.round((correctCount / questions.length) * 100)}%</Badge></div><p className="mt-3 text-sm text-sage-800">총 {questions.length}문항 중 <b>{correctCount}문항</b> 정답 · <b>{questions.length - correctCount}문항</b> 오답</p></Card>}
     </div>
   );
 }
 
-function PrivateContent({
-  active,
+/** 결과 화면 — 국시 대비 모의고사 결과(ExamResultView)와 같은 디자인: 오답을 카드(발문+보기+해설)로
+ *  제시하고 카드 우상단의 체크 버튼으로 오답노트에 담는다(.ll-exam-result-page 스코프 CSS 재사용). */
+function PrivateExamResult({
+  fileName,
   questions,
-  onAnswered,
-  priorAttempts,
-  resumeFromQuestionId,
+  answers,
+  onBack,
 }: {
-  active: { kind: 'upload'; uploadId: string; fileName: string };
+  fileName: string;
   questions: PrivateQuestion[];
-  onAnswered?: () => void;
-  priorAttempts?: Record<string, { selectedIndex: number; isCorrect: boolean }>;
-  resumeFromQuestionId?: string | null;
+  answers: Record<string, { selected: number; correct: boolean }>;
+  onBack: () => void;
 }) {
-  // 세트 전체 채점 집계 — 각 문항 카드의 채점 결과를 모은다(이어풀기 시 이전 답도 시드).
-  const [answers, setAnswers] = useState<Record<string, { selected: number; correct: boolean }>>(() => {
-    const init: Record<string, { selected: number; correct: boolean }> = {};
-    if (priorAttempts) {
-      for (const [qid, a] of Object.entries(priorAttempts)) {
-        if (a.selectedIndex >= 0) init[qid] = { selected: a.selectedIndex, correct: a.isCorrect };
-      }
-    }
-    return init;
-  });
-  const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [savedNote, setSavedNote] = useState(false);
-  const [savingNote, setSavingNote] = useState(false);
-
-  function handleGraded(qid: string, selected: number, correct: boolean) {
-    setAnswers((prev) => (prev[qid] ? prev : { ...prev, [qid]: { selected, correct } }));
-  }
-
-  const answeredList = questions.filter((q) => answers[q.id]);
-  const allAnswered = questions.length > 0 && answeredList.length === questions.length;
-  const correctCount = answeredList.filter((q) => answers[q.id].correct).length;
   const wrongList = questions.filter((q) => answers[q.id] && !answers[q.id].correct);
+  const correctCount = questions.filter((q) => answers[q.id]?.correct).length;
+  const unansweredCount = questions.filter((q) => !answers[q.id]).length;
   const pct = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
-  const resumeTargetId = (() => {
-    if (!resumeFromQuestionId || questions.length === 0) return null;
-    const lastIndex = questions.findIndex((question) => question.id === resumeFromQuestionId);
-    const ordered = lastIndex >= 0
-      ? [...questions.slice(lastIndex + 1), ...questions.slice(0, lastIndex + 1)]
-      : questions;
-    return ordered.find((question) => !priorAttempts?.[question.id])?.id ?? resumeFromQuestionId;
-  })();
+  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const unsavedWrong = wrongList.filter((q) => !saved.has(q.id));
 
-  // 다 풀면 오답을 기본 선택 상태로.
-  useEffect(() => {
-    if (allAnswered) setChecked(new Set(wrongList.map((q) => q.id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allAnswered]);
-
-  function toggleCheck(qid: string) {
-    setChecked((s) => {
-      const n = new Set(s);
-      if (n.has(qid)) n.delete(qid); else n.add(qid);
-      return n;
+  function postWrongAnswer(q: PrivateQuestion) {
+    return api.post('/api/wrong-answers', {
+      private_question_id: q.id,
+      sub_topic_id: q.sub_topic_id ?? null,
+      selected_index: answers[q.id]?.selected ?? null,
+      source: 'lecture_note',
     });
   }
 
-  async function saveToNotes() {
-    const targets = wrongList.filter((q) => checked.has(q.id));
-    if (targets.length === 0) { alert('오답노트에 담을 문제를 선택해주세요.'); return; }
-    setSavingNote(true);
+  async function saveOne(q: PrivateQuestion) {
+    if (saved.has(q.id) || savingIds.has(q.id)) return;
+    setSavingIds((previous) => new Set(previous).add(q.id));
     try {
-      await Promise.all(
-        targets.map((q) =>
-          api.post('/api/wrong-answers', {
-            private_question_id: q.id,
-            sub_topic_id: q.sub_topic_id ?? null,
-            selected_index: answers[q.id]?.selected ?? null,
-            source: 'lecture_note',
-          }),
-        ),
-      );
-      setSavedNote(true);
+      await postWrongAnswer(q);
+      setSaved((previous) => new Set(previous).add(q.id));
     } catch (e) {
       alert(e instanceof Error ? e.message : '오답노트 저장에 실패했습니다.');
     } finally {
-      setSavingNote(false);
+      setSavingIds((previous) => {
+        const next = new Set(previous);
+        next.delete(q.id);
+        return next;
+      });
+    }
+  }
+
+  async function saveAllUnsaved() {
+    if (unsavedWrong.length === 0 || bulkSaving) return;
+    setBulkSaving(true);
+    try {
+      const results = await Promise.allSettled(unsavedWrong.map((q) => postWrongAnswer(q)));
+      const succeeded = unsavedWrong.filter((_, i) => results[i].status === 'fulfilled');
+      if (succeeded.length > 0) {
+        setSaved((previous) => {
+          const next = new Set(previous);
+          for (const q of succeeded) next.add(q.id);
+          return next;
+        });
+      }
+      if (succeeded.length < unsavedWrong.length) alert('일부 오답을 담지 못했습니다. 다시 시도해주세요.');
+    } finally {
+      setBulkSaving(false);
     }
   }
 
   return (
-    <div>
-      {/* 상단 메타 + 오답노트 링크 */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <span
-            className="ll-chip"
-            style={{
-              width: '3rem',
-              height: '3rem',
-              borderRadius: '15px',
-              background: 'var(--color-private-bg)',
-              color: 'var(--color-private)',
-            }}
-          >
-            <Upload className="w-5 h-5" strokeWidth={2} />
+    <div className="ll-exam-result-page">
+      <div className="ll-card p-5 mb-4">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="ll-chip" style={{ width: '2.25rem', height: '2.25rem' }}>
+            <BookOpen className="w-4 h-4" strokeWidth={2} />
           </span>
           <div className="min-w-0">
-            <span className="ll-eyebrow mb-2">국시 오답 유사문항</span>
-            <div
-              className="text-2xl font-bold tracking-tight leading-tight truncate"
-              style={{ color: 'var(--color-private)' }}
-            >
-              {active.fileName}
-            </div>
+            <div className="text-[12px] font-semibold text-sage-600">내 문제집 · 결과</div>
+            <div className="text-[15px] font-bold text-sage-800 tracking-tight truncate">{fileName}</div>
           </div>
         </div>
-        <Link href="/wrong-notes">
-          <Button variant="secondary" size="md">
-            오답노트 보기 →
-          </Button>
-        </Link>
       </div>
 
-      <p className="text-sm text-[var(--color-muted)] mb-5 leading-relaxed">
-        보기를 눌러 바로 풀어보세요. 선택하면 정답과 해설이 표시됩니다.
-      </p>
-
-      {questions.length === 0 ? (
-        <Card className="py-16 text-center flex flex-col items-center">
-          <span
-            className="ll-chip mb-4"
-            style={{
-              width: '3rem',
-              height: '3rem',
-              borderRadius: '15px',
-              background: 'var(--color-private-bg)',
-              color: 'var(--color-private)',
-            }}
-          >
-            <FileText className="w-6 h-6" strokeWidth={1.7} />
-          </span>
-          <div className="text-lg font-bold mb-1" style={{ color: 'var(--color-private)' }}>
-            문항이 없습니다
-          </div>
-          <div className="text-sm text-[var(--color-muted)] max-w-sm">
-            이 자료에서 생성된 문항이 아직 없습니다.
-          </div>
-        </Card>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {questions.map((q, i) => (
-              <div
-                key={q.id}
-                id={`private-solve-${q.id}`}
-                data-library-resume-target={q.id === resumeTargetId ? 'true' : undefined}
-                className="scroll-mt-6"
-              >
-                {q.id === resumeTargetId && (
-                  <div className="mb-2 flex items-center gap-2 text-[12px] font-bold text-[var(--color-private)]">
-                    <span className="h-px flex-1 bg-[var(--color-border)]" />
-                    <span>이어서 푸는 문항</span>
-                    <span className="h-px flex-1 bg-[var(--color-border)]" />
-                  </div>
-                )}
-                <PrivateSolveCard
-                  q={q}
-                  index={i}
-                  onAnswered={onAnswered}
-                  prior={priorAttempts?.[q.id]}
-                  onGraded={(sel, correct) => handleGraded(q.id, sel, correct)}
-                />
-              </div>
-            ))}
-          </div>
-
-          {allAnswered && (
-            <Card className="mt-5">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div className="text-lg font-bold text-sage-800">전체 채점 결과</div>
-                <Badge variant={pct >= 60 ? 'curated' : 'warn'}>정답률 {pct}%</Badge>
-              </div>
-              <p className="text-sm text-sage-800 mb-1">
-                총 {questions.length}문항 중 <b>{correctCount}문항</b> 정답 · <b>{wrongList.length}문항</b> 오답
-              </p>
-
-              {wrongList.length === 0 ? (
-                <p className="mt-3 text-sm font-semibold text-[var(--color-curated)]">모두 맞혔어요! 🎉</p>
-              ) : savedNote ? (
-                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-sage-700 bg-[var(--color-curated-bg)] border border-[var(--color-sage-500)] rounded-xl p-3.5 text-center font-semibold">
-                  ✓ 선택한 오답을 오답노트에 담았어요.{' '}
-                  <Link href="/wrong-notes" className="underline">오답노트로 이동</Link>
-                </div>
-              ) : (
-                <>
-                  <p className="text-[13px] text-[var(--color-muted)] mt-4 mb-2">오답노트에 담을 문제를 선택하세요.</p>
-                  <div className="space-y-2 mb-4">
-                    {wrongList.map((q) => (
-                      <label
-                        key={q.id}
-                        className="flex items-start gap-3 p-3.5 rounded-xl border border-[var(--color-border)] cursor-pointer hover:border-sage-400 transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked.has(q.id)}
-                          onChange={() => toggleCheck(q.id)}
-                          className="mt-1 accent-[var(--color-private)]"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm text-sage-800 line-clamp-2">{withImageLabels(q.stem)}</div>
-                          <div className="text-xs text-[var(--color-warn)] mt-1">
-                            내 답 {(answers[q.id]?.selected ?? 0) + 1}번 · 정답 {q.answer_index + 1}번
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                  <Button onClick={saveToNotes} loading={savingNote} fullWidth>
-                    선택한 오답 노트에 담기
-                  </Button>
-                </>
-              )}
-            </Card>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-/** 내 문제집 안에서 바로 풀어보는 문항 카드 — 보기 전부 표시, 선택 시 정답·해설 공개. */
-function PrivateSolveCard({ q, index, onAnswered, prior, onGraded }: { q: PrivateQuestion; index: number; onAnswered?: () => void; prior?: { selectedIndex: number; isCorrect: boolean }; onGraded?: (selected: number, correct: boolean) => void }) {
-  // 이전에 푼 문항이면 그 선택을 복원(이어풀기).
-  const [selected, setSelected] = useState<number | null>(
-    prior && prior.selectedIndex >= 0 ? prior.selectedIndex : null,
-  );
-  const answered = selected !== null;
-
-  function handleSelect(ci: number) {
-    if (answered) return;
-    setSelected(ci);
-    onGraded?.(ci, ci === q.answer_index); // 상위(세트) 전체 채점 집계용
-    // 풀이 기록을 서버에 남겨야 진행도/정답률이 집계된다(track: lecture_note, quota 무료).
-    api
-      .post('/api/attempts', { question_id: q.id, selected_index: ci, track: 'lecture_note' })
-      .then(() => onAnswered?.())
-      .catch(() => {
-        // 기록 실패해도 로컬 채점/해설은 그대로 보여준다.
-      });
-  }
-  return (
-    <Card>
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="flex gap-1.5 flex-wrap">
-          <Badge variant="private">오답 유사문항</Badge>
-          <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>
+      <Card className="mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-lg font-bold text-sage-800">전체 채점 결과</div>
+          <Badge variant={pct >= 60 ? 'curated' : 'warn'}>정답률 {pct}%</Badge>
         </div>
-        <span className="text-xs font-semibold text-[var(--color-muted)] tabular-nums">#{index + 1}</span>
-      </div>
+        <p className="mt-3 text-sm text-sage-800">
+          총 {questions.length}문항 중 <b>{correctCount}문항</b> 정답 · <b>{wrongList.length}문항</b> 오답
+          {unansweredCount > 0 && <> · <b>{unansweredCount}문항</b> 미풀이</>}
+        </p>
+      </Card>
 
-      {/* 문제 발문을 이미지보다 먼저(위에) 배치한다. */}
-      <QuestionStem className="text-[15px] leading-7 text-sage-800 font-medium mb-4" text={withImageLabels(q.stem)} />
-
-      {q.images && q.images.length > 0 && (
-        <div className="mb-4 space-y-2">
-          {q.images.map((img, ii) => (
-            <figure key={ii}>
-              <figcaption className="text-[12px] font-semibold text-sage-700 mb-1">이미지 {ii + 1}</figcaption>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt={`이미지 ${ii + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
-            </figure>
-          ))}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        {q.choices.map((choice, ci) => {
-          const isCorrect = ci === q.answer_index;
-          const isSel = ci === selected;
-          let cls = 'border-[var(--color-border)] bg-white';
-          if (!answered) cls += ' hover:border-sage-300 hover:bg-sage-50 cursor-pointer';
-          else if (isCorrect) cls = 'border-[var(--color-curated)] bg-[var(--color-curated-bg)]';
-          else if (isSel) cls = 'border-[var(--color-warn)] bg-[var(--color-warn-bg)]';
-          return (
-            <button
-              key={ci}
-              type="button"
-              disabled={answered}
-              onClick={() => handleSelect(ci)}
-              className={`w-full text-left flex items-start gap-3 rounded-xl border px-4 py-3 transition-colors disabled:cursor-default ${cls}`}
-            >
-              <span className="w-6 h-6 rounded-lg border border-[var(--color-border)] bg-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-sage-700">
-                {ci + 1}
+      <Card className="mb-4">
+        <div className="panel-head mb-4">
+          <h2 className="panel-title">
+            <span className="title-line">
+              오답 확인{' '}
+              <span className="help-wrap">
+                <button className="help-button" type="button" aria-label="오답노트 설명">?</button>
+                <span className="help-pop">오답 문제 중 담은 문제는 오답노트 탭에서 다시 풀어볼 수 있습니다.</span>
               </span>
-              <span className="text-sm text-sage-800 leading-6 flex-1">{choice}</span>
-              {answered && isCorrect && (
-                <span className="text-[var(--color-curated)] font-bold flex-shrink-0" aria-label="정답">✓</span>
-              )}
-              {answered && isSel && !isCorrect && (
-                <span className="text-[var(--color-warn)] font-bold flex-shrink-0" aria-label="오답">✗</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {answered && (
-        <div className="mt-4 rounded-2xl bg-[var(--color-sage-100)] p-4">
-          <div className="text-sm font-bold mb-1.5" style={{ color: selected === q.answer_index ? 'var(--color-curated)' : 'var(--color-warn)' }}>
-            {selected === q.answer_index ? '✓ 정답입니다' : `✗ 오답 — 정답: ${q.answer_index + 1}번`}
-          </div>
-          {q.explanation && (
-            <div className="text-sm text-sage-800 leading-relaxed whitespace-pre-wrap">{q.explanation}</div>
-          )}
+            </span>
+          </h2>
         </div>
-      )}
-    </Card>
+
+        {wrongList.length === 0 ? (
+          <div className="explain">
+            <strong>모든 문항을 맞혔습니다.</strong>
+            <p>현재 학습 흐름을 이어가세요.</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-4">
+              {wrongList.map((q, wrongIndex) => {
+                const answer = answers[q.id];
+                const isSaved = saved.has(q.id);
+                return (
+                  <div className="wrong-card" key={q.id}>
+                    <div className="wrong-top">
+                      <div className="wrong-index">오답 {wrongIndex + 1}</div>
+                      <label className="save-check">
+                        <input type="checkbox" checked={isSaved} readOnly />
+                        <button
+                          type="button"
+                          className="save-surface"
+                          disabled={isSaved || savingIds.has(q.id)}
+                          onClick={() => saveOne(q)}
+                        >
+                          <span className="save-icon"><BookmarkPlus className="w-4 h-4" /></span>
+                          <span className="save-text"><strong>{isSaved ? '오답노트 담음' : '오답노트 담기'}</strong></span>
+                        </button>
+                      </label>
+                    </div>
+                    <QuestionStem className="question" text={withImageLabels(q.stem)} />
+                    {q.images && q.images.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        {q.images.map((image, imageIndex) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={imageIndex} src={image.url} alt={image.caption ?? `문항 이미지 ${imageIndex + 1}`} className="w-full max-h-80 object-contain rounded-xl border border-[var(--color-border)] bg-white" />
+                        ))}
+                      </div>
+                    )}
+                    <div className="answer-grid">
+                      {q.choices.map((choice, choiceIndex) => {
+                        const isCorrect = choiceIndex === q.answer_index;
+                        const isMine = choiceIndex === answer.selected && !isCorrect;
+                        return (
+                          <div className={`answer ${isCorrect ? 'correct' : ''} ${isMine ? 'wrong' : ''}`} key={choiceIndex}>
+                            <span className="num">{choiceIndex + 1}</span>
+                            <span>{choice}</span>
+                            <span className="answer-label">{isCorrect ? '정답' : isMine ? '내 선택' : ''}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {q.explanation && (
+                      <div className="explain">
+                        <strong>해설</strong>
+                        <p>{q.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {unsavedWrong.length > 0 && (
+              <div className="action-dock">
+                <button className="primary-wide" type="button" disabled={bulkSaving} onClick={saveAllUnsaved}>
+                  <BookmarkPlus className="w-4 h-4" />
+                  {bulkSaving ? '담는 중...' : '선택한 오답 담기'}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+
+      <div className="flex justify-end">
+        <Button variant="secondary" onClick={onBack}><ArrowLeft className="w-4 h-4" /> 문항 다시 보기</Button>
+      </div>
+    </div>
   );
 }
 
