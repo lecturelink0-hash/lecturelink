@@ -11,6 +11,7 @@ export default async function ProfessorMyPageRoute() {
     <ProfessorMyPage
       displayName={session.profile.displayName ?? '교수님'}
       email={session.email}
+      schoolId={session.profile.school?.id ?? null}
       schoolName={session.profile.school?.name ?? null}
       schoolShortName={session.profile.school?.shortName ?? null}
       facultyStatus={session.profile.facultyStatus}
