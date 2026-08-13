@@ -1,5 +1,15 @@
 # WORK LOG
 
+## 2026-08-14 sharp 타입 exports 배포 오류 수정
+
+- 요청 및 목적: Vercel Production에서 `sharp` 동적 import 타입 해석 오류로 빌드가 실패하는 문제를 최소 변경으로 해결.
+- 확인: `package.json`과 `package-lock.json`의 기존 sharp는 `0.35.0`, `tsconfig.json`은 `moduleResolution: bundler`, 서버 전용 동적 import 의도는 기존 코드에 유지됨.
+- 변경: `package.json`, `package-lock.json`, `pnpm-lock.yaml`의 sharp를 `0.35.3`으로 업데이트. `lib/extract/crop-medical-images.ts`는 수정하지 않음.
+- 이유: sharp 0.35.3은 import 조건에 `dist/index.d.mts` 타입 선언을 명시해 bundler 해석에서 발생한 `Could not find a declaration file for module 'sharp'`를 해결함.
+- 검사: Node 22로 TypeScript 전체 검사 통과. `pnpm run build`와 Vercel과 동일한 `npm ci`는 Windows 로컬 `node_modules` 파일 잠금/의존성 재설치 지연으로 제한 시간 내 완료되지 않음.
+- 직접 확인하지 못한 부분: 이 환경에서는 Vercel Production 재배포 및 운영 URL 반영을 확인하지 못함.
+- 최종 상태: 조건부 완료 (코드 수정 및 타입 오류 해결, production build/deploy 재검증 필요).
+
 ## 2026-08-13 · 내 문제집 이어풀기·유사문제 저장·삭제 확인 운영 반영
 
 - 요청 및 목적: 로컬에서 검증한 내 문제집 기능을 최신 운영 `main` 기준으로 분리해 실제 사이트에 반영한다.
