@@ -454,7 +454,6 @@ export default function CpxPractice() {
         </>
       )
     )}
-
     {phase === 'ready' && (
       <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-4" aria-labelledby="cpx-processing-notice-title">
         <div className="flex items-start gap-3">
@@ -494,7 +493,6 @@ export default function CpxPractice() {
         </div>
       </section>
     )}
-
     {/* 세션 진입 전: 파트 선택 → (좌 주호소 리스트 / 우 시나리오 리스트) → 연습 시작 */}
     {false && phase === 'ready' && (
       catalogLoading ? (
