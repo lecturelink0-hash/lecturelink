@@ -280,10 +280,11 @@ export function generateOrderId(prefix: 'sub' | 'cred' = 'sub'): string {
 
 import type { PlanTier } from '@/lib/types/database';
 
+// 가격 기준: app/(app)/plan/page.tsx 의 플랜 UI 가 단일 표준.
 export const PLAN_PRICES: Record<Exclude<PlanTier, 'free'>, number> = {
-  lite: 7_900,     // 내신 대비
-  standard: 9_900, // 국가고시 대비
-  pro: 14_900,     // 통합형
+  lite: 7_900,      // 내신대비
+  standard: 11_900, // CPX
+  pro: 16_900,      // 통합
 };
 
 export const CREDIT_PRICES = {

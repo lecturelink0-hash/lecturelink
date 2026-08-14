@@ -92,11 +92,12 @@ interface SubscriptionResponse {
 
 // ─── Static maps ─────────────────────────────────────────────────────────────
 
+// 이름·가격 기준: app/(app)/plan/page.tsx 의 플랜 UI 가 단일 표준.
 const PLAN_DISPLAY: Record<PlanTier, { name: string; price: number; desc: string }> = {
-  free:     { name: '무료 플랜',    price: 0,     desc: '기본 학습' },
-  lite:     { name: '내신 대비',    price: 7900,  desc: '학교 시험·내신 위주' },
-  standard: { name: '국가고시 대비', price: 9900,  desc: '국가고시형 집중' },
-  pro:      { name: '통합형',       price: 14900, desc: '내신 + 국시 통합' },
+  free:     { name: '무료 플랜', price: 0,     desc: '기본 학습' },
+  lite:     { name: '내신대비',  price: 7900,  desc: '학교 시험·내신 위주' },
+  standard: { name: 'CPX',      price: 11900, desc: 'CPX 실전 연습' },
+  pro:      { name: '통합',      price: 16900, desc: '내신 + CPX 통합' },
 };
 
 const GRADE_LABEL: Record<string, string> = {
