@@ -20,6 +20,7 @@ export const GET = withErrorHandling(async () => {
 const patchSchema = z.object({
   display_name: z.string().trim().min(1).max(50).optional(),
   school_id: z.string().uuid().optional(),
+  grade: z.enum(['pre_1', 'pre_2', 'med_1', 'med_2', 'med_3', 'med_4']).optional(),
 });
 
 export const PATCH = withErrorHandling(async (request: Request) => {
@@ -28,11 +29,6 @@ export const PATCH = withErrorHandling(async (request: Request) => {
 
   const supabase = await createServerClient();
   if (body.school_id) {
-    if (session.profile.accountType !== 'professor' && session.role !== 'admin') {
-      const { ForbiddenException } = await import('@/lib/utils/api');
-      throw new ForbiddenException('교수 계정에서만 소속 의과대학을 변경할 수 있습니다.');
-    }
-
     const { data: school, error: schoolError } = await supabase
       .from('schools')
       .select('id')
