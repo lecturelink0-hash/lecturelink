@@ -11,11 +11,29 @@ import {
   MicOff,
   Search,
   Shuffle,
-  Stethoscope,
-  Target,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+
+// 시안의 '다시 연습' 아이콘은 다트가 꽂힌 과녁 — lucide에 없는 형태라 인라인 SVG로 재현.
+function TargetArrowIcon(props) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M12 7a5 5 0 1 0 5 5" />
+      <path d="M13 3.055a9 9 0 1 0 7.941 7.945" />
+      <path d="M15 6v3h3l3-3h-3V3z" />
+      <path d="M15 9l-3 3" />
+    </svg>
+  );
+}
 
 function normalize(value) {
   return String(value || '').replace(/\s+/g, '').toLowerCase();
@@ -112,7 +130,7 @@ export default function CpxStartExperience({
     const coreCats = new Set(core.flatMap((group) => group.cats));
     const otherCats = categories.filter((category) => !coreCats.has(category));
     return [
-      { id: 'all', label: '전체', Icon: Stethoscope, cats: categories },
+      { id: 'all', label: '전체', Icon: null, cats: categories },
       ...core,
       { id: 'other', label: '기타', Icon: BarChart3, cats: otherCats },
     ].filter((group) => group.cats.length);
@@ -191,9 +209,9 @@ export default function CpxStartExperience({
     <header className="cpx-start-header">
       <div>
         <h1>환자 연습을 통해 CPX를 연습해보세요</h1>
-        <p>복습이 필요한 증례부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
+        <p>녹음이 필요한 준비부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
       </div>
-      <Link href="/cpx/history" className="cpx-record-link"><BarChart3 aria-hidden />나의 CPX 기록 <ChevronRight aria-hidden /></Link>
+      <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ArrowRight aria-hidden /></Link>
     </header>
 
     <section className="cpx-quick-section" aria-labelledby="cpx-quick-title">
@@ -202,7 +220,14 @@ export default function CpxStartExperience({
       </div>
       <div className="cpx-quick-grid">
         <article className="cpx-review-panel">
-          <div className="cpx-action-title"><Target aria-hidden /><span>부족했던 증례 다시 연습</span></div>
+          <div className="cpx-quick-label">
+            <span className="cpx-quick-icon"><TargetArrowIcon aria-hidden /></span>
+            <div>
+              <strong>부족했던 증례 다시 연습</strong>
+              {recommendation && !historyLoading && !historyError
+                && <span>지난 연습에서 가장 낮았던 영역이에요</span>}
+            </div>
+          </div>
           {historyLoading ? <div className="cpx-recommendation-loading" aria-live="polite">
             <span className="cpx-loading-bar" /><span className="cpx-loading-bar is-short" />
             <span className="sr-only">CPX 기록을 분석하고 있습니다.</span>
@@ -211,19 +236,18 @@ export default function CpxStartExperience({
             <p>추천을 만들려면 나의 CPX 기록을 다시 불러와야 해요.</p>
             <button type="button" onClick={onRetryHistory}>다시 불러오기</button>
           </div> : recommendation ? <>
-            <div className="cpx-recommendation-result">
-              <span>지난 연습에서</span>
-              {recommendation.weakest?.name && recommendation.weakestScore !== null
-                ? <p><strong>{recommendation.target.category}</strong>의 <strong>{recommendation.weakest.name}</strong> 점수가 <strong>{recommendation.weakestScore}점</strong>으로 가장 낮았어요</p>
-                : <p><strong>{recommendation.target.category}</strong> 증례의 총점이 {recommendation.totalScore !== null && <><strong>{recommendation.totalScore}점</strong>으로 </>}가장 낮았어요</p>}
-            </div>
             <div className="cpx-recommendation-case">
               <h3>{recommendation.target.category}</h3>
-              <p>{caseSubtitle(recommendation.target)}</p>
+              <p>
+                {caseSubtitle(recommendation.target)}
+                {recommendation.weakest?.name && recommendation.weakestScore !== null
+                  ? <> · {recommendation.weakest.name} 점수 {recommendation.weakestScore}점</>
+                  : recommendation.totalScore !== null && <> · 총점 {recommendation.totalScore}점</>}
+              </p>
             </div>
-            <Button type="button" size="lg" onClick={() => openSetup(recommendation.target, 'recommendation')}>
+            <button type="button" className="cpx-quick-cta" onClick={() => openSetup(recommendation.target, 'recommendation')}>
               다시 연습하기 <ArrowRight aria-hidden />
-            </Button>
+            </button>
           </> : <div className="cpx-recommendation-empty">
             <h3>아직 분석할 연습 기록이 없어요</h3>
             <p>첫 CPX를 완료하면 실제 점수를 바탕으로 보완할 증례를 추천해 드려요.</p>
@@ -232,14 +256,17 @@ export default function CpxStartExperience({
         </article>
 
         <article className="cpx-random-panel">
-          <div className="cpx-action-title"><Shuffle aria-hidden /><span>랜덤 실전</span></div>
-          <div>
-            <h3>증례 정보 없이 바로 시작</h3>
-            <p>시험처럼 증례를 무작위로 진행해요.</p>
+          <div className="cpx-quick-label">
+            <span className="cpx-quick-icon"><Shuffle aria-hidden /></span>
+            <div><strong>랜덤 실전</strong></div>
           </div>
-          <Button type="button" variant="secondary" size="lg" onClick={openRandomSetup} disabled={!cases.length}>
+          <div className="cpx-random-copy">
+            <h3>증례 정보 없이 바로 시작</h3>
+            <p>시험처럼 증례를 무작위로 진행해요</p>
+          </div>
+          <button type="button" className="cpx-quick-cta" onClick={openRandomSetup} disabled={!cases.length}>
             시작하기 <ArrowRight aria-hidden />
-          </Button>
+          </button>
         </article>
       </div>
     </section>
@@ -248,7 +275,7 @@ export default function CpxStartExperience({
       <div className="cpx-direct-heading">
         <div className="cpx-section-heading">
           <h2 id="cpx-direct-title">증례 직접 선택</h2>
-          <p>파트를 좁힌 뒤 주호소와 시나리오를 차례로 선택하세요.</p>
+          <p>파트별 증상 및 주호소와 시나리오를 차례로 선택해봐요.</p>
         </div>
         <label className="cpx-direct-search">
           <Search aria-hidden />
@@ -265,7 +292,7 @@ export default function CpxStartExperience({
           aria-pressed={part.id === activePart?.id}
           onClick={() => { setSelectedPart(part.id); setQuery(''); }}
         >
-          <part.Icon aria-hidden />{part.label}
+          {part.Icon && <part.Icon aria-hidden />}{part.label}
         </button>)}
       </div>
 
