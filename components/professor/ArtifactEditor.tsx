@@ -322,7 +322,7 @@ export function ArtifactEditor({ artifactId }: { artifactId: string }) {
       {data.course_id && <Link className="back artifact-course-back" href={`/professor/courses/${data.course_id}`}><ArrowLeft size={16} />차시로 돌아가기</Link>}
       <header className="page-head formative-review-head">
         <div>
-          <p className="eyebrow">교수 도구 · 검토 후 배포</p>
+          <span className="professor-badge">교수 도구 · 검토 후 배포</span>
           <h1><span className="headline-accent">형성평가</span> 검토하기</h1>
           <p className="lead">
             생성된 문항과 정답·해설을 확인하고 필요한 내용을 수정한 뒤 학생에게
