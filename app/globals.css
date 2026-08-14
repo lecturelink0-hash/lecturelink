@@ -1497,6 +1497,9 @@
 }
 
 .student-dashboard .dashboard-metrics dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   margin: 7px 0 0;
   color: var(--dashboard-forest);
   font-size: clamp(18px, 2vw, 24px);
@@ -1504,6 +1507,115 @@
   font-weight: 790;
   letter-spacing: -.03em;
   line-height: 1.15;
+  column-gap: 10px;
+  row-gap: 5px;
+}
+
+.student-dashboard .dashboard-head-side {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.student-dashboard .dashboard-head-side .dashboard-inline-link {
+  min-height: 0;
+  margin-top: 0;
+}
+
+.student-dashboard .dashboard-dday-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--dashboard-mint);
+  color: var(--dashboard-forest);
+  font-size: 12.5px;
+  font-weight: 740;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.student-dashboard .dashboard-dday-chip svg {
+  width: 13px;
+  height: 13px;
+}
+
+.student-dashboard .dashboard-dday-chip strong {
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.student-dashboard .dashboard-dday-chip.is-ghost {
+  border: 1.5px dashed var(--dashboard-mid);
+  background: var(--dashboard-mint-soft);
+  color: var(--dashboard-button);
+}
+
+.student-dashboard .dashboard-streak-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--dashboard-forest);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.student-dashboard .dashboard-streak-line svg {
+  width: 13px;
+  height: 13px;
+}
+
+.student-dashboard .dashboard-delta {
+  display: inline-flex;
+  flex-basis: 100%;
+  align-items: center;
+  gap: 3px;
+  color: var(--dashboard-button);
+  font-size: 11.5px;
+  font-weight: 720;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.student-dashboard .dashboard-delta.is-down {
+  color: var(--dashboard-muted);
+}
+
+.student-dashboard .dashboard-delta svg {
+  width: 10px;
+  height: 10px;
+}
+
+.student-dashboard .dashboard-delta small {
+  color: var(--dashboard-muted);
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.student-dashboard .dashboard-spark {
+  flex: 0 0 auto;
+  margin-bottom: 2px;
+}
+
+.student-dashboard .dashboard-spark .spark-area {
+  fill: var(--dashboard-mint);
+}
+
+.student-dashboard .dashboard-spark .spark-line {
+  fill: none;
+  stroke: var(--dashboard-forest);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.student-dashboard .dashboard-spark .spark-dot {
+  fill: var(--dashboard-forest);
+  stroke: #fff;
+  stroke-width: 1.5;
 }
 
 .student-dashboard .dashboard-weekly-card .study-week {
@@ -1575,6 +1687,30 @@
   font-size: clamp(13px, 1vw, 14px);
   font-weight: 520;
   line-height: 1.25;
+}
+
+.student-dashboard .dashboard-step-copy small b {
+  color: var(--dashboard-forest);
+  font-weight: 740;
+}
+
+.student-dashboard .dashboard-step-progress {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 132px;
+  max-width: 100%;
+  height: 4px;
+  margin-top: 3px;
+  border-radius: 999px;
+  background: var(--dashboard-mint);
+}
+
+.student-dashboard .dashboard-step-progress b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--dashboard-forest);
 }
 
 @media (max-width: 960px) {
