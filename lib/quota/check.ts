@@ -9,7 +9,7 @@ import { createAdminClient } from '@/lib/db/admin';
 import { ApiException } from '@/lib/utils/api';
 import type { PlanTier } from '@/lib/types/database';
 
-export type QuotaResource = 'questions' | 'uploads' | 'images';
+export type QuotaResource = 'questions' | 'uploads' | 'images' | 'cpx_seconds';
 
 export interface QuotaCheckResult {
   ok: boolean;
@@ -94,6 +94,7 @@ export async function requireQuota(
       questions: '문항',
       uploads: '자료 업로드',
       images: '이미지 문항',
+      cpx_seconds: 'CPX 이용 시간(초)',
     };
     throw new ApiException(
       'quota_exceeded',
@@ -221,6 +222,7 @@ export async function consumeQuotaCheckedStrict(
       questions: '문항',
       uploads: '자료 업로드',
       images: '이미지 문항',
+      cpx_seconds: 'CPX 이용 시간(초)',
     };
     throw new ApiException(
       'quota_exceeded',

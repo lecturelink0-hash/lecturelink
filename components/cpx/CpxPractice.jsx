@@ -14,6 +14,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PRIVACY_VERSION } from '@/lib/legal/config';
 
+// 서버 하트비트 주기. 스윕 임계(마지막 하트비트 + 10분)보다 크게 짧아야 하고,
+// 너무 잦으면 미러 쓰기가 늘어난다 — 정책 7장 권고(15~30초)의 중앙값.
+const HEARTBEAT_INTERVAL_MS = 20_000;
+
 // 진료 시간은 짧은 순서로 제시하며, 실전 기준은 12분이다.
 const TIME_LIMIT_OPTIONS = [
   { seconds: 11 * 60, label: '11분' },
@@ -38,7 +42,7 @@ const PART_GROUPS = [
       '목 통증', '피부 발진', '손떨림', '팔다리 근력 약화 및 감각 이상', '경련', '의식장애'],
   },
   {
-    id: 'psych', label: '정신·행동 중심', Icon: Brain,
+    id: 'psych', label: '정신행동 중심', Icon: Brain,
     desc: '정신과적 평가와 위험도 판단',
     cats: ['불안', '음주 문제', '기분 변화', '자살', '물질 오남용'],
   },
@@ -172,13 +176,56 @@ export default function CpxPractice() {
     }
   }, [sessionId]);
 
+  // 서버 하트비트 — 시간 차감 정산의 생존 신호(정책 7장).
+  // 전사·usage flush 는 보낼 내용이 있을 때만 전송되므로, 학생이 자료를 읽거나 고민하느라
+  // 침묵이 길어지면 신호가 끊긴다. 그대로 두면 스윕(마지막 하트비트 + 10분)이 진행 중인
+  // 세션을 이탈로 오인해 종료시키므로, 빈 이벤트 배열로 생존만 주기 전송한다.
+  // (서버는 세션 하위 미러 트래픽 수신 시각을 heartbeat_at 에 기록한다.)
+  const heartbeat = useCallback(() => {
+    if (!sessionId) return;
+    request(`/sessions/${sessionId}/events`, {
+      method: 'POST',
+      body: JSON.stringify([]),
+      keepalive: true,
+    }).catch(() => {});
+  }, [sessionId]);
+
   useEffect(() => {
     if (phase !== 'live') return undefined;
     const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAtRef.current) / 1000)), 1000);
     const saver = window.setInterval(flush, 3000);
     const usageSaver = window.setInterval(flushUsage, 3000);
-    return () => { window.clearInterval(timer); window.clearInterval(saver); window.clearInterval(usageSaver); };
-  }, [phase, flush, flushUsage]);
+    const beat = window.setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
+    return () => {
+      window.clearInterval(timer); window.clearInterval(saver);
+      window.clearInterval(usageSaver); window.clearInterval(beat);
+    };
+  }, [phase, flush, flushUsage, heartbeat]);
+
+  // 이탈 감지 — 탭 숨김·페이지 종료 시 마지막 전사와 생존 신호를 남긴다(정책 7장).
+  // 이탈은 종료가 아니라 자동 일시정지이므로 여기서 /end 를 호출하지 않는다. 정산 시점은
+  // 서버가 정한다(10분 내 미복귀 시 스윕이 마지막 하트비트까지만 차감).
+  // keepalive 요청이라 문서가 사라진 뒤에도 브라우저가 전송을 마친다.
+  useEffect(() => {
+    if (phase !== 'live') return undefined;
+    const persist = () => { flush(); flushUsage(); heartbeat(); };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') persist(); };
+    // 이어하기 복원이 아직 없어 지금은 이탈 = 연습 중단이므로, 브라우저 이탈은 한 번 되묻는다.
+    const onBeforeUnload = (event) => {
+      persist();
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', persist);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', persist);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [phase, flush, flushUsage, heartbeat]);
 
   // 채점(finishing) 중 원형 게이지를 95%까지 점점 느려지게 채운다.
   // 실제 채점은 단일 API 호출(진행률 이벤트 없음)이라 예상 소요시간 기반으로 시뮬레이션하며,
@@ -426,7 +473,7 @@ export default function CpxPractice() {
     return [...regions.values()];
   }, [buttons]);
 
-  return <div className="ll-system-page space-y-7">
+  return <div className="ll-system-page cpx-page space-y-7">
     {phase !== 'ready' && <section className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
       <div><span className="ll-eyebrow"><Stethoscope className="h-3.5 w-3.5" /> CPX 실전 연습</span><h1 className="mt-2 text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와 실제처럼 진료하세요</h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
       <div className="flex flex-wrap items-center gap-2"><div role="group" aria-label="제한시간 선택" title="실전(12분)보다 짧게 설정해 시간 압박에 대비할 수 있어요" className="inline-flex h-9 items-center gap-0.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-1.5"><Clock3 className="h-4 w-4 text-[var(--color-muted)]" />{TIME_LIMIT_OPTIONS.map((opt) => <button key={opt.seconds} type="button" onClick={() => setLimitSeconds(opt.seconds)} disabled={phase !== 'ready'} aria-pressed={limitSeconds === opt.seconds} className={`tnum h-7 rounded-[calc(var(--radius-md)-3px)] px-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-55 ${limitSeconds === opt.seconds ? 'bg-[var(--color-primary)] text-white disabled:opacity-100' : 'text-[var(--color-muted)] hover:text-[var(--color-primary)]'}`}>{opt.label}</button>)}</div><button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'border-[var(--color-warn)] bg-[var(--color-warn)] text-white hover:opacity-90' : 'border-[var(--color-warn)] bg-white text-[var(--color-warn)] hover:bg-[var(--color-warn-bg)]'}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button><Link href="/cpx/history" className="inline-flex h-9 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm font-bold text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">나의 기록 <ChevronRight className="h-4 w-4" /></Link></div>
