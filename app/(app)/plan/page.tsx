@@ -310,7 +310,6 @@ export default function PlanPage() {
             <div className="usage-grid">
               <QuotaBar label="문항" data={quota.questions} />
               <QuotaBar label="자료 업로드" data={quota.uploads} />
-              <QuotaBar label="이미지 문항" data={quota.images} />
             </div>
           </section>
         )}
