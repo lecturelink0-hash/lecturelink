@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { api, ApiError } from '@/lib/api/client';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
   CheckCircle2,
   XCircle,
-  X,
+  Trash2,
   Folder,
   FolderOpen,
   BookOpen,
@@ -81,6 +83,9 @@ interface QuestionUIState {
   similarSubmitted: boolean;
   similarCorrectIndex: number | null;
   similarExplanation: string | null;
+  similarUploadId: string | null;
+  similarSuccess: string | null;
+  similarError: string | null;
 }
 
 function initUIState(expanded = false): QuestionUIState {
@@ -96,6 +101,9 @@ function initUIState(expanded = false): QuestionUIState {
     similarSubmitted: false,
     similarCorrectIndex: null,
     similarExplanation: null,
+    similarUploadId: null,
+    similarSuccess: null,
+    similarError: null,
   };
 }
 
@@ -194,25 +202,23 @@ function ExplanationBox({ explanation, isCorrect }: ExplanationBoxProps) {
 interface SimilarPanelProps {
   state: QuestionUIState;
   isPrivate: boolean;
-  subTopicId: string | null;
   sourceQuestionId: string;
   onChange: (patch: Partial<QuestionUIState>) => void;
 }
 
-function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange }: SimilarPanelProps) {
+function SimilarPanel({ state, isPrivate, sourceQuestionId, onChange }: SimilarPanelProps) {
   async function loadSimilar() {
-    if (!subTopicId) return;
-    onChange({ similarLoading: true, similarQ: null, similarSelected: null, similarSubmitted: false, similarCorrectIndex: null, similarExplanation: null });
+    if (state.similarLoading) return;
+    onChange({ similarLoading: true, similarQ: null, similarSelected: null, similarSubmitted: false, similarCorrectIndex: null, similarExplanation: null, similarUploadId: null, similarSuccess: null, similarError: null });
     try {
       // 오답 기반 AI 유사문제 생성 (ai_user_triggered). 풀 재출제가 아니라 새 문항을 생성한다.
       const result = await api.post<{ upload_id: string; question_count: number }>('/api/questions/similar', {
         source_question_id: sourceQuestionId,
         source_kind: isPrivate ? 'private' : 'public',
       });
-      window.location.assign(`/similar-practice/${result.upload_id}`);
+      onChange({ similarLoading: false, similarUploadId: result.upload_id, similarSuccess: '유사문제를 만들고 내 문제집에 저장했어요.', similarError: null });
     } catch (e) {
-      onChange({ similarLoading: false });
-      alert(e instanceof ApiError ? e.message : '유사문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      onChange({ similarLoading: false, similarError: e instanceof ApiError ? e.message : '유사문제 생성에 실패했습니다. 잠시 후 다시 시도해주세요.' });
     }
   }
 
@@ -239,12 +245,12 @@ function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange
     // display:contents — 트리거 버튼이 부모 flex 행에 직접 정렬되도록(형제 버튼과 높이 일치).
     // 로딩/확장 패널은 basis-full 로 전체 폭 아래줄로 내려간다.
     <div className="contents">
-      {!state.similarQ && !state.similarLoading && (
+      {!state.similarQ && !state.similarLoading && !state.similarSuccess && (
         <Button
           variant="accent"
           size="sm"
           onClick={loadSimilar}
-          disabled={!subTopicId}
+          disabled={state.similarLoading}
         >
           <Copy className="w-3.5 h-3.5" />
           유사문제 생성
@@ -255,6 +261,20 @@ function SimilarPanel({ state, isPrivate, subTopicId, sourceQuestionId, onChange
           <span className="inline-block w-3.5 h-3.5 border-2 border-[var(--color-sage-400)] border-t-transparent rounded-full animate-spin" />
           AI가 유사문제를 생성하는 중입니다... (최대 30초)
         </p>
+      )}
+      {state.similarError && !state.similarLoading && (
+        <div className="basis-full flex flex-wrap items-center gap-2 text-xs text-[var(--color-warn)] py-1.5" role="alert">
+          <span>{state.similarError}</span>
+          <Button variant="ghost" size="sm" onClick={loadSimilar}>다시 시도</Button>
+        </div>
+      )}
+      {state.similarSuccess && state.similarUploadId && !state.similarLoading && (
+        <div className="basis-full flex flex-wrap items-center gap-2 text-xs text-sage-700 py-1.5" role="status">
+          <span>{state.similarSuccess}</span>
+          <Link className="font-bold underline underline-offset-2" href={`/library?set=${state.similarUploadId}`}>
+            내 문제집에서 확인
+          </Link>
+        </div>
       )}
       {state.similarQ && (
         <div className="basis-full w-full mt-3 ll-card p-5">
@@ -327,7 +347,9 @@ export default function WrongNotesPage() {
   const [reviewFolder, setReviewFolder] = useState<ReviewFolder>('need');
   const [selectedSubTopicId, setSelectedSubTopicId] = useState<string | null>(null); // null = 전체
   const [uiStates, setUiStates] = useState<Record<string, QuestionUIState>>({});
-  const [deleting, setDeleting] = useState<Set<string>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // ── Load ──────────────────────────────────────────────────────────────────
 
@@ -399,19 +421,24 @@ export default function WrongNotesPage() {
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
-  async function handleDelete(id: string) {
-    setDeleting((prev) => new Set(prev).add(id));
+  function handleDelete(id: string) {
+    setDeleteError(null);
+    setDeleteTarget(id);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleting) return;
+    const targetId = deleteTarget;
+    setDeleting(true);
+    setDeleteError(null);
     try {
-      await api.delete(`/api/wrong-answers?id=${id}`);
-      setItems((prev) => prev.filter((it) => it.id !== id));
+      await api.delete(`/api/wrong-answers?id=${targetId}`);
+      setItems((prev) => prev.filter((it) => it.id !== targetId));
+      setDeleteTarget(null);
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : '삭제 실패');
+      setDeleteError(e instanceof ApiError ? e.message : '삭제 실패. 다시 시도해주세요.');
     } finally {
-      setDeleting((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
+      setDeleting(false);
     }
   }
 
@@ -475,7 +502,6 @@ export default function WrongNotesPage() {
               <SimilarPanel
                 state={ui}
                 isPrivate={item.isPrivate}
-                subTopicId={item.subTopicId}
                 sourceQuestionId={q.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
@@ -493,7 +519,6 @@ export default function WrongNotesPage() {
             <SimilarPanel
               state={ui}
               isPrivate={item.isPrivate}
-              subTopicId={item.subTopicId}
               sourceQuestionId={q.id}
               onChange={(patch) => patchUI(item.id, patch)}
             />
@@ -523,11 +548,13 @@ export default function WrongNotesPage() {
           </div>
           <button
             onClick={() => handleDelete(item.id)}
-            disabled={deleting.has(item.id)}
+            disabled={deleting && deleteTarget === item.id}
             className="remove"
             title="오답노트에서 제거"
+            aria-label="오답노트에서 제거"
+            aria-haspopup="dialog"
           >
-            <X className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
 
@@ -568,15 +595,12 @@ export default function WrongNotesPage() {
               <RefreshCw className="w-3.5 h-3.5" />
               다시 풀기
             </Button>
-            {item.subTopicId && (
-              <SimilarPanel
-                state={ui}
-                isPrivate={item.isPrivate}
-                subTopicId={item.subTopicId}
-                sourceQuestionId={q.id}
-                onChange={(patch) => patchUI(item.id, patch)}
-              />
-            )}
+            <SimilarPanel
+              state={ui}
+              isPrivate={item.isPrivate}
+              sourceQuestionId={q.id}
+              onChange={(patch) => patchUI(item.id, patch)}
+            />
           </div>
         )}
       </Card>
@@ -600,11 +624,13 @@ export default function WrongNotesPage() {
           </div>
           <button
             onClick={() => handleDelete(item.id)}
-            disabled={deleting.has(item.id)}
+            disabled={deleting && deleteTarget === item.id}
             className="flex-shrink-0 p-1.5 rounded-lg hover:bg-[var(--color-warn-bg)] text-[var(--color-muted)] hover:text-[var(--color-warn)] transition-colors"
             title="오답노트에서 제거"
+            aria-label="오답노트에서 제거"
+            aria-haspopup="dialog"
           >
-            <X className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
 
@@ -660,7 +686,6 @@ export default function WrongNotesPage() {
                   <SimilarPanel
                     state={ui}
                     isPrivate={item.isPrivate}
-                    subTopicId={item.subTopicId}
                     sourceQuestionId={q.id}
                     onChange={(patch) => patchUI(item.id, patch)}
                   />
@@ -673,7 +698,6 @@ export default function WrongNotesPage() {
                 <SimilarPanel
                   state={ui}
                   isPrivate={item.isPrivate}
-                  subTopicId={item.subTopicId}
                   sourceQuestionId={q.id}
                   onChange={(patch) => patchUI(item.id, patch)}
                 />
@@ -866,6 +890,23 @@ export default function WrongNotesPage() {
           </div>
         </>
       )}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="이 오답노트를 삭제하시겠어요?"
+        description="삭제하면 해당 오답노트는 복구할 수 없습니다."
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        danger
+        loading={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          if (!deleting) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+      />
     </div>
   );
 }

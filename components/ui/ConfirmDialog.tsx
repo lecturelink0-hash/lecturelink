@@ -12,6 +12,7 @@ interface ConfirmDialogProps {
   /** 파괴적 액션(삭제 등)이면 확인 버튼을 danger 스타일로 */
   danger?: boolean;
   loading?: boolean;
+  error?: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -29,6 +30,7 @@ export function ConfirmDialog({
   cancelLabel = '취소',
   danger,
   loading,
+  error = null,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -42,8 +44,9 @@ export function ConfirmDialog({
 
     function handleKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        event.preventDefault();
         event.stopPropagation();
-        onCancel();
+        if (!loading) onCancel();
         return;
       }
       if (event.key !== 'Tab' || !dialogRef.current) return;
@@ -68,7 +71,7 @@ export function ConfirmDialog({
       document.removeEventListener('keydown', handleKey);
       previouslyFocused?.focus?.();
     };
-  }, [open, onCancel]);
+  }, [loading, onCancel, open]);
 
   if (!open) return null;
 
@@ -93,6 +96,11 @@ export function ConfirmDialog({
         {description && (
           <p id="confirm-dialog-desc" className="mt-2 text-sm text-[var(--color-muted)] leading-relaxed">
             {description}
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm leading-relaxed text-red-700">
+            {error}
           </p>
         )}
         <div className="mt-5 flex justify-end gap-2">
