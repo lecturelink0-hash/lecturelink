@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowRight, Check, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CheckCircle2 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -148,7 +149,12 @@ export default function OnboardingPage() {
 
   return (
     <div className={styles.page}>
+      <Link href="/dashboard" className={styles.back}>
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+        홈으로
+      </Link>
       <header className={styles.pageHeader}>
+        <span className={styles.eyebrow}>STEP 1 / 1 · 회원 정보 입력</span>
         <h1>
           <span>나에게 맞는 학습</span>을<br />시작해보세요
         </h1>
@@ -161,7 +167,6 @@ export default function OnboardingPage() {
             <h2>기본 정보</h2>
             <p>학습 경험을 준비하는 데 필요한 정보입니다.</p>
           </div>
-          <span>약 1분</span>
         </div>
 
         <div className={styles.fieldGrid}>
