@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Check, FileText, Stethoscope } from 'lucide-react';
 import { KakaoEmailPrompt } from '@/components/auth/KakaoEmailPrompt';
+import { formatStudyTime } from '@/lib/utils/kst';
 import cpxCharacterWave from '@/public/dashboard/cpx-character-wave.png';
 
 interface Day {
@@ -212,13 +213,4 @@ export function DashboardView({
 
 function materialDisplayTitle(fileName: string) {
   return fileName.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim();
-}
-
-function formatStudyTime(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours > 0) return `${hours}시간 ${remainingMinutes}분`;
-  if (minutes > 0) return `${minutes}분`;
-  return '0분';
 }

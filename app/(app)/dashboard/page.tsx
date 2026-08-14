@@ -1,16 +1,12 @@
 import { DashboardView } from './DashboardView';
 import { getCurrentSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
+import { KST_OFFSET_MS, calcStreak, kstDateKey } from '@/lib/utils/kst';
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 
 function pickOne(value: unknown): unknown {
   return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
-}
-
-function kstKey(iso: string): string {
-  return new Date(new Date(iso).getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
 function startOfKstWeekUtc(): Date {
@@ -27,28 +23,8 @@ function startOfKstWeekUtc(): Date {
 
 function kstWeekDateKeys(startUtc: Date): string[] {
   return Array.from({ length: 7 }, (_, index) => (
-    kstKey(new Date(startUtc.getTime() + index * 86400000).toISOString())
+    kstDateKey(new Date(startUtc.getTime() + index * 86400000))
   ));
-}
-
-function computeStreak(dates: Set<string>): number {
-  const nowKst = new Date(Date.now() + KST_OFFSET_MS);
-  const cursor = new Date(Date.UTC(
-    nowKst.getUTCFullYear(),
-    nowKst.getUTCMonth(),
-    nowKst.getUTCDate(),
-  ));
-
-  if (!dates.has(cursor.toISOString().slice(0, 10))) {
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-
-  let streak = 0;
-  while (dates.has(cursor.toISOString().slice(0, 10))) {
-    streak += 1;
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-  return streak;
 }
 
 interface AttemptRow {
@@ -161,8 +137,8 @@ export default async function DashboardPage() {
     0,
   );
   const weekDateKeys = kstWeekDateKeys(weekStart);
-  const studiedDateKeys = new Set(weekAttempts.map((attempt) => kstKey(attempt.created_at)));
-  const todayKey = kstKey(new Date().toISOString());
+  const studiedDateKeys = new Set(weekAttempts.map((attempt) => kstDateKey(attempt.created_at)));
+  const todayKey = kstDateKey(new Date());
   const weekDays = weekDateKeys.map((key, index) => ({
     label: WEEKDAY_LABELS[index],
     studied: studiedDateKeys.has(key),
@@ -170,7 +146,7 @@ export default async function DashboardPage() {
   }));
 
   const allDates = new Set(
-    (allDatesRes.data ?? []).map((attempt) => kstKey(attempt.created_at as string)),
+    (allDatesRes.data ?? []).map((attempt) => kstDateKey(attempt.created_at as string)),
   );
   const totalSolved = totalAttemptsRes.count ?? 0;
   const totalCorrect = correctAttemptsRes.count ?? 0;
@@ -209,7 +185,7 @@ export default async function DashboardPage() {
       displayName={session.profile.displayName ?? '학생'}
       weekSeconds={weekSeconds}
       weekCount={weekAttempts.length}
-      streak={computeStreak(allDates)}
+      streak={calcStreak(allDates)}
       weekDays={weekDays}
       overallAccuracy={overallAccuracy}
       totalSolved={totalSolved}

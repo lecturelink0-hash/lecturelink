@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Menu, X, LogOut, ChevronDown, CalendarDays, UserCog } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
+import { planName } from '@/lib/payment/plans';
 import './mobile-drawer.css';
 
 // 학습 흐름 순서: 내신 대비와 CPX를 각각 독립 메뉴로 제공한다.
@@ -43,6 +44,10 @@ export function Sidebar({ user }: SidebarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const drawerWasOpen = useRef(false);
 
   // 경로 변경 시 모바일 드로어 / 프로필 드롭다운 자동 닫기
   useEffect(() => {
@@ -53,13 +58,47 @@ export function Sidebar({ user }: SidebarProps) {
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      // 모달 드로어: Tab 을 드로어 내부에서 순환시켜 뒤 페이지로 새지 않게
+      if (event.key !== 'Tab' || !drawerRef.current) return;
+      const focusables = drawerRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey) {
+        if (active === first || !drawerRef.current.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !drawerRef.current.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
     document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('keydown', handleKey);
     return () => {
       document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('keydown', handleKey);
     };
+  }, [open]);
+
+  // 드로어 열림 → 닫기 버튼으로 포커스 이동, 닫힘 → 햄버거 버튼으로 복귀
+  useEffect(() => {
+    if (open) {
+      drawerWasOpen.current = true;
+      drawerCloseRef.current?.focus();
+    } else if (drawerWasOpen.current) {
+      drawerWasOpen.current = false;
+      hamburgerRef.current?.focus();
+    }
   }, [open]);
 
   // 프로필 드롭다운: 바깥 클릭 / ESC 로 닫기
@@ -104,13 +143,6 @@ export function Sidebar({ user }: SidebarProps) {
     return map[g] ?? g;
   };
 
-  const planLabel: Record<string, string> = {
-    free: 'Free',
-    lite: '내신 대비',
-    standard: '학습 플랜',
-    pro: '통합형',
-  };
-
   const visibleNavItems = NAV_ITEMS.filter((item) => !HIDDEN_STUDENT_NAV_HREFS.has(item.href));
   const navItems = user.onboarded ? visibleNavItems : [ONBOARDING_NAV, ...visibleNavItems];
 
@@ -120,7 +152,7 @@ export function Sidebar({ user }: SidebarProps) {
   const avatarInitial = user.displayName?.charAt(0)?.toUpperCase() ?? '?';
   const subtitle = user.schoolShortName
     ? `${user.schoolShortName} · ${gradeLabel(user.grade)}`
-    : `${planLabel[user.planTier] ?? user.planTier} 플랜`;
+    : `${planName(user.planTier)} 플랜`;
 
   // 프로필 드롭다운 / 모바일 드로어 공통 메뉴 항목
   const MENU_ITEMS = [
@@ -148,13 +180,14 @@ export function Sidebar({ user }: SidebarProps) {
   );
 
   return (
+    <>
     <header className="header fixed top-0 inset-x-0 z-40">
       <div className="header-inner">
         {/* 좌측 로고 */}
         <Logo />
 
-        {/* 가운데 메뉴 (데스크톱) — 활성 밑줄 */}
-        <nav className="nav hidden md:flex" aria-label="주요 메뉴">
+        {/* 가운데 메뉴 (데스크톱) — 900px 미만은 계정 메뉴가 잘려 햄버거로 전환 */}
+        <nav className="nav hidden min-[900px]:flex" aria-label="주요 메뉴">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -167,7 +200,7 @@ export function Sidebar({ user }: SidebarProps) {
         </nav>
 
         {/* 우측: 사용자 드롭다운 (데스크톱) */}
-        <div className="account hidden md:flex">
+        <div className="account hidden min-[900px]:flex">
         <div className="relative" ref={menuRef}>
           <button
             type="button"
@@ -242,24 +275,31 @@ export function Sidebar({ user }: SidebarProps) {
 
         {/* 모바일 메뉴 버튼 */}
         <button
+          ref={hamburgerRef}
           onClick={() => setOpen(true)}
           aria-label="메뉴 열기"
-          className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-sage-800 hover:bg-[var(--color-sage-100)]"
+          aria-expanded={open}
+          className="min-[900px]:hidden w-11 h-11 flex items-center justify-center rounded-lg text-sage-800 hover:bg-[var(--color-sage-100)]"
         >
           <Menu className="w-5 h-5" />
         </button>
       </div>
+    </header>
 
-      {/* 모바일 드로어 */}
+      {/* 모바일 드로어 — 헤더 밖 형제로 렌더링.
+          (헤더의 backdrop-filter 가 fixed 자손의 containing block 이 되어
+          배경막이 헤더 크기로 잘리는 문제를 피한다) */}
       {open && (
-        <button
-          type="button"
+        <div
           className="ll-mobile-drawer-backdrop ll-student-mobile-drawer"
           onClick={() => setOpen(false)}
-          aria-label="메뉴 닫기"
+          aria-hidden="true"
         />
       )}
       <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
         className={clsx(
           'll-mobile-drawer ll-student-mobile-drawer',
           open && 'is-open',
@@ -271,6 +311,7 @@ export function Sidebar({ user }: SidebarProps) {
         <div className="ll-mobile-drawer-header">
           <Logo />
           <button
+            ref={drawerCloseRef}
             onClick={() => setOpen(false)}
             aria-label="메뉴 닫기"
             className="ll-mobile-drawer-close"
@@ -330,7 +371,7 @@ export function Sidebar({ user }: SidebarProps) {
           </div>
         </div>
       </aside>
-    </header>
+    </>
   );
 }
 

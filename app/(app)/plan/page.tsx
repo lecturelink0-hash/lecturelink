@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
+import { PLAN_CATALOG, planName } from '@/lib/payment/plans';
 import { Check, Ticket, BarChart3 } from 'lucide-react';
 
 interface QuotaSnapshot {
@@ -22,12 +23,11 @@ interface Plan {
   features: { text: string; supportingText?: string }[];
 }
 
+// 플랜 명칭·가격·설명은 PLAN_CATALOG(단일 소스)에서 — 이 페이지는 features 만 정의한다.
 const PLANS: Plan[] = [
   {
     tier: 'lite' as const,
-    name: '내신대비',
-    price: 7_900,
-    desc: '강의자료로 시험 대비를 하고 싶은 학생',
+    ...PLAN_CATALOG.lite,
     features: [
       { text: '강의자료 업로드' },
       { text: '월 500문항 생성' },
@@ -39,9 +39,7 @@ const PLANS: Plan[] = [
   },
   {
     tier: 'standard' as const,
-    name: 'CPX',
-    price: 11_900,
-    desc: '실전처럼 CPX를 반복 연습하고 싶은 학생',
+    ...PLAN_CATALOG.standard,
     features: [
       {
         text: '월 CPX 20회',
@@ -56,9 +54,7 @@ const PLANS: Plan[] = [
   },
   {
     tier: 'pro' as const,
-    name: '통합',
-    price: 16_900,
-    desc: '문제 풀이부터 CPX 실전 연습까지 한 번에',
+    ...PLAN_CATALOG.pro,
     featured: true,
     features: [
       { text: '강의자료 업로드' },
@@ -75,11 +71,11 @@ const PLANS: Plan[] = [
 ];
 
 const PLAN_NAMES: Record<QuotaSnapshot['plan_tier'], string> = {
-  free: '무료',
-  lite: '내신대비',
-  standard: 'CPX',
-  pro: '통합',
-  unlimited: '통합',
+  free: PLAN_CATALOG.free.name,
+  lite: PLAN_CATALOG.lite.name,
+  standard: PLAN_CATALOG.standard.name,
+  pro: PLAN_CATALOG.pro.name,
+  unlimited: planName('unlimited'),
 };
 
 export default function PlanPage() {

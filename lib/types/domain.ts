@@ -233,7 +233,8 @@ export const PLAN_LIMITS: Record<
   PlanTier,
   { questions: number; uploads: number; images: number; price: number }
 > = {
-  // 가격 기준: app/(app)/plan/page.tsx 의 플랜 UI 가 단일 표준 (내신대비 7,900 / CPX 11,900 / 통합 16,900).
+  // 가격의 단일 소스는 lib/payment/plans.ts PLAN_CATALOG — 여기 값은 그와 일치해야 한다.
+  // 2026-08 개편: 내신대비 7,900 / CPX 11,900 / 통합 16,900.
   free: { questions: 50, uploads: 1, images: 5, price: 0 },
   lite: { questions: 500, uploads: 10, images: 30, price: 7900 },
   standard: { questions: 500, uploads: 5, images: 40, price: 11900 },
