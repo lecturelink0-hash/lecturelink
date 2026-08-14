@@ -18,6 +18,8 @@ interface StudyCalendarProps {
   onSelectDate: (dateKey: string) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  /** "오늘" 버튼 — 오늘이 속한 달로 이동 + 오늘 선택 */
+  onGoToday?: () => void;
 }
 
 const DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -60,6 +62,7 @@ export function StudyCalendar({
   onSelectDate,
   onPrevMonth,
   onNextMonth,
+  onGoToday,
 }: StudyCalendarProps) {
   const [focusedDate, setFocusedDate] = useState(selectedDate);
   const pendingFocus = useRef(false);
@@ -161,14 +164,25 @@ export function StudyCalendar({
         <span className="text-base font-bold text-sage-800" aria-live="polite">
           {viewYear}년 {viewMonth}월
         </span>
-        <button
-          type="button"
-          onClick={onNextMonth}
-          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--color-sage-100)] text-sage-700 transition-colors"
-          aria-label="다음 달"
-        >
-          <ChevronRight size={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          {onGoToday && !todayKey.startsWith(monthPrefix) && (
+            <button
+              type="button"
+              onClick={onGoToday}
+              className="min-h-11 px-3 rounded-lg text-[13px] font-semibold text-sage-700 hover:bg-[var(--color-sage-100)] transition-colors"
+            >
+              오늘
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onNextMonth}
+            className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--color-sage-100)] text-sage-700 transition-colors"
+            aria-label="다음 달"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
       <div role="grid" aria-label={`${viewYear}년 ${viewMonth}월 학습 캘린더`}>
@@ -250,8 +264,9 @@ export function StudyCalendar({
                     )}
                     {hasExam && (
                       <span
-                        className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full"
-                        style={{ background: count > 0 ? 'var(--color-accent)' : 'var(--color-warn)' }}
+                        className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[var(--color-warn)] ${
+                          count >= 10 ? 'ring-1 ring-white/80' : ''
+                        }`}
                       />
                     )}
                   </button>

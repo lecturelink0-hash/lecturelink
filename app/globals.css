@@ -1667,6 +1667,24 @@ body { min-width: 320px; }
 
 .ll-app-shell { background: var(--color-bg); }
 
+/* 본문 건너뛰기 링크 — 키보드 포커스 시에만 헤더 위로 나타난다 */
+.ll-skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  transform: translateY(-200%);
+  transition: transform 0.15s ease;
+}
+.ll-skip-link:focus-visible { transform: translateY(0); }
+#main-content:focus { outline: none; }
+
 /* Exact shared shell structure from the supplied redesign HTML. */
 .ll-app-shell .icon{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .ll-app-shell .header{height:60px;border-bottom:1px solid var(--color-border);background:color-mix(in srgb,var(--color-bg) 92%,transparent);backdrop-filter:blur(14px)}
@@ -1741,7 +1759,7 @@ body { min-width: 320px; }
 .ll-app-shell .footer-brand p{margin:12px 0 0;max-width:330px;color:var(--color-muted);font-size:13px;line-height:1.65}
 .ll-app-shell .footer-col h2{margin:0;color:var(--color-muted);font-size:12px;font-weight:750}
 .ll-app-shell .footer-col ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
-.ll-app-shell .footer-col a{color:var(--color-primary);font-size:13px;font-weight:560}
+.ll-app-shell .footer-col a{display:inline-block;padding:10px 0;margin:-10px 0;color:var(--color-primary);font-size:13px;font-weight:560}
 .ll-app-shell .footer-bottom{margin-top:30px;padding-top:18px;border-top:1px solid var(--color-border);display:flex;justify-content:space-between;gap:16px;color:var(--color-muted);font-size:12px;line-height:1.6}
 @media(max-width:920px){.ll-app-shell .header-inner{padding:0 20px}.ll-app-shell .footer-grid{grid-template-columns:1fr 1fr}.ll-app-shell .footer-bottom{flex-direction:column}}
 @media(max-width:560px){.ll-app-shell .footer-grid{grid-template-columns:1fr}}

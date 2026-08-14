@@ -3,7 +3,11 @@ import './globals.css';
 import '../components/account/legal-consent.css';
 
 export const metadata: Metadata = {
-  title: 'LectureLink — 의료 교육 특화 AI 학습',
+  // 세그먼트별 title 은 template 로 "페이지명 — LectureLink" 형태가 된다.
+  title: {
+    template: '%s — LectureLink',
+    default: 'LectureLink — 의료 교육 특화 AI 학습',
+  },
   description: '우리 학교 시험 범위에 맞춘 AI 의학 문제 무한 생성. KMLE 기반 풀 + 학교별 필터 + 강의자료 업로드.',
 };
 

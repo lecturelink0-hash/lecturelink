@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCurrentSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Target, Brain, FileText } from 'lucide-react';
+
+export const metadata: Metadata = { title: '학습 분석' };
 
 interface WeakAreaRow {
   sub_topic_id: string;
