@@ -8,6 +8,8 @@ import {
   BadgeCheck,
   BookOpen,
   Building2,
+  Eye,
+  EyeOff,
   KeyRound,
   Mail,
   Save,
@@ -24,6 +26,7 @@ import {
   PASSWORD_HINT,
   PASSWORD_MAX_LENGTH,
 } from "@/lib/auth/password-policy";
+import "@/components/faculty/formative-studio.css";
 
 type FacultyStatus = "not_requested" | "pending" | "approved" | "rejected";
 type MedicalSchool = { id: string; name: string; short_name: string };
@@ -34,6 +37,67 @@ const STATUS_LABEL: Record<FacultyStatus, string> = {
   approved: "인증된 교수 계정",
   rejected: "교수 인증 재확인 필요",
 };
+
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  autoComplete,
+  placeholder,
+  minLength,
+  hint,
+  className,
+  invalid,
+  feedbackId,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete: "current-password" | "new-password";
+  placeholder: string;
+  minLength?: number;
+  hint?: string;
+  className?: string;
+  invalid: boolean;
+  feedbackId: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  const hintId = hint ? `${id}-hint` : undefined;
+  const describedBy = [hintId, invalid ? feedbackId : null].filter(Boolean).join(" ") || undefined;
+
+  return (
+    <div className={`professor-password-field${className ? ` ${className}` : ""}`}>
+      <label htmlFor={id}>{label}</label>
+      <div className="professor-password-input">
+        <input
+          id={id}
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          minLength={minLength}
+          maxLength={PASSWORD_MAX_LENGTH}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          aria-invalid={invalid}
+          aria-describedby={describedBy}
+          required
+        />
+        <button
+          type="button"
+          className="professor-password-toggle"
+          onClick={() => setVisible((current) => !current)}
+          aria-label={`${label} ${visible ? "숨기기" : "보기"}`}
+          aria-pressed={visible}
+        >
+          {visible ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
+        </button>
+      </div>
+      {hint && <small id={hintId}>{hint}</small>}
+    </div>
+  );
+}
 
 export function ProfessorMyPage({
   displayName,
@@ -169,12 +233,12 @@ export function ProfessorMyPage({
   }
 
   return (
-    <div className="professor-mypage">
+    <div className="faculty-studio ll-upload-page professor-mypage">
       <Link className="back" href="/professor">
         <ArrowLeft size={16} aria-hidden="true" />
         홈으로
       </Link>
-      <header className="professor-mypage-heading">
+      <header className="page-head professor-mypage-heading">
         <div>
           <span className="eyebrow">교수 도구 · 마이페이지</span>
           <h1>
@@ -190,111 +254,151 @@ export function ProfessorMyPage({
         </span>
       </header>
 
-      <div className="professor-mypage-grid">
-        <section
-          className="professor-profile-panel"
-          aria-labelledby="faculty-profile-title"
-        >
-          <div className="professor-profile-title">
-            <span>
-              <UserRound size={22} aria-hidden="true" />
-            </span>
-            <div>
-              <h2 id="faculty-profile-title">기본 정보</h2>
-              <p>학생에게 보이는 교수자 정보를 확인하고 수정하세요.</p>
-            </div>
-          </div>
-
-          <form onSubmit={saveProfile} className="professor-profile-form">
-            <label>
-              <span>표시 이름</span>
-              <input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                minLength={1}
-                maxLength={50}
-                autoComplete="name"
-                required
-              />
-              <small>
-                저장하면 교수용 화면에 ‘{professorNamePreview} 교수님’으로
-                표시됩니다.
-              </small>
-            </label>
-            <div className="professor-readonly-field">
+      <div className="studio-workbench professor-mypage-grid">
+        <main className="studio-main professor-mypage-main">
+          <section
+            className="studio-section card pad professor-profile-panel"
+            aria-labelledby="faculty-profile-title"
+          >
+            <div className="professor-profile-title">
               <span>
-                <Mail size={17} aria-hidden="true" />
-                로그인 이메일
+                <UserRound size={22} aria-hidden="true" />
               </span>
-              <b>{email || "이메일 정보 없음"}</b>
-            </div>
-            <label>
-              <span><Building2 size={17} aria-hidden="true" />소속 의과대학</span>
-              <select value={selectedSchoolId} onChange={(event) => setSelectedSchoolId(event.target.value)} disabled={schoolsLoading || schoolsError} required>
-                <option value="">{schoolsLoading ? "전국 의과대학 목록을 불러오는 중..." : schoolsError ? "의과대학 목록을 불러오지 못했습니다" : "소속 의과대학 선택"}</option>
-                {schools.map((school) => <option value={school.id} key={school.id}>{school.name} ({school.short_name})</option>)}
-              </select>
-              {schoolsError ? <small className="professor-school-error">목록을 불러오지 못했습니다. <button type="button" onClick={() => void loadSchools()}>다시 불러오기</button></small> : <small>대한민국 전국 40개 의과대학·의학전문대학원 중에서 선택할 수 있습니다.</small>}
-            </label>
-
-            <div className="professor-profile-submit">
-              <div aria-live="polite">
-                {message && <p className="is-success">{message}</p>}
-                {error && <p className="is-error">{error}</p>}
+              <div>
+                <h2 id="faculty-profile-title">기본 정보</h2>
+                <p>학생에게 보이는 교수자 정보를 확인하고 수정하세요.</p>
               </div>
-              <button
-                type="submit"
-                className="professor-primary"
-                disabled={saving || schoolsLoading || (name.trim() === savedName && selectedSchoolId === savedSchoolId)}
-              >
-                <Save size={18} aria-hidden="true" />
-                {saving ? "저장 중..." : "변경사항 저장"}
-              </button>
             </div>
-          </form>
 
-          <div className="professor-profile-divider" />
-          <div className="professor-profile-title is-security">
-            <span><KeyRound size={22} aria-hidden="true" /></span>
-            <div><h2 id="faculty-password-title">비밀번호 변경</h2><p>로그인에 사용할 새 비밀번호를 설정합니다.</p></div>
-          </div>
-          <form onSubmit={changePassword} className="professor-profile-form" aria-labelledby="faculty-password-title">
-            <div className="professor-password-grid">
-              <label><span>현재 비밀번호</span><input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} maxLength={PASSWORD_MAX_LENGTH} autoComplete="current-password" placeholder="본인 확인을 위해 입력" required /></label>
-              <label><span>새 비밀번호</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={PASSWORD_MAX_LENGTH} autoComplete="new-password" placeholder={PASSWORD_HINT} required /></label>
-              <label><span>새 비밀번호 확인</span><input type="password" value={passwordConfirm} onChange={(event) => setPasswordConfirm(event.target.value)} minLength={8} maxLength={PASSWORD_MAX_LENGTH} autoComplete="new-password" placeholder="한 번 더 입력" required /></label>
-            </div>
-            <div className="professor-profile-submit">
-              <div aria-live="polite">{passwordMessage && <p className="is-success">{passwordMessage}</p>}{passwordError && <p className="is-error">{passwordError}</p>}</div>
-              <button type="submit" className="professor-secondary" disabled={passwordSaving || !currentPassword || !password || !passwordConfirm}><KeyRound size={18} aria-hidden="true" />{passwordSaving ? "변경 중..." : "비밀번호 변경"}</button>
-            </div>
-          </form>
-        </section>
+            <form onSubmit={saveProfile} className="professor-profile-form">
+              <div className="professor-form-field">
+                <label htmlFor="faculty-display-name">표시 이름</label>
+                <input
+                  id="faculty-display-name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  minLength={1}
+                  maxLength={50}
+                  autoComplete="name"
+                  required
+                />
+                <small>
+                  저장하면 교수용 화면에 ‘{professorNamePreview} 교수님’으로
+                  표시됩니다.
+                </small>
+              </div>
+              <div className="professor-readonly-field">
+                <span>
+                  <Mail size={17} aria-hidden="true" />
+                  로그인 이메일
+                </span>
+                <b>{email || "이메일 정보 없음"}</b>
+              </div>
+              <div className="professor-form-field">
+                <label htmlFor="faculty-school"><Building2 size={17} aria-hidden="true" />소속 의과대학</label>
+                <select id="faculty-school" value={selectedSchoolId} onChange={(event) => setSelectedSchoolId(event.target.value)} disabled={schoolsLoading || schoolsError} required>
+                  <option value="">{schoolsLoading ? "전국 의과대학 목록을 불러오는 중..." : schoolsError ? "의과대학 목록을 불러오지 못했습니다" : "소속 의과대학 선택"}</option>
+                  {schools.map((school) => <option value={school.id} key={school.id}>{school.name} ({school.short_name})</option>)}
+                </select>
+                {schoolsError ? <small className="professor-school-error">목록을 불러오지 못했습니다. <button type="button" onClick={() => void loadSchools()}>다시 불러오기</button></small> : <small>대한민국 전국 40개 의과대학·의학전문대학원 중에서 선택할 수 있습니다.</small>}
+              </div>
 
-        <aside className="professor-account-summary" aria-label="계정 안내">
-          <div>
-            <ShieldCheck size={24} aria-hidden="true" />
+              <div className="professor-profile-submit">
+                <div aria-live="polite">
+                  {message && <p className="is-success">{message}</p>}
+                  {error && <p className="is-error">{error}</p>}
+                </div>
+                <button
+                  type="submit"
+                  className="professor-primary"
+                  disabled={saving || schoolsLoading || (name.trim() === savedName && selectedSchoolId === savedSchoolId)}
+                >
+                  <Save size={18} aria-hidden="true" />
+                  {saving ? "저장 중..." : "변경사항 저장"}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section className="studio-section card pad professor-profile-panel professor-security-panel" aria-labelledby="faculty-password-title">
+            <div className="professor-profile-title">
+              <span><KeyRound size={22} aria-hidden="true" /></span>
+              <div><h2 id="faculty-password-title">비밀번호 변경</h2><p>로그인에 사용할 새 비밀번호를 설정합니다.</p></div>
+            </div>
+            <form onSubmit={changePassword} className="professor-profile-form" aria-labelledby="faculty-password-title">
+              <div className="professor-password-grid">
+                <PasswordField
+                  id="faculty-current-password"
+                  className="is-current"
+                  label="현재 비밀번호"
+                  value={currentPassword}
+                  onChange={setCurrentPassword}
+                  autoComplete="current-password"
+                  placeholder="본인 확인을 위해 입력"
+                  invalid={Boolean(passwordError)}
+                  feedbackId="faculty-password-feedback"
+                />
+                <PasswordField
+                  id="faculty-new-password"
+                  label="새 비밀번호"
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete="new-password"
+                  placeholder="새 비밀번호 입력"
+                  minLength={8}
+                  hint={PASSWORD_HINT}
+                  invalid={Boolean(passwordError)}
+                  feedbackId="faculty-password-feedback"
+                />
+                <PasswordField
+                  id="faculty-new-password-confirm"
+                  label="새 비밀번호 확인"
+                  value={passwordConfirm}
+                  onChange={setPasswordConfirm}
+                  autoComplete="new-password"
+                  placeholder="한 번 더 입력"
+                  minLength={8}
+                  invalid={Boolean(passwordError)}
+                  feedbackId="faculty-password-feedback"
+                />
+              </div>
+              <div className="professor-profile-submit">
+                <div id="faculty-password-feedback" aria-live="polite">{passwordMessage && <p className="is-success">{passwordMessage}</p>}{passwordError && <p className="is-error">{passwordError}</p>}</div>
+                <button type="submit" className="professor-primary" disabled={passwordSaving || !currentPassword || !password || !passwordConfirm}><KeyRound size={18} aria-hidden="true" />{passwordSaving ? "변경 중..." : "비밀번호 변경"}</button>
+              </div>
+            </form>
+          </section>
+
+          <AccountDeletion variant="faculty" />
+        </main>
+
+        <aside className="faculty-summary summary summary-hero card pad professor-account-summary" aria-label="계정 안내">
+          <div className="card-head professor-account-summary-head">
             <h2>교수 계정</h2>
             <p>
               강의자료를 바탕으로 예습자료와 형성평가를 만들고 학생 학습 현황을
               관리할 수 있습니다.
             </p>
           </div>
-          <dl>
-            <div>
+          <dl className="summary-list professor-account-summary-list">
+            <div className="summary-item professor-account-summary-item">
               <dt>계정 상태</dt>
               <dd>{STATUS_LABEL[facultyStatus]}</dd>
             </div>
-            <div>
+            <div className="summary-item professor-account-summary-item">
               <dt>소속</dt>
-              <dd>{schoolShortName ?? schoolName ?? "등록 정보 없음"}</dd>
+              <dd title={schoolName ?? undefined}>{schoolShortName ?? schoolName ?? "등록 정보 없음"}</dd>
             </div>
           </dl>
-          <Link href="/professor/courses">
+          <Link className="primary-btn professor-account-summary-cta" href="/professor/courses">
             <BookOpen size={18} aria-hidden="true" />
             통합 관리로 이동
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
+          <p className="summary-note note professor-account-summary-note">
+            <ShieldCheck size={15} aria-hidden="true" />
+            계정 정보와 강의자료는 안전하게 보호됩니다.
+          </p>
         </aside>
       </div>
 

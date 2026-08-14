@@ -5,6 +5,9 @@ import { Footer } from '@/components/layout/Footer';
 import { hasCurrentTermsConsent } from '@/lib/legal/consent';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const localStudentPreview =
+    process.env.NODE_ENV === 'development' &&
+    process.env.LOCAL_STUDENT_UI_PREVIEW === 'true';
   const session = await getCurrentSession();
   if (!session) {
     redirect('/login');
@@ -13,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session.email) {
     redirect('/complete-profile');
   }
-  if (!(await hasCurrentTermsConsent(session.userId))) {
+  if (!localStudentPreview && !(await hasCurrentTermsConsent(session.userId))) {
     redirect('/legal-consent');
   }
 

@@ -573,3 +573,525 @@
 .professor-account-summary>a svg:first-child{left:16px}
 .professor-account-summary>a svg:last-child{right:16px;margin-left:0}
 .professor-school-error{color:#913b3b!important}.professor-school-error button{margin-left:4px;padding:0;border:0;background:transparent;color:var(--p-forest);font-weight:750;text-decoration:underline;text-underline-offset:3px;cursor:pointer}.professor-password-grid>label:first-child{grid-column:1/-1}
+
+/* Faculty My Page — align its spacing and summary card with the pre-class studio. */
+.professor-mypage {
+ width:100%;
+ min-width:0;
+ max-width:1140px;
+ padding:28px 28px 0;
+ background:#fcfaf4;
+ color:#111827;
+ letter-spacing:0;
+}
+.professor-mypage>.back {
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+ margin-bottom:18px;
+ color:#6b7280;
+ font-size:15px;
+ font-weight:650;
+}
+.professor-mypage-heading {
+ display:flex;
+ align-items:flex-end;
+ justify-content:space-between;
+ gap:24px;
+ margin-bottom:22px;
+ padding:0;
+ border-bottom:0;
+}
+.professor-mypage-heading .eyebrow {
+ margin-bottom:0;
+}
+.professor-mypage-heading h1 {
+ max-width:760px;
+ margin:10px 0 0;
+ font-size:clamp(34px,3.4vw,44px);
+ line-height:1.3;
+ font-weight:830;
+ letter-spacing:-.012em;
+ color:#111827;
+}
+.professor-mypage-heading .lead {
+ margin:10px 0 0;
+ color:#6b7280;
+ font-size:17px;
+ line-height:1.75;
+ font-weight:500;
+}
+.professor-faculty-status {
+ max-width:100%;
+ min-height:42px;
+ white-space:normal;
+}
+.professor-mypage-grid {
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 286px;
+ align-items:start;
+ gap:28px;
+ padding-top:28px;
+}
+.professor-mypage-main {
+ min-width:0;
+ display:grid;
+ gap:16px;
+}
+.professor-profile-panel,
+.professor-danger-panel {
+ container-type:inline-size;
+ padding:22px;
+ border:1px solid var(--p-line);
+ border-radius:15px;
+ background:#fff;
+ box-shadow:0 1px 3px rgba(17,24,39,.025);
+}
+.professor-profile-title {
+ gap:12px;
+ padding-bottom:16px;
+}
+.professor-profile-title>span,
+.professor-danger-heading>span {
+ width:42px;
+ height:42px;
+ flex:0 0 auto;
+ display:grid;
+ place-items:center;
+ border-radius:12px;
+ background:var(--p-sage);
+ color:var(--p-forest);
+}
+.professor-profile-title h2,
+.professor-danger-heading h2,
+.professor-account-summary h2 {
+ margin:0;
+ font-size:21px;
+ line-height:1.35;
+ font-weight:760;
+ letter-spacing:-.02em;
+}
+.professor-profile-title p,
+.professor-danger-heading p {
+ margin:5px 0 0;
+ color:var(--p-muted);
+ font-size:15px;
+ line-height:1.58;
+}
+.professor-app .professor-mypage .professor-profile-title h2,
+.professor-app .professor-mypage .professor-danger-heading h2 {
+ font-size:21px;
+ line-height:1.35;
+ font-weight:760;
+ letter-spacing:-.02em;
+}
+.professor-app .professor-mypage .professor-profile-title p,
+.professor-app .professor-mypage .professor-danger-heading p {
+ margin:5px 0 0;
+ color:#6b7280;
+ font-size:15px;
+ line-height:1.6;
+ font-weight:500;
+}
+.professor-profile-form {
+ gap:18px;
+ padding-top:20px;
+}
+.professor-form-field,
+.professor-password-field,
+.professor-danger-field {
+ display:grid;
+ gap:7px;
+ min-width:0;
+}
+.professor-form-field>label,
+.professor-password-field>label,
+.professor-danger-field>label,
+.professor-readonly-field>span {
+ display:flex;
+ align-items:center;
+ gap:7px;
+ color:var(--p-muted);
+ font-size:15px;
+ line-height:1.5;
+ font-weight:700;
+}
+.professor-form-field>small,
+.professor-password-field>small,
+.professor-readonly-field small {
+ color:var(--p-muted);
+ font-size:14px;
+ line-height:1.55;
+}
+.professor-profile-form :is(input,select),
+.professor-danger-form input {
+ min-height:48px;
+ padding:0 13px;
+ border:1px solid var(--p-line);
+ border-radius:11px;
+ outline:none;
+}
+.professor-profile-form :is(input,select):focus,
+.professor-danger-form input:focus {
+ border-color:#a6c7b0;
+ box-shadow:0 0 0 3px rgba(166,199,176,.28);
+}
+.professor-profile-form input[aria-invalid="true"],
+.professor-danger-form input[aria-invalid="true"] {
+ border-color:#c98278;
+}
+.professor-school-error button {
+ min-height:44px;
+ padding:0 5px;
+}
+.professor-password-grid {
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ align-items:start;
+ gap:16px;
+}
+.professor-password-field.is-current {
+ grid-column:1/-1;
+}
+.professor-password-input {
+ position:relative;
+ min-width:0;
+ height:48px;
+}
+.professor-profile-form .professor-password-input input,
+.professor-danger-form .professor-password-input input {
+ width:100%;
+ height:48px;
+ padding-right:52px;
+}
+.professor-password-toggle {
+ position:absolute;
+ top:2px;
+ right:2px;
+ width:44px;
+ height:44px;
+ display:grid;
+ place-items:center;
+ padding:0;
+ border:0;
+ border-radius:9px;
+ background:transparent;
+ color:var(--p-muted);
+ cursor:pointer;
+}
+.professor-password-toggle:hover {
+ background:var(--p-sage);
+ color:var(--p-forest);
+}
+.professor-password-toggle:focus-visible,
+.professor-mypage button:focus-visible,
+.professor-mypage a:focus-visible {
+ outline:3px solid rgba(31,92,67,.22);
+ outline-offset:2px;
+}
+.professor-profile-submit {
+ min-height:52px;
+ flex-direction:row;
+ align-items:center;
+ gap:16px;
+}
+.professor-profile-submit>div {
+ min-width:0;
+ overflow-wrap:anywhere;
+}
+.professor-profile-submit p {
+ font-size:14px;
+ line-height:1.55;
+}
+.professor-profile-submit :is(.professor-primary,.professor-secondary) {
+ width:auto;
+ min-height:48px;
+ white-space:nowrap;
+}
+.professor-secondary:disabled {
+ cursor:not-allowed;
+ opacity:.45;
+}
+
+/* Same visual grammar as the pre-class “예습자료 초안” card. */
+.professor-account-summary {
+ position:sticky;
+ top:82px;
+ align-self:start;
+ display:block;
+ overflow:hidden;
+ padding:22px;
+ border:1px solid #cfe1d4;
+ border-radius:16px;
+ background:
+  radial-gradient(circle at 92% 0%,rgba(166,199,176,.34),transparent 35%),
+  linear-gradient(135deg,#fff 0%,#f2f8f4 52%,#e3f1e7 100%);
+ box-shadow:var(--shadow-card);
+}
+.professor-app .professor-account-summary .professor-account-summary-head {
+ display:block;
+ margin-bottom:16px;
+}
+.professor-account-summary-head h2 {
+ margin:0;
+}
+.professor-account-summary-head p {
+ margin:5px 0 0;
+ color:var(--p-muted);
+ font-size:15px;
+ line-height:1.58;
+ font-weight:500;
+}
+.professor-account-summary dl.professor-account-summary-list {
+ display:grid;
+ gap:10px;
+ margin:0;
+ padding:0;
+ border-top:0;
+}
+.professor-account-summary-list .professor-account-summary-item {
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:14px;
+ padding:0 0 10px;
+ border-bottom:1px solid rgba(229,225,216,.8);
+}
+.professor-account-summary-list .professor-account-summary-item:last-child {
+ padding-bottom:0;
+ border-bottom:0;
+}
+.professor-account-summary-item dt {
+ flex:0 0 auto;
+ color:var(--p-muted);
+ font-size:12.5px;
+ font-weight:620;
+ white-space:nowrap;
+}
+.professor-account-summary-item dd {
+ min-width:0;
+ max-width:none;
+ margin:0;
+ overflow:hidden;
+ color:var(--p-ink);
+ font-size:13px;
+ font-weight:760;
+ text-align:right;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+}
+.professor-account-summary>a.professor-account-summary-cta {
+ position:static;
+ width:100%;
+ min-height:52px;
+ margin-top:18px;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ padding:0 18px;
+ border-radius:14px;
+ background:var(--p-forest);
+ color:#fff;
+ font-size:16px;
+ font-weight:700;
+ text-align:center;
+ box-shadow:0 14px 30px -18px rgba(31,92,67,.72),0 0 0 4px rgba(243,198,78,.18);
+}
+.professor-account-summary>a.professor-account-summary-cta svg {
+ position:static;
+ transform:none;
+}
+.professor-account-summary>a.professor-account-summary-cta svg:last-child {
+ margin-left:0;
+}
+.professor-account-summary p.professor-account-summary-note {
+ margin:12px 0 0;
+ display:flex;
+ align-items:flex-start;
+ gap:7px;
+ padding:12px 13px;
+ border-radius:12px;
+ background:rgba(234,243,237,.82);
+ color:var(--p-forest-dark);
+ font-size:12.5px;
+ line-height:1.55;
+ font-weight:560;
+}
+.professor-account-summary-note svg {
+ flex:0 0 auto;
+ margin-top:3px;
+}
+
+.professor-danger-panel {
+ border-color:#ead2ce;
+ box-shadow:none;
+}
+.professor-danger-heading {
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+.professor-danger-heading>span {
+ background:#fff0ed;
+ color:#a84e43;
+}
+.professor-danger-copy {
+ max-width:68ch;
+ margin:16px 0 0;
+ color:#775d59;
+ font-size:14px;
+ line-height:1.65;
+}
+.professor-danger-copy a {
+ color:#91443b;
+ font-weight:700;
+ text-decoration:underline;
+ text-underline-offset:3px;
+}
+.professor-danger-policy-sentence {
+ display:inline-block;
+ white-space:nowrap;
+ word-break:keep-all;
+}
+@container (max-width:340px) {
+ .professor-danger-policy-sentence {
+  display:inline;
+  white-space:normal;
+ }
+}
+.professor-danger-open,
+.professor-danger-cancel,
+.professor-danger-delete {
+ min-height:44px;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ margin-top:16px;
+ padding:0 16px;
+ border-radius:11px;
+ font-size:15px;
+ font-weight:700;
+ cursor:pointer;
+}
+.professor-danger-open {
+ border:0;
+ background:#a84e43;
+ color:#fff;
+}
+.professor-danger-open:hover {
+ background:#8f4037;
+}
+.professor-danger-cancel:hover {
+ background:#fff4f2;
+}
+.professor-danger-form {
+ display:grid;
+ gap:16px;
+ margin-top:18px;
+ padding:18px;
+ border:1px solid #ead2ce;
+ border-radius:14px;
+ background:#fff9f8;
+}
+.professor-danger-field>label {
+ color:#775d59;
+}
+.professor-password-input.is-danger .professor-password-toggle:hover {
+ background:#fff0ed;
+ color:#91443b;
+}
+.professor-danger-error {
+ margin:0;
+ color:#91443b;
+ font-size:14px;
+ line-height:1.55;
+}
+.professor-danger-actions {
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+}
+.professor-danger-actions :is(.professor-danger-delete,.professor-danger-cancel) {
+ margin-top:0;
+}
+.professor-danger-delete {
+ border:0;
+ background:#a84e43;
+ color:#fff;
+}
+.professor-danger-delete:hover {
+ background:#8f4037;
+}
+.professor-danger-cancel {
+ border:0;
+ background:transparent;
+ color:var(--p-muted);
+}
+.professor-danger-actions button:disabled {
+ cursor:not-allowed;
+ opacity:.45;
+}
+
+@media(max-width:640px) {
+ .professor-app .professor-password-grid {
+  grid-template-columns:1fr;
+ }
+ .professor-app .professor-password-field.is-current {
+  grid-column:auto;
+ }
+}
+
+@media(max-width:920px) {
+ .professor-mypage-heading {
+  flex-direction:column;
+  align-items:start;
+ }
+ .professor-faculty-status {
+  justify-self:start;
+ }
+ .professor-mypage-grid {
+  grid-template-columns:1fr;
+ }
+ .professor-app .professor-mypage-grid {
+  grid-template-columns:1fr;
+ }
+ .professor-account-summary {
+  position:static;
+  order:initial;
+  grid-row:2;
+ }
+}
+
+@media(max-width:640px) {
+ .professor-profile-submit {
+  align-items:stretch;
+  flex-direction:column;
+ }
+ .professor-profile-submit :is(.professor-primary,.professor-secondary) {
+  width:100%;
+ }
+}
+
+@media(max-width:560px) {
+ .professor-mypage {
+  padding:24px 20px 0;
+ }
+ .professor-mypage-heading {
+  gap:18px;
+ }
+ .professor-mypage-heading h1 {
+  font-size:32px;
+ }
+ .professor-profile-panel,
+ .professor-account-summary,
+ .professor-danger-panel {
+  padding:18px;
+ }
+ .professor-danger-form {
+  margin-right:-6px;
+  margin-left:-6px;
+  padding:16px;
+ }
+}

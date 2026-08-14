@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { requireSession } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/db/admin';
+import { createServerClient } from '@/lib/db/server';
+import { PASSWORD_MAX_LENGTH } from '@/lib/auth/password-policy';
 import { STORAGE_BUCKET } from '@/lib/storage/paths';
 import { TEACHING_MATERIAL_BUCKET } from '@/lib/teaching/materials';
 import { ApiException, ok, withErrorHandling } from '@/lib/utils/api';
@@ -9,6 +11,7 @@ export const runtime = 'nodejs';
 
 const deleteSchema = z.object({
   confirmation: z.literal('회원탈퇴'),
+  password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
 });
 
 async function removeInBatches(
@@ -32,7 +35,19 @@ async function removeInBatches(
 
 export const DELETE = withErrorHandling(async (request: Request) => {
   const session = await requireSession();
-  deleteSchema.parse(await request.json());
+  const input = deleteSchema.parse(await request.json());
+  const auth = await createServerClient();
+  const { data: reauthenticated, error: reauthenticationError } = await auth.auth.signInWithPassword({
+    email: session.email,
+    password: input.password,
+  });
+  if (reauthenticationError || reauthenticated.user?.id !== session.userId) {
+    throw new ApiException(
+      'password_confirmation_failed',
+      '현재 비밀번호가 일치하지 않습니다. 다시 확인해주세요.',
+      401,
+    );
+  }
   const admin = createAdminClient();
 
   const cpxBackend = process.env.CPX_BACKEND_URL;
