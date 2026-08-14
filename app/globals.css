@@ -2500,20 +2500,41 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   word-break: keep-all;
 }
 
+.cpx-start-header p {
+  margin: 10px 0 0;
+  max-width: 640px;
+  color: var(--color-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+/* 나의 CPX 기록 — 텍스트 링크 대신 눈에 띄는 필 버튼으로 승격 */
 .cpx-record-link {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  min-height: 44px;
-  color: var(--color-primary);
-  font-size: 14px;
-  font-weight: 760;
+  gap: var(--space-2);
+  min-height: 52px;
+  padding: 0 22px;
+  border: 1px solid color-mix(in oklch, var(--color-primary) 30%, var(--color-border));
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 15px;
+  font-weight: 780;
+  transition: background-color var(--dur-short) ease, border-color var(--dur-short) ease, color var(--dur-short) ease;
+}
+
+.cpx-record-link:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
 }
 
 .cpx-record-link svg {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 
 .cpx-quick-section {
@@ -2541,6 +2562,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   margin-top: var(--space-5);
 }
 
+/* 빠른 시작 두 카드 — 대시보드의 CPX 진료 연습 카드(.dashboard-cpx-card)와 같은 배경 톤을 쓴다. */
 .cpx-review-panel,
 .cpx-random-panel {
   display: flex;
@@ -2548,19 +2570,9 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   align-items: flex-start;
   min-height: 318px;
   padding: clamp(24px, 3vw, 34px);
+  border: 1px solid #c8ddd0;
   border-radius: var(--radius-lg);
-}
-
-.cpx-review-panel {
-  border: 1px solid color-mix(in oklch, var(--color-primary) 28%, var(--color-border));
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-}
-
-.cpx-random-panel {
-  color: white;
-  background: var(--color-primary-strong);
-  box-shadow: 0 20px 48px -34px color-mix(in oklch, var(--color-primary-strong) 75%, transparent);
+  background: #eef6f1;
 }
 
 .cpx-action-title {
@@ -2575,10 +2587,6 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-action-title svg {
   width: 18px;
   height: 18px;
-}
-
-.cpx-random-panel .cpx-action-title {
-  color: rgba(255,255,255,.78);
 }
 
 .cpx-recommendation-result {
@@ -2649,21 +2657,10 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-random-panel p {
   max-width: 390px;
   margin: var(--space-3) 0 0;
-  color: rgba(255,255,255,.72);
+  color: var(--color-muted);
   font-size: 13.5px;
   line-height: 1.6;
   word-break: keep-all;
-}
-
-.cpx-random-panel > .btn {
-  border-color: rgba(255,255,255,.38);
-  background: white;
-  color: var(--color-primary-strong);
-}
-
-.cpx-random-panel > .btn:hover {
-  border-color: white;
-  background: var(--color-primary-soft);
 }
 
 .cpx-recommendation-empty {
@@ -3014,12 +3011,22 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-time-options {
   display: flex;
+  align-items: flex-start;
   gap: 5px;
 }
 
+/* 버튼 세 개는 같은 높이를 유지하고, '실전' 표기는 12분 버튼 아래 캡션으로 뺀다. */
+.cpx-time-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .cpx-time-options button {
+  width: 100%;
   min-width: 66px;
-  min-height: 52px;
+  min-height: 48px;
   padding: 6px 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -3030,7 +3037,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   font-variant-numeric: tabular-nums;
 }
 
-.cpx-time-options button span { display: block; margin-top: 2px; color: var(--color-muted); font-size: 9.5px; font-weight: 580; }
+.cpx-time-tag { color: var(--color-primary); font-size: 10.5px; font-weight: 740; letter-spacing: .02em; }
 .cpx-time-options button[aria-checked="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-strong); box-shadow: inset 0 0 0 1px var(--color-primary); }
 
 .cpx-voice-switch {
@@ -3099,7 +3106,8 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   .cpx-setup-dialog { width: 100%; max-height: min(92dvh, 720px); padding: 27px var(--space-5) var(--space-6); border-width: 1px 0 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
   .cpx-setting-group { align-items: flex-start; flex-direction: column; }
   .cpx-time-options { width: 100%; }
-  .cpx-time-options button { flex: 1 1 0; min-width: 0; }
+  .cpx-time-option { flex: 1 1 0; min-width: 0; }
+  .cpx-time-options button { min-width: 0; }
   .cpx-voice-setting { align-items: center; flex-direction: row; }
 }
 

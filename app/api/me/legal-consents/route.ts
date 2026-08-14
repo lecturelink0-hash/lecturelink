@@ -9,6 +9,23 @@ const noticeSchema = z.discriminatedUnion('documentType', [
   z.object({ documentType: z.literal('terms'), documentVersion: z.literal(TERMS_VERSION) }),
 ]);
 
+// CPX 처리 안내 확인 여부(현재 버전 기준) — 이미 확인한 사용자에게는 클라이언트가 배너를 다시 보여주지 않는다.
+export const GET = withErrorHandling(async () => {
+  const session = await requireSession();
+  const admin = createAdminClient();
+
+  const { data: existing, error } = await admin
+    .from('legal_consents')
+    .select('id')
+    .eq('user_id', session.userId)
+    .eq('document_type', 'cpx_processing_notice')
+    .eq('document_version', PRIVACY_VERSION)
+    .maybeSingle();
+  if (error) throw error;
+
+  return ok({ cpxProcessingNotice: Boolean(existing) });
+});
+
 export const POST = withErrorHandling(async (request: Request) => {
   const session = await requireSession();
   const notice = noticeSchema.parse(await request.json());
