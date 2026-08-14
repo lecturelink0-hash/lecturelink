@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { DashboardView } from './DashboardView';
 import { getCurrentSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { KST_OFFSET_MS, calcStreak, kstDateKey } from '@/lib/utils/kst';
+
+export const metadata: Metadata = { title: '홈' };
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 

@@ -42,6 +42,8 @@ export const POST = withErrorHandling(async (request: Request) => {
       exam_date: body.exam_date,
       subject_id: body.subject_id ?? null,
       memo: body.memo ?? null,
+      // color 는 저장만 되고 아직 UI(색 선택·렌더링)에서 쓰지 않는다 —
+      // 캘린더 점 색은 warn 고정. 색 선택 기능을 붙일 때 이 필드를 활용할 것.
       color: body.color ?? 'sage',
     })
     .select('id, title, exam_date, subject_id, memo, color, created_at')
