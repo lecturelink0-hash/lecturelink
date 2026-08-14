@@ -2569,10 +2569,10 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   padding: 4px 2px;
   color: var(--color-primary-strong);
-  font-size: 15.5px;
+  font-size: 18.5px;
   font-weight: 790;
   letter-spacing: -.01em;
   transition: color var(--dur-short) ease;
@@ -2582,19 +2582,19 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-record-link:hover svg { transform: translateX(2px); }
 
 .cpx-record-link svg {
-  width: 19px;
-  height: 19px;
+  width: 22px;
+  height: 22px;
   transition: transform var(--dur-short) ease;
 }
 
 .cpx-quick-section {
-  padding: var(--space-6) 0 44px;
+  padding: var(--space-6) 0 34px;
 }
 
 .cpx-section-heading h2 {
   margin: 0;
   font-size: 25px;
-  font-weight: 820;
+  font-weight: 770;
   letter-spacing: -.025em;
 }
 
@@ -2612,7 +2612,8 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   margin-top: var(--space-5);
 }
 
-/* 빠른 시작 두 카드 — 시안: 좌측(다시 연습)은 흰 카드, 우측(랜덤 실전)은 민트 카드 */
+/* 빠른 시작 두 카드 — 시안: 좌측(다시 연습)은 흰 카드, 우측(랜덤 실전)은 민트 카드.
+   반투명 채움 + blur + 상단 하이라이트로 글래스 질감을 준다. */
 .cpx-review-panel,
 .cpx-random-panel {
   display: flex;
@@ -2620,14 +2621,22 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   align-items: stretch;
   min-height: 264px;
   padding: clamp(22px, 2.6vw, 30px);
-  border: 1px solid var(--color-border);
+  border: 1.5px solid #e2ded5;
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: rgba(255, 255, 255, .58);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .8),
+    0 14px 34px -26px rgba(21, 62, 47, .3);
 }
 
 .cpx-random-panel {
-  border-color: #d8e9dd;
-  background: #eff6f1;
+  border-color: #c7ddce;
+  background: rgba(213, 233, 221, .55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .65),
+    0 14px 34px -26px rgba(21, 62, 47, .32);
 }
 
 /* 카드 상단 라벨 — 원형 아이콘 + 제목(+보조 설명) 가로 배치 */
@@ -2652,15 +2661,17 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-quick-icon svg { width: 24px; height: 24px; }
 
-.cpx-quick-label strong {
+/* 텍스트 규칙은 반드시 > div 하위로 한정 — .cpx-quick-icon도 span이라 넓게 잡으면
+   display:block이 아이콘 원의 grid 중앙정렬을 깨뜨린다(실측 사고). */
+.cpx-quick-label > div > strong {
   display: block;
   color: var(--color-primary);
   font-size: 16.5px;
-  font-weight: 790;
+  font-weight: 740;
   letter-spacing: -.015em;
 }
 
-.cpx-quick-label span {
+.cpx-quick-label > div > span {
   display: block;
   margin-top: 3px;
   color: var(--color-muted);
@@ -2705,7 +2716,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-recommendation-case h3 {
   margin: 0;
   font-size: clamp(23px, 2.2vw, 29px);
-  font-weight: 840;
+  font-weight: 790;
   line-height: 1.28;
   letter-spacing: -.035em;
 }
@@ -2722,7 +2733,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-random-copy h3 {
   margin: 0;
   font-size: clamp(24px, 2.3vw, 29px);
-  font-weight: 830;
+  font-weight: 780;
   line-height: 1.25;
   letter-spacing: -.035em;
   word-break: keep-all;
