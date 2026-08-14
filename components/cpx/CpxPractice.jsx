@@ -135,6 +135,8 @@ export default function CpxPractice() {
   const [showTranscript, setShowTranscript] = useState(false); // 채점 후 [전체 대화록] 패널 토글
   const [gradingProgress, setGradingProgress] = useState(0); // 채점 로딩 원형 게이지(%)
   const [voiceOn, setVoiceOn] = useState(true); // 음성 on/off (off 시 텍스트 전용)
+  // 순응도 낮은 환자 모드(옵트인) — 저항 유형은 서버가 세션 시드로 뽑고 채점 후에만 공개된다.
+  const [lowCompliance, setLowCompliance] = useState(false);
   const [processingNoticeAccepted, setProcessingNoticeAccepted] = useState(false);
   // 환자 인적사항 공개 여부 — 학생이 직접 물어봤을 때만 해당 항목을 노출한다.
   const [revealed, setRevealed] = useState({ name: false, age: false, gender: false });
@@ -280,7 +282,7 @@ export default function CpxPractice() {
         }),
       });
       if (!noticeResponse.ok) throw new Error('처리 안내 확인을 기록하지 못했습니다. 잠시 후 다시 시도해 주세요.');
-      const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: target.id, timeLimitSeconds: limitSeconds }) });
+      const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: target.id, timeLimitSeconds: limitSeconds, lowCompliance }) });
       setSessionId(created.sessionId); setPersona(created.persona); startedAtRef.current = Date.now(); setElapsed(0);
       const token = await request(`/sessions/${created.sessionId}/live-token`, { method: 'POST' });
       const live = new GeminiLivePatient({
@@ -447,6 +449,8 @@ export default function CpxPractice() {
             onLimitChange={setLimitSeconds}
             voiceOn={voiceOn}
             onVoiceChange={setVoiceOn}
+            lowComplianceOn={lowCompliance}
+            onLowComplianceChange={setLowCompliance}
             onStart={start}
           />
           {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
@@ -702,6 +706,8 @@ export default function CpxPractice() {
     )}
 
     {result && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">AI 생성 평가</b> · 학습 보조 결과이며 오류가 있을 수 있습니다. 항목별 근거를 확인하고 공식 평가나 의료 판단에 사용하지 마세요.</div>}
+    {/* 순응도 낮은 환자 모드 — 어떤 저항 유형이었는지는 실제 SP 시험처럼 채점 후에만 공개 */}
+    {result?.lowCompliance?.behaviors?.length > 0 && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">순응도 낮은 환자</b> · 이번 환자의 저항 유형: {result.lowCompliance.behaviors.map((b) => b.name).join(' · ')}. 저항의 이유를 먼저 묻고 공감한 뒤 설득했는지 대화록에서 확인해 보세요.</div>}
     {result && <Card title="CPX 결과" description="영역 카드를 누르면 항목별 상세 채점 근거가 펼쳐집니다." icon={<Sparkles className="h-5 w-5" />}><div className="grid gap-5 md:grid-cols-[auto_1fr]"><div className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-7 py-5 text-center text-white self-start"><div className="text-xs text-white/70">총점</div><div className="tnum mt-1 text-5xl font-bold">{result.totalScore}</div><div className="mt-1 text-sm">{result.overallGradeLabel}</div></div>
       <div className="space-y-3">
         <CpxTimeAnalysis analysis={result.timeAnalysis} excludedSections={result.excludedSections} />

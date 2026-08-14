@@ -13,6 +13,8 @@ import {
   Shuffle,
   Stethoscope,
   Target,
+  UserCheck,
+  UserX,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -98,6 +100,8 @@ export default function CpxStartExperience({
   onLimitChange,
   voiceOn,
   onVoiceChange,
+  lowComplianceOn,
+  onLowComplianceChange,
   onStart,
 }) {
   const cases = caseCatalog.cases || [];
@@ -334,9 +338,14 @@ export default function CpxStartExperience({
           <span className="cpx-setting-label">{voiceOn ? <Mic aria-hidden /> : <MicOff aria-hidden />}<span className="cpx-setting-copy"><strong>음성 문진</strong><span id="cpx-voice-description">{voiceOn ? '음성으로 환자와 문진할 수 있어요.' : '끄면 텍스트로만 진료할 수 있어요.'}</span></span></span>
           <span className={`cpx-voice-switch ${voiceOn ? 'is-on' : ''}`} aria-hidden><i /></span>
         </button>
+        <button type="button" role="switch" aria-checked={lowComplianceOn} aria-describedby="cpx-low-compliance-description" className="cpx-setting-group cpx-voice-setting" onClick={() => onLowComplianceChange(!lowComplianceOn)}>
+          <span className="cpx-setting-label">{lowComplianceOn ? <UserX aria-hidden /> : <UserCheck aria-hidden />}<span className="cpx-setting-copy"><strong>순응도 낮은 환자</strong><span id="cpx-low-compliance-description">{lowComplianceOn ? '실제 시험처럼 비협조적인 환자를 만나요. 유형은 채점 후 공개돼요.' : '환자가 무리 없이 협조해요.'}</span></span></span>
+          <span className={`cpx-voice-switch ${lowComplianceOn ? 'is-on' : ''}`} aria-hidden><i /></span>
+        </button>
         <div className="cpx-dialog-summary">
           <span>{timeOptions.find((option) => option.seconds === limitSeconds)?.label}</span>
           <span>음성 문진 {voiceOn ? 'ON' : 'OFF'}</span>
+          {lowComplianceOn && <span>순응도 낮은 환자</span>}
           {setup.mode === 'random' && <span>증례 비공개</span>}
         </div>
         <Button ref={startButtonRef} type="button" size="lg" fullWidth onClick={confirmStart}>

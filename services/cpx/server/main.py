@@ -65,6 +65,9 @@ class SessionCreate(BaseModel):
     caseId: str
     # 연습용 시간제한(초). 실전 12분(720) 외에 11분 30초·11분 단축 연습 지원.
     timeLimitSeconds: int | None = None
+    # 순응도 낮은 환자 모드(옵트인) — 저항 행동은 서버가 시드로 샘플링해 config에 저장하고,
+    # 어떤 유형이었는지는 채점 결과에서만 공개한다 (세션 중에는 비공개).
+    lowCompliance: bool | None = None
 
 
 DEFAULT_TIME_LIMIT_SECONDS = 12 * 60
@@ -114,9 +117,20 @@ def create_session(body: SessionCreate, user_id: str = Depends(current_user_id))
     seed = _uuid.uuid4().hex
     persona = prompt_mod.resolve_persona(case, seed)
     time_limit = resolve_time_limit(body.timeLimitSeconds)
-    config = _json.dumps({'timeLimitSeconds': time_limit}, ensure_ascii=False)
+    config_dict = {'timeLimitSeconds': time_limit}
+    if body.lowCompliance:
+        behaviors = prompt_mod.resolve_low_compliance(case, seed)
+        if behaviors:
+            config_dict['lowCompliance'] = {'enabled': True, 'behaviors': behaviors}
+    config = _json.dumps(config_dict, ensure_ascii=False)
     session_id = db.create_session(body.caseId, user_id, _json.dumps(persona, ensure_ascii=False), config)
-    return {'sessionId': session_id, 'persona': persona, 'timeLimitSeconds': time_limit}
+    return {
+        'sessionId': session_id,
+        'persona': persona,
+        'timeLimitSeconds': time_limit,
+        # 유형은 숨기고 적용 여부만 알려준다 (제외 카테고리면 false).
+        'lowCompliance': bool(config_dict.get('lowCompliance')),
+    }
 
 
 @app.post('/api/sessions/{session_id}/live-token')
@@ -130,7 +144,14 @@ def live_token(session_id: str, user_id: str = Depends(current_user_id)):
 
     import json as _json
     persona = _json.loads(session['persona']) if session.get('persona') else None
-    system_instruction = prompt_mod.build_system_instruction(session['case_id'], persona)
+    session_config = _json.loads(session['config']) if session.get('config') else {}
+    low_compliance = session_config.get('lowCompliance') or {}
+    low_compliance_ids = (
+        [b['id'] for b in low_compliance.get('behaviors', [])] if low_compliance.get('enabled') else None
+    )
+    system_instruction = prompt_mod.build_system_instruction(
+        session['case_id'], persona, low_compliance_ids=low_compliance_ids,
+    )
     voice = prompt_mod.voice_for_persona(persona or {})
 
     from google import genai  # 지연 임포트 — 키 없이도 서버는 뜬다
@@ -385,6 +406,9 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
     result['timeAnalysis'] = ev.compute_time_analysis(
         events, judgments.get('phases'), config.get('timeLimitSeconds'), session, exam_declarations,
     )
+    # 순응도 낮은 환자 모드였다면 어떤 저항 유형이었는지 채점 후에 공개한다.
+    if config.get('lowCompliance'):
+        result['lowCompliance'] = config['lowCompliance']
     # 프론트 표시용 항목 원문
     result['itemTexts'] = {
         i['id']: i['text'] for s in rubric['sections'] if s['type'] != 'deduction' for i in s['items']

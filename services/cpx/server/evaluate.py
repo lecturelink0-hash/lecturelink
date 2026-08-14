@@ -144,9 +144,10 @@ def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> 
 2. {rules['declarationCountsAsPerformance']}
 3. {rules['evidenceRequired']} — evidence에는 로그 라인 번호(L001 형식)와 발화 인용을 포함하라.
 4. {rules['sttTolerance']}
-5. 임상예의 위반 탐지 시: 의료적 필수 인적사항 질문(성별·나이·생년월일·이름·경제수준·학력·직업·키·몸무게)은 절대 위반으로 보고하지 마라. 애매하면 exempt=true로 표시하라.
-6. status는 met(충분히 수행), partial(일부만 수행하거나 안전상 불완전), not_met(근거 없음) 중 하나다. partial은 관련 질문·설명은 했지만 핵심 요소가 빠진 경우에만 쓴다.
-7. 근거가 없으면 status=not_met, satisfied=false, evidence=[]로 하라. 추측으로 인정하지 마라.
+5. 환자가 저항·거부하거나 정보를 숨기거나 모호하게 답했더라도, 의사가 해당 항목의 질문·설명·재질문·설득을 적절히 수행했다면 수행으로 인정하라. 환자의 협조 여부와 답변의 완성도는 의사 평가에 반영하지 않는다.
+6. 임상예의 위반 탐지 시: 의료적 필수 인적사항 질문(성별·나이·생년월일·이름·경제수준·학력·직업·키·몸무게)은 절대 위반으로 보고하지 마라. 애매하면 exempt=true로 표시하라.
+7. status는 met(충분히 수행), partial(일부만 수행하거나 안전상 불완전), not_met(근거 없음) 중 하나다. partial은 관련 질문·설명은 했지만 핵심 요소가 빠진 경우에만 쓴다.
+8. 근거가 없으면 status=not_met, satisfied=false, evidence=[]로 하라. 추측으로 인정하지 마라.
 
 [진료 단계 구분 — phases 필드]
 진료는 보통 병력청취 → 신체진찰 → 환자교육(설명·계획) 순서로 진행된다. 각 단계가 시작된 로그 라인 번호(L001 형식의 숫자 부분)를 phases 배열로 보고하라.
