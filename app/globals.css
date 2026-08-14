@@ -2601,7 +2601,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-section-heading p {
   margin: 7px 0 0;
   color: var(--color-muted);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
 }
 
@@ -2845,7 +2845,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 15px;
   outline: 0;
   transition: border-color var(--dur-short) ease, box-shadow var(--dur-short) ease;
 }
@@ -2929,7 +2929,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   min-height: 36px;
   padding: 2px 4px var(--space-3);
   color: var(--color-muted);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 
