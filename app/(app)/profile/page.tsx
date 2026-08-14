@@ -7,7 +7,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
 import { createBrowserClient } from '@/lib/db/browser';
+import { authErrorMessage } from '@/lib/auth/auth-error-message';
 import { AccountDeletion } from '@/components/account/AccountDeletion';
+import {
+  isValidPassword,
+  PASSWORD_ERROR,
+  PASSWORD_HINT,
+  PASSWORD_MAX_LENGTH,
+} from '@/lib/auth/password-policy';
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,8 +23,8 @@ import {
   Building2,
   CalendarDays,
   CalendarRange,
-  CheckCircle2,
   GraduationCap,
+  KeyRound,
   Mail,
   Save,
   ShieldCheck,
@@ -112,13 +119,17 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // 이메일 등록/변경 (특히 카카오 커스텀 로그인 사용자)
+  // 로그인 이메일은 표시 전용 — 이 페이지에서 변경할 수 없다.
   const [authEmail, setAuthEmail] = useState<string | null>(null);
-  const [newEmail, setNewEmail] = useState('');
-  const [emailSubmitting, setEmailSubmitting] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailError, setEmailError] = useState('');
   const isSyntheticEmail = !!authEmail && authEmail.endsWith(SYNTHETIC_EMAIL_SUFFIX);
+
+  // 비밀번호 변경 (교수용 마이페이지와 동일한 플로우)
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
     createBrowserClient().auth.getUser().then(({ data }) => {
@@ -126,32 +137,48 @@ export default function ProfilePage() {
     }).catch(() => {});
   }, []);
 
-  async function handleRegisterEmail(event: FormEvent<HTMLFormElement>) {
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const em = newEmail.trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
-      setEmailError('올바른 이메일 주소를 입력해 주세요.');
+    setPasswordMessage(null);
+    setPasswordError(null);
+    if (!isValidPassword(password)) {
+      setPasswordError(PASSWORD_ERROR);
       return;
     }
-    if (em.endsWith(SYNTHETIC_EMAIL_SUFFIX)) {
-      setEmailError('사용할 수 없는 주소입니다.');
+    if (password !== passwordConfirm) {
+      setPasswordError('새 비밀번호가 서로 일치하지 않습니다.');
       return;
     }
-    setEmailSubmitting(true);
-    setEmailError('');
+    if (!currentPassword) {
+      setPasswordError('현재 비밀번호를 입력해주세요.');
+      return;
+    }
+    if (!authEmail) {
+      setPasswordError('로그인 정보를 확인하지 못했습니다. 새로고침 후 다시 시도해주세요.');
+      return;
+    }
+
+    setPasswordSaving(true);
     try {
       const supabase = createBrowserClient();
-      const { error } = await supabase.auth.updateUser(
-        { email: em },
-        { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      );
-      if (error) {
-        setEmailError(error.message.includes('registered') ? '이미 사용 중인 이메일입니다.' : '이메일 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: currentPassword,
+      });
+      if (reauthError) {
+        setPasswordError(authErrorMessage(reauthError));
         return;
       }
-      setEmailSent(true);
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+      setCurrentPassword('');
+      setPassword('');
+      setPasswordConfirm('');
+      setPasswordMessage('비밀번호를 변경했습니다. 다음 로그인부터 새 비밀번호를 사용해주세요.');
+    } catch (caught) {
+      setPasswordError(authErrorMessage(caught));
     } finally {
-      setEmailSubmitting(false);
+      setPasswordSaving(false);
     }
   }
 
@@ -274,7 +301,6 @@ export default function ProfilePage() {
                   로그인 이메일
                 </span>
                 <b>{isSyntheticEmail ? '등록된 이메일 없음 (카카오 로그인)' : authEmail || '이메일 정보 없음'}</b>
-                {isSyntheticEmail && <small>아래 ‘이메일 등록’에서 알림을 받을 이메일을 등록할 수 있습니다.</small>}
               </div>
               <label>
                 <span><Building2 size={17} aria-hidden="true" />학교</span>
@@ -326,58 +352,74 @@ export default function ProfilePage() {
               </div>
             </form>
 
-            {authEmail !== null && (
+            {/* 카카오(합성 이메일) 계정은 비밀번호가 없어 재인증이 불가능하므로 섹션 비노출.
+                authEmail 로드 전에는 렌더하지 않아 카카오 계정에서의 깜빡임을 방지한다. */}
+            {authEmail !== null && !isSyntheticEmail && (
               <>
-                <div className="professor-profile-divider" />
-                <div className="professor-profile-title is-security">
-                  <span><Mail size={22} aria-hidden="true" /></span>
-                  <div>
-                    <h2 id="student-email-title">{isSyntheticEmail ? '이메일 등록' : '이메일 변경'}</h2>
-                    <p>
-                      {isSyntheticEmail
-                        ? '카카오로 가입하셨어요. 비밀번호 재설정·중요 알림 메일을 받으려면 이메일을 등록해 주세요.'
-                        : '로그인과 알림에 사용할 이메일 주소를 변경합니다.'}
-                    </p>
-                  </div>
+              <div className="professor-profile-divider" />
+              <div className="professor-profile-title is-security">
+                <span><KeyRound size={22} aria-hidden="true" /></span>
+                <div>
+                  <h2 id="student-password-title">비밀번호 변경</h2>
+                  <p>로그인에 사용할 새 비밀번호를 설정합니다.</p>
                 </div>
-                {emailSent ? (
-                  <div className="professor-profile-form" aria-live="polite">
-                    <div className="professor-readonly-field">
-                      <span>
-                        <CheckCircle2 size={17} aria-hidden="true" />
-                        확인 메일 발송됨
-                      </span>
-                      <b>입력하신 주소로 확인 메일을 보냈습니다. 메일 안의 링크를 누르면 등록이 완료됩니다.</b>
-                      <small>몇 분 내에 오지 않으면 스팸함·프로모션함도 확인해 주세요.</small>
-                    </div>
+              </div>
+              <form onSubmit={changePassword} className="professor-profile-form" aria-labelledby="student-password-title">
+                <div className="professor-password-grid">
+                  <label>
+                    <span>현재 비밀번호</span>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      maxLength={PASSWORD_MAX_LENGTH}
+                      autoComplete="current-password"
+                      placeholder="본인 확인을 위해 입력"
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span>새 비밀번호</span>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      minLength={8}
+                      maxLength={PASSWORD_MAX_LENGTH}
+                      autoComplete="new-password"
+                      placeholder={PASSWORD_HINT}
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span>새 비밀번호 확인</span>
+                    <input
+                      type="password"
+                      value={passwordConfirm}
+                      onChange={(event) => setPasswordConfirm(event.target.value)}
+                      minLength={8}
+                      maxLength={PASSWORD_MAX_LENGTH}
+                      autoComplete="new-password"
+                      placeholder="한 번 더 입력"
+                      required
+                    />
+                  </label>
+                </div>
+                <div className="professor-profile-submit">
+                  <div aria-live="polite">
+                    {passwordMessage && <p className="is-success">{passwordMessage}</p>}
+                    {passwordError && <p className="is-error">{passwordError}</p>}
                   </div>
-                ) : (
-                  <form onSubmit={handleRegisterEmail} className="professor-profile-form" aria-labelledby="student-email-title">
-                    <label>
-                      <span>{isSyntheticEmail ? '등록할 이메일 주소' : '변경할 이메일 주소'}</span>
-                      <input
-                        type="email"
-                        value={newEmail}
-                        onChange={(event) => setNewEmail(event.target.value)}
-                        placeholder="이메일 주소 입력"
-                        autoComplete="email"
-                      />
-                    </label>
-                    <div className="professor-profile-submit">
-                      <div aria-live="polite">
-                        {emailError && <p className="is-error">{emailError}</p>}
-                      </div>
-                      <button
-                        type="submit"
-                        className="professor-secondary"
-                        disabled={emailSubmitting || !newEmail.trim()}
-                      >
-                        <Mail size={18} aria-hidden="true" />
-                        {emailSubmitting ? '처리 중...' : isSyntheticEmail ? '이메일 등록' : '이메일 변경'}
-                      </button>
-                    </div>
-                  </form>
-                )}
+                  <button
+                    type="submit"
+                    className="professor-secondary"
+                    disabled={passwordSaving || !currentPassword || !password || !passwordConfirm}
+                  >
+                    <KeyRound size={18} aria-hidden="true" />
+                    {passwordSaving ? '변경 중...' : '비밀번호 변경'}
+                  </button>
+                </div>
+              </form>
               </>
             )}
           </section>
