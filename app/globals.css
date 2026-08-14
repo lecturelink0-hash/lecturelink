@@ -1730,6 +1730,9 @@
   --color-surface:    #ffffff;
   --color-border:     #ece6d9;   /* 크림과 어울리는 웜 뉴트럴 보더 */
   --color-line-strong: #d6d0c3;  /* 한 단계 진한 보더 — 폼 입력·호버 등 구분 강조용 */
+
+  /* 카드 모서리 단일 토큰 — 페이지별 14/16/20px 혼용을 16px 로 통일 */
+  --radius-card: 16px;
   --color-text:       #18241e;   /* 딥 그린-잉크 */
   --color-muted:      #6b7280;
 
@@ -1955,9 +1958,11 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
    장식(칩/필/그라디언트)은 여전히 배제.
    ============================================ */
 .ll-card {                                     /* 시안의 흰 종이 카드 + 절제된 깊이 */
+  /* 표면 규칙: 카드 표면은 --color-surface(흰색) 하나만 쓴다.
+     미색(ll-tint)은 카드 "안"의 인셋 영역 전용 — 카드 자체 배경으로 쓰지 않는다. */
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
 }
 .ll-card-hover {

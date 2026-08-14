@@ -1,7 +1,5 @@
 'use client';
 
-import '@/components/professor/professor.css';
-
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,6 +7,10 @@ import { api, ApiError } from '@/lib/api/client';
 import { createBrowserClient } from '@/lib/db/browser';
 import { authErrorMessage } from '@/lib/auth/auth-error-message';
 import { AccountDeletion } from '@/components/account/AccountDeletion';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import {
   isValidPassword,
   PASSWORD_ERROR,
@@ -19,13 +21,9 @@ import {
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
-  BookOpen,
-  Building2,
   CalendarDays,
-  CalendarRange,
   Eye,
   EyeOff,
-  GraduationCap,
   KeyRound,
   Mail,
   Save,
@@ -78,37 +76,21 @@ const YEAR_OPTIONS = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1];
 const HEADER_DESC =
   '회원가입 시 입력한 학교·학년·학기 등 정보를 확인하고 수정할 수 있습니다.';
 
-// 교수용 마이페이지(professor.css)와 동일한 룩을 학생 레이아웃 안에서 재사용하기 위한
-// 스코프 래퍼 — `.professor-app`은 --p-* 변수 정의용으로만 쓰고 셸 배경/높이는 무효화.
-const SKIN_WRAPPER_STYLE = { minHeight: 'auto', background: 'transparent' } as const;
+// 학생 폼 공통 규격 — 마이페이지 일정 추가 폼과 동일한 스타일
+const INPUT_CLS =
+  'w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 bg-white text-sage-800 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]';
+const LABEL_CLS = 'block text-xs font-medium text-sage-700 mb-1';
 
-function PageHeading() {
-  return (
-    <header className="professor-mypage-heading">
-      <div>
-        <span className="eyebrow">계정 · 회원정보</span>
-        <h1>
-          <span className="headline-accent">회원 정보</span> 수정
-        </h1>
-        <p className="lead">{HEADER_DESC}</p>
-      </div>
-      <span className="professor-faculty-status">
-        <BadgeCheck size={19} aria-hidden="true" />
-        학생 계정
-      </span>
-    </header>
-  );
-}
-
-// 비밀번호 입력칸 + 표시/숨김(눈동자) 토글. 스타일은 professor.css의
-// .professor-profile-form input 을 그대로 받고, 토글 버튼만 우측에 겹쳐 놓는다.
+// 비밀번호 입력칸 + 표시/숨김(눈동자) 토글.
 function PasswordInput({
+  id,
   value,
   onChange,
   placeholder,
   autoComplete,
   minLength,
 }: {
+  id: string;
   value: string;
   onChange: (next: string) => void;
   placeholder: string;
@@ -117,8 +99,9 @@ function PasswordInput({
 }) {
   const [visible, setVisible] = useState(false);
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <input
+        id={id}
         type={visible ? 'text' : 'password'}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -127,29 +110,14 @@ function PasswordInput({
         autoComplete={autoComplete}
         placeholder={placeholder}
         required
-        style={{ paddingRight: 44 }}
+        className={`${INPUT_CLS} pr-11`}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? '비밀번호 숨기기' : '비밀번호 표시'}
         aria-pressed={visible}
-        style={{
-          position: 'absolute',
-          top: '50%',
-          right: 7,
-          transform: 'translateY(-50%)',
-          width: 34,
-          height: 34,
-          display: 'grid',
-          placeItems: 'center',
-          padding: 0,
-          border: 0,
-          borderRadius: 8,
-          background: 'transparent',
-          color: 'var(--p-muted)',
-          cursor: 'pointer',
-        }}
+        className="absolute top-1/2 right-1 -translate-y-1/2 w-9 h-9 grid place-items-center rounded-lg text-[var(--color-muted)] hover:text-sage-700 transition-colors"
       >
         {visible ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
       </button>
@@ -307,206 +275,267 @@ export default function ProfilePage() {
 
   if (loading || loadError) {
     return (
-      <div className="professor-app" style={SKIN_WRAPPER_STYLE}>
-        <div className="professor-mypage">
-          <PageHeading />
-          <div className="professor-mypage-grid">
-            <section className="professor-profile-panel">
-              <p style={{ margin: 0, color: loadError ? '#913b3b' : 'var(--p-muted)', fontSize: 14 }}>
-                {loadError ?? '불러오는 중...'}
-              </p>
-            </section>
-          </div>
-        </div>
+      <div className="ll-system-page">
+        <PageHeader title="회원정보 수정" description={HEADER_DESC} />
+        <Card>
+          <p className={`text-sm ${loadError ? 'text-[var(--color-warn)]' : 'text-[var(--color-muted)]'}`}>
+            {loadError ?? '불러오는 중...'}
+          </p>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="professor-app" style={SKIN_WRAPPER_STYLE}>
-      <div className="professor-mypage">
-        <Link className="back" href="/mypage">
-          <ArrowLeft size={16} aria-hidden="true" />
-          마이페이지로
-        </Link>
-        <PageHeading />
+    <div className="ll-system-page">
+      <Link
+        href="/mypage"
+        className="inline-flex items-center gap-1 py-2 text-[13px] font-semibold text-[var(--color-muted)] hover:text-sage-800 transition-colors"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        마이페이지로
+      </Link>
+      <PageHeader
+        className="mt-2"
+        title="회원정보 수정"
+        description={HEADER_DESC}
+        action={
+          <Badge variant="default">
+            <BadgeCheck size={13} aria-hidden="true" />
+            학생 계정
+          </Badge>
+        }
+      />
 
-        <div className="professor-mypage-grid">
-          <section className="professor-profile-panel" aria-labelledby="student-profile-title">
-            <div className="professor-profile-title">
-              <span>
-                <UserRound size={22} aria-hidden="true" />
-              </span>
-              <div>
-                <h2 id="student-profile-title">기본 정보</h2>
-                <p>학교·학년·학기 정보를 입력하면 현재 학습 과정에 맞는 학습 범위가 적용됩니다.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 items-start">
+        <Card
+          icon={<UserRound className="w-5 h-5" strokeWidth={2} />}
+          title="기본 정보"
+          description="학교·학년·학기 정보를 입력하면 현재 학습 과정에 맞는 학습 범위가 적용됩니다."
+        >
+          <form onSubmit={handleSubmit} className="space-y-3" aria-label="기본 정보 수정">
+            <div>
+              <label htmlFor="profile-name" className={LABEL_CLS}>이름</label>
+              <input
+                id="profile-name"
+                name="name"
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                placeholder="이름을 입력하세요"
+                maxLength={50}
+                autoComplete="name"
+                className={INPUT_CLS}
+              />
+            </div>
+
+            {/* 로그인 이메일 — 표시 전용 */}
+            <div className="ll-tint rounded-lg px-3 py-2.5">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-sage-700">
+                <Mail size={14} aria-hidden="true" />
+                로그인 이메일
+              </p>
+              <p className="mt-0.5 text-sm font-semibold text-sage-800 break-all">
+                {isSyntheticEmail ? '등록된 이메일 없음 (카카오 로그인)' : authEmail || '이메일 정보 없음'}
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="profile-school" className={LABEL_CLS}>학교</label>
+              <select
+                id="profile-school"
+                value={selectedSchool}
+                onChange={(event) => setSelectedSchool(event.target.value)}
+                required
+                className={INPUT_CLS}
+              >
+                <option value="">선택...</option>
+                {schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="profile-grade" className={LABEL_CLS}>학년</label>
+              <select
+                id="profile-grade"
+                value={selectedGrade}
+                onChange={(event) => setSelectedGrade(event.target.value as GradeValue)}
+                className={INPUT_CLS}
+              >
+                {GRADE_OPTIONS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="profile-year" className={LABEL_CLS}>연도 · 학기</label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <select
+                  id="profile-year"
+                  value={selectedYear}
+                  onChange={(event) => setSelectedYear(Number(event.target.value))}
+                  aria-label="연도"
+                  className={INPUT_CLS}
+                >
+                  {YEAR_OPTIONS.map((y) => <option key={y} value={y}>{y}년</option>)}
+                </select>
+                <select
+                  value={selectedSemester}
+                  onChange={(event) => setSelectedSemester(event.target.value as 'spring' | 'fall')}
+                  aria-label="학기"
+                  className={INPUT_CLS}
+                >
+                  <option value="spring">{selectedYear}년 1학기</option>
+                  <option value="fall">{selectedYear}년 2학기</option>
+                </select>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="professor-profile-form">
-              <label>
-                <span>이름</span>
-                <input
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  placeholder="이름을 입력하세요"
-                  maxLength={50}
-                  autoComplete="name"
-                />
-              </label>
-              <div className="professor-readonly-field">
-                <span>
-                  <Mail size={17} aria-hidden="true" />
-                  로그인 이메일
+            <div>
+              <label htmlFor="profile-subject" className={LABEL_CLS}>수강 과목</label>
+              <select
+                id="profile-subject"
+                value={selectedSubject}
+                onChange={(event) => setSelectedSubject(event.target.value)}
+                required
+                className={INPUT_CLS}
+              >
+                <option value="">현재 수강 중인 과목 선택...</option>
+                {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <p className="mt-1 text-[11px] text-[var(--color-muted)]">
+                선택한 과목 기준으로 학습 범위가 설정됩니다.
+              </p>
+            </div>
+
+            <div aria-live="polite">
+              {saved && (
+                <p className="text-xs font-semibold text-sage-700">저장되었습니다. 마이페이지로 이동합니다.</p>
+              )}
+              {formError && <p className="text-xs text-[var(--color-warn)]">{formError}</p>}
+            </div>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              fullWidth
+              loading={submitting}
+              disabled={submitting || !selectedSchool || !selectedSubject}
+            >
+              <Save size={18} aria-hidden="true" />
+              변경사항 저장
+            </Button>
+          </form>
+
+          {/* 카카오(합성 이메일) 계정은 비밀번호가 없어 재인증이 불가능하므로 섹션 비노출.
+              authEmail 로드 전에는 렌더하지 않아 카카오 계정에서의 깜빡임을 방지한다. */}
+          {authEmail !== null && !isSyntheticEmail && (
+            <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
+              <div className="flex items-start gap-3 mb-4">
+                <span className="ll-chip">
+                  <KeyRound className="w-5 h-5" strokeWidth={2} />
                 </span>
-                <b>{isSyntheticEmail ? '등록된 이메일 없음 (카카오 로그인)' : authEmail || '이메일 정보 없음'}</b>
-              </div>
-              <label>
-                <span><Building2 size={17} aria-hidden="true" />학교</span>
-                <select value={selectedSchool} onChange={(event) => setSelectedSchool(event.target.value)} required>
-                  <option value="">선택...</option>
-                  {schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </label>
-              <label>
-                <span><GraduationCap size={17} aria-hidden="true" />학년</span>
-                <select value={selectedGrade} onChange={(event) => setSelectedGrade(event.target.value as GradeValue)}>
-                  {GRADE_OPTIONS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                </select>
-              </label>
-              <label>
-                <span><CalendarRange size={17} aria-hidden="true" />연도 · 학기</span>
-                <div className="professor-password-grid">
-                  <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} aria-label="연도">
-                    {YEAR_OPTIONS.map((y) => <option key={y} value={y}>{y}년</option>)}
-                  </select>
-                  <select value={selectedSemester} onChange={(event) => setSelectedSemester(event.target.value as 'spring' | 'fall')} aria-label="학기">
-                    <option value="spring">{selectedYear}년 1학기</option>
-                    <option value="fall">{selectedYear}년 2학기</option>
-                  </select>
-                </div>
-              </label>
-              <label>
-                <span><BookOpen size={17} aria-hidden="true" />수강 과목</span>
-                <select value={selectedSubject} onChange={(event) => setSelectedSubject(event.target.value)} required>
-                  <option value="">현재 수강 중인 과목 선택...</option>
-                  {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-                <small>선택한 과목 기준으로 학습 범위가 설정됩니다.</small>
-              </label>
-
-              <div className="professor-profile-submit">
-                <div aria-live="polite">
-                  {saved && <p className="is-success">저장되었습니다. 마이페이지로 이동합니다.</p>}
-                  {formError && <p className="is-error">{formError}</p>}
-                </div>
-                <button
-                  type="submit"
-                  className="professor-primary"
-                  disabled={submitting || !selectedSchool || !selectedSubject}
-                >
-                  <Save size={18} aria-hidden="true" />
-                  {submitting ? '저장 중...' : '변경사항 저장'}
-                </button>
-              </div>
-            </form>
-
-            {/* 카카오(합성 이메일) 계정은 비밀번호가 없어 재인증이 불가능하므로 섹션 비노출.
-                authEmail 로드 전에는 렌더하지 않아 카카오 계정에서의 깜빡임을 방지한다. */}
-            {authEmail !== null && !isSyntheticEmail && (
-              <>
-              <div className="professor-profile-divider" />
-              <div className="professor-profile-title is-security">
-                <span><KeyRound size={22} aria-hidden="true" /></span>
                 <div>
-                  <h2 id="student-password-title">비밀번호 변경</h2>
-                  <p>로그인에 사용할 새 비밀번호를 설정합니다.</p>
+                  <h2 id="student-password-title" className="text-base font-bold text-sage-800 tracking-tight">
+                    비밀번호 변경
+                  </h2>
+                  <p className="text-sm text-[var(--color-muted)] mt-1">
+                    로그인에 사용할 새 비밀번호를 설정합니다.
+                  </p>
                 </div>
               </div>
-              <form onSubmit={changePassword} className="professor-profile-form" aria-labelledby="student-password-title">
-                <div className="professor-password-grid">
-                  <label>
-                    <span>현재 비밀번호</span>
+              <form onSubmit={changePassword} aria-labelledby="student-password-title" className="space-y-3">
+                <div className="grid gap-2.5 sm:grid-cols-3">
+                  <div>
+                    <label htmlFor="pw-current" className={LABEL_CLS}>현재 비밀번호</label>
                     <PasswordInput
+                      id="pw-current"
                       value={currentPassword}
                       onChange={setCurrentPassword}
                       autoComplete="current-password"
                       placeholder="본인 확인을 위해 입력"
                     />
-                  </label>
-                  <label>
-                    <span>새 비밀번호</span>
+                  </div>
+                  <div>
+                    <label htmlFor="pw-new" className={LABEL_CLS}>새 비밀번호</label>
                     <PasswordInput
+                      id="pw-new"
                       value={password}
                       onChange={setPassword}
                       minLength={8}
                       autoComplete="new-password"
                       placeholder={PASSWORD_HINT}
                     />
-                  </label>
-                  <label>
-                    <span>새 비밀번호 확인</span>
+                  </div>
+                  <div>
+                    <label htmlFor="pw-confirm" className={LABEL_CLS}>새 비밀번호 확인</label>
                     <PasswordInput
+                      id="pw-confirm"
                       value={passwordConfirm}
                       onChange={setPasswordConfirm}
                       minLength={8}
                       autoComplete="new-password"
                       placeholder="한 번 더 입력"
                     />
-                  </label>
-                </div>
-                <div className="professor-profile-submit">
-                  <div aria-live="polite">
-                    {passwordMessage && <p className="is-success">{passwordMessage}</p>}
-                    {passwordError && <p className="is-error">{passwordError}</p>}
                   </div>
-                  <button
-                    type="submit"
-                    className="professor-secondary"
-                    disabled={passwordSaving || !currentPassword || !password || !passwordConfirm}
-                  >
-                    <KeyRound size={18} aria-hidden="true" />
-                    {passwordSaving ? '변경 중...' : '비밀번호 변경'}
-                  </button>
                 </div>
+                <div aria-live="polite">
+                  {passwordMessage && (
+                    <p className="text-xs font-semibold text-sage-700">{passwordMessage}</p>
+                  )}
+                  {passwordError && <p className="text-xs text-[var(--color-warn)]">{passwordError}</p>}
+                </div>
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  loading={passwordSaving}
+                  disabled={passwordSaving || !currentPassword || !password || !passwordConfirm}
+                >
+                  <KeyRound size={18} aria-hidden="true" />
+                  비밀번호 변경
+                </Button>
               </form>
-              </>
-            )}
-          </section>
-
-          <aside className="professor-account-summary" aria-label="계정 안내">
-            <div>
-              <ShieldCheck size={24} aria-hidden="true" />
-              <h2>학생 계정</h2>
-              <p>
-                학교·학년·과목을 변경하면 해당 조건에 맞는 학습 설정이 자동으로 적용됩니다.
-                시험 범위는 마이페이지 또는 문제 풀이 화면에서 언제든 변경할 수 있습니다.
-              </p>
             </div>
-            <dl>
-              <div>
-                <dt>소속</dt>
-                <dd>{schoolShortName ?? '등록 정보 없음'}</dd>
+          )}
+        </Card>
+
+        <aside aria-label="계정 안내">
+          <Card>
+            <ShieldCheck className="w-6 h-6 text-sage-600" aria-hidden="true" />
+            <h2 className="mt-3 text-base font-bold text-sage-800 tracking-tight">학생 계정</h2>
+            <p className="mt-1.5 text-sm text-[var(--color-muted)] leading-relaxed">
+              학교·학년·과목을 변경하면 해당 조건에 맞는 학습 설정이 자동으로 적용됩니다.
+              시험 범위는 마이페이지 또는 문제 풀이 화면에서 언제든 변경할 수 있습니다.
+            </p>
+            <dl className="mt-4 pt-4 border-t border-[var(--color-border)] space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-[var(--color-muted)]">소속</dt>
+                <dd className="font-semibold text-sage-800 text-right">{schoolShortName ?? '등록 정보 없음'}</dd>
               </div>
-              <div>
-                <dt>학년</dt>
-                <dd>{gradeLabel ?? '등록 정보 없음'}</dd>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-[var(--color-muted)]">학년</dt>
+                <dd className="font-semibold text-sage-800 text-right">{gradeLabel ?? '등록 정보 없음'}</dd>
               </div>
-              <div>
-                <dt>학기</dt>
-                <dd>{selectedYear}년 {selectedSemester === 'spring' ? '1학기' : '2학기'}</dd>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-[var(--color-muted)]">학기</dt>
+                <dd className="font-semibold text-sage-800 text-right tnum">
+                  {selectedYear}년 {selectedSemester === 'spring' ? '1학기' : '2학기'}
+                </dd>
               </div>
             </dl>
-            <Link href="/mypage">
+            <Link
+              href="/mypage"
+              className="mt-5 inline-flex w-full items-center justify-center gap-1.5 h-11 rounded-xl border border-[var(--color-border)] bg-white text-sm font-bold text-sage-700 hover:bg-[var(--color-sage-100)] hover:border-[var(--color-line-strong)] transition-colors"
+            >
               <CalendarDays size={18} aria-hidden="true" />
               마이페이지로 이동
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
-          </aside>
-        </div>
-
-        <AccountDeletion />
+          </Card>
+        </aside>
       </div>
+
+      <AccountDeletion />
     </div>
   );
 }
