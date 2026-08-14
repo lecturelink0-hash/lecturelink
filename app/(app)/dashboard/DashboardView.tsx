@@ -221,24 +221,23 @@ export function DashboardView({
                 <p>오늘부터 학습 기록을 만들어보세요</p>
               )}
             </div>
-            <div className="dashboard-head-side">
-              {examDday ? (
-                <Link href="/mypage#calendar" className="dashboard-dday-chip">
-                  <CalendarDays aria-hidden="true" />
-                  {examDday.title}&nbsp;
-                  <strong>{examDday.dday === 0 ? 'D-Day' : `D-${examDday.dday}`}</strong>
-                </Link>
-              ) : (
-                <Link href="/mypage#calendar" className="dashboard-dday-chip is-ghost">
-                  <Plus aria-hidden="true" />
-                  시험 일정 등록
-                </Link>
-              )}
-              <Link href="/analysis" className="dashboard-inline-link">
-                상세 분석 <ArrowRight aria-hidden="true" />
+            {examDday ? (
+              <Link href="/mypage#calendar" className="dashboard-dday-chip">
+                <CalendarDays aria-hidden="true" />
+                {examDday.title}&nbsp;
+                <strong>{examDday.dday === 0 ? 'D-Day' : `D-${examDday.dday}`}</strong>
               </Link>
-            </div>
+            ) : (
+              <Link href="/mypage#calendar" className="dashboard-dday-chip is-ghost">
+                <Plus aria-hidden="true" />
+                시험 일정 등록
+              </Link>
+            )}
           </div>
+
+          <Link href="/analysis" className="dashboard-inline-link">
+            상세 분석 <ArrowRight aria-hidden="true" />
+          </Link>
 
           <dl className="dashboard-metrics">
             <div>

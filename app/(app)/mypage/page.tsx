@@ -475,7 +475,7 @@ export default function MyPage() {
         {/* Plan */}
         <Card className="flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-sage-800 tracking-tight">현재 요금제</h2>
+            <h2 className="text-[20px] font-bold text-sage-800 tracking-tight">현재 요금제</h2>
             <Link
               href="/plan"
               className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
@@ -487,7 +487,7 @@ export default function MyPage() {
           {/* Plan highlight */}
           <div className="rounded-xl bg-sage-700 text-white px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[14px] font-bold leading-tight">{plan.name} 플랜</p>
+              <p className="text-[16px] font-bold leading-tight">{plan.name} 플랜</p>
               <p className="text-[13px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
             </div>
             <p className="text-right flex-shrink-0">
@@ -499,13 +499,13 @@ export default function MyPage() {
                   <span className="text-[14px] text-white/70"> / 월</span>
                 </>
               ) : planTier === 'free' ? (
-                <span className="text-[15px] font-bold">무료</span>
+                <span className="text-[17px] font-bold">무료</span>
               ) : subscription?.subscription ? (
                 // 유료 티어인데 활성 구독이 없음 = 구독 이력이 있으나 만료·해지된 상태
-                <span className="text-[14px] font-bold">구독 만료</span>
+                <span className="text-[16px] font-bold">구독 만료</span>
               ) : (
                 // 구독 이력 없이 부여된 유료 티어 (베타·개발자 계정)
-                <span className="text-[14px] font-bold">베타 제공</span>
+                <span className="text-[16px] font-bold">베타 제공</span>
               )}
             </p>
           </div>
@@ -521,11 +521,6 @@ export default function MyPage() {
               label="자료 업로드 잔여량"
               remaining={quota?.uploads.remaining ?? 0}
               total={(quota?.uploads.limit ?? 0) + (quota?.uploads.bonus ?? 0)}
-            />
-            <QuotaRow
-              label="이미지 생성 잔여량"
-              remaining={quota?.images.remaining ?? 0}
-              total={(quota?.images.limit ?? 0) + (quota?.images.bonus ?? 0)}
             />
           </div>
 
@@ -575,8 +570,12 @@ export default function MyPage() {
       {/* ── Calendar + Selected Date Panel (상단 2칸 바로 아래) ──
            id="calendar": 대시보드 D-day 칩·시험 일정 등록 버튼의 앵커 진입점 */}
       <div id="calendar" className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mt-6 scroll-mt-24">
-        {/* ── Calendar — 카드 제목은 Card 의 공통 규격(h2 · text-base)으로 ── */}
-        <Card icon={<CalendarDays className="w-4 h-4" strokeWidth={2} />} title="학습 캘린더">
+        {/* ── Calendar — 카드 제목만 공통 규격(text-base)보다 34% 확대 ── */}
+        <Card
+          icon={<CalendarDays className="w-4 h-4" strokeWidth={2} />}
+          title="학습 캘린더"
+          titleClassName="text-[20px]"
+        >
           <StudyCalendar
             viewYear={viewYear}
             viewMonth={viewMonth}
@@ -597,11 +596,11 @@ export default function MyPage() {
               <CalendarDays className="w-4 h-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">
-              <h2 className="text-base font-bold text-sage-800 tracking-tight leading-tight">
+              <h2 className="text-[24px] font-bold text-sage-800 tracking-tight leading-tight">
                 {selectedDate.replace(/-/g, '.')}
               </h2>
               {selectedDate === today && (
-                <Badge variant="default" className="mt-1">오늘</Badge>
+                <Badge variant="default" className="mt-1 text-[14px]">오늘</Badge>
               )}
             </div>
           </div>
@@ -610,15 +609,15 @@ export default function MyPage() {
           <div className="mb-4 p-4 rounded-2xl ll-tint">
             {selectedStudy && selectedStudy.count > 0 ? (
               <div className="space-y-1">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[18px]">
                   <span className="text-[var(--color-muted)]">푼 문항</span>
                   <span className="font-semibold text-sage-800">{selectedStudy.count}문항</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[18px]">
                   <span className="text-[var(--color-muted)]">정답</span>
                   <span className="font-semibold text-sage-800">{selectedStudy.correct}문항</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[18px]">
                   <span className="text-[var(--color-muted)]">정답률</span>
                   <span className="font-semibold text-sage-800">{selectedAccuracy}%</span>
                 </div>
@@ -640,20 +639,20 @@ export default function MyPage() {
                 <div className="mt-3 pt-2.5 border-t border-[var(--color-sage-200)] flex flex-wrap items-center gap-x-4 gap-y-1">
                   <Link
                     href="/wrong-notes"
-                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-xs font-semibold text-sage-700 hover:text-sage-900 transition-colors"
+                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-[15px] font-semibold text-sage-700 hover:text-sage-900 transition-colors"
                   >
                     오답노트에서 복습 <ChevronRight className="w-3 h-3" />
                   </Link>
                   <Link
                     href="/analysis"
-                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-xs font-semibold text-sage-700 hover:text-sage-900 transition-colors"
+                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-[15px] font-semibold text-sage-700 hover:text-sage-900 transition-colors"
                   >
                     상세 분석 <ChevronRight className="w-3 h-3" />
                   </Link>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-[var(--color-muted)] text-center py-2">
+              <p className="text-[15px] text-[var(--color-muted)] text-center py-2">
                 이 날의 학습 기록이 없습니다
               </p>
             )}
@@ -661,7 +660,7 @@ export default function MyPage() {
 
           {/* Exams on this date */}
           <div className="mb-4">
-            <p className="text-xs font-semibold text-sage-700 mb-2">시험 일정</p>
+            <p className="text-[15px] font-semibold text-sage-700 mb-2">시험 일정</p>
             {selectedSchedules.length > 0 ? (
               <ul className="space-y-2">
                 {selectedSchedules.map((s) => {
@@ -674,13 +673,13 @@ export default function MyPage() {
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'}>
+                          <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'} className="text-[14px]">
                             {dLabel}
                           </Badge>
-                          <p className="text-xs font-medium text-sage-800 truncate">{s.title}</p>
+                          <p className="text-[15px] font-medium text-sage-800 truncate">{s.title}</p>
                         </div>
                         {s.memo && (
-                          <p className="text-[11px] text-[var(--color-muted)] mt-0.5 truncate">
+                          <p className="text-[14px] text-[var(--color-muted)] mt-0.5 truncate">
                             {s.memo}
                           </p>
                         )}
@@ -702,14 +701,14 @@ export default function MyPage() {
                 })}
               </ul>
             ) : (
-              <p className="text-xs text-[var(--color-muted)]">이 날의 시험 일정이 없습니다</p>
+              <p className="text-[15px] text-[var(--color-muted)]">이 날의 시험 일정이 없습니다</p>
             )}
           </div>
 
           {/* Upcoming schedules — 날짜를 클릭하지 않아도 D-day 를 한눈에 */}
           {upcomingSchedules.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-semibold text-sage-700 mb-2">다가오는 일정</p>
+              <p className="text-[15px] font-semibold text-sage-700 mb-2">다가오는 일정</p>
               <ul className="space-y-1.5">
                 {upcomingSchedules.map((s) => {
                   const diff = diffDayKeys(s.exam_date, today);
@@ -720,13 +719,13 @@ export default function MyPage() {
                         onClick={() => goToDate(s.exam_date)}
                         className="w-full flex items-center gap-2 p-2 rounded-lg border border-[var(--color-border)] bg-white text-left hover:border-[var(--color-line-strong)] transition-colors"
                       >
-                        <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'}>
+                        <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'} className="text-[14px]">
                           {diff === 0 ? 'D-DAY' : `D-${diff}`}
                         </Badge>
-                        <span className="min-w-0 flex-1 truncate text-xs font-medium text-sage-800">
+                        <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-sage-800">
                           {s.title}
                         </span>
-                        <span className="flex-shrink-0 text-[11px] text-[var(--color-muted)] tnum">
+                        <span className="flex-shrink-0 text-[14px] text-[var(--color-muted)] tnum">
                           {s.exam_date.slice(5).replace('-', '.')}
                         </span>
                       </button>
@@ -746,12 +745,12 @@ export default function MyPage() {
               handleAddSchedule();
             }}
           >
-            <p id="add-schedule-heading" className="text-xs font-semibold text-sage-700 mb-2">
+            <p id="add-schedule-heading" className="text-[15px] font-semibold text-sage-700 mb-2">
               일정 추가
             </p>
             <div className="space-y-2.5">
               <div>
-                <label htmlFor="schedule-date" className="block text-xs font-medium text-sage-700 mb-1">
+                <label htmlFor="schedule-date" className="block text-[15px] font-medium text-sage-700 mb-1">
                   날짜{' '}
                   <span className="text-[var(--color-warn)]" aria-hidden="true">*</span>
                   <span className="sr-only">(필수)</span>
@@ -764,11 +763,11 @@ export default function MyPage() {
                   aria-required="true"
                   value={formDate}
                   onChange={(e) => setFormDate(e.target.value)}
-                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
+                  className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
                 />
               </div>
               <div>
-                <label htmlFor="schedule-title" className="block text-xs font-medium text-sage-700 mb-1">
+                <label htmlFor="schedule-title" className="block text-[15px] font-medium text-sage-700 mb-1">
                   제목{' '}
                   <span className="text-[var(--color-warn)]" aria-hidden="true">*</span>
                   <span className="sr-only">(필수)</span>
@@ -782,12 +781,12 @@ export default function MyPage() {
                   placeholder="예: 해부학 중간고사"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
+                  className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
                 />
               </div>
               {subjects.length > 0 && (
                 <div>
-                  <label htmlFor="schedule-subject" className="block text-xs font-medium text-sage-700 mb-1">
+                  <label htmlFor="schedule-subject" className="block text-[15px] font-medium text-sage-700 mb-1">
                     과목 (선택)
                   </label>
                   <select
@@ -795,7 +794,7 @@ export default function MyPage() {
                     name="subject_id"
                     value={formSubjectId}
                     onChange={(e) => setFormSubjectId(e.target.value)}
-                    className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
+                    className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
                   >
                     <option value="">선택 안 함</option>
                     {subjects.map((s) => (
@@ -807,7 +806,7 @@ export default function MyPage() {
                 </div>
               )}
               <div>
-                <label htmlFor="schedule-memo" className="block text-xs font-medium text-sage-700 mb-1">
+                <label htmlFor="schedule-memo" className="block text-[15px] font-medium text-sage-700 mb-1">
                   메모 (선택)
                 </label>
                 <input
@@ -817,13 +816,13 @@ export default function MyPage() {
                   placeholder="예: 3~5장 범위"
                   value={formMemo}
                   onChange={(e) => setFormMemo(e.target.value)}
-                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
+                  className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
                 />
               </div>
               <div aria-live="polite">
                 {scheduleFeedback && (
                   <p
-                    className={`text-xs ${
+                    className={`text-[15px] ${
                       scheduleFeedback.type === 'error'
                         ? 'text-[var(--color-warn)]'
                         : 'text-sage-700'
@@ -840,6 +839,7 @@ export default function MyPage() {
                 fullWidth
                 loading={formLoading}
                 disabled={!formTitle.trim() || !formDate}
+                className="text-[19px]"
               >
                 <Plus size={14} />
                 일정 추가
