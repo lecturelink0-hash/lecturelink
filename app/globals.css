@@ -3055,9 +3055,9 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-scenario-row:hover { background: color-mix(in oklch, var(--color-primary-soft) 58%, transparent); }
 .cpx-scenario-row:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--color-primary); outline-offset: -2px; border-radius: var(--radius-sm); }
 .cpx-scenario-copy { display: block; min-width: 0; }
-.cpx-scenario-name { display: block; margin: 0; font-size: 17px; font-weight: 790; line-height: 1.4; letter-spacing: -.015em; }
+.cpx-scenario-name { display: block; margin: 0; font-size: 18px; font-weight: 790; line-height: 1.4; letter-spacing: -.015em; }
 .cpx-scenario-category + .cpx-scenario-name { margin-top: 3px; }
-.cpx-scenario-description { margin: 6px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.55; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.cpx-scenario-description { margin: 6px 0 0; color: var(--color-muted); font-size: 15px; line-height: 1.55; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .cpx-scenario-action { display: inline-flex; align-items: center; gap: 6px; color: var(--color-primary-strong); font-size: 15px; font-weight: 790; white-space: nowrap; }
 .cpx-scenario-action svg { width: 16px; height: 16px; transition: transform var(--dur-short) ease; }
 .cpx-scenario-row:hover .cpx-scenario-action svg { transform: translateX(2px); }
