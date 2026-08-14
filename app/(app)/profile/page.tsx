@@ -21,6 +21,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api/client';
+import { STUDY_SUBJECT_STORAGE_KEY, defaultSemester } from '@/lib/study-settings';
 import { authErrorMessage } from '@/lib/auth/auth-error-message';
 import {
   isValidPassword,
@@ -47,6 +48,18 @@ interface MeProfile {
   displayName: string | null;
   school: { id: string; name: string; shortName: string } | null;
   grade: string | null;
+}
+
+interface SubjectOption {
+  id: string;
+  name: string;
+}
+
+interface StudySettingsRes {
+  school_id: string | null;
+  grade: string | null;
+  semester: 'spring' | 'fall' | null;
+  year: number | null;
 }
 
 const GRADE_OPTIONS = [
@@ -225,6 +238,13 @@ export default function ProfilePage() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [studySemester, setStudySemester] = useState<'spring' | 'fall'>(defaultSemester());
+  const [studyYear, setStudyYear] = useState<number>(new Date().getFullYear());
+  const [studySubject, setStudySubject] = useState('');
+  const [studySaving, setStudySaving] = useState(false);
+  const [studySavedName, setStudySavedName] = useState<string | null>(null);
+  const [studyError, setStudyError] = useState<string | null>(null);
   useEffect(() => {
     if (LOCAL_STUDENT_PREVIEW) return;
     createBrowserClient()
@@ -255,6 +275,23 @@ export default function ProfilePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (LOCAL_STUDENT_PREVIEW) return;
+    api
+      .get<SubjectOption[]>('/api/subjects?with_sub_topics=false')
+      .then(setSubjects)
+      .catch(() => undefined);
+    api
+      .get<StudySettingsRes>('/api/me/study-settings')
+      .then((settings) => {
+        if (settings.semester) setStudySemester(settings.semester);
+        if (settings.year) setStudyYear(settings.year);
+      })
+      .catch(() => undefined);
+    const storedSubject = window.localStorage.getItem(STUDY_SUBJECT_STORAGE_KEY);
+    if (storedSubject) setStudySubject(storedSubject);
+  }, []);
+
   async function handleSubmit() {
     if (!selectedSchool || !displayName.trim()) return;
     setSubmitting(true);
@@ -279,6 +316,33 @@ export default function ProfilePage() {
       window.alert(message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function saveStudySettings() {
+    if (!studySubject) return;
+    setStudySaving(true);
+    setStudyError(null);
+    setStudySavedName(null);
+    try {
+      if (LOCAL_STUDENT_PREVIEW) {
+        setStudySavedName('미리보기 과목');
+        return;
+      }
+      const res = await api.put<{ cohort_id: string; subject_name: string }>(
+        '/api/me/study-settings',
+        { semester: studySemester, year: studyYear, subject_id: studySubject },
+      );
+      window.localStorage.setItem(STUDY_SUBJECT_STORAGE_KEY, studySubject);
+      setStudySavedName(res.subject_name);
+    } catch (caught) {
+      setStudyError(
+        caught instanceof ApiError
+          ? caught.message
+          : '저장 중 오류가 발생했습니다.',
+      );
+    } finally {
+      setStudySaving(false);
     }
   }
 
@@ -473,6 +537,114 @@ export default function ProfilePage() {
                   >
                     <Save size={18} aria-hidden="true" />
                     {submitting ? '저장 중...' : '변경사항 저장'}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section
+              className="studio-section card pad professor-profile-panel"
+              aria-labelledby="student-study-settings-title"
+            >
+              <div className="professor-profile-title">
+                <span>
+                  <BookOpen size={22} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 id="student-study-settings-title">학습 설정</h2>
+                  <p>
+                    학기와 수강 과목을 저장하면 같은 학교·학년 선배들의 시험 범위
+                    데이터와 연결되어 추천 풀이에 반영됩니다.
+                  </p>
+                </div>
+              </div>
+
+              <div className="professor-profile-form">
+                <div className="student-profile-field-grid">
+                  <div className="professor-form-field">
+                    <label htmlFor="student-study-year">연도</label>
+                    <select
+                      id="student-study-year"
+                      value={studyYear}
+                      onChange={(event) => setStudyYear(Number(event.target.value))}
+                    >
+                      {Array.from(
+                        new Set([
+                          studyYear,
+                          new Date().getFullYear(),
+                          new Date().getFullYear() + 1,
+                        ]),
+                      )
+                        .sort()
+                        .map((year) => (
+                          <option key={year} value={year}>
+                            {year}년
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div className="professor-form-field">
+                    <label htmlFor="student-study-semester">학기</label>
+                    <select
+                      id="student-study-semester"
+                      value={studySemester}
+                      onChange={(event) =>
+                        setStudySemester(event.target.value as 'spring' | 'fall')
+                      }
+                    >
+                      <option value="spring">1학기</option>
+                      <option value="fall">2학기</option>
+                    </select>
+                  </div>
+
+                  <div className="professor-form-field is-full">
+                    <label htmlFor="student-study-subject">
+                      <BookOpen size={17} aria-hidden="true" />
+                      수강 과목
+                    </label>
+                    <select
+                      id="student-study-subject"
+                      value={studySubject}
+                      onChange={(event) => setStudySubject(event.target.value)}
+                    >
+                      <option value="">수강 과목 선택</option>
+                      {subjects.map((subject) => (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </option>
+                      ))}
+                    </select>
+                    <small>
+                      저장하면 이번 학기 코호트(같은 학교·학년·과목 집단)에
+                      배정됩니다. 소속 학교와 학년을 먼저 저장해야 합니다.
+                    </small>
+                  </div>
+                </div>
+
+                <div className="professor-profile-submit">
+                  <div aria-live="polite">
+                    {studySavedName && (
+                      <p className="is-success">
+                        <CheckCircle2 size={16} aria-hidden="true" />
+                        {studySavedName} 학습 설정을 저장했습니다.
+                      </p>
+                    )}
+                    {studyError && (
+                      <p className="is-error">
+                        <AlertCircle size={16} aria-hidden="true" />
+                        {studyError}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="professor-primary"
+                    onClick={() => void saveStudySettings()}
+                    disabled={studySaving || !studySubject}
+                  >
+                    <Save size={18} aria-hidden="true" />
+                    {studySaving ? '저장 중...' : '학습 설정 저장'}
                   </button>
                 </div>
               </div>

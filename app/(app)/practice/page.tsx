@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
+import { STUDY_SUBJECT_STORAGE_KEY } from '@/lib/study-settings';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -45,6 +47,17 @@ interface AttemptResponse {
   explanation: string | null;
 }
 
+interface StudySettingsRes {
+  school_id: string | null;
+  grade: string | null;
+  semester: 'spring' | 'fall' | null;
+  year: number | null;
+}
+
+interface CohortLookupRes {
+  cohort_id: string | null;
+}
+
 export default function PracticePage() {
   const [questions, setQuestions] = useState<QuestionForUser[]>([]);
   const [cohortId, setCohortId] = useState<string | null>(null);
@@ -52,6 +65,7 @@ export default function PracticePage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AttemptResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [settingsMissing, setSettingsMissing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [outOfScopeMarked, setOutOfScopeMarked] = useState(false);
 
@@ -71,11 +85,43 @@ export default function PracticePage() {
   async function loadQuestions() {
     setLoading(true);
     try {
-      // 먼저 본인 코호트 정보 가져오기 (가장 최근 attempt 의 cohort_id 사용 - 간단히)
-      // 실제로는 사용자 프로필에서 직접 조회. 여기서는 추천 API 가 알아서 처리.
-      const res = await api.get<RecommendResponse>('/api/questions/recommend?count=10');
+      // 프로필의 학습 설정(학교·학년·학기·연도)과 브라우저에 저장된 수강 과목으로
+      // 코호트를 찾아 추천에 반영한다. 설정이 없으면 안내 화면을 보여준다.
+      const subjectId = window.localStorage.getItem(STUDY_SUBJECT_STORAGE_KEY);
+      const settings = await api
+        .get<StudySettingsRes>('/api/me/study-settings')
+        .catch(() => null);
+
+      if (
+        !subjectId
+        || !settings?.school_id
+        || !settings.grade
+        || !settings.semester
+        || !settings.year
+      ) {
+        setSettingsMissing(true);
+        setQuestions([]);
+        return;
+      }
+      setSettingsMissing(false);
+
+      const lookup = await api
+        .get<CohortLookupRes>(
+          `/api/cohorts/lookup?school_id=${settings.school_id}&grade=${settings.grade}&year=${settings.year}&semester=${settings.semester}&subject_id=${subjectId}`,
+        )
+        .catch(() => null);
+      const resolvedCohortId = lookup?.cohort_id ?? null;
+
+      const query = [
+        'count=10',
+        resolvedCohortId ? `cohort_id=${resolvedCohortId}` : null,
+        `subject_id=${subjectId}`,
+      ]
+        .filter(Boolean)
+        .join('&');
+      const res = await api.get<RecommendResponse>(`/api/questions/recommend?${query}`);
       setQuestions(res.questions);
-      setCohortId(res.rationale.cohortUsed);
+      setCohortId(resolvedCohortId ?? res.rationale.cohortUsed);
       setCurrentIdx(0);
       resetQuestion();
     } catch (e) {
@@ -156,6 +202,27 @@ export default function PracticePage() {
     return <div className="text-center py-20 text-[var(--color-muted)]">문항 불러오는 중...</div>;
   }
   if (!current) {
+    if (settingsMissing) {
+      return (
+        <div className="max-w-md mx-auto text-center py-20">
+          <p className="text-[15px] font-semibold text-sage-800 mb-2">
+            학습 설정이 필요합니다
+          </p>
+          <p className="text-sm text-[var(--color-muted)] mb-6">
+            계정 설정에서 학기와 수강 과목을 저장하면
+            <br />
+            같은 학교·학년 선배 데이터 기반 추천이 시작됩니다.
+          </p>
+          <Link
+            href="/profile"
+            className="inline-flex items-center gap-1.5 h-11 px-5 rounded-lg bg-sage-700 text-white text-sm font-semibold hover:bg-sage-800"
+          >
+            학습 설정 하러 가기
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
+          </Link>
+        </div>
+      );
+    }
     return <div className="text-center py-20 text-[var(--color-muted)]">표시할 문항이 없습니다.</div>;
   }
 
