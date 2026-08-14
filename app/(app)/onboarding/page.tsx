@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Select } from '@/components/ui/Select';
 import { CheckCircle2 } from 'lucide-react';
 
 interface School { id: string; name: string; short_name: string }
@@ -40,7 +41,7 @@ const GRADE_OPTIONS = [
 
 const PURPOSE_OPTIONS = [
   { value: 'naesin', label: '내신 대비' },
-  { value: 'usmle', label: 'USMLE' },
+  { value: 'kmle', label: '국시 대비' },
   { value: 'other', label: '기타' },
 ] as const;
 
@@ -90,6 +91,7 @@ export default function OnboardingPage() {
 
   // 학교·학년·과목 변경 시 코호트 lookup
   useEffect(() => {
+    setScopeChecks({});
     if (!selectedSchool || !selectedSubject) return;
     api
       .get<CohortLookupRes>(
@@ -103,17 +105,6 @@ export default function OnboardingPage() {
         setSeniorData(map);
         setIsFallback(res.is_fallback);
         setSeniorCount(res.sample_size);
-
-        // 기본 체크: 선배 50% 이상 포함된 sub_topic 자동 선택
-        const subject = subjects.find((s) => s.id === selectedSubject);
-        if (subject) {
-          const initial: Record<string, boolean> = {};
-          for (const st of subject.sub_topics.filter((t) => t.level === 1)) {
-            const score = map[st.id] ?? st.exam_relevance / 3;
-            initial[st.id] = score >= 0.5;
-          }
-          setScopeChecks(initial);
-        }
       });
   }, [selectedSchool, selectedGrade, selectedSemester, selectedYear, selectedSubject, subjects]);
 
@@ -180,9 +171,9 @@ export default function OnboardingPage() {
   return (
     <div className="ll-system-page">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-sage-800 mb-2">온보딩 — 시험 범위 설정</h1>
+        <h1 className="text-2xl font-bold text-sage-800 mb-2">학습 정보 설정</h1>
         <p className="text-sm text-[var(--color-muted)]">
-          학교·학년·학기를 입력하면 선배들의 시험 범위 데이터를 기반으로 추천 콘텐츠가 자동 설정됩니다.
+          학교·학년·학기를 입력하면 같은 학교 선배들의 시험 범위를 바탕으로 추천 범위를 설정할 수 있어요.
         </p>
       </div>
 
@@ -195,40 +186,49 @@ export default function OnboardingPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="이름 (필수 · 카카오 이름 그대로 사용 가능)"
-              className="w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white"
+              className="ll-form-control"
             />
           </Field>
 
           <Field label="학교">
-            <select className="w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white" value={selectedSchool} onChange={(e) => setSelectedSchool(e.target.value)}>
-              <option value="">선택...</option>
-              {schools.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+            <Select
+              value={selectedSchool}
+              onValueChange={setSelectedSchool}
+              placeholder="학교 선택"
+              ariaLabel="학교 선택"
+              options={schools.map((school) => ({ value: school.id, label: school.name }))}
+            />
           </Field>
 
           <Field label="학년">
-            <select className="w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white" value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value as typeof selectedGrade)}>
-              {GRADE_OPTIONS.map((g) => (
-                <option key={g.value} value={g.value}>{g.label}</option>
-              ))}
-            </select>
+            <Select
+              value={selectedGrade}
+              onValueChange={(value) => setSelectedGrade(value as typeof selectedGrade)}
+              ariaLabel="학년 선택"
+              options={GRADE_OPTIONS}
+            />
           </Field>
 
           <Field label="학기">
-            <select className="w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white" value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value as 'spring' | 'fall')}>
-              <option value="spring">{selectedYear}년 1학기</option>
-              <option value="fall">{selectedYear}년 2학기</option>
-            </select>
+            <Select
+              value={selectedSemester}
+              onValueChange={(value) => setSelectedSemester(value as 'spring' | 'fall')}
+              ariaLabel="학기 선택"
+              options={[
+                { value: 'spring', label: `${selectedYear}년 1학기` },
+                { value: 'fall', label: `${selectedYear}년 2학기` },
+              ]}
+            />
           </Field>
 
           <Field label="수강 과목">
-            <select className="w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white" value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+            <Select
+              value={selectedSubject}
+              onValueChange={setSelectedSubject}
+              placeholder="과목 선택"
+              ariaLabel="수강 과목 선택"
+              options={subjects.map((subject) => ({ value: subject.id, label: subject.name }))}
+            />
           </Field>
         </div>
 
@@ -258,7 +258,7 @@ export default function OnboardingPage() {
               onChange={(e) => setPurposeDetail(e.target.value)}
               placeholder="이용 목적을 자유롭게 입력해주세요 (예: 주관식 시험 대비)"
               maxLength={100}
-              className="mt-2 w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white focus:border-sage-600 focus:outline-none"
+              className="ll-form-control mt-2"
             />
           )}
         </div>
@@ -270,20 +270,17 @@ export default function OnboardingPage() {
               value={referralCode}
               onChange={(e) => setReferralCode(e.target.value)}
               placeholder="친구·선배 추천 코드"
-              className="w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white focus:border-sage-600 focus:outline-none"
+              className="ll-form-control"
             />
           </Field>
           <Field label="알게된 경로 (선택)">
-            <select
-              className="w-full h-10 rounded-lg border border-[var(--color-border)] px-3 text-sm bg-white"
+            <Select
               value={acquisitionChannel}
-              onChange={(e) => setAcquisitionChannel(e.target.value)}
-            >
-              <option value="">선택...</option>
-              {CHANNEL_OPTIONS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+              onValueChange={setAcquisitionChannel}
+              placeholder="선택..."
+              ariaLabel="알게된 경로 선택"
+              options={CHANNEL_OPTIONS.map((channel) => ({ value: channel, label: channel }))}
+            />
           </Field>
         </div>
       </Card>
@@ -291,11 +288,11 @@ export default function OnboardingPage() {
       {/* Step 2 */}
       {currentSubject && (
         <Card
-          title="2. 시험 범위 확인"
+          title="2. 추천 범위 확인"
           description={
             seniorCount > 0
               ? `선배 ${seniorCount}명${isFallback ? ' (직전 학기 데이터)' : ''}이 누적한 시험 범위 데이터입니다. 본인 학기에 맞게 체크박스를 수정하세요.`
-              : '아직 같은 코호트 선배 데이터가 없습니다. KMLE 빈출도 기반으로 추천된 범위를 본인 학기에 맞게 조정하세요.'
+              : '아직 같은 학교·학년의 시험 범위 데이터가 충분하지 않아요. 추천 범위를 확인한 뒤 실제 수업 범위에 맞게 조정해주세요.'
           }
           className="mb-4"
         >
