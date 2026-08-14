@@ -339,6 +339,8 @@ export type UsageQuotaRow = {
   bonus_questions: number;
   bonus_uploads: number;
   bonus_images: number;
+  cpx_seconds_used: number;
+  bonus_cpx_seconds: number;
   updated_at: string;
 }
 
@@ -463,6 +465,11 @@ export type CpxSessionRow = {
   result: Record<string, unknown> | null;
   started_at: string;
   ended_at: string | null;
+  heartbeat_at: string | null;
+  time_limit_seconds: number | null;
+  metered_seconds: number | null;
+  settle_reason: 'completed' | 'abandoned' | 'swept' | null;
+  settled_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -762,7 +769,7 @@ export interface Database {
       check_user_quota: {
         Args: {
           p_user_id: string;
-          p_resource: 'questions' | 'uploads' | 'images';
+          p_resource: 'questions' | 'uploads' | 'images' | 'cpx_seconds';
           p_amount?: number;
         };
         Returns: {
@@ -777,7 +784,7 @@ export interface Database {
       consume_quota: {
         Args: {
           p_user_id: string;
-          p_resource: 'questions' | 'uploads' | 'images';
+          p_resource: 'questions' | 'uploads' | 'images' | 'cpx_seconds';
           p_amount?: number;
         };
         Returns: void;
@@ -785,7 +792,7 @@ export interface Database {
       consume_quota_checked: {
         Args: {
           p_user_id: string;
-          p_resource: 'questions' | 'uploads' | 'images';
+          p_resource: 'questions' | 'uploads' | 'images' | 'cpx_seconds';
           p_amount?: number;
         };
         Returns: {
@@ -800,10 +807,18 @@ export interface Database {
       add_bonus_credits: {
         Args: {
           p_user_id: string;
-          p_resource: 'questions' | 'uploads' | 'images';
+          p_resource: 'questions' | 'uploads' | 'images' | 'cpx_seconds';
           p_amount: number;
         };
         Returns: void;
+      };
+      settle_cpx_session: {
+        Args: { p_external_session_id: string; p_reason: 'completed' | 'abandoned' | 'swept' };
+        Returns: { settled: boolean; metered_seconds: number }[];
+      };
+      sweep_stale_cpx_sessions: {
+        Args: Record<string, never>;
+        Returns: number;
       };
       reset_expired_bonuses: {
         Args: Record<string, never>;

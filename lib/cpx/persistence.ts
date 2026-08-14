@@ -1,4 +1,5 @@
 import { createServerClient } from '@/lib/db/server';
+import { createAdminClient } from '@/lib/db/admin';
 
 type JsonObject = Record<string, unknown>;
 
@@ -68,12 +69,18 @@ export async function persistCpxExchange(exchange: Exchange): Promise<void> {
     const persona = response.persona && typeof response.persona === 'object' && !Array.isArray(response.persona)
       ? response.persona as JsonObject
       : {};
+    // timeLimitSeconds 는 엔진이 검증해 응답에 실어준다 — 시간 차감 정산의 상한으로 저장.
+    const timeLimitSeconds = Number.isInteger(response.timeLimitSeconds)
+      ? Number(response.timeLimitSeconds)
+      : null;
     const { error } = await supabase.from('cpx_sessions').upsert({
       user_id: userId,
       external_session_id: externalSessionId,
       case_id: caseId,
       persona,
       status: 'active',
+      time_limit_seconds: timeLimitSeconds,
+      heartbeat_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     } as never, { onConflict: 'external_session_id' });
     if (error) throw error;
@@ -85,6 +92,18 @@ export async function persistCpxExchange(exchange: Exchange): Promise<void> {
   if (!externalSessionId || !action) return;
   const sessionId = await localSessionId(userId, externalSessionId);
   if (!sessionId) throw new Error('CPX 세션 동기화 레코드를 찾을 수 없습니다.');
+
+  // 연습 중 주기 POST(전사 3초 flush·usage flush·신체진찰)를 서버 하트비트로 기록한다 —
+  // 시간 차감 정산·스윕(하트비트+10분 자동 종료)의 근거. 실패해도 미러를 막지 않는다.
+  if (action === 'events' || action === 'exam' || action === 'usage') {
+    const { error: hbError } = await supabase
+      .from('cpx_sessions')
+      .update({ heartbeat_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
+      .eq('id', sessionId)
+      .eq('user_id', userId)
+      .eq('status', 'active');
+    if (hbError) console.error('[cpx heartbeat] 기록 실패:', hbError);
+  }
 
   if (action === 'events') {
     const rows = jsonArray(requestBody)
@@ -129,5 +148,15 @@ export async function persistCpxExchange(exchange: Exchange): Promise<void> {
       .eq('id', sessionId)
       .eq('user_id', userId);
     if (error) throw error;
+
+    // 시간 차감 정산 — 멱등 RPC(settled_at 가드)라 중복 호출은 no-op. 실패해도 세션 종료를
+    // 막지 않는다: 스윕 크론이 ended·미정산 세션을 5분 내 백스톱 정산한다.
+    if (action === 'end') {
+      const { error: settleError } = await createAdminClient().rpc('settle_cpx_session', {
+        p_external_session_id: externalSessionId,
+        p_reason: 'completed',
+      });
+      if (settleError) console.error('[cpx settle] 정산 실패 — 스윕 백스톱 대기:', settleError);
+    }
   }
 }
