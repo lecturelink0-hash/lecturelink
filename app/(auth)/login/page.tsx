@@ -78,20 +78,34 @@ export default function LoginPage() {
     if (params.get('mode') === 'signup') {
       setMode('signup');
     }
-    const authError = params.get('error');
+    // GoTrue 구형(implicit) 링크의 검증 실패는 URL 프래그먼트(#error_code=...)로만 전달돼
+    // 서버 콜백이 볼 수 없다 — 리다이렉트를 따라 여기까지 보존되므로 클라이언트에서 판독한다.
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const hashErrorCode = hashParams.get('error_code');
+    const authError =
+      params.get('error') ?? (hashErrorCode === 'otp_expired' ? 'confirm_link_expired' : null);
     if (authError) {
       setErrorMsg(
         authError === 'kakao_denied'
           ? '카카오 로그인이 취소되었습니다.'
           : authError === 'legal_consent_required'
             ? '처음 카카오로 가입하려면 회원가입 화면에서 필수 항목에 동의해 주세요.'
+          : authError === 'confirm_link_expired'
+            ? '인증 링크가 만료되었거나 이미 사용되었습니다. 이미 인증을 마쳤다면 바로 로그인하시면 되고, 로그인이 안 되면 인증 메일을 다시 요청해 주세요.'
+          : authError === 'confirm_verified_login_needed'
+            ? '이메일 인증은 완료되었습니다. 가입한 이메일과 비밀번호로 로그인해 주세요.'
           : authError === 'callback_failed'
             ? '인증 링크가 만료되었거나 이미 사용되었습니다. 다시 시도해 주세요.'
             : '카카오 로그인 연결을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.',
       );
+      // 인증 링크 관련 안내는 이메일 로그인 폼을 바로 열어 다음 행동(로그인·재발송)으로 잇는다.
+      if (authError.startsWith('confirm_') || authError === 'callback_failed') {
+        setEmailOpen(true);
+      }
       const cleanUrl = new URL(window.location.href);
       cleanUrl.searchParams.delete('error');
-      window.history.replaceState(null, '', `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+      cleanUrl.hash = '';
+      window.history.replaceState(null, '', `${cleanUrl.pathname}${cleanUrl.search}`);
     }
   }, []);
 
