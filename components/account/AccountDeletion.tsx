@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AlertTriangle, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
 import { PASSWORD_MAX_LENGTH } from '@/lib/auth/password-policy';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export function AccountDeletion({ variant = 'default' }: { variant?: 'default' | 'faculty' | 'student' }) {
   const [open, setOpen] = useState(false);
@@ -13,6 +14,7 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [finalConfirmOpen, setFinalConfirmOpen] = useState(false);
   const idPrefix = useId().replace(/:/g, '');
   const confirmationId = `${idPrefix}-account-deletion-confirmation`;
   const passwordId = `${idPrefix}-account-deletion-password`;
@@ -43,7 +45,9 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
   }
 
   function closeDeletion() {
+    if (deleting) return;
     setOpen(false);
+    setFinalConfirmOpen(false);
     setConfirmation('');
     setPassword('');
     setPasswordVisible(false);
@@ -52,86 +56,103 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
 
   if (studio) {
     return (
-      <section className="studio-section card pad professor-danger-panel" aria-labelledby={`${idPrefix}-account-deletion-title`}>
-        <div className="professor-danger-heading">
-          <span><AlertTriangle size={22} aria-hidden="true" /></span>
-          <div>
-            <h2 id={`${idPrefix}-account-deletion-title`}>회원탈퇴</h2>
-            <p>{isStudent ? '계정과 학습자료는 삭제되며 복구할 수 없습니다.' : '계정과 강의자료는 삭제되며 복구할 수 없습니다.'}</p>
-          </div>
-        </div>
-        <p className="professor-danger-copy">
-          관계 법령에 따라 보존할 의무가 있는 거래 기록은 분리 보관 후 파기합니다.{" "}
-          <span className="professor-danger-policy-sentence">
-            자세한 내용은 <Link href="/privacy">개인정보처리방침</Link>에서 확인할 수 있습니다.
-          </span>
-        </p>
-        {!open ? (
-          <button type="button" onClick={() => setOpen(true)} className="professor-danger-open">
-            탈퇴 절차 열기
-          </button>
-        ) : (
-          <div className="professor-danger-form">
-            <div className="professor-danger-field">
-              <label htmlFor={confirmationId}>확인을 위해 ‘회원탈퇴’를 입력하세요.</label>
-              <input
-                id={confirmationId}
-                value={confirmation}
-                onChange={(event) => setConfirmation(event.target.value)}
-                disabled={deleting}
-                autoComplete="off"
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? errorId : undefined}
-              />
+      <>
+        <section className="studio-section card pad professor-danger-panel" aria-labelledby={`${idPrefix}-account-deletion-title`}>
+          <div className="professor-danger-heading">
+            <span><AlertTriangle size={22} aria-hidden="true" /></span>
+            <div>
+              <h2 id={`${idPrefix}-account-deletion-title`}>회원탈퇴</h2>
+              <p>{isStudent ? '계정과 학습자료는 삭제되며 복구할 수 없습니다.' : '계정과 강의자료는 삭제되며 복구할 수 없습니다.'}</p>
             </div>
-            <div className="professor-danger-field">
-              <label htmlFor={passwordId}>현재 비밀번호</label>
-              <div className="professor-password-input is-danger">
+          </div>
+          <p className="professor-danger-copy">
+            관계 법령에 따라 보존할 의무가 있는 거래 기록은 분리 보관 후 파기합니다.{" "}
+            <span className="professor-danger-policy-sentence">
+              자세한 내용은 <Link href="/privacy">개인정보처리방침</Link>에서 확인할 수 있습니다.
+            </span>
+          </p>
+          {!open ? (
+            <button type="button" onClick={() => { setOpen(true); setError(''); }} className="professor-danger-open">
+              탈퇴 절차 열기
+            </button>
+          ) : (
+            <div className="professor-danger-form">
+              <div className="professor-danger-field">
+                <label htmlFor={confirmationId}>확인을 위해 ‘회원탈퇴’를 입력하세요.</label>
                 <input
-                  id={passwordId}
-                  type={passwordVisible ? 'text' : 'password'}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  id={confirmationId}
+                  value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}
                   disabled={deleting}
-                  maxLength={PASSWORD_MAX_LENGTH}
-                  autoComplete="current-password"
+                  autoComplete="off"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? errorId : undefined}
-                  required
                 />
+              </div>
+              <div className="professor-danger-field">
+                <label htmlFor={passwordId}>현재 비밀번호</label>
+                <div className="professor-password-input is-danger">
+                  <input
+                    id={passwordId}
+                    type={passwordVisible ? 'text' : 'password'}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}
+                    disabled={deleting}
+                    maxLength={PASSWORD_MAX_LENGTH}
+                    autoComplete="current-password"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? errorId : undefined}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="professor-password-toggle"
+                    onClick={() => setPasswordVisible((current) => !current)}
+                    aria-label={`탈퇴 확인 비밀번호 ${passwordVisible ? '숨기기' : '보기'}`}
+                    aria-pressed={passwordVisible}
+                  >
+                    {passwordVisible ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
+                  </button>
+                </div>
+              </div>
+              {error && <p id={errorId} role="alert" className="professor-danger-error">{error}</p>}
+              <div className="professor-danger-actions">
                 <button
                   type="button"
-                  className="professor-password-toggle"
-                  onClick={() => setPasswordVisible((current) => !current)}
-                  aria-label={`탈퇴 확인 비밀번호 ${passwordVisible ? '숨기기' : '보기'}`}
-                  aria-pressed={passwordVisible}
+                  onClick={() => { setError(''); setFinalConfirmOpen(true); }}
+                  disabled={deleting || confirmation !== '회원탈퇴' || !password}
+                  className="professor-danger-delete"
                 >
-                  {passwordVisible ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
+                  <Trash2 size={17} aria-hidden="true" />{deleting ? '삭제 중...' : '영구 삭제'}
+                </button>
+                <button type="button" onClick={closeDeletion} disabled={deleting} className="professor-danger-cancel">
+                  취소
                 </button>
               </div>
             </div>
-            {error && <p id={errorId} role="alert" className="professor-danger-error">{error}</p>}
-            <div className="professor-danger-actions">
-              <button
-                type="button"
-                onClick={deleteAccount}
-                disabled={deleting || confirmation !== '회원탈퇴' || !password}
-                className="professor-danger-delete"
-              >
-                <Trash2 size={17} aria-hidden="true" />{deleting ? '삭제 중...' : '영구 삭제'}
-              </button>
-              <button type="button" onClick={closeDeletion} disabled={deleting} className="professor-danger-cancel">
-                취소
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+        <ConfirmDialog
+          open={finalConfirmOpen}
+          title="정말 탈퇴하시겠습니까?"
+          description="탈퇴하면 저장된 학습자료, 문제집, 오답노트, CPX 기록 등 계정 데이터가 삭제되며 복구할 수 없습니다."
+          confirmLabel="회원탈퇴"
+          cancelLabel="취소"
+          danger
+          loading={deleting}
+          error={error || null}
+          onCancel={() => { if (!deleting) setFinalConfirmOpen(false); }}
+          onConfirm={deleteAccount}
+        />
+      </>
     );
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-red-200 bg-red-50/60 p-5 sm:p-6" aria-labelledby={`${idPrefix}-account-deletion-title`}>
+    <>
+      <section className="mt-8 rounded-2xl border border-red-200 bg-red-50/60 p-5 sm:p-6" aria-labelledby={`${idPrefix}-account-deletion-title`}>
       <div className="flex items-start gap-3">
         <span className="mt-0.5 rounded-xl bg-white p-2 text-red-700"><AlertTriangle className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
@@ -143,7 +164,7 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
             자세한 내용은 <Link href="/privacy" className="underline">개인정보처리방침</Link>에서 확인할 수 있습니다.
           </p>
           {!open ? (
-            <button type="button" onClick={() => setOpen(true)} className="mt-4 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-100">
+            <button type="button" onClick={() => { setOpen(true); setError(''); }} className="mt-4 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-100">
               탈퇴 절차 열기
             </button>
           ) : (
@@ -155,6 +176,7 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
                 id={confirmationId}
                 value={confirmation}
                 onChange={(event) => setConfirmation(event.target.value)}
+                onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}
                 disabled={deleting}
                 autoComplete="off"
                 className="mt-2 h-11 w-full rounded-lg border border-red-200 px-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
@@ -166,6 +188,7 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
                   type={passwordVisible ? 'text' : 'password'}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}
                   disabled={deleting}
                   maxLength={PASSWORD_MAX_LENGTH}
                   autoComplete="current-password"
@@ -186,7 +209,7 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={deleteAccount}
+                  onClick={() => { setError(''); setFinalConfirmOpen(true); }}
                   disabled={deleting || confirmation !== '회원탈퇴' || !password}
                   className="inline-flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -200,6 +223,19 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
           )}
         </div>
       </div>
-    </section>
+      </section>
+      <ConfirmDialog
+        open={finalConfirmOpen}
+        title="정말 탈퇴하시겠습니까?"
+        description="탈퇴하면 저장된 학습자료, 문제집, 오답노트, CPX 기록 등 계정 데이터가 삭제되며 복구할 수 없습니다."
+        confirmLabel="회원탈퇴"
+        cancelLabel="취소"
+        danger
+        loading={deleting}
+        error={error || null}
+        onCancel={() => { if (!deleting) setFinalConfirmOpen(false); }}
+        onConfirm={deleteAccount}
+      />
+    </>
   );
 }
