@@ -23,6 +23,8 @@ import {
   Building2,
   CalendarDays,
   CalendarRange,
+  Eye,
+  EyeOff,
   GraduationCap,
   KeyRound,
   Mail,
@@ -95,6 +97,63 @@ function PageHeading() {
         학생 계정
       </span>
     </header>
+  );
+}
+
+// 비밀번호 입력칸 + 표시/숨김(눈동자) 토글. 스타일은 professor.css의
+// .professor-profile-form input 을 그대로 받고, 토글 버튼만 우측에 겹쳐 놓는다.
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  minLength,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+  autoComplete: string;
+  minLength?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        type={visible ? 'text' : 'password'}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        minLength={minLength}
+        maxLength={PASSWORD_MAX_LENGTH}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        required
+        style={{ paddingRight: 44 }}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? '비밀번호 숨기기' : '비밀번호 표시'}
+        aria-pressed={visible}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          right: 7,
+          transform: 'translateY(-50%)',
+          width: 34,
+          height: 34,
+          display: 'grid',
+          placeItems: 'center',
+          padding: 0,
+          border: 0,
+          borderRadius: 8,
+          background: 'transparent',
+          color: 'var(--p-muted)',
+          cursor: 'pointer',
+        }}
+      >
+        {visible ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+      </button>
+    </div>
   );
 }
 
@@ -368,40 +427,31 @@ export default function ProfilePage() {
                 <div className="professor-password-grid">
                   <label>
                     <span>현재 비밀번호</span>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={currentPassword}
-                      onChange={(event) => setCurrentPassword(event.target.value)}
-                      maxLength={PASSWORD_MAX_LENGTH}
+                      onChange={setCurrentPassword}
                       autoComplete="current-password"
                       placeholder="본인 확인을 위해 입력"
-                      required
                     />
                   </label>
                   <label>
                     <span>새 비밀번호</span>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={password}
-                      onChange={(event) => setPassword(event.target.value)}
+                      onChange={setPassword}
                       minLength={8}
-                      maxLength={PASSWORD_MAX_LENGTH}
                       autoComplete="new-password"
                       placeholder={PASSWORD_HINT}
-                      required
                     />
                   </label>
                   <label>
                     <span>새 비밀번호 확인</span>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={passwordConfirm}
-                      onChange={(event) => setPasswordConfirm(event.target.value)}
+                      onChange={setPasswordConfirm}
                       minLength={8}
-                      maxLength={PASSWORD_MAX_LENGTH}
                       autoComplete="new-password"
                       placeholder="한 번 더 입력"
-                      required
                     />
                   </label>
                 </div>
