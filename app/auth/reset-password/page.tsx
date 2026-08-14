@@ -34,6 +34,17 @@ export default function ResetPasswordPage() {
     const done = () => { if (!settled) { settled = true; setReady('ok'); } };
 
     async function init() {
+      // token_hash 링크(커스텀 메일 템플릿) — code_verifier 쿠키가 필요 없어
+      // 메일을 연 브라우저가 요청한 브라우저와 달라도 복구 세션이 성립한다.
+      if (typeof window !== 'undefined') {
+        const query = new URLSearchParams(window.location.search);
+        const tokenHash = query.get('token_hash');
+        if (tokenHash) {
+          const { error } = await supabase.auth.verifyOtp({ type: 'recovery', token_hash: tokenHash });
+          window.history.replaceState(null, '', window.location.pathname);
+          if (!error) { done(); return; }
+        }
+      }
       if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
         const params = new URLSearchParams(window.location.hash.slice(1));
         const access_token = params.get('access_token');
