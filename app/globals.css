@@ -1440,8 +1440,7 @@
   min-width: 0;
   min-height: 254px;
   flex-direction: column;
-  justify-content: center;
-  padding: 24px;
+  padding: 50px 24px 24px;
   border-radius: 16px;
 }
 
@@ -1457,6 +1456,10 @@
   font-size: 18px;
   font-weight: 760;
   line-height: 1.35;
+}
+
+.student-dashboard .dashboard-section-heading h2 {
+  font-size: calc(18px * 1.4);
 }
 
 .student-dashboard .dashboard-section-heading p,
@@ -1489,7 +1492,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
-  margin: 24px 0 0;
+  margin: 0;
 }
 
 .student-dashboard .dashboard-metrics > div {
@@ -1522,15 +1525,9 @@
   row-gap: 5px;
 }
 
-.student-dashboard .dashboard-head-side {
-  display: grid;
-  justify-items: end;
-  gap: 8px;
-}
-
-.student-dashboard .dashboard-head-side .dashboard-inline-link {
-  min-height: 0;
-  margin-top: 0;
+.student-dashboard .dashboard-weekly-card .dashboard-inline-link {
+  margin: auto 0;
+  align-self: flex-end;
 }
 
 .student-dashboard .dashboard-dday-chip {
@@ -1630,7 +1627,7 @@
 }
 
 .student-dashboard .dashboard-weekly-card .study-week {
-  margin: 26px 0 0;
+  margin: 26px 0 auto;
   padding: 0;
   list-style: none;
 }
@@ -1728,6 +1725,10 @@
   .student-dashboard .dashboard-priority-grid,
   .student-dashboard .dashboard-progress-grid {
     grid-template-columns: 1fr;
+  }
+
+  .student-dashboard .dashboard-weekly-card {
+    padding-top: 24px;
   }
 
   .student-dashboard .dashboard-cpx-card {
