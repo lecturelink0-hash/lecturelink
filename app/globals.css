@@ -2506,6 +2506,42 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 }
 
 /* CPX entry — quick start first, then deliberate case exploration. */
+
+/* CPX 학생 화면 한정 중성 페이퍼 톤 — 원 디자인 시안이 크림이 아닌 웜화이트 배경을 쓴다.
+   전역 토큰(크림)은 그대로 두고, /cpx 라우트가 렌더될 때만 파생 토큰을 덮어쓴다. */
+.ll-app-shell:has(.cpx-page) {
+  --color-bg: #faf9f6;
+  --color-surface: #fefefe;
+  --color-surface-muted: #f5f3ef;
+  --color-border: #ebe8e2;
+}
+.ll-app-shell:has(.cpx-page) .header {
+  background: color-mix(in srgb, #fdfcfa 94%, transparent);
+}
+/* 시안 실측(데스크톱): 콘텐츠 좌우 여백 40px(1448 뷰포트에서 콘텐츠 ~1368px),
+   헤더 78px(기본 60px)·내비 17px·아바타 44px로 한 단계 크다. 모바일은 기본 셸 유지. */
+@media (min-width: 900px) {
+  .ll-app-shell:has(.cpx-page) .ll-page-frame {
+    max-width: 1560px;
+    padding-inline: 40px;
+    padding-top: 104px;
+  }
+  .ll-app-shell:has(.cpx-page) .header-inner {
+    max-width: 1448px;
+    padding-inline: 40px;
+  }
+  .ll-app-shell:has(.cpx-page) .header,
+  .ll-app-shell:has(.cpx-page) .header-inner { height: 78px; }
+  .ll-app-shell:has(.cpx-page) .nav a { padding: 10px 13px; font-size: 17px; }
+  .ll-app-shell:has(.cpx-page) .logo-text { font-size: 22px; }
+  .ll-app-shell:has(.cpx-page) .beta { padding: 5px 8px; font-size: 12px; }
+  .ll-app-shell:has(.cpx-page) .avatar { width: 44px; height: 44px; font-size: 15px; }
+  .ll-app-shell:has(.cpx-page) .account .avatar + span > span:first-child { font-size: 14.5px; }
+  .ll-app-shell:has(.cpx-page) .account .avatar + span > span:last-child { font-size: 12px; }
+}
+/* 시안: 활성 내비 필 안에서는 골드 점을 표시하지 않는다 */
+.ll-app-shell:has(.cpx-page) .nav a.primary.active::before { display: none; }
+
 .cpx-start-experience {
   color: var(--color-text);
 }
@@ -2521,66 +2557,61 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-start-header h1 {
   margin: 0;
-  max-width: 760px;
-  font-size: clamp(30px, 4.2vw, 46px);
-  font-weight: 850;
-  line-height: 1.16;
-  letter-spacing: -.042em;
+  max-width: 820px;
+  font-size: clamp(31px, 3vw, 43px);
+  font-weight: 820;
+  line-height: 1.18;
+  letter-spacing: -.038em;
   word-break: keep-all;
 }
 
 .cpx-start-header p {
-  margin: 10px 0 0;
-  max-width: 640px;
+  margin: 12px 0 0;
+  max-width: 720px;
   color: var(--color-muted);
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.6;
   word-break: keep-all;
 }
 
-/* 나의 CPX 기록 — 텍스트 링크 대신 눈에 띄는 필 버튼으로 승격 */
+/* 나의 CPX 기록 — 시안대로 화살표 딸린 초록 텍스트 링크 */
 .cpx-record-link {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 52px;
-  padding: 0 22px;
-  border: 1px solid color-mix(in oklch, var(--color-primary) 30%, var(--color-border));
-  border-radius: var(--radius-pill);
-  background: var(--color-primary-soft);
+  gap: 8px;
+  padding: 4px 2px;
   color: var(--color-primary-strong);
-  font-size: 15px;
-  font-weight: 780;
-  transition: background-color var(--dur-short) ease, border-color var(--dur-short) ease, color var(--dur-short) ease;
+  font-size: 18.5px;
+  font-weight: 790;
+  letter-spacing: -.01em;
+  transition: color var(--dur-short) ease;
 }
 
-.cpx-record-link:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: white;
-}
+.cpx-record-link:hover { color: var(--color-primary); }
+.cpx-record-link:hover svg { transform: translateX(2px); }
 
 .cpx-record-link svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  transition: transform var(--dur-short) ease;
 }
 
 .cpx-quick-section {
-  padding: var(--space-6) 0 var(--space-16);
+  padding: var(--space-6) 0 34px;
 }
 
 .cpx-section-heading h2 {
   margin: 0;
-  font-size: 22px;
-  font-weight: 820;
+  font-size: 25px;
+  font-weight: 770;
   letter-spacing: -.025em;
 }
 
 .cpx-section-heading p {
-  margin: 6px 0 0;
+  margin: 7px 0 0;
   color: var(--color-muted);
-  font-size: 13.5px;
+  font-size: 16px;
   line-height: 1.55;
 }
 
@@ -2591,61 +2622,100 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   margin-top: var(--space-5);
 }
 
-/* 빠른 시작 두 카드 — 대시보드의 CPX 진료 연습 카드(.dashboard-cpx-card)와 같은 배경 톤을 쓴다. */
+/* 빠른 시작 두 카드 — 시안: 좌측(다시 연습)은 흰 카드, 우측(랜덤 실전)은 민트 카드.
+   반투명 채움 + blur + 상단 하이라이트로 글래스 질감을 준다. */
 .cpx-review-panel,
 .cpx-random-panel {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  min-height: 318px;
-  padding: clamp(24px, 3vw, 34px);
-  border: 1px solid #c8ddd0;
+  align-items: stretch;
+  min-height: 264px;
+  padding: clamp(22px, 2.6vw, 30px);
+  border: 1.5px solid #e2ded5;
   border-radius: var(--radius-lg);
-  background: #eef6f1;
+  background: rgba(255, 255, 255, .42);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .8),
+    0 14px 34px -26px rgba(21, 62, 47, .3);
 }
 
-.cpx-action-title {
+.cpx-random-panel {
+  border-color: #c7ddce;
+  background: rgba(216, 236, 224, .32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .65),
+    0 14px 34px -26px rgba(21, 62, 47, .32);
+}
+
+/* 카드 상단 라벨 — 원형 아이콘 + 제목(+보조 설명) 가로 배치 */
+.cpx-quick-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.cpx-quick-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #e5f0e9;
+  color: var(--color-primary);
+}
+
+/* 민트 카드 위에서는 원이 배경에 묻히므로 한 단계 더 진하게 */
+.cpx-random-panel .cpx-quick-icon { background: #cbe2d4; }
+
+.cpx-quick-icon svg { width: 28px; height: 28px; }
+
+/* 텍스트 규칙은 반드시 > div 하위로 한정 — .cpx-quick-icon도 span이라 넓게 잡으면
+   display:block이 아이콘 원의 grid 중앙정렬을 깨뜨린다(실측 사고). */
+.cpx-quick-label > div > strong {
+  display: block;
+  color: var(--color-primary);
+  font-size: 16.5px;
+  font-weight: 740;
+  letter-spacing: -.015em;
+}
+
+.cpx-quick-label > div > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 카드 우하단 텍스트 CTA */
+.cpx-quick-cta {
+  margin-top: auto;
+  align-self: flex-end;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  color: var(--color-primary);
-  font-size: 13px;
-  font-weight: 780;
-}
-
-.cpx-action-title svg {
-  width: 18px;
-  height: 18px;
-}
-
-.cpx-recommendation-result {
-  margin: var(--space-6) 0 0;
-}
-
-.cpx-recommendation-result > span {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--color-muted);
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.cpx-recommendation-result p {
-  margin: 0;
+  gap: 7px;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
   color: var(--color-primary-strong);
-  font-size: clamp(17px, 1.8vw, 21px);
-  font-weight: 680;
-  line-height: 1.42;
-  letter-spacing: -.02em;
-  word-break: keep-all;
+  font-size: 16px;
+  font-weight: 790;
+  letter-spacing: -.01em;
+  cursor: pointer;
+  transition: color var(--dur-short) ease;
 }
 
-.cpx-recommendation-result strong {
-  font-weight: 850;
-}
+.cpx-quick-cta:hover { color: var(--color-primary); }
+.cpx-quick-cta:hover svg { transform: translateX(2px); }
+.cpx-quick-cta:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+.cpx-quick-cta:disabled { cursor: not-allowed; opacity: .5; }
+.cpx-quick-cta svg { width: 19px; height: 19px; transition: transform var(--dur-short) ease; }
 
 .cpx-recommendation-case {
-  margin: var(--space-5) 0;
+  margin: var(--space-6) 0 var(--space-4);
 }
 
 .cpx-scenario-category {
@@ -2656,38 +2726,35 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-recommendation-case h3 {
   margin: 0;
-  font-size: clamp(21px, 2.4vw, 27px);
-  font-weight: 840;
+  font-size: clamp(23px, 2.2vw, 29px);
+  font-weight: 790;
   line-height: 1.28;
   letter-spacing: -.035em;
 }
 
 .cpx-recommendation-case p {
-  margin: 4px 0 0;
+  margin: 7px 0 0;
   color: var(--color-muted);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
-.cpx-review-panel > .btn,
-.cpx-random-panel > .btn {
-  margin-top: auto;
-}
+.cpx-random-copy { margin: var(--space-6) 0 var(--space-4); }
 
-.cpx-random-panel h3 {
-  margin: var(--space-6) 0 0;
-  font-size: clamp(23px, 2.5vw, 29px);
-  font-weight: 830;
+.cpx-random-copy h3 {
+  margin: 0;
+  font-size: clamp(24px, 2.3vw, 29px);
+  font-weight: 780;
   line-height: 1.25;
   letter-spacing: -.035em;
   word-break: keep-all;
 }
 
-.cpx-random-panel p {
+.cpx-random-copy p {
   max-width: 390px;
   margin: var(--space-3) 0 0;
   color: var(--color-muted);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.6;
   word-break: keep-all;
 }
@@ -2753,7 +2820,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-direct-section {
   scroll-margin-top: 96px;
-  padding: var(--space-10) 0 var(--space-4);
+  padding: var(--space-8) 0 var(--space-4);
   border-top: 1px solid var(--color-border);
 }
 
@@ -2766,7 +2833,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-direct-search {
   position: relative;
-  flex: 0 1 390px;
+  flex: 0 1 500px;
 }
 
 .cpx-direct-search > svg {
@@ -2788,7 +2855,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 15px;
   outline: 0;
   transition: border-color var(--dur-short) ease, box-shadow var(--dur-short) ease;
 }
@@ -2823,25 +2890,26 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-part-tabs button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 42px;
-  padding: 0 14px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
-  color: var(--color-muted);
-  font-size: 13.5px;
-  font-weight: 720;
+  color: var(--color-text);
+  font-size: 15.5px;
+  font-weight: 740;
   transition: color var(--dur-short) ease, border-color var(--dur-short) ease, background-color var(--dur-short) ease;
 }
 
-.cpx-part-tabs button svg { width: 16px; height: 16px; }
+.cpx-part-tabs button svg { width: 16px; height: 16px; color: var(--color-muted); }
 .cpx-part-tabs button:hover { border-color: var(--color-line-strong); color: var(--color-primary); }
 .cpx-part-tabs button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary); color: white; }
+.cpx-part-tabs button[aria-pressed="true"] svg { color: inherit; }
 
 .cpx-browser-grid {
   display: grid;
-  grid-template-columns: minmax(250px, .64fr) minmax(0, 1.36fr);
+  grid-template-columns: minmax(280px, .78fr) minmax(0, 1fr);
   align-items: stretch;
   min-height: 520px;
   margin-top: var(--space-4);
@@ -2868,22 +2936,31 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 32px;
-  padding: 0 4px var(--space-3);
+  min-height: 36px;
+  padding: 2px 4px var(--space-3);
   color: var(--color-muted);
-  font-size: 12.5px;
-  font-weight: 730;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .cpx-browser-title b {
+  display: grid;
+  place-items: center;
   min-width: 26px;
-  padding: 2px 7px;
+  height: 26px;
+  padding: 0 7px;
   border-radius: var(--radius-pill);
   background: var(--color-primary-soft);
-  color: var(--color-primary);
+  color: var(--color-primary-strong);
   text-align: center;
-  font-size: 11.5px;
+  font-size: 12px;
+  font-weight: 780;
   font-variant-numeric: tabular-nums;
+}
+
+/* 시안: 시나리오 열 헤더 아래 점선 구분 */
+.cpx-scenario-browser .cpx-browser-title {
+  border-bottom: 1px dashed color-mix(in oklch, var(--color-primary) 22%, var(--color-border));
 }
 
 .cpx-complaint-list,
@@ -2896,32 +2973,69 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-complaint-list {
   display: grid;
-  gap: 3px;
 }
 
 .cpx-complaint-list button {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto 17px;
   align-items: center;
   gap: var(--space-2);
   width: 100%;
-  min-height: 46px;
-  padding: 8px 10px 8px 12px;
+  min-height: 54px;
+  padding: 10px 10px 10px 16px;
   border: 0;
-  border-radius: calc(var(--radius-md) - 2px);
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
   background: transparent;
   color: var(--color-text);
   text-align: left;
-  font-size: 13.5px;
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 680;
   transition: background-color var(--dur-short) ease, color var(--dur-short) ease;
 }
 
-.cpx-complaint-list button:hover { background: var(--color-primary-soft); }
-.cpx-complaint-list button.is-active { background: var(--color-primary); color: white; }
+.cpx-complaint-list button:last-child { border-bottom: 0; }
+.cpx-complaint-list button:hover { background: color-mix(in oklch, var(--color-primary-soft) 45%, transparent); }
+
+/* 시안: 선택 행 = 민트 배경 + 좌측 진초록 바 + 진초록 글자 */
+.cpx-complaint-list button.is-active {
+  border-radius: var(--radius-sm);
+  background: #eaf4ef;
+  color: var(--color-primary-strong);
+  font-weight: 780;
+}
+.cpx-complaint-list button.is-active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--color-primary-strong);
+}
+
 .cpx-complaint-list button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cpx-complaint-list button b { font-size: 11.5px; font-variant-numeric: tabular-nums; }
-.cpx-complaint-list button svg { width: 15px; height: 15px; opacity: .66; }
+
+/* 카운트는 원형 배지: 기본 연회색, 선택 시 진초록 원 + 흰 숫자 */
+.cpx-complaint-list button b {
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-surface-muted) 80%, var(--color-border));
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 740;
+  font-variant-numeric: tabular-nums;
+}
+.cpx-complaint-list button.is-active b { background: var(--color-primary); color: white; }
+
+.cpx-complaint-list button svg { width: 16px; height: 16px; opacity: .55; }
+.cpx-complaint-list button.is-active svg { opacity: 1; color: var(--color-primary); }
 
 .cpx-scenario-list {
   display: grid;
@@ -2951,10 +3065,10 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-scenario-row:hover { background: color-mix(in oklch, var(--color-primary-soft) 58%, transparent); }
 .cpx-scenario-row:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--color-primary); outline-offset: -2px; border-radius: var(--radius-sm); }
 .cpx-scenario-copy { display: block; min-width: 0; }
-.cpx-scenario-name { display: block; margin: 0; font-size: 15.5px; font-weight: 780; line-height: 1.4; letter-spacing: -.015em; }
+.cpx-scenario-name { display: block; margin: 0; font-size: 18px; font-weight: 790; line-height: 1.4; letter-spacing: -.015em; }
 .cpx-scenario-category + .cpx-scenario-name { margin-top: 3px; }
-.cpx-scenario-description { margin: 5px 0 0; color: var(--color-muted); font-size: 12.5px; line-height: 1.5; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.cpx-scenario-action { display: inline-flex; align-items: center; gap: 5px; color: var(--color-primary); font-size: 13.5px; font-weight: 780; white-space: nowrap; }
+.cpx-scenario-description { margin: 6px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.55; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.cpx-scenario-action { display: inline-flex; align-items: center; gap: 6px; color: var(--color-primary-strong); font-size: 15px; font-weight: 790; white-space: nowrap; }
 .cpx-scenario-action svg { width: 16px; height: 16px; transition: transform var(--dur-short) ease; }
 .cpx-scenario-row:hover .cpx-scenario-action svg { transform: translateX(2px); }
 .cpx-list-empty { margin: 0; padding: var(--space-12) var(--space-4); color: var(--color-muted); text-align: center; font-size: 13px; }

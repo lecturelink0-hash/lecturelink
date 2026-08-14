@@ -216,7 +216,7 @@ export function Sidebar({ user }: SidebarProps) {
 
   // 레퍼런스 로고(투명 배경 forest 심볼 + "Lecturelink"). logo-mark 기본 배경/그림자는 인라인으로 무효화.
   const Logo = () => (
-    <Link href="/dashboard" className="logo" aria-label="LectureLink 홈">
+    <Link href="/dashboard" className="logo" aria-label="Lecturelink 홈">
       <span
         className="logo-mark"
         style={{ background: 'transparent', boxShadow: 'none', width: 40, height: 40 }}
@@ -224,11 +224,11 @@ export function Sidebar({ user }: SidebarProps) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/lecturelink-mark.png"
-          alt="LectureLink 로고"
+          alt="Lecturelink 로고"
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       </span>
-      <span className="logo-text">LectureLink</span>
+      <span className="logo-text">Lecturelink</span>
       <span className="beta">BETA</span>
     </Link>
   );
