@@ -2518,27 +2518,11 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .ll-app-shell:has(.cpx-page) .header {
   background: color-mix(in srgb, #fdfcfa 94%, transparent);
 }
-/* 시안 실측(데스크톱): 콘텐츠 좌우 여백 40px(1448 뷰포트에서 콘텐츠 ~1368px),
-   헤더 78px(기본 60px)·내비 17px·아바타 44px로 한 단계 크다. 모바일은 기본 셸 유지. */
-@media (min-width: 900px) {
-  .ll-app-shell:has(.cpx-page) .ll-page-frame {
-    max-width: 1560px;
-    padding-inline: 40px;
-    padding-top: 104px;
-  }
-  .ll-app-shell:has(.cpx-page) .header-inner {
-    max-width: 1448px;
-    padding-inline: 40px;
-  }
-  .ll-app-shell:has(.cpx-page) .header,
-  .ll-app-shell:has(.cpx-page) .header-inner { height: 78px; }
-  .ll-app-shell:has(.cpx-page) .nav a { padding: 10px 13px; font-size: 17px; }
-  .ll-app-shell:has(.cpx-page) .logo-text { font-size: 22px; }
-  .ll-app-shell:has(.cpx-page) .beta { padding: 5px 8px; font-size: 12px; }
-  .ll-app-shell:has(.cpx-page) .avatar { width: 44px; height: 44px; font-size: 15px; }
-  .ll-app-shell:has(.cpx-page) .account .avatar + span > span:first-child { font-size: 14.5px; }
-  .ll-app-shell:has(.cpx-page) .account .avatar + span > span:last-child { font-size: 12px; }
-}
+/* 상단 셸(헤더·콘텐츠 프레임)은 라우트마다 달라지지 않는다.
+   #172에서 시안 캡처 실측값을 그대로 옮겨 /cpx만 헤더 78px·내비 17px·아바타 44px·
+   여백 40px로 키웠으나, 그 캡처는 배율이 다른 렌더였고 결과적으로 대시보드→CPX 이동 시
+   최상단 메뉴만 커지는 현상이 생겼다. 전역 셸 규격(헤더 60px·max-width 1140·좌우 28px)을
+   따르도록 되돌린다. 색조(웜화이트 페이퍼 톤)만 CPX 한정으로 유지. */
 /* 시안: 활성 내비 필 안에서는 골드 점을 표시하지 않는다 */
 .ll-app-shell:has(.cpx-page) .nav a.primary.active::before { display: none; }
 
