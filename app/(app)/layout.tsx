@@ -22,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="ll-app-shell shell min-h-screen flex flex-col">
+      <a href="#main-content" className="ll-skip-link">본문으로 건너뛰기</a>
       <Sidebar
         user={{
           displayName: session.profile.displayName,
@@ -31,7 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           onboarded: !!session.profile.onboardedAt,
         }}
       />
-      <main className="ll-app-main overflow-x-clip flex-1">
+      <main id="main-content" tabIndex={-1} className="ll-app-main overflow-x-clip flex-1">
         <div className="ll-page-frame max-w-[1140px] mx-auto px-5 md:px-7 pt-[88px] pb-14">{children}</div>
       </main>
       <Footer />

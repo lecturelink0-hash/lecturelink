@@ -2552,6 +2552,25 @@
   background: var(--dashboard-page);
 }
 
+/* 카드 장식은 휴지통 등 실제 컨트롤의 클릭을 가로채지 않는다. */
+.ll-library-page .book-card::after { pointer-events: none; }
+
+/* 문제집 삭제는 기존 warn 색이 아닌 명확한 destructive red를 사용한다. */
+.ll-library-page .library-delete-danger {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff;
+}
+.ll-library-page .library-delete-danger:hover {
+  border-color: #912018;
+  background: #912018;
+  opacity: 1;
+}
+.ll-library-page .library-delete-danger:focus-visible {
+  outline: 2px solid #fca5a5;
+  outline-offset: 2px;
+}
+
 .student-dashboard .dashboard-greeting { margin-bottom: 18px; }
 .student-dashboard .dashboard-greeting h1 {
   margin: 0;

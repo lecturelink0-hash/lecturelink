@@ -1,0 +1,109 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { Button } from './Button';
+
+interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  /** 파괴적 액션(삭제 등)이면 확인 버튼을 danger 스타일로 */
+  danger?: boolean;
+  loading?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+/**
+ * 브랜드 스타일 확인 다이얼로그 — window.confirm()/alert() 대체.
+ * 열릴 때 취소 버튼(안전한 기본값)에 포커스, Escape 로 취소, Tab 은 내부 순환,
+ * 닫히면 이전 포커스로 복귀.
+ */
+export function ConfirmDialog({
+  open,
+  title,
+  description,
+  confirmLabel = '확인',
+  cancelLabel = '취소',
+  danger,
+  loading,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    cancelRef.current?.focus();
+
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        onCancel();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusables = dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled])');
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey) {
+        if (active === first || !dialogRef.current.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !dialogRef.current.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [open, onCancel]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-5">
+      <div
+        className="absolute inset-0 bg-[rgb(20_60_44_/_0.34)]"
+        aria-hidden="true"
+        onClick={loading ? undefined : onCancel}
+      />
+      <div
+        ref={dialogRef}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby={description ? 'confirm-dialog-desc' : undefined}
+        className="relative w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-xl"
+      >
+        <h2 id="confirm-dialog-title" className="text-base font-bold text-sage-800 tracking-tight">
+          {title}
+        </h2>
+        {description && (
+          <p id="confirm-dialog-desc" className="mt-2 text-sm text-[var(--color-muted)] leading-relaxed">
+            {description}
+          </p>
+        )}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button ref={cancelRef} variant="secondary" size="sm" onClick={onCancel} disabled={loading}>
+            {cancelLabel}
+          </Button>
+          <Button variant={danger ? 'danger' : 'primary'} size="sm" onClick={onConfirm} loading={loading}>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

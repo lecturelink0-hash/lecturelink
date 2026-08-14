@@ -1,5 +1,36 @@
 # WORK LOG
 
+## 2026-08-14 sharp 타입 exports 배포 오류 수정
+
+- 요청 및 목적: Vercel Production에서 `sharp` 동적 import 타입 해석 오류로 빌드가 실패하는 문제를 최소 변경으로 해결.
+- 확인: `package.json`과 `package-lock.json`의 기존 sharp는 `0.35.0`, `tsconfig.json`은 `moduleResolution: bundler`, 서버 전용 동적 import 의도는 기존 코드에 유지됨.
+- 변경: `package.json`, `package-lock.json`, `pnpm-lock.yaml`의 sharp를 `0.35.3`으로 업데이트. `lib/extract/crop-medical-images.ts`는 수정하지 않음.
+- 이유: sharp 0.35.3은 import 조건에 `dist/index.d.mts` 타입 선언을 명시해 bundler 해석에서 발생한 `Could not find a declaration file for module 'sharp'`를 해결함.
+- 검사: Node 22로 TypeScript 전체 검사 통과. `pnpm run build`와 Vercel과 동일한 `npm ci`는 Windows 로컬 `node_modules` 파일 잠금/의존성 재설치 지연으로 제한 시간 내 완료되지 않음.
+- 직접 확인하지 못한 부분: 이 환경에서는 Vercel Production 재배포 및 운영 URL 반영을 확인하지 못함.
+- 최종 상태: 조건부 완료 (코드 수정 및 타입 오류 해결, production build/deploy 재검증 필요).
+
+## 2026-08-13 · 내 문제집 이어풀기·유사문제 저장·삭제 확인 운영 반영
+
+- 요청 및 목적: 로컬에서 검증한 내 문제집 기능을 최신 운영 `main` 기준으로 분리해 실제 사이트에 반영한다.
+- 변경한 내용과 파일:
+  - `app/(app)/library/page.tsx`: 진행도 로딩 후 다음 미풀이 문항 복원, 완료 문제집 `다시 풀기`, 자동 저장 유사문제집 표시, 삭제 확인 Dialog·성공/실패 안내·중복 클릭 방지·키보드 접근성을 추가했다. 기존 형성평가 저장 목록은 유지했다.
+  - `app/api/me/library-progress/route.ts`, `lib/library-progress.ts`: 업로드별 최신 풀이 위치와 다음 미풀이 문항 계산을 추가했다.
+  - `app/api/questions/similar/route.ts`, `app/(app)/similar-practice/[uploadId]/page.tsx`: 기존 자동 저장을 유지하고 제목, 저장 안내, 풀이 완료 후 두 복귀 경로를 추가했다.
+  - `app/redesign-reference.css`: 카드 장식 클릭 방지와 빨간 destructive 버튼 hover/focus를 추가했다.
+  - `lib/extract/crop-medical-images.ts`: 최신 `sharp` 타입에서 불필요해진 `@ts-expect-error`를 제거해 운영 전체 TypeScript 검사를 복구했다. 런타임 로직은 변경하지 않았다.
+- 검수 결과:
+  - 다음 미풀이 계산 5개 assertion 통과(2/10→3번 포함), 변경 TS/TSX 파일 제한 구문 검사 오류 0개.
+  - 삭제 정확 문구, 기본 confirm 미사용, 성공/실패 안내, ESC, 중복 실행 방지, 유사문제집 표시 정적 검사 통과.
+  - Impeccable detector `[]`, `git diff --check` 통과.
+  - 전체 TypeScript `npm run typecheck` 통과, `npm run build` 통과(86개 정적 페이지 생성 완료).
+  - 전체 세트 문항 로딩 후 이어풀기 위치를 계산하도록 보강해 100문항 초과 세트의 부분 캐시 오판을 막았고, 진행도·답안 저장 실패 시 재시도 상태를 표시하도록 수정했다.
+  - 보강 후 `npm run typecheck`와 WorkGuard lint·typecheck·build를 다시 통과했다. PC·모바일 내 문제집 미리보기 증빙을 `.workguard/evidence`에 저장했다.
+- 직접 확인하지 못한 부분: 로그인 기반 삭제 실행 E2E는 사용자 요청에 따라 건너뛰었으며, 운영 URL 확인은 배포 후 진행한다.
+- 사용자 최종 확인 결과: 운영 배포 진행 승인 및 로그인 기반 검수 건너뛰기 요청 확인.
+- 팀 보고문 작성 여부: 미작성(운영 배포 확인 전).
+- 최종 상태: 조건부 완료 (`필수 자동검사 완료 · 운영 배포 진행 중`).
+
 ## 2026-08-13 — CPX 메인 User Flow 전면 개선
 
 - 요청 및 목적: CPX 진입 후 3초 안에 `약점 복습 / 랜덤 실전 / 직접 선택`의 차이를 이해하고 목적에 맞는 연습을 시작하도록 메인 페이지를 재설계.

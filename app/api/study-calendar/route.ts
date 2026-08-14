@@ -7,20 +7,16 @@
 
 import { requireSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
+import { kstDateKey } from '@/lib/utils/kst';
 import { ok, withErrorHandling } from '@/lib/utils/api';
-
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-
-function kstDateKey(iso: string): string {
-  return new Date(new Date(iso).getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
-}
 
 export const GET = withErrorHandling(async (request: Request) => {
   const session = await requireSession();
   const { searchParams } = new URL(request.url);
   const supabase = await createServerClient();
 
-  // 기본: 최근 120일
+  // 기간 파라미터가 없으면 전체 기간 — 단, 최근 5,000건 상한(아래 limit).
+  // summary 통계도 같은 상한 안에서 집계된다.
   const to = searchParams.get('to');
   const from = searchParams.get('from');
 

@@ -72,7 +72,7 @@ export const POST = withErrorHandling(async (request: Request) => {
     throw new ApiException('generation_failed', '유사 문항 3개를 생성하지 못했습니다. 다시 시도해주세요.', 502);
   }
 
-  const title = `${subTopic.name} 오답 유사문항 3제`;
+  const title = `오답 유사문항 · ${subTopic.name}`;
   const { data: upload, error: uploadError } = await admin
     .from('user_uploads')
     .insert({

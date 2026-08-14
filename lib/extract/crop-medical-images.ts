@@ -243,8 +243,7 @@ export async function cropRegions(
 
   // 박스 여백 보정용 파라미터.
   const PAD_FRAC = 0.02; // Vision 박스가 그림 가장자리를 살짝 잘라내는 경우 대비 — 2% 확장 후 트림.
-  // sharp 0.35는 런타임 타입을 포함하지만 package exports에 types 조건을 노출하지 않는다.
-  // @ts-expect-error -- 모듈은 서버 런타임에서만 동적으로 로드한다.
+  // sharp는 서버 런타임에서만 동적으로 로드한다.
   const sharpMod = (await import('sharp')).default;
 
   const out: CroppedImage[] = [];

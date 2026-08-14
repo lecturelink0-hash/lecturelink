@@ -401,6 +401,8 @@ export function ProfessorMyPage({
           </p>
         </aside>
       </div>
+
+      <AccountDeletion />
     </div>
   );
 }

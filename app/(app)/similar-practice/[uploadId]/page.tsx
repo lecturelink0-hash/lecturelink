@@ -53,6 +53,8 @@ export default function SimilarPracticePage() {
   const attempt = attempts[question.id];
   const selected = attempt?.selected_index ?? selections[question.id] ?? null;
   const completedQuestionIds = new Set(Object.keys(attempts));
+  const allAnswered = questions.every((item) => completedQuestionIds.has(item.id));
+  const nextUnansweredIndex = questions.findIndex((item) => !completedQuestionIds.has(item.id));
 
   function goToQuestion(nextIndex: number) {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
@@ -117,6 +119,7 @@ export default function SimilarPracticePage() {
           </div>
         </div>
         <div className="w-full h-2 bg-[var(--color-sage-200)] rounded-full overflow-hidden"><div className="h-full bg-sage-700 rounded-full transition-all" style={{ width: `${((index + 1) / questions.length) * 100}%` }} /></div>
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-sage-700"><CheckCircle2 className="h-3.5 w-3.5" />생성된 {questions.length}문항이 내 문제집에 자동 저장되었습니다.</p>
       </div>
 
       <Card className="mb-4">
@@ -139,8 +142,19 @@ export default function SimilarPracticePage() {
         {attempt?.explanation && <div className="mt-5 ll-tint rounded-2xl p-5 border border-[var(--color-border)]"><span className="ll-eyebrow mb-3">해설</span><div className="text-sm text-sage-800 leading-relaxed whitespace-pre-line">{attempt.explanation}</div></div>}
       </Card>
 
-      <div className="flex justify-end">
-        {!attempt ? <Button variant="accent" onClick={submit} disabled={selected === null} loading={submitting}>제출하고 채점</Button> : index < questions.length - 1 ? <Button onClick={() => goToQuestion(index + 1)}>다음 문항 <ChevronRight className="w-4 h-4" /></Button> : <Link href="/library"><Button>내 문제집에서 보기</Button></Link>}
+      {allAnswered && <Card className="mb-4"><div className="flex flex-col gap-1"><strong className="text-lg text-sage-800">유사문제 풀이를 마쳤습니다</strong><p className="text-sm text-[var(--color-muted)]">이 문제집은 자동 저장되어 언제든 다시 풀 수 있어요.</p></div></Card>}
+
+      <div className="flex flex-wrap justify-end gap-2">
+        {!attempt ? (
+          <Button variant="accent" onClick={submit} disabled={selected === null} loading={submitting}>제출하고 채점</Button>
+        ) : allAnswered ? (
+          <>
+            <Link href={`/library?set=${uploadId}`}><Button variant="accent">내 문제집에서 보기</Button></Link>
+            <Link href="/wrong-notes"><Button variant="secondary">오답노트로 돌아가기</Button></Link>
+          </>
+        ) : (
+          <Button onClick={() => goToQuestion(nextUnansweredIndex >= 0 ? nextUnansweredIndex : Math.min(index + 1, questions.length - 1))}>다음 미풀이 문항 <ChevronRight className="w-4 h-4" /></Button>
+        )}
       </div>
     </div>
   );

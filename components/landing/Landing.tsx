@@ -272,10 +272,12 @@ const NAV_LINKS = [
 function Logo({ light = false }: { light?: boolean }) {
   return (
     <span className="flex select-none items-center gap-2.5">
-      <span className={`grid h-9 w-9 place-items-center rounded-xl shadow-sm ${light ? 'bg-white/15' : 'bg-[#1F5C43]'}`}>
-        <BookOpen className="h-[19px] w-[19px] text-white" strokeWidth={1.9} />
+      <span className="grid h-10 w-10 shrink-0 place-items-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/lecturelink-mark.png" alt="LectureLink 로고" className="h-full w-full object-contain" />
       </span>
       <span className={`text-[20px] font-extrabold tracking-tight ${light ? 'text-white' : 'text-[#111827]'}`}>LectureLink</span>
+      <span className="rounded-full bg-[#FBF1D4] px-2 py-1 text-[11px] font-extrabold text-[#9A7B16]">BETA</span>
     </span>
   );
 }

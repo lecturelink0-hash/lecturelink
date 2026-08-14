@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Menu, X, LogOut, ChevronDown, CalendarDays, UserCog } from 'lucide-react';
 import { createBrowserClient } from '@/lib/db/browser';
+import { planName } from '@/lib/payment/plans';
 import './mobile-drawer.css';
 
 // 학습 흐름 순서: 내신 대비와 CPX를 각각 독립 메뉴로 제공한다.
@@ -43,6 +44,13 @@ export function Sidebar({ user }: SidebarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const drawerWasOpen = useRef(false);
+  const accountTriggerRef = useRef<HTMLButtonElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const pendingMenuFocus = useRef<'first' | 'last' | null>(null);
 
   // 경로 변경 시 모바일 드로어 / 프로필 드롭다운 자동 닫기
   useEffect(() => {
@@ -53,16 +61,50 @@ export function Sidebar({ user }: SidebarProps) {
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      // 모달 드로어: Tab 을 드로어 내부에서 순환시켜 뒤 페이지로 새지 않게
+      if (event.key !== 'Tab' || !drawerRef.current) return;
+      const focusables = drawerRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey) {
+        if (active === first || !drawerRef.current.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !drawerRef.current.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
     document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('keydown', handleKey);
     return () => {
       document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('keydown', handleKey);
     };
   }, [open]);
 
-  // 프로필 드롭다운: 바깥 클릭 / ESC 로 닫기
+  // 드로어 열림 → 닫기 버튼으로 포커스 이동, 닫힘 → 햄버거 버튼으로 복귀
+  useEffect(() => {
+    if (open) {
+      drawerWasOpen.current = true;
+      drawerCloseRef.current?.focus();
+    } else if (drawerWasOpen.current) {
+      drawerWasOpen.current = false;
+      hamburgerRef.current?.focus();
+    }
+  }, [open]);
+
+  // 프로필 드롭다운: 바깥 클릭 / ESC 로 닫기 (ESC 는 트리거로 포커스 반환)
   useEffect(() => {
     if (!menuOpen) return;
     function handleClick(e: MouseEvent) {
@@ -71,7 +113,10 @@ export function Sidebar({ user }: SidebarProps) {
       }
     }
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        accountTriggerRef.current?.focus();
+      }
     }
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleKey);
@@ -80,6 +125,54 @@ export function Sidebar({ user }: SidebarProps) {
       document.removeEventListener('keydown', handleKey);
     };
   }, [menuOpen]);
+
+  // 팝오버가 키보드로 열렸으면 첫/마지막 menuitem 으로 포커스 이동 (menu 패턴)
+  useEffect(() => {
+    if (!menuOpen || !pendingMenuFocus.current) return;
+    const items = accountMenuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]');
+    if (items && items.length > 0) {
+      (pendingMenuFocus.current === 'first' ? items[0] : items[items.length - 1]).focus();
+    }
+    pendingMenuFocus.current = null;
+  }, [menuOpen]);
+
+  function handleAccountTriggerKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    pendingMenuFocus.current = e.key === 'ArrowDown' ? 'first' : 'last';
+    if (menuOpen) {
+      const items = accountMenuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]');
+      if (items && items.length > 0) {
+        (e.key === 'ArrowDown' ? items[0] : items[items.length - 1]).focus();
+      }
+      pendingMenuFocus.current = null;
+    } else {
+      setMenuOpen(true);
+    }
+  }
+
+  function handleAccountMenuKeyDown(e: React.KeyboardEvent) {
+    const items = Array.from(
+      accountMenuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [],
+    );
+    if (items.length === 0) return;
+    const index = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[(index + 1) % items.length].focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(index - 1 + items.length) % items.length].focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      items[0].focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      items[items.length - 1].focus();
+    } else if (e.key === 'Tab') {
+      setMenuOpen(false);
+    }
+  }
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -104,13 +197,6 @@ export function Sidebar({ user }: SidebarProps) {
     return map[g] ?? g;
   };
 
-  const planLabel: Record<string, string> = {
-    free: 'Free',
-    lite: '내신 대비',
-    standard: '학습 플랜',
-    pro: '통합형',
-  };
-
   const visibleNavItems = NAV_ITEMS.filter((item) => !HIDDEN_STUDENT_NAV_HREFS.has(item.href));
   const navItems = user.onboarded ? visibleNavItems : [ONBOARDING_NAV, ...visibleNavItems];
 
@@ -120,7 +206,7 @@ export function Sidebar({ user }: SidebarProps) {
   const avatarInitial = user.displayName?.charAt(0)?.toUpperCase() ?? '?';
   const subtitle = user.schoolShortName
     ? `${user.schoolShortName} · ${gradeLabel(user.grade)}`
-    : `${planLabel[user.planTier] ?? user.planTier} 플랜`;
+    : `${planName(user.planTier)} 플랜`;
 
   // 프로필 드롭다운 / 모바일 드로어 공통 메뉴 항목
   const MENU_ITEMS = [
@@ -148,17 +234,19 @@ export function Sidebar({ user }: SidebarProps) {
   );
 
   return (
+    <>
     <header className="header fixed top-0 inset-x-0 z-40">
       <div className="header-inner">
         {/* 좌측 로고 */}
         <Logo />
 
-        {/* 가운데 메뉴 (데스크톱) — 활성 밑줄 */}
-        <nav className="nav hidden md:flex" aria-label="주요 메뉴">
+        {/* 가운데 메뉴 (데스크톱) — 900px 미만은 계정 메뉴가 잘려 햄버거로 전환 */}
+        <nav className="nav hidden min-[900px]:flex" aria-label="주요 메뉴">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
               className={clsx('primary' in item && item.primary && 'primary', isActive(item.href) && 'active')}
             >
               {item.label}
@@ -167,11 +255,13 @@ export function Sidebar({ user }: SidebarProps) {
         </nav>
 
         {/* 우측: 사용자 드롭다운 (데스크톱) */}
-        <div className="account hidden md:flex">
+        <div className="account hidden min-[900px]:flex">
         <div className="relative" ref={menuRef}>
           <button
+            ref={accountTriggerRef}
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
+            onKeyDown={handleAccountTriggerKeyDown}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             aria-label="내 계정 메뉴"
@@ -197,7 +287,9 @@ export function Sidebar({ user }: SidebarProps) {
 
           {menuOpen && (
             <div
+              ref={accountMenuRef}
               role="menu"
+              onKeyDown={handleAccountMenuKeyDown}
               className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-[var(--color-border)] bg-white shadow-lg py-1.5 z-50"
             >
               <div className="px-3 py-2 border-b border-[var(--color-border)] mb-1">
@@ -211,6 +303,7 @@ export function Sidebar({ user }: SidebarProps) {
                     key={item.href}
                     href={item.href}
                     role="menuitem"
+                    aria-current={pathname === item.href ? 'page' : undefined}
                     className={clsx(
                       'flex items-center gap-2.5 px-3 py-2 mx-1 rounded-lg text-[13px] transition-colors',
                       pathname === item.href
@@ -242,24 +335,31 @@ export function Sidebar({ user }: SidebarProps) {
 
         {/* 모바일 메뉴 버튼 */}
         <button
+          ref={hamburgerRef}
           onClick={() => setOpen(true)}
           aria-label="메뉴 열기"
-          className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-sage-800 hover:bg-[var(--color-sage-100)]"
+          aria-expanded={open}
+          className="min-[900px]:hidden w-11 h-11 flex items-center justify-center rounded-lg text-sage-800 hover:bg-[var(--color-sage-100)]"
         >
           <Menu className="w-5 h-5" />
         </button>
       </div>
+    </header>
 
-      {/* 모바일 드로어 */}
+      {/* 모바일 드로어 — 헤더 밖 형제로 렌더링.
+          (헤더의 backdrop-filter 가 fixed 자손의 containing block 이 되어
+          배경막이 헤더 크기로 잘리는 문제를 피한다) */}
       {open && (
-        <button
-          type="button"
+        <div
           className="ll-mobile-drawer-backdrop ll-student-mobile-drawer"
           onClick={() => setOpen(false)}
-          aria-label="메뉴 닫기"
+          aria-hidden="true"
         />
       )}
       <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
         className={clsx(
           'll-mobile-drawer ll-student-mobile-drawer',
           open && 'is-open',
@@ -271,6 +371,7 @@ export function Sidebar({ user }: SidebarProps) {
         <div className="ll-mobile-drawer-header">
           <Logo />
           <button
+            ref={drawerCloseRef}
             onClick={() => setOpen(false)}
             aria-label="메뉴 닫기"
             className="ll-mobile-drawer-close"
@@ -284,6 +385,7 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
               className={clsx(
                 'll-mobile-drawer-link',
                 isActive(item.href) && 'is-active',
@@ -309,6 +411,7 @@ export function Sidebar({ user }: SidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={pathname === item.href ? 'page' : undefined}
                 className={clsx(
                   'll-mobile-drawer-action',
                   pathname === item.href && 'is-active',
@@ -330,7 +433,7 @@ export function Sidebar({ user }: SidebarProps) {
           </div>
         </div>
       </aside>
-    </header>
+    </>
   );
 }
 

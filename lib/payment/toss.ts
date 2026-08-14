@@ -276,14 +276,17 @@ export function generateOrderId(prefix: 'sub' | 'cred' = 'sub'): string {
   return `${prefix}_${Date.now()}_${nanoid(16)}`;
 }
 
-// ───────────── 가격 정의 (단일 소스) ─────────────
+// ───────────── 가격 정의 ─────────────
+// 단일 소스는 lib/payment/plans.ts 의 PLAN_CATALOG — 여기서는 파생만 한다.
+// (2026-08 가격 개편: 기존 구독자 전원 무료 베타·개발자 계정 확인 → 그랜드파더링 없이 인상)
 
 import type { PlanTier } from '@/lib/types/database';
+import { PLAN_CATALOG } from '@/lib/payment/plans';
 
 export const PLAN_PRICES: Record<Exclude<PlanTier, 'free'>, number> = {
-  lite: 7_900,     // 내신 대비
-  standard: 9_900, // 국가고시 대비
-  pro: 14_900,     // 통합형
+  lite: PLAN_CATALOG.lite.price,         // 내신대비
+  standard: PLAN_CATALOG.standard.price, // CPX
+  pro: PLAN_CATALOG.pro.price,           // 통합
 };
 
 export const CREDIT_PRICES = {

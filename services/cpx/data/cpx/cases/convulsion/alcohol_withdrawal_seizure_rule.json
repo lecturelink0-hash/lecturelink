@@ -7,7 +7,7 @@
   "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 45 '경련' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "알코올 금단 발작 의심 (Suspected alcohol withdrawal seizure)",
   "variant": "만성 음주 중단 후 발작 + 진전·발한형",
-  "description": "평소 술을 많이 마시다가 며칠 끊은 뒤 손이 떨리고 발작을 한 환자의 규칙입니다.",
+  "description": "평소 술을 많이 마시다가 며칠 끊은 뒤 손이 떨리고 발작을 한 환자입니다.",
   "tags": [
     "경련",
     "알코올금단",

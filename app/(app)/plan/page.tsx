@@ -2,213 +2,240 @@
 
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { api } from '@/lib/api/client';
+import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
-import { Check, X, BarChart3 } from 'lucide-react';
-import { SUPPORT_EMAIL } from '@/lib/legal/config';
+import { PLAN_CATALOG, planName } from '@/lib/payment/plans';
+import { Check, Ticket, BarChart3 } from 'lucide-react';
 
 interface QuotaSnapshot {
-  plan_tier: 'free' | 'lite' | 'standard' | 'pro';
+  plan_tier: 'free' | 'lite' | 'standard' | 'pro' | 'unlimited';
   questions: { limit: number; used: number; bonus: number; remaining: number };
   uploads: { limit: number; used: number; bonus: number; remaining: number };
   images: { limit: number; used: number; bonus: number; remaining: number };
 }
 
 interface Plan {
-  tier: 'lite' | 'standard' | 'pro' | 'unlimited';
+  tier: 'lite' | 'standard' | 'pro';
   name: string;
   price: number;
   desc: string;
   featured?: boolean;
-  /** 통합형 무제한: 별도 enum 값이 필요해 현재는 표시만(구매 대신 문의) */
-  displayOnly?: boolean;
-  features: { ok: boolean; text: string }[];
+  features: { text: string; supportingText?: string }[];
 }
 
+// 플랜 명칭·가격·설명은 PLAN_CATALOG(단일 소스)에서 — 이 페이지는 features 만 정의한다.
 const PLANS: Plan[] = [
   {
     tier: 'lite' as const,
-    name: '내신 대비',
-    price: 7_900,
-    desc: '학교 시험·내신 위주',
+    ...PLAN_CATALOG.lite,
     features: [
-      { ok: true, text: '강의자료 업로드' },
-      { ok: true, text: '월 500문항 생성' },
-      { ok: true, text: '기본 해설 + 오답노트' },
-      { ok: true, text: '유사문제 자동 생성' },
-      { ok: false, text: '모의고사 CBT' },
-      { ok: false, text: '국시 전 범위 풀이' },
+      { text: '강의자료 업로드' },
+      { text: '월 500문항 생성' },
+      { text: '지식형 · 임상형 · 이미지형 문제 생성' },
+      { text: '기본 해설 + 오답노트' },
+      { text: '유사문제 자동 생성' },
+      { text: 'CPX 체험 1회' },
     ],
   },
   {
     tier: 'standard' as const,
-    name: '국가고시 대비',
-    price: 9_900,
-    desc: '국가고시형 집중',
+    ...PLAN_CATALOG.standard,
     features: [
-      { ok: true, text: '국가고시형 문제 풀이' },
-      { ok: true, text: '오답 기반 월 500문항 생성' },
-      { ok: true, text: '실전 해설 + 개념 연결' },
-      { ok: true, text: '모의고사 CBT' },
-      { ok: true, text: '주간 학습 리포트' },
-      { ok: false, text: '자료 기반 문제 생성' },
+      {
+        text: '월 CPX 20회',
+        supportingText: '총 240분 · 12분 × 20회',
+      },
+      { text: 'AI 환자와 음성 문진' },
+      { text: '신체진찰 연습' },
+      { text: '진료 종료 후 자동 채점' },
+      { text: '항목별 점수 및 피드백' },
+      { text: '부족한 영역 다시 연습' },
     ],
   },
   {
     tier: 'pro' as const,
-    name: '통합형',
-    price: 14_900,
-    desc: '내신 + 국시 통합',
+    ...PLAN_CATALOG.pro,
     featured: true,
     features: [
-      { ok: true, text: '자료 기반 + 국가고시형 모두' },
-      { ok: true, text: '월 2,000문항 생성' },
-      { ok: true, text: '자료 업로드 월 100개' },
-      { ok: true, text: '자료·국시 오답 통합 보기' },
-      { ok: true, text: '모의고사 CBT (전 과목)' },
-      { ok: true, text: '이미지 문제 적용' },
-    ],
-  },
-  {
-    tier: 'unlimited' as const,
-    name: '통합형 무제한',
-    price: 20_900,
-    desc: '국시 직전·시험 직전 집중',
-    features: [
-      { ok: true, text: '자료 업로드 무제한' },
-      { ok: true, text: '문항 생성 무제한' },
-      { ok: true, text: '우선 처리 (빠른 분석)' },
-      { ok: true, text: '이미지 문제 무제한' },
-      { ok: true, text: '상세 유형별 학습 분석' },
+      { text: '강의자료 업로드' },
+      { text: '월 500문항 생성' },
+      { text: '지식형 · 임상형 · 이미지형 문제 생성' },
+      { text: '오답노트 + 유사문제 생성' },
+      {
+        text: '월 CPX 20회',
+        supportingText: '총 240분 · 12분 × 20회',
+      },
+      { text: 'CPX 채점 및 피드백' },
     ],
   },
 ];
 
+const PLAN_NAMES: Record<QuotaSnapshot['plan_tier'], string> = {
+  free: PLAN_CATALOG.free.name,
+  lite: PLAN_CATALOG.lite.name,
+  standard: PLAN_CATALOG.standard.name,
+  pro: PLAN_CATALOG.pro.name,
+  unlimited: planName('unlimited'),
+};
+
 export default function PlanPage() {
   const [quota, setQuota] = useState<QuotaSnapshot | null>(null);
+  const [quotaReady, setQuotaReady] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
 
   useEffect(() => {
-    api.get<QuotaSnapshot>('/api/me/quota').then(setQuota).catch(() => {});
+    api
+      .get<QuotaSnapshot>('/api/me/quota')
+      .then(setQuota)
+      .catch(() => {})
+      .finally(() => setQuotaReady(true));
     if (typeof window !== 'undefined') {
       setLimitReached(new URLSearchParams(window.location.search).has('limit'));
     }
   }, []);
 
+  async function handlePurchase(plan: Plan) {
+    setLoading(plan.tier);
+    try {
+      const res = await api.post<{
+        order_id: string;
+        amount: number;
+        order_name: string;
+        customer_email: string;
+        success_url: string;
+        fail_url: string;
+        client_key: string;
+      }>('/api/payments/init', {
+        kind: 'subscription',
+        plan_tier: plan.tier as 'lite' | 'standard' | 'pro',
+      });
+
+      // 실제 토스 SDK 로딩 및 결제 위젯 호출은 다음 단계에서 통합
+      alert(
+        `결제 초기화 완료\n주문 ID: ${res.order_id}\n금액: ₩${res.amount.toLocaleString()}\n\n(데모) 실제 토스 위젯 연결은 운영 단계에서 추가됩니다.`,
+      );
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : '결제 초기화 실패';
+      alert(msg);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  function handleCpxPassPurchase() {
+    // CPX 이용권용 결제 kind/product ID와 entitlement가 아직 없어 기존 구독 결제로
+    // 우회하지 않는다. 버튼은 현재 구독 상태와 무관하게 같은 진입점을 사용한다.
+    alert('CPX 5회 이용권은 결제 상품 연결 후 구매할 수 있어요. 현재는 상품 정보를 확인해 주세요.');
+  }
+
+  const hasPaidPlan = quota != null && quota.plan_tier !== 'free';
+  const showFreeTrial = quotaReady && quota?.plan_tier === 'free';
+
   return (
     <div className="ll-plan-page content">
-      {/* 사용량 한도 도달 시: '추가 크레딧' / '통합형 무제한' 2택 병렬 안내(기획서) */}
-      {limitReached && (
-        <div className="ll-card p-5 mb-8 border border-[var(--color-accent)]/40 bg-[var(--color-accent-bg)]">
-          <div className="text-[15px] font-bold text-sage-800 mb-1">사용량 한도에 도달했어요</div>
-          <div className="text-[13px] text-[var(--color-muted)] mb-4 leading-relaxed">
-            계속 학습하려면 아래 두 가지 중 하나를 선택하세요.
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              type="button"
-              disabled
-              className="text-left rounded-[14px] border border-[var(--color-border)] bg-white p-4 opacity-70"
+      <section className="page-head">
+        <h1>
+          <span className="headline-accent">학습 방식에 맞는</span>
+          <br />
+          플랜을 선택하세요
+        </h1>
+        <p className="lead">내신 대비부터 CPX 실전 연습까지, 필요한 기능에 맞는 플랜을 선택하세요.</p>
+      </section>
+
+      <div className="plan-content-flow">
+        <div className={clsx('plan-selection', showFreeTrial && 'has-trial')}>
+          {showFreeTrial && (
+            <div className="notice">
+              <strong>무료로 먼저 체험해보세요</strong>
+              <span>문제 생성 30문항 + CPX 1회를 무료로 이용할 수 있어요.</span>
+            </div>
+          )}
+
+          {/* 요금제 카드 */}
+          <div className="relative">
+            {!quotaReady && (
+              <section
+                className="plans absolute inset-0 z-10"
+                aria-label="요금제 정보를 불러오는 중"
+                aria-busy="true"
+              >
+                {PLANS.map((plan) => (
+                  <div key={plan.tier} className="plan pointer-events-none" aria-hidden="true">
+                    <div className="flex h-full flex-col animate-pulse">
+                      <div className="h-7 w-28 rounded-md bg-[var(--color-sage-100)]" />
+                      <div className="mt-3 h-4 w-40 rounded bg-[var(--color-sage-100)]" />
+                      <div className="mt-7 h-10 w-32 rounded bg-[var(--color-sage-100)]" />
+                      <div className="mt-7 space-y-3">
+                        <div className="h-4 rounded bg-[var(--color-sage-100)]" />
+                        <div className="h-4 rounded bg-[var(--color-sage-100)]" />
+                        <div className="h-4 w-4/5 rounded bg-[var(--color-sage-100)]" />
+                      </div>
+                      <div className="mt-auto h-[52px] rounded-lg bg-[var(--color-sage-100)]" />
+                    </div>
+                  </div>
+                ))}
+              </section>
+            )}
+
+            <section
+              className={clsx('plans', !quotaReady && 'pointer-events-none opacity-0')}
+              aria-label="요금제 목록"
             >
-              <div className="text-sm font-bold text-sage-800 mb-1">추가 크레딧 준비 중</div>
-              <div className="text-[12px] text-[var(--color-muted)]">결제 기능을 정식으로 열기 전에는 구매되지 않습니다.</div>
-            </button>
-            <a
-              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('통합형 무제한 문의')}`}
-              className="text-left rounded-[14px] border border-sage-700 bg-sage-700 text-white p-4 hover:bg-sage-800 transition-colors"
-            >
-              <div className="text-sm font-bold mb-1">통합형 무제한으로 전환</div>
-              <div className="text-[12px] text-white/80">한도 없이 무제한으로 이용 (문의)</div>
-            </a>
-          </div>
-        </div>
-      )}
+              {PLANS.map((plan) => {
+                const featured = !!plan.featured;
+                const currentPlanTier = quota?.plan_tier === 'unlimited' ? 'pro' : quota?.plan_tier;
+                const isCurrent = currentPlanTier === plan.tier;
+                return (
+                  <div
+                    key={plan.tier}
+                    className={clsx(
+                      'plan',
+                      featured && 'integrated',
+                      isCurrent && 'current',
+                    )}
+                  >
+                  {/* 플랜명·가격·설명 */}
+                  <div className="plan-heading-row">
+                    <div className="plan-title-group">
+                      <h2 className="plan-name">
+                        {plan.name}
+                      </h2>
+                      {featured && <span className="ribbon">추천</span>}
+                    </div>
+                    {isCurrent && <span className="current-state">현재 플랜</span>}
+                  </div>
 
-      <section className="page-head"><span className="eyebrow">요금 안내</span><h1><span className="headline-accent">학습 방식</span>에 맞는<br/>플랜을 선택하세요</h1><p className="lead">내신 대비, 국시 대비 또는 두 기능을 모두 이용할 수 있는 플랜을 선택할 수 있어요.</p></section>
-
-      <div className="space-y-8">
-        {/* 무료 베타 운영 안내 */}
-        <div className="notice">
-          <strong>무료 베타 운영 중</strong><span>현재 결제수단을 받지 않으며, 자동으로 유료 전환하거나 청구하지 않습니다.</span>
-        </div>
-
-        {/* 요금제 카드 */}
-        <div>
-          <section className="plans" aria-label="요금제 목록">
-            {PLANS.map((plan) => {
-              const featured = !!plan.featured;
-              const isCurrent = quota?.plan_tier === plan.tier;
-              return (
-                <div
-                  key={plan.tier}
-                  className={clsx(
-                    'plan',
-                    featured && 'integrated',
-                    isCurrent && 'current',
-                  )}
-                >
-                  {featured && (
-                    <span className="ribbon">
-                      추천
-                    </span>
-                  )}
-                  {isCurrent && (
-                    <span className="current-state">
-                      현재 이용 중
-                    </span>
-                  )}
-
-                  {/* 플랜명 */}
-                  <div className="mb-5">
-                    <h2 className="plan-name">
-                      {plan.name}
-                    </h2>
+                  <div className="plan-summary">
+                    <div className="price" aria-label={`월 ${plan.price.toLocaleString()}원`}>
+                      <strong>
+                        ₩{plan.price.toLocaleString()}
+                      </strong>
+                      <span>/월</span>
+                    </div>
                     <p className="plan-sub">
                       {plan.desc}
                     </p>
                   </div>
 
-                  {/* 가격 */}
-                  <div className="price">
-                    <strong>
-                      ₩{plan.price.toLocaleString()}
-                    </strong><span>/월 출시 예정가</span>
-                  </div>
-                  <p className="desc">
-                    정식 유료 판매 전 별도 고지하며 현재는 결제되지 않습니다.
-                  </p>
-
                   {/* 기능 목록 */}
                   <ul className="features">
                     {plan.features.map((f, i) => (
-                      <li key={i} className={f.ok ? '' : 'no'}>
-                        {f.ok ? (
-                          <Check
-                            className={clsx('w-4 h-4 mt-0.5 flex-shrink-0', featured ? 'text-[#9A7B16]' : 'text-sage-600')}
-                            strokeWidth={2.5}
-                          />
-                        ) : (
-                          <X
-                            className={clsx('w-4 h-4 mt-0.5 flex-shrink-0', featured ? 'text-[#C4AC5E]' : 'text-[var(--color-sage-400)]')}
-                            strokeWidth={2.5}
-                          />
-                        )}
-                        {/* 통합형(featured) 카드는 밝은 골드 배경 → 흰색 대신 진한 골드-브라운으로 표기 */}
-                        <span
-                          className={clsx(
-                            f.ok
-                              ? featured ? 'text-[#6F5511]' : 'text-sage-800'
-                              : featured ? 'text-[#A98B2E]' : 'text-[var(--color-muted)]',
-                          )}
-                        >
-                          {f.text}
+                      <li key={i}>
+                        <Check
+                          className="w-4 h-4 mt-0.5 flex-shrink-0 text-sage-600"
+                          strokeWidth={2.5}
+                        />
+                        <span className="feature-copy">
+                          <span>{f.text}</span>
+                          {f.supportingText && <small>{f.supportingText}</small>}
                         </span>
                       </li>
                     ))}
                   </ul>
 
                   {/* CTA */}
-                  <div className="mt-auto">
+                  <div className="plan-action">
                     {isCurrent ? (
                       <button
                         type="button"
@@ -218,34 +245,57 @@ export default function PlanPage() {
                       >
                         현재 이용 중
                       </button>
-                    ) : featured ? (
-                      <button
-                        type="button"
-                        disabled
-                        className="w-full h-[52px] rounded-lg inline-flex items-center justify-center gap-2 text-base font-bold bg-[var(--color-gold)] text-sage-900 disabled:opacity-70 disabled:cursor-not-allowed"
-                      >
-                        유료 판매 준비 중
-                      </button>
                     ) : (
                       <Button
                         fullWidth
                         size="lg"
-                        variant="secondary"
-                        disabled
+                        variant={featured ? 'primary' : 'secondary'}
+                        className="plan-action-button"
+                        onClick={() => handlePurchase(plan)}
+                        loading={loading === plan.tier}
                       >
-                        유료 판매 준비 중
+                        {hasPaidPlan ? '이 플랜으로 변경 →' : `${plan.name} 구독하기`}
                       </Button>
                     )}
                   </div>
-                </div>
-              );
-            })}
-          </section>
-
-          <p className="text-center text-xs text-[var(--color-muted)] mt-5">
-            표시 가격과 구성은 정식 출시 전에 변경될 수 있습니다.
-          </p>
+                  </div>
+                );
+              })}
+            </section>
+          </div>
         </div>
+
+        <section className="cpx-pass" aria-labelledby="cpx-pass-title">
+          <div className="cpx-pass-copy">
+            <div className="cpx-pass-heading">
+              <Ticket className="w-4 h-4" aria-hidden="true" />
+              <h2 id="cpx-pass-title">CPX 5회 이용권</h2>
+            </div>
+            <p className="cpx-pass-price">
+              <strong>CPX 5회</strong>
+              <span aria-hidden="true">·</span>
+              <strong>₩4,900</strong>
+            </p>
+            <p id="cpx-pass-description">구독 없이 필요한 만큼 이용하거나, 기존 플랜에 추가할 수 있어요.</p>
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            className="cpx-pass-button"
+            onClick={handleCpxPassPurchase}
+            aria-describedby="cpx-pass-description"
+          >
+            CPX 5회 구매하기
+          </Button>
+        </section>
+
+        {limitReached && (
+          <div className="limit-notice" role="status">
+            <strong>사용량 한도에 도달했어요.</strong>
+            <span>필요한 기능에 맞는 플랜이나 CPX 5회 이용권을 확인해 주세요.</span>
+          </div>
+        )}
 
         {/* 이번 달 사용량 — 플랫 */}
         {quota && (
@@ -255,7 +305,7 @@ export default function PlanPage() {
               <span className="ll-eyebrow">이번 달 사용량</span>
             </div>
             <h2>
-              현재 {quota.plan_tier.toUpperCase()} 플랜
+              현재 {PLAN_NAMES[quota.plan_tier]} 플랜
             </h2><p className="current-plan">현재 계정에서 이번 달 사용할 수 있는 학습 리소스입니다.</p>
             <div className="usage-grid">
               <QuotaBar label="문항" data={quota.questions} />
