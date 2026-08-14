@@ -65,9 +65,9 @@ class SessionCreate(BaseModel):
     caseId: str
     # 연습용 시간제한(초). 실전 12분(720) 외에 11분 30초·11분 단축 연습 지원.
     timeLimitSeconds: int | None = None
-    # 순응도 낮은 환자 모드(옵트인) — 저항 행동은 서버가 시드로 샘플링해 config에 저장하고,
-    # 어떤 유형이었는지는 채점 결과에서만 공개한다 (세션 중에는 비공개).
-    lowCompliance: bool | None = None
+    # 연습 방식 — 'random'(증례 비공개 랜덤 실전)이면 순응도 낮은 환자 배정 확률이 40%,
+    # 그 외(직접 선택·추천)는 25%. 배정 자체는 모든 세션에 상시 적용되며 사용자가 끌 수 없다.
+    practiceMode: str | None = None
 
 
 DEFAULT_TIME_LIMIT_SECONDS = 12 * 60
@@ -118,20 +118,16 @@ def create_session(body: SessionCreate, user_id: str = Depends(current_user_id))
     persona = prompt_mod.resolve_persona(case, seed)
     time_limit = resolve_time_limit(body.timeLimitSeconds)
     config_dict = {'timeLimitSeconds': time_limit}
-    if body.lowCompliance:
-        # 실제 배정 여부는 25% 확률(prompt.LOW_COMPLIANCE_PROBABILITY)로 서버가 결정.
-        # 빗나간 세션도 enabled로 기록해 채점 후 '협조적인 환자였다'고 알려줄 수 있게 한다.
-        behaviors = prompt_mod.resolve_low_compliance(case, seed)
-        config_dict['lowCompliance'] = {'enabled': True, 'behaviors': behaviors}
+    # 순응도 낮은 환자는 모든 세션에 상시 무작위 배정 (직접 선택 25% · 랜덤 실전 40%).
+    # 배정 결과는 config에만 저장하고 응답에는 싣지 않는다 — 세션 중에는 비공개,
+    # 채점 결과에서만 유형이 공개된다.
+    probability = prompt_mod.low_compliance_probability(body.practiceMode)
+    behaviors = prompt_mod.resolve_low_compliance(case, seed, probability)
+    if behaviors:
+        config_dict['lowCompliance'] = {'behaviors': behaviors, 'probability': probability}
     config = _json.dumps(config_dict, ensure_ascii=False)
     session_id = db.create_session(body.caseId, user_id, _json.dumps(persona, ensure_ascii=False), config)
-    return {
-        'sessionId': session_id,
-        'persona': persona,
-        'timeLimitSeconds': time_limit,
-        # 옵트인 여부만 되돌려준다 — 이번 환자가 실제로 저항형인지는 세션 중 비공개.
-        'lowCompliance': bool(body.lowCompliance),
-    }
+    return {'sessionId': session_id, 'persona': persona, 'timeLimitSeconds': time_limit}
 
 
 @app.post('/api/sessions/{session_id}/live-token')
@@ -147,9 +143,7 @@ def live_token(session_id: str, user_id: str = Depends(current_user_id)):
     persona = _json.loads(session['persona']) if session.get('persona') else None
     session_config = _json.loads(session['config']) if session.get('config') else {}
     low_compliance = session_config.get('lowCompliance') or {}
-    low_compliance_ids = (
-        [b['id'] for b in low_compliance.get('behaviors', [])] if low_compliance.get('enabled') else None
-    )
+    low_compliance_ids = [b['id'] for b in low_compliance.get('behaviors', [])] or None
     system_instruction = prompt_mod.build_system_instruction(
         session['case_id'], persona, low_compliance_ids=low_compliance_ids,
     )
