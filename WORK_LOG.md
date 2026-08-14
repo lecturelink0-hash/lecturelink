@@ -1,5 +1,16 @@
 # WORK LOG
 
+## 2026-08-14 — Git repository structure consolidation
+
+- 목적: nested `github-main` 구조를 없애고 단일 기본 repository와 외부 worktree 구조로 정리.
+- 보존: local Nephrology changes committed as `fd1be6d` and pushed to `preserve/nephrology-local-20260814`.
+- 보존: local deploy worktree changes committed as `cc95a56` and pushed to `preserve/deploy-local-20260814`.
+- 통합 검토: latest `origin/main` 기준 `integrate/lecturelink-20260814` 생성 및 CPX 보정 commit `5479e29` push. Login, Plan, Library, and Landing worktree changes were already present in `origin/main`; duplicate cherry-picks were skipped.
+- 구조 변경: canonical repository moved from `lecturelink-main/github-main` to `C:/Users/Owner/Desktop/lecturelink`. Linked worktrees moved to `C:/Users/Owner/Desktop/lecturelink-worktrees/`.
+- 검수: `git worktree list`, `git diff --check`, repository root, branch alignment, and preserved paths checked. No build, dependency install, or deployment run.
+- 사용자 확인: folder move and worktree relocation explicitly approved.
+- 최종 상태: 조건부 완료 — main is aligned with origin/main; integration and preservation branches remain available for later review.
+
 ## 2026-08-14 sharp 타입 exports 배포 오류 수정
 
 - 요청 및 목적: Vercel Production에서 `sharp` 동적 import 타입 해석 오류로 빌드가 실패하는 문제를 최소 변경으로 해결.
