@@ -14,6 +14,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PRIVACY_VERSION } from '@/lib/legal/config';
 
+// 서버 하트비트 주기. 스윕 임계(마지막 하트비트 + 10분)보다 크게 짧아야 하고,
+// 너무 잦으면 미러 쓰기가 늘어난다 — 정책 7장 권고(15~30초)의 중앙값.
+const HEARTBEAT_INTERVAL_MS = 20_000;
+
 // 진료 시간은 짧은 순서로 제시하며, 실전 기준은 12분이다.
 const TIME_LIMIT_OPTIONS = [
   { seconds: 11 * 60, label: '11분' },
@@ -172,13 +176,56 @@ export default function CpxPractice() {
     }
   }, [sessionId]);
 
+  // 서버 하트비트 — 시간 차감 정산의 생존 신호(정책 7장).
+  // 전사·usage flush 는 보낼 내용이 있을 때만 전송되므로, 학생이 자료를 읽거나 고민하느라
+  // 침묵이 길어지면 신호가 끊긴다. 그대로 두면 스윕(마지막 하트비트 + 10분)이 진행 중인
+  // 세션을 이탈로 오인해 종료시키므로, 빈 이벤트 배열로 생존만 주기 전송한다.
+  // (서버는 세션 하위 미러 트래픽 수신 시각을 heartbeat_at 에 기록한다.)
+  const heartbeat = useCallback(() => {
+    if (!sessionId) return;
+    request(`/sessions/${sessionId}/events`, {
+      method: 'POST',
+      body: JSON.stringify([]),
+      keepalive: true,
+    }).catch(() => {});
+  }, [sessionId]);
+
   useEffect(() => {
     if (phase !== 'live') return undefined;
     const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAtRef.current) / 1000)), 1000);
     const saver = window.setInterval(flush, 3000);
     const usageSaver = window.setInterval(flushUsage, 3000);
-    return () => { window.clearInterval(timer); window.clearInterval(saver); window.clearInterval(usageSaver); };
-  }, [phase, flush, flushUsage]);
+    const beat = window.setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
+    return () => {
+      window.clearInterval(timer); window.clearInterval(saver);
+      window.clearInterval(usageSaver); window.clearInterval(beat);
+    };
+  }, [phase, flush, flushUsage, heartbeat]);
+
+  // 이탈 감지 — 탭 숨김·페이지 종료 시 마지막 전사와 생존 신호를 남긴다(정책 7장).
+  // 이탈은 종료가 아니라 자동 일시정지이므로 여기서 /end 를 호출하지 않는다. 정산 시점은
+  // 서버가 정한다(10분 내 미복귀 시 스윕이 마지막 하트비트까지만 차감).
+  // keepalive 요청이라 문서가 사라진 뒤에도 브라우저가 전송을 마친다.
+  useEffect(() => {
+    if (phase !== 'live') return undefined;
+    const persist = () => { flush(); flushUsage(); heartbeat(); };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') persist(); };
+    // 이어하기 복원이 아직 없어 지금은 이탈 = 연습 중단이므로, 브라우저 이탈은 한 번 되묻는다.
+    const onBeforeUnload = (event) => {
+      persist();
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', persist);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', persist);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [phase, flush, flushUsage, heartbeat]);
 
   // 채점(finishing) 중 원형 게이지를 95%까지 점점 느려지게 채운다.
   // 실제 채점은 단일 API 호출(진행률 이벤트 없음)이라 예상 소요시간 기반으로 시뮬레이션하며,
