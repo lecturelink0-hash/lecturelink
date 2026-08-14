@@ -475,7 +475,7 @@ export default function MyPage() {
         {/* Plan */}
         <Card className="flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-sage-800 tracking-tight">현재 요금제</h2>
+            <h2 className="text-[20px] font-bold text-sage-800 tracking-tight">현재 요금제</h2>
             <Link
               href="/plan"
               className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
@@ -487,7 +487,7 @@ export default function MyPage() {
           {/* Plan highlight */}
           <div className="rounded-xl bg-sage-700 text-white px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[14px] font-bold leading-tight">{plan.name} 플랜</p>
+              <p className="text-[16px] font-bold leading-tight">{plan.name} 플랜</p>
               <p className="text-[13px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
             </div>
             <p className="text-right flex-shrink-0">
@@ -499,13 +499,13 @@ export default function MyPage() {
                   <span className="text-[14px] text-white/70"> / 월</span>
                 </>
               ) : planTier === 'free' ? (
-                <span className="text-[15px] font-bold">무료</span>
+                <span className="text-[17px] font-bold">무료</span>
               ) : subscription?.subscription ? (
                 // 유료 티어인데 활성 구독이 없음 = 구독 이력이 있으나 만료·해지된 상태
-                <span className="text-[14px] font-bold">구독 만료</span>
+                <span className="text-[16px] font-bold">구독 만료</span>
               ) : (
                 // 구독 이력 없이 부여된 유료 티어 (베타·개발자 계정)
-                <span className="text-[14px] font-bold">베타 제공</span>
+                <span className="text-[16px] font-bold">베타 제공</span>
               )}
             </p>
           </div>
@@ -521,11 +521,6 @@ export default function MyPage() {
               label="자료 업로드 잔여량"
               remaining={quota?.uploads.remaining ?? 0}
               total={(quota?.uploads.limit ?? 0) + (quota?.uploads.bonus ?? 0)}
-            />
-            <QuotaRow
-              label="이미지 생성 잔여량"
-              remaining={quota?.images.remaining ?? 0}
-              total={(quota?.images.limit ?? 0) + (quota?.images.bonus ?? 0)}
             />
           </div>
 
