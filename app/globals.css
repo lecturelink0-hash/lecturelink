@@ -2582,7 +2582,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   gap: 8px;
   padding: 4px 2px;
   color: var(--color-primary-strong);
-  font-size: 18.5px;
+  font-size: 21.5px;
   font-weight: 790;
   letter-spacing: -.01em;
   transition: color var(--dur-short) ease;
@@ -2592,8 +2592,8 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-record-link:hover svg { transform: translateX(2px); }
 
 .cpx-record-link svg {
-  width: 22px;
-  height: 22px;
+  width: 25px;
+  height: 25px;
   transition: transform var(--dur-short) ease;
 }
 
@@ -2643,9 +2643,14 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
     0 14px 34px -26px rgba(21, 62, 47, .3);
 }
 
+/* 랜덤 실전 카드 — 학생 대시보드 글래스 카드와 같은 그라데이션을 그대로 쓴다.
+   (.student-dashboard .dashboard-next-card 와 동일 값이며, 끝 색 #edf6f0 은
+   대시보드 CPX 카드의 단색 #eef6f1 과 같은 톤이라 두 카드가 한 가족으로 읽힌다.)
+   불투명 채움이라 backdrop-filter 는 이 카드에서 그림에 영향을 주지 않는다 —
+   /cpx 배경이 단색 #faf9f6 이라 원래도 블러가 보이는 효과는 없었다. */
 .cpx-random-panel {
-  border-color: #c7ddce;
-  background: rgba(216, 236, 224, .32);
+  border-color: #bed8c8;
+  background: linear-gradient(135deg, #fff 0%, #f7fbf8 64%, #edf6f0 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .65),
     0 14px 34px -26px rgba(21, 62, 47, .32);
