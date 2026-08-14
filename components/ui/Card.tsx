@@ -13,6 +13,8 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   hover?: boolean;
   /** 아이콘 칩 색조 */
   tone?: 'sage' | 'accent' | 'gold';
+  /** 제목 크기 규격 대체 (기본 text-base) — CSS 출력 순서에 기대지 않도록 덮어쓰기가 아니라 교체 */
+  titleClassName?: string;
 }
 
 export function Card({
@@ -23,6 +25,7 @@ export function Card({
   eyebrow,
   hover,
   tone = 'sage',
+  titleClassName,
   className,
   children,
   ...rest
@@ -40,7 +43,9 @@ export function Card({
               {eyebrow && <span className="ll-eyebrow mb-2">{eyebrow}</span>}
               {title && (
                 // 카드 제목 규격: h2 + text-base font-bold (페이지 h1 아래 카드 단위 제목)
-                <h2 className="text-base font-bold text-sage-800 tracking-tight">{title}</h2>
+                <h2 className={clsx('font-bold text-sage-800 tracking-tight', titleClassName ?? 'text-base')}>
+                  {title}
+                </h2>
               )}
               {description && (
                 <p className="text-sm text-[var(--color-muted)] mt-1 leading-relaxed">

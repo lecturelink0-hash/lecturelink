@@ -154,7 +154,9 @@ export default function CpxStartExperience({
       window.cancelAnimationFrame(frame);
       window.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previousOverflow;
-      previousFocusRef.current?.focus?.();
+      // preventScroll: 진료 시작이 안내 미확인으로 막히면 페이지가 안내 배너로 스크롤되는데,
+      // 포커스 복원의 기본 스크롤이 그 이동을 다시 위로 끌어올리지 않도록 막는다.
+      previousFocusRef.current?.focus?.({ preventScroll: true });
     };
   }, [setup]);
 
