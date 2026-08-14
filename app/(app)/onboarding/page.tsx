@@ -1,33 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { ArrowRight, Check, CheckCircle2 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
-import { CheckCircle2 } from 'lucide-react';
+import styles from './onboarding.module.css';
 
-interface School { id: string; name: string; short_name: string }
-interface SubTopic {
-  id: string;
-  code: string;
-  name: string;
-  parent_id: string | null;
-  level: number;
-  exam_relevance: 1 | 2 | 3;
-  is_risk_category: boolean;
-}
-interface Subject {
+interface School {
   id: string;
   name: string;
-  code: string;
-  sub_topics: SubTopic[];
-}
-interface CohortLookupRes {
-  cohort_id: string | null;
-  is_fallback: boolean;
-  sample_size: number;
-  scores: Array<{ sub_topic_id: string; inclusion_score: number; confidence: number; sample_size: number }>;
+  short_name: string;
 }
 
 const GRADE_OPTIONS = [
@@ -40,322 +23,284 @@ const GRADE_OPTIONS = [
 ] as const;
 
 const PURPOSE_OPTIONS = [
-  { value: 'naesin', label: '내신 대비' },
-  { value: 'kmle', label: '국시 대비' },
-  { value: 'other', label: '기타' },
+  { value: 'naesin', label: '내신 대비', description: '학교 시험과 강의 복습' },
+  { value: 'cpx', label: 'CPX 대비', description: '진료 수행과 실전 연습' },
+  { value: 'other', label: '기타', description: '직접 목적 입력' },
 ] as const;
 
 const CHANNEL_OPTIONS = ['학교 단톡방', '선후배 추천', '친구 추천', 'SNS/유튜브', '검색', '기타'] as const;
 
-export default function OnboardingPage() {
+type Grade = typeof GRADE_OPTIONS[number]['value'];
+type StudyPurpose = typeof PURPOSE_OPTIONS[number]['value'];
 
+export default function OnboardingPage() {
   const [schools, setSchools] = useState<School[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSchool, setSelectedSchool] = useState('');
-  const [selectedGrade, setSelectedGrade] = useState<typeof GRADE_OPTIONS[number]['value']>('med_2');
-  const [selectedSemester, setSelectedSemester] = useState<'spring' | 'fall'>('spring');
-  const [selectedYear] = useState(new Date().getFullYear());
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [studyPurpose, setStudyPurpose] = useState<typeof PURPOSE_OPTIONS[number]['value']>('naesin');
-  const [purposeDetail, setPurposeDetail] = useState(''); // '기타' 선택 시 주관식 입력
+  const [selectedGrade, setSelectedGrade] = useState<Grade>('med_2');
+  const [studyPurpose, setStudyPurpose] = useState<StudyPurpose>('naesin');
+  const [purposeDetail, setPurposeDetail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [referralCode, setReferralCode] = useState('');
   const [acquisitionChannel, setAcquisitionChannel] = useState('');
-  const [scopeChecks, setScopeChecks] = useState<Record<string, boolean>>({});
-  const [seniorData, setSeniorData] = useState<Record<string, number>>({});
-  const [isFallback, setIsFallback] = useState(false);
-  const [seniorCount, setSeniorCount] = useState(0);
+  const [loadingSchools, setLoadingSchools] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
 
-  // 초기 로드: 학교 + 과목
   useEffect(() => {
+    let active = true;
+
     Promise.all([
       api.get<School[]>('/api/schools'),
-      api.get<Subject[]>('/api/subjects'),
       api.get<{ displayName: string | null; accountType: 'student' | 'professor' }>('/api/me').catch(() => null),
     ])
-      .then(([sch, subs, me]) => {
+      .then(([schoolList, me]) => {
+        if (!active) return;
         if (me?.accountType === 'professor') {
           window.location.replace('/professor-onboarding');
           return;
         }
-        setSchools(sch);
-        setSubjects(subs);
-        if (subs.length > 0) setSelectedSubject(subs[0].id);
-        // 이메일이 이름으로 채워진 경우는 프리필하지 않음(사용자가 실제 이름 입력).
+        setSchools(schoolList);
         if (me?.displayName && !me.displayName.includes('@')) setDisplayName(me.displayName);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) setLoadError('학교 목록을 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
+      })
+      .finally(() => {
+        if (active) setLoadingSchools(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // 학교·학년·과목 변경 시 코호트 lookup
-  useEffect(() => {
-    setScopeChecks({});
-    if (!selectedSchool || !selectedSubject) return;
-    api
-      .get<CohortLookupRes>(
-        `/api/cohorts/lookup?school_id=${selectedSchool}&grade=${selectedGrade}&year=${selectedYear}&semester=${selectedSemester}&subject_id=${selectedSubject}`,
-      )
-      .then((res) => {
-        const map: Record<string, number> = {};
-        for (const s of res.scores) {
-          map[s.sub_topic_id] = s.inclusion_score;
-        }
-        setSeniorData(map);
-        setIsFallback(res.is_fallback);
-        setSeniorCount(res.sample_size);
-      });
-  }, [selectedSchool, selectedGrade, selectedSemester, selectedYear, selectedSubject, subjects]);
+  const trimmedPurposeDetail = purposeDetail.trim();
+  const canSubmit = Boolean(
+    displayName.trim()
+      && selectedSchool
+      && (studyPurpose !== 'other' || trimmedPurposeDetail),
+  );
 
-  async function handleSubmit() {
-    if (!displayName.trim()) { alert('이름을 입력해주세요.'); return; }
-    if (!selectedSchool || !selectedSubject) return;
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError('');
+
+    if (!displayName.trim()) {
+      setFormError('이름을 입력해 주세요.');
+      return;
+    }
+    if (!selectedSchool) {
+      setFormError('학교를 선택해 주세요.');
+      return;
+    }
+    if (studyPurpose === 'other' && !trimmedPurposeDetail) {
+      setFormError('기타 이용 목적을 입력해 주세요.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const nm = displayName.trim();
-      if (nm) await api.patch('/api/me', { display_name: nm }).catch(() => {});
+      await api.patch('/api/me', { display_name: displayName.trim() });
       await api.post('/api/onboarding', {
         school_id: selectedSchool,
         grade: selectedGrade,
-        semester: selectedSemester,
-        year: selectedYear,
-        subject_id: selectedSubject,
         study_purpose: studyPurpose,
-        study_purpose_detail: studyPurpose === 'other' ? (purposeDetail.trim() || null) : null,
-        referral_code: referralCode || null,
+        study_purpose_detail: studyPurpose === 'other' ? trimmedPurposeDetail : null,
         acquisition_channel: acquisitionChannel || null,
       });
-      // 가입 축하 화면 노출(기획서). '계속하기'로 홈 이동.
       setCompleted(true);
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : '오류가 발생했습니다';
-      alert(msg);
+    } catch (error) {
+      setFormError(error instanceof ApiError ? error.message : '설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setSubmitting(false);
     }
   }
 
-  const currentSubject = subjects.find((s) => s.id === selectedSubject);
-
   if (completed) {
+    const learnerName = displayName.trim().includes('@')
+      ? displayName.trim().split('@')[0]
+      : displayName.trim();
+
     return (
-      <div className="max-w-lg mx-auto py-16 text-center">
-        <div className="flex justify-center mb-5">
-          <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-curated-bg)] text-sage-700">
-            <CheckCircle2 className="w-9 h-9" strokeWidth={2} />
-          </span>
-        </div>
-        <h1 className="text-2xl font-bold text-sage-800 mb-2 break-keep leading-snug">
-          {(() => {
-            const nm = (displayName || '').includes('@') ? displayName.split('@')[0] : displayName;
-            return nm ? `${nm}님, 가입을 축하합니다 🎉` : '가입을 축하합니다 🎉';
-          })()}
+      <section className={styles.completion} aria-labelledby="onboarding-complete-title">
+        <span className={styles.completionIcon} aria-hidden="true">
+          <CheckCircle2 strokeWidth={1.9} />
+        </span>
+        <h1 id="onboarding-complete-title">
+          <span>{learnerName ? `${learnerName}님, ` : ''}준비가 끝났어요.</span>
+          <br />바로 학습을 시작해보세요
         </h1>
-        <p className="text-[15px] text-[var(--color-muted)] leading-relaxed mb-8">
-          이제 학습을 시작할 수 있어요. <br />
-          <span className="text-sage-800 font-semibold">통합 요금제</span>는 지금 무료체험으로 시작할 수 있습니다.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button variant="accent" size="lg" onClick={() => { window.location.href = '/plan'; }}>
-            요금제 보기 · 무료체험 시작
-          </Button>
-          <Button variant="secondary" size="lg" onClick={() => { window.location.href = '/dashboard'; }}>
-            홈으로 계속하기
+        <p>입력한 학습 목적에 맞는 기능을 홈에서 바로 이용할 수 있습니다.</p>
+        <div className={styles.completionActions}>
+          <Button
+            size="lg"
+            className={styles.primaryButton}
+            onClick={() => { window.location.href = '/dashboard'; }}
+          >
+            홈으로 이동
+            <ArrowRight aria-hidden="true" />
           </Button>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="ll-system-page">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-sage-800 mb-2">학습 정보 설정</h1>
-        <p className="text-sm text-[var(--color-muted)]">
-          학교·학년·학기를 입력하면 같은 학교 선배들의 시험 범위를 바탕으로 추천 범위를 설정할 수 있어요.
-        </p>
-      </div>
+    <div className={styles.page}>
+      <header className={styles.pageHeader}>
+        <h1>
+          <span>나에게 맞는 학습</span>을<br />시작해보세요
+        </h1>
+        <p>학교와 학년, 서비스 이용 목적만 알려주세요. 필요한 설정만 간단히 저장합니다.</p>
+      </header>
 
-      {/* Step 1 */}
-      <Card title="1. 학교 정보 입력" description="정확한 정보를 입력하면 같은 학교 선배들의 학습 데이터를 활용할 수 있습니다." className="mb-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="이름 *">
+      <form className={styles.formPanel} onSubmit={handleSubmit} noValidate>
+        <div className={styles.formHeading}>
+          <div>
+            <h2>기본 정보</h2>
+            <p>학습 경험을 준비하는 데 필요한 정보입니다.</p>
+          </div>
+          <span>약 1분</span>
+        </div>
+
+        <div className={styles.fieldGrid}>
+          <Field label="이름" htmlFor="onboarding-name" required>
             <input
+              id="onboarding-name"
               type="text"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="이름 (필수 · 카카오 이름 그대로 사용 가능)"
-              className="ll-form-control"
+              onChange={(event) => setDisplayName(event.target.value)}
+              placeholder="이름을 입력해 주세요"
+              autoComplete="name"
+              maxLength={50}
+              className={styles.textInput}
             />
           </Field>
 
-          <Field label="학교">
+          <Field label="학교" required>
             <Select
               value={selectedSchool}
               onValueChange={setSelectedSchool}
-              placeholder="학교 선택"
+              placeholder={loadingSchools ? '불러오는 중...' : '학교를 선택해 주세요'}
               ariaLabel="학교 선택"
+              disabled={loadingSchools || Boolean(loadError)}
+              className={styles.selectControl}
               options={schools.map((school) => ({ value: school.id, label: school.name }))}
             />
+            {loadError && <small className={styles.fieldError}>{loadError}</small>}
           </Field>
 
-          <Field label="학년">
+          <Field label="학년" required>
             <Select
               value={selectedGrade}
-              onValueChange={(value) => setSelectedGrade(value as typeof selectedGrade)}
+              onValueChange={(value) => setSelectedGrade(value as Grade)}
               ariaLabel="학년 선택"
+              className={styles.selectControl}
               options={GRADE_OPTIONS}
             />
           </Field>
 
-          <Field label="학기">
-            <Select
-              value={selectedSemester}
-              onValueChange={(value) => setSelectedSemester(value as 'spring' | 'fall')}
-              ariaLabel="학기 선택"
-              options={[
-                { value: 'spring', label: `${selectedYear}년 1학기` },
-                { value: 'fall', label: `${selectedYear}년 2학기` },
-              ]}
-            />
-          </Field>
-
-          <Field label="수강 과목">
-            <Select
-              value={selectedSubject}
-              onValueChange={setSelectedSubject}
-              placeholder="과목 선택"
-              ariaLabel="수강 과목 선택"
-              options={subjects.map((subject) => ({ value: subject.id, label: subject.name }))}
-            />
-          </Field>
-        </div>
-
-        {/* 서비스 이용 목적 */}
-        <div className="mt-4">
-          <label className="block text-xs font-semibold text-sage-800 mb-1.5">서비스 이용 목적</label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {PURPOSE_OPTIONS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => setStudyPurpose(p.value)}
-                className={`h-10 rounded-lg border text-sm font-medium transition-colors ${
-                  studyPurpose === p.value
-                    ? 'bg-sage-700 text-white border-sage-700'
-                    : 'bg-white text-sage-800 border-[var(--color-border)] hover:border-sage-600'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-          {studyPurpose === 'other' && (
-            <input
-              type="text"
-              value={purposeDetail}
-              onChange={(e) => setPurposeDetail(e.target.value)}
-              placeholder="이용 목적을 자유롭게 입력해주세요 (예: 주관식 시험 대비)"
-              maxLength={100}
-              className="ll-form-control mt-2"
-            />
-          )}
-        </div>
-
-        {/* 추천인 / 알게된 경로 (선택) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          <Field label="추천인 코드 (선택)">
-            <input
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value)}
-              placeholder="친구·선배 추천 코드"
-              className="ll-form-control"
-            />
-          </Field>
-          <Field label="알게된 경로 (선택)">
+          <Field label="알게 된 경로" hint="선택">
             <Select
               value={acquisitionChannel}
               onValueChange={setAcquisitionChannel}
-              placeholder="선택..."
-              ariaLabel="알게된 경로 선택"
+              placeholder="선택해 주세요"
+              ariaLabel="알게 된 경로 선택"
+              className={styles.selectControl}
               options={CHANNEL_OPTIONS.map((channel) => ({ value: channel, label: channel }))}
             />
           </Field>
         </div>
-      </Card>
 
-      {/* Step 2 */}
-      {currentSubject && (
-        <Card
-          title="2. 추천 범위 확인"
-          description={
-            seniorCount > 0
-              ? `선배 ${seniorCount}명${isFallback ? ' (직전 학기 데이터)' : ''}이 누적한 시험 범위 데이터입니다. 본인 학기에 맞게 체크박스를 수정하세요.`
-              : '아직 같은 학교·학년의 시험 범위 데이터가 충분하지 않아요. 추천 범위를 확인한 뒤 실제 수업 범위에 맞게 조정해주세요.'
-          }
-          className="mb-4"
-        >
-          <div className="space-y-2">
-            {currentSubject.sub_topics.filter((st) => st.level === 1).map((st) => {
-              const seniorRate = seniorData[st.id];
-              const checked = scopeChecks[st.id] ?? false;
+        <fieldset className={styles.purposeFieldset}>
+          <legend>
+            서비스 이용 목적 <span aria-hidden="true">*</span>
+          </legend>
+          <div className={styles.purposeOptions} role="radiogroup" aria-label="서비스 이용 목적">
+            {PURPOSE_OPTIONS.map((purpose) => {
+              const selected = studyPurpose === purpose.value;
               return (
-                <label
-                  key={st.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    checked
-                      ? 'bg-[var(--color-sage-200)] border-sage-600'
-                      : 'bg-white border-[var(--color-border)] hover:bg-[var(--color-sage-100)]'
-                  }`}
+                <button
+                  key={purpose.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className={styles.purposeOption}
+                  onClick={() => {
+                    setStudyPurpose(purpose.value);
+                    if (purpose.value !== 'other') setPurposeDetail('');
+                  }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => setScopeChecks((s) => ({ ...s, [st.id]: e.target.checked }))}
-                    className="w-4 h-4 accent-sage-700"
-                  />
-                  <div className="flex-1 text-sm font-medium text-sage-800">{st.name}</div>
-                  <div className="text-xs text-[var(--color-muted)]">
-                    {st.is_risk_category && <span className="text-[var(--color-warn)] mr-2">⚠ 응급</span>}
-                    {'★'.repeat(st.exam_relevance)}
-                  </div>
-                  {seniorRate !== undefined && (
-                    <div className="text-[11px] font-semibold text-sage-700 ml-2 min-w-[80px] text-right">
-                      선배 {Math.round(seniorRate * 100)}% 포함
-                    </div>
-                  )}
-                </label>
+                  <span>
+                    <strong>{purpose.label}</strong>
+                    <small>{purpose.description}</small>
+                  </span>
+                  <i aria-hidden="true">{selected && <Check strokeWidth={2.5} />}</i>
+                </button>
               );
             })}
           </div>
-        </Card>
-      )}
 
-      <div className="bg-[var(--color-sage-100)] border border-[var(--color-sage-200)] rounded-lg p-4 mb-6 text-sm text-sage-800">
-        <strong>잘 모르겠다면?</strong> 첫 1~2주는 광범위하게 풀어보세요.
-        각 문제의 <strong>“시험 범위 아니에요”</strong> 버튼을 누르면 자동으로 범위가 조정됩니다.
-      </div>
+          {studyPurpose === 'other' && (
+            <div className={styles.otherPurpose}>
+              <label htmlFor="onboarding-purpose-detail">기타 이용 목적</label>
+              <input
+                id="onboarding-purpose-detail"
+                type="text"
+                value={purposeDetail}
+                onChange={(event) => setPurposeDetail(event.target.value)}
+                placeholder="예: 주관식 시험 대비"
+                maxLength={100}
+                className={styles.textInput}
+                autoFocus
+                required
+              />
+            </div>
+          )}
+        </fieldset>
 
-      <div className="flex justify-end">
-        <Button
-          size="lg"
-          onClick={handleSubmit}
-          loading={submitting}
-          disabled={!selectedSchool || !selectedSubject}
-        >
-          <CheckCircle2 className="w-4 h-4" />
-          학습 시작
-        </Button>
-      </div>
+        <div className={styles.formFooter}>
+          <p id="onboarding-form-status" className={formError ? styles.formError : styles.formHint} role={formError ? 'alert' : undefined}>
+            {formError || '필수 항목을 입력하면 학습을 시작할 수 있어요.'}
+          </p>
+          <Button
+            type="submit"
+            size="lg"
+            loading={submitting}
+            disabled={!canSubmit || loadingSchools || Boolean(loadError)}
+            aria-describedby="onboarding-form-status"
+            className={styles.primaryButton}
+          >
+            설정 완료하고 시작하기
+            {!submitting && <ArrowRight aria-hidden="true" />}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  htmlFor,
+  required = false,
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  htmlFor?: string;
+  required?: boolean;
+  hint?: string;
+}) {
   return (
-    <div>
-      <label className="block text-xs font-semibold text-sage-800 mb-1.5">{label}</label>
+    <div className={styles.field}>
+      <label htmlFor={htmlFor}>
+        {label}
+        {required && <span aria-hidden="true">*</span>}
+        {hint && <small>{hint}</small>}
+      </label>
       {children}
     </div>
   );

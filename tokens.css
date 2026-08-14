@@ -36,6 +36,11 @@
   --font-display: "Pretendard Variable", Pretendard, sans-serif;
   --font-body: "Pretendard Variable", Pretendard, sans-serif;
 
+  --font-weight-medium: 500;
+  --font-weight-semibold: 650;
+  --font-weight-bold: 760;
+  --font-weight-display: 830;
+
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -52,15 +57,28 @@
   --text-display: clamp(2.8rem, 7vw, 5.7rem);
   --text-display-s: clamp(2.35rem, 5.4vw, 4.5rem);
   --text-title: clamp(1.75rem, 3vw, 2.6rem);
+  --text-page-title: clamp(1.6875rem, 3.5vw, 2.375rem);
+  --text-page-title-mobile: 1.8125rem;
   --text-body: 1rem;
+
+  --measure-heading: 40rem;
+  --measure-copy: 42rem;
+  --measure-form-wide: 56rem;
+
+  --control-height: 2.625rem;
+  --control-height-lg: 4rem;
+  --control-height-action: 3.25rem;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
+  --radius-action: 0.875rem;
   --radius-pill: 999px;
   --rule-hairline: 1px;
   --shadow-card: 0 1px 2px oklch(25% 0.035 158 / 0.04), 0 12px 32px -28px oklch(25% 0.035 158 / 0.28);
   --shadow-menu: 0 18px 48px -24px oklch(25% 0.035 158 / 0.3);
+  --shadow-action: 0 14px 30px -18px oklch(42% 0.105 157 / 0.72), 0 0 0 4px oklch(78% 0.14 86 / 0.18);
+  --focus-ring: 0 0 0 3px oklch(42% 0.105 157 / 0.14);
   --dur-short: 120ms;
   --dur-medium: 220ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
