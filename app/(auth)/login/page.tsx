@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   AlertCircle,
-  BookOpen,
   ChartNoAxesCombined,
   CircleCheck,
   FileText,
@@ -270,8 +269,12 @@ export default function LoginPage() {
         <div className="header-inner">
           {/* 루트는 미인증 시 정적 랜딩(rewrite) — RSC 프리페치 대상이 아니므로 일반 앵커로 문서 내비게이션 */}
           <Link href="/" className="logo">
-            <span className="logo-mark"><BookOpen className="icon" /></span>
+            <span className="logo-mark" style={{ background: 'transparent', boxShadow: 'none', width: 40, height: 40 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/lecturelink-mark.png" alt="LectureLink 로고" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </span>
             <span className="logo-text">LectureLink</span>
+            <span className="beta">BETA</span>
           </Link>
           <Link href="/" className="header-link">홈으로</Link>
         </div>
