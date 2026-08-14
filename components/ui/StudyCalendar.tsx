@@ -161,7 +161,7 @@ export function StudyCalendar({
         >
           <ChevronLeft size={18} />
         </button>
-        <span className="text-base font-bold text-sage-800" aria-live="polite">
+        <span className="text-[20px] font-bold text-sage-800" aria-live="polite">
           {viewYear}년 {viewMonth}월
         </span>
         <div className="flex items-center gap-1">
@@ -169,7 +169,7 @@ export function StudyCalendar({
             <button
               type="button"
               onClick={onGoToday}
-              className="min-h-11 px-3 rounded-lg text-[13px] font-semibold text-sage-700 hover:bg-[var(--color-sage-100)] transition-colors"
+              className="min-h-11 px-3 rounded-lg text-[16px] font-semibold text-sage-700 hover:bg-[var(--color-sage-100)] transition-colors"
             >
               오늘
             </button>
@@ -192,7 +192,7 @@ export function StudyCalendar({
             <div
               key={dow}
               role="columnheader"
-              className={`text-center text-[11px] font-semibold py-1 ${
+              className={`text-center text-[14px] font-semibold py-1 ${
                 dowIndex === 0 ? 'text-[var(--color-warn)] opacity-70' : 'text-[var(--color-muted)]'
               }`}
             >
@@ -245,7 +245,7 @@ export function StudyCalendar({
                     aria-current={isToday ? 'date' : undefined}
                     aria-label={label}
                     className={[
-                      'relative aspect-square min-h-11 rounded-lg flex flex-col items-center justify-center transition-all text-xs font-medium',
+                      'relative aspect-square min-h-11 rounded-lg flex flex-col items-center justify-center transition-all text-[15px] font-medium',
                       bgClass,
                       !bgClass && 'hover:bg-[var(--color-sage-100)]',
                       isSelected && 'ring-2 ring-sage-900',
@@ -257,7 +257,7 @@ export function StudyCalendar({
                     <span className={count >= 10 ? 'text-white' : 'text-sage-800'}>{day}</span>
                     {count > 0 && (
                       <span
-                        className={`text-[10px] leading-none mt-0.5 ${
+                        className={`text-[13px] leading-none mt-0.5 ${
                           count >= 10 ? 'text-white/80' : 'text-sage-600'
                         }`}
                       >
@@ -281,7 +281,7 @@ export function StudyCalendar({
 
       {/* Legend — 스와치는 실제 셀과 같은 색을 쓴다 (빈 셀 = 카드 흰 배경) */}
       <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[var(--color-border)]">
-        <span className="text-[11px] text-[var(--color-muted)]">학습량:</span>
+        <span className="text-[14px] text-[var(--color-muted)]">학습량:</span>
         <div className="flex items-center gap-2">
           {[
             { label: '없음', cls: 'bg-white border border-[var(--color-border)]' },
@@ -291,13 +291,13 @@ export function StudyCalendar({
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-1">
               <span className={`w-3 h-3 rounded-sm inline-block ${item.cls}`} />
-              <span className="text-[11px] text-[var(--color-muted)]">{item.label}</span>
+              <span className="text-[14px] text-[var(--color-muted)]">{item.label}</span>
             </div>
           ))}
         </div>
         <div className="flex items-center gap-1 ml-2">
           <span className="w-2 h-2 rounded-full bg-[var(--color-warn)] inline-block" />
-          <span className="text-[11px] text-[var(--color-muted)]">시험 일정</span>
+          <span className="text-[14px] text-[var(--color-muted)]">시험 일정</span>
         </div>
       </div>
     </div>
