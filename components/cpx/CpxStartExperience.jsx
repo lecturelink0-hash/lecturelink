@@ -188,9 +188,10 @@ export default function CpxStartExperience({
   return <div className="cpx-start-experience">
     <header className="cpx-start-header">
       <div>
-        <h1>어떤 방식으로 연습할까요?</h1>
+        <h1>환자 연습을 통해 CPX를 연습해보세요</h1>
+        <p>복습이 필요한 증례부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
       </div>
-      <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ChevronRight aria-hidden /></Link>
+      <Link href="/cpx/history" className="cpx-record-link"><BarChart3 aria-hidden />나의 CPX 기록 <ChevronRight aria-hidden /></Link>
     </header>
 
     <section className="cpx-quick-section" aria-labelledby="cpx-quick-title">
@@ -321,13 +322,16 @@ export default function CpxStartExperience({
         <div className="cpx-setting-group">
           <div className="cpx-setting-label"><Clock3 aria-hidden /><div><strong>진료 시간</strong></div></div>
           <div className="cpx-time-options" role="radiogroup" aria-label="진료 시간">
-            {timeOptions.map((option) => <button
-              key={option.seconds}
-              type="button"
-              role="radio"
-              aria-checked={limitSeconds === option.seconds}
-              onClick={() => onLimitChange(option.seconds)}
-            >{option.label}{option.seconds === 720 && <span>실전</span>}</button>)}
+            {timeOptions.map((option) => <div key={option.seconds} className="cpx-time-option">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={limitSeconds === option.seconds}
+                aria-describedby={option.seconds === 720 ? 'cpx-time-real' : undefined}
+                onClick={() => onLimitChange(option.seconds)}
+              >{option.label}</button>
+              {option.seconds === 720 && <span id="cpx-time-real" className="cpx-time-tag">실전</span>}
+            </div>)}
           </div>
         </div>
         <button type="button" role="switch" aria-checked={voiceOn} aria-describedby="cpx-voice-description" className="cpx-setting-group cpx-voice-setting" onClick={() => onVoiceChange(!voiceOn)}>
