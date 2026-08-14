@@ -289,9 +289,11 @@ export const PLAN_PRICES: Record<Exclude<PlanTier, 'free'>, number> = {
   pro: PLAN_CATALOG.pro.price,           // 통합
 };
 
+// 이미지 크레딧 상품은 이미지 문항 정책 확정(2026-08-14)으로 폐지 — 이미지 문항은 별도
+// 제한 없이 전체 문항 한도에 포함되므로 판매 근거가 없다. (기존 credit_images 결제 row 는
+// confirm 이 kind 문자열 prefix 로 처리하므로 영향 없음)
 export const CREDIT_PRICES = {
   questions: { amount: 500, price_krw: 4_900 },
-  images: { amount: 200, price_krw: 6_900 },
   uploads: { amount: 10, price_krw: 3_900 },
 } as const;
 

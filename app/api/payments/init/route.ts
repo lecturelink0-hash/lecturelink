@@ -7,7 +7,7 @@
  *
  * Body:
  *   - 구독: { kind: 'subscription', plan_tier: 'lite'|'standard'|'pro' }
- *   - 크레딧: { kind: 'credit', credit_kind: 'questions'|'images'|'uploads' }
+ *   - 크레딧: { kind: 'credit', credit_kind: 'questions'|'uploads' }
  */
 
 import { z } from 'zod';
@@ -29,7 +29,7 @@ const bodySchema = z.discriminatedUnion('kind', [
   }),
   z.object({
     kind: z.literal('credit'),
-    credit_kind: z.enum(['questions', 'images', 'uploads']),
+    credit_kind: z.enum(['questions', 'uploads']),
   }),
 ]);
 
@@ -59,7 +59,6 @@ export const POST = withErrorHandling(async (request: Request) => {
     amount = credit.price_krw;
     const kindLabel: Record<CreditKind, string> = {
       questions: '문항',
-      images: '이미지 문항',
       uploads: '자료 업로드',
     };
     orderName = `${kindLabel[body.credit_kind as CreditKind]} 크레딧 ${credit.amount}회`;
