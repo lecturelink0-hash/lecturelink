@@ -592,11 +592,11 @@ export default function MyPage() {
               <CalendarDays className="w-4 h-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">
-              <h2 className="text-base font-bold text-sage-800 tracking-tight leading-tight">
+              <h2 className="text-[20px] font-bold text-sage-800 tracking-tight leading-tight">
                 {selectedDate.replace(/-/g, '.')}
               </h2>
               {selectedDate === today && (
-                <Badge variant="default" className="mt-1">오늘</Badge>
+                <Badge variant="default" className="mt-1 text-[14px]">오늘</Badge>
               )}
             </div>
           </div>
@@ -605,15 +605,15 @@ export default function MyPage() {
           <div className="mb-4 p-4 rounded-2xl ll-tint">
             {selectedStudy && selectedStudy.count > 0 ? (
               <div className="space-y-1">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[18px]">
                   <span className="text-[var(--color-muted)]">푼 문항</span>
                   <span className="font-semibold text-sage-800">{selectedStudy.count}문항</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[18px]">
                   <span className="text-[var(--color-muted)]">정답</span>
                   <span className="font-semibold text-sage-800">{selectedStudy.correct}문항</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-[18px]">
                   <span className="text-[var(--color-muted)]">정답률</span>
                   <span className="font-semibold text-sage-800">{selectedAccuracy}%</span>
                 </div>
@@ -635,20 +635,20 @@ export default function MyPage() {
                 <div className="mt-3 pt-2.5 border-t border-[var(--color-sage-200)] flex flex-wrap items-center gap-x-4 gap-y-1">
                   <Link
                     href="/wrong-notes"
-                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-xs font-semibold text-sage-700 hover:text-sage-900 transition-colors"
+                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-[15px] font-semibold text-sage-700 hover:text-sage-900 transition-colors"
                   >
                     오답노트에서 복습 <ChevronRight className="w-3 h-3" />
                   </Link>
                   <Link
                     href="/analysis"
-                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-xs font-semibold text-sage-700 hover:text-sage-900 transition-colors"
+                    className="inline-flex items-center gap-0.5 py-2 -my-2 text-[15px] font-semibold text-sage-700 hover:text-sage-900 transition-colors"
                   >
                     상세 분석 <ChevronRight className="w-3 h-3" />
                   </Link>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-[var(--color-muted)] text-center py-2">
+              <p className="text-[15px] text-[var(--color-muted)] text-center py-2">
                 이 날의 학습 기록이 없습니다
               </p>
             )}
@@ -656,7 +656,7 @@ export default function MyPage() {
 
           {/* Exams on this date */}
           <div className="mb-4">
-            <p className="text-xs font-semibold text-sage-700 mb-2">시험 일정</p>
+            <p className="text-[15px] font-semibold text-sage-700 mb-2">시험 일정</p>
             {selectedSchedules.length > 0 ? (
               <ul className="space-y-2">
                 {selectedSchedules.map((s) => {
@@ -669,13 +669,13 @@ export default function MyPage() {
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'}>
+                          <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'} className="text-[14px]">
                             {dLabel}
                           </Badge>
-                          <p className="text-xs font-medium text-sage-800 truncate">{s.title}</p>
+                          <p className="text-[15px] font-medium text-sage-800 truncate">{s.title}</p>
                         </div>
                         {s.memo && (
-                          <p className="text-[11px] text-[var(--color-muted)] mt-0.5 truncate">
+                          <p className="text-[14px] text-[var(--color-muted)] mt-0.5 truncate">
                             {s.memo}
                           </p>
                         )}
@@ -697,14 +697,14 @@ export default function MyPage() {
                 })}
               </ul>
             ) : (
-              <p className="text-xs text-[var(--color-muted)]">이 날의 시험 일정이 없습니다</p>
+              <p className="text-[15px] text-[var(--color-muted)]">이 날의 시험 일정이 없습니다</p>
             )}
           </div>
 
           {/* Upcoming schedules — 날짜를 클릭하지 않아도 D-day 를 한눈에 */}
           {upcomingSchedules.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-semibold text-sage-700 mb-2">다가오는 일정</p>
+              <p className="text-[15px] font-semibold text-sage-700 mb-2">다가오는 일정</p>
               <ul className="space-y-1.5">
                 {upcomingSchedules.map((s) => {
                   const diff = diffDayKeys(s.exam_date, today);
@@ -715,13 +715,13 @@ export default function MyPage() {
                         onClick={() => goToDate(s.exam_date)}
                         className="w-full flex items-center gap-2 p-2 rounded-lg border border-[var(--color-border)] bg-white text-left hover:border-[var(--color-line-strong)] transition-colors"
                       >
-                        <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'}>
+                        <Badge variant={diff >= 0 && diff <= 7 ? 'warn' : 'default'} className="text-[14px]">
                           {diff === 0 ? 'D-DAY' : `D-${diff}`}
                         </Badge>
-                        <span className="min-w-0 flex-1 truncate text-xs font-medium text-sage-800">
+                        <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-sage-800">
                           {s.title}
                         </span>
-                        <span className="flex-shrink-0 text-[11px] text-[var(--color-muted)] tnum">
+                        <span className="flex-shrink-0 text-[14px] text-[var(--color-muted)] tnum">
                           {s.exam_date.slice(5).replace('-', '.')}
                         </span>
                       </button>
@@ -741,12 +741,12 @@ export default function MyPage() {
               handleAddSchedule();
             }}
           >
-            <p id="add-schedule-heading" className="text-xs font-semibold text-sage-700 mb-2">
+            <p id="add-schedule-heading" className="text-[15px] font-semibold text-sage-700 mb-2">
               일정 추가
             </p>
             <div className="space-y-2.5">
               <div>
-                <label htmlFor="schedule-date" className="block text-xs font-medium text-sage-700 mb-1">
+                <label htmlFor="schedule-date" className="block text-[15px] font-medium text-sage-700 mb-1">
                   날짜{' '}
                   <span className="text-[var(--color-warn)]" aria-hidden="true">*</span>
                   <span className="sr-only">(필수)</span>
@@ -759,11 +759,11 @@ export default function MyPage() {
                   aria-required="true"
                   value={formDate}
                   onChange={(e) => setFormDate(e.target.value)}
-                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
+                  className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
                 />
               </div>
               <div>
-                <label htmlFor="schedule-title" className="block text-xs font-medium text-sage-700 mb-1">
+                <label htmlFor="schedule-title" className="block text-[15px] font-medium text-sage-700 mb-1">
                   제목{' '}
                   <span className="text-[var(--color-warn)]" aria-hidden="true">*</span>
                   <span className="sr-only">(필수)</span>
@@ -777,12 +777,12 @@ export default function MyPage() {
                   placeholder="예: 해부학 중간고사"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
+                  className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
                 />
               </div>
               {subjects.length > 0 && (
                 <div>
-                  <label htmlFor="schedule-subject" className="block text-xs font-medium text-sage-700 mb-1">
+                  <label htmlFor="schedule-subject" className="block text-[15px] font-medium text-sage-700 mb-1">
                     과목 (선택)
                   </label>
                   <select
@@ -790,7 +790,7 @@ export default function MyPage() {
                     name="subject_id"
                     value={formSubjectId}
                     onChange={(e) => setFormSubjectId(e.target.value)}
-                    className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
+                    className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
                   >
                     <option value="">선택 안 함</option>
                     {subjects.map((s) => (
@@ -802,7 +802,7 @@ export default function MyPage() {
                 </div>
               )}
               <div>
-                <label htmlFor="schedule-memo" className="block text-xs font-medium text-sage-700 mb-1">
+                <label htmlFor="schedule-memo" className="block text-[15px] font-medium text-sage-700 mb-1">
                   메모 (선택)
                 </label>
                 <input
@@ -812,13 +812,13 @@ export default function MyPage() {
                   placeholder="예: 3~5장 범위"
                   value={formMemo}
                   onChange={(e) => setFormMemo(e.target.value)}
-                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
+                  className="w-full h-11 text-[18px] border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
                 />
               </div>
               <div aria-live="polite">
                 {scheduleFeedback && (
                   <p
-                    className={`text-xs ${
+                    className={`text-[15px] ${
                       scheduleFeedback.type === 'error'
                         ? 'text-[var(--color-warn)]'
                         : 'text-sage-700'
@@ -835,6 +835,7 @@ export default function MyPage() {
                 fullWidth
                 loading={formLoading}
                 disabled={!formTitle.trim() || !formDate}
+                className="text-[19px]"
               >
                 <Plus size={14} />
                 일정 추가
