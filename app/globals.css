@@ -2929,7 +2929,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   min-height: 36px;
   padding: 2px 4px var(--space-3);
   color: var(--color-muted);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -2947,9 +2947,6 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   font-weight: 780;
   font-variant-numeric: tabular-nums;
 }
-
-/* 좌측 열 헤더('주호소')만 목록 항목에 맞춰 한 단계 크게 */
-.cpx-complaint-browser .cpx-browser-title { font-size: 16px; }
 
 /* 시안: 시나리오 열 헤더 아래 점선 구분 */
 .cpx-scenario-browser .cpx-browser-title {
