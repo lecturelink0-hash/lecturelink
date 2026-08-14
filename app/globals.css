@@ -2725,7 +2725,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-recommendation-case p {
   margin: 7px 0 0;
   color: var(--color-muted);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
@@ -2744,7 +2744,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   max-width: 390px;
   margin: var(--space-3) 0 0;
   color: var(--color-muted);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   word-break: keep-all;
 }
