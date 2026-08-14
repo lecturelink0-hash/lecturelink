@@ -18,6 +18,7 @@ const bodySchema = z
     study_purpose: z.enum(['naesin', 'cpx', 'other']),
     study_purpose_detail: z.string().trim().max(100).nullable().optional(),
     acquisition_channel: z.string().trim().max(100).nullable().optional(),
+    referral_code: z.string().trim().max(50).nullable().optional(),
   })
   .superRefine((body, context) => {
     if (body.study_purpose === 'other' && !body.study_purpose_detail) {
@@ -52,6 +53,7 @@ export const POST = withErrorHandling(async (request: Request) => {
       study_purpose: body.study_purpose,
       study_purpose_detail: body.study_purpose === 'other' ? body.study_purpose_detail : null,
       acquisition_channel: body.acquisition_channel ?? null,
+      referral_code: body.referral_code || null,
       onboarded_at: new Date().toISOString(),
     })
     .eq('id', session.userId)

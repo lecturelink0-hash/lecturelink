@@ -42,6 +42,7 @@ export default function OnboardingPage() {
   const [purposeDetail, setPurposeDetail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [acquisitionChannel, setAcquisitionChannel] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [formError, setFormError] = useState('');
@@ -109,6 +110,7 @@ export default function OnboardingPage() {
         study_purpose: studyPurpose,
         study_purpose_detail: studyPurpose === 'other' ? trimmedPurposeDetail : null,
         acquisition_channel: acquisitionChannel || null,
+        referral_code: referralCode.trim() || null,
       });
       setCompleted(true);
     } catch (error) {
@@ -132,15 +134,26 @@ export default function OnboardingPage() {
           <span>{learnerName ? `${learnerName}님, ` : ''}준비가 끝났어요.</span>
           <br />바로 학습을 시작해보세요
         </h1>
-        <p>입력한 학습 목적에 맞는 기능을 홈에서 바로 이용할 수 있습니다.</p>
+        <p>
+          입력한 학습 목적에 맞는 기능을 홈에서 바로 이용할 수 있습니다.
+          <br />
+          문제 생성 30문항과 CPX 1회는 지금 무료로 먼저 체험할 수 있어요.
+        </p>
         <div className={styles.completionActions}>
           <Button
             size="lg"
             className={styles.primaryButton}
+            onClick={() => { window.location.href = '/plan'; }}
+          >
+            요금제 보기 · 무료체험 시작
+            <ArrowRight aria-hidden="true" />
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
             onClick={() => { window.location.href = '/dashboard'; }}
           >
             홈으로 이동
-            <ArrowRight aria-hidden="true" />
           </Button>
         </div>
       </section>
@@ -214,6 +227,19 @@ export default function OnboardingPage() {
               ariaLabel="알게 된 경로 선택"
               className={styles.selectControl}
               options={CHANNEL_OPTIONS.map((channel) => ({ value: channel, label: channel }))}
+            />
+          </Field>
+
+          <Field label="추천인 코드" htmlFor="onboarding-referral" hint="선택">
+            <input
+              id="onboarding-referral"
+              type="text"
+              value={referralCode}
+              onChange={(event) => setReferralCode(event.target.value)}
+              placeholder="친구·선배 추천 코드"
+              maxLength={50}
+              autoComplete="off"
+              className={styles.textInput}
             />
           </Field>
         </div>
