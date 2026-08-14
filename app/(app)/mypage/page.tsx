@@ -574,7 +574,7 @@ export default function MyPage() {
         <Card
           icon={<CalendarDays className="w-4 h-4" strokeWidth={2} />}
           title="학습 캘린더"
-          titleClassName="text-[21px]"
+          titleClassName="text-[20px]"
         >
           <StudyCalendar
             viewYear={viewYear}
