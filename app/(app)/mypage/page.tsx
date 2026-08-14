@@ -567,8 +567,9 @@ export default function MyPage() {
         </div>
       </div>
 
-      {/* ── Calendar + Selected Date Panel (상단 2칸 바로 아래) ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mt-6">
+      {/* ── Calendar + Selected Date Panel (상단 2칸 바로 아래) ──
+           id="calendar": 대시보드 D-day 칩·시험 일정 등록 버튼의 앵커 진입점 */}
+      <div id="calendar" className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mt-6 scroll-mt-24">
         {/* ── Calendar ── */}
         <Card>
           <div className="flex items-center gap-2.5 mb-5">
