@@ -287,7 +287,7 @@ export default function LibraryPage() {
     const upload = uploads.find((item) => item.id === requestedUploadId);
     if (!upload) return;
 
-    const requestSignature = `${upload.id}:${requestedReset ? 'reset' : 'resume'}`;
+    const requestSignature = `${upload.id}:${requestedReset ? 'reset' : requestedResume ? 'resume' : 'open'}`;
     if (openedSetRequestRef.current !== requestSignature) {
       openedSetRequestRef.current = requestSignature;
       openUpload(upload, requestedReset);

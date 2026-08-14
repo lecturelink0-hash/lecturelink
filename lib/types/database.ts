@@ -81,7 +81,7 @@ export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'past_due'
 
 export type UserRole = 'user' | 'admin';
 
-export type StudyPurpose = 'naesin' | 'kmle' | 'usmle' | 'other';
+export type StudyPurpose = 'naesin' | 'kmle' | 'usmle' | 'cpx' | 'other';
 
 export type MockExamStatus = 'in_progress' | 'submitted' | 'abandoned';
 
@@ -178,6 +178,7 @@ export type UserRow = {
   faculty_approved_at: string | null;
   faculty_approved_by: string | null;
   study_purpose: StudyPurpose | null;
+  study_purpose_detail: string | null;
   referral_code: string | null;
   acquisition_channel: string | null;
   onboarded_at: string | null;
