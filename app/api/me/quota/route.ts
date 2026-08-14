@@ -15,10 +15,11 @@ export const GET = withErrorHandling(async () => {
   // amount=1 로 호출 — 본 엔드포인트는 limit/used/bonus/remaining 표시만 사용하므로
   // amount 값은 반환되는 표시값에 영향이 없다. (ok 플래그는 무시한다.)
   // 00016 입력 검증에서 p_amount<=0 은 예외이므로 amount=0 은 사용 불가.
-  const [questions, uploads, images] = await Promise.all([
+  const [questions, uploads, images, cpxSeconds] = await Promise.all([
     checkQuota(session.userId, 'questions', 1),
     checkQuota(session.userId, 'uploads', 1),
     checkQuota(session.userId, 'images', 1),
+    checkQuota(session.userId, 'cpx_seconds', 1),
   ]);
 
   return ok({
@@ -42,6 +43,13 @@ export const GET = withErrorHandling(async () => {
       used: images.used,
       bonus: images.bonus,
       remaining: images.remaining,
+    },
+    // CPX 이용 시간(초) — 시간 차감 정책 v1.0. 화면 표시는 분 단위로 환산해 사용할 것.
+    cpx_seconds: {
+      limit: cpxSeconds.limit,
+      used: cpxSeconds.used,
+      bonus: cpxSeconds.bonus,
+      remaining: cpxSeconds.remaining,
     },
   });
 });

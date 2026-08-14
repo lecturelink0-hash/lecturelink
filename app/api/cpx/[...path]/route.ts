@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ApiErrors, withErrorHandling } from '@/lib/utils/api';
+import { requireQuota } from '@/lib/quota/check';
 import { persistCpxExchange } from '@/lib/cpx/persistence';
 
 export const dynamic = 'force-dynamic';
@@ -147,6 +148,33 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   const session = await requireSession();
   const { path } = await context.params;
   if (!path.length || !ALLOWED_ROOTS.has(path[0])) return ApiErrors.notFound('CPX API');
+
+  // CPX 시간 차감 정책(v1.0) — 세션 시작 게이트.
+  if (request.method === 'POST' && path.length === 1 && path[0] === 'sessions') {
+    // 잔여 시간 1분 미만이면 시작 불가 (정책 4-5). 한도·잔여는 cpx_seconds quota 기준.
+    await requireQuota(session.userId, 'cpx_seconds', 60);
+
+    // 동시 진행 세션 1개 (확정 파라미터) — 살아있는(active + 하트비트 10분 이내) 세션이
+    // 있으면 차단한다. 하트비트가 끊긴 세션은 스윕 크론이 정산하므로 여기서 막지 않는다.
+    if (process.env.CPX_PERSIST_TO_SUPABASE === 'true') {
+      const supabase = await createServerClient();
+      const { data: activeSessions } = await supabase
+        .from('cpx_sessions')
+        .select('heartbeat_at, started_at')
+        .eq('user_id', session.userId)
+        .eq('status', 'active');
+      const aliveSince = Date.now() - 10 * 60 * 1000;
+      const hasLive = (activeSessions ?? []).some(
+        (s) => new Date(s.heartbeat_at ?? s.started_at).getTime() > aliveSince,
+      );
+      if (hasLive) {
+        return NextResponse.json(
+          { detail: '이미 진행 중인 CPX 연습이 있습니다. 기존 연습을 종료한 뒤 다시 시작해주세요.' },
+          { status: 409 },
+        );
+      }
+    }
+  }
 
   if (request.method === 'GET' && path.length === 1 && path[0] === 'history'
       && process.env.CPX_PERSIST_TO_SUPABASE === 'true') {
