@@ -360,6 +360,8 @@
 
 .completionActions {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   margin-top: var(--space-8);
 }
 
@@ -397,6 +399,8 @@
 
   .completionActions {
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
