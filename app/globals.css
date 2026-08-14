@@ -2634,8 +2634,10 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   border: 1.5px solid #e2ded5;
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, .42);
+  /* -webkit- 접두사를 직접 쓰지 말 것: 빌드의 lightningcss가 값이 같은 선언을
+     중복 제거하며 나중에 온 접두사판만 남겨(표준 속성 소실) 최신 크롬에서
+     블러가 통째로 죽는다(운영 실측). 접두사는 번들러가 타깃에 맞춰 붙인다. */
   backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .8),
     0 14px 34px -26px rgba(21, 62, 47, .3);
