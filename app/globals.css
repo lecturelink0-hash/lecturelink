@@ -2962,6 +2962,260 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   .cpx-voice-setting { align-items: center; flex-direction: row; }
 }
 
+/* Dashboard parity with the approved local student preview. */
+.student-dashboard .dashboard-next-copy-content {
+  margin-block: auto;
+}
+
+.student-dashboard .dashboard-next-copy-content > p {
+  margin: 18px 0 0;
+}
+
+.student-dashboard .dashboard-material-copy > span {
+  font-size: 12px;
+}
+
+.student-dashboard .dashboard-material-copy strong {
+  font-size: 14px;
+}
+
+.student-dashboard .dashboard-material-copy small {
+  font-size: 12px;
+}
+
+.student-dashboard .dashboard-cpx-card {
+  padding: 32px;
+}
+
+.student-dashboard .dashboard-cpx-copy {
+  max-width: calc(100% - 220px);
+}
+
+.student-dashboard .dashboard-cpx-card h2 {
+  max-width: 620px;
+  font-size: clamp(27px, 3.35vw, 40px);
+  font-weight: 800;
+  line-height: 1.22;
+}
+
+.student-dashboard .dashboard-cpx-action {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  margin-top: auto;
+  padding: 0 18px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 740;
+  text-decoration: none;
+}
+
+.student-dashboard .dashboard-cpx-character-frame {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  right: -14px;
+  bottom: 0;
+  width: 216px;
+  overflow: hidden;
+  pointer-events: none;
+  filter: drop-shadow(0 14px 15px rgba(42, 77, 59, .1));
+}
+
+.student-dashboard .dashboard-cpx-character {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 216px;
+  max-width: none;
+  height: auto;
+  transform: scaleX(-1);
+  transform-origin: center top;
+}
+
+.student-dashboard .dashboard-weekly-card {
+  justify-content: space-between;
+  gap: clamp(26px, 2.6vw, 32px);
+  padding: clamp(32px, 3.2vw, 42px) clamp(20px, 2.2vw, 28px);
+}
+
+.student-dashboard .dashboard-section-heading {
+  align-items: center;
+}
+
+.student-dashboard .dashboard-section-heading h2 {
+  font-size: clamp(28px, 2.5vw, 32px);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1.2;
+}
+
+.student-dashboard .dashboard-queue-heading h2 {
+  font-size: clamp(19px, 1.6vw, 21px);
+  line-height: 1.15;
+}
+
+.student-dashboard .dashboard-queue-heading p {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.student-dashboard .dashboard-section-heading .dashboard-streak {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--dashboard-forest);
+  font-size: clamp(16px, 1.25vw, 17px);
+  font-weight: 680;
+  line-height: 1.3;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.student-dashboard .dashboard-streak svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--dashboard-button);
+  stroke-width: 2;
+}
+
+.student-dashboard .dashboard-metrics > div {
+  padding: 0 clamp(6px, 1.5vw, 18px);
+  text-align: center;
+}
+
+.student-dashboard .dashboard-metrics > div + div {
+  padding-left: clamp(6px, 1.5vw, 18px);
+  border-left: 0;
+}
+
+.student-dashboard .dashboard-metrics dt {
+  font-size: clamp(15px, 1.25vw, 17px);
+}
+
+.student-dashboard .dashboard-metrics dd {
+  margin: 8px 0 0;
+  font-size: clamp(26px, 2.7vw, 32px);
+}
+
+.student-dashboard .dashboard-weekly-card .study-week {
+  margin: 0;
+}
+
+.student-dashboard .dashboard-weekly-card .study-day {
+  gap: 10px;
+  font-size: clamp(15px, 1.2vw, 16px);
+}
+
+.student-dashboard .dashboard-weekly-card .study-day i {
+  width: clamp(24px, 2vw, 26px);
+  height: clamp(24px, 2vw, 26px);
+}
+
+.student-dashboard .dashboard-weekly-card .study-day svg {
+  width: 15px;
+  height: 15px;
+}
+
+.student-dashboard .dashboard-step-copy strong {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+@media (max-width: 960px) {
+  .student-dashboard .dashboard-cpx-copy {
+    max-width: 480px;
+    padding-right: 200px;
+  }
+
+  .student-dashboard .dashboard-cpx-character-frame {
+    right: -10px;
+    width: 207px;
+  }
+
+  .student-dashboard .dashboard-cpx-character {
+    width: 207px;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-dashboard .dashboard-cpx-copy {
+    max-width: none;
+    padding-right: 136px;
+  }
+
+  .student-dashboard .dashboard-cpx-character-frame {
+    right: -12px;
+    width: 171px;
+  }
+
+  .student-dashboard .dashboard-cpx-character {
+    width: 171px;
+  }
+
+  .student-dashboard .dashboard-weekly-card {
+    gap: 24px;
+    padding: 28px 20px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .dashboard-section-heading {
+    gap: 8px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .dashboard-section-heading .dashboard-streak {
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .dashboard-streak svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .dashboard-metrics > div + div {
+    padding-inline: 10px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .dashboard-metrics dt {
+    font-size: 13px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .dashboard-metrics dd {
+    font-size: 22px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .study-day {
+    gap: 9px;
+    font-size: 13px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .study-day i {
+    width: 22px;
+    height: 22px;
+  }
+
+  .student-dashboard .dashboard-weekly-card .study-day svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .student-dashboard .dashboard-cpx-copy {
+    padding-right: 0;
+  }
+
+  .student-dashboard .dashboard-cpx-character-frame {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .cpx-start-header { flex-direction: column; gap: var(--space-3); }
   .cpx-start-header h1 { font-size: 29px; }

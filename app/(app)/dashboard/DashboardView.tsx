@@ -1,9 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Check, FileText, Stethoscope } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, FileText, Flame, Stethoscope } from 'lucide-react';
 import { KakaoEmailPrompt } from '@/components/auth/KakaoEmailPrompt';
-import { formatStudyTime } from '@/lib/utils/kst';
-import cpxCharacterWave from '@/public/dashboard/cpx-character-wave.png';
+import loginCpxCharacter from '@/public/login-cpx-character-v2.png';
 
 interface Day {
   label: string;
@@ -97,8 +96,10 @@ export function DashboardView({
       <section className="dashboard-priority-grid" aria-label="오늘의 우선 학습">
         <article className="dashboard-card dashboard-next-card">
           <div className="dashboard-next-copy">
-            <h2>내신 대비 문항 생성하기</h2>
-            <p>강의자료를 올리면 내 시험 범위에 맞는 문항을 만들 수 있어요.</p>
+            <div className="dashboard-next-copy-content">
+              <h2>내신 대비 문항 생성하기</h2>
+              <p>강의자료를 올리면 내 시험 범위에 맞는 문항을 만들 수 있어요.</p>
+            </div>
 
             <div className="dashboard-next-actions">
               <Link href="/notes" className="dashboard-primary-action">
@@ -136,31 +137,31 @@ export function DashboardView({
             <Stethoscope className="dashboard-cpx-icon" aria-hidden="true" />
             <h2>CPX 진료 연습</h2>
             <p>환자 진료 과정을 실전처럼 단계별로 연습하세요.</p>
-            <span className="dashboard-cpx-flow">문진 → 신체진찰 → 환자교육</span>
-            <Link href="/cpx" className="dashboard-cpx-action">
+            <span className="dashboard-cpx-flow">병력청취 → 신체진찰 → 환자교육</span>
+            <Link href="/cpx" className="dashboard-primary-action dashboard-cpx-action">
               CPX 시작하기 <ArrowRight aria-hidden="true" />
             </Link>
           </div>
-          <Image
-            src={cpxCharacterWave}
-            alt="손을 들어 인사하는 CPX 환자 캐릭터"
-            className="dashboard-cpx-character"
-            sizes="(max-width: 720px) 116px, 150px"
-            priority
-          />
+          <div className="dashboard-cpx-character-frame">
+            <Image
+              src={loginCpxCharacter}
+              alt="손을 들어 인사하는 CPX 환자 캐릭터"
+              className="dashboard-cpx-character"
+              sizes="(max-width: 720px) 171px, 216px"
+              priority
+            />
+          </div>
         </article>
       </section>
 
       <section className="dashboard-progress-grid" aria-label="학습 기록과 다음 단계">
         <article className="dashboard-card dashboard-weekly-card">
           <div className="dashboard-section-heading">
-            <div>
-              <h2>이번 주 학습</h2>
-              <p>{streak > 0 ? `${streak}일 연속 학습 중` : '오늘부터 학습 기록을 만들어보세요'}</p>
-            </div>
-            <Link href="/analysis" className="dashboard-inline-link">
-              상세 분석 <ArrowRight aria-hidden="true" />
-            </Link>
+            <h2>이번 주 학습</h2>
+            <p className="dashboard-streak">
+              {streak > 0 && <Flame aria-hidden="true" />}
+              <span>{streak > 0 ? `${streak}일 연속 학습 중` : '오늘부터 학습 기록을 만들어보세요'}</span>
+            </p>
           </div>
 
           <dl className="dashboard-metrics">
@@ -189,7 +190,7 @@ export function DashboardView({
 
         <section className="dashboard-next-queue" aria-labelledby="next-steps-title">
           <div className="dashboard-queue-heading">
-            <h2 id="next-steps-title">그다음 학습</h2>
+            <h2 id="next-steps-title">다음 학습</h2>
             <p>진행 중인 학습과 다음 단계를 모았습니다.</p>
           </div>
           <ol>
@@ -213,4 +214,13 @@ export function DashboardView({
 
 function materialDisplayTitle(fileName: string) {
   return fileName.replace(/\.[^.]+$/, '').replace(/_/g, ' ').trim();
+}
+
+function formatStudyTime(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours > 0) return `${hours}시간 ${remainingMinutes}분`;
+  if (minutes > 0) return `${minutes}분`;
+  return '0분';
 }
