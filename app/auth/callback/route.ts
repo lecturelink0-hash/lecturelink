@@ -15,6 +15,8 @@ export async function GET(request: Request) {
   const code = searchParams.get('code');
   const tokenHash = searchParams.get('token_hash');
   const type = searchParams.get('type'); // signup | email | invite | magiclink | recovery
+  // GoTrue 가 /auth/v1/verify 검증 실패를 쿼리로 붙여 보낸 경우(만료·재사용 링크).
+  const gotrueErrorCode = searchParams.get('error_code');
   // 이메일 인증(회원가입 확인)이면 완료 안내 페이지로, 그 외(카카오 등)는 앱 홈으로.
   const isEmailConfirm = type === 'signup' || type === 'email' || type === 'invite';
   // / 는 이제 랜딩이므로, 인증 완료(이메일 확인·카카오) 후 기본 목적지는 앱 홈(/dashboard).
@@ -68,7 +70,18 @@ export async function GET(request: Request) {
     return fallback;
   }
 
+  // 검증 실패 처리 — 같은 브라우저에 이미 로그인 세션이 있으면(링크 중복 클릭 등)
+  // 실패가 아니라 정상 진입으로 취급한다. 오류 화면보다 앱으로 보내는 쪽이 항상 낫다.
+  async function failureRedirect(errorCode: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      return NextResponse.redirect(`${base}${await accountDestination(next)}`);
+    }
+    return NextResponse.redirect(`${base}/login?error=${errorCode}`);
+  }
+
   // (A) 이메일 확인 링크(token_hash + type) — verifyOtp 로 검증.
+  // 쿠키가 필요 없어 가입한 브라우저가 아니어도(메일앱 인앱 브라우저 등) 성립한다.
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
@@ -77,16 +90,26 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${base}${await accountDestination(next)}`);
     }
+    return failureRedirect('confirm_link_expired');
   }
 
   // (B) OAuth / PKCE(?code) — 세션 교환.
+  // 가입을 개시한 브라우저의 code_verifier 쿠키가 필요하다. 메일 링크를 다른
+  // 브라우저(카카오톡·네이버 인앱 등)에서 열면 교환만 실패하고, GoTrue /verify 를
+  // 거쳐 왔다면 이메일 인증 자체는 이미 완료된 상태다.
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${base}${await accountDestination(next)}`);
     }
+    return failureRedirect('confirm_verified_login_needed');
   }
 
-  // 코드 없음 또는 교환 실패
+  // GoTrue 검증 실패 리다이렉트(만료·재사용 링크).
+  if (gotrueErrorCode) {
+    return failureRedirect(gotrueErrorCode === 'otp_expired' ? 'confirm_link_expired' : 'callback_failed');
+  }
+
+  // 파라미터 없음(구형 implicit 링크는 세션을 URL 프래그먼트로 전달해 서버가 볼 수 없다)
   return NextResponse.redirect(`${base}/login?error=callback_failed`);
 }
