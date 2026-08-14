@@ -1440,7 +1440,7 @@
   min-width: 0;
   min-height: 254px;
   flex-direction: column;
-  padding: 54px 24px 24px;
+  padding: 50px 24px 28px;
   border-radius: 16px;
 }
 
@@ -1532,6 +1532,7 @@
 .student-dashboard .dashboard-weekly-card .dashboard-inline-link {
   margin: auto 0;
   align-self: flex-end;
+  transform: translateY(-4px);
 }
 
 .student-dashboard .dashboard-dday-chip {
