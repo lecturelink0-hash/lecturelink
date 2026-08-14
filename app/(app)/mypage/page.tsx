@@ -570,8 +570,12 @@ export default function MyPage() {
       {/* ── Calendar + Selected Date Panel (상단 2칸 바로 아래) ──
            id="calendar": 대시보드 D-day 칩·시험 일정 등록 버튼의 앵커 진입점 */}
       <div id="calendar" className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mt-6 scroll-mt-24">
-        {/* ── Calendar — 카드 제목은 Card 의 공통 규격(h2 · text-base)으로 ── */}
-        <Card icon={<CalendarDays className="w-4 h-4" strokeWidth={2} />} title="학습 캘린더">
+        {/* ── Calendar — 카드 제목만 공통 규격(text-base)보다 34% 확대 ── */}
+        <Card
+          icon={<CalendarDays className="w-4 h-4" strokeWidth={2} />}
+          title="학습 캘린더"
+          titleClassName="text-[21px]"
+        >
           <StudyCalendar
             viewYear={viewYear}
             viewMonth={viewMonth}
@@ -592,7 +596,7 @@ export default function MyPage() {
               <CalendarDays className="w-4 h-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">
-              <h2 className="text-[20px] font-bold text-sage-800 tracking-tight leading-tight">
+              <h2 className="text-[24px] font-bold text-sage-800 tracking-tight leading-tight">
                 {selectedDate.replace(/-/g, '.')}
               </h2>
               {selectedDate === today && (
