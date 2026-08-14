@@ -233,12 +233,12 @@ export const PLAN_LIMITS: Record<
   PlanTier,
   { questions: number; uploads: number; images: number; price: number }
 > = {
-  // 요금제 개편(기획서 기준): 내신 대비 7,900 / 국가고시 대비 9,900 / 통합형 14,900.
-  // (통합형 무제한 20,900 은 별도 enum 값이 필요해 백엔드 마이그레이션 후 추가 — 현재는 표시만)
+  // 가격의 단일 소스는 lib/payment/plans.ts PLAN_CATALOG — 여기 값은 그와 일치해야 한다.
+  // 2026-08 개편: 내신대비 7,900 / CPX 11,900 / 통합 16,900.
   free: { questions: 50, uploads: 1, images: 5, price: 0 },
   lite: { questions: 500, uploads: 10, images: 30, price: 7900 },
-  standard: { questions: 500, uploads: 5, images: 40, price: 9900 },
-  pro: { questions: 2000, uploads: 100, images: 200, price: 14900 },
+  standard: { questions: 500, uploads: 5, images: 40, price: 11900 },
+  pro: { questions: 2000, uploads: 100, images: 200, price: 16900 },
 };
 
 // ───────────── AI 생성 파이프라인 ─────────────

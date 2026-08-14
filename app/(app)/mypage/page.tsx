@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  ChevronLeft,
   ChevronRight,
   CalendarDays,
   Trash2,
@@ -15,8 +14,12 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { StudyCalendar } from '@/components/ui/StudyCalendar';
 import { api, ApiError } from '@/lib/api/client';
+import { PLAN_CATALOG } from '@/lib/payment/plans';
+import { calcStreak, diffDayKeys, formatStudyTime, kstTodayKey } from '@/lib/utils/kst';
 import type { UserProfile } from '@/lib/types/domain';
 import type { PlanTier } from '@/lib/types/database';
 
@@ -39,14 +42,6 @@ interface CalendarSummary {
 interface StudyCalendarResponse {
   days: StudyDay[];
   summary: CalendarSummary;
-}
-
-/** 초 → "N시간 M분" (0 이면 "0분") */
-function formatStudyTime(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60);
-  const h = Math.floor(m / 60);
-  const mm = m % 60;
-  return h > 0 ? `${h}시간 ${mm}분` : `${mm}분`;
 }
 
 interface ExamSchedule {
@@ -92,13 +87,6 @@ interface SubscriptionResponse {
 
 // ─── Static maps ─────────────────────────────────────────────────────────────
 
-const PLAN_DISPLAY: Record<PlanTier, { name: string; price: number; desc: string }> = {
-  free:     { name: '무료 플랜',    price: 0,     desc: '기본 학습' },
-  lite:     { name: '내신 대비',    price: 7900,  desc: '학교 시험·내신 위주' },
-  standard: { name: '국가고시 대비', price: 9900,  desc: '국가고시형 집중' },
-  pro:      { name: '통합형',       price: 14900, desc: '내신 + 국시 통합' },
-};
-
 const GRADE_LABEL: Record<string, string> = {
   pre_1: '예과 1학년',
   pre_2: '예과 2학년',
@@ -108,64 +96,9 @@ const GRADE_LABEL: Record<string, string> = {
   med_4: '본과 4학년',
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function toDateKey(y: number, m: number, d: number): string {
-  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
-
-function todayKey(): string {
-  const now = new Date();
-  return toDateKey(now.getFullYear(), now.getMonth() + 1, now.getDate());
-}
-
-function calcStreak(days: StudyDay[]): number {
-  const activeSet = new Set(days.filter((d) => d.count > 0).map((d) => d.date));
-  const today = todayKey();
-  const msPerDay = 86400000;
-
-  let streak = 0;
-  let cur = activeSet.has(today)
-    ? new Date(today)
-    : (() => {
-        const yesterday = new Date(new Date(today).getTime() - msPerDay);
-        const yk = toDateKey(yesterday.getFullYear(), yesterday.getMonth() + 1, yesterday.getDate());
-        return activeSet.has(yk) ? yesterday : null;
-      })();
-
-  if (!cur) return 0;
-
-  while (true) {
-    const key = toDateKey(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
-    if (!activeSet.has(key)) break;
-    streak++;
-    cur = new Date(cur.getTime() - msPerDay);
-  }
-  return streak;
-}
-
-function daysInMonth(y: number, m: number): number {
-  return new Date(y, m, 0).getDate();
-}
-
-function firstDayOfWeek(y: number, m: number): number {
-  return new Date(y, m - 1, 1).getDay();
-}
-
-function countBgClass(count: number): string {
-  if (count === 0) return '';
-  if (count < 10) return 'bg-[var(--color-sage-200)]';
-  if (count < 30) return 'bg-sage-500 text-white';
-  return 'bg-sage-700 text-white';
-}
-
-function diffDays(target: string): number {
-  const today = new Date(todayKey());
-  const t = new Date(target);
-  return Math.round((t.getTime() - today.getTime()) / 86400000);
-}
-
 // ─── Main Page ───────────────────────────────────────────────────────────────
+// 날짜·스트릭·D-day 계산은 전부 lib/utils/kst 의 KST 기준 공용 유틸 사용
+// (데이터가 KST 로 집계되므로 브라우저 로컬 타임존을 쓰면 어긋난다).
 
 export default function MyPage() {
   // Data state
@@ -179,13 +112,12 @@ export default function MyPage() {
   const [error, setError] = useState<string | null>(null);
   const [cancellingSubscription, setCancellingSubscription] = useState(false);
 
-  // Calendar navigation
-  const now = new Date();
-  const [viewYear, setViewYear] = useState(now.getFullYear());
-  const [viewMonth, setViewMonth] = useState(now.getMonth() + 1);
+  // Calendar navigation — 초기 뷰는 KST 기준 오늘이 속한 달
+  const [viewYear, setViewYear] = useState(() => Number(kstTodayKey().slice(0, 4)));
+  const [viewMonth, setViewMonth] = useState(() => Number(kstTodayKey().slice(5, 7)));
 
   // Selected date
-  const [selectedDate, setSelectedDate] = useState<string>(todayKey());
+  const [selectedDate, setSelectedDate] = useState<string>(() => kstTodayKey());
 
   // Form state
   const [formTitle, setFormTitle] = useState('');
@@ -193,6 +125,12 @@ export default function MyPage() {
   const [formMemo, setFormMemo] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
+  const [scheduleFeedback, setScheduleFeedback] = useState<
+    { type: 'success' | 'error'; text: string } | null
+  >(null);
+  const [pendingDelete, setPendingDelete] = useState<ExamSchedule | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   // ─── Fetch ──────────────────────────────────────────────────────────────
 
@@ -252,16 +190,18 @@ export default function MyPage() {
   });
 
   const summary = calendarData?.summary;
-  const streak = calendarData ? calcStreak(calendarData.days) : 0;
+  const streak = calendarData
+    ? calcStreak(calendarData.days.filter((d) => d.count > 0).map((d) => d.date))
+    : 0;
   const accuracyPct = summary ? Math.round((summary.accuracy ?? 0) * 100) : 0;
   const generatedQuestionCount = quota?.questions.used ?? 0;
 
-  const today = todayKey();
+  const today = kstTodayKey();
 
   // Profile / plan display
   const displayName = profile?.displayName ?? '학생';
   const planTier: PlanTier = profile?.planTier ?? quota?.plan_tier ?? 'free';
-  const plan = PLAN_DISPLAY[planTier];
+  const plan = PLAN_CATALOG[planTier];
   const schoolLabel = profile?.school?.shortName ?? profile?.school?.name ?? null;
   const gradeLabelText = profile?.grade ? (GRADE_LABEL[profile.grade] ?? profile.grade) : null;
   const identitySub = [schoolLabel, gradeLabelText].filter(Boolean).join(' · ');
@@ -274,8 +214,8 @@ export default function MyPage() {
 
   async function cancelSubscription() {
     if (!activeSubscription?.auto_renew || cancellingSubscription) return;
-    if (!confirm('자동 갱신을 해제할까요? 이용 기간이 남아 있다면 만료일까지 사용할 수 있습니다.')) return;
     setCancellingSubscription(true);
+    setSubscriptionError(null);
     try {
       await api.post('/api/me/subscription/cancel', {});
       setSubscription((current) => current?.subscription ? {
@@ -283,21 +223,20 @@ export default function MyPage() {
         subscription: { ...current.subscription, auto_renew: false },
       } : current);
     } catch (cause) {
-      alert(cause instanceof ApiError ? cause.message : '자동 갱신을 해제하지 못했습니다.');
+      setSubscriptionError(
+        cause instanceof ApiError ? cause.message : '자동 갱신을 해제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
     } finally {
       setCancellingSubscription(false);
+      setCancelDialogOpen(false);
     }
   }
 
-  // Calendar grid
-  const totalDays = daysInMonth(viewYear, viewMonth);
-  const startDow = firstDayOfWeek(viewYear, viewMonth);
-  const cells: (number | null)[] = [
-    ...Array<null>(startDow).fill(null),
-    ...Array.from({ length: totalDays }, (_, i) => i + 1),
-  ];
-  // pad to full rows
-  while (cells.length % 7 !== 0) cells.push(null);
+  // Calendar cell data (그리드 구성·키보드 내비게이션은 StudyCalendar 담당)
+  const getCalendarDay = (dateKey: string) => ({
+    count: dayIndex[dateKey]?.count ?? 0,
+    hasExam: (scheduleIndex[dateKey]?.length ?? 0) > 0,
+  });
 
   // Selected date info
   const selectedStudy = dayIndex[selectedDate];
@@ -330,6 +269,7 @@ export default function MyPage() {
   async function handleAddSchedule() {
     if (!formTitle.trim()) return;
     setFormLoading(true);
+    setScheduleFeedback(null);
     try {
       await api.post('/api/exam-schedules', {
         title: formTitle.trim(),
@@ -341,8 +281,14 @@ export default function MyPage() {
       setFormSubjectId('');
       setFormMemo('');
       await fetchSchedules();
-    } catch {
-      // silent
+      setScheduleFeedback({ type: 'success', text: '일정이 추가되었습니다.' });
+    } catch (cause) {
+      setScheduleFeedback({
+        type: 'error',
+        text: cause instanceof ApiError
+          ? cause.message
+          : '일정을 추가하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      });
     } finally {
       setFormLoading(false);
     }
@@ -350,13 +296,19 @@ export default function MyPage() {
 
   async function handleDeleteSchedule(id: string) {
     setDeleteLoadingId(id);
+    setScheduleFeedback(null);
     try {
       await api.delete(`/api/exam-schedules/${id}`);
       await fetchSchedules();
+      setScheduleFeedback({ type: 'success', text: '일정이 삭제되었습니다.' });
     } catch {
-      // silent
+      setScheduleFeedback({
+        type: 'error',
+        text: '일정을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      });
     } finally {
       setDeleteLoadingId(null);
+      setPendingDelete(null);
     }
   }
 
@@ -368,7 +320,7 @@ export default function MyPage() {
         <PageHeader
           eyebrow="마이페이지"
           title="안녕하세요"
-          description="이번 주 학습 흐름과 요금제·개정 정보를 한곳에서 확인하세요"
+          description="학습 기록과 요금제·계정 정보를 한곳에서 확인하세요"
         />
         <div className="flex items-center justify-center h-64 text-[var(--color-muted)]">
           <div className="text-center">
@@ -386,7 +338,7 @@ export default function MyPage() {
         <PageHeader
           eyebrow="마이페이지"
           title="안녕하세요"
-          description="이번 주 학습 흐름과 요금제·개정 정보를 한곳에서 확인하세요"
+          description="학습 기록과 요금제·계정 정보를 한곳에서 확인하세요"
         />
         <Card>
           <div className="flex items-center gap-2 text-[var(--color-warn)]">
@@ -407,7 +359,7 @@ export default function MyPage() {
       <PageHeader
         eyebrow="마이페이지"
         title={`${displayName}님 안녕하세요`}
-        description="이번 주 학습 흐름과 요금제·개정 정보를 한곳에서 확인하세요"
+        description="학습 기록과 요금제·계정 정보를 한곳에서 확인하세요"
       />
 
       {/* ── Top: Profile + Plan ── */}
@@ -423,7 +375,7 @@ export default function MyPage() {
                 <h2 className="text-[17px] font-bold text-sage-800 tracking-tight leading-none">
                   {displayName}
                 </h2>
-                <Badge variant="default">{plan.name}</Badge>
+                <Badge variant="default">{plan.name} 플랜</Badge>
               </div>
               {identitySub && (
                 <p className="text-[13px] text-[var(--color-muted)] mt-1.5">{identitySub}</p>
@@ -436,7 +388,7 @@ export default function MyPage() {
 
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-px overflow-hidden rounded-xl border border-[var(--color-sage-200)] bg-[var(--color-sage-200)]">
             <ProfileStat label="누적 학습시간" value={formatStudyTime(summary?.totalStudySeconds ?? 0)} />
-            <ProfileStat label="생성한 문항" value={`${generatedQuestionCount}문항`} />
+            <ProfileStat label="이번 달 생성 문항" value={`${generatedQuestionCount}문항`} />
             <ProfileStat label="학습한 날" value={`${summary?.activeDays ?? 0}일`} />
             <ProfileStat label="평균 정답률" value={`${accuracyPct}%`} />
           </div>
@@ -457,7 +409,7 @@ export default function MyPage() {
           {/* Plan highlight */}
           <div className="rounded-xl bg-sage-700 text-white px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[14px] font-bold leading-tight">{plan.name}</p>
+              <p className="text-[14px] font-bold leading-tight">{plan.name} 플랜</p>
               <p className="text-[11px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
             </div>
             <p className="text-right flex-shrink-0">
@@ -494,10 +446,15 @@ export default function MyPage() {
             <span className="font-semibold text-sage-800 tnum">{activeSubscription ? nextBillingDate : '없음'}</span>
           </div>
           {activeSubscription?.auto_renew && (
-            <button type="button" onClick={cancelSubscription} disabled={cancellingSubscription} className="mt-2 text-left text-xs font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50">
+            <button type="button" onClick={() => setCancelDialogOpen(true)} disabled={cancellingSubscription} className="mt-2 text-left text-xs font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50">
               {cancellingSubscription ? '해지 처리 중...' : '자동 갱신 해제'}
             </button>
           )}
+          <div aria-live="polite">
+            {subscriptionError && (
+              <p className="mt-2 text-xs text-[var(--color-warn)]">{subscriptionError}</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -511,114 +468,16 @@ export default function MyPage() {
             </span>
             <h2 className="text-lg font-bold text-sage-800 tracking-tight">학습 캘린더</h2>
           </div>
-          {/* Month navigation */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={prevMonth}
-              className="p-1.5 rounded-lg hover:bg-[var(--color-sage-100)] text-sage-700 transition-colors"
-              aria-label="이전 달"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span className="text-base font-bold text-sage-800">
-              {viewYear}년 {viewMonth}월
-            </span>
-            <button
-              onClick={nextMonth}
-              className="p-1.5 rounded-lg hover:bg-[var(--color-sage-100)] text-sage-700 transition-colors"
-              aria-label="다음 달"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-
-          {/* Day-of-week header */}
-          <div className="grid grid-cols-7 mb-1">
-            {['일', '월', '화', '수', '목', '금', '토'].map((dow) => (
-              <div
-                key={dow}
-                className="text-center text-[11px] font-semibold text-[var(--color-muted)] py-1"
-              >
-                {dow}
-              </div>
-            ))}
-          </div>
-
-          {/* Date cells */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {cells.map((day, idx) => {
-              if (day === null) {
-                return <div key={`empty-${idx}`} className="aspect-square" />;
-              }
-
-              const dateKey = toDateKey(viewYear, viewMonth, day);
-              const study = dayIndex[dateKey];
-              const count = study?.count ?? 0;
-              const hasExam = (scheduleIndex[dateKey]?.length ?? 0) > 0;
-              const isToday = dateKey === today;
-              const isSelected = dateKey === selectedDate;
-              const bgClass = countBgClass(count);
-
-              return (
-                <button
-                  key={dateKey}
-                  onClick={() => setSelectedDate(dateKey)}
-                  className={[
-                    'relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all text-xs font-medium',
-                    bgClass,
-                    !bgClass && 'hover:bg-[var(--color-sage-100)]',
-                    isSelected && !bgClass && 'ring-2 ring-sage-500',
-                    isSelected && bgClass && 'ring-2 ring-sage-800',
-                    isToday && !isSelected && 'ring-2 ring-sage-400',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  aria-label={`${viewYear}년 ${viewMonth}월 ${day}일`}
-                >
-                  <span className={count >= 10 ? 'text-white' : 'text-sage-800'}>
-                    {day}
-                  </span>
-                  {count > 0 && (
-                    <span
-                      className={`text-[9px] leading-none mt-0.5 ${
-                        count >= 10 ? 'text-white/80' : 'text-sage-600'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                  {hasExam && (
-                    <span
-                      className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full"
-                      style={{ background: count > 0 ? 'var(--color-accent)' : 'var(--color-warn)' }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[var(--color-border)]">
-            <span className="text-[11px] text-[var(--color-muted)]">학습량:</span>
-            <div className="flex items-center gap-2">
-              {[
-                { label: '없음', cls: 'bg-[var(--color-bg)] border border-[var(--color-border)]' },
-                { label: '1~9', cls: 'bg-[var(--color-sage-200)]' },
-                { label: '10~29', cls: 'bg-sage-500' },
-                { label: '30+', cls: 'bg-sage-700' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-1">
-                  <span className={`w-3 h-3 rounded-sm inline-block ${item.cls}`} />
-                  <span className="text-[10px] text-[var(--color-muted)]">{item.label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-1 ml-2">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-warn)] inline-block" />
-              <span className="text-[10px] text-[var(--color-muted)]">시험 일정</span>
-            </div>
-          </div>
+          <StudyCalendar
+            viewYear={viewYear}
+            viewMonth={viewMonth}
+            selectedDate={selectedDate}
+            todayKey={today}
+            getDay={getCalendarDay}
+            onSelectDate={setSelectedDate}
+            onPrevMonth={prevMonth}
+            onNextMonth={nextMonth}
+          />
         </Card>
 
         {/* ── Selected Date Panel ── */}
@@ -674,7 +533,7 @@ export default function MyPage() {
             {selectedSchedules.length > 0 ? (
               <ul className="space-y-2">
                 {selectedSchedules.map((s) => {
-                  const diff = diffDays(s.exam_date);
+                  const diff = diffDayKeys(s.exam_date, today);
                   const dLabel = diff === 0 ? 'D-DAY' : diff > 0 ? `D-${diff}` : `D+${-diff}`;
                   return (
                     <li
@@ -695,10 +554,10 @@ export default function MyPage() {
                         )}
                       </div>
                       <button
-                        onClick={() => handleDeleteSchedule(s.id)}
+                        onClick={() => setPendingDelete(s)}
                         disabled={deleteLoadingId === s.id}
-                        className="flex-shrink-0 text-[var(--color-muted)] hover:text-[var(--color-warn)] transition-colors disabled:opacity-40"
-                        aria-label="일정 삭제"
+                        className="flex-shrink-0 p-3 -m-2 text-[var(--color-muted)] hover:text-[var(--color-warn)] transition-colors disabled:opacity-40"
+                        aria-label={`${s.title} 일정 삭제`}
                       >
                         {deleteLoadingId === s.id ? (
                           <span className="inline-block w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
@@ -716,50 +575,97 @@ export default function MyPage() {
           </div>
 
           {/* Add schedule form */}
-          <div className="border-t border-[var(--color-border)] pt-4">
-            <p className="text-xs font-semibold text-sage-700 mb-2">이 날짜에 일정 추가</p>
-            <div className="space-y-2">
-              <input
-                type="text"
-                placeholder="시험/일정 제목 *"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                className="w-full text-xs border border-[var(--color-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
-              />
+          <form
+            className="border-t border-[var(--color-border)] pt-4"
+            aria-labelledby="add-schedule-heading"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleAddSchedule();
+            }}
+          >
+            <p id="add-schedule-heading" className="text-xs font-semibold text-sage-700 mb-2">
+              이 날짜에 일정 추가
+            </p>
+            <div className="space-y-2.5">
+              <div>
+                <label htmlFor="schedule-title" className="block text-xs font-medium text-sage-700 mb-1">
+                  제목{' '}
+                  <span className="text-[var(--color-warn)]" aria-hidden="true">*</span>
+                  <span className="sr-only">(필수)</span>
+                </label>
+                <input
+                  id="schedule-title"
+                  name="title"
+                  type="text"
+                  required
+                  aria-required="true"
+                  placeholder="예: 해부학 중간고사"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
+                />
+              </div>
               {subjects.length > 0 && (
-                <select
-                  value={formSubjectId}
-                  onChange={(e) => setFormSubjectId(e.target.value)}
-                  className="w-full text-xs border border-[var(--color-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
-                >
-                  <option value="">과목 선택 (선택)</option>
-                  {subjects.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <label htmlFor="schedule-subject" className="block text-xs font-medium text-sage-700 mb-1">
+                    과목 (선택)
+                  </label>
+                  <select
+                    id="schedule-subject"
+                    name="subject_id"
+                    value={formSubjectId}
+                    onChange={(e) => setFormSubjectId(e.target.value)}
+                    className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 text-sage-800 bg-white"
+                  >
+                    <option value="">선택 안 함</option>
+                    {subjects.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
-              <input
-                type="text"
-                placeholder="메모 (선택)"
-                value={formMemo}
-                onChange={(e) => setFormMemo(e.target.value)}
-                className="w-full text-xs border border-[var(--color-border)] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
-              />
+              <div>
+                <label htmlFor="schedule-memo" className="block text-xs font-medium text-sage-700 mb-1">
+                  메모 (선택)
+                </label>
+                <input
+                  id="schedule-memo"
+                  name="memo"
+                  type="text"
+                  placeholder="예: 3~5장 범위"
+                  value={formMemo}
+                  onChange={(e) => setFormMemo(e.target.value)}
+                  className="w-full h-11 text-sm border border-[var(--color-line-strong)] rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-sage-400 placeholder:text-[var(--color-muted)]"
+                />
+              </div>
+              <div aria-live="polite">
+                {scheduleFeedback && (
+                  <p
+                    className={`text-xs ${
+                      scheduleFeedback.type === 'error'
+                        ? 'text-[var(--color-warn)]'
+                        : 'text-sage-700'
+                    }`}
+                  >
+                    {scheduleFeedback.text}
+                  </p>
+                )}
+              </div>
               <Button
+                type="submit"
                 variant="primary"
-                size="sm"
+                size="md"
                 fullWidth
                 loading={formLoading}
                 disabled={!formTitle.trim()}
-                onClick={handleAddSchedule}
               >
                 <Plus size={14} />
                 일정 추가
               </Button>
             </div>
-          </div>
+          </form>
         </Card>
       </div>
 
@@ -771,6 +677,27 @@ export default function MyPage() {
           모드의 새 문제 풀이나 추가 문제 생성은 제한됩니다.
         </p>
       </div>
+
+      {/* ── 확인 다이얼로그 (window.confirm 대체) ── */}
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="일정을 삭제할까요?"
+        description={pendingDelete ? `'${pendingDelete.title}' 일정이 바로 삭제됩니다.` : undefined}
+        confirmLabel="삭제"
+        danger
+        loading={deleteLoadingId !== null}
+        onConfirm={() => pendingDelete && handleDeleteSchedule(pendingDelete.id)}
+        onCancel={() => setPendingDelete(null)}
+      />
+      <ConfirmDialog
+        open={cancelDialogOpen}
+        title="자동 갱신을 해제할까요?"
+        description="이용 기간이 남아 있다면 만료일까지 그대로 사용할 수 있습니다."
+        confirmLabel="자동 갱신 해제"
+        loading={cancellingSubscription}
+        onConfirm={cancelSubscription}
+        onCancel={() => setCancelDialogOpen(false)}
+      />
     </div>
   );
 }
