@@ -433,22 +433,22 @@ export default function MyPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-[17px] font-bold text-sage-800 tracking-tight leading-none">
+                  <h2 className="text-[20px] font-bold text-sage-800 tracking-tight leading-none">
                     {displayName}
                   </h2>
-                  <Badge variant="default">{plan.name} 플랜</Badge>
+                  <Badge variant="default" className="text-[13px]">{plan.name} 플랜</Badge>
                 </div>
                 {identitySub && (
-                  <p className="text-[13px] text-[var(--color-muted)] mt-1.5">{identitySub}</p>
+                  <p className="text-[15px] text-[var(--color-muted)] mt-1.5">{identitySub}</p>
                 )}
-                <p className="text-[12px] text-[var(--color-muted)] mt-1">
+                <p className="text-[14px] text-[var(--color-muted)] mt-1">
                   {streak > 0 ? `${streak}일 연속 학습 중` : '오늘도 학습을 시작해보세요'}
                 </p>
               </div>
             </div>
             <Link
               href="/profile"
-              className="flex-shrink-0 inline-flex items-center gap-1 py-2.5 -my-1 px-1 text-[13px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
+              className="flex-shrink-0 inline-flex items-center gap-1 py-2.5 -my-1 px-1 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
             >
               <UserCog className="w-4 h-4" />
               회원정보 수정
@@ -456,10 +456,10 @@ export default function MyPage() {
           </div>
 
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-xs font-semibold text-sage-700">학습 통계</span>
+            <span className="text-sm font-semibold text-sage-700">학습 통계</span>
             <Link
               href="/analysis"
-              className="inline-flex items-center gap-0.5 py-2 -my-2 text-[13px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
+              className="inline-flex items-center gap-0.5 py-2 -my-2 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
             >
               상세 분석 <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -478,7 +478,7 @@ export default function MyPage() {
             <h2 className="text-base font-bold text-sage-800 tracking-tight">현재 요금제</h2>
             <Link
               href="/plan"
-              className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[13px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
+              className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
             >
               요금제 보기 <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -488,15 +488,15 @@ export default function MyPage() {
           <div className="rounded-xl bg-sage-700 text-white px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[14px] font-bold leading-tight">{plan.name} 플랜</p>
-              <p className="text-[11px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
+              <p className="text-[13px] text-white/70 mt-0.5 truncate">{plan.desc}</p>
             </div>
             <p className="text-right flex-shrink-0">
               {activeSubscription && plan.price > 0 ? (
                 <>
-                  <span className="text-[16px] font-bold tnum">
+                  <span className="text-[18px] font-bold tnum">
                     {plan.price.toLocaleString()}원
                   </span>
-                  <span className="text-[12px] text-white/70"> / 월</span>
+                  <span className="text-[14px] text-white/70"> / 월</span>
                 </>
               ) : planTier === 'free' ? (
                 <span className="text-[15px] font-bold">무료</span>
@@ -532,16 +532,16 @@ export default function MyPage() {
           {/* Next billing / 업그레이드 CTA */}
           {activeSubscription ? (
             <>
-              <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[12px]">
+              <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[14px]">
                 <span className="text-[var(--color-muted)]">{activeSubscription.auto_renew ? '다음 결제 예정일' : '이용 만료일'}</span>
                 <span className="font-semibold text-sage-800 tnum">{nextBillingDate}</span>
               </div>
               {activeSubscription.auto_renew ? (
-                <button type="button" onClick={() => setCancelDialogOpen(true)} disabled={cancellingSubscription} className="mt-2 text-left text-xs font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50">
+                <button type="button" onClick={() => setCancelDialogOpen(true)} disabled={cancellingSubscription} className="mt-2 text-left text-sm font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50">
                   {cancellingSubscription ? '해지 처리 중...' : '자동 갱신 해제'}
                 </button>
               ) : (
-                <p className="mt-2 text-xs text-[var(--color-muted)]">
+                <p className="mt-2 text-sm text-[var(--color-muted)]">
                   자동 갱신이 꺼져 있어요 ·{' '}
                   <Link href="/plan" className="font-semibold text-sage-700 underline underline-offset-2">
                     요금제에서 관리
@@ -553,20 +553,20 @@ export default function MyPage() {
             <div className="mt-auto pt-3">
               <Link
                 href="/plan"
-                className="inline-flex w-full items-center justify-center gap-1.5 h-11 px-5 rounded-xl bg-[var(--color-accent)] text-white text-sm font-bold hover:bg-[var(--color-accent-dark)] transition-colors"
+                className="inline-flex w-full items-center justify-center gap-1.5 h-11 px-5 rounded-xl bg-[var(--color-accent)] text-white text-base font-bold hover:bg-[var(--color-accent-dark)] transition-colors"
               >
                 플랜 업그레이드 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
           ) : (
-            <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[12px]">
+            <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[14px]">
               <span className="text-[var(--color-muted)]">자동 결제</span>
               <span className="font-semibold text-sage-800">없음</span>
             </div>
           )}
           <div aria-live="polite">
             {subscriptionError && (
-              <p className="mt-2 text-xs text-[var(--color-warn)]">{subscriptionError}</p>
+              <p className="mt-2 text-sm text-[var(--color-warn)]">{subscriptionError}</p>
             )}
           </div>
         </Card>
@@ -885,8 +885,8 @@ export default function MyPage() {
 function ProfileStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 bg-[var(--color-sage-100)] px-3 py-3">
-      <p className="truncate text-[11px] font-medium text-[var(--color-muted)]">{label}</p>
-      <p className="ll-stat mt-1 whitespace-nowrap text-[16px] font-bold leading-none tracking-[-0.03em]">{value}</p>
+      <p className="truncate text-[13px] font-medium text-[var(--color-muted)]">{label}</p>
+      <p className="ll-stat mt-1 whitespace-nowrap text-[18px] font-bold leading-none tracking-[-0.03em]">{value}</p>
     </div>
   );
 }
@@ -908,7 +908,7 @@ function QuotaRow({
   const low = !unlimited && total > 0 && remaining / total <= 0.2;
   return (
     <div>
-      <div className="flex items-center justify-between text-[13px] mb-1.5">
+      <div className="flex items-center justify-between text-[15px] mb-1.5">
         <span className="text-[var(--color-muted)]">{label}</span>
         {unlimited ? (
           <span className="font-semibold text-sage-800">무제한</span>
