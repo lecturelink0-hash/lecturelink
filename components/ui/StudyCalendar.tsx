@@ -186,13 +186,15 @@ export function StudyCalendar({
       </div>
 
       <div role="grid" aria-label={`${viewYear}년 ${viewMonth}월 학습 캘린더`}>
-        {/* Day-of-week header */}
+        {/* Day-of-week header — 일요일은 관례대로 warn 톤으로 은은하게 구분 */}
         <div role="row" className="grid grid-cols-7 mb-1">
-          {DOW_LABELS.map((dow) => (
+          {DOW_LABELS.map((dow, dowIndex) => (
             <div
               key={dow}
               role="columnheader"
-              className="text-center text-[11px] font-semibold text-[var(--color-muted)] py-1"
+              className={`text-center text-[11px] font-semibold py-1 ${
+                dowIndex === 0 ? 'text-[var(--color-warn)] opacity-70' : 'text-[var(--color-muted)]'
+              }`}
             >
               {dow}
             </div>
@@ -277,25 +279,25 @@ export function StudyCalendar({
         </div>
       </div>
 
-      {/* Legend */}
+      {/* Legend — 스와치는 실제 셀과 같은 색을 쓴다 (빈 셀 = 카드 흰 배경) */}
       <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[var(--color-border)]">
         <span className="text-[11px] text-[var(--color-muted)]">학습량:</span>
         <div className="flex items-center gap-2">
           {[
-            { label: '없음', cls: 'bg-[var(--color-bg)] border border-[var(--color-border)]' },
+            { label: '없음', cls: 'bg-white border border-[var(--color-border)]' },
             { label: '1~9', cls: 'bg-[var(--color-sage-200)]' },
             { label: '10~29', cls: 'bg-sage-600' },
             { label: '30+', cls: 'bg-sage-800' },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-1">
               <span className={`w-3 h-3 rounded-sm inline-block ${item.cls}`} />
-              <span className="text-[10px] text-[var(--color-muted)]">{item.label}</span>
+              <span className="text-[11px] text-[var(--color-muted)]">{item.label}</span>
             </div>
           ))}
         </div>
         <div className="flex items-center gap-1 ml-2">
           <span className="w-2 h-2 rounded-full bg-[var(--color-warn)] inline-block" />
-          <span className="text-[10px] text-[var(--color-muted)]">시험 일정</span>
+          <span className="text-[11px] text-[var(--color-muted)]">시험 일정</span>
         </div>
       </div>
     </div>

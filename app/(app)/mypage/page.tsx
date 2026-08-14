@@ -424,8 +424,8 @@ export default function MyPage() {
 
       {/* ── Top: Profile + Plan ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Profile */}
-        <div className="ll-card p-5 flex flex-col justify-between">
+        {/* Profile — 상·하단 카드가 같은 Card 규격(패딩·보더·그림자)을 쓰도록 통일 */}
+        <Card className="flex flex-col justify-between">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0">
               <span className="w-10 h-10 rounded-full bg-sage-700 text-white flex items-center justify-center flex-shrink-0">
@@ -470,12 +470,12 @@ export default function MyPage() {
             <ProfileStat label="학습한 날" value={`${summary?.activeDays ?? 0}일`} />
             <ProfileStat label="평균 정답률" value={`${accuracyPct}%`} />
           </div>
-        </div>
+        </Card>
 
         {/* Plan */}
-        <div className="ll-card p-5 flex flex-col">
+        <Card className="flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[15px] font-bold text-sage-800">현재 요금제</h2>
+            <h2 className="text-base font-bold text-sage-800 tracking-tight">현재 요금제</h2>
             <Link
               href="/plan"
               className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[13px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
@@ -522,6 +522,11 @@ export default function MyPage() {
               remaining={quota?.uploads.remaining ?? 0}
               total={(quota?.uploads.limit ?? 0) + (quota?.uploads.bonus ?? 0)}
             />
+            <QuotaRow
+              label="이미지 생성 잔여량"
+              remaining={quota?.images.remaining ?? 0}
+              total={(quota?.images.limit ?? 0) + (quota?.images.bonus ?? 0)}
+            />
           </div>
 
           {/* Next billing / 업그레이드 CTA */}
@@ -564,20 +569,14 @@ export default function MyPage() {
               <p className="mt-2 text-xs text-[var(--color-warn)]">{subscriptionError}</p>
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* ── Calendar + Selected Date Panel (상단 2칸 바로 아래) ──
            id="calendar": 대시보드 D-day 칩·시험 일정 등록 버튼의 앵커 진입점 */}
       <div id="calendar" className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mt-6 scroll-mt-24">
-        {/* ── Calendar ── */}
-        <Card>
-          <div className="flex items-center gap-2.5 mb-5">
-            <span className="ll-chip" style={{ width: '2.25rem', height: '2.25rem' }}>
-              <CalendarDays className="w-4 h-4" strokeWidth={2} />
-            </span>
-            <h2 className="text-lg font-bold text-sage-800 tracking-tight">학습 캘린더</h2>
-          </div>
+        {/* ── Calendar — 카드 제목은 Card 의 공통 규격(h2 · text-base)으로 ── */}
+        <Card icon={<CalendarDays className="w-4 h-4" strokeWidth={2} />} title="학습 캘린더">
           <StudyCalendar
             viewYear={viewYear}
             viewMonth={viewMonth}
@@ -598,9 +597,9 @@ export default function MyPage() {
               <CalendarDays className="w-4 h-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">
-              <h3 className="text-base font-bold text-sage-800 tracking-tight leading-tight">
+              <h2 className="text-base font-bold text-sage-800 tracking-tight leading-tight">
                 {selectedDate.replace(/-/g, '.')}
-              </h3>
+              </h2>
               {selectedDate === today && (
                 <Badge variant="default" className="mt-1">오늘</Badge>
               )}

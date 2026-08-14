@@ -275,7 +275,7 @@ export function Sidebar({ user }: SidebarProps) {
             </span>
             <span className="flex flex-col leading-tight text-left">
               <span className="text-[13px] font-semibold text-sage-800">{displayName}</span>
-              <span className="text-[10px] text-[var(--color-muted)]">{subtitle}</span>
+              <span className="text-[11px] text-[var(--color-muted)]">{subtitle}</span>
             </span>
             <ChevronDown
               className={clsx(

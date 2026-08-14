@@ -39,7 +39,8 @@ export function Card({
             <div className="min-w-0">
               {eyebrow && <span className="ll-eyebrow mb-2">{eyebrow}</span>}
               {title && (
-                <h3 className="text-base font-bold text-sage-800 tracking-tight">{title}</h3>
+                // 카드 제목 규격: h2 + text-base font-bold (페이지 h1 아래 카드 단위 제목)
+                <h2 className="text-base font-bold text-sage-800 tracking-tight">{title}</h2>
               )}
               {description && (
                 <p className="text-sm text-[var(--color-muted)] mt-1 leading-relaxed">
