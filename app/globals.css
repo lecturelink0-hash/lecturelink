@@ -2623,9 +2623,9 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   padding: clamp(22px, 2.6vw, 30px);
   border: 1.5px solid #e2ded5;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, .58);
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  background: rgba(255, 255, 255, .42);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .8),
     0 14px 34px -26px rgba(21, 62, 47, .3);
@@ -2633,7 +2633,7 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 .cpx-random-panel {
   border-color: #c7ddce;
-  background: rgba(213, 233, 221, .55);
+  background: rgba(213, 233, 221, .38);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .65),
     0 14px 34px -26px rgba(21, 62, 47, .32);
@@ -2653,13 +2653,14 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #e7f1ea;
+  background: #dcebe2;
   color: var(--color-primary);
 }
 
-.cpx-random-panel .cpx-quick-icon { background: #ddebe1; }
+/* 민트 카드 위에서는 원이 배경에 묻히므로 한 단계 더 진하게 */
+.cpx-random-panel .cpx-quick-icon { background: #bcd9c6; }
 
-.cpx-quick-icon svg { width: 24px; height: 24px; }
+.cpx-quick-icon svg { width: 28px; height: 28px; }
 
 /* 텍스트 규칙은 반드시 > div 하위로 한정 — .cpx-quick-icon도 span이라 넓게 잡으면
    display:block이 아이콘 원의 grid 중앙정렬을 깨뜨린다(실측 사고). */

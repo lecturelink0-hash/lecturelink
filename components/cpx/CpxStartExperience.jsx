@@ -209,7 +209,7 @@ export default function CpxStartExperience({
     <header className="cpx-start-header">
       <div>
         <h1>환자 연습을 통해 CPX를 연습해보세요</h1>
-        <p>녹음이 필요한 준비부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
+        <p>복습이 필요한 증례부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
       </div>
       <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ArrowRight aria-hidden /></Link>
     </header>
