@@ -157,6 +157,9 @@ def voice_style_for_case(case: dict) -> str:
 
 # 순응도 낮은 환자 모드 — 행동 라이브러리 (파일은 콘텐츠, 선택·주입 규칙은 이 모듈이 담당).
 # liveApiContext.patientContextFocus는 스트립되므로 행동 지침은 반드시 이 경로로만 주입한다.
+# 실제 시험처럼 모드를 켜도 협조적인 환자가 올 수 있다 — 옵트인 세션 중 이 확률로만 저항 행동을 배정한다.
+LOW_COMPLIANCE_PROBABILITY = 0.25
+
 _low_compliance_library_cache: dict | None = None
 
 
@@ -175,6 +178,8 @@ def _is_guardian_case(case: dict) -> bool:
 def resolve_low_compliance(case: dict, seed: str) -> list[dict]:
     """세션별 저항 행동 확정 — 병력청취 1개 + 환자교육 1개 (seed=sessionId, 결정론).
 
+    실제 시험처럼 순응도 높은 환자도 나온다: 옵트인 세션이라도
+    LOW_COMPLIANCE_PROBABILITY(25%) 확률에서만 저항 행동을 배정하고, 나머지는 빈 목록.
     12분 하드 타이머 안에서 시뮬레이션이 망가지지 않도록 세션당 행동 수를 제한한다.
     안전·상담 중심 카테고리(자살·가정폭력·성폭력·나쁜소식 전하기)는 통째로 제외한다.
     반환: [{'id', 'name', 'phase'}] — 세션 config에 저장되고 채점 후 학생에게 공개된다.
@@ -182,9 +187,11 @@ def resolve_low_compliance(case: dict, seed: str) -> list[dict]:
     lib = load_low_compliance_library()
     if case.get('category', '') in set(lib.get('excludedCategories', [])):
         return []
+    rng = random.Random(f'lowcomp:{seed}')
+    if rng.random() >= LOW_COMPLIANCE_PROBABILITY:
+        return []
     guardian = _is_guardian_case(case)
     pool = [b for b in lib['behaviors'] if guardian or not b.get('requiresGuardian')]
-    rng = random.Random(f'lowcomp:{seed}')
     picked = []
     for phase in ('history', 'education'):
         candidates = [b for b in pool if b['phase'] == phase]

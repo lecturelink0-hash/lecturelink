@@ -119,17 +119,18 @@ def create_session(body: SessionCreate, user_id: str = Depends(current_user_id))
     time_limit = resolve_time_limit(body.timeLimitSeconds)
     config_dict = {'timeLimitSeconds': time_limit}
     if body.lowCompliance:
+        # 실제 배정 여부는 25% 확률(prompt.LOW_COMPLIANCE_PROBABILITY)로 서버가 결정.
+        # 빗나간 세션도 enabled로 기록해 채점 후 '협조적인 환자였다'고 알려줄 수 있게 한다.
         behaviors = prompt_mod.resolve_low_compliance(case, seed)
-        if behaviors:
-            config_dict['lowCompliance'] = {'enabled': True, 'behaviors': behaviors}
+        config_dict['lowCompliance'] = {'enabled': True, 'behaviors': behaviors}
     config = _json.dumps(config_dict, ensure_ascii=False)
     session_id = db.create_session(body.caseId, user_id, _json.dumps(persona, ensure_ascii=False), config)
     return {
         'sessionId': session_id,
         'persona': persona,
         'timeLimitSeconds': time_limit,
-        # 유형은 숨기고 적용 여부만 알려준다 (제외 카테고리면 false).
-        'lowCompliance': bool(config_dict.get('lowCompliance')),
+        # 옵트인 여부만 되돌려준다 — 이번 환자가 실제로 저항형인지는 세션 중 비공개.
+        'lowCompliance': bool(body.lowCompliance),
     }
 
 

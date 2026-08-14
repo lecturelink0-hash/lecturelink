@@ -1,4 +1,4 @@
-"""순응도 낮은 환자 모드 회귀 검사 — 라이브러리 무결성·샘플링 결정론·프롬프트 주입."""
+"""순응도 낮은 환자 모드 회귀 검사 — 라이브러리 무결성·확률 게이트·샘플링 결정론·프롬프트 주입."""
 
 import prompt
 
@@ -17,25 +17,49 @@ def run():
     assert any(b['phase'] == 'education' for b in lib['behaviors'])
 
     excluded_categories = set(lib['excludedCategories'])
+    metas = prompt.list_cases()
+
+    # 2) 확률 게이트: 옵트인해도 LOW_COMPLIANCE_PROBABILITY(25%)에서만 저항 행동 배정.
+    #    시드별 통과/미통과가 모두 존재하고, 통과 비율이 25% 근방인지 확인한다.
+    sample_case = next(
+        c for c in (prompt.load_case(m['id']) for m in metas)
+        if c.get('category', '') not in excluded_categories
+    )
+    passing_seed = failing_seed = None
+    trials = 400
+    hits = 0
+    for i in range(trials):
+        s = f'seed-{i}'
+        if prompt.resolve_low_compliance(sample_case, s):
+            hits += 1
+            passing_seed = passing_seed or s
+        else:
+            failing_seed = failing_seed or s
+    assert passing_seed and failing_seed, '확률 게이트가 한쪽 결과만 낸다'
+    ratio = hits / trials
+    assert 0.15 < ratio < 0.35, f'배정 비율 {ratio:.2f} — 25%에서 크게 벗어남'
+
     checked = excluded = guardian_cases = 0
-    for meta in prompt.list_cases():
+    by_id = {b['id']: b for b in lib['behaviors']}
+    for meta in metas:
         case = prompt.load_case(meta['id'])
-        picked = prompt.resolve_low_compliance(case, 'seed-1')
-        # 2) 결정론: 같은 시드는 항상 같은 선택
-        assert picked == prompt.resolve_low_compliance(case, 'seed-1'), case['id']
+        picked = prompt.resolve_low_compliance(case, passing_seed)
+        # 3) 결정론: 같은 시드는 항상 같은 선택 (미통과 시드는 항상 빈 목록)
+        assert picked == prompt.resolve_low_compliance(case, passing_seed), case['id']
+        assert prompt.resolve_low_compliance(case, failing_seed) == [], case['id']
 
         if case.get('category', '') in excluded_categories:
+            # 제외 카테고리는 확률을 통과한 시드에서도 행동이 배정되지 않는다
             assert picked == [], f"제외 카테고리에 행동 배정됨: {case['id']}"
             excluded += 1
             continue
 
-        # 3) 세션당 병력 1 + 교육 1, phase 중복 없음
+        # 4) 세션당 병력 1 + 교육 1, phase 중복 없음
         assert 1 <= len(picked) <= 2, case['id']
         phases = [p['phase'] for p in picked]
         assert len(set(phases)) == len(phases), case['id']
 
-        # 4) 보호자 전용 행동은 보호자 케이스에서만 나온다
-        by_id = {b['id']: b for b in lib['behaviors']}
+        # 5) 보호자 전용 행동은 보호자 케이스에서만 나온다
         guardian = prompt._is_guardian_case(case)
         if guardian:
             guardian_cases += 1
@@ -43,7 +67,7 @@ def run():
             if by_id[p['id']].get('requiresGuardian'):
                 assert guardian, f"보호자 아닌 케이스에 보호자 행동: {case['id']}"
 
-        # 5) 프롬프트 주입: 모드 켜면 블록 포함, 기본은 미포함
+        # 6) 프롬프트 주입: 행동이 있으면 블록 포함, 기본(모드 꺼짐)은 미포함
         ids = [p['id'] for p in picked]
         with_block = prompt.build_system_instruction(case['id'], low_compliance_ids=ids)
         assert '[순응도 낮은 환자 모드' in with_block, case['id']
@@ -53,12 +77,13 @@ def run():
         assert '[순응도 낮은 환자 모드' not in base, case['id']
         checked += 1
 
-    # 6) 존재하지 않는 id는 조용히 건너뛴다 (라이브러리 개편 내성)
+    # 7) 존재하지 않는 id·빈 목록은 블록을 만들지 않는다 (라이브러리 개편 내성)
     assert prompt.low_compliance_block(['no_such_behavior']) == ''
+    assert prompt.low_compliance_block([]) == ''
 
     print(
         f'순응도 낮은 환자 모드: 적용 {checked}개 · 제외 카테고리 {excluded}개 · '
-        f'보호자 케이스 {guardian_cases}개 통과'
+        f'보호자 케이스 {guardian_cases}개 · 배정 비율 {ratio:.0%} (기대 25%) 통과'
     )
 
 
