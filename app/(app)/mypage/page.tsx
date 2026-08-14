@@ -522,11 +522,6 @@ export default function MyPage() {
               remaining={quota?.uploads.remaining ?? 0}
               total={(quota?.uploads.limit ?? 0) + (quota?.uploads.bonus ?? 0)}
             />
-            <QuotaRow
-              label="이미지 생성 잔여량"
-              remaining={quota?.images.remaining ?? 0}
-              total={(quota?.images.limit ?? 0) + (quota?.images.bonus ?? 0)}
-            />
           </div>
 
           {/* Next billing / 업그레이드 CTA */}

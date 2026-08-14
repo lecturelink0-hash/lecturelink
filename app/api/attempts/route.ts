@@ -49,7 +49,6 @@ export const POST = withErrorHandling(async (request: Request) => {
   let answerIndex: number;
   let explanation: string | null;
   let subTopicId: string | null;
-  let isImageQuestion = false;
 
   if (isPrivate) {
     const { data: pq, error } = await admin
@@ -70,7 +69,7 @@ export const POST = withErrorHandling(async (request: Request) => {
   } else {
     const { data: q, error } = await admin
       .from('questions')
-      .select('id, answer_index, explanation, sub_topic_id, image_url')
+      .select('id, answer_index, explanation, sub_topic_id')
       .eq('id', body.question_id)
       .maybeSingle();
     if (error || !q) {
@@ -79,15 +78,12 @@ export const POST = withErrorHandling(async (request: Request) => {
     answerIndex = q.answer_index;
     explanation = q.explanation;
     subTopicId = q.sub_topic_id;
-    isImageQuestion = q.image_url !== null;
   }
 
   // 1-1) Quota 체크 — public 만. private 풀이는 생성 시 이미 차감했고 본인 자료라 무료.
+  // 이미지 문항 별도 차감은 이미지 문항 정책 확정(2026-08-14)으로 폐지 — 문항 quota 에만 포함.
   if (!isPrivate) {
     await requireQuota(session.userId, 'questions', 1);
-    if (isImageQuestion) {
-      await requireQuota(session.userId, 'images', 1);
-    }
   }
 
   const isCorrect = body.selected_index === answerIndex;
@@ -159,9 +155,6 @@ export const POST = withErrorHandling(async (request: Request) => {
   // 5) Quota 차감 — public 만.
   if (!isPrivate) {
     await consumeQuota(session.userId, 'questions', 1);
-    if (isImageQuestion) {
-      await consumeQuota(session.userId, 'images', 1);
-    }
   }
 
   return ok({
