@@ -17,21 +17,22 @@ interface FooterColumn {
 
 const columns: FooterColumn[] = [
   {
-    title: '서비스',
+    title: '학습',
     links: [
-      { label: '문제 만들기', href: '/notes' },
+      { label: '내신 대비', href: '/notes' },
+      { label: 'CPX', href: '/cpx' },
       { label: '내 문제집', href: '/library' },
       { label: '오답노트', href: '/wrong-notes' },
+      { label: '요금제', href: '/plan' },
     ],
   },
   {
-    title: '지원',
+    title: '계정 및 지원',
     links: [
-      // 카카오톡 문의는 전용 페이지(/contact)에서 채널로 연결 — 채널 URL은 KAKAO_CHANNEL_URL(런타임 env).
-      { label: '카카오톡 문의', href: '/contact' },
+      { label: '마이페이지', href: '/mypage' },
+      { label: '회원정보 수정', href: '/profile' },
+      { label: '자주 묻는 질문', href: '/faq' },
       { label: '문의하기', href: '/contact' },
-      { label: '오류 신고', href: 'mailto:lecturelink0@gmail.com?subject=LectureLink 오류 신고', external: true, notice: '오류 신고를 위해 이메일 화면으로 이동합니다.' },
-      { label: '피드백 보내기', href: 'mailto:lecturelink0@gmail.com?subject=LectureLink 피드백', external: true, notice: '피드백을 보내기 위해 이메일 화면으로 이동합니다.' },
     ],
   },
   {

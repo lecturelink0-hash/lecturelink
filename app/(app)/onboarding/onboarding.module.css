@@ -4,8 +4,30 @@
   color: var(--color-text);
 }
 
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .pageHeader {
   margin-bottom: var(--space-6);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .pageHeader h1,
@@ -20,6 +42,10 @@
   letter-spacing: -0.03em;
   text-wrap: balance;
   word-break: keep-all;
+}
+
+.pageHeader h1 {
+  margin-top: 10px;
 }
 
 .pageHeader h1 span,
@@ -70,17 +96,6 @@
   font-size: 0.8125rem;
   font-weight: var(--font-weight-medium);
   line-height: 1.55;
-}
-
-.formHeading > span {
-  flex: 0 0 auto;
-  padding: 0.3125rem 0.5625rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-primary-soft);
-  color: var(--color-primary-strong);
-  font-size: 0.71875rem;
-  font-weight: var(--font-weight-bold);
-  line-height: 1.2;
 }
 
 .fieldGrid {

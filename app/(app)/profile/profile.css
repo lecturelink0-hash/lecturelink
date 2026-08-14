@@ -13,7 +13,14 @@
 .student-profile-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 18px 16px;
+}
+
+.student-profile-field-grid > .professor-form-field > :is(input, select) {
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
 }
 
 .student-profile-field-grid > .is-full {
