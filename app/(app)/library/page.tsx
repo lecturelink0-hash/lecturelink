@@ -274,12 +274,24 @@ export default function LibraryPage() {
   // 세트별 진행도/정답률 로드 (마운트 + 풀이 후 갱신)
   // 이어풀기 링크(/library?set=업로드ID)로 들어오면 해당 문제집을 바로 연다.
   // 문항 목록이 나중에 도착하는 경우에도 다시 반영해 빈 화면으로 멈추지 않는다.
+  // 같은 요청(세트+모드)이 이미 열려 있으면 openUpload 를 반복하지 않는다 — 채점 후 진행도
+  // 재조회가 progressByUpload 를 갈아끼워 이 이펙트가 재발화하는데, 그때 openUpload 가
+  // 문항을 비우고 setLoadingRight(true)로 되돌리면 문항 fetch 이펙트는 activeUploadId 가
+  // 그대로라 다시 돌지 않아 "진행도를 불러오는 중" 화면에 영영 갇힌다.
+  const openedSetRequestRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!requestedUploadId) return;
+    if (!requestedUploadId) {
+      openedSetRequestRef.current = null;
+      return;
+    }
     const upload = uploads.find((item) => item.id === requestedUploadId);
     if (!upload) return;
 
-    openUpload(upload, requestedReset);
+    const requestSignature = `${upload.id}:${requestedReset ? 'reset' : 'resume'}`;
+    if (openedSetRequestRef.current !== requestSignature) {
+      openedSetRequestRef.current = requestSignature;
+      openUpload(upload, requestedReset);
+    }
     setResumeFromQuestionId(
       requestedResume ? progressByUpload[upload.id]?.lastAttemptedQuestionId ?? null : null,
     );
