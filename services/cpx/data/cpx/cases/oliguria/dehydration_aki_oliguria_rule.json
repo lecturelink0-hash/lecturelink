@@ -7,7 +7,7 @@
   "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 28 '핍뇨' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "탈수 연관 급성 신손상 의심 (Suspected prerenal acute kidney injury from volume depletion)",
   "variant": "위장관 수분 소실 뒤 급격한 소변 감소형",
-  "description": "구토·설사 뒤 줄어든 소변에서 혈량 감소와 요로 폐쇄·신독성 약물 등 위험 원인을 구분하는 규칙입니다.",
+  "description": "구토·설사 뒤 소변이 줄어 혈량 감소와 요로 폐쇄·신독성 약물 등 위험 원인 감별이 필요한 환자입니다.",
   "tags": [
     "핍뇨",
     "급성신손상",

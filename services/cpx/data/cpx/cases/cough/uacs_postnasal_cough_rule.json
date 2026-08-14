@@ -7,7 +7,7 @@
   "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 12 '기침' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "상기도기침증후군(후비루)에 의한 만성 기침 의심 (Suspected upper airway cough syndrome / postnasal drip)",
   "variant": "목 뒤로 넘어가는 콧물·헛기침 중심형",
-  "description": "콧물이 목 뒤로 넘어가 자꾸 헛기침을 하고 목이 간질거리는 만성 기침 환자의 규칙입니다.",
+  "description": "콧물이 목 뒤로 넘어가 자꾸 헛기침을 하고 목이 간질거리는 만성 기침 환자입니다.",
   "tags": [
     "기침",
     "후비루",

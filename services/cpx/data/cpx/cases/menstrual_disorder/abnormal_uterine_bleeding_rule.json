@@ -7,7 +7,7 @@
   "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 43 '월경 이상/월경통' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "이상자궁출혈(자궁근종 등) 의심 (Suspected abnormal uterine bleeding)",
   "variant": "과다·불규칙 월경 출혈 + 빈혈형",
-  "description": "월경량이 지나치게 많고 불규칙하며 어지러운 환자의 규칙입니다.",
+  "description": "월경량이 지나치게 많고 불규칙하며 어지러운 환자입니다.",
   "tags": [
     "월경이상",
     "이상자궁출혈",

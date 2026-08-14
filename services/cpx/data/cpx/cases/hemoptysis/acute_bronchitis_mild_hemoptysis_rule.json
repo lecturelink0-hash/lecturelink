@@ -7,7 +7,7 @@
   "classificationStandard": "주호소 분류 근거: 한국보건의료인국가시험원(국시원) 공개 CPX 진료문항 항목표 CPX 14 '객혈' — 국가시험 공개 표준 분류이며 특정 교재의 편집·배열을 따른 것이 아님. 개별 시나리오의 인물·서사·대사·수치는 자체 창작.",
   "targetDiagnosis": "급성 기관지염 연관 소량 객혈 의심 (Suspected mild hemoptysis with acute bronchitis)",
   "variant": "감염 후 기침·가래에 소량 선홍색 혈흔형",
-  "description": "심한 기침 뒤 소량 혈흔이 섞인 가래에서 대량 출혈과 중증 호흡기 위험 신호를 우선 배제하는 규칙입니다.",
+  "description": "심한 기침 뒤 가래에 소량 혈흔이 섞여 대량 출혈과 중증 호흡기 위험 배제가 필요한 환자입니다.",
   "tags": [
     "객혈",
     "급성기관지염",
