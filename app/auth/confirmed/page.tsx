@@ -1,6 +1,7 @@
 'use client';
 
-import { CheckCircle2, Stethoscope } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 /** 이메일 인증 완료 안내. 확인 메일의 링크 → /auth/callback → 여기로 이동. */
@@ -9,7 +10,14 @@ export default function EmailConfirmedPage() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-6 py-16">
       <div className="w-full max-w-md text-center">
         <div className="inline-flex items-center gap-2.5 mb-8">
-          <Stethoscope className="w-7 h-7 text-sage-700" strokeWidth={2.2} />
+          <Image
+            src="/lecturelink-mark.png"
+            alt=""
+            width={467}
+            height={424}
+            priority
+            className="w-8 h-8 object-contain"
+          />
           <span className="text-2xl font-bold text-sage-700">LectureLink</span>
         </div>
         <div className="flex justify-center mb-5">

@@ -704,6 +704,13 @@ export default function NotesPage() {
   // (참고 자료 / 추천 설정 / 문제 세트 정보 / 생성 요약은 업로드 후 등장)
   const hasUploaded = materials.length > 0;
   const folderName = subjects.find((s) => s.id === folder)?.name ?? '미지정';
+  // 좌측 상단 STEP 필 — 자료 업로드 → AI 강의록 판독 중 → 판독 완료(문제 생성) 3단계.
+  // analyzing이 판독 중, recommendation이 판독 결과이므로 그 둘로 단계를 판정한다.
+  const stepLabel = analyzing
+    ? 'STEP 2 / 3 · 자동분석 설정 확인'
+    : recommendation
+      ? 'STEP 3 / 3 · 문제 생성'
+      : 'STEP 1 / 3 · 자료 업로드';
 
   return (
     <div className="ll-upload-page content">
@@ -715,7 +722,7 @@ export default function NotesPage() {
         <ArrowLeft className="w-4 h-4" />
         홈으로
       </Link>
-      <section className="page-head"><div><span className="eyebrow">STEP 1 / 1 · 자료 업로드</span><h1><span className="headline-accent">내 학습자료</span>로<br/>문제를 만들어보세요</h1><p className="lead">강의자료와 기출문제를 업로드하고 원하는 범위의 예상 문제를 생성해 보세요.</p></div><div className="guide"><Link href="/tutorial" className="guide-trigger"><span className="guide-icon">?</span><GuideLabel /></Link><div className="guide-panel"><h2>어떻게 사용하나요?</h2><ol><li><strong>학습자료 업로드</strong>: 업로드한 자료를 기반으로 문제를 생성합니다.</li><li><strong>참고 자료 추가</strong>: 예시 문항의 형식과 난이도를 반영합니다.</li><li><strong>문제 세트 정보 확인</strong>: 이름과 주제를 확인하고 수정합니다.</li></ol></div></div></section>
+      <section className="page-head"><div><span className="eyebrow" aria-live="polite">{stepLabel}</span><h1><span className="headline-accent">내 학습자료</span>로<br/>문제를 만들어보세요</h1><p className="lead">강의자료와 기출문제를 업로드하고 원하는 범위의 예상 문제를 생성해 보세요.</p></div><div className="guide"><Link href="/tutorial" className="guide-trigger"><span className="guide-icon">?</span><GuideLabel /></Link><div className="guide-panel"><h2>어떻게 사용하나요?</h2><ol><li><strong>학습자료 업로드</strong>: 업로드한 자료를 기반으로 문제를 생성합니다.</li><li><strong>참고 자료 추가</strong>: 예시 문항의 형식과 난이도를 반영합니다.</li><li><strong>문제 세트 정보 확인</strong>: 이름과 주제를 확인하고 수정합니다.</li></ol></div></div></section>
 
       <div
         className={clsx(
@@ -1154,10 +1161,6 @@ function ResultView({
     <div className="max-w-4xl mx-auto">
       {/* 헤더 */}
       <div className="mb-8">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent-bg)] px-3 py-1.5 text-[0.72rem] font-bold tracking-wide text-[var(--color-accent-dark)] mb-4">
-          <Check className="w-3.5 h-3.5" strokeWidth={2.6} />
-          STEP 2 / 2 · 생성 완료
-        </span>
         <h1 className="text-[2.4rem] leading-[1.1] font-bold text-sage-800 tracking-[-0.03em]">
           문제집이 완성됐어요
         </h1>
