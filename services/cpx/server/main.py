@@ -359,30 +359,33 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
 
     events = db.get_transcript(session_id, user_id)
     student_turns = [e for e in events if e['role'] == 'student']
-    patient_turns = [e for e in events if e['role'] == 'patient']
-    # 실제 문진 대화가 있어야 채점 (신체진찰 버튼만 누른 세션은 환자 응답 0 → 차단).
-    if len(student_turns) < 2 or len(patient_turns) < 1:
-        raise HTTPException(422, '채점하기에 대화가 부족합니다. 환자와 문진 대화를 나눈 뒤 종료해주세요.')
 
     case = prompt_mod.load_case(session['case_id'])
     rubric = ev.load_rubric(case)
     persona = _json.loads(session['persona']) if session.get('persona') else None
     context = ev.build_context(case, persona)
 
-    # LLM 근거 추출을 하드 타임아웃으로 감싼다 — 쿼터 소진 시 SDK가 무한 재시도로
-    # 매달려 결과 화면이 영원히 로딩되는 것을 방지 (실측 2분+ 행 확인).
-    import concurrent.futures as _cf
-    try:
-        with _cf.ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context)
-            judgments = future.result(timeout=75)
-    except _cf.TimeoutError:
-        raise HTTPException(504, '채점 시간이 초과되었습니다. 잠시 후 다시 시도해주세요. (API 응답 지연 또는 무료 티어 쿼터 소진 가능성)')
-    except Exception as e:  # noqa: BLE001
-        msg = str(e)
-        if '429' in msg or 'RESOURCE_EXHAUSTED' in msg:
-            raise HTTPException(429, '무료 티어 채점 쿼터를 모두 사용했습니다. 잠시 후(또는 다음 날) 다시 시도하거나 유료 플랜으로 전환해주세요.')
-        raise HTTPException(502, f'근거 추출 실패: {msg}')
+    # 대화가 짧아도 채점은 한다 — 실제 시험처럼 '그 시점까지의 수행'이 곧 결과다.
+    # 예전에는 문진 2턴 미만이면 422로 막았는데, 프론트가 그 실패를 받고 진료 화면으로
+    # 되돌아가 "종료를 눌렀는데 이유 없이 대화 화면으로 튕긴다"로 보고됐다(2026-08-15 모바일).
+    # 학생 발화가 0턴일 때만 LLM 호출을 건너뛰고 전 항목 미충족으로 곧장 채점한다.
+    if not student_turns:
+        judgments = ev.empty_judgments(rubric, context)
+    else:
+        # LLM 근거 추출을 하드 타임아웃으로 감싼다 — 쿼터 소진 시 SDK가 무한 재시도로
+        # 매달려 결과 화면이 영원히 로딩되는 것을 방지 (실측 2분+ 행 확인).
+        import concurrent.futures as _cf
+        try:
+            with _cf.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context)
+                judgments = future.result(timeout=75)
+        except _cf.TimeoutError:
+            raise HTTPException(504, '채점 시간이 초과되었습니다. 잠시 후 다시 시도해주세요. (API 응답 지연 또는 무료 티어 쿼터 소진 가능성)')
+        except Exception as e:  # noqa: BLE001
+            msg = str(e)
+            if '429' in msg or 'RESOURCE_EXHAUSTED' in msg:
+                raise HTTPException(429, '무료 티어 채점 쿼터를 모두 사용했습니다. 잠시 후(또는 다음 날) 다시 시도하거나 유료 플랜으로 전환해주세요.')
+            raise HTTPException(502, f'근거 추출 실패: {msg}')
 
     # 채점 호출 토큰 → usage_events(kind=evaluate) 기록. scoring 입력에서는 분리.
     eval_usage = judgments.pop('usage', None)

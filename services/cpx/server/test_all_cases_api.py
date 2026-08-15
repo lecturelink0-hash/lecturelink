@@ -26,7 +26,11 @@ OTHER_USER_HEADERS = {
 }
 
 
+EXTRACT_CALLS = {"n": 0}
+
+
 def fake_extract_judgments(*args, **kwargs):
+    EXTRACT_CALLS["n"] += 1
     rubric = kwargs.get("rubric")
     if rubric is None and len(args) >= 2:
         rubric = args[1]
@@ -137,6 +141,55 @@ def run() -> None:
                     )
                     if index % 25 == 0 or index == len(cases):
                         print(f"API lifecycle passed: {index}/{len(cases)}")
+
+                # ── 조기 종료도 결과 화면이 떠야 한다 (2026-08-15 모바일 보고) ──
+                # 예전에는 문진 2턴 미만이면 evaluate 가 422 → 프론트가 진료 화면으로
+                # 되돌아가 "이유 없이 튕긴다"로 보였다. 이제 짧은 세션도 채점된다.
+                early_case = cases[0]["id"]
+
+                # (1) 문진 1턴 + 환자 응답 1턴 — 종료 즉시 채점되어야 한다
+                one_turn = expect_ok(
+                    client.post("/api/sessions", headers=HEADERS, json={"caseId": early_case}),
+                    "one-turn: create session",
+                )["sessionId"]
+                expect_ok(
+                    client.post(
+                        f"/api/sessions/{one_turn}/events",
+                        headers=HEADERS,
+                        json=[
+                            {"role": "student", "text": "어디가 불편해서 오셨어요?", "tOffsetMs": 0},
+                            {"role": "patient", "text": "아파서 왔습니다.", "tOffsetMs": 900},
+                        ],
+                    ),
+                    "one-turn: append events",
+                )
+                expect_ok(client.post(f"/api/sessions/{one_turn}/end", headers=HEADERS), "one-turn: end")
+                one_turn_result = expect_ok(
+                    client.post(f"/api/sessions/{one_turn}/evaluate", headers=HEADERS),
+                    "one-turn: evaluate",
+                )
+                assert one_turn_result.get("totalScore") is not None, "one-turn: 총점이 없다"
+
+                # (2) 대화 0턴(시작 직후 종료) — 채점은 되되 LLM 근거 추출은 부르지 않는다
+                empty_session = expect_ok(
+                    client.post("/api/sessions", headers=HEADERS, json={"caseId": early_case}),
+                    "empty: create session",
+                )["sessionId"]
+                expect_ok(client.post(f"/api/sessions/{empty_session}/end", headers=HEADERS), "empty: end")
+                calls_before = EXTRACT_CALLS["n"]
+                empty_result = expect_ok(
+                    client.post(f"/api/sessions/{empty_session}/evaluate", headers=HEADERS),
+                    "empty: evaluate",
+                )
+                assert EXTRACT_CALLS["n"] == calls_before, (
+                    "학생 발화가 0턴이면 LLM 근거 추출을 호출하지 않아야 한다"
+                )
+                checklist = [s for s in empty_result["sections"] if "satisfiedIds" in s]
+                assert checklist, "empty: 체크리스트 영역이 없다"
+                assert all(s["satisfiedCount"] == 0 for s in checklist), (
+                    f"empty: 충족 항목이 있으면 안 된다 — {[(s['id'], s['satisfiedCount']) for s in checklist]}"
+                )
+                assert empty_result.get("timeAnalysis") is None, "empty: 시간 분석은 계산할 수 없다"
 
                 assert first_session_id is not None
                 forbidden = client.get(
