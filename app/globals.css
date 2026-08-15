@@ -2563,10 +2563,13 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   color: #1f5c43;
 }
 
+/* 제목 크기는 내 문제집(.ll-library-page h1)과 동일한 clamp 를 쓴다 — 내신 대비(.ll-upload-page h1)는
+   상한만 38px 로 2px 작고 나머지 구간은 같다. 두 페이지 모두 브레이크포인트별 재정의 없이 clamp 하나로
+   반응하므로, CPX 쪽 모바일 고정값(31px·29px)도 두지 않아야 폭 전 구간에서 크기가 일치한다. */
 .cpx-start-header h1 {
   margin: 10px 0 0;
   max-width: 820px;
-  font-size: clamp(31px, 3vw, 43px);
+  font-size: clamp(28px, 3.5vw, 40px);
   font-weight: 820;
   line-height: 1.18;
   letter-spacing: -.038em;
@@ -3240,7 +3243,6 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 @media (max-width: 680px) {
   .cpx-start-header { align-items: flex-start; padding-top: 0; }
-  .cpx-start-header h1 { font-size: 31px; }
   .cpx-start-header p { font-size: 14px; }
   .cpx-record-link { align-self: flex-start; }
   .cpx-quick-section { padding: var(--space-8) 0 var(--space-12); }
@@ -3271,7 +3273,6 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 
 @media (max-width: 480px) {
   .cpx-start-header { flex-direction: column; gap: var(--space-3); }
-  .cpx-start-header h1 { font-size: 29px; }
   .cpx-record-link { margin-left: -4px; }
   .cpx-random-panel h3 br { display: none; }
 }
