@@ -237,6 +237,8 @@ export default function MyPage() {
   const activeSubscription = subscription?.subscription?.status === 'active'
     ? subscription.subscription
     : null;
+  // 유료 구독자만 전용 관리 화면(/subscription)으로 보낸다. 무료 사용자는 요금제 안내로.
+  const hasActivePaidSubscription = !!activeSubscription && activeSubscription.plan_tier !== 'free';
 
   async function cancelSubscription() {
     if (!activeSubscription?.auto_renew || cancellingSubscription) return;
@@ -492,10 +494,10 @@ export default function MyPage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[20px] font-bold text-sage-800 tracking-tight">현재 요금제</h2>
             <Link
-              href="/plan"
+              href={hasActivePaidSubscription ? '/subscription' : '/plan'}
               className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
             >
-              요금제 보기 <ChevronRight className="w-3.5 h-3.5" />
+              {hasActivePaidSubscription ? '구독 관리' : '요금제 보기'} <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
