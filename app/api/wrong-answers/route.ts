@@ -9,6 +9,7 @@
 import { z } from 'zod';
 import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
+import { STORAGE_BUCKET } from '@/lib/storage/paths';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
 
 const TIER_BADGE: Record<string, { label: string; color: 'curated' | 'community' | 'beta' }> = {
@@ -16,6 +17,15 @@ const TIER_BADGE: Record<string, { label: string; color: 'curated' | 'community'
   community: { label: 'AI 검증', color: 'community' },
   beta: { label: '베타', color: 'beta' },
 };
+
+/** private_question_images 서명 URL 유효기간(초). /api/private-questions 와 동일. */
+const SIGNED_URL_TTL_SECONDS = 3600;
+
+interface QuestionImage {
+  url: string;
+  kind: string | null;
+  caption: string | null;
+}
 
 export const GET = withErrorHandling(async () => {
   await requireAuthUser();
@@ -31,7 +41,8 @@ export const GET = withErrorHandling(async () => {
         image_url, image_type, tier
       ),
       private_question:private_questions (
-        id, stem, choices, answer_index, explanation, difficulty
+        id, stem, choices, answer_index, explanation, difficulty,
+        images:private_question_images ( storage_path, kind, caption, sort_order )
       ),
       sub_topic:sub_topics (
         id, name, subject:subjects ( id, name )
@@ -42,12 +53,50 @@ export const GET = withErrorHandling(async () => {
 
   if (error) throw error;
 
-  const items = (data ?? []).map((row) => {
-    const r = row as Record<string, any>;
+  const rows = (data ?? []) as Record<string, any>[];
+
+  // 내 자료 기반(private) 문항의 이미지는 private 버킷에 있어 서명 URL 이 필요하다.
+  // 행마다 따로 서명하면 왕복이 문항 수만큼 늘어나므로 전체 경로를 모아 한 번에 서명한다.
+  const imagePaths = Array.from(
+    new Set(
+      rows.flatMap((r) =>
+        ((r.private_question?.images ?? []) as { storage_path: string }[])
+          .map((im) => im.storage_path)
+          .filter(Boolean),
+      ),
+    ),
+  );
+
+  const signedByPath = new Map<string, string>();
+  if (imagePaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUrls(imagePaths, SIGNED_URL_TTL_SECONDS);
+    for (const s of signed ?? []) {
+      if (s.signedUrl && s.path) signedByPath.set(s.path, s.signedUrl);
+    }
+  }
+
+  const items = rows.map((r) => {
     const q = r.question ?? r.private_question;
     const isPrivate = !r.question && !!r.private_question;
     const st = r.sub_topic;
     const subject = st?.subject;
+
+    // 공유 풀은 questions.image_url(공개 URL) 한 장, private 은 연결된 이미지 전부.
+    const images: QuestionImage[] = isPrivate
+      ? [...((q?.images ?? []) as { storage_path: string; kind: string | null; caption: string | null; sort_order: number }[])]
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((im) => ({
+            url: signedByPath.get(im.storage_path) ?? '',
+            kind: im.kind,
+            caption: im.caption,
+          }))
+          .filter((im) => im.url !== '')
+      : q?.image_url
+        ? [{ url: q.image_url as string, kind: (q.image_type as string | null) ?? null, caption: null }]
+        : [];
+
     return {
       id: r.id,
       savedAt: r.created_at,
@@ -63,8 +112,10 @@ export const GET = withErrorHandling(async () => {
             answerIndex: q.answer_index,
             explanation: q.explanation,
             difficulty: q.difficulty,
-            imageUrl: q.image_url ?? null,
-            imageType: q.image_type ?? null,
+            images,
+            // imageUrl/imageType 은 기존 소비자 호환용(대표 이미지 1장).
+            imageUrl: images[0]?.url ?? null,
+            imageType: q.image_type ?? images[0]?.kind ?? null,
             tier: q.tier ?? 'community',
             badge: TIER_BADGE[q.tier ?? 'community'] ?? TIER_BADGE.community,
           }

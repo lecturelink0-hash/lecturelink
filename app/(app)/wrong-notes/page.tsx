@@ -22,6 +22,12 @@ import { QuestionStem } from '@/components/ui/QuestionStem';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface QuestionImage {
+  url: string;
+  kind: string | null;
+  caption: string | null;
+}
+
 interface QuestionDetail {
   id: string;
   stem: string;
@@ -29,6 +35,8 @@ interface QuestionDetail {
   answerIndex: number;
   explanation: string | null;
   difficulty: 1 | 2 | 3;
+  /** 문항에 연결된 이미지 전부. 내 자료 기반 문항은 여러 장일 수 있다. */
+  images: QuestionImage[];
   imageUrl: string | null;
   imageType: string | null;
   tier: 'curated' | 'community' | 'beta';
@@ -108,6 +116,34 @@ function initUIState(expanded = false): QuestionUIState {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+/**
+ * 문항 이미지 — 공유 풀은 questions.image_url 1장, 내 자료 기반은 연결된 이미지 전부.
+ * 고정 높이 컨테이너 대신 max-h 로 두어 세로로 긴 이미지도 잘리지 않게 한다.
+ */
+function QuestionImages({ images }: { images: QuestionImage[] }) {
+  if (!images || images.length === 0) return null;
+  return (
+    <div className="mb-4 space-y-2">
+      {images.map((img, i) => (
+        <figure key={`${img.url}-${i}`}>
+          {images.length > 1 && (
+            <figcaption className="text-[12px] font-semibold text-sage-700 mb-1">이미지 {i + 1}</figcaption>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={img.url}
+            alt={`문항 이미지 ${i + 1}`}
+            className="w-full max-h-80 object-contain rounded-lg border border-[var(--color-border)] bg-white"
+          />
+          {img.caption && (
+            <figcaption className="mt-1 text-[12px] text-[var(--color-muted)]">{img.caption}</figcaption>
+          )}
+        </figure>
+      ))}
+    </div>
+  );
+}
 
 interface ChoicesProps {
   choices: string[];
@@ -569,16 +605,7 @@ export default function WrongNotesPage() {
         {ui.expanded && q && (
           <div className="mt-2 border-t border-[var(--color-border)] pt-4">
             <QuestionStem className="text-[14px] leading-7 text-sage-800 mb-4" text={q.stem} />
-            {q.imageUrl && (
-              <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-48 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={q.imageUrl}
-                  alt={q.imageType ?? 'medical image'}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            )}
+            <QuestionImages images={q.images} />
             {renderChoicesSection(item)}
           </div>
         )}
@@ -637,16 +664,7 @@ export default function WrongNotesPage() {
         {q ? (
           <>
             <QuestionStem className="text-[15px] leading-7 text-sage-800 mb-4" text={q.stem} />
-            {q.imageUrl && (
-              <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-56 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={q.imageUrl}
-                  alt={q.imageType ?? 'medical image'}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            )}
+            <QuestionImages images={q.images} />
 
             <Choices
               choices={q.choices}
