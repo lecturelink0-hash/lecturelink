@@ -2400,16 +2400,21 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   border: 1px solid #d9ad32;
   color: #5d4710;
 }
+/* 현재 플랜 칸은 구독 관리 화면 링크(a)다 — button 과 달리 가운데 정렬이
+   기본이 아니라서 flex 로 직접 맞춘다. */
 .ll-plan-page .plan-current-button {
+  display: flex;
   width: 100%;
   height: 52px;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--forest);
   border-radius: 0.5rem;
   background: var(--forest);
   color: #ffffff;
   font-size: 1rem;
   font-weight: 700;
-  cursor: default;
+  text-decoration: none;
 }
 .ll-plan-page .plan-current-button:disabled { opacity: 1; }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import clsx from 'clsx';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
@@ -237,14 +238,14 @@ export default function PlanPage() {
                   {/* CTA */}
                   <div className="plan-action">
                     {isCurrent ? (
-                      <button
-                        type="button"
-                        disabled
+                      // 현재 플랜 칸은 구독 관리(해지 포함) 화면 진입점을 겸한다.
+                      <Link
+                        href="/subscription"
                         aria-current="true"
                         className="plan-current-button"
                       >
-                        현재 이용 중
-                      </button>
+                        구독 관리
+                      </Link>
                     ) : (
                       <Button
                         fullWidth
