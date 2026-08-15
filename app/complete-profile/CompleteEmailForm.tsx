@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Stethoscope } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import Image from 'next/image';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 
@@ -29,7 +30,14 @@ export function CompleteEmailForm({ displayName }: { displayName: string | null 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2.5 mb-3">
-            <Stethoscope className="w-7 h-7 text-sage-700" strokeWidth={2.2} />
+            <Image
+              src="/lecturelink-mark.png"
+              alt=""
+              width={467}
+              height={424}
+              priority
+              className="w-8 h-8 object-contain"
+            />
             <h1 className="text-2xl font-bold text-sage-700">LectureLink</h1>
           </div>
           <h2 className="text-[1.35rem] font-bold text-sage-800 mt-6 tracking-[-0.02em]">
