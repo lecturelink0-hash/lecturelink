@@ -231,7 +231,9 @@ export default function PracticePage() {
         selected_index: selected,
         time_spent_seconds: elapsedSeconds,
         track: 'smart_practice',
-        cohort_id: cohortId,
+        // 약점 집중 코스는 코호트 없이 도는 경로다. 키를 null 로 실어 보내면 안 되고
+        // 아예 빼야 한다(서버 스키마의 optional 은 undefined 만 허용).
+        ...(cohortId ? { cohort_id: cohortId } : {}),
       });
       setResult(res);
     } catch (e) {
@@ -496,7 +498,8 @@ export default function PracticePage() {
           )}
         </div>
 
-        <Button onClick={goNext} disabled={!result}>
+        {/* 채점하지 않아도 넘어갈 수 있다 — 모르는 문항에서 막히지 않게 한다. */}
+        <Button onClick={goNext} disabled={submitting}>
           {currentIdx === questions.length - 1
             ? (focus ? '코스 완료' : '새 문항 추천')
             : '다음 문제'}

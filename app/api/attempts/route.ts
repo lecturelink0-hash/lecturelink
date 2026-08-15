@@ -17,7 +17,7 @@
  *     selected_index: 0~4,
  *     time_spent_seconds?: integer,
  *     track: 'smart_practice' | 'lecture_note',
- *     cohort_id?: uuid
+ *     cohort_id?: uuid | null   // 코호트가 없는 경로(약점 집중 코스 등)는 null 로 온다
  *   }
  */
 
@@ -33,7 +33,9 @@ const bodySchema = z.object({
   selected_index: z.number().int().min(0).max(4),
   time_spent_seconds: z.number().int().min(0).max(3600).optional(),
   track: z.enum(['smart_practice', 'lecture_note']),
-  cohort_id: z.string().uuid().optional(),
+  // 코호트가 없는 풀이 경로(약점 집중 코스, 코호트 미매칭 맞춤 풀이)는 null 을 보낸다.
+  // .optional() 만 두면 null 이 스키마에서 튕겨 "입력값이 올바르지 않습니다." 400 이 된다.
+  cohort_id: z.string().uuid().nullable().optional(),
 });
 
 export const POST = withErrorHandling(async (request: Request) => {
