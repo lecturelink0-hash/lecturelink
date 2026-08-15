@@ -8,6 +8,8 @@ const DEFAULT_PAGE_SIZE = 10;
 // 세부 채점 항목은 한 영역에 20개 넘게 쌓인다. 모바일에서 전부 펼치면
 // 한 영역을 지나가는 데만 화면 여러 장을 스크롤해야 해 끝까지 내리기 어렵다.
 // 기본 10개씩 끊어 보여주고 ‹ › 로 넘긴다. 한 쪽에 다 들어가면 컨트롤을 그리지 않는다.
+// unitLabel 은 카운터 접미사 전용('21개 항목') — aria 문구에 그대로 끼우면
+// '다음 개 항목' 처럼 읽히므로 버튼 라벨은 고정 문구를 쓴다.
 export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_SIZE, unitLabel = '항목' }) {
   const list = Array.isArray(items) ? items : [];
   const total = list.length;
@@ -43,7 +45,7 @@ export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_
             type="button"
             onClick={() => go(current - 1)}
             disabled={current === 0}
-            aria-label={`이전 ${unitLabel}`}
+            aria-label="이전 항목"
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -57,7 +59,7 @@ export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_
             type="button"
             onClick={() => go(current + 1)}
             disabled={current >= pageCount - 1}
-            aria-label={`다음 ${unitLabel}`}
+            aria-label="다음 항목"
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
