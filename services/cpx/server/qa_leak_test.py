@@ -47,6 +47,17 @@ DISCLAIMER_MARKERS = ['의학적 조언', '의료 전문가와 상담', '전문�
 META_LABEL_MARKERS = ['비의료적', '질문에 대한 답변', '답변입니다', '답변드리자면',
                       '역할로서', '표준화 환자', '역할극']
 
+# 프롬프트 안의 예시 대사를 자기 주소증인 양 따라 하는 이탈. 2026-08-15 실측:
+# 산전 진찰(24주) 환자와 음주 문제 환자가 개방형 질문에 "요즘 통 잠을 못 자서 왔어요"라고 답했다.
+# [정보 공개 통제] 블록의 예시("수면 문제면 …")를 베낀 것으로, 학생은 산전 진찰인데 불면 병력을
+# 캐게 된다. dx_leak/open_leak가 진단명만 보느라 통과시켰던 사각이라 여기서 따로 잡는다.
+# (구절, 그 구절이 정당한 카테고리) — 카테고리가 맞지 않으면 주소증 조작으로 본다.
+EXAMPLE_PARROTS = [
+    ('잠을 통 못 자', ('수면장애', '피로', '불안', '기분 변화', '자살')),
+    ('잠을 못 자', ('수면장애', '피로', '불안', '기분 변화', '자살')),
+    ('머리가 너무 아파', ('두통',)),
+]
+
 # 외국어 응대 판정용. 환자는 한국어 단일어 화자이므로 뜻을 알아듣지도, 언어 이름을 대지도 못한다.
 LANGUAGE_NAMES = ['영어', '스페인어', '중국어', '일본어', '독일어', '프랑스어', 'English', 'Spanish']
 CONFUSION_MARKERS = ['네?', '예?', '뭐라고', '못 알아', '모르겠', '무슨 말씀', '다시 말씀',
@@ -134,6 +145,25 @@ def call_patient(client, system_instruction: str, probe: dict) -> str:
             raise
 
 
+def example_parroting(text: str, case: dict) -> str:
+    """프롬프트 예시 대사를 주소증으로 베꼈으면 사유를 반환, 아니면 빈 문자열.
+
+    카테고리와 caseSummary 양쪽으로 정당성을 본다 — 예: '피로' 케이스가 잠 이야기를 하는 건
+    정상이지만, '산전 진찰' 케이스가 그러면 방문 이유를 조작한 것이다.
+    """
+    category = str(case.get('category', ''))
+    summary = str((case.get('scenarioRule') or {}).get('caseSummary', ''))
+    for phrase, ok_categories in EXAMPLE_PARROTS:
+        if phrase not in text:
+            continue
+        if any(c in category for c in ok_categories):
+            continue
+        if '잠' in phrase and ('불면' in summary or '수면' in summary or '잠' in summary):
+            continue  # caseSummary가 실제로 수면을 다루면 정상
+        return f'프롬프트 예시 대사를 주소증으로 따라 함: "{phrase}" (카테고리: {category or "없음"})'
+    return ''
+
+
 def check_response(probe: dict, text: str, case: dict, persona: dict | None = None) -> tuple[bool, str]:
     """(passed, note) 반환."""
     check_type = probe['check']
@@ -178,6 +208,9 @@ def check_response(probe: dict, text: str, case: dict, persona: dict | None = No
         kws = [k for k in diagnosis_keywords(case) if k in text]
         if kws:
             return False, f'개방형 질문에 병명 키워드 노출: {kws}'
+        parroted = example_parroting(text, case)
+        if parroted:
+            return False, parroted
         return True, '주소증만 응답'
     return True, ''
 
@@ -335,6 +368,17 @@ def selftest() -> int:
         if passed != expected:
             failed += 1
             print(f'❌ [{probe_id}] 기대 passed={expected} 실제 {passed} — {note}\n     "{text}"')
+
+    # 예시 베끼기 판정 — 2026-08-15 실측으로 드러난 사각. 양방향으로 본다.
+    for title, want_flag in (('산전 진찰', True), ('수면장애', False)):
+        target = next((m['id'] for m in prompt_mod.list_cases()
+                       if title in m['title'] or title in m.get('category', '')), None)
+        if not target:
+            continue
+        got = bool(example_parroting('요즘 통 잠을 못 자서 왔어요.', prompt_mod.load_case(target)))
+        if got != want_flag:
+            failed += 1
+            print(f'❌ 예시 베끼기 판정: {title} 케이스에서 flagged={got}, 기대 {want_flag}')
 
     leaked = '아, 네... 이쪽으로 돌리면 좀 아파요. " 비의료적 질문에 대한 답변입니다.'
     if not [m for m in META_LABEL_MARKERS if m in leaked]:
