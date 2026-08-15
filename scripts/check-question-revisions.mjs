@@ -24,7 +24,11 @@ import { readFileSync, existsSync } from 'node:fs';
 import { lintChoiceLeakage, lintKmleQuestion, normalizeKmleQuestion } from '../lib/ai/kmle-format.ts';
 
 const argv = process.argv;
-const arg = (n) => argv[argv.indexOf(`--${n}`) + 1];
+// indexOf 가 -1 일 때 argv[0](node 실행 파일 경로)이 잡히지 않도록 존재 여부를 먼저 본다.
+const arg = (n) => {
+  const i = argv.indexOf(`--${n}`);
+  return i >= 0 ? argv[i + 1] : undefined;
+};
 const VERBOSE = argv.includes('--verbose');
 
 const inPath = arg('in');
