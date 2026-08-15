@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createServerClient } from '@/lib/db/server';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { resolveQuestionBadgeShort } from '@/lib/content/tier-badge';
 import { Plus } from 'lucide-react';
 
 interface SubjectRow {
@@ -63,12 +64,16 @@ export default async function BankPage() {
       const from = page * PAGE_SIZE;
       const { data: rows, error } = await supabase
         .from('questions')
-        .select('sub_topic_id, tier')
+        .select('sub_topic_id, tier, reviewed_by')
         .eq('status', 'active')
         .range(from, from + PAGE_SIZE - 1);
 
       if (error) break;
-      const batch = (rows ?? []) as { sub_topic_id: string | null; tier: string | null }[];
+      const batch = (rows ?? []) as {
+        sub_topic_id: string | null;
+        tier: string | null;
+        reviewed_by: string | null;
+      }[];
 
       for (const row of batch) {
         const subjectId = row.sub_topic_id
@@ -77,9 +82,12 @@ export default async function BankPage() {
         if (!subjectId) continue;
         const bucket =
           counts.get(subjectId) ?? { curated: 0, community: 0, beta: 0 };
-        if (row.tier === 'curated') bucket.curated += 1;
-        else if (row.tier === 'community') bucket.community += 1;
-        else if (row.tier === 'beta') bucket.beta += 1;
+        // 집계도 배지와 같은 근거를 쓴다 — 검수자가 기록된 문항만 '의사 검수'로 센다.
+        // tier='curated' 라벨만 보고 세면 화면의 숫자가 배지와 어긋나 또 다른 거짓이 된다.
+        const badge = resolveQuestionBadgeShort({ tier: row.tier, reviewedBy: row.reviewed_by });
+        if (badge.color === 'curated') bucket.curated += 1;
+        else if (badge.color === 'beta') bucket.beta += 1;
+        else bucket.community += 1;
         counts.set(subjectId, bucket);
       }
 
@@ -114,8 +122,8 @@ export default async function BankPage() {
       </div>
 
       <div className="flex flex-wrap gap-2.5 mb-8">
-        <PoolStat label="Curated 풀 (의사 검수)" value={totalCurated.toLocaleString()} />
-        <PoolStat label="Community 풀 (AI 검증)" value={totalCommunity.toLocaleString()} />
+        <PoolStat label="의사 검수 완료" value={totalCurated.toLocaleString()} />
+        <PoolStat label="AI 생성 · 검수 전" value={totalCommunity.toLocaleString()} />
         <PoolStat label="베타 (생성 중)" value={totalBeta.toLocaleString()} />
       </div>
 

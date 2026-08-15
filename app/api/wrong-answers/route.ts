@@ -11,12 +11,7 @@ import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { STORAGE_BUCKET } from '@/lib/storage/paths';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
-
-const TIER_BADGE: Record<string, { label: string; color: 'curated' | 'community' | 'beta' }> = {
-  curated: { label: '의사 검수', color: 'curated' },
-  community: { label: 'AI 검증', color: 'community' },
-  beta: { label: '베타', color: 'beta' },
-};
+import { resolveQuestionBadgeShort } from '@/lib/content/tier-badge';
 
 /** private_question_images 서명 URL 유효기간(초). /api/private-questions 와 동일. */
 const SIGNED_URL_TTL_SECONDS = 3600;
@@ -38,7 +33,7 @@ export const GET = withErrorHandling(async () => {
       id, source, selected_index, resolved, created_at, sub_topic_id,
       question:questions (
         id, stem, choices, answer_index, explanation, difficulty,
-        image_url, image_type, tier
+        image_url, image_type, tier, reviewed_by
       ),
       private_question:private_questions (
         id, stem, choices, answer_index, explanation, difficulty,
@@ -117,7 +112,7 @@ export const GET = withErrorHandling(async () => {
             imageUrl: images[0]?.url ?? null,
             imageType: q.image_type ?? images[0]?.kind ?? null,
             tier: q.tier ?? 'community',
-            badge: TIER_BADGE[q.tier ?? 'community'] ?? TIER_BADGE.community,
+            badge: resolveQuestionBadgeShort({ tier: q.tier, reviewedBy: q.reviewed_by }),
           }
         : null,
       subjectName: subject?.name ?? (isPrivate ? '내 강의 노트' : '기타'),
