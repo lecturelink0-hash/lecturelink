@@ -3534,6 +3534,12 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
 .ll-plan-page .features {
   margin: 0;
   gap: 7px;
+  /* 목록은 .plan 의 1fr 행에 놓이므로 세 카드가 같은 높이로 늘어난다. 그리드의
+     align-content 기본값(normal=stretch)은 그 남는 높이를 auto 행에 고루 나눠 넣어,
+     항목이 적은 내신대비·CPX 카드만 줄 간격이 벌어져 보였다(통합은 내용이 꽉 차
+     영향 없음). start 로 고정해 어느 카드든 gap 7px 로 붙이고, 남는 높이는 목록
+     아래 여백으로 남긴다 — CTA 버튼은 별도 행이라 카드 바닥에 그대로 붙어 있다. */
+  align-content: start;
 }
 .ll-plan-page .features li,
 .ll-plan-page .integrated .features li,

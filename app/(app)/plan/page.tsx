@@ -334,7 +334,9 @@ export default function PlanPage() {
                   포함된다(2026-08-14 정책, lib/payment/toss.ts CREDIT_PRICES 주석 참조) —
                   없는 제한을 있는 것처럼 보여주던 칸이었다. 그 자리는 실제로 차감되는
                   CPX 이용 시간이 대신한다. */}
-              <QuotaBar label="CPX 남은 시간" data={quota.cpx_seconds} unit="minutes" />
+              {/* 이 칸의 큰 숫자는 '쓴 양 / 총량'이라 라벨도 사용 기준으로 읽어야 맞는다
+                  (마이페이지 바는 잔여를 보여주므로 거기 라벨은 '남은 시간' 그대로다). */}
+              <QuotaBar label="CPX 사용 시간" data={quota.cpx_seconds} unit="minutes" />
             </div>
           </section>
         )}
