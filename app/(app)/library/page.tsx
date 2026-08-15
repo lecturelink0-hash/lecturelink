@@ -133,8 +133,9 @@ const STATUS_FILTERS: { key: SetStatus | 'all'; label: string }[] = [
 ];
 
 /** 문제집 그리드 한 쪽에 보여줄 카드 수 — 모바일에서 목록이 무한히 늘어지지 않게 하는 기준.
- *  실측(폭 386px): 57개 = 15,034px(약 17.9화면) → 5개면 1,306px(1.6화면)·12쪽. */
-const SETS_PER_PAGE = 5;
+ *  실측(폭 386px): 57개 = 15,034px(약 17.9화면) → 5개면 1,306px(1.6화면)·12쪽.
+ *  데스크톱은 2열이라 6개면 3줄로 딱 떨어진다(5개는 마지막 줄이 한 칸 비었다). */
+const SETS_PER_PAGE = 6;
 
 const STATUS_BADGE: Record<SetStatus, { label: string; variant: 'default' | 'curated' }> = {
   inprogress: { label: '풀이 중', variant: 'default' },
