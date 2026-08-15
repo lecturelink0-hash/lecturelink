@@ -160,16 +160,21 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
       const supabase = await createServerClient();
       const { data: activeSessions } = await supabase
         .from('cpx_sessions')
-        .select('heartbeat_at, started_at')
+        .select('external_session_id, heartbeat_at, started_at')
         .eq('user_id', session.userId)
         .eq('status', 'active');
       const aliveSince = Date.now() - 10 * 60 * 1000;
-      const hasLive = (activeSessions ?? []).some(
+      const live = (activeSessions ?? []).find(
         (s) => new Date(s.heartbeat_at ?? s.started_at).getTime() > aliveSince,
       );
-      if (hasLive) {
+      if (live) {
+        // 막은 세션의 id 를 함께 돌려준다 — 클라이언트가 '기존 연습 종료하고 시작'으로
+        // 스스로 잠금을 풀 수 있어야 한다(없으면 스윕 전까지 최대 10분간 시작 불가).
         return NextResponse.json(
-          { detail: '이미 진행 중인 CPX 연습이 있습니다. 기존 연습을 종료한 뒤 다시 시작해주세요.' },
+          {
+            detail: '이미 진행 중인 CPX 연습이 있습니다. 기존 연습을 종료한 뒤 다시 시작해주세요.',
+            activeSessionId: live.external_session_id,
+          },
           { status: 409 },
         );
       }

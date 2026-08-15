@@ -69,7 +69,14 @@ function request(path, options = {}) {
     ...options,
   }).then(async (response) => {
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.detail || `요청 실패 (${response.status})`);
+    if (!response.ok) {
+      // 상태코드와 본문을 오류에 실어 보낸다 — 동시 세션 409는 본문의 activeSessionId 로
+      // '기존 연습 종료하고 시작' 복구 동선을 만들 수 있어야 한다.
+      const failure = new Error(body.detail || `요청 실패 (${response.status})`);
+      failure.status = response.status;
+      failure.payload = body;
+      throw failure;
+    }
     return body;
   });
 }
@@ -130,6 +137,11 @@ export default function CpxPractice() {
   const [noticeStatus, setNoticeStatus] = useState('checking');
   // 환자 인적사항 공개 여부 — 학생이 직접 물어봤을 때만 해당 항목을 노출한다.
   const [revealed, setRevealed] = useState({ name: false, age: false, gender: false });
+  // 진료 시작이 실패했을 때 사유 배너를 시야로 끌어오기 위한 신호(증가할 때마다 스크롤).
+  // 빠른 시작 패널은 페이지 최상단에 있어, 배너가 화면 밖이면 사용자에겐 '이유 없이 튕김'으로만 보인다.
+  const [startErrorSeq, setStartErrorSeq] = useState(0);
+  // 동시 진행 세션 게이트(409)에 막았을 때 그 세션 id — '기존 연습 종료하고 시작' 버튼에 쓴다.
+  const [blockedSessionId, setBlockedSessionId] = useState('');
   // 연습용 시간제한(초) — 세션 시작 전에만 변경 가능, 세션 생성 시 서버에 함께 저장된다.
   const [limitSeconds, setLimitSeconds] = useState(12 * 60);
   const liveRef = useRef(null);
@@ -141,6 +153,8 @@ export default function CpxPractice() {
   const autoEndedRef = useRef(false); // 시간 종료 자동 채점은 세션당 1회만
   const finishRef = useRef(null);
   const noticeRef = useRef(null); // 처리 안내 배너 — 미확인 상태로 시작을 누르면 여기로 스크롤한다.
+  const startErrorRef = useRef(null); // 진료 시작 실패 배너 — 실패할 때마다 여기로 스크롤한다.
+  const lastStartRef = useRef(null); // 마지막 시작 인자 — 기존 연습을 종료한 뒤 같은 조건으로 재시도한다.
 
   const remaining = Math.max(0, limitSeconds - elapsed);
   const push = useCallback((role, text) => {
@@ -334,10 +348,13 @@ export default function CpxPractice() {
       return;
     }
     if (caseId !== target.id) setCaseId(target.id);
+    lastStartRef.current = { target, startOptions };
+    setBlockedSessionId('');
     setPracticeMode(startOptions.mode || 'direct');
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     usageRef.current = [];
+    let createdSessionId = '';
     try {
       const noticeResponse = await fetch('/api/me/legal-consents', {
         method: 'POST',
@@ -351,6 +368,7 @@ export default function CpxPractice() {
       setNoticeStatus('done'); // 확인 이력이 서버에 남았으므로 이후에는 배너를 다시 보여주지 않는다.
       // practiceMode로 순응도 낮은 환자 배정 확률이 갈린다 — 랜덤 실전 40%, 직접 선택·추천 25%.
       const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: target.id, timeLimitSeconds: limitSeconds, practiceMode: startOptions.mode || 'direct' }) });
+      createdSessionId = created.sessionId;
       setSessionId(created.sessionId); setPersona(created.persona); startedAtRef.current = Date.now(); setElapsed(0);
       const token = await request(`/sessions/${created.sessionId}/live-token`, { method: 'POST' });
       const live = new GeminiLivePatient({
@@ -373,12 +391,57 @@ export default function CpxPractice() {
       }
       setPhase('live'); setStatus('진료 중 — 환자에게 질문해 보세요.');
     } catch (nextError) {
-      liveRef.current?.disconnect?.({ silent: true });
-      micRef.current?.stop?.();
+      liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null;
+      micRef.current?.stop?.(); micRef.current = null;
+      // 세션이 만들어진 뒤(토큰 발급·Live 연결·마이크 단계)에 실패하면 서버 세션이 active 로 남는다.
+      // 그대로 두면 '동시 진행 세션 1개' 게이트가 최대 10분간 모든 재시도를 409로 막아,
+      // 한 번의 일시적 실패가 10분짜리 잠금으로 굳는다 — 여기서 곧바로 반납한다.
+      if (createdSessionId) {
+        request(`/sessions/${createdSessionId}/end`, { method: 'POST' }).catch(() => {});
+        setSessionId('');
+      }
+      // 이미 진행 중인 연습에 막힌 경우에만 그 세션을 종료할 수 있는 복구 버튼을 띄운다.
+      if (nextError?.status === 409 && nextError.payload?.activeSessionId) {
+        setBlockedSessionId(String(nextError.payload.activeSessionId));
+      }
       setPhase('ready'); setError(nextError instanceof Error ? nextError.message : 'CPX 세션을 시작하지 못했습니다.');
       setStatus('연결 실패');
+      setStartErrorSeq((seq) => seq + 1);
     }
   };
+
+  // 다른 탭·이전 연습이 살아 있어 시작이 막혔을 때의 복구 — 그 세션을 종료하고 같은 조건으로 재시도한다.
+  // 진행 중인 연습을 끊는 동작이라 자동으로 하지 않고 사용자가 명시적으로 누를 때만 실행한다.
+  const endBlockedSessionAndRetry = async () => {
+    const blocked = blockedSessionId;
+    if (!blocked) return;
+    setBlockedSessionId(''); setError(''); setStatus('이전 연습을 종료하고 있습니다.');
+    try {
+      await request(`/sessions/${blocked}/end`, { method: 'POST' });
+    } catch {
+      setError('이전 연습을 종료하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      setStartErrorSeq((seq) => seq + 1);
+      return;
+    }
+    loadHistory();
+    const last = lastStartRef.current;
+    if (last) await start(last.target, last.startOptions);
+  };
+
+  // 실패 사유 배너로 데려다준다 — 빠른 시작은 페이지 최상단이라 배너가 화면 밖이면
+  // 사용자에게는 아무 설명 없이 시작 화면으로 튕긴 것으로만 보인다.
+  // (일부 브라우저가 smooth 를 조용히 무시하는 것이 실측돼 즉시 스크롤 폴백을 둔다 — 처리 안내 배너와 동일.)
+  useEffect(() => {
+    if (!startErrorSeq || phase !== 'ready') return undefined;
+    const banner = startErrorRef.current;
+    if (!banner) return undefined;
+    const startY = window.scrollY;
+    banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const timer = window.setTimeout(() => {
+      if (Math.abs(window.scrollY - startY) < 2) banner.scrollIntoView({ block: 'center' });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [startErrorSeq, phase]);
 
   const sendText = async (event) => {
     event.preventDefault();
@@ -495,6 +558,18 @@ export default function CpxPractice() {
         <div className="ll-card py-20 text-center text-[var(--color-muted)]">승인 증례를 불러오는 중…</div>
       ) : (
         <>
+          {/* 시작 실패·목록 오류 배너는 시작 화면 맨 위에 둔다. 아래(증례 직접 선택 밑)에 있으면
+              빠른 시작에서 실패했을 때 배너가 화면 밖이라 사유 없이 튕긴 것처럼 보인다. */}
+          {(catalogError || error) && <div ref={startErrorRef} className="space-y-2">
+            {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
+            {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]">
+              <ShieldAlert className="h-5 w-5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p>{error}</p>
+                {blockedSessionId && <button type="button" onClick={endBlockedSessionAndRetry} className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-white px-3 text-sm font-bold text-[var(--color-warn)] transition hover:bg-[var(--color-warn-bg)]"><RotateCcw className="h-4 w-4" />기존 연습 종료하고 시작하기</button>}
+              </div>
+            </div>}
+          </div>}
           <CpxStartExperience
             caseCatalog={caseCatalog}
             rawPartGroups={partGroups}
@@ -509,8 +584,6 @@ export default function CpxPractice() {
             onVoiceChange={setVoiceOn}
             onStart={start}
           />
-          {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
-          {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
         </>
       )
     )}

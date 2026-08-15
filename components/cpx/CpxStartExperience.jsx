@@ -209,7 +209,8 @@ export default function CpxStartExperience({
     <header className="cpx-start-header">
       <div>
         <span className="cpx-start-eyebrow">CPX 실기 연습</span>
-        <h1><span className="cpx-headline-accent">의사-환자 모의대화</span>를 통해 CPX를 대비해보세요</h1>
+        {/* 내신 대비(/notes)·내 문제집(/library) 제목과 같은 2줄 구성 — 강조 구절과 뒷문장을 <br/>로 나눈다. */}
+        <h1><span className="cpx-headline-accent">의사-환자 모의대화</span>를 통해<br />CPX를 대비해보세요</h1>
         <p>복습이 필요한 증례부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
       </div>
       <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ArrowRight aria-hidden /></Link>
