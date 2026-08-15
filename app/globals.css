@@ -2642,29 +2642,15 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   align-items: stretch;
   min-height: 264px;
   padding: clamp(22px, 2.6vw, 30px);
-  border: 1.5px solid #e2ded5;
+  border: 1.5px solid #bed8c8;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, .42);
-  /* -webkit- 접두사를 직접 쓰지 말 것: 빌드의 lightningcss가 값이 같은 선언을
-     중복 제거하며 나중에 온 접두사판만 남겨(표준 속성 소실) 최신 크롬에서
-     블러가 통째로 죽는다(운영 실측). 접두사는 번들러가 타깃에 맞춰 붙인다. */
-  backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .8),
-    0 14px 34px -26px rgba(21, 62, 47, .3);
-}
-
-/* 랜덤 실전 카드 — 학생 대시보드 글래스 카드와 같은 그라데이션을 그대로 쓴다.
-   (.student-dashboard .dashboard-next-card 와 동일 값이며, 끝 색 #edf6f0 은
-   대시보드 CPX 카드의 단색 #eef6f1 과 같은 톤이라 두 카드가 한 가족으로 읽힌다.)
-   불투명 채움이라 backdrop-filter 는 이 카드에서 그림에 영향을 주지 않는다 —
-   /cpx 배경이 단색 #faf9f6 이라 원래도 블러가 보이는 효과는 없었다. */
-.cpx-random-panel {
-  border-color: #bed8c8;
   background: linear-gradient(135deg, #fff 0%, #f7fbf8 64%, #edf6f0 100%);
+  backdrop-filter: blur(16px) saturate(1.2);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .65),
     0 14px 34px -26px rgba(21, 62, 47, .32);
+  cursor: pointer;
+  transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
 }
 
 /* 카드 상단 라벨 — 원형 아이콘 + 제목(+보조 설명) 가로 배치 */
@@ -2685,8 +2671,8 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   color: var(--color-primary);
 }
 
-/* 민트 카드 위에서는 원이 배경에 묻히므로 한 단계 더 진하게 */
-.cpx-random-panel .cpx-quick-icon { background: #cbe2d4; }
+/* 두 카드의 아이콘 배경도 같은 톤으로 맞춘다. */
+.cpx-quick-icon { background: #cbe2d4; }
 
 .cpx-quick-icon svg { width: 28px; height: 28px; }
 
@@ -2777,6 +2763,38 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   word-break: keep-all;
 }
 
+.cpx-review-panel:hover,
+.cpx-random-panel:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary-soft) 34%, #edf6f0);
+  box-shadow: 0 2px 4px oklch(25% 0.035 158 / 0.06), 0 16px 36px -26px oklch(25% 0.035 158 / 0.32);
+}
+
+.cpx-review-panel:hover .cpx-quick-icon,
+.cpx-random-panel:hover .cpx-quick-icon {
+  background: color-mix(in oklch, var(--color-primary-soft) 72%, var(--color-primary) 28%);
+}
+
+.cpx-review-panel:hover > .cpx-quick-cta,
+.cpx-random-panel:hover > .cpx-quick-cta {
+  color: var(--color-primary-strong);
+}
+
+.cpx-review-panel > .cpx-quick-cta svg,
+.cpx-random-panel > .cpx-quick-cta svg {
+  transition: transform 180ms ease-out;
+}
+
+.cpx-review-panel:hover > .cpx-quick-cta svg,
+.cpx-random-panel:hover > .cpx-quick-cta svg {
+  transform: translateX(4px);
+}
+
+.cpx-review-panel:focus-visible,
+.cpx-random-panel:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
 .cpx-recommendation-empty {
   display: flex;
   flex: 1;
