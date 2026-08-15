@@ -246,6 +246,13 @@ export function buildGenerationUserMessage(input: {
    */
   examples?: Array<{ stem: string; choices: string[]; explanation: string }>;
   count: number;
+  /**
+   * 사용자 메시지에 실제 이미지가 함께 실려 있는지.
+   *
+   * 이미지는 텍스트와 별개 블록으로 붙어 있어 지시가 없으면 모델이 그림을 무시하고
+   * 텍스트만으로 문항을 만들어 버린다. F11·F23 이 갈리는 지점이라 명시적으로 알린다.
+   */
+  hasImage?: boolean;
 }): string {
   const styleDesc =
     input.style === 'kmle'
@@ -270,6 +277,10 @@ export function buildGenerationUserMessage(input: {
       ? `\n- 발문 유형을 섞는다. 실제 국시 분포는 ${ASK_TYPE_MIX} 이다.`
       : '';
 
+  const imageRule = input.hasImage
+    ? `\n- **이 메시지에 사진이 첨부돼 있다. 사진을 판독해 문항을 만든다.** F11 대로 발문에서 "…사진(사진 1)이다."로 지칭하고, F23 대로 이미지형 문항으로 쓴다. 사진을 보지 않고도 풀리는 문항이면 안 된다.`
+    : '';
+
   return `
 다음 조건으로 ${input.count}개의 의학 문항을 생성하세요.
 
@@ -287,7 +298,7 @@ ${fewShot}
 ## 요구사항
 - ${input.count}개의 서로 다른 임상 시나리오 (환자 정보·검사 결과·증상 다양화)
 - 같은 sub-topic이지만 평가 포인트가 겹치지 않도록
-- 각 문항은 독립적으로 풀 수 있어야 함 (의존 관계 X)${mix}
+- 각 문항은 독립적으로 풀 수 있어야 함 (의존 관계 X)${mix}${imageRule}
 - 제출 전 자기 점검 10항목을 모두 통과시킬 것
 
 generate_questions 도구로 응답하세요.
