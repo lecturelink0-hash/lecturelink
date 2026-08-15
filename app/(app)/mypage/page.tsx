@@ -234,8 +234,9 @@ export default function MyPage() {
   const activeSubscription = subscription?.subscription?.status === 'active'
     ? subscription.subscription
     : null;
-  // 유료 구독자만 전용 관리 화면(/subscription)으로 보낸다. 무료 사용자는 요금제 안내로.
-  const hasActivePaidSubscription = !!activeSubscription && activeSubscription.plan_tier !== 'free';
+  // 실제 결제 레코드가 아직 없는 베타 제공 계정도 현재 플랜을 관리할 수 있다.
+  // 다만 정기결제 해지는 결제 레코드가 있는 계정에서만 /subscription 내부에 노출된다.
+  const hasPaidPlan = planTier !== 'free';
 
   // Calendar cell data (그리드 구성·키보드 내비게이션은 StudyCalendar 담당)
   const getCalendarDay = (dateKey: string) => ({
@@ -471,10 +472,10 @@ export default function MyPage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[20px] font-bold text-sage-800 tracking-tight">현재 요금제</h2>
             <Link
-              href={hasActivePaidSubscription ? '/subscription' : '/plan'}
+              href={hasPaidPlan ? '/subscription' : '/plan'}
               className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
             >
-              {hasActivePaidSubscription ? '구독 관리' : '요금제 보기'} <ChevronRight className="w-3.5 h-3.5" />
+              {hasPaidPlan ? '구독 관리' : '요금제 보기'} <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
