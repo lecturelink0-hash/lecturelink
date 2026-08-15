@@ -110,6 +110,28 @@ def rubric_sections_for_context(rubric: dict, context: dict) -> list[dict]:
     ]
 
 
+def empty_judgments(rubric: dict, context: dict) -> dict:
+    """학생 발화가 없는 세션용 판정 — 전 항목 미충족.
+
+    시작 직후 '진료 종료 및 채점'을 누른 조기 종료에서도 결과 화면은 떠야 한다.
+    근거로 삼을 대화가 아예 없으면 LLM 판정 결과는 어차피 전 항목 미충족으로 고정이므로,
+    같은 값을 호출 없이 만들어 채점 경로를 그대로 태운다(응답 지연·쿼터 소모 없음).
+    """
+    valid_ids = {
+        i['id'] for s in rubric_sections_for_context(rubric, context)
+        if s['type'] != 'deduction' for i in s['items']
+    }
+    return {
+        'items': {
+            item_id: {'satisfied': False, 'status': 'not_met', 'evidence': [], 'confidence': 'low'}
+            for item_id in valid_ids
+        },
+        'violations': [],
+        'phases': [],
+        'usage': None,
+    }
+
+
 def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> str:
     sections_desc = []
     for s in rubric_sections_for_context(rubric, context):
