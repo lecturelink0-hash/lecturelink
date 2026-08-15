@@ -14,6 +14,7 @@
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { IDENTITY_HEADER, encodeIdentity } from '@/lib/auth/request-identity';
 
 interface CookieToSet {
   name: string;
@@ -75,6 +76,14 @@ function isDocumentRequest(request: NextRequest): boolean {
   return dest === null || dest === 'document' || dest === 'iframe';
 }
 
+// 브라우저가 보낸 인증 핸드오프 헤더는 항상 버린다. 값은 미들웨어만 발급한다.
+// (서명까지 검증하므로 이건 방어 2선이다.)
+function forwardHeaders(request: NextRequest): Headers {
+  const headers = new Headers(request.headers);
+  headers.delete(IDENTITY_HEADER);
+  return headers;
+}
+
 // 미인증 루트(/) → 정적 랜딩. 문서 요청은 rewrite 로 URL 을 유지하고,
 // 클라이언트 라우터의 RSC fetch 는 rewrite 시 flight payload 가 없어 Vercel 에서
 // 404 가 나므로(죽은 프리페치 → 내비게이션 오류) redirect 로 문서 내비게이션을 유도한다.
@@ -95,11 +104,11 @@ export async function middleware(request: NextRequest) {
   if (studentPreview && request.nextUrl.pathname.startsWith('/api/')) {
     const url = request.nextUrl.clone();
     url.pathname = `/api/preview${request.nextUrl.pathname.slice('/api'.length)}`;
-    return NextResponse.rewrite(url);
+    return NextResponse.rewrite(url, { request: { headers: forwardHeaders(request) } });
   }
 
   if (studentPreview && !isPublicPath(request.nextUrl.pathname)) {
-    return NextResponse.next({ request });
+    return NextResponse.next({ request: { headers: forwardHeaders(request) } });
   }
 
   const isRoot = request.nextUrl.pathname === '/';
@@ -111,7 +120,7 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname === '/legal-consent' ||
       (process.env.LOCAL_FACULTY_ONBOARDING_PREVIEW === 'true' && request.nextUrl.pathname === '/api/schools'))
   ) {
-    return NextResponse.next({ request });
+    return NextResponse.next({ request: { headers: forwardHeaders(request) } });
   }
 
   // 홈(/): 세션 쿠키가 아예 없는 익명 방문은 app/page.tsx의 React 랜딩을 그대로 보여준다.
@@ -121,11 +130,12 @@ export async function middleware(request: NextRequest) {
       .getAll()
       .some((c) => /^sb-.*-auth-token(\.\d+)?$/.test(c.name) && c.value);
     if (!hasAuthCookie) {
-      return NextResponse.next({ request });
+      return NextResponse.next({ request: { headers: forwardHeaders(request) } });
     }
   }
 
-  let response = NextResponse.next({ request });
+  // 세션 갱신으로 새로 발급된 쿠키. 어떤 응답(통과·리다이렉트)으로 끝나든 함께 실어 보낸다.
+  const refreshedCookies: CookieToSet[] = [];
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -139,14 +149,39 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
+          refreshedCookies.push(...cookiesToSet);
         },
       },
     },
   );
+
+  function applyCookies<T extends NextResponse>(res: T): T {
+    refreshedCookies.forEach(({ name, value, options }) =>
+      res.cookies.set(name, value, options),
+    );
+    return res;
+  }
+
+  function redirectTo(url: URL) {
+    return applyCookies(NextResponse.redirect(url));
+  }
+
+  // 인증을 이미 마쳤으므로, 같은 요청을 처리할 RSC/라우트 핸들러가 Supabase Auth 로
+  // 또 왕복하지 않도록 검증된 신원을 서명해 넘긴다(lib/auth/request-identity.ts).
+  async function passThrough(
+    authenticated: { id: string; email?: string | null } | null,
+  ) {
+    const headers = forwardHeaders(request);
+    if (authenticated) {
+      const token = await encodeIdentity(
+        authenticated.id,
+        authenticated.email ?? '',
+        Date.now(),
+      );
+      if (token) headers.set(IDENTITY_HEADER, token);
+    }
+    return applyCookies(NextResponse.next({ request: { headers } }));
+  }
 
   // 손상/만료 쿠키에서 세션 파싱이 throw 할 수 있으므로(예: base64 깨짐 → Invalid UTF-8)
   // 안전하게 감싸고, 실패 시 미인증으로 취급한다.
@@ -164,7 +199,7 @@ export async function middleware(request: NextRequest) {
   //   - 아니면(만료 등)     → app/page.tsx의 React 랜딩
   if (isRoot) {
     if (!user) {
-      return response;
+      return passThrough(null);
     }
     const { data: profile } = await supabase
       .from('users')
@@ -173,24 +208,24 @@ export async function middleware(request: NextRequest) {
       .maybeSingle();
     const url = request.nextUrl.clone();
     url.pathname = profile?.account_type === 'professor' ? '/professor' : '/dashboard';
-    return NextResponse.redirect(url);
+    return redirectTo(url);
   }
 
   // 공개 경로는 그대로
   if (isPublicPath(pathname)) {
-    return response;
+    return passThrough(user);
   }
 
   // 미인증
   if (!user) {
     // API 라우트는 401 으로 반환되도록 그대로 통과 (각 라우트의 requireSession 이 처리)
     if (pathname.startsWith('/api/')) {
-      return response;
+      return passThrough(null);
     }
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
+    return redirectTo(url);
   }
 
   // 온보딩 필요 경로 게이트
@@ -210,20 +245,24 @@ export async function middleware(request: NextRequest) {
       if (!profile || !profile.onboarded_at) {
         const url = request.nextUrl.clone();
         url.pathname = '/onboarding';
-        return NextResponse.redirect(url);
+        return redirectTo(url);
       }
 
-      response.cookies.set('ll-onboarded', user.id, {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 30,
+      refreshedCookies.push({
+        name: 'll-onboarded',
+        value: user.id,
+        options: {
+          path: '/',
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24 * 30,
+        },
       });
     }
   }
 
-  return response;
+  return passThrough(user);
 }
 
 export const config = {

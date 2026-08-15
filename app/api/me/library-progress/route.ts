@@ -10,12 +10,12 @@
  * RLS 로 본인 데이터만 조회된다(server client).
  */
 
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling } from '@/lib/utils/api';
 
 export const GET = withErrorHandling(async () => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const supabase = await createServerClient();
 
   // 본인 private 문항 → 업로드 매핑

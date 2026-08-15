@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/db/admin';
 import { ok, withErrorHandling } from '@/lib/utils/api';
 import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal/config';
@@ -11,7 +11,7 @@ const noticeSchema = z.discriminatedUnion('documentType', [
 
 // CPX 처리 안내 확인 여부(현재 버전 기준) — 이미 확인한 사용자에게는 클라이언트가 배너를 다시 보여주지 않는다.
 export const GET = withErrorHandling(async () => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const admin = createAdminClient();
 
   const { data: existing, error } = await admin
@@ -27,7 +27,7 @@ export const GET = withErrorHandling(async () => {
 });
 
 export const POST = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const notice = noticeSchema.parse(await request.json());
   const admin = createAdminClient();
 

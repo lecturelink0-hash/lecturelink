@@ -4,12 +4,12 @@
  */
 
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling } from '@/lib/utils/api';
 
 export const GET = withErrorHandling(async () => {
-  await requireSession();
+  await requireAuthUser();
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -30,7 +30,7 @@ const createSchema = z.object({
 });
 
 export const POST = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const body = createSchema.parse(await request.json());
   const supabase = await createServerClient();
 

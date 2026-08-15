@@ -5,13 +5,13 @@
  * user_attempts 를 KST 기준 날짜로 그룹핑하여 푼 문항 수 / 정답 수를 반환.
  */
 
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { kstDateKey } from '@/lib/utils/kst';
 import { ok, withErrorHandling } from '@/lib/utils/api';
 
 export const GET = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const { searchParams } = new URL(request.url);
   const supabase = await createServerClient();
 

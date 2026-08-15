@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
 
@@ -18,7 +18,7 @@ const TIER_BADGE: Record<string, { label: string; color: 'curated' | 'community'
 };
 
 export const GET = withErrorHandling(async () => {
-  await requireSession();
+  await requireAuthUser();
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -91,7 +91,7 @@ const saveSchema = z
   });
 
 export const POST = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const body = saveSchema.parse(await request.json());
   const supabase = await createServerClient();
 
@@ -117,7 +117,7 @@ export const POST = withErrorHandling(async (request: Request) => {
 });
 
 export const DELETE = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const questionId = searchParams.get('question_id');

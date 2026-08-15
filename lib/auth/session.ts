@@ -5,8 +5,10 @@
  */
 
 import { cache } from 'react';
+import { headers } from 'next/headers';
 import { createServerClient } from '@/lib/db/server';
 import { createAdminClient } from '@/lib/db/admin';
+import { IDENTITY_HEADER, decodeIdentity } from '@/lib/auth/request-identity';
 import type { UserProfile } from '@/lib/types/domain';
 import type { GradeLevel, PlanTier, SemesterTerm } from '@/lib/types/database';
 
@@ -16,6 +18,31 @@ export interface AuthSession {
   profile: UserProfile;
   role: 'user' | 'admin';
 }
+
+/**
+ * 이 요청의 인증된 사용자. 미들웨어가 이미 검증해 서명해 둔 헤더가 있으면 그것을 쓰고,
+ * 없으면(서명 키 미설정·미들웨어 미경유) 기존대로 Supabase Auth 로 확인한다.
+ *
+ * 요청당 인증 왕복을 1회 줄이는 것이 목적이며, 같은 요청 안에서 여러 번 불려도
+ * React cache() 로 1회만 수행된다.
+ */
+const resolveAuthUser = cache(
+  async (): Promise<{ userId: string; email: string } | null> => {
+    const verified = await decodeIdentity(
+      (await headers()).get(IDENTITY_HEADER),
+      Date.now(),
+    );
+    if (verified) return verified;
+
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error || !user) return null;
+    return { userId: user.id, email: user.email ?? '' };
+  },
+);
 
 /**
  * 현재 사용자 세션 조회. 인증되지 않은 경우 null.
@@ -80,16 +107,13 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
     };
   }
 
-  const supabase = await createServerClient();
+  const user = await resolveAuthUser();
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  if (!user) {
     return null;
   }
+
+  const supabase = await createServerClient();
 
   let { data: profile, error: profileError } = await supabase
     .from('users')
@@ -112,7 +136,7 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
       )
     `,
     )
-    .eq('id', user.id)
+    .eq('id', user.userId)
     .maybeSingle();
 
   // Keep authentication working while the account_type migration is being
@@ -138,7 +162,7 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
         )
       `,
       )
-      .eq('id', user.id)
+      .eq('id', user.userId)
       .maybeSingle();
 
     profile = fallback.data as typeof profile;
@@ -162,7 +186,7 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
         faculty_approved_at: new Date().toISOString(),
         faculty_approved_by: null,
       })
-      .eq('id', user.id)
+      .eq('id', user.userId)
       .eq('faculty_status', 'pending');
 
     if (!repairError) {
@@ -207,7 +231,7 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
             : 'not_requested') as UserProfile['facultyStatus'],
       }
     : {
-        id: user.id,
+        id: user.userId,
         displayName: null,
         school: null,
         grade: null,
@@ -224,8 +248,8 @@ export const getCurrentSession = cache(async (): Promise<AuthSession | null> => 
     profile && (profile as { role?: string }).role === 'admin' ? 'admin' : 'user';
 
   return {
-    userId: user.id,
-    email: user.email ?? '',
+    userId: user.userId,
+    email: user.email,
     profile: userProfile,
     role,
   };
@@ -251,16 +275,12 @@ export async function requireAuthUser(): Promise<{ userId: string; email: string
     };
   }
 
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) {
+  const user = await resolveAuthUser();
+  if (!user) {
     const { UnauthorizedException } = await import('@/lib/utils/api');
     throw new UnauthorizedException();
   }
-  return { userId: user.id, email: user.email ?? '' };
+  return user;
 }
 
 export async function requireSession(): Promise<AuthSession> {
