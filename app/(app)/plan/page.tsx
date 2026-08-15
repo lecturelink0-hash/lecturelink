@@ -311,6 +311,9 @@ export default function PlanPage() {
             <div className="usage-grid">
               <QuotaBar label="문항" data={quota.questions} />
               <QuotaBar label="자료 업로드" data={quota.uploads} />
+              {/* #163 에서 '별도 제한 폐지'로 뺐던 바를 사용자 요청으로 복원.
+                  /api/me/quota 는 계속 images 를 내려주므로 실제 수치가 뜬다. */}
+              <QuotaBar label="이미지 문항" data={quota.images} />
             </div>
           </section>
         )}
