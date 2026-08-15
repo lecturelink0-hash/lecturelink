@@ -1,6 +1,7 @@
 import { DashboardView } from './DashboardView';
 import { getCurrentSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
+import { GENERATED_SET_TYPES, isGeneratedSet } from '@/lib/generated-sets';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -190,7 +191,8 @@ export default async function DashboardPage() {
       .select('id, file_name, file_type, completed_question_count')
       .eq('user_id', session.userId)
       .eq('status', 'completed')
-      .neq('file_type', 'generated/similar')
+      // 자동 생성 세트(오답 유사문항·약점 집중 코스)는 '이어서 학습' 후보에서 제외
+      .not('file_type', 'in', `(${Object.values(GENERATED_SET_TYPES).join(',')})`)
       .order('created_at', { ascending: false })
       .limit(1),
     supabase
@@ -346,7 +348,7 @@ export default async function DashboardPage() {
       fileType: nextUpload.file_type,
       questionCount: count ?? nextUpload.completed_question_count ?? 0,
       attemptedCount: attemptedIds.size,
-      href: nextUpload.file_type === 'generated/similar'
+      href: isGeneratedSet(nextUpload.file_type)
         ? `/similar-practice/${nextUpload.id}`
         : `/library?set=${encodeURIComponent(nextUpload.id)}&resume=1`,
       hasProgress: Boolean(recentStudyUpload),

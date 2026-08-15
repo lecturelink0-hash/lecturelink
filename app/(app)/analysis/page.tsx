@@ -127,8 +127,8 @@ export default async function AnalysisPage() {
                 rank={1}
                 track="맞춤 풀이"
                 title={`${topWeak!.subTopicName} 집중 코스`}
-                description={`최약점 영역 ① 보완. ${topWeak!.subjectName} 내 유사 문항이 풀에서 자동 추출됩니다.`}
-                href={topWeak!.subjectId ? `/practice?subject_id=${topWeak!.subjectId}` : '/practice'}
+                description={`최약점 영역 ① 보완. ${topWeak!.subjectName} · ${topWeak!.subTopicName} 문항이 풀에서 자동 추출됩니다.`}
+                href={focusHref(topWeak!)}
                 icon={<Brain className="w-4 h-4" />}
                 featured
               />
@@ -138,11 +138,7 @@ export default async function AnalysisPage() {
                   track="맞춤 풀이"
                   title={`${weakAreas[1].subTopicName} 보강`}
                   description={`${weakAreas[1].subjectName} · 정답률 ${weakAreas[1].accuracy}% 영역`}
-                  href={
-                    weakAreas[1].subjectId
-                      ? `/practice?subject_id=${weakAreas[1].subjectId}`
-                      : '/practice'
-                  }
+                  href={focusHref(weakAreas[1])}
                   icon={<Target className="w-4 h-4" />}
                 />
               )}
@@ -162,6 +158,19 @@ export default async function AnalysisPage() {
   );
 }
 
+/**
+ * 약점 집중 코스 링크.
+ *
+ * 과목만 넘기면 맞춤 풀이가 코호트/수강 과목 기준으로 다시 뽑아 엉뚱한 과목 문항이
+ * 나온다(대동맥박리 코스에 내분비 문항이 뜨던 원인). 세부주제 ID를 함께 넘겨
+ * 그 주제 문항만 나오게 한다.
+ */
+function focusHref(area: NormalizedWeakArea): string {
+  const params = new URLSearchParams({ sub_topic_id: area.subTopicId });
+  if (area.subjectId) params.set('subject_id', area.subjectId);
+  return `/practice?${params.toString()}`;
+}
+
 function WeakRow({ index, area }: { index: number; area: NormalizedWeakArea }) {
   const color =
     area.accuracy < 30
@@ -172,17 +181,19 @@ function WeakRow({ index, area }: { index: number; area: NormalizedWeakArea }) {
           ? '#C89A52'
           : '#A89B5C';
 
+  // 라벨/퍼센트 칸은 고정 폭(shrink-0). min-w 로 두면 제목이 긴 행만 칸이 넓어져
+  // 바 시작점이 행마다 어긋난다. 긴 제목은 잘라내지 않고 줄바꿈으로 흘린다.
   return (
     <div className="flex items-center gap-3 py-2 border-b border-[var(--color-border)] last:border-b-0">
-      <div className="min-w-[180px]">
-        <div className="text-sm font-medium text-sage-800">
+      <div className="w-[150px] sm:w-[180px] shrink-0">
+        <div className="text-sm font-medium text-sage-800 break-keep">
           {circled(index)} {area.subTopicName}
         </div>
-        <div className="text-[11px] text-[var(--color-muted)] mt-0.5">
+        <div className="text-[11px] text-[var(--color-muted)] mt-0.5 break-keep">
           {area.subjectName} · 오답 {area.errorCount}건 / {area.attemptCount}회 풀이
         </div>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="w-full h-1.5 bg-[var(--color-sage-200)] rounded-full overflow-hidden">
           <div
             className="h-full"
@@ -190,7 +201,7 @@ function WeakRow({ index, area }: { index: number; area: NormalizedWeakArea }) {
           />
         </div>
       </div>
-      <div className="text-sm font-semibold min-w-[48px] text-right" style={{ color }}>
+      <div className="text-sm font-semibold w-[48px] shrink-0 text-right" style={{ color }}>
         {area.accuracy}%
       </div>
     </div>
