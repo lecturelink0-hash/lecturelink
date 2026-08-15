@@ -763,8 +763,8 @@ export default function ProfilePage() {
               className="primary-btn professor-account-summary-cta"
               href="/mypage"
             >
-              <BookOpen size={18} aria-hidden="true" />
-              학습 현황으로 이동
+              <UserRound size={18} aria-hidden="true" />
+              마이페이지로 이동
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <p className="summary-note note professor-account-summary-note">

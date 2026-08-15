@@ -1,8 +1,10 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import clsx from 'clsx';
 
+export type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
+
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
+  variant?: ButtonVariant;
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;

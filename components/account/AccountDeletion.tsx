@@ -140,7 +140,8 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
           description="탈퇴하면 저장된 학습자료, 문제집, 오답노트, CPX 기록 등 계정 데이터가 삭제되며 복구할 수 없습니다."
           confirmLabel="회원탈퇴"
           cancelLabel="취소"
-          danger
+          confirmVariant="secondary"
+          cancelVariant="primary"
           loading={deleting}
           error={error || null}
           onCancel={() => { if (!deleting) setFinalConfirmOpen(false); }}
@@ -230,7 +231,8 @@ export function AccountDeletion({ variant = 'default' }: { variant?: 'default' |
         description="탈퇴하면 저장된 학습자료, 문제집, 오답노트, CPX 기록 등 계정 데이터가 삭제되며 복구할 수 없습니다."
         confirmLabel="회원탈퇴"
         cancelLabel="취소"
-        danger
+        confirmVariant="secondary"
+        cancelVariant="primary"
         loading={deleting}
         error={error || null}
         onCancel={() => { if (!deleting) setFinalConfirmOpen(false); }}
