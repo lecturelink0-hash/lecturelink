@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ChevronRight,
@@ -172,6 +172,21 @@ export default function MyPage() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // 대시보드의 시험 일정 칩은 /mypage#calendar 로 들어온다. 이 페이지는 데이터가 오기 전까지
+  // 스켈레톤만 그리므로, 브라우저가 해시 스크롤을 시도하는 시점에는 #calendar 가 아직 DOM 에 없다.
+  // (그래서 캘린더가 아니라 페이지 최상단에 착지했다.) 로드가 끝난 뒤 한 번만 직접 스크롤한다.
+  const hashScrolledRef = useRef(false);
+  useEffect(() => {
+    if (loading || hashScrolledRef.current) return;
+    const targetId = window.location.hash.slice(1);
+    if (!targetId) return;
+    hashScrolledRef.current = true;
+    // 렌더 커밋 직후 한 프레임 양보해 레이아웃이 잡힌 뒤 이동한다.
+    window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [loading]);
 
   // 캘린더에서 날짜를 고르면 일정 추가 폼의 날짜도 따라간다
   useEffect(() => {

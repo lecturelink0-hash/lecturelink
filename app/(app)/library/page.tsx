@@ -129,6 +129,9 @@ const STATUS_FILTERS: { key: SetStatus | 'all'; label: string }[] = [
   { key: 'done', label: '완료' },
 ];
 
+/** 문제집 그리드 한 페이지에 보여줄 카드 수 — 모바일에서 목록이 무한히 늘어지지 않게 하는 기준. */
+const SETS_PER_PAGE = 5;
+
 const STATUS_BADGE: Record<SetStatus, { label: string; variant: 'default' | 'curated' }> = {
   inprogress: { label: '풀이 중', variant: 'default' },
   done: { label: '완료', variant: 'curated' },
@@ -226,6 +229,8 @@ export default function LibraryPage() {
   // 학습 상태 필터 · 검색어 (우측 문제집 그리드용)
   const [statusFilter, setStatusFilter] = useState<SetStatus | 'all'>('all');
   const [query, setQuery] = useState('');
+  // 문제집 그리드 페이지(0-based) — 카드가 세로로 끝없이 이어지지 않도록 SETS_PER_PAGE 씩 끊어 보여준다.
+  const [setPageIndex, setSetPageIndex] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deletingSet, setDeletingSet] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -435,6 +440,7 @@ export default function LibraryPage() {
 
   function selectFilter(key: SetStatus | 'all') {
     setStatusFilter(key);
+    setSetPageIndex(0);
     closeActive();
   }
 
@@ -504,6 +510,24 @@ export default function LibraryPage() {
 
   const currentFilterLabel =
     STATUS_FILTERS.find((f) => f.key === statusFilter)?.label ?? '전체 문제집';
+
+  // 페이지는 파생값으로 한 번 더 조인다 — 삭제로 목록이 짧아져도 빈 페이지에 머무르지 않는다.
+  const setPageCount = Math.max(1, Math.ceil(visibleSets.length / SETS_PER_PAGE));
+  const currentSetPage = Math.min(setPageIndex, setPageCount - 1);
+  const pagedSets = visibleSets.slice(
+    currentSetPage * SETS_PER_PAGE,
+    currentSetPage * SETS_PER_PAGE + SETS_PER_PAGE,
+  );
+
+  function goToSetPage(next: number) {
+    const clamped = Math.min(Math.max(next, 0), setPageCount - 1);
+    if (clamped === currentSetPage) return;
+    setSetPageIndex(clamped);
+    // 페이지를 넘기면 새 카드의 첫 줄이 보이도록 목록 머리로 되돌린다.
+    window.requestAnimationFrame(() => {
+      document.getElementById('library-solve')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -931,7 +955,12 @@ export default function LibraryPage() {
         </Card>
 
         {/* ─── 우측: 콘텐츠 패널 ─────────────────────────────────────────── */}
-        <section id="library-solve" className="main-list">
+        {/* min-w-0 — 이 섹션은 .layout 그리드의 아이템이라 기본 min-width:auto 를 가진다.
+            그대로 두면 풀이 헤더의 최소폭이 그리드 트랙을 밀어 카드가 화면 밖(386px 기준 +35px)으로
+            빠져나간다. 0 으로 낮춰야 폭 부족이 제목 truncate 로 흡수된다. */}
+        {/* scroll-mt-20 — 셸 헤더가 position:fixed(60px)라 scrollIntoView 가 이 섹션을 y=0 에
+            붙이면 목록 툴바가 헤더 뒤로 숨는다. 85px 로 내려 잡는다(페이지 이동·풀이 진입 공통). */}
+        <section id="library-solve" className="main-list min-w-0 scroll-mt-20">
           {active ? (
             <div>
               <button
@@ -977,7 +1006,10 @@ export default function LibraryPage() {
                   <Search className="icon" />
                   <input
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setSetPageIndex(0);
+                    }}
                     placeholder="문제집 이름 검색"
                   />
                 </label>
@@ -1012,11 +1044,44 @@ export default function LibraryPage() {
                   조건에 맞는 문제집이 없습니다.
                 </Card>
               ) : (
-                <div className="books">
-                  {visibleSets.map((item) => (
-                    <SetCard key={item.upload.id} item={item} onOpen={continueUpload} onDelete={handleDeleteSet} />
-                  ))}
-                </div>
+                <>
+                  <div className="books">
+                    {pagedSets.map((item) => (
+                      <SetCard key={item.upload.id} item={item} onOpen={continueUpload} onDelete={handleDeleteSet} />
+                    ))}
+                  </div>
+                  {setPageCount > 1 && (
+                    <nav
+                      className="mt-5 flex items-center justify-center gap-3"
+                      aria-label="문제집 목록 페이지 이동"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => goToSetPage(currentSetPage - 1)}
+                        disabled={currentSetPage === 0}
+                        aria-label="이전 문제집 보기"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <ChevronLeft className="h-4.5 w-4.5" />
+                      </button>
+                      <span
+                        className="min-w-[76px] text-center text-[13px] font-semibold text-[var(--color-muted)] tabular-nums"
+                        aria-live="polite"
+                      >
+                        <b className="text-sage-800">{currentSetPage + 1}</b> / {setPageCount}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => goToSetPage(currentSetPage + 1)}
+                        disabled={currentSetPage >= setPageCount - 1}
+                        aria-label="다음 문제집 보기"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <ChevronRight className="h-4.5 w-4.5" />
+                      </button>
+                    </nav>
+                  )}
+                </>
               )}
 
               <p className="mt-5 text-[12px] text-[var(--color-muted)] leading-relaxed">
@@ -1480,8 +1545,8 @@ function PrivateExamSession({
     <div>
       <div className="ll-card p-5 mb-4">
         <div className="flex items-center justify-between gap-3 mb-3.5">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="ll-chip" style={{ width: '2.25rem', height: '2.25rem' }}>
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <span className="ll-chip shrink-0" style={{ width: '2.25rem', height: '2.25rem' }}>
               <BookOpen className="w-4 h-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">
@@ -1489,12 +1554,14 @@ function PrivateExamSession({
               <div className="text-[15px] font-bold text-sage-800 tracking-tight truncate">{active.fileName}</div>
             </div>
           </div>
-          <div className="relative flex items-center gap-1.5">
-            <button type="button" onClick={() => goToQuestion(index - 1)} disabled={index === 0} aria-label="이전 문항" className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
+          {/* shrink-0 — 좁은 폭(모바일)에서 이 조작부가 눌리면 "문항 10/10" 이 문/항 으로 쪼개진다.
+              줄어드는 쪽은 왼쪽 제목(min-w-0 + truncate)이어야 한다. */}
+          <div className="relative flex shrink-0 items-center gap-1.5">
+            <button type="button" onClick={() => goToQuestion(index - 1)} disabled={index === 0} aria-label="이전 문항" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
               <ChevronLeft className="h-4 w-4" />
             </button>
             <div className="relative">
-              <button type="button" onClick={() => setShowQuestionGrid((open) => !open)} aria-expanded={showQuestionGrid} className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-white px-2.5 text-sm font-semibold text-sage-800 transition-colors hover:border-sage-400">
+              <button type="button" onClick={() => setShowQuestionGrid((open) => !open)} aria-expanded={showQuestionGrid} className="inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-[var(--color-border)] bg-white px-2.5 text-sm font-semibold text-sage-800 transition-colors hover:border-sage-400">
                 문항 <span className="tnum">{index + 1}/{questions.length}</span>
                 <ChevronDown className={`h-3.5 w-3.5 text-[var(--color-muted)] transition-transform ${showQuestionGrid ? 'rotate-180' : ''}`} />
               </button>
@@ -1513,7 +1580,7 @@ function PrivateExamSession({
                 </div>
               )}
             </div>
-            <button type="button" onClick={() => goToQuestion(index + 1)} disabled={index === questions.length - 1} aria-label="다음 문항" className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
+            <button type="button" onClick={() => goToQuestion(index + 1)} disabled={index === questions.length - 1} aria-label="다음 문항" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
