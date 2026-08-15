@@ -71,7 +71,6 @@ interface QuotaResponse {
   plan_tier: PlanTier;
   questions: QuotaResource;
   uploads: QuotaResource;
-  images: QuotaResource;
 }
 
 interface SubscriptionResponse {
