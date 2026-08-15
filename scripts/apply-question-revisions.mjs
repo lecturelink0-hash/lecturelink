@@ -28,7 +28,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, appendFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 function loadEnvLocal() {
   for (const file of ['.env.local', '.env']) {
@@ -43,7 +44,12 @@ function loadEnvLocal() {
 loadEnvLocal();
 
 const argv = process.argv;
-const arg = (n) => argv[argv.indexOf(`--${n}`) + 1];
+// indexOf 가 -1 일 때 +1 하면 argv[0](node 실행 경로)을 돌려주므로 반드시 확인한다.
+// 옵션을 안 준 것과 "node 경로를 값으로 준 것"이 구분되지 않으면 엉뚱한 파일을 읽는다.
+const arg = (n) => {
+  const i = argv.indexOf(`--${n}`);
+  return i >= 0 ? argv[i + 1] : undefined;
+};
 const flag = (n) => argv.includes(`--${n}`);
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -62,6 +68,48 @@ const SNAPSHOT_COLUMNS =
   'id, sub_topic_id, stem, choices, answer_index, explanation, concepts, ' +
   'difficulty, image_url, image_type, open_image_id, source, tier, status';
 
+/**
+ * 이력 저장소 — DB 테이블이 없으면 파일로 대체한다.
+ *
+ * 이력을 남기지 못하면 수정 전 내용이 영구 소실되므로 반영 자체를 막는 것이 원칙이다.
+ * 다만 운영 DB에 question_revisions(마이그레이션 00028)가 아직 없을 수 있는데, 그때
+ * 작업을 통째로 멈추는 대신 같은 스냅샷을 JSONL 파일로 남겨 되돌릴 수 있게 한다.
+ * 파일은 저장소에 커밋해 두면 DB 테이블과 같은 역할을 한다.
+ *
+ * 테이블이 생기면 자동으로 그쪽을 쓴다 — 파일 경로는 폴백일 뿐이다.
+ */
+const HISTORY_FILE = arg('history-file') ?? 'outputs/question-revision-history.jsonl';
+
+function readFileHistory() {
+  if (!existsSync(HISTORY_FILE)) return [];
+  return readFileSync(HISTORY_FILE, 'utf8')
+    .split('\n')
+    .filter((l) => l.trim())
+    .map((l) => JSON.parse(l));
+}
+
+function nextFileRevision(questionId) {
+  const rows = readFileHistory().filter((r) => r.question_id === questionId);
+  return rows.reduce((m, r) => Math.max(m, r.revision), 0) + 1;
+}
+
+function appendFileHistory(record) {
+  mkdirSync(dirname(HISTORY_FILE), { recursive: true });
+  appendFileSync(HISTORY_FILE, JSON.stringify(record) + '\n');
+}
+
+/**
+ * 이력 테이블/함수가 아직 없어서 난 오류인가.
+ *
+ * 테이블(question_revisions)과 함수(next_question_revision)가 같은 마이그레이션에
+ * 들어 있어 둘 다 없을 수 있다. 'question_revision' 을 부분 문자열로 보면 둘 다 잡힌다.
+ * PGRST205=테이블 없음, PGRST202=함수 없음.
+ */
+function isMissingRevisionTable(error) {
+  const m = `${error?.message ?? ''} ${error?.code ?? ''}`;
+  return m.includes('question_revision') || m.includes('PGRST205') || m.includes('PGRST202');
+}
+
 // ─────────────────────────────────────────────
 // 복구 모드
 // ─────────────────────────────────────────────
@@ -73,14 +121,26 @@ if (flag('restore')) {
     process.exit(1);
   }
 
-  const { data: rev, error } = await db
+  let rev = null;
+  const { data: dbRev, error } = await db
     .from('question_revisions')
     .select('*')
     .eq('question_id', questionId)
     .eq('revision', to)
-    .single();
-  if (error || !rev) {
-    console.error(`[apply] revision ${to} 을 찾지 못했습니다.`, error?.message ?? '');
+    .maybeSingle();
+
+  if (dbRev) {
+    rev = dbRev;
+  } else if (!error || isMissingRevisionTable(error)) {
+    // 테이블이 없거나 그쪽에 기록이 없으면 파일 이력에서 찾는다.
+    rev = readFileHistory().find(
+      (x) => x.question_id === questionId && x.revision === to,
+    ) ?? null;
+  }
+  if (!rev) {
+    console.error(
+      `[apply] revision ${to} 을 찾지 못했습니다. (DB: ${error?.message ?? '없음'} / 파일: ${HISTORY_FILE})`,
+    );
     process.exit(1);
   }
 
@@ -98,19 +158,24 @@ if (flag('restore')) {
     .eq('id', questionId)
     .single();
 
-  const { data: nextRev } = await db.rpc('next_question_revision', {
-    p_question_id: questionId,
-  });
-
-  await db.from('question_revisions').insert({
+  const restoreRecord = {
     question_id: questionId,
-    revision: nextRev,
     before_data: current,
     after_data: target,
     reason: `restore:${to}`,
     ruleset: null,
     actor: ACTOR,
+  };
+  const { data: dbNext, error: rpcErr } = await db.rpc('next_question_revision', {
+    p_question_id: questionId,
   });
+  const { error: insErr } = rpcErr
+    ? { error: rpcErr }
+    : await db.from('question_revisions').insert({ ...restoreRecord, revision: dbNext });
+  const nextRev = insErr ? nextFileRevision(questionId) : dbNext;
+  if (insErr) {
+    appendFileHistory({ ...restoreRecord, revision: nextRev, created_at: new Date().toISOString() });
+  }
 
   const { id, ...restorable } = target;
   const { error: upErr } = await db.from('questions').update(restorable).eq('id', questionId);
@@ -175,6 +240,7 @@ async function embed(text) {
 const applied = [];
 const skipped = [];
 const needsEmbeddingBackfill = [];
+let usedFileHistory = false;
 
 for (const r of revisions) {
   const fail = gate(r);
@@ -216,18 +282,31 @@ for (const r of revisions) {
   if (vector) next.embedding = vector;
   else needsEmbeddingBackfill.push(r.id);
 
-  const { data: nextRev } = await db.rpc('next_question_revision', { p_question_id: r.id });
-
-  const { error: revErr } = await db.from('question_revisions').insert({
+  const record = {
     question_id: r.id,
-    revision: nextRev,
     before_data: current,
     after_data: { ...current, ...next, embedding: undefined },
     reason: r.notes ? `kmle-format: ${r.notes}`.slice(0, 500) : 'kmle-format',
     ruleset,
     actor: ACTOR,
+  };
+
+  let nextRev;
+  const { data: dbRev, error: rpcErr } = await db.rpc('next_question_revision', {
+    p_question_id: r.id,
   });
-  if (revErr) {
+  const { error: revErr } = rpcErr
+    ? { error: rpcErr }
+    : await db.from('question_revisions').insert({ ...record, revision: dbRev });
+
+  if (!revErr) {
+    nextRev = dbRev;
+  } else if (isMissingRevisionTable(revErr) || isMissingRevisionTable(rpcErr)) {
+    // 테이블이 아직 없다 — 같은 스냅샷을 파일에 남기고 계속한다.
+    nextRev = nextFileRevision(r.id);
+    appendFileHistory({ ...record, revision: nextRev, created_at: new Date().toISOString() });
+    usedFileHistory = true;
+  } else {
     skipped.push({ id: r.id, reasons: [`이력 기록 실패 — 반영 중단: ${revErr.message}`] });
     continue;
   }
@@ -244,6 +323,13 @@ console.log(`\n${DRY ? '[dry-run] ' : ''}반영 ${applied.length}건 / 건너뜀
 if (skipped.length > 0) {
   console.log('\n건너뛴 문항:');
   for (const s of skipped) console.log(`  ${s.id}\n     ${s.reasons.join('\n     ')}`);
+}
+if (usedFileHistory) {
+  console.log(
+    `\n[안내] question_revisions 테이블이 없어 수정 이력을 ${HISTORY_FILE} 에 남겼습니다.\n` +
+      '       되돌리려면 --restore <question_id> --to <revision> 을 쓰면 같은 파일을 읽습니다.\n' +
+      '       마이그레이션 00028 을 적용하면 이후로는 DB 에 기록됩니다.',
+  );
 }
 if (needsEmbeddingBackfill.length > 0) {
   console.log(
