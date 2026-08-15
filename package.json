@@ -18,6 +18,7 @@
     "cpx:sanitize-check": "node scripts/test-cpx-sanitize.mjs",
     "test:leakage": "node --experimental-strip-types --no-warnings scripts/test-question-leakage.mjs",
     "audit:leakage": "node --experimental-strip-types --no-warnings scripts/audit-question-leakage.mjs",
+    "backfill:embeddings": "node scripts/backfill-question-embeddings.mjs",
     "check:revisions": "node --experimental-strip-types --no-warnings scripts/check-question-revisions.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
