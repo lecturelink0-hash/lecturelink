@@ -2408,36 +2408,35 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   min-height: 318px;
   padding: clamp(24px, 3vw, 34px);
   border-radius: var(--radius-lg);
-}
-
-.cpx-review-panel {
-  border: 1px solid color-mix(in oklch, var(--color-primary) 28%, var(--color-border));
-  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  background: var(--color-primary-soft);
   box-shadow: var(--shadow-card);
-}
-
-.cpx-random-panel {
-  color: white;
-  background: var(--color-primary-strong);
-  box-shadow: 0 20px 48px -34px color-mix(in oklch, var(--color-primary-strong) 75%, transparent);
+  cursor: pointer;
+  transition: background-color 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
 }
 
 .cpx-action-title {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-primary);
+  color: var(--color-primary-strong);
   font-size: 13px;
   font-weight: 780;
 }
 
 .cpx-action-title svg {
-  width: 18px;
-  height: 18px;
+  flex: 0 0 70px;
+  width: 70px;
+  height: 70px;
+  padding: 20px;
+  border-radius: 50%;
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+  transition: background-color 180ms ease-out, color 180ms ease-out;
 }
 
 .cpx-random-panel .cpx-action-title {
-  color: rgba(255,255,255,.78);
+  color: var(--color-primary-strong);
 }
 
 .cpx-recommendation-result {
@@ -2494,6 +2493,15 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-review-panel > .btn,
 .cpx-random-panel > .btn {
   margin-top: auto;
+  align-self: flex-end;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-primary);
+  box-shadow: none;
+  transition: color 180ms ease-out;
 }
 
 .cpx-random-panel h3 {
@@ -2508,21 +2516,55 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 .cpx-random-panel p {
   max-width: 390px;
   margin: var(--space-3) 0 0;
-  color: rgba(255,255,255,.72);
+  color: var(--color-muted);
   font-size: 13.5px;
   line-height: 1.6;
   word-break: keep-all;
 }
 
 .cpx-random-panel > .btn {
-  border-color: rgba(255,255,255,.38);
-  background: white;
-  color: var(--color-primary-strong);
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-primary);
 }
 
 .cpx-random-panel > .btn:hover {
-  border-color: white;
-  background: var(--color-primary-soft);
+  border-color: transparent;
+  background: transparent;
+}
+
+.cpx-review-panel:hover,
+.cpx-random-panel:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary-soft) 34%, var(--color-surface));
+  box-shadow: 0 2px 4px oklch(25% 0.035 158 / 0.06), 0 16px 36px -26px oklch(25% 0.035 158 / 0.32);
+}
+
+.cpx-review-panel:hover .cpx-action-title svg,
+.cpx-random-panel:hover .cpx-action-title svg {
+  color: var(--color-primary-strong);
+  background: color-mix(in oklch, var(--color-primary-soft) 72%, var(--color-primary) 28%);
+}
+
+.cpx-review-panel:hover > .btn,
+.cpx-random-panel:hover > .btn {
+  color: var(--color-primary-strong);
+}
+
+.cpx-review-panel > .btn svg,
+.cpx-random-panel > .btn svg {
+  transition: transform 180ms ease-out;
+}
+
+.cpx-review-panel:hover > .btn svg,
+.cpx-random-panel:hover > .btn svg {
+  transform: translateX(4px);
+}
+
+.cpx-review-panel:focus-visible,
+.cpx-random-panel:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 
 .cpx-recommendation-empty {

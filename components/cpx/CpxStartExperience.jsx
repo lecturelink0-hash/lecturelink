@@ -184,6 +184,13 @@ export default function CpxStartExperience({
     setSetup(null);
     onStart(pending.target, { mode: pending.mode });
   };
+  const handleCardKeyDown = (event, action) => {
+    if (event.target !== event.currentTarget || event.key === 'Escape') return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      action();
+    }
+  };
 
   return <div className="cpx-start-experience">
     <header className="cpx-start-header">
@@ -198,7 +205,13 @@ export default function CpxStartExperience({
         <h2 id="cpx-quick-title">빠른 시작</h2>
       </div>
       <div className="cpx-quick-grid">
-        <article className="cpx-review-panel">
+        <article
+          className="cpx-review-panel"
+          role={recommendation ? 'button' : undefined}
+          tabIndex={recommendation ? 0 : undefined}
+          onClick={recommendation ? () => openSetup(recommendation.target, 'recommendation') : undefined}
+          onKeyDown={recommendation ? (event) => handleCardKeyDown(event, () => openSetup(recommendation.target, 'recommendation')) : undefined}
+        >
           <div className="cpx-action-title"><Target aria-hidden /><span>부족했던 증례 다시 연습</span></div>
           {historyLoading ? <div className="cpx-recommendation-loading" aria-live="polite">
             <span className="cpx-loading-bar" /><span className="cpx-loading-bar is-short" />
@@ -218,7 +231,7 @@ export default function CpxStartExperience({
               <h3>{recommendation.target.category}</h3>
               <p>{caseSubtitle(recommendation.target)}</p>
             </div>
-            <Button type="button" size="lg" onClick={() => openSetup(recommendation.target, 'recommendation')}>
+            <Button type="button" size="lg" onClick={(event) => { event.stopPropagation(); openSetup(recommendation.target, 'recommendation'); }}>
               다시 연습하기 <ArrowRight aria-hidden />
             </Button>
           </> : <div className="cpx-recommendation-empty">
@@ -228,13 +241,19 @@ export default function CpxStartExperience({
           </div>}
         </article>
 
-        <article className="cpx-random-panel">
+        <article
+          className="cpx-random-panel"
+          role={cases.length ? 'button' : undefined}
+          tabIndex={cases.length ? 0 : undefined}
+          onClick={cases.length ? openRandomSetup : undefined}
+          onKeyDown={cases.length ? (event) => handleCardKeyDown(event, openRandomSetup) : undefined}
+        >
           <div className="cpx-action-title"><Shuffle aria-hidden /><span>랜덤 실전</span></div>
           <div>
             <h3>증례 정보 없이 바로 시작</h3>
             <p>시험처럼 증례를 무작위로 진행해요.</p>
           </div>
-          <Button type="button" variant="secondary" size="lg" onClick={openRandomSetup} disabled={!cases.length}>
+          <Button type="button" variant="secondary" size="lg" onClick={(event) => { event.stopPropagation(); openRandomSetup(); }} disabled={!cases.length}>
             시작하기 <ArrowRight aria-hidden />
           </Button>
         </article>
