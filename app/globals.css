@@ -2652,7 +2652,6 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
   cursor: pointer;
   transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
 }
-}
 
 /* 카드 상단 라벨 — 원형 아이콘 + 제목(+보조 설명) 가로 배치 */
 .cpx-quick-label {
