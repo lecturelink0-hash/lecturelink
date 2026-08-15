@@ -11,7 +11,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/db/admin';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
@@ -20,7 +20,7 @@ import { STORAGE_BUCKET, buildStoragePath } from '@/lib/storage/paths';
 // ───────────── GET (목록) ─────────────
 
 export const GET = withErrorHandling(async () => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -62,7 +62,7 @@ const initSchema = z.object({
 });
 
 export const POST = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const body = initSchema.parse(await request.json());
 
   const admin = createAdminClient();

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/db/admin';
 import { generateQuestions } from '@/lib/ai/generate';
 import { recordAiCost, requireDailyCostCap } from '@/lib/ai/cost-cap';
@@ -14,7 +14,7 @@ const bodySchema = z.object({
 export const maxDuration = 120;
 
 export const POST = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const body = bodySchema.parse(await request.json());
   const admin = createAdminClient();
 

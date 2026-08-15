@@ -13,7 +13,7 @@
  */
 
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { createAdminClient } from '@/lib/db/admin';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
@@ -24,7 +24,7 @@ const bodySchema = z.object({
 });
 
 export const POST = withErrorHandling(async (request: Request) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const body = bodySchema.parse(await request.json());
 
   const supabase = await createServerClient();

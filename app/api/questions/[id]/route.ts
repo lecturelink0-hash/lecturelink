@@ -5,7 +5,7 @@
  * 기본은 정답·해설 숨김(QuestionForUser). ?reveal=true 면 정답·해설 포함.
  */
 
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
 
@@ -20,7 +20,7 @@ interface RouteContext {
 }
 
 export const GET = withErrorHandling(async (request: Request, context: RouteContext) => {
-  await requireSession();
+  await requireAuthUser();
   const { id } = await context.params;
   const { searchParams } = new URL(request.url);
   const reveal = searchParams.get('reveal') === 'true';
