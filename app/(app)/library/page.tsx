@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
 import { findNextUnansweredQuestionId } from '@/lib/library-progress';
+import { generatedSetLabel, isGeneratedSet } from '@/lib/generated-sets';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -471,11 +472,11 @@ export default function LibraryPage() {
 
   // ── 파생 데이터 (문제집 그리드 · 통계) ────────────────────────────────────
 
-  // 내신대비, QR 형성평가, 오답노트에서 자동 저장된 유사문제집을 한곳에 표시한다.
-  const nationalSimilarUploads = uploads.filter((upload) => upload.file_type === 'generated/similar');
+  // 내신대비, QR 형성평가, 오답노트·약점분석에서 자동 저장된 생성 문제집을 한곳에 표시한다.
+  const nationalSimilarUploads = uploads.filter((upload) => isGeneratedSet(upload.file_type));
   const formativeUploads = uploads.filter((upload) => upload.file_type === 'formative/live');
   const schoolUploads = uploads.filter(
-    (upload) => upload.file_type !== 'generated/similar' && upload.file_type !== 'formative/live',
+    (upload) => !isGeneratedSet(upload.file_type) && upload.file_type !== 'formative/live',
   );
   const libraryUploads = [...schoolUploads, ...formativeUploads, ...nationalSimilarUploads];
   const setItems: SetItem[] = libraryUploads.map((u) => {
@@ -1192,11 +1193,8 @@ function SetCard({
 }) {
   const { upload, count, status, attempted, correct } = item;
   const badge = STATUS_BADGE[status];
-  const sourceLabel = upload.file_type === 'generated/similar'
-    ? '오답노트에서 생성'
-    : upload.file_type === 'formative/live'
-      ? '형성평가 저장'
-      : '내신대비 생성';
+  const sourceLabel = generatedSetLabel(upload.file_type)
+    ?? (upload.file_type === 'formative/live' ? '형성평가 저장' : '내신대비 생성');
   const total = item.progressTotal || count;
   const isDone = total > 0 && attempted >= total; // 다 풀었으면 '다시풀기'
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : null;

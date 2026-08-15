@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { STUDY_SUBJECT_STORAGE_KEY } from '@/lib/study-settings';
@@ -37,7 +38,18 @@ interface RecommendResponse {
     allocations: Array<{ subTopicId: string; count: number; bucket: string }>;
     weakSubTopics: string[];
     excludedCount: number;
+    focusSubTopicId: string | null;
+    focusSubTopicName: string | null;
+    focusSubjectName: string | null;
+    focusPoolEmpty: boolean;
   };
+}
+
+interface WeakAreaSetResponse {
+  mode: 'pool' | 'generated';
+  upload_id?: string;
+  question_count: number;
+  seeded_from?: 'sub_topic' | 'subject' | 'none';
 }
 
 interface AttemptResponse {
@@ -59,6 +71,12 @@ interface CohortLookupRes {
 }
 
 export default function PracticePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // 약점·오답 분석의 "집중 코스"에서 넘어온 경우 — 이 세부주제 문항만 푼다.
+  const focusSubTopicId = searchParams.get('sub_topic_id');
+  const focusSubjectId = searchParams.get('subject_id');
+
   const [questions, setQuestions] = useState<QuestionForUser[]>([]);
   const [cohortId, setCohortId] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -68,6 +86,13 @@ export default function PracticePage() {
   const [settingsMissing, setSettingsMissing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [outOfScopeMarked, setOutOfScopeMarked] = useState(false);
+  const [focus, setFocus] = useState<{
+    subTopicName: string | null;
+    subjectName: string | null;
+    poolEmpty: boolean;
+  } | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const current = questions[currentIdx];
 
@@ -80,11 +105,40 @@ export default function PracticePage() {
   // 초기 로드: 추천 받기
   useEffect(() => {
     loadQuestions();
-  }, []);
+    // 집중 코스 링크가 바뀌면(다른 약점 주제 선택) 다시 불러온다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusSubTopicId]);
 
   async function loadQuestions() {
     setLoading(true);
     try {
+      // ── 집중 코스: 학습 설정/코호트와 무관하게 지정된 세부주제 문항만 뽑는다 ──
+      // 여기서 학습 설정의 수강 과목을 쓰면 "대동맥박리 집중 코스"인데 수강 과목
+      // (예: 내분비) 문항이 나온다. 링크에 담긴 주제가 우선이다.
+      if (focusSubTopicId) {
+        setSettingsMissing(false);
+        const query = [
+          'count=10',
+          `sub_topic_id=${focusSubTopicId}`,
+          focusSubjectId ? `subject_id=${focusSubjectId}` : null,
+        ]
+          .filter(Boolean)
+          .join('&');
+        const res = await api.get<RecommendResponse>(`/api/questions/recommend?${query}`);
+        setQuestions(res.questions);
+        setCohortId(null);
+        setFocus({
+          subTopicName: res.rationale.focusSubTopicName,
+          subjectName: res.rationale.focusSubjectName,
+          poolEmpty: res.rationale.focusPoolEmpty,
+        });
+        setCurrentIdx(0);
+        resetQuestion();
+        return;
+      }
+
+      setFocus(null);
+
       // 프로필의 학습 설정(학교·학년·학기·연도)과 브라우저에 저장된 수강 과목으로
       // 코호트를 찾아 추천에 반영한다. 설정이 없으면 안내 화면을 보여준다.
       const subjectId = window.localStorage.getItem(STUDY_SUBJECT_STORAGE_KEY);
@@ -129,6 +183,32 @@ export default function PracticePage() {
       alert(msg);
     } finally {
       setLoading(false);
+    }
+  }
+
+  /**
+   * 공개 문제 풀에 이 세부주제 문항이 없을 때 —
+   * 학생의 '내 문제집' 문항을 바탕으로 같은 주제 문항을 미리 만들어 두고
+   * 바로 풀 수 있는 문제집으로 이동한다.
+   */
+  async function handleGenerateFromLibrary() {
+    if (!focusSubTopicId) return;
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const res = await api.post<WeakAreaSetResponse>('/api/questions/weak-area-set', {
+        sub_topic_id: focusSubTopicId,
+      });
+      if (res.mode === 'generated' && res.upload_id) {
+        router.push(`/similar-practice/${res.upload_id}`);
+        return;
+      }
+      // 그 사이 풀에 문항이 생긴 경우 — 다시 불러오면 바로 풀 수 있다.
+      await loadQuestions();
+    } catch (e) {
+      setGenerateError(e instanceof ApiError ? e.message : '문항 생성에 실패했습니다.');
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -185,6 +265,9 @@ export default function PracticePage() {
     if (currentIdx < questions.length - 1) {
       setCurrentIdx((i) => i + 1);
       resetQuestion();
+    } else if (focus) {
+      // 집중 코스는 주제 문항이 유한하다 — 다시 추천해도 같은 문항이라 분석으로 돌려보낸다.
+      router.push('/analysis');
     } else {
       // 마지막이면 새로운 추천 로드
       loadQuestions();
@@ -202,6 +285,35 @@ export default function PracticePage() {
     return <div className="text-center py-20 text-[var(--color-muted)]">문항 불러오는 중...</div>;
   }
   if (!current) {
+    // 집중 코스인데 공개 풀에 문항이 없음 → 내 문제집 기반으로 미리 생성해 주는 경로 안내
+    if (focus) {
+      return (
+        <div className="ll-system-page max-w-lg mx-auto text-center py-16">
+          <p className="text-[15px] font-semibold text-sage-800 mb-2">
+            {focus.subTopicName ?? '이 주제'} 문항이 아직 문제 풀에 없습니다
+          </p>
+          <p className="text-sm text-[var(--color-muted)] mb-6 leading-relaxed">
+            내 문제집에 있는 {focus.subjectName ?? '해당 과목'} 문항을 바탕으로
+            <br />
+            같은 주제의 새 문항을 만들어 미리 준비해 둘 수 있어요.
+          </p>
+          {generateError && (
+            <p className="text-sm text-[var(--color-warn)] mb-4">{generateError}</p>
+          )}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button onClick={handleGenerateFromLibrary} loading={generating}>
+              내 문제집 기반으로 문항 만들기
+            </Button>
+            <Link href="/analysis">
+              <Button variant="secondary">분석으로 돌아가기</Button>
+            </Link>
+          </div>
+          <p className="text-[11px] text-[var(--color-muted)] mt-4">
+            생성된 문항은 내 문제집에 저장되어 언제든 다시 풀 수 있습니다.
+          </p>
+        </div>
+      );
+    }
     if (settingsMissing) {
       return (
         <div className="max-w-md mx-auto text-center py-20">
@@ -231,10 +343,30 @@ export default function PracticePage() {
   return (
     <div className="ll-system-page">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-sage-800 mb-1">맞춤 풀이</h1>
-        <p className="text-sm text-[var(--color-muted)]">
-          KMLE 가이드라인 기반 · 학교별 시험 범위 필터 적용 · 평소 학습 baseline
-        </p>
+        {focus ? (
+          <>
+            <Link
+              href="/analysis"
+              className="inline-flex items-center gap-1 text-[13px] font-medium text-[var(--color-muted)] hover:text-sage-800 transition-colors mb-2"
+            >
+              <ChevronLeft className="w-4 h-4" /> 약점·오답 분석으로
+            </Link>
+            <h1 className="text-2xl font-bold text-sage-800 mb-1">
+              {focus.subTopicName ?? '약점'} 집중 코스
+            </h1>
+            <p className="text-sm text-[var(--color-muted)]">
+              {focus.subjectName ? `${focus.subjectName} · ` : ''}
+              약점 세부주제 문항만 모아서 풉니다
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold text-sage-800 mb-1">맞춤 풀이</h1>
+            <p className="text-sm text-[var(--color-muted)]">
+              KMLE 가이드라인 기반 · 학교별 시험 범위 필터 적용 · 평소 학습 baseline
+            </p>
+          </>
+        )}
       </div>
 
       {/* Progress */}
@@ -328,8 +460,8 @@ export default function PracticePage() {
         )}
       </Card>
 
-      {/* Out of scope */}
-      {!result && (
+      {/* Out of scope — 집중 코스는 코호트 없이 도는 경로라 시험범위 피드백 대상이 아니다 */}
+      {!result && !focus && (
         <div className="bg-[var(--color-note-bg)] border border-[var(--color-border)] rounded-lg p-3 flex items-center justify-between gap-3 mb-4">
           <div className="text-sm text-sage-800">
             {outOfScopeMarked
@@ -365,7 +497,9 @@ export default function PracticePage() {
         </div>
 
         <Button onClick={goNext} disabled={!result}>
-          {currentIdx === questions.length - 1 ? '새 문항 추천' : '다음 문제'}
+          {currentIdx === questions.length - 1
+            ? (focus ? '코스 완료' : '새 문항 추천')
+            : '다음 문제'}
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
