@@ -42,15 +42,37 @@ interface RecommendResponse {
     focusSubTopicName: string | null;
     focusSubjectName: string | null;
     focusPoolEmpty: boolean;
+    focusPoolCount: number;
   };
 }
 
+/** 오답 사유 판정 결과 — 왜 이 문항들이 만들어졌는지 화면에서 밝힌다. */
+interface ErrorAnalysisRes {
+  primary_reason: string;
+  primary_label: string;
+  confidence: number;
+  evidence: string;
+  sample_size: number;
+  confusion_pairs: Array<{ picked: string; correct: string; discriminator: string }>;
+  applied_to_generation: boolean;
+}
+
 interface WeakAreaSetResponse {
-  mode: 'pool' | 'generated';
+  mode: 'pool' | 'generated' | 'topped_up';
   upload_id?: string;
   question_count: number;
   seeded_from?: 'sub_topic' | 'subject' | 'none';
+  added?: number;
+  rejected?: number;
+  reached_minimum?: boolean;
+  error_analysis: ErrorAnalysisRes | null;
 }
+
+/**
+ * 약점 집중 코스가 보장해야 하는 최소 문항 수.
+ * 서버(lib/recommend/engine.ts FOCUS_MIN_QUESTIONS)와 같은 값이어야 한다.
+ */
+const FOCUS_MIN_QUESTIONS = 3;
 
 interface AttemptResponse {
   attempt_id: string;
@@ -99,9 +121,16 @@ export default function PracticePage() {
     subTopicName: string | null;
     subjectName: string | null;
     poolEmpty: boolean;
+    poolCount: number;
   } | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [errorAnalysis, setErrorAnalysis] = useState<ErrorAnalysisRes | null>(null);
+  const [shortNotice, setShortNotice] = useState<string | null>(null);
+  // 같은 세부주제에 보충 생성을 두 번 걸지 않기 위한 표식.
+  // 보충 후에도 하한을 못 채우는 주제가 있을 수 있는데, 그때 재요청이 계속 나가면
+  // 학생 할당량만 태운다.
+  const toppedUpRef = useRef<string | null>(null);
 
   const current = questions[currentIdx];
   const { selected, result, outOfScope: outOfScopeMarked } =
@@ -152,8 +181,23 @@ export default function PracticePage() {
           subTopicName: res.rationale.focusSubTopicName,
           subjectName: res.rationale.focusSubjectName,
           poolEmpty: res.rationale.focusPoolEmpty,
+          poolCount: res.rationale.focusPoolCount,
         });
         setCurrentIdx(0);
+
+        // 풀에 문항이 있긴 한데 하한(3문항)에 못 미치면 그 자리에서 보충한다.
+        // 종전에는 '완전히 빈 경우'만 보충 경로가 있어서 1문항짜리 주제는
+        // 계속 1/1 로 떴다. 여기서 자동으로 거는 이유는, 학생이 이미 이 주제를
+        // 약점으로 지목받아 들어온 상태라 한 번 더 물어봐야 할 결정이 아니기 때문.
+        const poolCount = res.rationale.focusPoolCount;
+        if (
+          poolCount > 0
+          && poolCount < FOCUS_MIN_QUESTIONS
+          && toppedUpRef.current !== focusSubTopicId
+        ) {
+          toppedUpRef.current = focusSubTopicId;
+          void topUpFocusPool();
+        }
         return;
       }
 
@@ -218,6 +262,7 @@ export default function PracticePage() {
       const res = await api.post<WeakAreaSetResponse>('/api/questions/weak-area-set', {
         sub_topic_id: focusSubTopicId,
       });
+      setErrorAnalysis(res.error_analysis);
       if (res.mode === 'generated' && res.upload_id) {
         router.push(`/similar-practice/${res.upload_id}`);
         return;
@@ -226,6 +271,41 @@ export default function PracticePage() {
       await loadQuestions();
     } catch (e) {
       setGenerateError(e instanceof ApiError ? e.message : '문항 생성에 실패했습니다.');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  /**
+   * 집중 코스의 공개 풀이 하한(3문항)에 못 미칠 때 그 자리에서 채운다.
+   *
+   * 실패해도 이미 뽑아 둔 1~2문항은 그대로 풀 수 있어야 하므로, 오류는 배너로만
+   * 알리고 화면을 비우지 않는다. 하한을 못 채웠으면 그 사실도 그대로 쓴다 —
+   * 조용히 넘어가면 "AI가 약점 코스를 만들어 줬다"는 말이 또 거짓이 된다.
+   */
+  async function topUpFocusPool() {
+    if (!focusSubTopicId) return;
+    setGenerating(true);
+    setGenerateError(null);
+    setShortNotice(null);
+    try {
+      const res = await api.post<WeakAreaSetResponse>('/api/questions/weak-area-set', {
+        sub_topic_id: focusSubTopicId,
+      });
+      setErrorAnalysis(res.error_analysis);
+      if (res.reached_minimum === false) {
+        setShortNotice(
+          `이 주제는 지금 ${res.question_count}문항까지만 준비됐습니다`
+          + `${res.rejected ? ` (품질 기준에 걸린 ${res.rejected}문항은 제외했습니다)` : ''}.`,
+        );
+      }
+      await loadQuestions();
+    } catch (e) {
+      setGenerateError(
+        e instanceof ApiError
+          ? `약점 문항을 더 만들지 못했습니다 — ${e.message}`
+          : '약점 문항을 더 만들지 못했습니다.',
+      );
     } finally {
       setGenerating(false);
     }
@@ -386,6 +466,38 @@ export default function PracticePage() {
           </>
         )}
       </div>
+
+      {/* 약점 코스 상태 — 무엇을 근거로 어떤 문항을 준비했는지 밝힌다 */}
+      {focus && (generating || errorAnalysis || shortNotice || generateError) && (
+        <div className="mb-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-sage-100)] px-4 py-3">
+          {generating && (
+            <p className="text-[13px] font-semibold text-sage-800">
+              이 주제의 문항이 {focus.poolCount}개뿐이라 약점을 겨냥한 문항을 더 만들고 있습니다…
+            </p>
+          )}
+          {!generating && errorAnalysis && (
+            <>
+              <p className="text-[13px] font-semibold text-sage-800">
+                {errorAnalysis.applied_to_generation
+                  ? `오답 사유 «${errorAnalysis.primary_label}» 를 겨냥해 문항을 준비했습니다`
+                  : `오답 사유는 «${errorAnalysis.primary_label}» 로 추정되나 근거가 약해 출제에는 반영하지 않았습니다`}
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-muted)]">
+                최근 오답 {errorAnalysis.sample_size}건 기준 · 확신도 {Math.round(errorAnalysis.confidence * 100)}%
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-muted)]">
+                {errorAnalysis.evidence}
+              </p>
+            </>
+          )}
+          {!generating && shortNotice && (
+            <p className="mt-2 text-[12px] text-[var(--color-warn)]">{shortNotice}</p>
+          )}
+          {!generating && generateError && (
+            <p className="mt-2 text-[12px] text-[var(--color-warn)]">{generateError}</p>
+          )}
+        </div>
+      )}
 
       {/* Progress */}
       <div className="flex items-center justify-between text-sm text-[var(--color-muted)] mb-2">

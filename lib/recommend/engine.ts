@@ -14,6 +14,7 @@ import { createAdminClient } from '@/lib/db/admin';
 import { allocateCount, type BanditAllocation, type BanditSubTopicInput } from './bandit';
 import type { QuestionForUser } from '@/lib/types/domain';
 import type { ContentTier } from '@/lib/types/database';
+import { resolveQuestionBadge } from '@/lib/content/tier-badge';
 
 const TIER_PRIORITY: Record<ContentTier, number> = {
   curated: 3,
@@ -21,11 +22,6 @@ const TIER_PRIORITY: Record<ContentTier, number> = {
   beta: 1,
 };
 
-const TIER_BADGE: Record<ContentTier, { label: string; color: 'curated' | 'community' | 'beta' }> = {
-  curated: { label: '✓ 의사 검수 완료', color: 'curated' },
-  community: { label: 'AI 검증', color: 'community' },
-  beta: { label: '⚠ 베타', color: 'beta' },
-};
 
 /** questions 조회 공통 select — open_image / sub_topic / subject 를 함께 가져온다. */
 const QUESTION_SELECT = `
@@ -37,6 +33,7 @@ const QUESTION_SELECT = `
   image_url,
   image_type,
   tier,
+  reviewed_by,
   sub_topic_id,
   open_image_id,
   open_image:open_images (
@@ -78,7 +75,7 @@ function toQuestionForUser(r: QuestionRow): QuestionForUser {
     imageUrl: (r.image_url as string | null) ?? null,
     imageType: (r.image_type as QuestionForUser['imageType']) ?? null,
     tier,
-    badge: TIER_BADGE[tier],
+    badge: resolveQuestionBadge({ tier, reviewedBy: r.reviewed_by as string | null }),
     subjectName: subject?.name ?? '',
     subTopicName: subTopic?.name ?? '',
     attribution: oi
@@ -118,8 +115,23 @@ export interface RecommendResult {
      * true 면 클라이언트가 '내 문제집 기반 사전 생성' 경로로 안내한다.
      */
     focusPoolEmpty: boolean;
+    /**
+     * 집중 코스 sub_topic 의 공개 풀 문항 수(status='active').
+     *
+     * FOCUS_MIN_QUESTIONS 미만이면 클라이언트가 보충 생성을 건다. '비었나 아닌가'만
+     * 봐서는 1문항짜리 코스를 못 잡는다 — 실제로 마르판 증후군이 1문항이었다.
+     */
+    focusPoolCount: number;
   };
 }
+
+/**
+ * 약점 집중 코스가 보장해야 하는 최소 문항 수.
+ *
+ * 한 문항으로는 약점이 고쳐졌는지 확인할 수 없다. 틀린 이유를 겨냥한 문항을 최소
+ * 세 번은 만나야 '풀린 것'과 '찍은 것'이 갈린다.
+ */
+export const FOCUS_MIN_QUESTIONS = 3;
 
 export async function recommendQuestions(
   input: RecommendInput,
@@ -187,6 +199,7 @@ export async function recommendQuestions(
         focusSubTopicName: null,
         focusSubjectName: null,
         focusPoolEmpty: false,
+        focusPoolCount: 0,
       },
     };
   }
@@ -281,6 +294,7 @@ export async function recommendQuestions(
       focusSubTopicName: null,
       focusSubjectName: null,
       focusPoolEmpty: false,
+      focusPoolCount: 0,
     },
   };
 }
@@ -356,6 +370,7 @@ async function focusedRecommend(
       focusSubTopicName: topic?.name ?? null,
       focusSubjectName: topicSubject?.name ?? null,
       focusPoolEmpty: all.length === 0,
+      focusPoolCount: all.length,
     },
   };
 }

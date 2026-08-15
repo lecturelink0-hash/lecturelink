@@ -27,5 +27,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      # 정답 누출 린트(F17 계열) 회귀 검사 — 규칙이 죽으면 즉시 빨개진다.
+      - run: npm run test:leakage
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high

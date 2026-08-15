@@ -17,12 +17,7 @@
 import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling } from '@/lib/utils/api';
-
-const TIER_BADGE: Record<string, { label: string; color: 'curated' | 'community' | 'beta' }> = {
-  curated: { label: '의사 검수', color: 'curated' },
-  community: { label: 'AI 검증', color: 'community' },
-  beta: { label: '베타', color: 'beta' },
-};
+import { resolveQuestionBadgeShort } from '@/lib/content/tier-badge';
 
 export const GET = withErrorHandling(async (request: Request) => {
   // 프로필 정보가 불필요한 읽기 전용 조회 — 경량 인증 체크로 DB 왕복 절감
@@ -98,7 +93,7 @@ export const GET = withErrorHandling(async (request: Request) => {
     .from('questions')
     .select(
       `
-      id, stem, choices, concepts, difficulty, image_url, image_type, tier,
+      id, stem, choices, concepts, difficulty, image_url, image_type, tier, reviewed_by,
       sub_topic:sub_topics ( id, name, subject:subjects ( id, name ) )
     `,
     )
@@ -123,7 +118,7 @@ export const GET = withErrorHandling(async (request: Request) => {
       imageUrl: r.image_url ?? null,
       imageType: r.image_type ?? null,
       tier: r.tier,
-      badge: TIER_BADGE[r.tier] ?? TIER_BADGE.community,
+      badge: resolveQuestionBadgeShort({ tier: r.tier, reviewedBy: r.reviewed_by }),
       subjectName: st?.subject?.name ?? '기타',
       subTopicName: st?.name ?? '미분류',
       subTopicId: st?.id ?? null,

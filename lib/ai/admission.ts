@@ -46,6 +46,8 @@ export interface AdmissionInput {
   };
   createdBy?: string;              // 트리거한 사용자 (있을 경우)
   saveToDb?: boolean;              // 기본 true. false 면 시뮬레이션만.
+  /** 오답 사유 브리프. 있으면 그 사유를 겨냥한 문항을 만든다. */
+  errorFocus?: string;
 }
 
 export interface AdmittedQuestion {
@@ -103,6 +105,7 @@ export async function admitGeneratedQuestions(
     examples: input.examples,
     imageContext: input.imageContext,
     count: input.count,
+    errorFocus: input.errorFocus,
   });
   totalCost += generation.usage.costUSD;
 
@@ -119,6 +122,24 @@ export async function admitGeneratedQuestions(
     normalized.map(async (question) => {
       // 자동 교정이 위험한 형식 위반은 지적만 받아 tier 판정에 반영한다.
       const formatIssues = lintKmleQuestion(question);
+
+      // 정답 누출(F17 계열)은 tier 강등이 아니라 즉시 거부한다.
+      // 오답이 상식만으로 소거되거나 정답만 유독 길면, 그 문항은 '검수 대기 문항'이
+      // 아니라 애초에 문항이 아니다. 베타로 내려 보내면 결국 학습자에게 노출된다.
+      // 검증 호출 전에 걸러 토큰도 아낀다.
+      const leakageIssues = formatIssues.filter(
+        (i) => i.rule === 'F17' || i.rule === 'F17-L',
+      );
+      if (leakageIssues.length > 0) {
+        rejected.push({
+          question,
+          reason: `정답 누출: ${leakageIssues.map((i) => `[${i.rule}] ${i.message}`).join(' / ')}`,
+          severity: 'major',
+          score: 0,
+          issues: leakageIssues.map((i) => `[${i.rule}] ${i.message}`),
+        });
+        return;
+      }
 
       // 검증
       const verification = await verifyQuestion({

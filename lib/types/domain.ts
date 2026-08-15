@@ -255,6 +255,11 @@ export interface QuestionGenerationContext {
     imageUrl: string;
     imageType: MedicalImageType;
   };
+  /**
+   * 오답 사유 브리프. 있으면 그 사유를 겨냥한 문항을 만든다.
+   * lib/ai/error-analysis.ts 의 buildErrorFocus() 산출물을 그대로 넣는다.
+   */
+  errorFocus?: string;
 }
 
 export interface GeneratedQuestion {
