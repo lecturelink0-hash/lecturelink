@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
 
@@ -21,7 +21,7 @@ const patchSchema = z.object({
 });
 
 export const PATCH = withErrorHandling(async (request: Request, context: RouteContext) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const { id } = await context.params;
   const body = patchSchema.parse(await request.json());
   const supabase = await createServerClient();
@@ -40,7 +40,7 @@ export const PATCH = withErrorHandling(async (request: Request, context: RouteCo
 });
 
 export const DELETE = withErrorHandling(async (_request: Request, context: RouteContext) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const { id } = await context.params;
   const supabase = await createServerClient();
 

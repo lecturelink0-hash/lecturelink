@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "qa:faculty": "npm run lint && npm run typecheck && npm run build && npm audit --omit=dev --audit-level=high",
+    "test:auth-handoff": "node scripts/test-request-identity.mjs",
     "cpx:smoke": "node scripts/test-cpx-deployment.mjs",
     "cpx:bundle-check": "node scripts/check-cpx-client-bundle.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",

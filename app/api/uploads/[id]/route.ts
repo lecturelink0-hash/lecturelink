@@ -3,7 +3,7 @@
  * DELETE /api/uploads/[id]   — 업로드 + 연결된 private 문항 삭제
  */
 
-import { requireSession } from '@/lib/auth/session';
+import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { createAdminClient } from '@/lib/db/admin';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
@@ -19,7 +19,7 @@ export const GET = withErrorHandling(async (
   _request: Request,
   context: RouteContext,
 ) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const { id } = await context.params;
   const supabase = await createServerClient();
 
@@ -59,7 +59,7 @@ export const DELETE = withErrorHandling(async (
   _request: Request,
   context: RouteContext,
 ) => {
-  const session = await requireSession();
+  const session = await requireAuthUser();
   const { id } = await context.params;
   const supabase = await createServerClient();
   const admin = createAdminClient();

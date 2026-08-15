@@ -34,64 +34,71 @@ export default async function BankPage() {
 
   const subjects: SubjectRow[] = subjectsRaw ?? [];
 
-  const stats: SubjectStat[] = await Promise.all(
-    subjects.map(async (subject) => {
-      const { data: subTopicRows } = await supabase
-        .from('sub_topics')
-        .select('id')
-        .eq('subject_id', subject.id);
-      const subTopicIds = ((subTopicRows ?? []) as { id: string }[]).map(
-        (r) => r.id,
-      );
+  // 예전에는 과목마다 sub_topics 1회 + tier 별 count 3회를 돌려 과목 수에 비례해
+  // 왕복이 늘었다(과목 20개면 80회 이상). sub_topic 목록을 한 번에 받고, 문항은
+  // (sub_topic_id, tier) 두 열만 한 번에 읽어 애플리케이션에서 집계한다.
+  const subjectIds = subjects.map((s) => s.id);
 
-      if (subTopicIds.length === 0) {
-        return {
-          id: subject.id,
-          name: subject.name,
-          code: subject.code,
-          curated: 0,
-          community: 0,
-          beta: 0,
-          total: 0,
-        };
+  const { data: subTopicRows } = subjectIds.length
+    ? await supabase
+        .from('sub_topics')
+        .select('id, subject_id')
+        .in('subject_id', subjectIds)
+    : { data: [] as { id: string; subject_id: string }[] };
+
+  const subjectIdBySubTopic = new Map<string, string>();
+  for (const row of (subTopicRows ?? []) as { id: string; subject_id: string }[]) {
+    subjectIdBySubTopic.set(row.id, row.subject_id);
+  }
+
+  // sub_topic id 를 URL 로 나열하면(수백 개) 쿼리 문자열 길이 제한에 걸리므로 필터 없이
+  // 활성 문항의 두 열만 읽고, 위 map 에 없는 행(비활성 과목)은 건너뛴다.
+  // PostgREST 는 응답 행 수 상한이 있어 페이지 단위로 끝까지 읽는다.
+  const PAGE_SIZE = 1000;
+  const MAX_PAGES = 50;
+  const counts = new Map<string, { curated: number; community: number; beta: number }>();
+
+  if (subjectIdBySubTopic.size > 0) {
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const from = page * PAGE_SIZE;
+      const { data: rows, error } = await supabase
+        .from('questions')
+        .select('sub_topic_id, tier')
+        .eq('status', 'active')
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) break;
+      const batch = (rows ?? []) as { sub_topic_id: string | null; tier: string | null }[];
+
+      for (const row of batch) {
+        const subjectId = row.sub_topic_id
+          ? subjectIdBySubTopic.get(row.sub_topic_id)
+          : undefined;
+        if (!subjectId) continue;
+        const bucket =
+          counts.get(subjectId) ?? { curated: 0, community: 0, beta: 0 };
+        if (row.tier === 'curated') bucket.curated += 1;
+        else if (row.tier === 'community') bucket.community += 1;
+        else if (row.tier === 'beta') bucket.beta += 1;
+        counts.set(subjectId, bucket);
       }
 
-      const [curatedRes, communityRes, betaRes] = await Promise.all([
-        supabase
-          .from('questions')
-          .select('id', { count: 'exact', head: true })
-          .in('sub_topic_id', subTopicIds)
-          .eq('tier', 'curated')
-          .eq('status', 'active'),
-        supabase
-          .from('questions')
-          .select('id', { count: 'exact', head: true })
-          .in('sub_topic_id', subTopicIds)
-          .eq('tier', 'community')
-          .eq('status', 'active'),
-        supabase
-          .from('questions')
-          .select('id', { count: 'exact', head: true })
-          .in('sub_topic_id', subTopicIds)
-          .eq('tier', 'beta')
-          .eq('status', 'active'),
-      ]);
+      if (batch.length < PAGE_SIZE) break;
+    }
+  }
 
-      const curated = curatedRes.count ?? 0;
-      const community = communityRes.count ?? 0;
-      const beta = betaRes.count ?? 0;
-
-      return {
-        id: subject.id,
-        name: subject.name,
-        code: subject.code,
-        curated,
-        community,
-        beta,
-        total: curated + community + beta,
-      };
-    }),
-  );
+  const stats: SubjectStat[] = subjects.map((subject) => {
+    const bucket = counts.get(subject.id) ?? { curated: 0, community: 0, beta: 0 };
+    return {
+      id: subject.id,
+      name: subject.name,
+      code: subject.code,
+      curated: bucket.curated,
+      community: bucket.community,
+      beta: bucket.beta,
+      total: bucket.curated + bucket.community + bucket.beta,
+    };
+  });
 
   const totalCurated = stats.reduce((sum, s) => sum + s.curated, 0);
   const totalCommunity = stats.reduce((sum, s) => sum + s.community, 0);
