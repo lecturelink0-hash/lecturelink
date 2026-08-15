@@ -15,6 +15,7 @@
     "test:auth-handoff": "node scripts/test-request-identity.mjs",
     "cpx:smoke": "node scripts/test-cpx-deployment.mjs",
     "cpx:bundle-check": "node scripts/check-cpx-client-bundle.mjs",
+    "cpx:sanitize-check": "node scripts/test-cpx-sanitize.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",
