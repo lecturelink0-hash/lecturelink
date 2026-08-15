@@ -1161,10 +1161,6 @@ function ResultView({
     <div className="max-w-4xl mx-auto">
       {/* 헤더 */}
       <div className="mb-8">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent-bg)] px-3 py-1.5 text-[0.72rem] font-bold tracking-wide text-[var(--color-accent-dark)] mb-4">
-          <Check className="w-3.5 h-3.5" strokeWidth={2.6} />
-          STEP 2 / 2 · 생성 완료
-        </span>
         <h1 className="text-[2.4rem] leading-[1.1] font-bold text-sage-800 tracking-[-0.03em]">
           문제집이 완성됐어요
         </h1>
