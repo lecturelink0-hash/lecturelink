@@ -375,7 +375,7 @@ export default function CpxStartExperience({
           {setup.mode === 'random' && <span>증례 비공개</span>}
         </div>
         {/* 순응도 낮은 환자는 상시 무작위 배정(직접 선택 25% · 랜덤 실전 40%) — 사용자 설정 불가, 유형은 채점 후 공개 */}
-        <p className="mt-2 text-xs text-[var(--color-muted)]">실제 시험처럼 순응도가 낮은 환자를 무작위로 만날 수 있어요. 어떤 유형이었는지는 채점 후에 알려드려요.</p>
+        <p className="cpx-dialog-note">실제 시험처럼 순응도가 낮은 환자를 무작위로 만날 수 있어요. 어떤 유형이었는지는 채점 후에 알려드려요.</p>
         <Button ref={startButtonRef} type="button" size="lg" fullWidth onClick={confirmStart}>
           진료 시작 <ArrowRight aria-hidden />
         </Button>
