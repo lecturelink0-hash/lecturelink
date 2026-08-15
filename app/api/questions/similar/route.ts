@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { requireAuthUser } from '@/lib/auth/session';
 import { createAdminClient } from '@/lib/db/admin';
 import { generateQuestions } from '@/lib/ai/generate';
+import { buildImageExamples } from '@/lib/ai/image-example';
 import type { UsageRecord } from '@/lib/ai/client';
 import { recordAiCost, requireDailyCostCap } from '@/lib/ai/cost-cap';
 import { requireQuota, consumeQuota } from '@/lib/quota/check';
@@ -225,6 +226,9 @@ export const POST = withErrorHandling(async (request: Request) => {
     const [imageResult, textResult] = await Promise.all([
       generateQuestions({
         ...baseInput,
+        // 텍스트 문항은 원본 예시를 그대로 쓴다(F23 상 소견 서술이 맞는 형태).
+        // 사진을 붙일 문항만 예시에서 영상 소견 문장을 걷어낸다.
+        examples: buildImageExamples(source),
         count: 1,
         imageContext: { imageUrl: sourceImage.visionUrl, imageType: sourceImage.imageType },
       }).catch((error: unknown) => {
