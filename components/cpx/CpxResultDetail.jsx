@@ -276,11 +276,12 @@ export default function CpxResultDetail({ sessionId }) {
               {Object.entries(result.feedback.missedBySection).map(([sectionName, items]) => (
                 <div key={sectionName}>
                   <div className="text-xs font-semibold text-[var(--color-muted)]">{sectionName}</div>
-                  <CpxPagedList items={Array.isArray(items) ? items : []} unitLabel="개 항목">{(pageItems) => (
-                    <ul className="mt-1 space-y-1">{pageItems.map((t, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-[var(--color-text)]"><MinusCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warn)]" />{typeof t === 'string' ? t : JSON.stringify(t)}</li>
-                    ))}</ul>
-                  )}</CpxPagedList>
+                  {/* 보완할 점은 쪽을 나누지 않고 전량을 보여준다 — 왼쪽 세부 채점과 달리
+                      항목당 한 줄뿐이라 끊어 봐야 얻는 게 없고, 다음 진료 전에 훑어야 할
+                      체크리스트라 ‹ › 뒤에 가려지면 놓친 항목이 있는 줄도 모른다. */}
+                  <ul className="mt-1 space-y-1">{(Array.isArray(items) ? items : []).map((t, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-[var(--color-text)]"><MinusCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warn)]" />{typeof t === 'string' ? t : JSON.stringify(t)}</li>
+                  ))}</ul>
                 </div>
               ))}
             </div> : <p className="text-sm text-[var(--color-muted)]">놓친 핵심 항목이 없습니다. 훌륭합니다.</p>}
