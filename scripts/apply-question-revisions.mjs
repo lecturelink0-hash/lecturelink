@@ -62,6 +62,7 @@ const db = createClient(url, key, { auth: { persistSession: false } });
 
 const ACTOR = arg('actor') ?? `script:apply-question-revisions`;
 const DRY = flag('dry-run');
+const ALLOW_MEANING_CHANGE = flag('allow-meaning-change');
 
 /** 문항 스냅샷으로 남길 컬럼. 복구할 때 그대로 되살린다. */
 const SNAPSHOT_COLUMNS =
@@ -204,7 +205,13 @@ function gate(r) {
   if (!Array.isArray(r.choices) || r.choices.length !== 5) fail.push('선지가 5개가 아님');
   if (!Number.isInteger(r.answer_index) || r.answer_index < 0 || r.answer_index > 4)
     fail.push('answer_index 범위 밖');
-  if (r.answer_meaning_changed === true) fail.push('answer_meaning_changed=true (사람 확인 필요)');
+  // 정답의 의학적 의미가 바뀌는 수정은 기본적으로 막는다. 화면은 멀쩡한데 채점 기준만
+  // 달라지는 변경이라 사람이 봐야 한다. 확인을 마쳤으면 --allow-meaning-change 로 연다.
+  // 플래그로 여는 이유: 초안의 answer_meaning_changed 를 false 로 고쳐 통과시키면
+  // "의미가 바뀌었다"는 사실 자체가 이력에서 지워진다.
+  if (r.answer_meaning_changed === true && !ALLOW_MEANING_CHANGE) {
+    fail.push('answer_meaning_changed=true (사람 확인 필요 — 확인했다면 --allow-meaning-change)');
+  }
   if (
     Array.isArray(r.choices) &&
     Number.isInteger(r.answer_index) &&
