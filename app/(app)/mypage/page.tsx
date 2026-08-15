@@ -112,7 +112,6 @@ export default function MyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [partialError, setPartialError] = useState(false);
-  const [cancellingSubscription, setCancellingSubscription] = useState(false);
 
   // Calendar navigation — 초기 뷰는 KST 기준 오늘이 속한 달
   const [viewYear, setViewYear] = useState(() => Number(kstTodayKey().slice(0, 4)));
@@ -132,8 +131,6 @@ export default function MyPage() {
     { type: 'success' | 'error'; text: string } | null
   >(null);
   const [pendingDelete, setPendingDelete] = useState<ExamSchedule | null>(null);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   // ─── Fetch ──────────────────────────────────────────────────────────────
 
@@ -239,26 +236,6 @@ export default function MyPage() {
     : null;
   // 유료 구독자만 전용 관리 화면(/subscription)으로 보낸다. 무료 사용자는 요금제 안내로.
   const hasActivePaidSubscription = !!activeSubscription && activeSubscription.plan_tier !== 'free';
-
-  async function cancelSubscription() {
-    if (!activeSubscription?.auto_renew || cancellingSubscription) return;
-    setCancellingSubscription(true);
-    setSubscriptionError(null);
-    try {
-      await api.post('/api/me/subscription/cancel', {});
-      setSubscription((current) => current?.subscription ? {
-        ...current,
-        subscription: { ...current.subscription, auto_renew: false },
-      } : current);
-    } catch (cause) {
-      setSubscriptionError(
-        cause instanceof ApiError ? cause.message : '자동 갱신을 해제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-      );
-    } finally {
-      setCancellingSubscription(false);
-      setCancelDialogOpen(false);
-    }
-  }
 
   // Calendar cell data (그리드 구성·키보드 내비게이션은 StudyCalendar 담당)
   const getCalendarDay = (dateKey: string) => ({
@@ -543,24 +520,10 @@ export default function MyPage() {
 
           {/* Next billing / 업그레이드 CTA */}
           {activeSubscription ? (
-            <>
-              <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[14px]">
-                <span className="text-[var(--color-muted)]">{activeSubscription.auto_renew ? '다음 결제 예정일' : '이용 만료일'}</span>
-                <span className="font-semibold text-sage-800 tnum">{nextBillingDate}</span>
-              </div>
-              {activeSubscription.auto_renew ? (
-                <button type="button" onClick={() => setCancelDialogOpen(true)} disabled={cancellingSubscription} className="mt-2 text-left text-sm font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50">
-                  {cancellingSubscription ? '해지 처리 중...' : '자동 갱신 해제'}
-                </button>
-              ) : (
-                <p className="mt-2 text-sm text-[var(--color-muted)]">
-                  자동 갱신이 꺼져 있어요 ·{' '}
-                  <Link href="/plan" className="font-semibold text-sage-700 underline underline-offset-2">
-                    요금제에서 관리
-                  </Link>
-                </p>
-              )}
-            </>
+            <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[14px]">
+              <span className="text-[var(--color-muted)]">{activeSubscription.auto_renew ? '다음 결제 예정일' : '이용 만료일'}</span>
+              <span className="font-semibold text-sage-800 tnum">{nextBillingDate}</span>
+            </div>
           ) : planTier === 'free' ? (
             <div className="mt-auto pt-3">
               <Link
@@ -576,11 +539,6 @@ export default function MyPage() {
               <span className="font-semibold text-sage-800">없음</span>
             </div>
           )}
-          <div aria-live="polite">
-            {subscriptionError && (
-              <p className="mt-2 text-sm text-[var(--color-warn)]">{subscriptionError}</p>
-            )}
-          </div>
         </Card>
       </div>
 
@@ -885,15 +843,6 @@ export default function MyPage() {
         loading={deleteLoadingId !== null}
         onConfirm={() => pendingDelete && handleDeleteSchedule(pendingDelete.id)}
         onCancel={() => setPendingDelete(null)}
-      />
-      <ConfirmDialog
-        open={cancelDialogOpen}
-        title="자동 갱신을 해제할까요?"
-        description="이용 기간이 남아 있다면 만료일까지 그대로 사용할 수 있습니다."
-        confirmLabel="자동 갱신 해제"
-        loading={cancellingSubscription}
-        onConfirm={cancelSubscription}
-        onCancel={() => setCancelDialogOpen(false)}
       />
     </div>
   );
