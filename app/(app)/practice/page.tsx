@@ -152,6 +152,11 @@ export default function PracticePage() {
 
   // 초기 로드: 추천 받기
   useEffect(() => {
+    // 다른 약점 주제로 옮기면 이전 주제의 오답 사유·보충 안내는 거짓이 된다.
+    // "감별진단의 오류를 겨냥했습니다"가 엉뚱한 주제 위에 남아 있으면 안 된다.
+    setErrorAnalysis(null);
+    setShortNotice(null);
+    setGenerateError(null);
     loadQuestions();
     // 집중 코스 링크가 바뀌면(다른 약점 주제 선택) 다시 불러온다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
