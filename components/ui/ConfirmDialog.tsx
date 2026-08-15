@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Button } from './Button';
+import { Button, type ButtonVariant } from './Button';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -9,6 +9,8 @@ interface ConfirmDialogProps {
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  confirmVariant?: ButtonVariant;
+  cancelVariant?: ButtonVariant;
   /** 파괴적 액션(삭제 등)이면 확인 버튼을 danger 스타일로 */
   danger?: boolean;
   loading?: boolean;
@@ -29,6 +31,8 @@ export function ConfirmDialog({
   confirmLabel = '확인',
   cancelLabel = '취소',
   danger,
+  confirmVariant,
+  cancelVariant = 'secondary',
   loading,
   error = null,
   onConfirm,
@@ -104,10 +108,10 @@ export function ConfirmDialog({
           </p>
         )}
         <div className="mt-5 flex justify-end gap-2">
-          <Button ref={cancelRef} variant="secondary" size="sm" onClick={onCancel} disabled={loading}>
+          <Button ref={cancelRef} variant={cancelVariant} size="sm" onClick={onCancel} disabled={loading}>
             {cancelLabel}
           </Button>
-          <Button variant={danger ? 'danger' : 'primary'} size="sm" onClick={onConfirm} loading={loading}>
+          <Button variant={confirmVariant ?? (danger ? 'danger' : 'primary')} size="sm" onClick={onConfirm} loading={loading}>
             {confirmLabel}
           </Button>
         </div>

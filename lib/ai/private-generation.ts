@@ -72,7 +72,10 @@ import { runOcr } from '@/lib/ocr/engine';
 // (텍스트 위주 자료는 앞서 text-only 경로로 빠지므로 여기 상한과 무관.)
 const MAX_PDF_PAGES = 100;         // 이미지 검출용 페이지 렌더 상한
 const PDF_RENDER_EDGE_PX = 1280;   // PDF 페이지 렌더 해상도 — 메모리·토큰 절감 (기본 1600 대비 하향)
-const MAX_VISION_SLIDES = 100;     // detectMedicalRegions 대상 슬라이드 수
+// detectMedicalRegions 대상 슬라이드 수. 스캔 PDF(비전 검출 경로)는 페이지당 검출 콜이
+// 붙는 유일한 원가 꼬리(업로드당 +5~15원)라, 이미지 문항 정책 확정(2026-08-14)에 따라
+// 100 → 40 으로 하향. 40페이지면 강의록 대부분을 커버하고 초과분은 검출을 생략한다.
+const MAX_VISION_SLIDES = 40;
 // 문항에 투입하는 이미지 상한의 절대 천장. 실제 상한은 요청 문항 수에 연동해 정한다
 // (featuredBudget). 종전 고정 8은 "주석 텍스트가 정답 단서로 새는 것"을 막으려 15에서
 // 내린 값인데, 그 뒤 좌표 마스킹·재OCR 검증·텍스트 캡처 검열이 들어가 원래 이유가 해소됐다.
@@ -87,6 +90,27 @@ const MIN_FEATURED_IMAGES = 8;
  */
 function featuredBudget(desiredCount: number): number {
   return Math.min(MAX_FEATURED_IMAGES_CAP, Math.max(MIN_FEATURED_IMAGES, desiredCount));
+}
+// 생성 호출에 첨부하는 크롭의 긴 변 상한(px). 크롭 원본을 그대로 base64 첨부하면 이미지형
+// 입력 토큰의 대부분을 차지한다(선별 단계만 320px 축소, 생성 단계는 원본이었음 — 이미지 문항
+// 정책 확정 2026-08-14). 문항 저장·표시용 원본은 그대로 두고 모델 입력만 줄인다.
+const GEN_IMAGE_EDGE_PX = 1024;
+
+async function toGenerationImageBase64(png: Uint8Array): Promise<string> {
+  try {
+    const { loadImage, createCanvas } = await import('canvas');
+    const img = await loadImage(Buffer.from(png));
+    const scale = Math.min(1, GEN_IMAGE_EDGE_PX / Math.max(img.width, img.height));
+    if (scale >= 1) return Buffer.from(png).toString('base64');
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
+    const canvas = createCanvas(w, h);
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    return canvas.toBuffer('image/png').toString('base64');
+  } catch {
+    // 다운스케일 실패는 원가 최적화 실패일 뿐이므로 원본 첨부로 계속한다.
+    return Buffer.from(png).toString('base64');
+  }
 }
 // 동일 이미지 1장을 문항에 연결할 수 있는 상한. 저장 후 정리(초과 연결 제거)뿐 아니라
 // 이미지 배치 예약 수·배치별 최소 이미지 문항 수·보충 배치의 이미지 재투입 판단이 공유한다.
@@ -2253,7 +2277,7 @@ export async function generatePrivateQuestionsFromUpload(
           source: {
             type: 'base64',
             media_type: 'image/png',
-            data: Buffer.from(featured[i].c.png).toString('base64'),
+            data: await toGenerationImageBase64(featured[i].c.png),
           },
         } as Anthropic.ImageBlockParam);
       }

@@ -92,14 +92,9 @@ export const POST = withErrorHandling(async (request: Request) => {
     await validateImageUrl(body.image_context.image_url);
   }
 
-  // P0-6: quota 사전 체크 (문항 + 이미지 별도)
+  // P0-6: quota 사전 체크. 이미지 별도 차감은 이미지 문항 정책 확정(2026-08-14)으로
+  // 폐지 — 이미지 포함 여부와 무관하게 문항 quota 에만 포함한다.
   await requireQuota(session.userId, 'questions', body.count);
-  const usesImage =
-    body.image_source === 'user' && !!body.image_context;
-  const usesOpenLibrary = body.image_source === 'open_library';
-  if (usesImage || usesOpenLibrary) {
-    await requireQuota(session.userId, 'images', body.count);
-  }
 
   // sub_topic 조회
   const admin = createAdminClient();
@@ -221,9 +216,6 @@ export const POST = withErrorHandling(async (request: Request) => {
   const admittedCount = result.admitted.length;
   if (admittedCount > 0) {
     await consumeQuota(session.userId, 'questions', admittedCount);
-    if (usesImage || usesOpenLibrary) {
-      await consumeQuota(session.userId, 'images', admittedCount);
-    }
   }
 
   return ok(result);

@@ -42,8 +42,8 @@ const PLANS: Plan[] = [
     ...PLAN_CATALOG.standard,
     features: [
       {
-        text: '월 CPX 20회',
-        supportingText: '총 240분 · 12분 × 20회',
+        text: '월 CPX 240분',
+        supportingText: '약 12분 × 20회 분량',
       },
       { text: 'AI 환자와 음성 문진' },
       { text: '신체진찰 연습' },
@@ -62,8 +62,8 @@ const PLANS: Plan[] = [
       { text: '지식형 · 임상형 · 이미지형 문제 생성' },
       { text: '오답노트 + 유사문제 생성' },
       {
-        text: '월 CPX 20회',
-        supportingText: '총 240분 · 12분 × 20회',
+        text: '월 CPX 240분',
+        supportingText: '약 12분 × 20회 분량',
       },
       { text: 'CPX 채점 및 피드백' },
     ],
@@ -310,7 +310,6 @@ export default function PlanPage() {
             <div className="usage-grid">
               <QuotaBar label="문항" data={quota.questions} />
               <QuotaBar label="자료 업로드" data={quota.uploads} />
-              <QuotaBar label="이미지 문항" data={quota.images} />
             </div>
           </section>
         )}

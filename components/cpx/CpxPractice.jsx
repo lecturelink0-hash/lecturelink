@@ -14,6 +14,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PRIVACY_VERSION } from '@/lib/legal/config';
 
+// 서버 하트비트 주기. 스윕 임계(마지막 하트비트 + 10분)보다 크게 짧아야 하고,
+// 너무 잦으면 미러 쓰기가 늘어난다 — 정책 7장 권고(15~30초)의 중앙값.
+const HEARTBEAT_INTERVAL_MS = 20_000;
+
 // 진료 시간은 짧은 순서로 제시하며, 실전 기준은 12분이다.
 const TIME_LIMIT_OPTIONS = [
   { seconds: 11 * 60, label: '11분' },
@@ -38,7 +42,7 @@ const PART_GROUPS = [
       '목 통증', '피부 발진', '손떨림', '팔다리 근력 약화 및 감각 이상', '경련', '의식장애'],
   },
   {
-    id: 'psych', label: '정신·행동 중심', Icon: Brain,
+    id: 'psych', label: '정신행동 중심', Icon: Brain,
     desc: '정신과적 평가와 위험도 판단',
     cats: ['불안', '음주 문제', '기분 변화', '자살', '물질 오남용'],
   },
@@ -172,13 +176,56 @@ export default function CpxPractice() {
     }
   }, [sessionId]);
 
+  // 서버 하트비트 — 시간 차감 정산의 생존 신호(정책 7장).
+  // 전사·usage flush 는 보낼 내용이 있을 때만 전송되므로, 학생이 자료를 읽거나 고민하느라
+  // 침묵이 길어지면 신호가 끊긴다. 그대로 두면 스윕(마지막 하트비트 + 10분)이 진행 중인
+  // 세션을 이탈로 오인해 종료시키므로, 빈 이벤트 배열로 생존만 주기 전송한다.
+  // (서버는 세션 하위 미러 트래픽 수신 시각을 heartbeat_at 에 기록한다.)
+  const heartbeat = useCallback(() => {
+    if (!sessionId) return;
+    request(`/sessions/${sessionId}/events`, {
+      method: 'POST',
+      body: JSON.stringify([]),
+      keepalive: true,
+    }).catch(() => {});
+  }, [sessionId]);
+
   useEffect(() => {
     if (phase !== 'live') return undefined;
     const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAtRef.current) / 1000)), 1000);
     const saver = window.setInterval(flush, 3000);
     const usageSaver = window.setInterval(flushUsage, 3000);
-    return () => { window.clearInterval(timer); window.clearInterval(saver); window.clearInterval(usageSaver); };
-  }, [phase, flush, flushUsage]);
+    const beat = window.setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
+    return () => {
+      window.clearInterval(timer); window.clearInterval(saver);
+      window.clearInterval(usageSaver); window.clearInterval(beat);
+    };
+  }, [phase, flush, flushUsage, heartbeat]);
+
+  // 이탈 감지 — 탭 숨김·페이지 종료 시 마지막 전사와 생존 신호를 남긴다(정책 7장).
+  // 이탈은 종료가 아니라 자동 일시정지이므로 여기서 /end 를 호출하지 않는다. 정산 시점은
+  // 서버가 정한다(10분 내 미복귀 시 스윕이 마지막 하트비트까지만 차감).
+  // keepalive 요청이라 문서가 사라진 뒤에도 브라우저가 전송을 마친다.
+  useEffect(() => {
+    if (phase !== 'live') return undefined;
+    const persist = () => { flush(); flushUsage(); heartbeat(); };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') persist(); };
+    // 이어하기 복원이 아직 없어 지금은 이탈 = 연습 중단이므로, 브라우저 이탈은 한 번 되묻는다.
+    const onBeforeUnload = (event) => {
+      persist();
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', persist);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', persist);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [phase, flush, flushUsage, heartbeat]);
 
   // 채점(finishing) 중 원형 게이지를 95%까지 점점 느려지게 채운다.
   // 실제 채점은 단일 API 호출(진행률 이벤트 없음)이라 예상 소요시간 기반으로 시뮬레이션하며,
@@ -437,7 +484,7 @@ export default function CpxPractice() {
     return [...regions.values()];
   }, [buttons]);
 
-  return <div className="ll-system-page space-y-7">
+  return <div className="ll-system-page cpx-page space-y-7">
     {phase !== 'ready' && <section className="flex flex-col gap-4 border-b border-[var(--color-border)] pb-6 lg:flex-row lg:items-end lg:justify-between">
       <div><span className="ll-eyebrow"><Stethoscope className="h-3.5 w-3.5" /> CPX 실전 연습</span><h1 className="mt-2 text-3xl font-bold tracking-[-.035em] text-[var(--color-text)]">표준화 환자와 실제처럼 진료하세요</h1><p className="mt-2 max-w-2xl text-sm text-[var(--color-muted)]">음성 문진, 부위별 신체진찰, 루브릭 기반 피드백을 한 세션에서 이어갑니다.</p></div>
       <div className="flex flex-wrap items-center gap-2"><div role="group" aria-label="제한시간 선택" title="실전(12분)보다 짧게 설정해 시간 압박에 대비할 수 있어요" className="inline-flex h-9 items-center gap-0.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-1.5"><Clock3 className="h-4 w-4 text-[var(--color-muted)]" />{TIME_LIMIT_OPTIONS.map((opt) => <button key={opt.seconds} type="button" onClick={() => setLimitSeconds(opt.seconds)} disabled={phase !== 'ready'} aria-pressed={limitSeconds === opt.seconds} className={`tnum h-7 rounded-[calc(var(--radius-md)-3px)] px-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-55 ${limitSeconds === opt.seconds ? 'bg-[var(--color-primary)] text-white disabled:opacity-100' : 'text-[var(--color-muted)] hover:text-[var(--color-primary)]'}`}>{opt.label}</button>)}</div><button type="button" onClick={toggleVoice} aria-pressed={voiceOn} title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요" className={`inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-bold transition ${voiceOn ? 'border-[var(--color-warn)] bg-[var(--color-warn)] text-white hover:opacity-90' : 'border-[var(--color-warn)] bg-white text-[var(--color-warn)] hover:bg-[var(--color-warn-bg)]'}`}>{voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}음성 {voiceOn ? 'ON' : 'OFF'}</button><Link href="/cpx/history" className="inline-flex h-9 items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm font-bold text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]">나의 기록 <ChevronRight className="h-4 w-4" /></Link></div>
@@ -494,7 +541,7 @@ export default function CpxPractice() {
     {/* 진료 중 화면(아바타·전사·신체진찰) — 채점/결과 단계에서는 숨긴다 */}
     {(phase === 'starting' || phase === 'live') && (<>
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,.9fr)]">
-      <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]"><div className="absolute left-4 top-4 z-10 rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="font-bold">{selected?.category}</div></div><div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white"><Wave active={phase === 'live'} />{status}</div>{examTarget && phase === 'live' && <button type="button" onClick={() => setExamTarget(null)} className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-[var(--color-primary)] shadow-lg transition hover:bg-white"><PersonStanding className="h-4 w-4" /> 환자 앉히기</button>}<div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} child={persona?.child || null} speaking={audioLevel > 0.02} audioLevel={audioLevel} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} category={selected?.category || ''} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="space-y-2">{transcript.length ? transcript.slice(-3).map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}{transcript.length > 3 && <p className="pt-1 text-center text-[11px] text-[var(--color-muted)]">실제 시험처럼 최근 대화만 표시됩니다 · 전체 기록은 채점에 반영됩니다</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
+      <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]">{practiceMode !== 'random' && <div className="absolute left-4 top-4 z-10 rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="font-bold">{selected?.category}</div></div>}<div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white"><Wave active={phase === 'live'} />{status}</div>{examTarget && phase === 'live' && <button type="button" onClick={() => setExamTarget(null)} className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-[var(--color-primary)] shadow-lg transition hover:bg-white"><PersonStanding className="h-4 w-4" /> 환자 앉히기</button>}<div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} child={persona?.child || null} speaking={audioLevel > 0.02} audioLevel={audioLevel} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} category={selected?.category || ''} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="space-y-2">{transcript.length ? transcript.slice(-3).map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}{transcript.length > 3 && <p className="pt-1 text-center text-[11px] text-[var(--color-muted)]">실제 시험처럼 최근 대화만 표시됩니다 · 전체 기록은 채점에 반영됩니다</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
 
       <div className="space-y-6"><Card title="환자 정보" icon={<UserRound className="h-5 w-5" />}><div className="space-y-2 text-sm">{persona ? (<>{persona.child && <p className="text-xs font-bold text-[var(--color-primary)]">보호자 (대화 상대)</p>}<div className="space-y-1.5">{[['이름', revealed.name ? persona.name : null], ['나이', revealed.age ? `${persona.age}세` : null], ['성별', revealed.gender ? persona.gender : null]].map(([label, val]) => <div key={label} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div>{persona.child && (<><p className="pt-1 text-xs font-bold text-[var(--color-primary)]">환아</p><div className="space-y-1.5">{[['이름', revealed.name ? persona.child.name : null], ['나이', revealed.age ? (persona.child.ageDetail || `${persona.child.age}세`) : null], ['성별', revealed.gender ? persona.child.gender : null]].map(([label, val]) => <div key={`child-${label}`} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div></>)}{(!revealed.name || !revealed.age || !revealed.gender) && <p className="text-xs text-[var(--color-muted)]">{persona.child ? '보호자에게 환아의 이름·나이·성별을 직접 확인하세요.' : '환자에게 이름·나이·성별을 직접 여쭤보세요.'}</p>}</>) : <p className="font-bold text-[var(--color-text)]">진료 시작 시 환자 정보가 확정됩니다.</p>}{practiceMode === 'random' ? <div className="rounded-[var(--radius-md)] bg-[var(--color-sage-100)] p-3"><p className="font-bold text-[var(--color-text)]">무작위 실전 증례</p><p className="mt-1 text-xs text-[var(--color-muted)]">진단과 시나리오 정보는 채점 전까지 공개되지 않습니다.</p></div> : <><p className="text-[var(--color-muted)]">{selected?.title}</p><p className="text-[var(--color-muted)]">{selected?.variant}</p></>}</div></Card><Card title="남은 시간" icon={<Clock3 className="h-5 w-5" />} action={<span className={`tnum text-2xl font-bold ${remaining < 120 ? 'text-[var(--color-warn)]' : 'text-[var(--color-primary)]'}`}>{formatTime(remaining)}</span>}><Button fullWidth variant="accent" onClick={finish} disabled={phase !== 'live'}><Activity className="h-4 w-4" />진료 종료 및 채점</Button></Card>
       {/* 신체진찰 — 전체 화면에서 우측 빈 공간(환자정보·남은시간 아래)에 배치.

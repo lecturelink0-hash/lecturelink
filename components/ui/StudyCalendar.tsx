@@ -161,7 +161,7 @@ export function StudyCalendar({
         >
           <ChevronLeft size={18} />
         </button>
-        <span className="text-[27px] font-bold text-sage-800" aria-live="polite">
+        <span className="text-[24px] font-bold text-sage-800" aria-live="polite">
           {viewYear}년 {viewMonth}월
         </span>
         <div className="flex items-center gap-1">
@@ -192,7 +192,7 @@ export function StudyCalendar({
             <div
               key={dow}
               role="columnheader"
-              className={`text-center text-[17px] font-semibold py-1 ${
+              className={`text-center text-[16px] font-semibold py-1 ${
                 dowIndex === 0 ? 'text-[var(--color-warn)] opacity-70' : 'text-[var(--color-muted)]'
               }`}
             >
@@ -245,7 +245,7 @@ export function StudyCalendar({
                     aria-current={isToday ? 'date' : undefined}
                     aria-label={label}
                     className={[
-                      'relative aspect-square min-h-11 rounded-lg flex flex-col items-center justify-center transition-all text-[17px] font-medium',
+                      'relative aspect-square min-h-11 rounded-lg flex flex-col items-center justify-center transition-all text-[15px] font-medium',
                       bgClass,
                       !bgClass && 'hover:bg-[var(--color-sage-100)]',
                       isSelected && 'ring-2 ring-sage-900',
@@ -257,7 +257,7 @@ export function StudyCalendar({
                     <span className={count >= 10 ? 'text-white' : 'text-sage-800'}>{day}</span>
                     {count > 0 && (
                       <span
-                        className={`text-[14px] leading-none mt-0.5 ${
+                        className={`text-[12px] leading-none mt-0.5 ${
                           count >= 10 ? 'text-white/80' : 'text-sage-600'
                         }`}
                       >

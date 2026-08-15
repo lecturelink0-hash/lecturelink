@@ -570,11 +570,11 @@ export default function MyPage() {
       {/* ── Calendar + Selected Date Panel (상단 2칸 바로 아래) ──
            id="calendar": 대시보드 D-day 칩·시험 일정 등록 버튼의 앵커 진입점 */}
       <div id="calendar" className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mt-6 scroll-mt-24">
-        {/* ── Calendar — 카드 제목만 공통 규격(text-base)보다 34% 확대 ── */}
+        {/* ── Calendar — 제목은 공통 규격(text-base)보다 크게, 아이콘도 제목과 같은 크기로 ── */}
         <Card
-          icon={<CalendarDays className="w-4 h-4" strokeWidth={2} />}
+          icon={<CalendarDays className="w-5 h-5" strokeWidth={2} />}
           title="학습 캘린더"
-          titleClassName="text-[21px]"
+          titleClassName="text-[20px]"
         >
           <StudyCalendar
             viewYear={viewYear}
