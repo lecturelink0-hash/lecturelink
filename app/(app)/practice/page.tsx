@@ -64,6 +64,7 @@ interface WeakAreaSetResponse {
   seeded_from?: 'sub_topic' | 'subject' | 'none';
   added?: number;
   rejected?: number;
+  reject_reasons?: string[];
   reached_minimum?: boolean;
   error_analysis: ErrorAnalysisRes | null;
 }
@@ -299,9 +300,11 @@ export default function PracticePage() {
       });
       setErrorAnalysis(res.error_analysis);
       if (res.reached_minimum === false) {
+        const why = res.reject_reasons?.[0];
         setShortNotice(
           `이 주제는 지금 ${res.question_count}문항까지만 준비됐습니다`
-          + `${res.rejected ? ` (품질 기준에 걸린 ${res.rejected}문항은 제외했습니다)` : ''}.`,
+          + `${res.rejected ? ` (품질 기준에 걸린 ${res.rejected}문항은 제외했습니다)` : ''}.`
+          + `${why ? ` 사유: ${why}` : ''}`,
         );
       }
       await loadQuestions();

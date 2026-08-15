@@ -160,21 +160,31 @@ export const POST = withErrorHandling(async (request: Request) => {
     await requireDailyCostCap();
     await requireQuota(session.userId, 'questions', requestCount);
 
-    const result = await admitGeneratedQuestions({
-      subjectId: subTopic.subject_id,
-      subjectName: subject.name,
-      subTopicId: subTopic.id,
-      subTopicName: subTopic.name,
-      examRelevance: (subTopic.exam_relevance ?? 2) as 1 | 2 | 3,
-      isRiskCategory: subTopic.is_risk_category,
-      // 약점 보완은 감별을 요구해야 의미가 있다. 개념 부족 판정일 때만 한 단계 낮춘다.
-      difficulty: analysis?.primaryReason === 'concept_gap' ? 2 : 3,
-      count: requestCount,
-      style: 'kmle',
-      source: 'ai_user_triggered',
-      createdBy: session.userId,
-      errorFocus,
-    });
+    // 보충이 실패하면 원인을 화면까지 전달한다. 일반 500 으로 덮으면 화면에는
+    // "서버 오류가 발생했습니다."만 남아, 학생도 우리도 무엇이 막혔는지 알 수 없다.
+    // (실제로 첫 운영 실측에서 이 경로가 정확히 그렇게 죽었다.)
+    let result;
+    try {
+      result = await admitGeneratedQuestions({
+        subjectId: subTopic.subject_id,
+        subjectName: subject.name,
+        subTopicId: subTopic.id,
+        subTopicName: subTopic.name,
+        examRelevance: (subTopic.exam_relevance ?? 2) as 1 | 2 | 3,
+        isRiskCategory: subTopic.is_risk_category,
+        // 약점 보완은 감별을 요구해야 의미가 있다. 개념 부족 판정일 때만 한 단계 낮춘다.
+        difficulty: analysis?.primaryReason === 'concept_gap' ? 2 : 3,
+        count: requestCount,
+        style: 'kmle',
+        source: 'ai_user_triggered',
+        createdBy: session.userId,
+        errorFocus,
+      });
+    } catch (e) {
+      const cause = e instanceof Error ? e.message : String(e);
+      console.error('[weak-area-set] 공개 풀 보충 실패:', e);
+      throw new ApiException('topup_failed', `약점 문항 보충에 실패했습니다 — ${cause}`, 502);
+    }
 
     await consumeQuota(session.userId, 'questions', result.admitted.length);
 
@@ -190,6 +200,11 @@ export const POST = withErrorHandling(async (request: Request) => {
       added: result.admitted.length,
       rejected: result.totals.rejected,
       duplicates_skipped: result.totals.duplicatesSkipped,
+      /**
+       * 왜 떨어졌는지 앞 3건. 하한을 못 채웠을 때 화면이 이유를 말할 수 있어야 한다.
+       * 우리가 만든 문구(누출 규칙·검증 지적)라 그대로 보여도 문제없다.
+       */
+      reject_reasons: result.rejected.slice(0, 3).map((r) => r.reason),
       /** 하한을 못 채웠으면 화면이 그렇게 말해야 한다. 조용히 넘기지 않는다. */
       reached_minimum: (afterCount ?? 0) >= FOCUS_MIN_QUESTIONS,
       error_analysis: serializeAnalysis(analysis),
