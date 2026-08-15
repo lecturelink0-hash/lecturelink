@@ -18,6 +18,8 @@ import {
   CheckCircle2, XCircle, BookmarkPlus,
 } from 'lucide-react';
 import { QuestionStem } from '@/components/ui/QuestionStem';
+// 목록을 N개씩 끊어 ‹ › 로 넘기는 공용 페이저 — CPX 세부 채점(#191)과 같은 것을 쓴다.
+import CpxPagedList from '@/components/cpx/CpxPagedList';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -129,7 +131,8 @@ const STATUS_FILTERS: { key: SetStatus | 'all'; label: string }[] = [
   { key: 'done', label: '완료' },
 ];
 
-/** 문제집 그리드 한 페이지에 보여줄 카드 수 — 모바일에서 목록이 무한히 늘어지지 않게 하는 기준. */
+/** 문제집 그리드 한 쪽에 보여줄 카드 수 — 모바일에서 목록이 무한히 늘어지지 않게 하는 기준.
+ *  실측(폭 386px): 57개 = 15,034px(약 17.9화면) → 5개면 1,306px(1.6화면)·12쪽. */
 const SETS_PER_PAGE = 5;
 
 const STATUS_BADGE: Record<SetStatus, { label: string; variant: 'default' | 'curated' }> = {
@@ -229,8 +232,6 @@ export default function LibraryPage() {
   // 학습 상태 필터 · 검색어 (우측 문제집 그리드용)
   const [statusFilter, setStatusFilter] = useState<SetStatus | 'all'>('all');
   const [query, setQuery] = useState('');
-  // 문제집 그리드 페이지(0-based) — 카드가 세로로 끝없이 이어지지 않도록 SETS_PER_PAGE 씩 끊어 보여준다.
-  const [setPageIndex, setSetPageIndex] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deletingSet, setDeletingSet] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -440,7 +441,6 @@ export default function LibraryPage() {
 
   function selectFilter(key: SetStatus | 'all') {
     setStatusFilter(key);
-    setSetPageIndex(0);
     closeActive();
   }
 
@@ -510,24 +510,6 @@ export default function LibraryPage() {
 
   const currentFilterLabel =
     STATUS_FILTERS.find((f) => f.key === statusFilter)?.label ?? '전체 문제집';
-
-  // 페이지는 파생값으로 한 번 더 조인다 — 삭제로 목록이 짧아져도 빈 페이지에 머무르지 않는다.
-  const setPageCount = Math.max(1, Math.ceil(visibleSets.length / SETS_PER_PAGE));
-  const currentSetPage = Math.min(setPageIndex, setPageCount - 1);
-  const pagedSets = visibleSets.slice(
-    currentSetPage * SETS_PER_PAGE,
-    currentSetPage * SETS_PER_PAGE + SETS_PER_PAGE,
-  );
-
-  function goToSetPage(next: number) {
-    const clamped = Math.min(Math.max(next, 0), setPageCount - 1);
-    if (clamped === currentSetPage) return;
-    setSetPageIndex(clamped);
-    // 페이지를 넘기면 새 카드의 첫 줄이 보이도록 목록 머리로 되돌린다.
-    window.requestAnimationFrame(() => {
-      document.getElementById('library-solve')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -958,8 +940,8 @@ export default function LibraryPage() {
         {/* min-w-0 — 이 섹션은 .layout 그리드의 아이템이라 기본 min-width:auto 를 가진다.
             그대로 두면 풀이 헤더의 최소폭이 그리드 트랙을 밀어 카드가 화면 밖(386px 기준 +35px)으로
             빠져나간다. 0 으로 낮춰야 폭 부족이 제목 truncate 로 흡수된다. */}
-        {/* scroll-mt-20 — 셸 헤더가 position:fixed(60px)라 scrollIntoView 가 이 섹션을 y=0 에
-            붙이면 목록 툴바가 헤더 뒤로 숨는다. 85px 로 내려 잡는다(페이지 이동·풀이 진입 공통). */}
+        {/* scroll-mt-20 — 셸 헤더가 position:fixed(60px)라 scrollToSolveArea 가 이 섹션을 y=0 에
+            붙이면 목록 툴바가 헤더 뒤로 숨는다. 85px 로 내려 잡는다. */}
         <section id="library-solve" className="main-list min-w-0 scroll-mt-20">
           {active ? (
             <div>
@@ -1006,10 +988,7 @@ export default function LibraryPage() {
                   <Search className="icon" />
                   <input
                     value={query}
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                      setSetPageIndex(0);
-                    }}
+                    onChange={(e) => setQuery(e.target.value)}
                     placeholder="문제집 이름 검색"
                   />
                 </label>
@@ -1044,44 +1023,22 @@ export default function LibraryPage() {
                   조건에 맞는 문제집이 없습니다.
                 </Card>
               ) : (
-                <>
-                  <div className="books">
-                    {pagedSets.map((item) => (
-                      <SetCard key={item.upload.id} item={item} onOpen={continueUpload} onDelete={handleDeleteSet} />
-                    ))}
-                  </div>
-                  {setPageCount > 1 && (
-                    <nav
-                      className="mt-5 flex items-center justify-center gap-3"
-                      aria-label="문제집 목록 페이지 이동"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => goToSetPage(currentSetPage - 1)}
-                        disabled={currentSetPage === 0}
-                        aria-label="이전 문제집 보기"
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        <ChevronLeft className="h-4.5 w-4.5" />
-                      </button>
-                      <span
-                        className="min-w-[76px] text-center text-[13px] font-semibold text-[var(--color-muted)] tabular-nums"
-                        aria-live="polite"
-                      >
-                        <b className="text-sage-800">{currentSetPage + 1}</b> / {setPageCount}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => goToSetPage(currentSetPage + 1)}
-                        disabled={currentSetPage >= setPageCount - 1}
-                        aria-label="다음 문제집 보기"
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35"
-                      >
-                        <ChevronRight className="h-4.5 w-4.5" />
-                      </button>
-                    </nav>
+                // 페이저는 CPX 세부 채점(#191)이 쓰는 공용 컴포넌트를 그대로 재사용한다.
+                // key — 필터·검색이 바뀌면 목록 자체가 달라지므로 1쪽으로 되돌린다(쪽 상태는 컴포넌트가 들고 있다).
+                <CpxPagedList
+                  key={`${statusFilter}|${query}`}
+                  items={visibleSets}
+                  pageSize={SETS_PER_PAGE}
+                  unitLabel="개 문제집"
+                >
+                  {(pageSets: typeof visibleSets) => (
+                    <div className="books">
+                      {pageSets.map((item) => (
+                        <SetCard key={item.upload.id} item={item} onOpen={continueUpload} onDelete={handleDeleteSet} />
+                      ))}
+                    </div>
                   )}
-                </>
+                </CpxPagedList>
               )}
 
               <p className="mt-5 text-[12px] text-[var(--color-muted)] leading-relaxed">
