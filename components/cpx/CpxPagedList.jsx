@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 6;
 
 // 세부 채점 항목은 한 영역에 20개 넘게 쌓인다. 모바일에서 전부 펼치면
 // 한 영역을 지나가는 데만 화면 여러 장을 스크롤해야 해 끝까지 내리기 어렵다.
-// 기본 10개씩 끊어 보여주고 ‹ › 로 넘긴다. 한 쪽에 다 들어가면 컨트롤을 그리지 않는다.
+// 기본 6개씩 끊어 보여주고 ‹ › 로 넘긴다(10개는 근거 인용구까지 붙으면 여전히
+// 한 화면을 넘겼다). 한 쪽에 다 들어가면 컨트롤을 그리지 않는다.
 // unitLabel 은 카운터 접미사 전용('21개 항목') — aria 문구에 그대로 끼우면
 // '다음 개 항목' 처럼 읽히므로 버튼 라벨은 고정 문구를 쓴다.
 export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_SIZE, unitLabel = '항목' }) {
