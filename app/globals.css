@@ -13,6 +13,7 @@
   width: 100%;
   height: 40px;
   padding: 0 12px;
+  padding-inline-end: var(--control-padding-inline-end);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: #fff;
@@ -2510,13 +2511,12 @@ h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
 /* CPX 학생 화면 한정 중성 페이퍼 톤 — 원 디자인 시안이 크림이 아닌 웜화이트 배경을 쓴다.
    전역 토큰(크림)은 그대로 두고, /cpx 라우트가 렌더될 때만 파생 토큰을 덮어쓴다. */
 .ll-app-shell:has(.cpx-page) {
-  --color-bg: #faf9f6;
   --color-surface: #fefefe;
   --color-surface-muted: #f5f3ef;
   --color-border: #ebe8e2;
 }
 .ll-app-shell:has(.cpx-page) .header {
-  background: color-mix(in srgb, #fdfcfa 94%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 94%, transparent);
 }
 /* 상단 셸(헤더·콘텐츠 프레임)은 라우트마다 달라지지 않는다.
    #172에서 시안 캡처 실측값을 그대로 옮겨 /cpx만 헤더 78px·내비 17px·아바타 44px·
