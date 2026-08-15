@@ -699,7 +699,6 @@ export default function CpxPractice() {
       </Card>
     )}
 
-    {result && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">AI 생성 평가</b> · 학습 보조 결과이며 오류가 있을 수 있습니다. 항목별 근거를 확인하고 공식 평가나 의료 판단에 사용하지 마세요.</div>}
     {/* 순응도 낮은 환자 — 상시 무작위 배정(직접 선택 25% · 랜덤 실전 40%).
         어떤 저항 유형이었는지는 실제 SP 시험처럼 채점 후에만 공개한다. */}
     {result?.lowCompliance?.behaviors?.length > 0 && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">순응도 낮은 환자</b> · 이번 환자는 무작위로 배정된 순응도 낮은 환자였어요. 저항 유형: {result.lowCompliance.behaviors.map((b) => b.name).join(' · ')}. 저항의 이유를 먼저 묻고 공감한 뒤 설득했는지 대화록에서 확인해 보세요.</div>}
@@ -755,6 +754,10 @@ export default function CpxPractice() {
         </div>
       </>
     )}
+
+    {/* AI 생성 평가 고지 — 채점 결과 화면의 최하단(대화록·재연습 버튼 아래)에 둔다.
+        결과를 먼저 보여주고 면책은 맨 끝에서 읽히도록 한 배치. */}
+    {result && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">AI 생성 평가</b> · 학습 보조 결과이며 오류가 있을 수 있습니다. 항목별 근거를 확인하고 공식 평가나 의료 판단에 사용하지 마세요.</div>}
     </>)}
   </div>;
 }
