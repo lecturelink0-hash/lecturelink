@@ -44,10 +44,38 @@ const HARD_BREAK_PATTERNS = [
   /(?:의학적|의료적)[^.!?…]{0,12}(?:조언|소견|판단|진단|정보|자문)[^.!?…]*(?:아니|아닙|없|드릴\s*수|제공|한계|대체|불가)/,
   /진단(?:을|은)?[^.!?…]{0,6}(?:내릴|내려|드릴|제공할)\s*수(?:는|가)?\s*없/,
   /참고용|면책/,
+  // v3: 자기 발화 해설 라벨. 모델이 대사 뒤에 그 대사가 무엇인지 꼬리표를 붙인다
+  // ("…아파요. " 비의료적 질문에 대한 답변입니다."). 면책 어휘도 권고 어미도 없어서
+  // v2 판정을 그대로 통과했다. 환자는 자기 말을 분류·해설하지 않는다.
+  /(?:질문|물음|요청|상황)에\s*대한\s*(?:답변|응답|대답)/,
+  /(?:답변|응답)\s*(?:입니다|이었습니다|드립니다|드리겠습니다|드렸습니다|드리자면)/,
+  /비\s*-?\s*의료(?:적|성)|의료\s*외(?:의)?\s*(?:질문|내용|영역)|진료\s*와\s*무관/,
+  /역할\s*로서(?:의)?\s*(?:답변|응답|대답)/,
+  /(?:규칙|지침|설정|시나리오|맥락)\s*(?:상|에\s*따라서?)\s*[^.!?…]{0,10}(?:답변|응답|대답|말씀|안내)/,
 ]
+
+// 모델이 자기 사정을 설명할 때만 나오는 어휘. 환자 화법에는 없다.
+const MODEL_VOCAB = /시스템\s*(?:프롬프트|지시|지침|메시지)|지시문|프롬프트|시뮬레이션|역할극|페르소나|표준화\s*환자|가상\s*환자/
+
+// 못 알아듣고 되묻는 환자 반응. 어휘만 보고 지우면 이런 정상 대사까지 사라져 자막이 빈 턴이
+// 된다 — 오디오는 이미 나간 뒤라 화면만 비는 게 더 나쁘다. 되묻는 문장은 이탈로 보지 않는다.
+const CONFUSED_PATIENT = /네\?|예\?|무슨 말씀|모르겠|못 알아|뭔지|뭐예요|뭐래|뭔가요|다시 말씀/
+
+// 문장 분리 때문에 되묻기가 조각난다("역할극이요? 무슨 말씀이신지 모르겠어요."의 앞 조각).
+// 짧은 의문문은 들은 말을 그대로 되받는 환자 반응으로 보고 어휘 판정에서 면제한다.
+function isEchoQuestion(sentence) {
+  return /\?\s*$/.test(sentence) && sentence.length <= 20
+}
+
+// 가장자리 따옴표 제거 — 짝이 안 맞아도 버린다. 공통 프롬프트가 대사를 큰따옴표로 감싸게
+// 하므로 문장 경계마다 따옴표가 붙어 오고, 중간 문장을 지우면 한쪽만 남는다.
+function trimEdgeQuotes(s) {
+  return s.replace(/^[\s"“”'‘’]+/, '').replace(/[\s"“”'‘’]+$/, '').trim()
+}
 
 function isPersonaBreak(sentence) {
   for (const p of HARD_BREAK_PATTERNS) if (p.test(sentence)) return true
+  if (MODEL_VOCAB.test(sentence) && !CONFUSED_PATIENT.test(sentence) && !isEchoQuestion(sentence)) return true
   return MEDICAL_TOPIC.test(sentence) && ADVICE_ENDING.test(sentence)
 }
 
@@ -62,9 +90,8 @@ export function sanitizePatientText(text) {
   // 문장 분리: 종결부호 뒤에서 자르되 소수점("38.5도")·부호 연속("?!")은 유지.
   const sentences = out.split(/(?<=[.!?…])(?![\d.!?…])\s*|\n+/)
   out = sentences
-    .map((s) => s.trim())
+    .map((s) => trimEdgeQuotes(s.trim()))
     .filter((s) => s && !isPersonaBreak(s))
     .join(' ')
-  // 가장자리 따옴표는 짝이 안 맞아도 제거(발화가 따옴표로 감싸져 오거나 문장 제거로 한쪽만 남는 경우).
-  return out.replace(/^[\s"“”'‘’]+/, '').replace(/[\s"“”'‘’]+$/, '').trim()
+  return trimEdgeQuotes(out)
 }
