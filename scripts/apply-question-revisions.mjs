@@ -344,5 +344,18 @@ if (needsEmbeddingBackfill.length > 0) {
       '       VOYAGE_API_KEY 를 설정하고 다시 돌리거나 백필하세요.\n' +
       '       그대로 두면 유사문제 추천과 중복 검사가 옛 지문 기준으로 동작합니다.',
   );
-  writeFileSync('outputs/embedding-backfill.json', JSON.stringify(needsEmbeddingBackfill, null, 2));
+  // 배치마다 통째로 덮어쓰면 직전 배치의 미백필 목록이 사라진다. 기존 목록과 합쳐서 쓴다.
+  const backfillPath = 'outputs/embedding-backfill.json';
+  let previous = [];
+  if (existsSync(backfillPath)) {
+    try {
+      const parsed = JSON.parse(readFileSync(backfillPath, 'utf8'));
+      if (Array.isArray(parsed)) previous = parsed;
+    } catch {
+      previous = [];
+    }
+  }
+  const merged = [...new Set([...previous, ...needsEmbeddingBackfill])];
+  writeFileSync(backfillPath, JSON.stringify(merged, null, 2));
+  console.log(`       누적 미백필 목록: ${merged.length}건 (${backfillPath})`);
 }
