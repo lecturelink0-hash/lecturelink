@@ -498,8 +498,8 @@ export default function CpxPractice() {
             onVoiceChange={setVoiceOn}
             onStart={start}
           />
-          {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
-          {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
+          {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-error)] bg-[var(--color-error-bg)] p-3 text-sm text-[var(--color-error)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
+          {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-error)] bg-[var(--color-error-bg)] p-3 text-sm text-[var(--color-error)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
         </>
       )
     )}
@@ -519,7 +519,7 @@ export default function CpxPractice() {
               위 처리 내용을 확인했습니다. (필수)
             </label>
             <p className="mt-2 text-xs text-[var(--color-muted)]"><Link href="/privacy" target="_blank" className="underline">개인정보처리방침 자세히 보기</Link> · AI 결과는 학습 보조용이며 의료행위 또는 공식 시험 판정이 아닙니다.</p>
-            {error && <p role="alert" className="mt-2 text-sm font-semibold text-[var(--color-warn)]">{error}</p>}
+            {error && <p role="alert" className="mt-2 text-sm font-semibold text-[var(--color-error)]">{error}</p>}
           </div>
         </div>
       </section>

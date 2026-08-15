@@ -133,9 +133,9 @@ export function KakaoEmailPrompt() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="이메일 주소 입력"
-              className="mb-3 h-12 w-full rounded-lg border border-[var(--color-border)] px-4 text-base outline-none focus:border-sage-600"
+              className="mb-3 h-12 w-full rounded-lg border border-[var(--color-border-control)] px-4 text-base outline-none focus:border-sage-600"
             />
-            {error && <p className="mb-3 text-sm text-[var(--color-warn)]">{error}</p>}
+            {error && <p className="mb-3 text-sm text-[var(--color-error)]">{error}</p>}
             <div className="flex gap-2">
               <button
                 type="button"

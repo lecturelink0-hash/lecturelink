@@ -346,7 +346,7 @@ export default function LoginPage() {
             <p>학생과 교수 모두 LectureLink에서 시작하세요.</p>
           </div>
           {!emailOpen && status !== 'sent' && errorMsg && (
-            <div role="alert" aria-live="polite" className="mb-5 flex items-start gap-2.5 rounded-lg bg-[var(--color-warn-bg)] p-3.5 text-sm leading-relaxed text-[var(--color-warn)]">
+            <div role="alert" aria-live="polite" className="mb-5 flex items-start gap-2.5 rounded-lg bg-[var(--color-error-bg)] p-3.5 text-sm leading-relaxed text-[var(--color-error)]">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{errorMsg}</span>
             </div>
@@ -421,7 +421,7 @@ export default function LoginPage() {
                 발신: <b>LectureLink &lt;{SUPPORT_EMAIL}&gt;</b>
               </div>
               {errorMsg && (
-                <div role="alert" aria-live="polite" className="mt-4 flex items-start gap-2.5 rounded-lg bg-[var(--color-warn-bg)] p-3.5 text-left text-sm leading-relaxed text-[var(--color-warn)]">
+                <div role="alert" aria-live="polite" className="mt-4 flex items-start gap-2.5 rounded-lg bg-[var(--color-error-bg)] p-3.5 text-left text-sm leading-relaxed text-[var(--color-error)]">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>{errorMsg}</span>
                 </div>
@@ -479,7 +479,7 @@ export default function LoginPage() {
                   aria-invalid={Boolean(errorMsg)}
                   aria-describedby={errorMsg ? 'auth-error' : undefined}
                   disabled={status === 'sending'}
-                  className="w-full h-12 pl-11 pr-3.5 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base"
+                  className="w-full h-12 pl-11 pr-3.5 rounded-lg border border-[var(--color-border-control)] focus:border-sage-600 focus:outline-none text-base"
                   placeholder="you@school.ac.kr"
                 />
               </div>
@@ -501,7 +501,7 @@ export default function LoginPage() {
                   aria-describedby={errorMsg ? 'auth-error' : undefined}
                   autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   disabled={status === 'sending'}
-                  className="w-full h-12 pl-11 pr-12 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base"
+                  className="w-full h-12 pl-11 pr-12 rounded-lg border border-[var(--color-border-control)] focus:border-sage-600 focus:outline-none text-base"
                   placeholder={mode === 'signup' ? PASSWORD_HINT : '비밀번호'}
                 />
                 <button
@@ -534,7 +534,7 @@ export default function LoginPage() {
                       aria-describedby={errorMsg ? 'auth-error' : undefined}
                       autoComplete="new-password"
                       disabled={status === 'sending'}
-                      className="w-full h-12 pl-11 pr-12 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base"
+                      className="w-full h-12 pl-11 pr-12 rounded-lg border border-[var(--color-border-control)] focus:border-sage-600 focus:outline-none text-base"
                       placeholder="비밀번호 다시 입력"
                     />
                     <button
@@ -553,7 +553,7 @@ export default function LoginPage() {
                     <legend className="block text-sm font-semibold text-sage-800 mb-2">가입 유형</legend>
                     <div className="grid grid-cols-2 gap-2" role="group" aria-label="가입 유형">
                       {([['student', '학생', '문제풀이와 복습'], ['professor', '교수', '수업과 형성평가']] as const).map(([value, label, description]) => (
-                        <button key={value} type="button" onClick={() => setAccountType(value)} aria-pressed={accountType === value} className={`min-h-16 rounded-lg border px-3 py-2 text-left transition-colors ${accountType === value ? 'border-sage-600 bg-[var(--color-sage-100)] text-sage-800' : 'border-[var(--color-border)] bg-white text-[var(--color-muted)]'}`}>
+                        <button key={value} type="button" onClick={() => setAccountType(value)} aria-pressed={accountType === value} className={`min-h-16 rounded-lg border px-3 py-2 text-left transition-colors ${accountType === value ? 'border-sage-600 bg-[var(--color-sage-100)] text-sage-800' : 'border-[var(--color-border-control)] bg-white text-[var(--color-muted)]'}`}>
                           <strong className="block text-sm">{label}</strong>
                           <span className="block mt-0.5 text-xs">{description}</span>
                         </button>
@@ -588,7 +588,7 @@ export default function LoginPage() {
               )}
 
               {errorMsg && (
-                <div id="auth-error" role="alert" aria-live="polite" className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-warn)] bg-[var(--color-warn-bg)] rounded-lg p-3.5 mb-5">
+                <div id="auth-error" role="alert" aria-live="polite" className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-error)] bg-[var(--color-error-bg)] rounded-lg p-3.5 mb-5">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>{errorMsg}</span>
                 </div>

@@ -60,7 +60,7 @@ export default function PaymentSuccessPage() {
         {status === 'error' && (
           <>
             <div className="flex justify-center mb-5">
-              <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-warn-bg)] text-[var(--color-warn)]">
+              <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-error-bg)] text-[var(--color-error)]">
                 <XCircle className="w-9 h-9" strokeWidth={2} />
               </span>
             </div>

@@ -387,7 +387,7 @@ export default function MyPage() {
           description="학습 기록과 요금제·계정 정보를 한곳에서 확인하세요"
         />
         <Card>
-          <div className="flex items-center gap-2 text-[var(--color-warn)]">
+          <div className="flex items-center gap-2 text-[var(--color-error)]">
             <AlertCircle size={18} />
             <span className="text-sm">{error}</span>
           </div>
@@ -561,7 +561,7 @@ export default function MyPage() {
           )}
           <div aria-live="polite">
             {subscriptionError && (
-              <p className="mt-2 text-sm text-[var(--color-warn)]">{subscriptionError}</p>
+              <p className="mt-2 text-sm text-[var(--color-error)]">{subscriptionError}</p>
             )}
           </div>
         </Card>

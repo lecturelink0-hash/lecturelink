@@ -415,10 +415,10 @@ export default function ProfilePage() {
               </>
             ) : (
               <>
-                <AlertCircle size={22} aria-hidden="true" />
+                <AlertCircle size={22} className="text-[var(--color-error)]" aria-hidden="true" />
                 <div>
                   <h2>회원 정보를 불러오지 못했습니다.</h2>
-                  <p>{loadError}</p>
+                  <p className="text-[var(--color-error)]">{loadError}</p>
                 </div>
               </>
             )}

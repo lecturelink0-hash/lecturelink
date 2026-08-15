@@ -51,12 +51,12 @@ export function CompleteEmailForm({ displayName }: { displayName: string | null 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@school.ac.kr"
-              className="w-full h-12 pl-10 pr-3 rounded-[12px] border border-[var(--color-border)] bg-white text-[15px] text-sage-800 placeholder:text-[var(--color-muted)] focus:outline-none focus:border-sage-400 transition-colors"
+              className="w-full h-12 pl-10 pr-3 rounded-[12px] border border-[var(--color-border-control)] bg-white text-[15px] text-sage-800 placeholder:text-[var(--color-muted)] focus:outline-none focus:border-sage-400 transition-colors"
             />
           </div>
 
           {errorMsg && (
-            <p className="mt-3 text-[13px] text-[var(--color-warn)]">{errorMsg}</p>
+            <p className="mt-3 text-[13px] text-[var(--color-error)]">{errorMsg}</p>
           )}
 
           <Button
