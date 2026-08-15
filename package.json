@@ -16,6 +16,8 @@
     "cpx:smoke": "node scripts/test-cpx-deployment.mjs",
     "cpx:bundle-check": "node scripts/check-cpx-client-bundle.mjs",
     "cpx:sanitize-check": "node scripts/test-cpx-sanitize.mjs",
+    "test:leakage": "node --experimental-strip-types --no-warnings scripts/test-question-leakage.mjs",
+    "audit:leakage": "node --experimental-strip-types --no-warnings scripts/audit-question-leakage.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",

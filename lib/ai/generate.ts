@@ -47,6 +47,7 @@ export async function generateQuestions(
     examples: input.examples,
     count: input.count,
     hasImage: !!input.imageContext,
+    errorFocus: input.errorFocus,
   });
 
   // SDK 0.32 의 ImageBlockParam.source 는 base64 만 모델돼 있고 url source 는 누락.

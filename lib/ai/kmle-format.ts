@@ -14,9 +14,18 @@
  *
  *  - lintKmleQuestion(): 자동 교정이 위험한 것은 고치지 않고 지적만 한다.
  *      F01 금지 표현, F05 활력징후 서식, F06 검사 블록 도입문,
- *      F08/F14 영문 약어 잔존, F12 발문 형태, F13 선지 수, F16 종결형 혼용
+ *      F08/F14 영문 약어 잔존, F12 발문 형태, F13 선지 수, F16 종결형 혼용,
+ *      F17 오답 성립성, F17-L 정답 길이 누출
  *
  * 근거: 국시원 공개 기출(제90회) 55문항 정독 + 임종평 164문항 실측.
+ *
+ * F17 계열이 나중에 추가된 이유(2026-08-16 운영 DB 전수 실측):
+ *   active 1,318문항에서 정답이 1번인 비율 52.3 %, 정답이 '가장 긴 선지'인 비율
+ *   57.2 % 였다(균등 기대는 각각 20 %). AI 생성분 1,073문항만 보면 59.9 % / 62.2 %.
+ *   의학 지식 없이 "제일 긴 선지"만 찍어도 60 % 가까이 맞는 상태였다.
+ *   실제로 마르판 증후군 문항의 선지는 [운동 / 항생제 / 혈압 방치 / 흡연 지속 /
+ *   정기 대동맥 영상 추적]이었다 — 정답만 유일하게 의료행위이고 유일하게 길다.
+ *   F17 은 프롬프트에 있었지만 코드로 검사하지 않아 아무도 막지 못했다.
  */
 
 export interface KmleQuestionShape {
@@ -106,6 +115,37 @@ const FORBIDDEN_ASK_PATTERNS: Array<[RegExp, string]> = [
   [/단계는\s*\?/, '"다음 단계는?" 대신 "처치는?" "검사는?"을 쓴다'],
 ];
 
+/**
+ * F17 — 오답으로 성립하지 않는 선지.
+ *
+ * 여기 걸리는 선지는 의학을 몰라도 소거된다. 하나라도 있으면 그 문항은 5지선다가
+ * 아니라 사실상 4지 이하가 되고, 남은 선지 중 유일하게 '제대로 된 처치'가 정답이
+ * 되어 버린다.
+ */
+const IMPLAUSIBLE_CHOICE_PATTERNS: Array<[RegExp, string]> = [
+  [/방치/, '"방치"는 의료행위가 아니다 — 실제로 고려될 수 있는 처치로 바꾼다'],
+  [
+    /(흡연|음주|비만|고혈압|약물)\s*(지속|유지|계속)/,
+    '위해행위를 지속하는 선지는 상식만으로 소거된다',
+  ],
+  [/하지\s*않(는다|고|음)/, '"~하지 않는다" 형태의 태도 부정문은 상식만으로 소거된다'],
+  [/(절대|전혀)\s*\S*\s*없다/, '단정 부정문("절대 ~ 없다")은 오답 선지로 쓰지 않는다'],
+  [/불가능하다/, '단정 부정문("~는 불가능하다")은 오답 선지로 쓰지 않는다'],
+  [/무관하다/, '단정 부정문("~와 무관하다")은 오답 선지로 쓰지 않는다'],
+  [/폐기한다/, '검체·기록을 폐기하는 선지는 의료행위로 성립하지 않는다'],
+  [/^(아무것도|치료하지)/, '처치를 하지 않는다는 선지는 상식만으로 소거된다'],
+];
+
+/**
+ * F17-L — 정답만 유독 긴 '길이 누출'.
+ *
+ * F15 가 선지를 길이 오름차순으로 세우므로, 정답만 길게 쓰면 정답은 언제나 마지막
+ * 칸에 온다. 즉 길이 편중은 그 자체로 정답 위치까지 알려준다. 두 조건을 함께 보는
+ * 이유는 짧은 선지들끼리는 1~2자 차이로도 배율이 커지기 때문이다.
+ */
+const ANSWER_LENGTH_RATIO = 1.6;
+const ANSWER_LENGTH_MARGIN = 4;
+
 /** 지문 마지막 물음표 문장(발문)만 잘라낸다. */
 function extractAsk(stem: string): string {
   const flat = stem.replace(/\s+/g, ' ').trim();
@@ -189,6 +229,56 @@ export function lintKmleQuestion(question: KmleQuestionShape): KmleLintIssue[] {
       issues.push({
         rule: 'F16',
         message: '한 문항 안에서 명사구 선지와 문장형 선지를 섞지 않는다',
+      });
+    }
+  }
+
+  issues.push(...lintChoiceLeakage(question));
+
+  return issues;
+}
+
+/**
+ * F17 계열 — 정답이 지식 없이 드러나는지 본다.
+ *
+ * lintKmleQuestion() 안에서 호출되지만, 기존 문항 감사처럼 형식 위반과 분리해
+ * 정답 누출만 세고 싶을 때가 있어 따로 내보낸다.
+ */
+export function lintChoiceLeakage(question: KmleQuestionShape): KmleLintIssue[] {
+  const issues: KmleLintIssue[] = [];
+  const choices = (Array.isArray(question.choices) ? question.choices : []).map((c) =>
+    String(c ?? '').trim(),
+  );
+  if (choices.length < 2) return issues;
+
+  // F17 — 오답으로 성립하지 않는 선지
+  for (const [pattern, message] of IMPLAUSIBLE_CHOICE_PATTERNS) {
+    const hits = choices.filter((c) => pattern.test(c));
+    if (hits.length > 0) {
+      issues.push({ rule: 'F17', message: `${message} (해당 선지: ${hits.join(', ')})` });
+    }
+  }
+
+  const lengths = choices.map((c) => c.length);
+
+  // F17-L — 정답만 유독 긴 길이 누출
+  //
+  // '선지 길이 산포' 자체는 규칙으로 삼지 않는다. 운영 1,318문항에 적용해 보니
+  // [천식 / 만성폐쇄성폐질환 / 폐색전증 / 심부전 / 기관지확장증] 처럼 병명 길이가
+  // 자연히 갈리는 정상 진단 문항이 대량으로 걸렸다(2자 vs 8자). 한국어 병명은 길이가
+  // 제각각이라 산포만으로는 누출을 못 가른다.
+  //
+  // 실제로 답을 알려주는 것은 **정답이 길이 극단에 홀로 서 있는 경우**다. 시험 요령에서
+  // '가장 긴 선지를 고르라'가 통하는 이유가 그것이고, 운영 풀에서 정답이 최장인 비율이
+  // 57 % 였던 것도 그것이다. 그래서 정답 기준 상대 길이만 본다.
+  const answerIndex = question.answer_index;
+  if (Number.isInteger(answerIndex) && answerIndex >= 0 && answerIndex < choices.length) {
+    const answerLen = lengths[answerIndex];
+    const maxOther = Math.max(...lengths.filter((_, i) => i !== answerIndex));
+    if (answerLen > maxOther * ANSWER_LENGTH_RATIO && answerLen - maxOther >= ANSWER_LENGTH_MARGIN) {
+      issues.push({
+        rule: 'F17-L',
+        message: `정답 선지(${answerLen}자)가 나머지 최장 선지(${maxOther}자)보다 유독 길다 — 길이만으로 정답이 드러난다`,
       });
     }
   }

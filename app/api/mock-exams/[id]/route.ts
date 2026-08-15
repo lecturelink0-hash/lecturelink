@@ -11,16 +11,12 @@ import { requireAuthUser } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { createAdminClient } from '@/lib/db/admin';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
+import { resolveQuestionBadgeShort } from '@/lib/content/tier-badge';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-const TIER_BADGE: Record<string, { label: string; color: 'curated' | 'community' | 'beta' }> = {
-  curated: { label: '의사 검수', color: 'curated' },
-  community: { label: 'AI 검증', color: 'community' },
-  beta: { label: '베타', color: 'beta' },
-};
 
 export const GET = withErrorHandling(async (_request: Request, context: RouteContext) => {
   const session = await requireAuthUser();
@@ -41,7 +37,7 @@ export const GET = withErrorHandling(async (_request: Request, context: RouteCon
   const { data: qs, error: qErr } = await supabase
     .from('questions')
     .select(
-      'id, stem, choices, answer_index, explanation, difficulty, image_url, image_type, tier, sub_topic:sub_topics(id, name, subject:subjects(name))',
+      'id, stem, choices, answer_index, explanation, difficulty, image_url, image_type, tier, reviewed_by, sub_topic:sub_topics(id, name, subject:subjects(name))',
     )
     .in('id', sess.question_ids);
   if (qErr) throw qErr;
@@ -61,7 +57,7 @@ export const GET = withErrorHandling(async (_request: Request, context: RouteCon
         imageUrl: r.image_url ?? null,
         imageType: r.image_type ?? null,
         tier: r.tier,
-        badge: TIER_BADGE[r.tier] ?? TIER_BADGE.community,
+        badge: resolveQuestionBadgeShort({ tier: r.tier, reviewedBy: r.reviewed_by }),
         subjectName: st?.subject?.name ?? '기타',
         subTopicName: st?.name ?? '미분류',
         subTopicId: st?.id ?? null,
