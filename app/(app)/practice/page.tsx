@@ -59,6 +59,15 @@ interface AttemptResponse {
   explanation: string | null;
 }
 
+/** 문항 하나의 풀이 상태. 문항 id 로 보관해 앞뒤로 오가도 살아남는다. */
+interface AnswerState {
+  selected: number | null;
+  result: AttemptResponse | null;
+  outOfScope: boolean;
+}
+
+const EMPTY_ANSWER: AnswerState = { selected: null, result: null, outOfScope: false };
+
 interface StudySettingsRes {
   school_id: string | null;
   grade: string | null;
@@ -80,12 +89,12 @@ export default function PracticePage() {
   const [questions, setQuestions] = useState<QuestionForUser[]>([]);
   const [cohortId, setCohortId] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [result, setResult] = useState<AttemptResponse | null>(null);
+  // 문항 id → 풀이 상태. 문항을 건너뛰거나 이전 문제로 되돌아와도 고른 선지·채점 결과·
+  // 해설이 그대로 남는다(스칼라 한 벌로 두면 이동할 때마다 지워진다).
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
   const [loading, setLoading] = useState(true);
   const [settingsMissing, setSettingsMissing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [outOfScopeMarked, setOutOfScopeMarked] = useState(false);
   const [focus, setFocus] = useState<{
     subTopicName: string | null;
     subjectName: string | null;
@@ -95,6 +104,16 @@ export default function PracticePage() {
   const [generateError, setGenerateError] = useState<string | null>(null);
 
   const current = questions[currentIdx];
+  const { selected, result, outOfScope: outOfScopeMarked } =
+    (current ? answers[current.id] : undefined) ?? EMPTY_ANSWER;
+
+  /** 현재 문항의 풀이 상태만 갈아끼운다. 다른 문항 상태는 건드리지 않는다. */
+  function patchAnswer(questionId: string, patch: Partial<AnswerState>) {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: { ...EMPTY_ANSWER, ...prev[questionId], ...patch },
+    }));
+  }
 
   // 문항이 표시된 시각 — 제출 시 실제 소요 시간 계산용. 문항이 바뀔 때마다 재설정.
   const questionStartRef = useRef<number>(0);
@@ -111,6 +130,8 @@ export default function PracticePage() {
 
   async function loadQuestions() {
     setLoading(true);
+    // 새 문항 세트가 오면 이전 세트의 풀이 상태는 의미가 없다(id 가 겹칠 수도 있다).
+    clearAnswers();
     try {
       // ── 집중 코스: 학습 설정/코호트와 무관하게 지정된 세부주제 문항만 뽑는다 ──
       // 여기서 학습 설정의 수강 과목을 쓰면 "대동맥박리 집중 코스"인데 수강 과목
@@ -133,7 +154,6 @@ export default function PracticePage() {
           poolEmpty: res.rationale.focusPoolEmpty,
         });
         setCurrentIdx(0);
-        resetQuestion();
         return;
       }
 
@@ -177,7 +197,6 @@ export default function PracticePage() {
       setQuestions(res.questions);
       setCohortId(resolvedCohortId ?? res.rationale.cohortUsed);
       setCurrentIdx(0);
-      resetQuestion();
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : '문항을 가져오지 못했습니다';
       alert(msg);
@@ -212,14 +231,14 @@ export default function PracticePage() {
     }
   }
 
-  function resetQuestion() {
-    setSelected(null);
-    setResult(null);
-    setOutOfScopeMarked(false);
+  /** 새 문항 세트를 받아올 때만 호출한다 — 문항 사이 이동으로는 절대 지우지 않는다. */
+  function clearAnswers() {
+    setAnswers({});
   }
 
   async function handleSubmit() {
-    if (selected === null || !current) return;
+    // 이미 채점된 문항은 다시 제출하지 않는다 — 되돌아왔을 때 중복 기록·쿼터 이중 차감 방지.
+    if (selected === null || !current || result) return;
     setSubmitting(true);
     try {
       // 문항 표시 시점부터 제출까지 실제 경과 초(1~3600 범위로 클램프).
@@ -235,7 +254,7 @@ export default function PracticePage() {
         // 아예 빼야 한다(서버 스키마의 optional 은 undefined 만 허용).
         ...(cohortId ? { cohort_id: cohortId } : {}),
       });
-      setResult(res);
+      patchAnswer(current.id, { result: res });
     } catch (e) {
       if (e instanceof ApiError && e.code === 'quota_exceeded') {
         window.location.href = '/plan?limit=1';
@@ -257,16 +276,16 @@ export default function PracticePage() {
         question_id: current.id,
         cohort_id: cohortId,
       });
-      setOutOfScopeMarked(true);
+      patchAnswer(current.id, { outOfScope: true });
     } catch (e) {
       alert(e instanceof Error ? e.message : '저장 실패');
     }
   }
 
+  // 문항 사이 이동은 인덱스만 옮긴다. 풀이 상태는 answers 에 문항별로 남아 있다.
   function goNext() {
     if (currentIdx < questions.length - 1) {
       setCurrentIdx((i) => i + 1);
-      resetQuestion();
     } else if (focus) {
       // 집중 코스는 주제 문항이 유한하다 — 다시 추천해도 같은 문항이라 분석으로 돌려보낸다.
       router.push('/analysis');
@@ -277,10 +296,7 @@ export default function PracticePage() {
   }
 
   function goPrev() {
-    if (currentIdx > 0) {
-      setCurrentIdx((i) => i - 1);
-      resetQuestion();
-    }
+    if (currentIdx > 0) setCurrentIdx((i) => i - 1);
   }
 
   if (loading) {
@@ -424,7 +440,7 @@ export default function PracticePage() {
             return (
               <button
                 key={i}
-                onClick={() => !result && setSelected(i)}
+                onClick={() => !result && patchAnswer(current.id, { selected: i })}
                 disabled={result !== null}
                 className={`w-full text-left p-3 px-4 rounded-lg border flex items-center gap-3 transition-colors ${
                   isCorrect
