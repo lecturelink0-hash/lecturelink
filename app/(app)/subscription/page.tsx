@@ -80,16 +80,18 @@ export default function SubscriptionPage() {
   }, [loadSubscription]);
 
   const subscription = data?.subscription ?? null;
-  const isActivePaidSubscription = subscription?.status === 'active' && subscription.plan_tier !== 'free';
+  const planTier = subscription?.plan_tier ?? data?.plan_tier ?? 'free';
+  const hasPaidPlan = planTier !== 'free';
+  const hasActivePaidSubscription = subscription?.status === 'active' && hasPaidPlan;
   const accessEndDate = formatDate(subscription?.expires_at ?? null);
-  const planName = subscription ? planNameFor(subscription.plan_tier) : null;
-  const pricingPlan = subscription && subscription.plan_tier !== 'free'
-    ? PLAN_CATALOG[subscription.plan_tier]
+  const planName = hasPaidPlan ? planNameFor(planTier) : null;
+  const pricingPlan = hasPaidPlan
+    ? PLAN_CATALOG[planTier]
     : undefined;
   const monthlyPrice = pricingPlan
     ? new Intl.NumberFormat('ko-KR').format(pricingPlan.price)
     : null;
-  const planSummary = subscription?.plan_tier === 'pro'
+  const planSummary = planTier === 'pro'
     ? '내신 대비 + CPX를 함께 이용할 수 있어요.'
     : pricingPlan?.desc;
 
@@ -151,7 +153,7 @@ export default function SubscriptionPage() {
     );
   }
 
-  if (!isActivePaidSubscription || !subscription || !planName) {
+  if (!hasPaidPlan || !planName) {
     return (
       <div className="ll-system-page">
         <PageHeader title="구독 관리" description="현재 이용 중인 유료 구독이 없어요." />
@@ -169,7 +171,7 @@ export default function SubscriptionPage() {
     );
   }
 
-  const cancellationScheduled = !subscription.auto_renew;
+  const cancellationScheduled = hasActivePaidSubscription && !subscription!.auto_renew;
 
   return (
     <div className="ll-system-page">
@@ -203,11 +205,11 @@ export default function SubscriptionPage() {
               <div className="flex flex-wrap items-center gap-2.5">
                 <p className="text-xl font-bold tracking-tight">{planName}</p>
                 <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold">
-                  {cancellationScheduled ? '결제 종료 예정' : '이용 중'}
+                  {hasActivePaidSubscription ? (cancellationScheduled ? '결제 종료 예정' : '이용 중') : '베타 제공'}
                 </span>
               </div>
               {planSummary && <p className="mt-1.5 text-sm leading-relaxed text-white/80">{planSummary}</p>}
-              {monthlyPrice && <p className="mt-3 text-xl font-bold tracking-tight">월 {monthlyPrice}원</p>}
+              {monthlyPrice && hasActivePaidSubscription && <p className="mt-3 text-xl font-bold tracking-tight">월 {monthlyPrice}원</p>}
             </div>
           </div>
 
@@ -215,15 +217,15 @@ export default function SubscriptionPage() {
             <div className="flex items-start gap-2.5">
               <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
               <div>
-                <dt className="text-xs font-medium text-[var(--color-muted)]">{cancellationScheduled ? '이용 가능 기간' : '다음 결제일'}</dt>
-                <dd className="mt-1 text-sm font-bold text-[var(--color-text)]">{accessEndDate}</dd>
+                <dt className="text-xs font-medium text-[var(--color-muted)]">{hasActivePaidSubscription ? (cancellationScheduled ? '이용 가능 기간' : '다음 결제일') : '이용 상태'}</dt>
+                <dd className="mt-1 text-sm font-bold text-[var(--color-text)]">{hasActivePaidSubscription ? accessEndDate : '베타 제공 중'}</dd>
               </div>
             </div>
             <div className="flex items-start gap-2.5 md:border-l md:border-[var(--color-border)] md:pl-5">
               <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
               <div>
                 <dt className="text-xs font-medium text-[var(--color-muted)]">결제 상태</dt>
-                <dd className="mt-1 text-sm font-bold text-[var(--color-text)]">{cancellationScheduled ? '자동결제 종료됨' : '자동결제 이용 중'}</dd>
+                <dd className="mt-1 text-sm font-bold text-[var(--color-text)]">{hasActivePaidSubscription ? (cancellationScheduled ? '자동결제 종료됨' : '자동결제 이용 중') : '정기결제 정보 없음'}</dd>
               </div>
             </div>
             <div className="flex items-start justify-between gap-3 md:border-l md:border-[var(--color-border)] md:pl-5">
@@ -256,7 +258,14 @@ export default function SubscriptionPage() {
           title={cancellationScheduled ? '자동결제가 종료되었어요' : '정기결제 해지'}
           description={cancellationScheduled ? undefined : '정기결제를 해지하면 다음 결제일부터 추가 결제가 진행되지 않아요.'}
         >
-          {cancellationScheduled ? (
+          {!hasActivePaidSubscription ? (
+            <div role="status" aria-live="polite">
+              <div className="rounded-[var(--radius-md)] bg-[var(--color-sage-100)] px-4 py-3 text-sm leading-relaxed text-sage-800">
+                현재 계정은 베타 제공 상태로, 연결된 정기결제가 없어요.
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">정기결제가 연결된 계정에서는 이 화면에서 해지할 수 있어요.</p>
+            </div>
+          ) : cancellationScheduled ? (
             <div role="status" aria-live="polite">
               <div className="rounded-[var(--radius-md)] bg-[var(--color-sage-100)] px-4 py-3 text-sm leading-relaxed text-sage-800">
                 <strong>{accessEndDate}</strong>까지 현재 요금제의 기능을 계속 이용할 수 있어요.
