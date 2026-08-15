@@ -319,7 +319,18 @@ export default function CpxPractice() {
     if (!processingNoticeAccepted) {
       setError('음성·대화 처리 안내를 확인해 주세요.');
       // 시작 버튼(모달)과 안내 배너가 멀리 떨어져 있어, 미확인 상태에서는 배너로 데려다준다.
-      noticeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // 모달이 닫히며 body overflow·포커스가 복원된 다음 스크롤해야 하므로 한 틱 늦춘다.
+      // 일부 브라우저 환경은 smooth 스크롤을 조용히 무시하므로(실측), 이동이 없으면 즉시 스크롤로 폴백한다.
+      window.setTimeout(() => {
+        const notice = noticeRef.current;
+        if (!notice) return;
+        const startY = window.scrollY;
+        notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.setTimeout(() => {
+          if (Math.abs(window.scrollY - startY) < 2) notice.scrollIntoView({ block: 'center' });
+          notice.querySelector('input[type="checkbox"]')?.focus({ preventScroll: true });
+        }, 400);
+      }, 0);
       return;
     }
     if (caseId !== target.id) setCaseId(target.id);
