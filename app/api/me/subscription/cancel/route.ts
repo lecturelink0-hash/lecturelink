@@ -9,19 +9,34 @@ import { requireSession } from '@/lib/auth/session';
 import { createServerClient } from '@/lib/db/server';
 import { createAdminClient } from '@/lib/db/admin';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
+import { z } from 'zod';
 
-export const POST = withErrorHandling(async () => {
+const cancellationSchema = z.object({
+  reason: z.enum([
+    'price',
+    'low_usage',
+    'missing_features',
+    'temporary_break',
+    'other',
+    'prefer_not_to_say',
+  ]).optional(),
+});
+
+export const POST = withErrorHandling(async (request: Request) => {
   const session = await requireSession();
+  const { reason } = cancellationSchema.parse(await request.json().catch(() => ({})));
   const supabase = await createServerClient();
 
   const { data: sub } = await supabase
     .from('subscriptions')
-    .select('id, status, auto_renew')
+    .select('id, plan_tier, status, auto_renew')
     .eq('user_id', session.userId)
     .eq('status', 'active')
+    .order('started_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (!sub) {
+  if (!sub || sub.plan_tier === 'free') {
     throw new ApiException(
       'no_active_subscription',
       '활성 구독이 없습니다.',
@@ -34,12 +49,33 @@ export const POST = withErrorHandling(async () => {
   }
 
   const admin = createAdminClient();
-  const { error: cancelError } = await admin
+  const cancelledAt = new Date().toISOString();
+  const { error } = await admin
     .from('subscriptions')
-    .update({ auto_renew: false })
+    .update({
+      auto_renew: false,
+      cancellation_reason: reason ?? null,
+      cancelled_at: cancelledAt,
+    })
     .eq('id', sub.id);
-  if (cancelError) {
-    throw new ApiException('subscription_cancel_failed', '자동 갱신을 해제하지 못했습니다.', 503);
+
+  // The essential cancellation action must remain available while the optional
+  // feedback migration is waiting to be applied.
+  if (error?.code === '42703') {
+    const { error: fallbackError } = await admin
+      .from('subscriptions')
+      .update({ auto_renew: false })
+      .eq('id', sub.id);
+
+    if (fallbackError) {
+      throw new ApiException('subscription_cancel_failed', '구독 해지 처리에 실패했습니다. 잠시 뒤 다시 시도해 주세요.', 503);
+    }
+
+    return ok({ cancelled: true, feedback_pending_migration: true });
+  }
+
+  if (error) {
+    throw new ApiException('subscription_cancel_failed', '구독 해지 처리에 실패했습니다. 잠시 후 다시 시도해주세요.', 503);
   }
 
   return ok({ cancelled: true });
