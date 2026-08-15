@@ -43,7 +43,7 @@ export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_
             type="button"
             onClick={() => go(current - 1)}
             disabled={current === 0}
-            aria-label={`이전 ${unitLabel}`}
+            aria-label="이전 항목"
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -57,7 +57,7 @@ export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_
             type="button"
             onClick={() => go(current + 1)}
             disabled={current >= pageCount - 1}
-            aria-label={`다음 ${unitLabel}`}
+            aria-label="다음 항목"
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
