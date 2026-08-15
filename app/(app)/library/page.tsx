@@ -18,6 +18,8 @@ import {
   CheckCircle2, XCircle, BookmarkPlus,
 } from 'lucide-react';
 import { QuestionStem } from '@/components/ui/QuestionStem';
+// 목록을 N개씩 끊어 ‹ › 로 넘기는 공용 페이저 — CPX 세부 채점(#191)과 같은 것을 쓴다.
+import CpxPagedList from '@/components/cpx/CpxPagedList';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -128,6 +130,10 @@ const STATUS_FILTERS: { key: SetStatus | 'all'; label: string }[] = [
   { key: 'inprogress', label: '풀이 중' },
   { key: 'done', label: '완료' },
 ];
+
+/** 문제집 그리드 한 쪽에 보여줄 카드 수 — 모바일에서 목록이 무한히 늘어지지 않게 하는 기준.
+ *  실측(폭 386px): 57개 = 15,034px(약 17.9화면) → 5개면 1,306px(1.6화면)·12쪽. */
+const SETS_PER_PAGE = 5;
 
 const STATUS_BADGE: Record<SetStatus, { label: string; variant: 'default' | 'curated' }> = {
   inprogress: { label: '풀이 중', variant: 'default' },
@@ -931,7 +937,12 @@ export default function LibraryPage() {
         </Card>
 
         {/* ─── 우측: 콘텐츠 패널 ─────────────────────────────────────────── */}
-        <section id="library-solve" className="main-list">
+        {/* min-w-0 — 이 섹션은 .layout 그리드의 아이템이라 기본 min-width:auto 를 가진다.
+            그대로 두면 풀이 헤더의 최소폭이 그리드 트랙을 밀어 카드가 화면 밖(386px 기준 +35px)으로
+            빠져나간다. 0 으로 낮춰야 폭 부족이 제목 truncate 로 흡수된다. */}
+        {/* scroll-mt-20 — 셸 헤더가 position:fixed(60px)라 scrollToSolveArea 가 이 섹션을 y=0 에
+            붙이면 목록 툴바가 헤더 뒤로 숨는다. 85px 로 내려 잡는다. */}
+        <section id="library-solve" className="main-list min-w-0 scroll-mt-20">
           {active ? (
             <div>
               <button
@@ -1012,11 +1023,22 @@ export default function LibraryPage() {
                   조건에 맞는 문제집이 없습니다.
                 </Card>
               ) : (
-                <div className="books">
-                  {visibleSets.map((item) => (
-                    <SetCard key={item.upload.id} item={item} onOpen={continueUpload} onDelete={handleDeleteSet} />
-                  ))}
-                </div>
+                // 페이저는 CPX 세부 채점(#191)이 쓰는 공용 컴포넌트를 그대로 재사용한다.
+                // key — 필터·검색이 바뀌면 목록 자체가 달라지므로 1쪽으로 되돌린다(쪽 상태는 컴포넌트가 들고 있다).
+                <CpxPagedList
+                  key={`${statusFilter}|${query}`}
+                  items={visibleSets}
+                  pageSize={SETS_PER_PAGE}
+                  unitLabel="개 문제집"
+                >
+                  {(pageSets: typeof visibleSets) => (
+                    <div className="books">
+                      {pageSets.map((item) => (
+                        <SetCard key={item.upload.id} item={item} onOpen={continueUpload} onDelete={handleDeleteSet} />
+                      ))}
+                    </div>
+                  )}
+                </CpxPagedList>
               )}
 
               <p className="mt-5 text-[12px] text-[var(--color-muted)] leading-relaxed">
@@ -1480,8 +1502,8 @@ function PrivateExamSession({
     <div>
       <div className="ll-card p-5 mb-4">
         <div className="flex items-center justify-between gap-3 mb-3.5">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="ll-chip" style={{ width: '2.25rem', height: '2.25rem' }}>
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <span className="ll-chip shrink-0" style={{ width: '2.25rem', height: '2.25rem' }}>
               <BookOpen className="w-4 h-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">
@@ -1489,12 +1511,14 @@ function PrivateExamSession({
               <div className="text-[15px] font-bold text-sage-800 tracking-tight truncate">{active.fileName}</div>
             </div>
           </div>
-          <div className="relative flex items-center gap-1.5">
-            <button type="button" onClick={() => goToQuestion(index - 1)} disabled={index === 0} aria-label="이전 문항" className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
+          {/* shrink-0 — 좁은 폭(모바일)에서 이 조작부가 눌리면 "문항 10/10" 이 문/항 으로 쪼개진다.
+              줄어드는 쪽은 왼쪽 제목(min-w-0 + truncate)이어야 한다. */}
+          <div className="relative flex shrink-0 items-center gap-1.5">
+            <button type="button" onClick={() => goToQuestion(index - 1)} disabled={index === 0} aria-label="이전 문항" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
               <ChevronLeft className="h-4 w-4" />
             </button>
             <div className="relative">
-              <button type="button" onClick={() => setShowQuestionGrid((open) => !open)} aria-expanded={showQuestionGrid} className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-white px-2.5 text-sm font-semibold text-sage-800 transition-colors hover:border-sage-400">
+              <button type="button" onClick={() => setShowQuestionGrid((open) => !open)} aria-expanded={showQuestionGrid} className="inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-[var(--color-border)] bg-white px-2.5 text-sm font-semibold text-sage-800 transition-colors hover:border-sage-400">
                 문항 <span className="tnum">{index + 1}/{questions.length}</span>
                 <ChevronDown className={`h-3.5 w-3.5 text-[var(--color-muted)] transition-transform ${showQuestionGrid ? 'rotate-180' : ''}`} />
               </button>
@@ -1513,7 +1537,7 @@ function PrivateExamSession({
                 </div>
               )}
             </div>
-            <button type="button" onClick={() => goToQuestion(index + 1)} disabled={index === questions.length - 1} aria-label="다음 문항" className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
+            <button type="button" onClick={() => goToQuestion(index + 1)} disabled={index === questions.length - 1} aria-label="다음 문항" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-sage-700 transition-colors hover:border-sage-400 disabled:cursor-not-allowed disabled:opacity-35">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
