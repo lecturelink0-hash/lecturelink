@@ -160,7 +160,7 @@ function BankCard({ stat }: { stat: SubjectStat }) {
       {stat.total > 0 ? (
         <Link
           href={`/practice?subject_id=${stat.id}`}
-          className="mt-auto inline-flex items-center justify-center gap-2 bg-[var(--color-accent)] text-white text-[15px] font-semibold px-5 h-11 rounded-lg hover:bg-[var(--color-accent-dark)] transition-colors"
+          className="mt-auto inline-flex items-center justify-center gap-2 bg-[var(--color-cta)] text-white text-[15px] font-semibold px-5 h-11 rounded-lg hover:bg-[var(--color-cta-hover)] transition-colors"
         >
           풀이 시작 →
         </Link>

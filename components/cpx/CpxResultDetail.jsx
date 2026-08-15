@@ -150,7 +150,7 @@ export default function CpxResultDetail({ sessionId }) {
       </div>
     </section>
 
-    {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-4 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
+    {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-error)] bg-[var(--color-error-bg)] p-4 text-sm text-[var(--color-error)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
 
     {!result && !error && <Card><div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--color-muted)]"><span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />채점 기록을 불러오는 중입니다.</div></Card>}
 
@@ -179,7 +179,7 @@ export default function CpxResultDetail({ sessionId }) {
       {transcriptOpen && (
         <Card title="전체 대화록" description="이 진료에서 환자와 나눈 대화 전체입니다. 신체진찰 선언도 함께 표시됩니다." icon={<MessageCircle className="h-5 w-5" />}>
           {transcriptLoading && <div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--color-muted)]"><span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />대화록을 불러오는 중입니다.</div>}
-          {!transcriptLoading && transcriptError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-4 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{transcriptError}</div>}
+          {!transcriptLoading && transcriptError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-error)] bg-[var(--color-error-bg)] p-4 text-sm text-[var(--color-error)]"><ShieldAlert className="h-5 w-5 shrink-0" />{transcriptError}</div>}
           {!transcriptLoading && !transcriptError && <CpxTranscriptView events={transcriptEvents} />}
         </Card>
       )}

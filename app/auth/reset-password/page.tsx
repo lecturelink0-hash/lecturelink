@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button';
 import { BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
 
 const inputClass =
-  'w-full h-12 px-4 rounded-lg border border-[var(--color-border)] focus:border-sage-600 focus:outline-none text-base';
+  'w-full h-12 px-4 rounded-lg border border-[var(--color-border-control)] focus:border-sage-600 focus:outline-none text-base';
 
 export default function ResetPasswordPage() {
   const [ready, setReady] = useState<'checking' | 'ok' | 'no-session'>('checking');
@@ -118,7 +118,7 @@ export default function ResetPasswordPage() {
 
             {ready === 'no-session' && (
               <div className="text-center py-4">
-                <AlertCircle className="w-12 h-12 text-[var(--color-warn)] mx-auto mb-4" strokeWidth={1.5} />
+                <AlertCircle className="w-12 h-12 text-[var(--color-error)] mx-auto mb-4" strokeWidth={1.5} />
                 <p className="text-sm text-[var(--color-muted)] leading-relaxed">
                   재설정 링크가 유효하지 않거나 만료되었습니다.<br />로그인 화면에서 다시 요청해 주세요.
                 </p>
@@ -168,7 +168,7 @@ export default function ResetPasswordPage() {
                   className={`${inputClass} mb-5`}
                 />
                 {errorMsg && (
-                  <div id="reset-password-error" role="alert" aria-live="polite" className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-warn)] bg-[var(--color-warn-bg)] rounded-lg p-3.5 mb-5">
+                  <div id="reset-password-error" role="alert" aria-live="polite" className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-error)] bg-[var(--color-error-bg)] rounded-lg p-3.5 mb-5">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>{errorMsg}</span>
                   </div>

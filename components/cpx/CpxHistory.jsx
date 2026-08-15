@@ -66,11 +66,11 @@ export default function CpxHistory() {
       <Link href="/cpx" className="inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 text-[15px] font-bold text-white transition hover:bg-[var(--color-primary-strong)]"><ArrowLeft className="h-4 w-4" />실습으로 돌아가기</Link>
     </section>
 
-    {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-4 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
+    {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-error)] bg-[var(--color-error-bg)] p-4 text-sm text-[var(--color-error)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
 
     {sessions === null && <Card><div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--color-muted)]"><span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />기록을 불러오는 중입니다.</div></Card>}
 
-    {sessions?.length === 0 && !error && <Card className="text-center"><Stethoscope className="mx-auto h-10 w-10 text-[var(--color-primary)]" /><h2 className="mt-3 font-bold text-[var(--color-text)]">아직 완료한 세션이 없습니다</h2><p className="mt-1 text-sm text-[var(--color-muted)]">첫 CPX 연습을 마치면 결과가 여기에 저장됩니다.</p><Link href="/cpx" className="mt-5 inline-flex h-11 items-center rounded-[var(--radius-md)] bg-[var(--color-accent)] px-5 text-sm font-bold text-white">첫 연습 시작</Link></Card>}
+    {sessions?.length === 0 && !error && <Card className="text-center"><Stethoscope className="mx-auto h-10 w-10 text-[var(--color-primary)]" /><h2 className="mt-3 font-bold text-[var(--color-text)]">아직 완료한 세션이 없습니다</h2><p className="mt-1 text-sm text-[var(--color-muted)]">첫 CPX 연습을 마치면 결과가 여기에 저장됩니다.</p><Link href="/cpx" className="mt-5 inline-flex h-11 items-center rounded-[var(--radius-md)] bg-[var(--color-cta)] px-5 text-sm font-bold text-white hover:bg-[var(--color-cta-hover)]">첫 연습 시작</Link></Card>}
 
     {sessions?.length > 0 && <div className="grid gap-3">
       {sessions.map((session) => <Link key={session.sessionId} href={`/cpx/history/${session.sessionId}`} className="block rounded-[var(--radius-lg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]">

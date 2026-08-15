@@ -13,7 +13,7 @@
   width: 100%;
   height: 40px;
   padding: 0 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-control);
   border-radius: 8px;
   background: #fff;
   color: var(--color-text);
@@ -78,7 +78,7 @@
   max-height: 256px;
   overflow-y: auto;
   padding: 4px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-control);
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 12px 28px rgba(17, 24, 39, 0.12);
@@ -1875,7 +1875,7 @@
    Design tokens — 딥 포레스트 그린 · 크림 · 골드 (브랜드 레퍼런스)
    토큰 이름은 sage-* 로 유지(전 페이지 호환), 값만 레퍼런스 팔레트로 매핑.
    ============================================ */
-@theme {
+@theme inline {
   /* Forest green spectrum — 레퍼런스 #1F5C43 기준 */
   --color-sage-50:  #f3f7f4;
   --color-sage-100: #e9f2ec;
@@ -1888,42 +1888,28 @@
   --color-sage-800: #194b37;
   --color-sage-900: #143c2c;
 
-  /* Functional aliases */
-  --color-primary:    #1f5c43;
-  --color-primary-light: #2f6a4c;
-  --color-bg:         #fcfaf4;   /* 따뜻한 크림 배경 */
-  --color-surface:    #ffffff;
-  --color-border:     #ece6d9;   /* 크림과 어울리는 웜 뉴트럴 보더 */
-  --color-line-strong: #d6d0c3;  /* 한 단계 진한 보더 — 폼 입력·호버 등 구분 강조용 */
+  /* Functional aliases — source values live in tokens.css. */
+  --color-primary:    var(--color-accent-pine);
+  --color-bg:         var(--color-paper);
+  --color-surface:    var(--color-paper-raised);
+  --color-border:     var(--color-line);
 
   /* 카드 모서리 단일 토큰 — 페이지별 14/16/20px 혼용을 16px 로 통일 */
   --radius-card: 16px;
-  --color-text:       #18241e;   /* 딥 그린-잉크 */
-  --color-muted:      #6b7280;
+  --color-text:       var(--color-ink);
+  --color-muted:      var(--color-ink-soft);
 
   /* Gold accent — 랜딩 하이라이트/배지 */
-  --color-gold:      #f3c64e;
-  --color-gold-dark: #d9a82f;
-  --color-gold-bg:   #fbf1d4;
+  --color-gold:      var(--color-accent-gold);
 
   /* Action accent — 오렌지 (문제 생성·이어풀기 등 강조 CTA) */
-  --color-accent:      #e0743a;
-  --color-accent-dark: #c9622e;
-  --color-accent-bg:   #fbeee4;
+  --color-accent:      var(--color-accent-coral);
+  --color-accent-dark: var(--color-accent-coral-strong);
+  --color-accent-bg:   var(--color-accent-coral-soft);
 
   /* Semantic colors */
-  --color-warn:    #c0563f;
-  --color-warn-bg: #fbe9e3;
-  --color-note:    #b88a2a;
-  --color-note-bg: #fbf3e0;
-
-  /* Tier badge colors */
-  --color-curated:    #1f5c43;
-  --color-curated-bg: #dce9e1;
-  --color-beta:       #a07d23;
-  --color-beta-bg:    #fbf1d4;
-  --color-private:    #c25e2a;
-  --color-private-bg: #fbeee4;
+  --color-warn:    var(--color-danger);
+  --color-warn-bg: var(--color-danger-soft);
 
   /* Fonts */
   --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont,

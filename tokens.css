@@ -17,6 +17,26 @@
   --color-danger: oklch(55% 0.16 30);
   --color-danger-soft: oklch(94% 0.045 30);
 
+  /* Semantic colors shared by the Tailwind theme and components. */
+  --color-primary-light: #2f6a4c;
+  --color-gold-dark: #d9a82f;
+  --color-gold-bg: #fbf1d4;
+  --color-note: #b88a2a;
+  --color-note-bg: #fbf3e0;
+  --color-curated: #1f5c43;
+  --color-curated-bg: #dce9e1;
+  --color-beta: #a07d23;
+  --color-beta-bg: #fbf1d4;
+  --color-private: #c25e2a;
+  --color-private-bg: #fbeee4;
+
+  /* Accessible action, error, and control tokens. */
+  --color-border-control: #958e82;
+  --color-cta: #b5542b;
+  --color-cta-hover: #9d4624;
+  --color-error: #a94a37;
+  --color-error-bg: #fbe9e3;
+
   --color-bg: var(--color-paper);
   --color-surface: var(--color-paper-raised);
   --color-surface-muted: var(--color-paper-muted);
