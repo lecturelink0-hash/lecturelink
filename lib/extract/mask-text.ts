@@ -51,6 +51,13 @@ export interface MaskTextResult {
   kept: number;
   /** 남긴 이유별 개수 — 진단용. */
   keptReasons: Record<string, number>;
+  /**
+   * 실제로 덮은 사각형(여백 적용 후 최종 좌표)과 그 자리에 있던 글자.
+   *
+   * lib/extract/annotate-markers.ts 가 이 자리에 A·B·C 표식을 찍는다. 모델이 준
+   * 원본 박스가 아니라 "실제로 덮인 자리"여야 표식이 지워진 영역 안에 앉는다.
+   */
+  regions: MaskBox[];
 }
 
 /**
@@ -90,9 +97,11 @@ export async function maskTextRegions(
   const keep = (reason: string) => {
     keptReasons[reason] = (keptReasons[reason] ?? 0) + 1;
   };
+  // 실제로 덮은 자리 — 표식(A·B·C)을 찍을 좌표로 쓴다.
+  const regions: MaskBox[] = [];
 
   if (boxes.length === 0) {
-    return { png, masked: 0, kept: 0, keptReasons };
+    return { png, masked: 0, kept: 0, keptReasons, regions };
   }
 
   const { createCanvas, loadImage } = await import('canvas');
@@ -312,6 +321,7 @@ export async function maskTextRegions(
       ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
       ctx.fillRect(fx0, fy0, bw, bh);
       masked += 1;
+      regions.push({ text: box.text, x0: fx0, y0: fy0, x1: fx1, y1: fy1 });
       continue;
     }
     const fill = ctx.createImageData(bw, bh);
@@ -339,6 +349,7 @@ export async function maskTextRegions(
     }
     ctx.putImageData(fill, fx0, fy0);
     masked += 1;
+    regions.push({ text: box.text, x0: fx0, y0: fy0, x1: fx1, y1: fy1 });
   }
 
   return {
@@ -346,5 +357,6 @@ export async function maskTextRegions(
     masked,
     kept: Object.values(keptReasons).reduce((a, b) => a + b, 0),
     keptReasons,
+    regions,
   };
 }
