@@ -166,6 +166,41 @@ const GEN_SEGMENT_OVERLAP_RATIO = 0.1;
 // 이미지 1장 정제(인페인팅+검증)에 허용하는 최대 시간. 초과하면 그 이미지는 제외한다.
 // 느린 이미지 편집 호출 한 건이 전체 생성을 붙잡는 꼬리를 차단한다.
 const IMAGE_REFINE_TIMEOUT_MS = 20_000;
+// 전처리(추출) 완료를 기다리는 상한. 초과하면 그때까지 확보한 본문 텍스트만으로 생성을 마친다.
+//
+// 왜 필요한가: 종전에는 `await extractPromise` 에 상한이 없어, 전처리가 어떤 이유로든
+// 끝나지 않으면 실행 전체가 그 자리에서 영구 정지했다. 예외가 아니라 "정지"라서
+// 실패 처리도 진단 기록도 돌지 않고, user_uploads 행이 status=processing 인 채로 남아
+// 화면은 진행률이 멈춘 채 영원히 로딩됐다(실측: 강의록 PDF 2건이 66 %에서 정지).
+// 개별 원인(pdfjs 전역 이미지 객체)은 고쳤지만, 처음 보는 강의록 형식이 또 다른 방식으로
+// 전처리를 붙잡을 수 있으므로 "실행은 어떤 경우에도 끝난다"를 여기서 보장한다.
+const EXTRACT_WAIT_TIMEOUT_MS = 90_000;
+// 크롭 OCR 전체 완료를 기다리는 상한. 위와 같은 취지의 최후 방어선이다.
+const OCR_WAIT_TIMEOUT_MS = 60_000;
+
+/**
+ * 약속이 상한 안에 끝나지 않으면 `fallback` 으로 진행한다(거부하지 않는다).
+ * 원 약속은 그대로 흘러가되 결과만 버린다 — 부분 결과라도 이미 반영된 것은 유지된다.
+ */
+async function withDeadline<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  fallback: T,
+  onTimeout?: () => void,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const guard = new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      onTimeout?.();
+      resolve(fallback);
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, guard]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 async function selectLikelyImagePages(
   pages: Array<{ pageIndex: number; png: Uint8Array }>,
@@ -1691,7 +1726,14 @@ export async function generatePrivateQuestionsFromUpload(
     }
 
     // 4-b) 추출 완료 대기 — 위 선발사 배치들은 이 시간 동안 이미 생성 중이다.
-    const { slides } = await extractPromise;
+    //      상한을 넘기면 이미지 없이(본문 텍스트만으로) 생성을 마무리한다. 실행이 끝나지
+    //      않는 것보다 이미지 문항이 빠진 채로라도 끝나는 편이 언제나 낫다.
+    const { slides } = await withDeadline(extractPromise, EXTRACT_WAIT_TIMEOUT_MS, { slides: [] }, () => {
+      diag.extract.extractTimedOut = true;
+      warnings.push(
+        `전처리가 ${Math.round(EXTRACT_WAIT_TIMEOUT_MS / 1000)}초를 넘겨 본문 텍스트만으로 생성을 마쳤습니다.`,
+      );
+    });
     diag.timings.extractAwaitedMs = Date.now() - startTime;
     const allCrops = slides.flatMap((s) =>
       s.croppedImages.map((c) => ({ slide: s, crop: c })),
@@ -1719,13 +1761,22 @@ export async function generatePrivateQuestionsFromUpload(
     // 비용 누적은 전부 startCropOcr 안에 있어 종전과 동일하다.
     for (const { slide, crop } of allCrops) startCropOcr(slide.text, slide.pageIndex, crop);
     let ocrDone = 0;
-    await Promise.all(
-      allCrops.map(({ crop }) =>
-        (ocrTasks.get(crop) ?? Promise.resolve()).then(async () => {
-          ocrDone += 1;
-          if (reportOcrProgress) await updateProgress('ocr', ocrDone, allCrops.length);
-        }),
+    // 상한 초과 시 아직 안 끝난 OCR 은 포기하고 진행한다(해당 크롭은 주석 텍스트 없이 쓰인다).
+    await withDeadline(
+      Promise.all(
+        allCrops.map(({ crop }) =>
+          (ocrTasks.get(crop) ?? Promise.resolve()).then(async () => {
+            ocrDone += 1;
+            if (reportOcrProgress) await updateProgress('ocr', ocrDone, allCrops.length);
+          }),
+        ),
       ),
+      OCR_WAIT_TIMEOUT_MS,
+      [] as unknown[],
+      () => {
+        diag.extract.ocrTimedOut = true;
+        warnings.push(`크롭 OCR ${allCrops.length - ocrDone}건이 상한을 넘겨 생략됐습니다.`);
+      },
     );
     // 스트리밍이라 이 값은 "Vision 과 겹친 뒤 남은 잔여 대기"만 나타낸다.
     diag.timings.ocrMs = Date.now() - tOcr;
