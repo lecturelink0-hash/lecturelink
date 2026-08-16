@@ -58,6 +58,18 @@ import {
 } from '@/lib/extract/select-exam-images';
 import { inpaintRemoveText } from '@/lib/extract/inpaint-text';
 import { maskTextRegions, isShortFigureLabel } from '@/lib/extract/mask-text';
+import {
+  annotateMarkers,
+  selectMarkerSources,
+  buildMarkerLegend,
+  stemReferencesMarker,
+  type PlacedMarker,
+} from '@/lib/extract/annotate-markers';
+import {
+  CLINICAL_VIGNETTE_RULES,
+  buildClinicalQuotaDirective,
+} from '@/lib/ai/prompts/clinical-vignette';
+import { measureClinicalYield } from '@/lib/ai/clinical-shape';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -354,7 +366,9 @@ const IMAGE_DEPENDENT_STEM_RE = new RegExp(
 );
 
 function stemDependsOnImage(stem: string): boolean {
-  return IMAGE_DEPENDENT_STEM_RE.test(String(stem ?? ''));
+  const s = String(stem ?? '');
+  // 표식 문항("A로 표시된 …")에는 그림 명사가 하나도 없어 위 정규식이 못 잡는다.
+  return IMAGE_DEPENDENT_STEM_RE.test(s) || stemReferencesMarker(s);
 }
 
 /**
@@ -377,7 +391,9 @@ const FIGURE_DECLARATION_RE = new RegExp(
 export const stemDeclaresFigureForTest = (stem: string): boolean => stemDeclaresFigure(stem);
 
 function stemDeclaresFigure(stem: string): boolean {
-  return FIGURE_DECLARATION_RE.test(String(stem ?? ''));
+  const s = String(stem ?? '');
+  // 표식을 가리키는 문항은 이미지가 없으면 풀 수 없다 — 그림 선언과 같이 취급한다.
+  return FIGURE_DECLARATION_RE.test(s) || stemReferencesMarker(s);
 }
 
 /** 문항 선지 수 — 국시형 고정값. 저장 전에 반드시 이 값으로 맞춘다. */
@@ -1581,15 +1597,27 @@ export async function generatePrivateQuestionsFromUpload(
             : '';
     const typeDirectives: Record<string, string> = {
       '지식형': '**지식형**: 개념·정의·기전을 확인하는 단답/개념 확인 문항 위주로 만든다(긴 증례보다 핵심 지식).',
-      '임상형': '**임상형**: 실제 환자 증례(vignette: 나이/증상/검사)를 제시하고 진단·처치·판단을 묻는 임상 문항 위주로 만든다.',
-      '이미지형': '**이미지형**: 자료의 의료 이미지를 판독·해석해야 푸는 문항을 가능한 한 많이 만든다(이미지가 있으면 우선).',
+      // 임상형의 실제 규격은 아래 CLINICAL_VIGNETTE_RULES 가 전담한다. 여기서는 어느
+      // 규격을 따르라는 포인터만 둔다 — 예전처럼 이 한 줄이 규격 전부이면 모델이
+      // 지식형으로 되돌아간다(2026-08-16 실측: 임상형 10문항이 전부 지식형이었다).
+      '임상형': '**임상형**: 아래 "임상형 문항 규격(C0~C11)"을 그대로 적용한다. 환자 한 명의 증례로 시작해 임상 판단 하나를 묻는다.',
+      '이미지형':
+        '**이미지형**: 자료의 의료 이미지를 판독·해석해야 푸는 문항을 가능한 한 많이 만든다(이미지가 있으면 우선). ' +
+        '**그림을 가려도 풀리는 문항은 이미지형이 아니다** — 표식(A·B·C)이 있으면 그것을 가리켜 묻고, ' +
+        '없으면 그림에서 읽어야만 알 수 있는 소견을 답의 근거로 삼는다.',
     };
     const selectedTypes = input.questionTypes ?? [];
+    const wantsClinical = selectedTypes.includes('임상형');
     const typeDirective = selectedTypes.length
       ? `선택된 문항 유형(${selectedTypes.join(', ')})을 전체 문항에 고르게 배분한다.\n${selectedTypes.map((type) => typeDirectives[type]).join('\n')}`
       : '';
     if (diffDirective || typeDirective) {
       systemPrompt += `\n\n## 사용자 지정 출제 조건\n${[diffDirective, typeDirective].filter(Boolean).join('\n')}`;
+    }
+    // 임상형을 고른 요청에만 붙인다. 지식형·이미지형만 고른 요청에 붙이면 그 문항들까지
+    // 증례를 달게 되어 사용자가 고른 유형과 어긋난다.
+    if (wantsClinical) {
+      systemPrompt += `\n\n${CLINICAL_VIGNETTE_RULES}`;
     }
     const client = getAnthropic();
     modelUsed = MODELS.generation();
@@ -1698,6 +1726,20 @@ export async function generatePrivateQuestionsFromUpload(
         (_, k) => batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0) + k,
       );
 
+    // 배치의 "임상 증례형 최소 수".
+    //
+    // imageQuotaFor 와 같은 이유로 필요하다. 시스템 프롬프트에 "유형을 고르게 배분한다"만
+    // 두면 배치가 병렬로 독립 판단해 임상형이 0개인 배치가 나온다. 실측(2026-08-16)에서는
+    // 임상형만 골랐는데도 10문항 전부가 지식형이었다.
+    // 임상형 단독 선택이면 배치 전 문항이 임상형이어야 하고, 다른 유형과 섞이면 유형 수로
+    // 나눈 몫(최소 1)을 요구한다. 이미지 문항도 증례형일 수 있으므로 imageQuota 와
+    // 서로 자리를 다투지 않는다(증례 + 사진 판독은 국시의 기본형이다).
+    const clinicalQuotaFor = (batchSize: number): number => {
+      if (!wantsClinical) return 0;
+      if (selectedTypes.length <= 1) return batchSize;
+      return Math.max(1, Math.min(batchSize, Math.ceil(batchSize / selectedTypes.length)));
+    };
+
     type SettledBatch = { ok: true; v: BatchResult } | { ok: false; e: unknown };
     const prefired: Array<Promise<SettledBatch> | null> = batchSizes.map((_, batchIndex) =>
       batchIndex < prefireCount
@@ -1706,6 +1748,7 @@ export async function generatePrivateQuestionsFromUpload(
             featured: [],
             getDisplayPng: async () => null,
             segmented: prefireSegmented,
+            clinicalQuota: clinicalQuotaFor(batchSizes[batchIndex]),
           }).then(
             (v): SettledBatch => ({ ok: true, v }),
             (e: unknown): SettledBatch => ({ ok: false, e }),
@@ -1958,6 +2001,24 @@ export async function generatePrivateQuestionsFromUpload(
         '이번 요청에서는 의료 이미지를 제공하지 않는다. 모든 문항은 제공된 텍스트 근거만으로 ' +
         '풀 수 있게 만들고, `image_indices` 는 **항상 빈 배열 []** 로 둔다. ' +
         '"다음 심전도에서", "아래 흉부 X-ray 를 보고" 처럼 제시되지 않은 그림을 가리키는 발문도 쓰지 않는다.';
+    } else {
+      // 기본 규칙과의 충돌 해소.
+      //
+      // 시스템 프롬프트에는 "이미지 안에 주석·설명 텍스트가 많아 보면 정답이 드러나는
+      // 그림은 image_indices 에 넣지 않는다"는 규칙이 있다. 그런데 모델에게 주는 것은
+      // **라벨이 살아 있는 원본**이고 학생이 받는 것은 라벨이 지워진 정제본이다.
+      // 그 차이를 알려 주지 않으면 라벨이 붙은 해부도·조직 사진(= 표식 문항을 만들 수
+      // 있는 바로 그 그림들)을 모델이 스스로 제외해 버린다.
+      systemPrompt +=
+        '\n\n## 이미지 라벨 안내(이번 요청)\n' +
+        '제시된 [이미지 N]은 **원본**이라 라벨·주석 글자가 그대로 보인다. 학생이 받는 ' +
+        '이미지에서는 그 글자가 자동으로 모두 지워진다. 따라서 **라벨이 많다는 이유만으로 ' +
+        'image_indices 에서 빼지 않는다** — 라벨이 붙은 해부도·조직 사진일수록 좋은 판독 ' +
+        '문항이 된다.\n' +
+        '- 다만 그림에서 읽은 라벨 글자를 발문·선지·해설에 그대로 옮겨 적으면 정답이 ' +
+        '노출되므로 절대 쓰지 않는다.\n' +
+        '- "표식 안내"가 붙은 이미지는 라벨 자리에 A·B·C 표식이 찍혀 있다. 그 표식을 ' +
+        '가리켜 물으면 그림을 보지 않고는 풀 수 없는 문항이 된다.';
     }
 
     // 선별 텍스트 인페인팅(비용 최적화): 모든 featured 를 미리 인페인팅하지 않고,
@@ -2051,8 +2112,20 @@ export async function generatePrivateQuestionsFromUpload(
     //
     // 롤백: ENABLE_TEXT_INPAINT=1 이면 예전 생성형 인페인팅 경로를 쓴다.
     const legacyInpaint = process.env.ENABLE_TEXT_INPAINT === '1';
-    const displayCache = new Map<number, Promise<Uint8Array | null>>();
-    const getDisplayPng = (i: number): Promise<Uint8Array | null> => {
+
+    // ── 지운 라벨 자리에 A·B·C 표식 찍기
+    //
+    // 정제가 그림 속 글자를 전부 지우고 나면 학생 화면의 그림에는 **가리킬 것이 하나도
+    // 남지 않는다.** 그래서 이미지형 문항이 "이 그림에 대한 설명으로 옳은 것은?" 으로
+    // 후퇴했다(2026-08-16 사용자 지적). 지운 좌표는 알고 있으므로 그 자리에 표식을
+    // 찍고, 표식↔원본 라벨 대응표를 생성 모델에게만 넘긴다. 정답 단서(라벨 글자)는
+    // 여전히 지워진 채로 "가리킬 대상"만 생긴다.
+    // 롤백: ENABLE_IMAGE_MARKERS=0
+    const markersEnabled = process.env.ENABLE_IMAGE_MARKERS !== '0';
+    /** 학생에게 보여줄 이미지 + 그 이미지에 찍힌 표식(모델 전용 대응표). */
+    type DisplayImage = { png: Uint8Array; markers: PlacedMarker[] };
+    const displayCache = new Map<number, Promise<DisplayImage | null>>();
+    const getDisplayPng = (i: number): Promise<DisplayImage | null> => {
       const fi = featuredImages[i];
       const ocrLen = (fi.c.ocrText ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
       const boxes = fi.c.ocrBoxes ?? [];
@@ -2060,7 +2133,7 @@ export async function generatePrivateQuestionsFromUpload(
       const cached = displayCache.get(i);
       if (cached) return cached;
 
-      const p = (async (): Promise<Uint8Array | null> => {
+      const p = (async (): Promise<DisplayImage | null> => {
         const t0 = Date.now();
         const rec: Record<string, unknown> = {
           gi: i,
@@ -2068,11 +2141,33 @@ export async function generatePrivateQuestionsFromUpload(
           ocrLen,
           boxes: boxes.length,
         };
+        /**
+         * 덮인 자리 중 "구조 이름 라벨"이었던 곳에 표식을 찍는다.
+         *
+         * 표식을 못 찍으면 대응표도 비운다 — 없는 표식을 가리키는 문항이 만들어지면
+         * 학생이 풀 수 없다.
+         */
+        const withMarkers = async (
+          png: Uint8Array,
+          regions: Array<{ text: string; x0: number; y0: number; x1: number; y1: number }>,
+        ): Promise<DisplayImage> => {
+          if (!markersEnabled || regions.length === 0) return { png, markers: [] };
+          const sources = selectMarkerSources(regions, fi.c.widthPx, fi.c.heightPx);
+          if (sources.length === 0) {
+            rec.markers = 0;
+            return { png, markers: [] };
+          }
+          const out = await annotateMarkers(png, sources);
+          rec.markers = out.markers.length;
+          rec.markerLabels = out.markers.map((m) => `${m.letter}=${m.label}`);
+          return out;
+        };
         try {
           // 글자가 거의 없으면 손대지 않는다(정답 단서 위험 없음).
+          // 지운 것이 없으니 표식을 찍을 자리도 없다.
           if (ocrLen < 8) {
             rec.result = 'no_text';
-            return fi.c.png;
+            return { png: fi.c.png, markers: [] };
           }
 
           if (!legacyInpaint) {
@@ -2128,6 +2223,9 @@ export async function generatePrivateQuestionsFromUpload(
             let current = fi.c.png;
             let boxesToMask = useBoxes;
             let lastLen = 0;
+            // 1패스에서 덮인 자리 = 원본 라벨이 있던 자리. 표식은 여기에 찍는다
+            // (2패스 이후는 "1패스가 빗나간 조각"이라 구조 이름이 아니다).
+            let labelRegions: Array<{ text: string; x0: number; y0: number; x1: number; y1: number }> = [];
             for (let pass = 1; pass <= MAX_MASK_PASSES; pass++) {
               const m = await maskTextRegions(
                 current,
@@ -2140,6 +2238,7 @@ export async function generatePrivateQuestionsFromUpload(
               if (pass === 1) {
                 rec.keptBoxes = m.kept;
                 rec.keptReasons = m.keptReasons;
+                labelRegions = m.regions;
               }
 
               const check = await readResidualText(fi.c, current);
@@ -2148,7 +2247,10 @@ export async function generatePrivateQuestionsFromUpload(
               if (check.len <= RESIDUAL_TEXT_MAX) {
                 rec.result = pass === 1 ? 'masked' : `masked_${pass}pass`;
                 rec.passes = pass;
-                return current;
+                // 표식은 잔존 텍스트 검사를 통과한 뒤에 찍는다. A~E 는
+                // isShortFigureLabel() 이 걸러 주지만, 검사 전에 찍으면 그 판정에
+                // 의존하게 되므로 순서로 의존을 없앤다.
+                return await withMarkers(current, labelRegions);
               }
               // 글자는 남았는데 위치를 모르면 더 덮을 수 없다.
               if (check.boxes.length === 0) break;
@@ -2177,8 +2279,10 @@ export async function generatePrivateQuestionsFromUpload(
             rec.result = 'residual_text';
             return null;
           }
+          // 생성형 인페인팅은 이미지를 재생성하므로 원본 좌표와 결과가 어긋난다 —
+          // 표식을 찍을 수 없다(이 경로는 롤백용 옵션이다).
           rec.result = 'inpainted';
-          return cleaned;
+          return { png: cleaned, markers: [] };
         } catch (e) {
           rec.result = 'error';
           rec.error = e instanceof Error ? e.message.slice(0, 80) : String(e).slice(0, 80);
@@ -2212,19 +2316,37 @@ export async function generatePrivateQuestionsFromUpload(
     };
     // 배치별 생성 컨텍스트 — "텍스트 선발사 배치"(이미지 없음)와 "전체 컨텍스트 배치"가
     // 같은 함수를 공유하기 위한 주입 지점.
+    /**
+     * 배치에 제시하는 이미지 한 장.
+     *
+     * markers 는 정제 단계에서 그 이미지에 실제로 찍힌 A·B·C 표식이다. 정제 완료 전에는
+     * 알 수 없으므로 resolveFeatured 가 채운다(배정 시점에는 비어 있다).
+     */
+    type BatchImage = {
+      slide: number;
+      c: CroppedImage;
+      gi: number;
+      markers?: PlacedMarker[];
+    };
     type GenContext = {
       contextText: string;
       /** 이 배치에 제시할 이미지. gi 는 전역 인덱스(인페인팅 캐시·Storage 경로 기준). */
-      featured: Array<{ slide: number; c: CroppedImage; gi: number }>;
+      featured: BatchImage[];
       /**
        * 이미지를 "정제 완료를 기다려" 확정하는 경로. 있으면 featured 대신 이걸 쓴다.
        * 배치가 자기 몫의 정제만 기다리게 해서(배치별 게이팅) 느린 한 장이 다른 배치를
        * 붙잡지 않게 한다. 반환값에는 정제에 성공한 이미지만 담긴다.
        */
-      resolveFeatured?: () => Promise<Array<{ slide: number; c: CroppedImage; gi: number }>>;
+      resolveFeatured?: () => Promise<BatchImage[]>;
       /** 정제 후 확정된 장수로 이미지 문항 최소 수를 다시 계산한다(정제 탈락 반영). */
       imageQuotaFor?: (featuredLen: number, batchSize: number) => number;
-      getDisplayPng: (gi: number) => Promise<Uint8Array | null>;
+      getDisplayPng: (gi: number) => Promise<DisplayImage | null>;
+      /**
+       * 이 배치에서 "환자 증례로 시작하는" 임상형 문항의 최소 수.
+       * imageQuota 와 같은 이유로 정량 지시가 필요하다 — 정성 지시만으로는 배치가
+       * 독립 판단해 임상형이 0개인 배치가 나온다(실측: 임상형 10문항 전부 지식형).
+       */
+      clinicalQuota?: number;
       /**
        * 429(rate limit) 재시도 대기 상한. 보충 배치는 본 배치들이 방금 끝난 직후에
        * 실행돼 429 를 맞기 쉬운데, 기본 상한(45초)을 그대로 기다리면 그 대기가 전체
@@ -2321,6 +2443,8 @@ export async function generatePrivateQuestionsFromUpload(
           },
         } as Anthropic.ImageBlockParam);
       }
+      // 표식이 찍힌 이미지가 몇 장인지 — 배치 지시문의 표식 문항 요구에 쓴다.
+      let markedImageCount = 0;
       for (let i = 0; i < featured.length; i++) {
         userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
         userContent.push({
@@ -2331,6 +2455,14 @@ export async function generatePrivateQuestionsFromUpload(
             data: await toGenerationImageBase64(featured[i].c.png),
           },
         } as Anthropic.ImageBlockParam);
+        // 모델에게 주는 이미지는 라벨이 살아 있는 원본이고, 학생이 받는 이미지는 라벨이
+        // 지워지고 그 자리에 표식이 찍힌 정제본이다. 그 차이를 대응표로 알려 줘야
+        // "A로 표시된 …" 형태의 문항을 만들 수 있다.
+        const legend = buildMarkerLegend(i, featured[i].markers ?? []);
+        if (legend) {
+          markedImageCount += 1;
+          userContent.push({ type: 'text', text: legend });
+        }
       }
       // 병렬 배치 간 중복 방지.
       //  - 구간 분할이 적용된 경우(gen.segmented): 아래 근거 자체가 이 배치에 배정된
@@ -2370,8 +2502,28 @@ export async function generatePrivateQuestionsFromUpload(
                 `최소 ${imageQuota}문항은 제시된 [이미지 N]을 직접 판독·해석해야 풀 수 있는 문항으로 ` +
                 `만들고, 그 문항의 image_indices 에 해당 번호를 넣으세요. 텍스트 근거와 이미지 근거가 ` +
                 `모두 가능한 내용이면 이미지 판독 문항을 우선하세요. ` +
-                `단, 같은 이미지는 최대 ${MAX_QUESTIONS_PER_IMAGE}문항까지만 사용하세요.`
+                `단, 같은 이미지는 최대 ${MAX_QUESTIONS_PER_IMAGE}문항까지만 사용하세요.\n\n` +
+                // 이미지형의 실패 형태는 "이미지가 안 붙는 것"이 아니라 "붙었는데 봐도
+                // 안 봐도 풀리는 것"이었다(사용자 지적 2026-08-16). 자기 점검을 못박는다.
+                `**가림 검사**: 이미지 판독 문항을 하나 쓸 때마다 "그림을 손으로 가려도 이 문항이 ` +
+                `풀리는가?"를 자문하세요. 풀린다면 그것은 이미지 문항이 아니라 지식 문항입니다. ` +
+                `그림에서 읽어야만 알 수 있는 것(위치·모양·크기·분포·신호 강도·염색 양상·표식이 ` +
+                `가리키는 대상)을 정답의 근거로 삼아 다시 쓰세요. ` +
+                `"…에 대한 설명으로 옳은 것은?" 처럼 그림과 무관하게 성립하는 문두는 쓰지 않습니다.`
+              : '') +
+            // 표식(A·B·C)이 찍힌 이미지가 있으면 그것을 가리키는 문항을 반드시 만들게 한다.
+            // 표식은 "그림을 봐야만 풀리는" 형태를 구조적으로 보장하는 유일한 장치다.
+            (markedImageCount > 0
+              ? `\n\n**표식 문항 최소 1문항**: 표식 안내가 붙은 이미지가 ${markedImageCount}장 있습니다. ` +
+                `그 중 최소 1문항은 "A로 표시된 구조는?", "B로 표시된 세포층에서 일어나는 일은?" 처럼 ` +
+                `**표식을 직접 가리키는** 문항으로 만드세요. ` +
+                `표식을 가리킬 때는 반드시 **"…로 표시된"** 표현을 쓰고(예: "C로 표시된 부위의 진단은?"), ` +
+                `image_indices 에 해당 이미지 번호를 넣으세요. ` +
+                `대응표에 적힌 라벨 원문은 발문·선지·해설에 그대로 쓰지 마세요(정답 노출).`
               : '');
+      // 임상형 정량 지시. 이미지 유무와 무관하므로 noImageDirective 바깥에 둔다
+      // (안에 두면 이미지를 못 받은 텍스트 배치가 이 지시를 통째로 놓친다).
+      const clinicalDirective = buildClinicalQuotaDirective(batchSize, gen.clinicalQuota ?? 0);
       // 조합형 빈도 제한(요청에 별도 조건이 없을 때).
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
@@ -2381,7 +2533,7 @@ export async function generatePrivateQuestionsFromUpload(
         text:
           `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
           (gen.contextText || '(추출된 텍스트·이미지 없음)') +
-          `\n\n${userMessage}${batchDirective}${noImageDirective}${comboDirective}`,
+          `\n\n${userMessage}${batchDirective}${noImageDirective}${clinicalDirective}${comboDirective}`,
       });
 
       // 해설 길이 상한(350자) 적용 후 문항당 실출력은 ~1,000토큰대. 다만 지시 이탈로
@@ -2557,6 +2709,29 @@ export async function generatePrivateQuestionsFromUpload(
           generation_slot: slots[questionIndex],
         };
       });
+
+      // 임상형 수확량 계측.
+      //
+      // 이 실패는 로그에 흔적을 안 남긴다 — 저장은 정상이고 문항 수도 맞다. 화면을 사람이
+      // 보기 전에는 아무도 모른다(그래서 2026-08-16 에 사용자가 먼저 발견했다).
+      // 고치지는 않는다: 지문을 자동으로 증례로 바꾸는 것은 의학 내용을 발명하는 일이라
+      // 코드가 할 수 없다. 대신 세어서 경고·진단으로 남겨 회귀를 즉시 드러낸다.
+      const clinicalQuota = gen.clinicalQuota ?? 0;
+      if (clinicalQuota > 0) {
+        const yieldStat = measureClinicalYield(
+          rows.map((r) => r.stem),
+          clinicalQuota,
+        );
+        batchDiag.clinicalQuota = clinicalQuota;
+        batchDiag.clinicalKept = yieldStat.clinical;
+        if (yieldStat.shortfall > 0) {
+          warnings.push(
+            `배치 ${batchIndex + 1}: 임상 증례형이 ${yieldStat.clinical}/${clinicalQuota}문항에 그침` +
+              `(전체 ${yieldStat.total}문항) — 나머지는 지식형으로 생성됨.`,
+          );
+        }
+      }
+
       const { data: inserted, error: insertErr } = await admin
         .from('private_questions')
         .upsert(rows, { onConflict: 'upload_id,generation_slot' })
@@ -2581,7 +2756,7 @@ export async function generatePrivateQuestionsFromUpload(
           const imgPath = `${uploadRow.user_id}/${uploadRow.id}/crops/q_image_${gi}.png`;
           const { error: upErr } = await admin.storage
             .from(STORAGE_BUCKET)
-            .upload(imgPath, Buffer.from(display), {
+            .upload(imgPath, Buffer.from(display.png), {
               contentType: 'image/png',
               upsert: true,
             });
@@ -2694,11 +2869,11 @@ export async function generatePrivateQuestionsFromUpload(
     // 이제 배치는 자기에게 배정된 이미지의 정제만 기다린다. 정제는 이미지별로 독립이고
     // getDisplayPng 는 gi 단위로 캐시되므로, 배정만 먼저 확정하면 서로 기다릴 이유가 없다.
     const withRefineTimeout = (
-      promise: Promise<Uint8Array | null>,
-    ): Promise<Uint8Array | null> =>
+      promise: Promise<DisplayImage | null>,
+    ): Promise<DisplayImage | null> =>
       Promise.race([
         promise,
-        new Promise<Uint8Array | null>((resolve) =>
+        new Promise<DisplayImage | null>((resolve) =>
           setTimeout(() => resolve(null), IMAGE_REFINE_TIMEOUT_MS),
         ),
       ]);
@@ -2706,14 +2881,15 @@ export async function generatePrivateQuestionsFromUpload(
     // 정제에 성공해 실제로 문항에 쓸 수 있었던 이미지(gi) — 배치들이 채워 나간다.
     const refinedUsableGis = new Set<number>();
     /** 배정된 이미지의 정제를 기다려 "쓸 수 있는 것만" 남긴다. 장당 시간 상한 적용. */
-    const resolveRefined = async (
-      list: Array<{ slide: number; c: CroppedImage; gi: number }>,
-    ): Promise<Array<{ slide: number; c: CroppedImage; gi: number }>> => {
+    const resolveRefined = async (list: BatchImage[]): Promise<BatchImage[]> => {
       if (list.length === 0) return [];
       const results = await Promise.all(
-        list.map(async (fi) => ({ fi, png: await withRefineTimeout(getDisplayPng(fi.gi)) })),
+        list.map(async (fi) => ({ fi, display: await withRefineTimeout(getDisplayPng(fi.gi)) })),
       );
-      const usable = results.filter((r) => r.png !== null).map((r) => r.fi);
+      // 정제 결과에 찍힌 표식을 이미지에 붙여 배치 프롬프트가 대응표를 쓸 수 있게 한다.
+      const usable = results
+        .filter((r) => r.display !== null)
+        .map((r) => ({ ...r.fi, markers: r.display?.markers ?? [] }));
       for (const fi of usable) refinedUsableGis.add(fi.gi);
       if (usable.length < list.length) {
         warnings.push(
@@ -2775,6 +2951,7 @@ export async function generatePrivateQuestionsFromUpload(
         imageQuotaFor,
         getDisplayPng,
         segmented: segmentCount > 1,
+        clinicalQuota: clinicalQuotaFor(batchSizes[batchIndex] ?? 1),
       };
     };
 
@@ -3068,6 +3245,9 @@ export async function generatePrivateQuestionsFromUpload(
             // 보충은 "빈 칸 한두 개"라 오래 기다릴 이유가 없다. 실측에서 1문항 보충이
             // 27.6초를 써 총 시간을 지배했으므로 대기 상한을 더 조인다.
             retryMaxDelayMs: 3_000,
+            // 보충 문항도 사용자가 고른 유형을 지켜야 한다. 빼먹으면 폐기가 일어날 때마다
+            // 임상형이 지식형으로 조용히 치환된다(이미지 재투입을 넣은 것과 같은 이유).
+            clinicalQuota: clinicalQuotaFor(slots.length),
           });
         } catch (e) {
           warnings.push(

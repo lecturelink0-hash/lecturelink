@@ -21,6 +21,8 @@
     "backfill:embeddings": "node scripts/backfill-question-embeddings.mjs",
     "check:revisions": "node --experimental-strip-types --no-warnings scripts/check-question-revisions.mjs",
     "check:pdf": "node --experimental-strip-types --no-warnings scripts/check-pdf-extraction.mjs",
+    "check:clinical": "node --experimental-strip-types --no-warnings scripts/check-clinical-vignette.mjs",
+    "check:markers": "node --experimental-strip-types --no-warnings scripts/check-image-markers.mjs",
     "check:eta": "node --experimental-strip-types --no-warnings scripts/replay-eta-accuracy.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
