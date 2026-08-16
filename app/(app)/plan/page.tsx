@@ -329,7 +329,8 @@ export default function PlanPage() {
               현재 {PLAN_NAMES[quota.plan_tier]} 플랜
             </h2><p className="current-plan">현재 계정에서 이번 달 사용할 수 있는 학습 리소스입니다.</p>
             <div className="usage-grid">
-              <QuotaBar label="문항" data={quota.questions} />
+              {/* '문항'만 두면 보유 문항 수로 읽히는데 이 칸이 세는 건 이번 달 생성량이다. */}
+              <QuotaBar label="문항 생성" data={quota.questions} />
               <QuotaBar label="자료 업로드" data={quota.uploads} />
               {/* 이미지 문항 바는 삭제. 이미지 문항에는 별도 한도가 없고 전체 문항 한도에
                   포함된다(2026-08-14 정책, lib/payment/toss.ts CREDIT_PRICES 주석 참조) —
