@@ -184,9 +184,11 @@ console.log('실제 렌더 — 마스킹 → 표식');
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
-  // 그림 몸통(표식이 침범하면 안 되는 영역)
+  // 그림 몸통(표식이 침범하면 안 되는 영역). 라벨과 가깝게 둔다 — 표식은 가리킬 대상이
+  // 탐색 범위 안에 있어야 찍히므로, 몸통이 멀면 표식이 전부 탈락한다(그 규칙은 아래
+  // '지시 대상 판정' 블록에서 따로 검사한다).
   ctx.fillStyle = '#cfe3f5';
-  ctx.fillRect(180, 40, 180, 220);
+  ctx.fillRect(150, 40, 210, 220);
   ctx.fillStyle = '#111111';
   ctx.font = '16px sans-serif';
   const labels = [
@@ -286,6 +288,80 @@ console.log('실제 렌더 — 마스킹 → 표식');
   check('후보가 없으면 원본을 그대로 돌려준다', noSources.png === masked.png && noSources.markers.length === 0);
 }
 
+console.log('지시 대상 판정 — 가리킬 것이 없으면 표식을 찍지 않는다');
+{
+  // 운영 지적(2026-08-16): 원본 그림의 라벨이 지시선 없이 위치만으로 구조를 가리키는
+  // 경우가 많아, 글자를 지우고 표식을 놓으면 배경 위에 동그라미가 떠 있게 된다.
+  // → 가리킬 대상을 못 찾거나 방향이 모호하면 표식을 아예 찍지 않는다.
+  const { createCanvas } = await import('canvas');
+  const IW = 400, IH = 300;
+  const make = (paint) => {
+    const c = createCanvas(IW, IH);
+    const x = c.getContext('2d');
+    x.fillStyle = '#ffffff';
+    x.fillRect(0, 0, IW, IH);
+    paint(x);
+    return new Uint8Array(c.toBuffer('image/png'));
+  };
+  const labelAt = (cx, cy) => [{ text: 'Structure', x0: cx - 30, y0: cy - 10, x1: cx + 30, y1: cy + 10 }];
+
+  {
+    // 사방이 텅 빈 곳에 뜬 표식 — 무엇을 가리키는지 알 수 없다.
+    const png = make(() => {});
+    const res = await annotateMarkers(png, labelAt(200, 150));
+    check('배경만 있으면 표식을 찍지 않는다', res.markers.length === 0, `실제 ${res.markers.length}개`);
+  }
+  {
+    // 한쪽에만 그림이 있다 — 그쪽으로 지시선을 긋고 표식을 남긴다.
+    // (탐색 범위는 짧은 변의 30 %다. 운영 그림에서 라벨과 대상 사이는 폭의 10 % 안쪽이라
+    //  넉넉하고, 그보다 먼 라벨은 애초에 무엇을 가리키는지 모호하다.)
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(200, 120, 90, 70);
+    });
+    const res = await annotateMarkers(png, labelAt(120, 150));
+    check('한쪽에 대상이 있으면 표식을 남긴다', res.markers.length === 1, `실제 ${res.markers.length}개`);
+  }
+  {
+    // 표식이 대상 위에 이미 얹혀 있다 — 선 없이 표식만.
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(150, 100, 120, 100);
+    });
+    const res = await annotateMarkers(png, labelAt(200, 150));
+    check('대상 위에 있으면 표식을 남긴다', res.markers.length === 1, `실제 ${res.markers.length}개`);
+  }
+  {
+    // 사방에 비슷한 거리로 그림이 있다 — 어느 것을 가리키는지 정할 수 없다.
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      for (const [bx, by] of [[200, 40], [200, 250], [40, 150], [350, 150]]) {
+        x.fillRect(bx - 22, by - 22, 44, 44);
+      }
+    });
+    const res = await annotateMarkers(png, labelAt(200, 150));
+    check(
+      '사방이 비슷하게 가까우면(모호) 표식을 찍지 않는다',
+      res.markers.length === 0,
+      `실제 ${res.markers.length}개`,
+    );
+  }
+  {
+    // 대상이 있는 표식과 없는 표식이 섞이면, 남은 것에 A 부터 다시 붙는다
+    // (건너뛴 글자가 생기면 대응표와 그림이 어긋난다).
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(300, 30, 70, 50);
+    });
+    const res = await annotateMarkers(png, [
+      { text: 'Far away', x0: 20, y0: 240, x1: 80, y1: 260 },
+      { text: 'Near target', x0: 200, y0: 45, x1: 260, y1: 65 },
+    ]);
+    check('탈락분이 있어도 글자는 A 부터 연속', res.markers.map((m) => m.letter).join('') === 'A', res.markers.map((m) => `${m.letter}=${m.label}`).join(','));
+    check('남은 표식의 라벨이 맞다', res.markers[0]?.label === 'Near target', res.markers[0]?.label);
+  }
+}
+
 console.log('표식 글자 — 폰트 API 를 아예 쓰지 않는가');
 {
   // 운영 사고의 근본 원인은 "폰트가 없는 런타임에서 fillText 를 썼다"는 것이다.
@@ -327,6 +403,9 @@ console.log('표식 글자 — 폰트 없이 실제로 구별되게 그려지는
   const bctx = base.getContext('2d');
   bctx.fillStyle = '#ffffff';
   bctx.fillRect(0, 0, IW, IH);
+  // 표식은 가리킬 대상이 있어야 찍힌다 — 각 라벨 자리 옆에 그림 요소를 둔다.
+  bctx.fillStyle = '#cfe3f5';
+  bctx.fillRect(170, 20, 180, 560);
 
   const BOX_H = 24;
   const regions = Array.from({ length: 5 }, (_, i) => ({
