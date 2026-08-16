@@ -35,6 +35,10 @@
  *     프롬프트에서 지시한다.
  */
 
+// 타입 전용 import 는 `node --experimental-strip-types` 가 지워 버리므로, 이 파일을
+// 의존성 없이 두는 원칙(아래 isShortFigureLabel 주석 참고)을 깨지 않는다.
+import type { CanvasRenderingContext2D } from 'canvas';
+
 /**
  * 짧은 단독 라벨(A, 1, ①, Ⅲ) 판정.
  *
@@ -200,6 +204,93 @@ export function selectMarkerSources(
 }
 
 /**
+ * 표식 글자를 **선분과 호로 직접 그린다.** 폰트를 쓰지 않는다.
+ *
+ * 운영 사고(2026-08-16, 첫 배포분): `ctx.fillText(letter, …)` 에 `sans-serif` 를 썼는데
+ * Vercel 리눅스 런타임에는 node-canvas 가 쓸 시스템 폰트가 없어서 **모든 표식이 두부
+ * (□)로 나갔다.** 원과 테두리는 우리가 직접 그리니 멀쩡했고 글자만 사라져서, 화면에는
+ * "빈 동그라미"로 보였다. 개발 맥에는 폰트가 있어 로컬에서는 정상으로 보였다.
+ *
+ * 저장소에 `public/fonts/NotoSansKR-Variable.ttf` 가 있고 infographic-text-repair.ts 가
+ * `registerFont` 로 쓰지만, 여기서는 쓰지 않는다.
+ *   - 라틴 대문자 5글자를 위해 10 MB 가변 폰트를 콜드스타트마다 로드하게 된다.
+ *   - `process.cwd()/public/` 이 서버리스 번들에 실리는지에 의존하게 되는데, 지금 깨진
+ *     것이 정확히 "런타임에 파일이 없어서" 계열이다. 같은 종류의 의존을 새로 만들 이유가 없다.
+ * 다섯 글자는 선분·호로 그리면 폰트 의존이 **아예 없어지고** 결과가 결정적이다.
+ *
+ * 획으로만 그린다(채우기 없음). 작은 크기에서도 형태가 뭉개지지 않는다.
+ */
+function drawMarkerGlyph(
+  ctx: CanvasRenderingContext2D,
+  letter: string,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
+  const h = r * 1.1; // 글자 높이 — 원 안에 여백을 남긴다
+  const w = h * 0.78; // 글자 폭
+  const x0 = cx - w / 2;
+  const x1 = cx + w / 2;
+  const y0 = cy - h / 2;
+  const y1 = cy + h / 2;
+
+  // 획 두께. 0.2r 은 B 의 보울 속을 메워 검은 덩어리로 만들었다(육안 확인) — 조인다.
+  ctx.lineWidth = Math.max(1.4, r * 0.16);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#111111';
+  ctx.beginPath();
+
+  switch (letter) {
+    case 'A':
+      ctx.moveTo(x0, y1);
+      ctx.lineTo(cx, y0);
+      ctx.lineTo(x1, y1);
+      // 가로대는 아래쪽 1/3 지점
+      ctx.moveTo(x0 + w * 0.18, y1 - h * 0.33);
+      ctx.lineTo(x1 - w * 0.18, y1 - h * 0.33);
+      break;
+    case 'B':
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0, y1);
+      // 위·아래 보울. 반지름 h/4 짜리 반원으로 그렸더니 획 두께에 속이 메워져
+      // 검은 덩어리가 됐다 — 글자 폭 전체를 쓰는 곡선으로 그린다.
+      ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(x1, y0, x1, cy, x0, cy);
+      ctx.moveTo(x0, cy);
+      ctx.bezierCurveTo(x1, cy, x1, y1, x0, y1);
+      break;
+    case 'C':
+      // 오른쪽이 트인 호 — 50°에서 시계방향으로 310°까지(아래→왼쪽→위)
+      ctx.arc(cx, cy, h / 2, Math.PI * 0.28, Math.PI * 1.72);
+      break;
+    case 'D':
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0, y1);
+      ctx.moveTo(x0, y0);
+      ctx.arc(x0, cy, h / 2, -Math.PI / 2, Math.PI / 2);
+      break;
+    case 'E':
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0, y1);
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y0);
+      ctx.moveTo(x0, cy);
+      ctx.lineTo(x1 - w * 0.15, cy); // 가운데 가로대는 조금 짧게
+      ctx.moveTo(x0, y1);
+      ctx.lineTo(x1, y1);
+      break;
+    default:
+      // MARKER_LETTERS 밖의 글자는 오지 않는다. 와도 빈 원으로 두지 않고 점을 찍어
+      // "표식은 있는데 글자가 없는" 상태(= 이번 사고의 증상)를 만들지 않는다.
+      ctx.moveTo(cx - w * 0.3, cy);
+      ctx.lineTo(cx + w * 0.3, cy);
+      break;
+  }
+  ctx.stroke();
+}
+
+/**
  * 고른 자리에 A·B·C 표식을 그린다.
  *
  * 흰 원 + 검은 테두리 + 검은 글자로 통일한다. 밝은 해부도와 어두운 영상(X선·초음파)
@@ -231,10 +322,15 @@ export async function annotateMarkers(
       const letter = MARKER_LETTERS[i];
       const boxH = Math.max(1, src.y1 - src.y0);
       // 지운 자리 높이에 맞추되(설계 제약 2), 그림 크기 대비 최소·최대 크기를 둔다.
+      //
+      // 하한을 8px → 10px, 비율 하한을 2 % → 2.5 % 로 올렸다. 운영 첫 배포분에서
+      // 표식이 육안으로 너무 작았다(넓은 모식도의 작은 라벨 자리는 boxH 가 작아
+      // 반지름이 하한에 걸린다). 표식이 지운 자리를 조금 넘어가는 것은 허용한다 —
+      // 실제 시험 그림의 표식도 그렇고, 읽히지 않는 표식은 없는 것과 같다.
       const r = Math.round(
         Math.max(
-          Math.max(8, minSide * 0.02),
-          Math.min(boxH * 0.75, minSide * 0.055),
+          Math.max(10, minSide * 0.025),
+          Math.min(boxH * 0.9, minSide * 0.055),
         ),
       );
       // 테두리가 잘리지 않게 가장자리에서 안쪽으로 밀어 넣는다.
@@ -249,12 +345,7 @@ export async function annotateMarkers(
       ctx.strokeStyle = '#111111';
       ctx.stroke();
 
-      ctx.fillStyle = '#111111';
-      ctx.font = `bold ${Math.round(r * 1.3)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      // 글꼴 기준선 보정 — middle 기준선은 대문자에서 약간 아래로 치우친다.
-      ctx.fillText(letter, cx, cy + Math.round(r * 0.06));
+      drawMarkerGlyph(ctx, letter, cx, cy, r);
 
       markers.push({ letter, label: src.text.trim() });
     });
