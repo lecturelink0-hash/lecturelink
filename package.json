@@ -20,6 +20,8 @@
     "audit:leakage": "node --experimental-strip-types --no-warnings scripts/audit-question-leakage.mjs",
     "backfill:embeddings": "node scripts/backfill-question-embeddings.mjs",
     "check:revisions": "node --experimental-strip-types --no-warnings scripts/check-question-revisions.mjs",
+    "check:pdf": "node --experimental-strip-types --no-warnings scripts/check-pdf-extraction.mjs",
+    "check:eta": "node --experimental-strip-types --no-warnings scripts/replay-eta-accuracy.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",

@@ -103,7 +103,8 @@ const PALETTE = (g: Gender): Record<string, string> => ({
 const OUTLINE = '#221a12';
 
 function formatEta(secs: number): string {
-  const r = Math.max(10, Math.round(secs / 10) * 10);
+  // 10초 미만은 5초 단위로 — "약 10초"에서 한참 머무는 것보다 정직하다.
+  const r = secs < 10 ? Math.max(5, Math.round(secs / 5) * 5) : Math.round(secs / 10) * 10;
   if (r >= 60) {
     const m = Math.floor(r / 60);
     const s = r % 60;
@@ -112,22 +113,103 @@ function formatEta(secs: number): string {
   return `약 ${r}초 남았습니다`;
 }
 
-function GaugeBar({ progress, etaText }: { progress: number; etaText: string }) {
+// ── 남은 시간 예측 모델 (프로덕션 진단 8건 실측, 2026-08)
+//
+// 종전에는 "기본 90초에서 카운트다운"하거나 게이지 퍼센트로 역산했다. 게이지 퍼센트는
+// 단계 가중치가 만든 인공 수치라 이를 근거로 역산하면 값이 요동친다. 실제로 진행률이
+// 멈추면 `(100-progress) × (elapsed/dp)` 의 elapsed 만 계속 자라 **남은 시간이 거꾸로
+// 늘어났다**(영상에서 10→20→30→40초로 관찰).
+//
+// 대신 시작 시점에 이미 아는 요청 특성으로 총 소요를 예측한다. 실측에서 가장 큰 변수는
+// 문항 수가 아니라 **'이미지형' 포함 여부**였다.
+//   이미지형 포함 10문항: 32.2 / 35.5 / 38.5 / 44.6 / 52.6 초 (중앙값 38.5)
+//   텍스트형만  10문항: 7.7 초,  4문항: 9.6 초
+// 생성 배치는 최대 8개 동시 × 2문항 = 16문항까지 사실상 병렬이라 총 소요가 문항 수에
+// 비례하지 않는다(위 10문항 7.7초 vs 4문항 9.6초). 그래서 "묶음(wave)" 단위로 센다.
+const WAVE_QUESTIONS = 16; // GEN_BATCH_MAX_QUESTIONS(2) × GEN_CONCURRENCY(8)
+const PREP_SEC = { image: 10, text: 3 };
+const WAVE_SEC = { image: 30, text: 6 };
+
+/** 파일 1개에 대한 총 소요 예측(초). */
+function predictPerFileSec(desiredCount: number, withImages: boolean): number {
+  const k = withImages ? 'image' : 'text';
+  const waves = Math.max(1, Math.ceil(Math.max(1, desiredCount) / WAVE_QUESTIONS));
+  return PREP_SEC[k] + WAVE_SEC[k] * waves;
+}
+
+/**
+ * 서버 처리 단계 → 게이지 구간. 진행률 환산(notes/page.tsx)과 남은 시간 보정(이 파일)이
+ * 같은 표를 봐야 하므로 여기서 한 번만 정의한다.
+ *
+ * 구간은 프로덕션 진단 8건의 **실측 소요 비중**으로 잡았다(extract 대기 중앙 25 %,
+ * 배치 중앙 62 %). 종전에는 8건 중 7건이 방문조차 안 하는 vision·ocr 에 42포인트를
+ * 배정해 게이지가 16 % → 58 % 로 순간 점프한 뒤 오래 멈춰 있었다.
+ * generating 이 extracting 의 끝(32)에서 시작하므로 두 단계를 건너뛰어도 점프가 없다.
+ */
+export const STAGE_RANGES: Record<string, [number, number]> = {
+  queued: [0, 4],
+  downloading: [4, 8],
+  extracting: [8, 32],
+  vision: [32, 46],
+  ocr: [46, 60],
+  generating: [32, 97],
+  partially_completed: [32, 97],
+  completed: [100, 100],
+};
+
+/**
+ * 스캔 자료 경로(vision·ocr)에 들어갔을 때 쓰는 최소 잔여 예상(초).
+ *
+ * 본문 텍스트가 없는 스캔 PDF 는 페이지 전체 OCR 이 유일한 내용원이라 소요가 완전히
+ * 다른 규모가 된다(실측: 국가시험 스캔본 96.4초 — OCR 만 45.5초). '이미지형' 미선택
+ * 요청이라도 이 단계에 들어왔다면 가벼운 텍스트 자료 예측(9초)은 더 이상 유효하지 않다.
+ */
+const SCAN_PATH_MIN_REMAIN_SEC = 40;
+
+/**
+ * 처리 단계의 사람이 읽는 이름 — 업로드 목록(notes/page.tsx)과 이 화면이 같은 문구를 쓴다.
+ * 게이지가 느리게 움직이는 구간에서 "무엇을 하는 중인지"를 보여 주면 정지로 오해하지 않는다.
+ */
+export const STAGE_LABELS: Record<string, string> = {
+  queued: '순서를 기다리는 중',
+  downloading: '자료 불러오는 중',
+  extracting: '강의록 읽는 중',
+  vision: '이미지 분석 중',
+  ocr: '텍스트 판독 중',
+  generating: '문항 만드는 중',
+  partially_completed: '나머지 문항 만드는 중',
+};
+
+function GaugeBar({
+  progress,
+  etaText,
+  stageText,
+}: {
+  progress: number;
+  etaText: string;
+  stageText: string;
+}) {
   const pct = Math.max(0, Math.min(100, Math.round(progress)));
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[12px] font-semibold text-sage-800 tracking-tight">
+      <div className="flex items-center justify-between mb-1.5 gap-2">
+        <span className="text-[12px] font-semibold text-sage-800 tracking-tight truncate">
           문제 생성까지 {pct}% 완료했습니다
         </span>
-        <span className="text-[12px] font-semibold text-sage-600 tabular-nums">{etaText}</span>
+        <span className="text-[12px] font-semibold text-sage-600 tabular-nums shrink-0">
+          {etaText}
+        </span>
       </div>
       <div className="h-2.5 w-full rounded-full bg-[#e9e2d2] overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-sage-300 to-sage-500 transition-[width] duration-500 ease-out"
+          // 진척은 1초 간격으로 갱신되므로 전환도 1초에 맞춰 끊김 없이 이어지게 한다
+          // (0.5초면 갱신 사이에 멈춰 있는 구간이 생겨 "멈춘 것처럼" 보였다).
+          className="h-full rounded-full bg-gradient-to-r from-sage-300 to-sage-500 transition-[width] duration-1000 ease-linear"
           style={{ width: `${Math.max(4, pct)}%` }}
         />
       </div>
+      {/* 지금 무슨 작업 중인지 — 게이지가 느리게 움직일 때 "멈췄다"는 오해를 막는다. */}
+      <div className="mt-1.5 text-[11px] text-sage-600">{stageText}</div>
     </div>
   );
 }
@@ -135,52 +217,191 @@ function GaugeBar({ progress, etaText }: { progress: number; etaText: string }) 
 export default function GenerationLoadingGame({
   progress,
   fileName,
+  stage,
+  desiredCount = 10,
+  withImages = true,
+  filesTotal = 1,
 }: {
   progress: number;
   fileName?: string;
+  /** 서버가 보고한 현재 처리 단계(processing_stage). 남은 시간 보정과 문구에 쓴다. */
+  stage?: string | null;
+  /** 이번 요청의 문항 수. */
+  desiredCount?: number;
+  /** '이미지형'을 포함했는지 — 소요를 4~5배 가르는 최대 변수. */
+  withImages?: boolean;
+  /** 이번 세션에서 처리할 파일 수. */
+  filesTotal?: number;
 }) {
   const [gender, setGender] = useState<Gender>('male');
   const [muted, setMuted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
-  const [etaText, setEtaText] = useState('약 1분 30초 남았습니다');
+  const [etaText, setEtaText] = useState('시간 계산 중…');
+  // 게이지에 실제로 그리는 값 — 근거 진행률(progress)에 시간 기반 보간을 얹은 값.
+  const [shownProgress, setShownProgress] = useState(progress);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
 
-  // ── 남은 시간 추정: 진행률 증가 속도 기반, 초기엔 기본 1분 30초에서 카운트다운 ──
-  const etaRef = useRef<{ start: number; p0: number }>({ start: 0, p0: 0 });
+  // ── 남은 시간 추정 ──────────────────────────────────────────────
+  // 원칙 3가지
+  //   (1) 게이지 퍼센트로 역산하지 않는다. 그 값은 단계 가중치가 만든 인공 수치다.
+  //   (2) 표시되는 남은 시간은 절대 늘어나지 않는다. 늘어나는 시계는 없는 것보다 나쁘다.
+  //   (3) 예측을 벗어나면 숫자를 지어내지 말고 상태를 말한다.
+  const startRef = useRef(0);
+  /** 총 소요 예측(초). 실측 근거가 생기면 갱신한다. */
+  const totalRef = useRef(0);
+  /** 마지막으로 표시한 남은 시간과 그 시각 — 단조 감소를 보장하는 기준. */
+  const shownRef = useRef<{ secs: number; at: number }>({ secs: 0, at: 0 });
+  /** 진행률이 마지막으로 실제로 움직인 시각 + 그 값. */
+  const movedRef = useRef<{ pct: number; at: number }>({ pct: -1, at: 0 });
+  /** 'generating' 단계에 처음 들어간 시각 — 준비 구간 실측치로 예측을 보정한다. */
+  const genEnteredRef = useRef(0);
+  /** 스캔 경로(vision·ocr)에 처음 들어간 시각 — 이 경로는 소요 규모가 완전히 다르다. */
+  const scanEnteredRef = useRef(0);
+  /**
+   * 직전 tick 이 숫자를 표시했는가.
+   *
+   * 단조 감소 기준선(shownRef)은 숫자를 표시할 때만 갱신된다. 그래서 '계산 중'·'예상보다
+   * 길어지는 중' 같은 문구 상태에 머무는 동안 기준선이 그대로 낡아 버리고, 거기서 빠져나와
+   * 다시 숫자를 낼 때 `decayed` 가 음수가 되어 **남은 시간이 넉넉한데도 '마무리 중'** 이
+   * 떠 버린다(정체 60초 후 진행률이 다시 움직이는 경우가 정확히 이것).
+   * 문구 상태를 거쳐 숫자로 복귀할 때는 기준선을 다시 잡는다 — 직전에 화면에 숫자가
+   * 없었으므로 사용자에겐 "늘어난 시계"로 보이지 않는다.
+   */
+  const lastWasNumberRef = useRef(false);
+
   useEffect(() => {
-    etaRef.current = { start: performance.now(), p0: progress };
+    const now = performance.now();
+    const perFile = predictPerFileSec(desiredCount, withImages);
+    const total = perFile * Math.max(1, filesTotal);
+    startRef.current = now;
+    totalRef.current = total;
+    shownRef.current = { secs: total, at: now };
+    movedRef.current = { pct: progress, at: now };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
+    const now = performance.now();
+    // 진행률이 움직였으면 정체 타이머를 되감는다.
+    if (Math.round(progress) !== Math.round(movedRef.current.pct)) {
+      movedRef.current = { pct: progress, at: now };
+    }
+    const waves = Math.max(1, Math.ceil(Math.max(1, desiredCount) / WAVE_QUESTIONS));
+    const waveSec = (withImages ? WAVE_SEC.image : WAVE_SEC.text) * waves;
+    const restFiles = Math.max(0, Math.max(1, filesTotal) - 1);
+    const restSec = predictPerFileSec(desiredCount, withImages) * restFiles;
+
+    // 스캔 자료 경로 진입 — 본문 텍스트가 없어 페이지 전체 OCR 로 떨어진 실행이다.
+    // 이 경로에 들어왔다는 사실만으로 가벼운 예측은 무효가 된다(실측 96.4초 사례).
+    const scanning = stage === 'vision' || stage === 'ocr';
+    if (scanning && scanEnteredRef.current === 0) {
+      scanEnteredRef.current = now;
+      const elapsedSec = (now - startRef.current) / 1000;
+      totalRef.current = Math.max(
+        totalRef.current,
+        elapsedSec + SCAN_PATH_MIN_REMAIN_SEC + waveSec + restSec,
+      );
+    }
+    // 'generating' 진입 시점 = 준비(추출)가 실제로 끝난 시각. 예측의 준비 구간을
+    // 실측치로 갈아끼운다 — 큰 강의록이면 늘고, 가벼우면 줄어든다.
+    const generating = stage === 'generating' || stage === 'partially_completed';
+    if (generating && genEnteredRef.current === 0) {
+      genEnteredRef.current = now;
+      const prepSec = (now - startRef.current) / 1000;
+      totalRef.current = prepSec + waveSec + restSec;
+    }
+
     const tick = () => {
-      const { start, p0 } = etaRef.current;
-      const elapsed = (performance.now() - start) / 1000;
-      // 보통 1분 내외로 끝난다(병렬 소배치 생성) — "1분 30초 초과"로 안내하지 않는다.
-      // 남은 시간 = 기본 추정 1분 30초에서 경과 시간만큼 감소(최소 10초 표시 유지).
-      if (elapsed > 100) {
-        setEtaText('곧 완료됩니다…');
+      const t = performance.now();
+      const elapsed = (t - startRef.current) / 1000;
+      const stalledFor = (t - movedRef.current.at) / 1000;
+
+      // 스캔 경로에서는 OCR 진척으로 잔여를 직접 외삽한다.
+      // OCR 은 crop 1장 = 1단위라 눈금이 촘촘하다(문항 완료처럼 몰려서 끝나지 않는다).
+      // 그래서 여기서는 속도 외삽이 실제로 잘 맞는다.
+      // 파일이 여러 개면 progress 가 세션 전체 기준이라 구간 역산이 성립하지 않아 건너뛴다.
+      if (scanning && scanEnteredRef.current > 0 && Math.max(1, filesTotal) === 1) {
+        const band = stage ? STAGE_RANGES[stage] : undefined;
+        if (band) {
+          const [lo, hi] = band;
+          const frac = hi > lo ? (progress - lo) / (hi - lo) : 0;
+          const inStage = (t - scanEnteredRef.current) / 1000;
+          if (frac > 0.15 && inStage > 3) {
+            const remainStage = (inStage * (1 - frac)) / frac;
+            totalRef.current = Math.max(
+              totalRef.current,
+              elapsed + remainStage + waveSec + restSec,
+            );
+          }
+        }
+      }
+      const total = totalRef.current;
+
+      // ── 게이지: 근거 진행률을 바탕으로, 정체 중에도 조금씩 차오르게 한다.
+      //   남은 구간의 35 %까지만 시간으로 채운다(근거 없이 100 % 에 붙지 않게).
+      //   ★ 반드시 단조 증가여야 한다. 보간이 앞서 나간 뒤(예: 66 → 78) 근거가 그보다
+      //     작은 값으로 갱신되면(70) 게이지가 뒤로 가 버린다 — 이전 표시값과도 max 를 취한다.
+      const creepShare = 1 - Math.exp(-stalledFor / 25);
+      const creep = progress + (100 - progress) * 0.35 * creepShare;
+      setShownProgress((prev) => Math.min(99, Math.max(prev, progress, creep)));
+
+      // ── 남은 시간
+      /** 문구 상태로 빠질 때 — 다음에 숫자로 돌아오면 기준선을 다시 잡게 표시해 둔다. */
+      const showStatus = (text: string) => {
+        lastWasNumberRef.current = false;
+        setEtaText(text);
+      };
+
+      if (progress >= 97) {
+        showStatus('곧 완료됩니다…');
         return;
       }
-      const dp = progress - p0;
-      let secs: number;
-      if (elapsed > 8 && dp > 1.5) {
-        secs = (100 - progress) * (elapsed / dp); // 실측 속도 기반
-      } else {
-        secs = 90 - elapsed;
+      // '이미지형'을 안 고른 요청은 아직 어느 경로인지 모른다 — 본문 텍스트가 있는
+      // 가벼운 자료(실측 7.7초)일 수도, 본문이 없어 페이지 전체 OCR 로 떨어지는
+      // 스캔본(실측 96.4초)일 수도 있다. 12배 차이를 찍어서 맞히려 하지 않고,
+      // 단계가 갈릴 때까지(보통 1~2초) 숫자를 내지 않는다.
+      // 이미지형을 고른 요청은 사용자의 선택 자체가 무거운 경로를 확정하므로 바로 안내한다.
+      if (!withImages && genEnteredRef.current === 0 && scanEnteredRef.current === 0) {
+        showStatus('시간 계산 중…');
+        return;
       }
-      // 상한 1분 30초: 어떤 경우에도 그 이상으로 안내하지 않는다.
-      secs = Math.min(90 - elapsed * 0.5, secs);
-      setEtaText(formatEta(Math.min(90, Math.max(10, secs))));
+      // 예측을 크게 벗어났으면 숫자 대신 상태를 말한다.
+      if (elapsed > total * 1.6 || stalledFor > 60) {
+        showStatus('예상보다 길어지는 중…');
+        return;
+      }
+      const remaining = Math.max(0, total - elapsed);
+      // 문구 상태를 거쳐 돌아왔다면 낡은 기준선을 버리고 현재 추정으로 다시 잡는다
+      // (그대로 두면 문구를 띄운 시간만큼 기준선이 썩어 '마무리 중'에 갇힌다).
+      if (!lastWasNumberRef.current) {
+        shownRef.current = { secs: remaining, at: t };
+      }
+      // ★ 단조 감소 보장: 직전 표시에서 흐른 시간만큼은 반드시 줄어든다.
+      const decayed = shownRef.current.secs - (t - shownRef.current.at) / 1000;
+      const secs = Math.min(remaining, decayed);
+      shownRef.current = { secs, at: t };
+      if (secs < 3) {
+        showStatus('마무리 중…');
+        return;
+      }
+      lastWasNumberRef.current = true;
+      setEtaText(formatEta(secs));
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [progress]);
+  }, [progress, stage, desiredCount, withImages, filesTotal]);
+
+  // 여러 파일을 처리하는 세션이면 몇 번째인지도 알려 준다.
+  const stageText = (() => {
+    const label = (stage && STAGE_LABELS[stage]) || 'AI 처리 중';
+    return filesTotal > 1 ? `${label} · 파일 ${filesTotal}개` : label;
+  })();
 
   // 게임 상태는 리렌더를 피하려 ref 로 관리.
   const stateRef = useRef({
@@ -443,7 +664,7 @@ export default function GenerationLoadingGame({
       {/* 상단: 진척 게이지 + 남은 시간 */}
       <div className="px-4 pt-2 pb-3 sm:px-8">
         <div className="mx-auto w-full max-w-2xl">
-          <GaugeBar progress={progress} etaText={etaText} />
+          <GaugeBar progress={shownProgress} etaText={etaText} stageText={stageText} />
           <p className="mt-2 text-[11px] text-[var(--color-muted)]">
             {fileName ? `‘${fileName}’ ` : ''}문항을 만드는 동안 잠깐 달려볼까요? — 생성이 끝나면 자동으로 문제가 열립니다.
           </p>
