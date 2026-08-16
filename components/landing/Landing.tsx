@@ -10,7 +10,7 @@
  *
  * 재사용한 기존 컴포넌트/에셋:
  *   - 01 강의자료 기반 섹션 + 문제 프리뷰(MockGenerated) + 커서 클릭 데모 애니메이션: public/landing.html
- *   - 후기 캐러셀, 요금제(4개 플랜 데이터 포함), 헤더/푸터: public/landing.html
+ *   - 후기 캐러셀, 요금제(PLAN_CATALOG 기반 3개 플랜), 헤더/푸터: public/landing.html
  *   - CPX 스테이지: components/cpx/CpxPractice.jsx 진료 화면 + Avatar3D
  *     (public/cpx/models/patient_female.glb — 실제 CPX 실전 연습과 동일한 캐릭터)
  */
@@ -34,6 +34,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import { PLAN_CATALOG } from '@/lib/payment/plans';
 
 // 실제 CPX 진료 화면(components/cpx/CpxPractice.jsx)이 사용하는 환자 아바타 렌더러를 그대로 재사용.
 // /cpx/models/patient_female.glb 를 로드하며, CPX 실전 연습 화면과 동일한 캐릭터·idle/말하기 모션이다.
@@ -82,7 +83,7 @@ const reviews = [
   { q: '오답노트가 자동으로 정리되니까 시험 전날 약한 개념만 빠르게 훑어볼 수 있었습니다.', who: '본과 3학년', tag: '소화기' },
 ];
 
-// 요금제 — 기존 랜딩(public/landing.html) 요금제 데이터 그대로
+// 랜딩 요금제의 이름·가격·설명은 결제·마이페이지와 공유하는 단일 카탈로그를 사용한다.
 interface Plan {
   name: string;
   price: string;
@@ -93,30 +94,24 @@ interface Plan {
 }
 const plans: Plan[] = [
   {
-    name: '자료 생성 전용',
-    price: '7,900',
-    sub: '학교 시험 대비',
-    feats: ['강의자료 업로드 월 50시간', '월 500문항 생성', '기본 해설 + 오답노트', '유사문제 자동 생성'],
+    name: PLAN_CATALOG.lite.name,
+    price: PLAN_CATALOG.lite.price.toLocaleString(),
+    sub: PLAN_CATALOG.lite.desc,
+    feats: ['강의자료 업로드', '월 500문항 생성', '지식형 · 임상형 · 이미지형 문제 생성', '기본 해설 + 오답노트', '유사문제 자동 생성', 'CPX 체험 1회'],
   },
   {
-    name: '국가고시형 전용',
-    price: '9,900',
-    sub: '국시 대비',
-    feats: ['국가고시형 문제풀이 무제한', '오답 기반 500문항 생성', '심화 해설 + 개념 연결', '주간 학습 리포트'],
+    name: PLAN_CATALOG.standard.name,
+    price: PLAN_CATALOG.standard.price.toLocaleString(),
+    sub: PLAN_CATALOG.standard.desc,
+    feats: ['월 CPX 240분', 'AI 환자와 음성 문진', '신체진찰 연습', '진료 종료 후 자동 채점', '항목별 점수 및 피드백', '부족한 영역 다시 연습'],
   },
   {
-    name: '통합형',
-    price: '14,900',
-    sub: '학교 시험 + 국시 통합',
-    feats: ['자료 기반 + 국가고시형 모두 사용', '월 2,000문항 생성 / 200시간 업로드', '자료 기반 + 국시형 오답 통합 보기', '이미지 문제 적용'],
+    name: PLAN_CATALOG.pro.name,
+    price: PLAN_CATALOG.pro.price.toLocaleString(),
+    sub: PLAN_CATALOG.pro.desc,
+    feats: ['강의자료 업로드', '월 500문항 생성', '지식형 · 임상형 · 이미지형 문제 생성', '오답노트 + 유사문제 생성', '월 CPX 240분', 'CPX 채점 및 피드백'],
     primary: true,
     badge: '추천',
-  },
-  {
-    name: '통합형 무제한',
-    price: '20,900',
-    sub: '고학년 · 집중 학습자',
-    feats: ['자료 업로드 · 문항 생성 무제한', '우선 처리 및 빠른 분석', '이미지 문제 무제한', '다양한 문제 유형 이용'],
   },
 ];
 
@@ -935,7 +930,7 @@ export function Landing() {
               />
             </ScrollReveal>
             <ScrollReveal delay={100}>
-              <div className="mt-12 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mx-auto mt-12 grid w-full max-w-[930px] items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {plans.map((plan) => (
                   <PlanCard key={plan.name} {...plan} />
                 ))}
