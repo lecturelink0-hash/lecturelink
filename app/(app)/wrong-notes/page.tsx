@@ -17,10 +17,22 @@ import {
   BookOpen,
   RefreshCw,
   Copy,
+  Undo2,
 } from 'lucide-react';
 import { QuestionStem } from '@/components/ui/QuestionStem';
+import CpxPagedList from '@/components/cpx/CpxPagedList';
+
+/** 오답 카드 한 쪽에 보여줄 개수 — 요약 보기는 2열이라 4개면 2줄로 한 화면에 들어온다.
+ *  나머지는 목록 아래 ‹ › 로 넘긴다(CPX 세부 채점·내 문제집이 쓰는 공용 페이저 재사용). */
+const WRONG_PER_PAGE = 4;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+interface QuestionImage {
+  url: string;
+  kind: string | null;
+  caption: string | null;
+}
 
 interface QuestionDetail {
   id: string;
@@ -29,6 +41,8 @@ interface QuestionDetail {
   answerIndex: number;
   explanation: string | null;
   difficulty: 1 | 2 | 3;
+  /** 문항에 연결된 이미지 전부. 내 자료 기반 문항은 여러 장일 수 있다. */
+  images: QuestionImage[];
   imageUrl: string | null;
   imageType: string | null;
   tier: 'curated' | 'community' | 'beta';
@@ -108,6 +122,34 @@ function initUIState(expanded = false): QuestionUIState {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+/**
+ * 문항 이미지 — 공유 풀은 questions.image_url 1장, 내 자료 기반은 연결된 이미지 전부.
+ * 고정 높이 컨테이너 대신 max-h 로 두어 세로로 긴 이미지도 잘리지 않게 한다.
+ */
+function QuestionImages({ images }: { images: QuestionImage[] }) {
+  if (!images || images.length === 0) return null;
+  return (
+    <div className="mb-4 space-y-2">
+      {images.map((img, i) => (
+        <figure key={`${img.url}-${i}`}>
+          {images.length > 1 && (
+            <figcaption className="text-[12px] font-semibold text-sage-700 mb-1">이미지 {i + 1}</figcaption>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={img.url}
+            alt={`문항 이미지 ${i + 1}`}
+            className="w-full max-h-80 object-contain rounded-lg border border-[var(--color-border)] bg-white"
+          />
+          {img.caption && (
+            <figcaption className="mt-1 text-[12px] text-[var(--color-muted)]">{img.caption}</figcaption>
+          )}
+        </figure>
+      ))}
+    </div>
+  );
+}
 
 interface ChoicesProps {
   choices: string[];
@@ -469,6 +511,19 @@ export default function WrongNotesPage() {
 
   // ── Render helpers ────────────────────────────────────────────────────────
 
+  /** 되감기 — 다시 풀기를 취소하고 원래의 오답 카드(발문·내 답·정답 요약)로 되돌린다.
+   *  유사문제 관련 상태는 남긴다: 이미 만들어 둔 유사문제의 '내 문제집에서 확인' 링크가
+   *  취소 한 번에 사라지면 안 되고, 접힌 카드도 같은 SimilarPanel 을 그대로 렌더한다. */
+  function rewind(item: WrongAnswerItem) {
+    patchUI(item.id, {
+      expanded: false,
+      selected: null,
+      submitted: false,
+      correctIndex: null,
+      explanation: null,
+    });
+  }
+
   function renderChoicesSection(item: WrongAnswerItem) {
     if (!item.question) return null;
     const q = item.question;
@@ -505,6 +560,10 @@ export default function WrongNotesPage() {
                 sourceQuestionId={q.id}
                 onChange={(patch) => patchUI(item.id, patch)}
               />
+              <Button variant="ghost" size="sm" onClick={() => rewind(item)}>
+                <Undo2 className="w-3.5 h-3.5" />
+                되감기
+              </Button>
             </div>
           </>
         ) : (
@@ -522,6 +581,10 @@ export default function WrongNotesPage() {
               sourceQuestionId={q.id}
               onChange={(patch) => patchUI(item.id, patch)}
             />
+            <Button variant="ghost" size="sm" onClick={() => rewind(item)}>
+              <Undo2 className="w-3.5 h-3.5" />
+              되감기
+            </Button>
           </div>
         )}
       </>
@@ -558,27 +621,19 @@ export default function WrongNotesPage() {
           </button>
         </div>
 
-        {/* Stem preview */}
-        {q ? (
-          <><QuestionStem className="question" text={q.stem} /><div className="answer-grid"><div className="answer wrong"><div className="answer-label">내 답</div><div className="answer-text">{myAnswer}</div></div><div className="answer correct"><div className="answer-label">정답</div><div className="answer-text">{correctAnswer}</div></div></div></>
-        ) : (
+        {/* Stem preview — 다시 풀기(펼침) 중에는 발문 요약·내 답·정답을 모두 감춘다.
+            아래 풀이 영역이 같은 발문을 다시 보여주는 데다, 정답이 위에 떠 있으면 다시 풀 이유가 없다. */}
+        {!q ? (
           <p className="text-sm text-[var(--color-muted)] mb-3">문제를 불러올 수 없습니다.</p>
-        )}
+        ) : !ui.expanded ? (
+          <><QuestionStem className="question" text={q.stem} /><div className="answer-grid"><div className="answer wrong"><div className="answer-label">내 답</div><div className="answer-text">{myAnswer}</div></div><div className="answer correct"><div className="answer-label">정답</div><div className="answer-text">{correctAnswer}</div></div></div></>
+        ) : null}
 
-        {/* Expanded content — 다시 풀기 */}
+        {/* Expanded content — 다시 풀기. 위 요약이 사라진 상태라 구분선 없이 바로 발문부터 그린다. */}
         {ui.expanded && q && (
-          <div className="mt-2 border-t border-[var(--color-border)] pt-4">
+          <div>
             <QuestionStem className="text-[14px] leading-7 text-sage-800 mb-4" text={q.stem} />
-            {q.imageUrl && (
-              <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-48 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={q.imageUrl}
-                  alt={q.imageType ?? 'medical image'}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            )}
+            <QuestionImages images={q.images} />
             {renderChoicesSection(item)}
           </div>
         )}
@@ -637,16 +692,7 @@ export default function WrongNotesPage() {
         {q ? (
           <>
             <QuestionStem className="text-[15px] leading-7 text-sage-800 mb-4" text={q.stem} />
-            {q.imageUrl && (
-              <div className="mb-3 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-sage-100)] h-56 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={q.imageUrl}
-                  alt={q.imageType ?? 'medical image'}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            )}
+            <QuestionImages images={q.images} />
 
             <Choices
               choices={q.choices}
@@ -871,20 +917,34 @@ export default function WrongNotesPage() {
                 <div className="ll-card text-center py-16 text-sm text-[var(--color-muted)]">
                   조건에 맞는 오답이 없습니다.
                 </div>
-              ) : viewMode === 'summary' ? (
-                // ── Summary view
-                <div className="wrong-grid">
-                  {filteredItems.map((item) => (
-                    <SummaryCard key={item.id} item={item} />
-                  ))}
-                </div>
               ) : (
-                // ── Full view
-                <div className="space-y-4">
-                  {filteredItems.map((item) => (
-                    <FullItem key={item.id} item={item} />
-                  ))}
-                </div>
+                // 한 쪽에 4개씩 끊고 나머지는 ‹ › 로 넘긴다.
+                // key — 복습 상태·세부 주제·보기 모드가 바뀌면 목록 자체가 달라지므로 1쪽으로 되돌린다
+                // (쪽 상태는 CpxPagedList 가 들고 있다).
+                <CpxPagedList
+                  key={`${viewMode}|${reviewFolder}|${selectedSubTopicId ?? 'all'}`}
+                  items={filteredItems}
+                  pageSize={WRONG_PER_PAGE}
+                  unitLabel="개 오답"
+                >
+                  {(pageItems: WrongAnswerItem[]) =>
+                    viewMode === 'summary' ? (
+                      // ── Summary view
+                      <div className="wrong-grid">
+                        {pageItems.map((item) => (
+                          <SummaryCard key={item.id} item={item} />
+                        ))}
+                      </div>
+                    ) : (
+                      // ── Full view
+                      <div className="space-y-4">
+                        {pageItems.map((item) => (
+                          <FullItem key={item.id} item={item} />
+                        ))}
+                      </div>
+                    )
+                  }
+                </CpxPagedList>
               )}
             </section>
           </div>

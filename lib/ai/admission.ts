@@ -46,6 +46,8 @@ export interface AdmissionInput {
   };
   createdBy?: string;              // 트리거한 사용자 (있을 경우)
   saveToDb?: boolean;              // 기본 true. false 면 시뮬레이션만.
+  /** 오답 사유 브리프. 있으면 그 사유를 겨냥한 문항을 만든다. */
+  errorFocus?: string;
 }
 
 export interface AdmittedQuestion {
@@ -57,7 +59,8 @@ export interface AdmittedQuestion {
   examRelevance: 1 | 2 | 3;
   imageDependency: 'required' | 'helpful' | 'none';
   clinicalSetting?: string;
-  embedding: number[];
+  /** 임베딩 제공자가 실패하면 null. 문항은 저장하되 백필 대상으로 남긴다. */
+  embedding: number[] | null;
   dbId?: string;                   // DB 저장 후 부여된 ID
 }
 
@@ -103,6 +106,7 @@ export async function admitGeneratedQuestions(
     examples: input.examples,
     imageContext: input.imageContext,
     count: input.count,
+    errorFocus: input.errorFocus,
   });
   totalCost += generation.usage.costUSD;
 
@@ -115,86 +119,134 @@ export async function admitGeneratedQuestions(
   const normalized = generation.questions.map((q) => normalizeKmleQuestion(q));
 
   // ───── 2. 각 문항 검증·태깅 (병렬 처리) ─────
+  //
+  // 실패는 문항 단위로 가둔다. Promise.all 이 하나의 거부로 전체를 무너뜨리면
+  // 멀쩡히 만들어진 나머지 문항까지 함께 사라지고, 호출부에는 원인 없는 500 만
+  // 남는다. 약점 코스는 '3문항 확보'가 목적이라 여유분을 만들어 두는데, 한 건의
+  // 일시적 실패로 전량을 잃으면 그 여유분이 아무 의미가 없다.
   await Promise.all(
     normalized.map(async (question) => {
-      // 자동 교정이 위험한 형식 위반은 지적만 받아 tier 판정에 반영한다.
-      const formatIssues = lintKmleQuestion(question);
-
-      // 검증
-      const verification = await verifyQuestion({
-        subjectName: input.subjectName,
-        subTopicName: input.subTopicName,
-        isRiskCategory: input.isRiskCategory,
-        question,
-      });
-      totalCost += verification.usage.costUSD;
-
-      // critical/major 는 reject
-      if (
-        verification.severity === 'critical' ||
-        verification.severity === 'major' ||
-        verification.score < 0.6
-      ) {
+      try {
+        await admitOne(question);
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        console.error('[admission] 문항 처리 실패 — 이 문항만 제외한다:', reason);
         rejected.push({
           question,
-          reason: verification.issues.join(' / ') || '품질 미달',
-          severity:
-            verification.severity === 'critical' ? 'critical' : 'major',
-          score: verification.score,
-          issues: verification.issues,
+          reason: `처리 실패: ${reason}`,
+          severity: 'major',
+          score: 0,
+          issues: [reason],
         });
-        return;
       }
-
-      // 태깅 + 임베딩 (병렬)
-      const [tagging, embedding] = await Promise.all([
-        tagQuestion({
-          subjectName: input.subjectName,
-          subTopicName: input.subTopicName,
-          question,
-        }),
-        embedText({
-          text: buildEmbeddingText({
-            stem: question.stem,
-            choices: question.choices,
-            concepts: question.concepts,
-            explanation: question.explanation,
-          }),
-          inputType: 'document',
-        }),
-      ]);
-      totalCost += tagging.usage.costUSD + embedding.usage.costUSD;
-
-      // tier 결정 (MVP 단계: severity·score 만으로 판정. 위험 영역 강제 beta 는 정식 출시 후 추가)
-      // 국시 형식 위반이 남아 있으면 community 로 올리지 않는다 — 학습자에게
-      // 국시 형식이라고 제시하는 문항은 형식을 지켜야 한다.
-      let tier: ContentTier;
-      if (
-        verification.severity === 'none' &&
-        verification.score >= 0.85 &&
-        formatIssues.length === 0
-      ) {
-        tier = 'community';
-      } else {
-        tier = 'beta';
-      }
-
-      admitted.push({
-        question,
-        tier,
-        verificationScore: verification.score,
-        verificationIssues: [
-          ...verification.issues,
-          ...formatIssues.map((i) => `[${i.rule}] ${i.message}`),
-        ],
-        concepts: tagging.concepts,
-        examRelevance: tagging.exam_relevance,
-        imageDependency: tagging.image_dependency,
-        clinicalSetting: tagging.clinical_setting,
-        embedding: embedding.embedding,
-      });
     }),
   );
+
+  async function admitOne(question: GeneratedQuestion) {
+    // 자동 교정이 위험한 형식 위반은 지적만 받아 tier 판정에 반영한다.
+    const formatIssues = lintKmleQuestion(question);
+
+    // 정답 누출(F17 계열)은 tier 강등이 아니라 즉시 거부한다.
+    // 오답이 상식만으로 소거되거나 정답만 유독 길면, 그 문항은 '검수 대기 문항'이
+    // 아니라 애초에 문항이 아니다. 베타로 내려 보내면 결국 학습자에게 노출된다.
+    // 검증 호출 전에 걸러 토큰도 아낀다.
+    const leakageIssues = formatIssues.filter(
+      (i) => i.rule === 'F17' || i.rule === 'F17-L',
+    );
+    if (leakageIssues.length > 0) {
+      rejected.push({
+        question,
+        reason: `정답 누출: ${leakageIssues.map((i) => `[${i.rule}] ${i.message}`).join(' / ')}`,
+        severity: 'major',
+        score: 0,
+        issues: leakageIssues.map((i) => `[${i.rule}] ${i.message}`),
+      });
+      return;
+    }
+
+    // 검증
+    const verification = await verifyQuestion({
+      subjectName: input.subjectName,
+      subTopicName: input.subTopicName,
+      isRiskCategory: input.isRiskCategory,
+      question,
+    });
+    totalCost += verification.usage.costUSD;
+
+    // critical/major 는 reject
+    if (
+      verification.severity === 'critical' ||
+      verification.severity === 'major' ||
+      verification.score < 0.6
+    ) {
+      rejected.push({
+        question,
+        reason: verification.issues.join(' / ') || '품질 미달',
+        severity:
+          verification.severity === 'critical' ? 'critical' : 'major',
+        score: verification.score,
+        issues: verification.issues,
+      });
+      return;
+    }
+
+    // 태깅 + 임베딩 (병렬)
+    //
+    // 임베딩은 중복 검사와 유사문항 추천을 위한 부가 정보이지 문항의 정확성 조건이
+    // 아니다(questions.embedding 은 nullable 이고 운영 풀에도 임베딩 없는 문항이
+    // 이미 있다). 임베딩 제공자 하나가 죽었다고 생성 자체를 실패시키면, 학생은
+    // 멀쩡히 만들어진 문항까지 통째로 잃는다. 그래서 실패해도 문항은 살리고
+    // 임베딩만 비워 백필 대상으로 남긴다.
+    const [tagging, embedding] = await Promise.all([
+      tagQuestion({
+        subjectName: input.subjectName,
+        subTopicName: input.subTopicName,
+        question,
+      }),
+      embedText({
+        text: buildEmbeddingText({
+          stem: question.stem,
+          choices: question.choices,
+          concepts: question.concepts,
+          explanation: question.explanation,
+        }),
+        inputType: 'document',
+      }).catch((e) => {
+        console.error('[admission] 임베딩 실패 — 문항은 임베딩 없이 저장한다:', e);
+        return null;
+      }),
+    ]);
+    totalCost += tagging.usage.costUSD + (embedding?.usage.costUSD ?? 0);
+
+    // tier 결정 (MVP 단계: severity·score 만으로 판정. 위험 영역 강제 beta 는 정식 출시 후 추가)
+    // 국시 형식 위반이 남아 있으면 community 로 올리지 않는다 — 학습자에게
+    // 국시 형식이라고 제시하는 문항은 형식을 지켜야 한다.
+    let tier: ContentTier;
+    if (
+      verification.severity === 'none' &&
+      verification.score >= 0.85 &&
+      formatIssues.length === 0
+    ) {
+      tier = 'community';
+    } else {
+      tier = 'beta';
+    }
+
+    admitted.push({
+      question,
+      tier,
+      verificationScore: verification.score,
+      verificationIssues: [
+        ...verification.issues,
+        ...formatIssues.map((i) => `[${i.rule}] ${i.message}`),
+      ],
+      concepts: tagging.concepts,
+      examRelevance: tagging.exam_relevance,
+      imageDependency: tagging.image_dependency,
+      clinicalSetting: tagging.clinical_setting,
+      embedding: embedding?.embedding ?? null,
+    });
+  }
 
   // ───── 2.5. 중복 체크 — pgvector RPC 호출 ─────
   let duplicatesSkipped = 0;
@@ -203,6 +255,13 @@ export async function admitGeneratedQuestions(
     const survivors: AdmittedQuestion[] = [];
 
     for (const a of admitted) {
+      // 임베딩이 없으면 벡터 비교 자체를 할 수 없다. 중복일 가능성을 안고 통과시키되
+      // (임베딩 백필 뒤 다시 검사할 수 있다) 조용히 넘기지 않도록 로그를 남긴다.
+      if (!a.embedding) {
+        console.warn('[admission] 임베딩 없음 — 중복 검사를 건너뛴다');
+        survivors.push(a);
+        continue;
+      }
       const { data: matches } = await admin.rpc('match_questions', {
         query_embedding: a.embedding,
         match_threshold: DUPLICATE_SIMILARITY_THRESHOLD,
@@ -246,7 +305,7 @@ export async function admitGeneratedQuestions(
       tier: a.tier,
       status: 'active' as const,
       created_by: input.createdBy ?? null,
-      embedding: a.embedding,
+      ...(a.embedding ? { embedding: a.embedding } : {}),
     }));
 
     const { data, error } = await admin

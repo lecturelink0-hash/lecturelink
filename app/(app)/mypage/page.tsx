@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ChevronRight,
@@ -21,6 +21,7 @@ import { StudyCalendar } from '@/components/ui/StudyCalendar';
 import { api, ApiError } from '@/lib/api/client';
 import { PLAN_CATALOG } from '@/lib/payment/plans';
 import { calcStreak, diffDayKeys, formatStudyTime, kstTodayKey } from '@/lib/utils/kst';
+import { QUOTA_UNLIMITED_DISPLAY_MIN } from '@/lib/types/domain';
 import type { UserProfile } from '@/lib/types/domain';
 import type { PlanTier } from '@/lib/types/database';
 
@@ -71,7 +72,8 @@ interface QuotaResponse {
   plan_tier: PlanTier;
   questions: QuotaResource;
   uploads: QuotaResource;
-  images: QuotaResource;
+  /** CPX 이용 시간 — 값의 단위는 '초'다. 화면에는 분으로 환산해 쓴다. */
+  cpx_seconds: QuotaResource;
 }
 
 interface SubscriptionResponse {
@@ -112,7 +114,6 @@ export default function MyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [partialError, setPartialError] = useState(false);
-  const [cancellingSubscription, setCancellingSubscription] = useState(false);
 
   // Calendar navigation — 초기 뷰는 KST 기준 오늘이 속한 달
   const [viewYear, setViewYear] = useState(() => Number(kstTodayKey().slice(0, 4)));
@@ -132,8 +133,6 @@ export default function MyPage() {
     { type: 'success' | 'error'; text: string } | null
   >(null);
   const [pendingDelete, setPendingDelete] = useState<ExamSchedule | null>(null);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   // ─── Fetch ──────────────────────────────────────────────────────────────
 
@@ -172,6 +171,21 @@ export default function MyPage() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // 대시보드의 시험 일정 칩은 /mypage#calendar 로 들어온다. 이 페이지는 데이터가 오기 전까지
+  // 스켈레톤만 그리므로, 브라우저가 해시 스크롤을 시도하는 시점에는 #calendar 가 아직 DOM 에 없다.
+  // (그래서 캘린더가 아니라 페이지 최상단에 착지했다.) 로드가 끝난 뒤 한 번만 직접 스크롤한다.
+  const hashScrolledRef = useRef(false);
+  useEffect(() => {
+    if (loading || hashScrolledRef.current) return;
+    const targetId = window.location.hash.slice(1);
+    if (!targetId) return;
+    hashScrolledRef.current = true;
+    // 렌더 커밋 직후 한 프레임 양보해 레이아웃이 잡힌 뒤 이동한다.
+    window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [loading]);
 
   // 캘린더에서 날짜를 고르면 일정 추가 폼의 날짜도 따라간다
   useEffect(() => {
@@ -222,26 +236,9 @@ export default function MyPage() {
   const activeSubscription = subscription?.subscription?.status === 'active'
     ? subscription.subscription
     : null;
-
-  async function cancelSubscription() {
-    if (!activeSubscription?.auto_renew || cancellingSubscription) return;
-    setCancellingSubscription(true);
-    setSubscriptionError(null);
-    try {
-      await api.post('/api/me/subscription/cancel', {});
-      setSubscription((current) => current?.subscription ? {
-        ...current,
-        subscription: { ...current.subscription, auto_renew: false },
-      } : current);
-    } catch (cause) {
-      setSubscriptionError(
-        cause instanceof ApiError ? cause.message : '자동 갱신을 해제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
-      );
-    } finally {
-      setCancellingSubscription(false);
-      setCancelDialogOpen(false);
-    }
-  }
+  // 실제 결제 레코드가 아직 없는 베타 제공 계정도 현재 플랜을 관리할 수 있다.
+  // 다만 정기결제 해지는 결제 레코드가 있는 계정에서만 /subscription 내부에 노출된다.
+  const hasPaidPlan = planTier !== 'free';
 
   // Calendar cell data (그리드 구성·키보드 내비게이션은 StudyCalendar 담당)
   const getCalendarDay = (dateKey: string) => ({
@@ -477,10 +474,10 @@ export default function MyPage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[20px] font-bold text-sage-800 tracking-tight">현재 요금제</h2>
             <Link
-              href="/plan"
+              href={hasPaidPlan ? '/subscription' : '/plan'}
               className="inline-flex items-center gap-0.5 py-3 -my-3 px-1 -mx-1 text-[15px] text-[var(--color-muted)] hover:text-sage-800 transition-colors"
             >
-              요금제 보기 <ChevronRight className="w-3.5 h-3.5" />
+              {hasPaidPlan ? '구독 관리' : '요금제 보기'} <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -522,28 +519,24 @@ export default function MyPage() {
               remaining={quota?.uploads.remaining ?? 0}
               total={(quota?.uploads.limit ?? 0) + (quota?.uploads.bonus ?? 0)}
             />
+            {/* 통합 플랜만 — CPX 실전 연습을 요금제에 포함해 파는 티어다.
+                2열 그리드의 세 번째 칸이므로 '문항 생성 잔여량' 바로 아래에 놓인다. */}
+            {planTier === 'pro' && (
+              <QuotaRow
+                label="CPX 남은 시간"
+                remaining={quota?.cpx_seconds.remaining ?? 0}
+                total={(quota?.cpx_seconds.limit ?? 0) + (quota?.cpx_seconds.bonus ?? 0)}
+                unit="minutes"
+              />
+            )}
           </div>
 
           {/* Next billing / 업그레이드 CTA */}
           {activeSubscription ? (
-            <>
-              <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[14px]">
-                <span className="text-[var(--color-muted)]">{activeSubscription.auto_renew ? '다음 결제 예정일' : '이용 만료일'}</span>
-                <span className="font-semibold text-sage-800 tnum">{nextBillingDate}</span>
-              </div>
-              {activeSubscription.auto_renew ? (
-                <button type="button" onClick={() => setCancelDialogOpen(true)} disabled={cancellingSubscription} className="mt-2 text-left text-sm font-semibold text-[var(--color-muted)] underline underline-offset-2 disabled:opacity-50">
-                  {cancellingSubscription ? '해지 처리 중...' : '자동 갱신 해제'}
-                </button>
-              ) : (
-                <p className="mt-2 text-sm text-[var(--color-muted)]">
-                  자동 갱신이 꺼져 있어요 ·{' '}
-                  <Link href="/plan" className="font-semibold text-sage-700 underline underline-offset-2">
-                    요금제에서 관리
-                  </Link>
-                </p>
-              )}
-            </>
+            <div className="mt-auto pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between text-[14px]">
+              <span className="text-[var(--color-muted)]">{activeSubscription.auto_renew ? '다음 결제 예정일' : '이용 만료일'}</span>
+              <span className="font-semibold text-sage-800 tnum">{nextBillingDate}</span>
+            </div>
           ) : planTier === 'free' ? (
             <div className="mt-auto pt-3">
               <Link
@@ -559,11 +552,6 @@ export default function MyPage() {
               <span className="font-semibold text-sage-800">없음</span>
             </div>
           )}
-          <div aria-live="polite">
-            {subscriptionError && (
-              <p className="mt-2 text-sm text-[var(--color-warn)]">{subscriptionError}</p>
-            )}
-          </div>
         </Card>
       </div>
 
@@ -591,9 +579,16 @@ export default function MyPage() {
 
         {/* ── Selected Date Panel ── */}
         <Card>
-          <div className="flex items-center gap-2.5 mb-4">
-            <span className="ll-chip" style={{ width: '2.25rem', height: '2.25rem' }}>
-              <CalendarDays className="w-4 h-4" strokeWidth={2} />
+          {/* 아이콘 규격·높이는 좌측 '학습 캘린더' 카드와 맞춘다.
+              - 크기: 2.25rem 박스 안의 w-4 라 좌측(w-5)보다 작아 보였다 → 박스를 걷고 w-5 로.
+              - 높이: items-center 였을 때는 h2 + '오늘' 배지 묶음의 한가운데라 날짜보다 아래로
+                내려갔다. items-start 로 두고 칩 높이를 날짜 h2 의 줄상자(24px × leading-tight
+                = 30px)로 주면 배지 유무와 무관하게 아이콘 중심이 날짜 글줄 중심에 맞는다.
+              높이는 인라인 style 이어야 한다 — .ll-chip 의 height:auto 는 레이어 밖 규칙이라
+              @layer utilities 안에 있는 Tailwind h-* 유틸리티가 이기지 못한다. */}
+          <div className="flex items-start gap-2.5 mb-4">
+            <span className="ll-chip" style={{ height: '30px' }}>
+              <CalendarDays className="w-5 h-5" strokeWidth={2} />
             </span>
             <div className="min-w-0">
               <h2 className="text-[24px] font-bold text-sage-800 tracking-tight leading-tight">
@@ -869,15 +864,6 @@ export default function MyPage() {
         onConfirm={() => pendingDelete && handleDeleteSchedule(pendingDelete.id)}
         onCancel={() => setPendingDelete(null)}
       />
-      <ConfirmDialog
-        open={cancelDialogOpen}
-        title="자동 갱신을 해제할까요?"
-        description="이용 기간이 남아 있다면 만료일까지 그대로 사용할 수 있습니다."
-        confirmLabel="자동 갱신 해제"
-        loading={cancellingSubscription}
-        onConfirm={cancelSubscription}
-        onCancel={() => setCancelDialogOpen(false)}
-      />
     </div>
   );
 }
@@ -897,15 +883,24 @@ function QuotaRow({
   label,
   remaining,
   total,
+  unit = 'count',
 }: {
   label: string;
   remaining: number;
   total: number;
+  /** 'minutes' 면 초 단위로 받은 값을 분으로 환산해 표시한다(CPX 이용 시간). */
+  unit?: 'count' | 'minutes';
 }) {
-  const unlimited = remaining >= 1_000_000 || total >= 1_000_000;
+  const unlimited =
+    remaining >= QUOTA_UNLIMITED_DISPLAY_MIN || total >= QUOTA_UNLIMITED_DISPLAY_MIN;
+  // 비율은 환산 전 원값(초/개)으로 — 분 반올림이 막대 길이를 흔들지 않게
   const pct = unlimited ? 100 : total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
   // 잔여 20% 이하는 warn 색으로 — "잔여량" 막대임이 상태로 드러나게
   const low = !unlimited && total > 0 && remaining / total <= 0.2;
+  // 분 환산은 내림 — 남은 시간을 부풀리지 않는다(요금제 페이지 QuotaBar 와 같은 규칙).
+  // 총량은 60 으로 나누어떨어지므로(720·14400초) 화면에서 '잔여 ≤ 총량'이 깨지지 않는다.
+  const fmt = (value: number) => (unit === 'minutes' ? Math.floor(value / 60) : value);
+  const suffix = unit === 'minutes' ? '분' : '개';
   return (
     <div>
       <div className="flex items-center justify-between text-[15px] mb-1.5">
@@ -914,8 +909,8 @@ function QuotaRow({
           <span className="font-semibold text-sage-800">무제한</span>
         ) : (
           <span className={`font-semibold tnum ${low ? 'text-[var(--color-warn)]' : 'text-sage-800'}`}>
-            {remaining}
-            <span className="text-[var(--color-muted)] font-normal"> / {total}개</span>
+            {fmt(remaining)}
+            <span className="text-[var(--color-muted)] font-normal"> / {fmt(total)}{suffix}</span>
           </span>
         )}
       </div>
@@ -923,9 +918,9 @@ function QuotaRow({
         role="progressbar"
         aria-label={label}
         aria-valuemin={0}
-        aria-valuemax={unlimited ? undefined : total}
-        aria-valuenow={unlimited ? undefined : remaining}
-        aria-valuetext={unlimited ? '무제한' : `${remaining} / ${total}개 남음`}
+        aria-valuemax={unlimited ? undefined : fmt(total)}
+        aria-valuenow={unlimited ? undefined : fmt(remaining)}
+        aria-valuetext={unlimited ? '무제한' : `${fmt(remaining)} / ${fmt(total)}${suffix} 남음`}
         className="h-1.5 rounded-full bg-[var(--color-sage-200)] overflow-hidden"
       >
         <div

@@ -211,7 +211,7 @@ export function StudyCalendar({
                     <div
                       key={`empty-${weekIndex}-${dayIndex}`}
                       role="gridcell"
-                      className="aspect-square min-h-11"
+                      className="min-w-0 min-h-11 min-[440px]:aspect-square"
                     />
                   );
                 }
@@ -245,7 +245,9 @@ export function StudyCalendar({
                     aria-current={isToday ? 'date' : undefined}
                     aria-label={label}
                     className={[
-                      'relative aspect-square min-h-11 rounded-lg flex flex-col items-center justify-center transition-all text-[15px] font-medium',
+                      // aspect-square 는 440px 이상에서만: 그 아래에서는 min-h-11(root 17px → 46.75px)이
+                      // 비율을 타고 가로축 최소폭으로 전이돼 셀이 트랙(41px)보다 넓어지며 옆 날짜를 침범한다.
+                      'relative min-w-0 min-h-11 min-[440px]:aspect-square rounded-lg flex flex-col items-center justify-center transition-all text-[15px] font-medium',
                       bgClass,
                       !bgClass && 'hover:bg-[var(--color-sage-100)]',
                       isSelected && 'ring-2 ring-sage-900',
@@ -280,24 +282,25 @@ export function StudyCalendar({
       </div>
 
       {/* Legend — 스와치는 실제 셀과 같은 색을 쓴다 (빈 셀 = 카드 흰 배경) */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[var(--color-border)]">
-        <span className="text-[15px] text-[var(--color-muted)]">학습량:</span>
-        <div className="flex items-center gap-2">
+      {/* 좁은 화면에서는 줄바꿈으로 흘려보낸다 — 안 그러면 flex 축소로 '학습량:' 이 한 글자씩 세로로 쌓인다. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-4 pt-3 border-t border-[var(--color-border)]">
+        <span className="shrink-0 whitespace-nowrap text-[15px] text-[var(--color-muted)]">학습량:</span>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
           {[
             { label: '없음', cls: 'bg-white border border-[var(--color-border)]' },
             { label: '1~9', cls: 'bg-[var(--color-sage-200)]' },
             { label: '10~29', cls: 'bg-sage-600' },
             { label: '30+', cls: 'bg-sage-800' },
           ].map((item) => (
-            <div key={item.label} className="flex items-center gap-1">
-              <span className={`w-3 h-3 rounded-sm inline-block ${item.cls}`} />
-              <span className="text-[15px] text-[var(--color-muted)]">{item.label}</span>
+            <div key={item.label} className="flex shrink-0 items-center gap-1">
+              <span className={`shrink-0 w-3 h-3 rounded-sm inline-block ${item.cls}`} />
+              <span className="whitespace-nowrap text-[15px] text-[var(--color-muted)]">{item.label}</span>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-1 ml-2">
-          <span className="w-2 h-2 rounded-full bg-[var(--color-warn)] inline-block" />
-          <span className="text-[15px] text-[var(--color-muted)]">시험 일정</span>
+        <div className="flex shrink-0 items-center gap-1">
+          <span className="shrink-0 w-2 h-2 rounded-full bg-[var(--color-warn)] inline-block" />
+          <span className="whitespace-nowrap text-[15px] text-[var(--color-muted)]">시험 일정</span>
         </div>
       </div>
     </div>

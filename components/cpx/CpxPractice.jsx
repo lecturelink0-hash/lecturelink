@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Activity, Baby, Brain, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Clock3, MessageCircle, Mic, MicOff, MinusCircle, PersonStanding, RotateCcw, Search, Send, Shield, ShieldAlert, Sparkles, Stethoscope, UserRound, XCircle } from 'lucide-react';
 import Avatar3D from './Avatar3D';
+import CpxPagedList from './CpxPagedList';
 import CpxStartExperience from './CpxStartExperience';
 import CpxTimeAnalysis from './CpxTimeAnalysis';
 import CpxTranscriptView from './CpxTranscriptView';
@@ -69,7 +70,14 @@ function request(path, options = {}) {
     ...options,
   }).then(async (response) => {
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.detail || `요청 실패 (${response.status})`);
+    if (!response.ok) {
+      // 상태코드와 본문을 오류에 실어 보낸다 — 동시 세션 409는 본문의 activeSessionId 로
+      // '기존 연습 종료하고 시작' 복구 동선을 만들 수 있어야 한다.
+      const failure = new Error(body.detail || `요청 실패 (${response.status})`);
+      failure.status = response.status;
+      failure.payload = body;
+      throw failure;
+    }
     return body;
   });
 }
@@ -130,6 +138,11 @@ export default function CpxPractice() {
   const [noticeStatus, setNoticeStatus] = useState('checking');
   // 환자 인적사항 공개 여부 — 학생이 직접 물어봤을 때만 해당 항목을 노출한다.
   const [revealed, setRevealed] = useState({ name: false, age: false, gender: false });
+  // 진료 시작이 실패했을 때 사유 배너를 시야로 끌어오기 위한 신호(증가할 때마다 스크롤).
+  // 빠른 시작 패널은 페이지 최상단에 있어, 배너가 화면 밖이면 사용자에겐 '이유 없이 튕김'으로만 보인다.
+  const [startErrorSeq, setStartErrorSeq] = useState(0);
+  // 동시 진행 세션 게이트(409)에 막았을 때 그 세션 id — '기존 연습 종료하고 시작' 버튼에 쓴다.
+  const [blockedSessionId, setBlockedSessionId] = useState('');
   // 연습용 시간제한(초) — 세션 시작 전에만 변경 가능, 세션 생성 시 서버에 함께 저장된다.
   const [limitSeconds, setLimitSeconds] = useState(12 * 60);
   const liveRef = useRef(null);
@@ -141,6 +154,8 @@ export default function CpxPractice() {
   const autoEndedRef = useRef(false); // 시간 종료 자동 채점은 세션당 1회만
   const finishRef = useRef(null);
   const noticeRef = useRef(null); // 처리 안내 배너 — 미확인 상태로 시작을 누르면 여기로 스크롤한다.
+  const startErrorRef = useRef(null); // 진료 시작 실패 배너 — 실패할 때마다 여기로 스크롤한다.
+  const lastStartRef = useRef(null); // 마지막 시작 인자 — 기존 연습을 종료한 뒤 같은 조건으로 재시도한다.
 
   const remaining = Math.max(0, limitSeconds - elapsed);
   const push = useCallback((role, text) => {
@@ -319,14 +334,28 @@ export default function CpxPractice() {
     if (!processingNoticeAccepted) {
       setError('음성·대화 처리 안내를 확인해 주세요.');
       // 시작 버튼(모달)과 안내 배너가 멀리 떨어져 있어, 미확인 상태에서는 배너로 데려다준다.
-      noticeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // 모달이 닫히며 body overflow·포커스가 복원된 다음 스크롤해야 하므로 한 틱 늦춘다.
+      // 일부 브라우저 환경은 smooth 스크롤을 조용히 무시하므로(실측), 이동이 없으면 즉시 스크롤로 폴백한다.
+      window.setTimeout(() => {
+        const notice = noticeRef.current;
+        if (!notice) return;
+        const startY = window.scrollY;
+        notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.setTimeout(() => {
+          if (Math.abs(window.scrollY - startY) < 2) notice.scrollIntoView({ block: 'center' });
+          notice.querySelector('input[type="checkbox"]')?.focus({ preventScroll: true });
+        }, 400);
+      }, 0);
       return;
     }
     if (caseId !== target.id) setCaseId(target.id);
+    lastStartRef.current = { target, startOptions };
+    setBlockedSessionId('');
     setPracticeMode(startOptions.mode || 'direct');
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     usageRef.current = [];
+    let createdSessionId = '';
     try {
       const noticeResponse = await fetch('/api/me/legal-consents', {
         method: 'POST',
@@ -340,6 +369,7 @@ export default function CpxPractice() {
       setNoticeStatus('done'); // 확인 이력이 서버에 남았으므로 이후에는 배너를 다시 보여주지 않는다.
       // practiceMode로 순응도 낮은 환자 배정 확률이 갈린다 — 랜덤 실전 40%, 직접 선택·추천 25%.
       const created = await request('/sessions', { method: 'POST', body: JSON.stringify({ caseId: target.id, timeLimitSeconds: limitSeconds, practiceMode: startOptions.mode || 'direct' }) });
+      createdSessionId = created.sessionId;
       setSessionId(created.sessionId); setPersona(created.persona); startedAtRef.current = Date.now(); setElapsed(0);
       const token = await request(`/sessions/${created.sessionId}/live-token`, { method: 'POST' });
       const live = new GeminiLivePatient({
@@ -360,14 +390,60 @@ export default function CpxPractice() {
           setError('마이크를 사용할 수 없습니다. 아래 입력창으로 텍스트 문진은 계속할 수 있습니다.');
         }
       }
-      setPhase('live'); setStatus('진료 중 — 환자에게 질문해 보세요.');
+      // 배지는 상태만 짧게 — 안내 문구는 아래 대화창 플레이스홀더가 같은 말을 이미 한다.
+      setPhase('live'); setStatus('진료 중');
     } catch (nextError) {
-      liveRef.current?.disconnect?.({ silent: true });
-      micRef.current?.stop?.();
+      liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null;
+      micRef.current?.stop?.(); micRef.current = null;
+      // 세션이 만들어진 뒤(토큰 발급·Live 연결·마이크 단계)에 실패하면 서버 세션이 active 로 남는다.
+      // 그대로 두면 '동시 진행 세션 1개' 게이트가 최대 10분간 모든 재시도를 409로 막아,
+      // 한 번의 일시적 실패가 10분짜리 잠금으로 굳는다 — 여기서 곧바로 반납한다.
+      if (createdSessionId) {
+        request(`/sessions/${createdSessionId}/end`, { method: 'POST' }).catch(() => {});
+        setSessionId('');
+      }
+      // 이미 진행 중인 연습에 막힌 경우에만 그 세션을 종료할 수 있는 복구 버튼을 띄운다.
+      if (nextError?.status === 409 && nextError.payload?.activeSessionId) {
+        setBlockedSessionId(String(nextError.payload.activeSessionId));
+      }
       setPhase('ready'); setError(nextError instanceof Error ? nextError.message : 'CPX 세션을 시작하지 못했습니다.');
       setStatus('연결 실패');
+      setStartErrorSeq((seq) => seq + 1);
     }
   };
+
+  // 다른 탭·이전 연습이 살아 있어 시작이 막혔을 때의 복구 — 그 세션을 종료하고 같은 조건으로 재시도한다.
+  // 진행 중인 연습을 끊는 동작이라 자동으로 하지 않고 사용자가 명시적으로 누를 때만 실행한다.
+  const endBlockedSessionAndRetry = async () => {
+    const blocked = blockedSessionId;
+    if (!blocked) return;
+    setBlockedSessionId(''); setError(''); setStatus('이전 연습을 종료하고 있습니다.');
+    try {
+      await request(`/sessions/${blocked}/end`, { method: 'POST' });
+    } catch {
+      setError('이전 연습을 종료하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      setStartErrorSeq((seq) => seq + 1);
+      return;
+    }
+    loadHistory();
+    const last = lastStartRef.current;
+    if (last) await start(last.target, last.startOptions);
+  };
+
+  // 실패 사유 배너로 데려다준다 — 빠른 시작은 페이지 최상단이라 배너가 화면 밖이면
+  // 사용자에게는 아무 설명 없이 시작 화면으로 튕긴 것으로만 보인다.
+  // (일부 브라우저가 smooth 를 조용히 무시하는 것이 실측돼 즉시 스크롤 폴백을 둔다 — 처리 안내 배너와 동일.)
+  useEffect(() => {
+    if (!startErrorSeq || phase !== 'ready') return undefined;
+    const banner = startErrorRef.current;
+    if (!banner) return undefined;
+    const startY = window.scrollY;
+    banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const timer = window.setTimeout(() => {
+      if (Math.abs(window.scrollY - startY) < 2) banner.scrollIntoView({ block: 'center' });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [startErrorSeq, phase]);
 
   const sendText = async (event) => {
     event.preventDefault();
@@ -397,20 +473,37 @@ export default function CpxPractice() {
 
   const finish = async () => {
     if (!sessionId || phase !== 'live') return;
-    setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
+    setError(''); setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
     try {
       micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush(); await flushUsage();
       await request(`/sessions/${sessionId}/end`, { method: 'POST' });
       const evaluation = await request(`/sessions/${sessionId}/evaluate`, { method: 'POST' });
       setResult(evaluation); setPhase('ended'); setStatus('채점 완료');
     } catch (nextError) {
-      setPhase('live'); setStatus('진료 중'); setError(nextError instanceof Error ? nextError.message : '채점을 완료하지 못했습니다.');
+      // 여기서 phase 를 'live' 로 되돌리면 안 된다 — 마이크·Live 연결은 이미 끊겼고
+      // 세션도 서버에서 종료된 뒤라, 되돌아간 진료 화면은 말이 통하지 않는 껍데기다.
+      // 실제로 "종료를 눌렀는데 이유 없이 대화 화면으로 튕긴다"로 보고된 증상이 이것이다.
+      setPhase('failed'); setStatus('채점 실패');
+      setError(nextError instanceof Error ? nextError.message : '채점을 완료하지 못했습니다.');
     }
   };
   useEffect(() => { finishRef.current = finish; });
 
+  // 채점만 다시 시도 — 세션은 이미 종료됐으므로 evaluate 만 재호출한다.
+  const retryEvaluate = async () => {
+    if (!sessionId || phase !== 'failed') return;
+    setError(''); setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
+    try {
+      const evaluation = await request(`/sessions/${sessionId}/evaluate`, { method: 'POST' });
+      setResult(evaluation); setPhase('ended'); setStatus('채점 완료');
+    } catch (nextError) {
+      setPhase('failed'); setStatus('채점 실패');
+      setError(nextError instanceof Error ? nextError.message : '채점을 완료하지 못했습니다.');
+    }
+  };
+
   // 시간제한 종료 → 실제 시험처럼 자동으로 진료를 종료하고 채점한다.
-  // 채점 실패(대화 부족 등)로 phase 가 live 로 돌아와도 autoEndedRef 가 재시도 루프를 막는다.
+  // 채점이 실패하면 phase 는 'failed'(재시도 화면)로 가므로 이 효과가 다시 돌 일은 없다.
   useEffect(() => {
     if (phase !== 'live' || remaining > 0 || autoEndedRef.current) return;
     autoEndedRef.current = true;
@@ -484,6 +577,18 @@ export default function CpxPractice() {
         <div className="ll-card py-20 text-center text-[var(--color-muted)]">승인 증례를 불러오는 중…</div>
       ) : (
         <>
+          {/* 시작 실패·목록 오류 배너는 시작 화면 맨 위에 둔다. 아래(증례 직접 선택 밑)에 있으면
+              빠른 시작에서 실패했을 때 배너가 화면 밖이라 사유 없이 튕긴 것처럼 보인다. */}
+          {(catalogError || error) && <div ref={startErrorRef} className="space-y-2">
+            {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
+            {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]">
+              <ShieldAlert className="h-5 w-5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p>{error}</p>
+                {blockedSessionId && <button type="button" onClick={endBlockedSessionAndRetry} className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-white px-3 text-sm font-bold text-[var(--color-warn)] transition hover:bg-[var(--color-warn-bg)]"><RotateCcw className="h-4 w-4" />기존 연습 종료하고 시작하기</button>}
+              </div>
+            </div>}
+          </div>}
           <CpxStartExperience
             caseCatalog={caseCatalog}
             rawPartGroups={partGroups}
@@ -498,8 +603,6 @@ export default function CpxPractice() {
             onVoiceChange={setVoiceOn}
             onStart={start}
           />
-          {catalogError && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{catalogError}</div>}
-          {error && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
         </>
       )
     )}
@@ -527,10 +630,15 @@ export default function CpxPractice() {
 
     {/* 세션 진행/결과 뷰 — 진료 시작 이후 */}
     {phase !== 'ready' && (<>
+    {/* 세션 중 오류 배너 — 예전에는 오류 배너가 증례 선택 화면에만 있어 진료 중 실패가
+        화면에 전혀 뜨지 않았다. 'failed' 화면은 자체 안내를 쓰므로 여기서는 제외. */}
+    {error && phase !== 'failed' && <div role="alert" className="flex gap-2 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]"><ShieldAlert className="h-5 w-5 shrink-0" />{error}</div>}
     {/* 진료 중 화면(아바타·전사·신체진찰) — 채점/결과 단계에서는 숨긴다 */}
     {(phase === 'starting' || phase === 'live') && (<>
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,.9fr)]">
-      <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]">{practiceMode !== 'random' && <div className="absolute left-4 top-4 z-10 rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="font-bold">{selected?.category}</div></div>}<div className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-white"><Wave active={phase === 'live'} />{status}</div>{examTarget && phase === 'live' && <button type="button" onClick={() => setExamTarget(null)} className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-[var(--color-primary)] shadow-lg transition hover:bg-white"><PersonStanding className="h-4 w-4" /> 환자 앉히기</button>}<div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} child={persona?.child || null} speaking={audioLevel > 0.02} audioLevel={audioLevel} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} category={selected?.category || ''} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="space-y-2">{transcript.length ? transcript.slice(-3).map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}{transcript.length > 3 && <p className="pt-1 text-center text-[11px] text-[var(--color-muted)]">실제 시험처럼 최근 대화만 표시됩니다 · 전체 기록은 채점에 반영됩니다</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
+      <Card className="overflow-hidden p-0"><div className="relative min-h-[430px] bg-[#143c2c]">{/* 주소증·상태 배지는 한 줄(flex)로 묶는다. 각각을 absolute 로 두면 좁은 화면에서
+    상태 문구가 배지 밖으로 넘쳐 마지막 글자가 튀어나오고 주소증 칸과 겹친다(모바일 실측). */}
+<div className="absolute inset-x-4 top-4 z-10 flex items-start justify-between gap-2">{practiceMode !== 'random' ? <div className="min-w-0 shrink rounded-[var(--radius-md)] bg-black/20 px-3 py-2 text-white"><div className="text-xs text-white/70">주소증</div><div className="truncate font-bold">{selected?.category}</div></div> : <span />}<div title={status} className="flex min-w-0 items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white sm:text-sm"><Wave active={phase === 'live'} /><span className="truncate">{status}</span></div></div>{examTarget && phase === 'live' && <button type="button" onClick={() => setExamTarget(null)} className="absolute bottom-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-sm font-bold text-[var(--color-primary)] shadow-lg transition hover:bg-white"><PersonStanding className="h-4 w-4" /> 환자 앉히기</button>}<div className="h-[430px]"><Avatar3D gender={persona?.gender || '여성'} age={persona?.age || 48} child={persona?.child || null} speaking={audioLevel > 0.02} audioLevel={audioLevel} pose={examTarget ? 'lying' : 'sitting'} examTarget={examTarget} category={selected?.category || ''} /></div></div><div className="border-t border-[var(--color-border)] bg-white p-4"><div className="space-y-2">{transcript.length ? transcript.slice(-3).map((event, index) => <div key={`${event.tOffsetMs}-${index}`} className={event.role === 'student' ? 'text-right' : 'text-left'}><span className={`inline-block max-w-[88%] rounded-[var(--radius-md)] px-3 py-2 text-sm ${event.role === 'student' ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-sage-100)] text-[var(--color-text)]'}`}>{event.text}</span></div>) : <p className="py-5 text-center text-sm text-[var(--color-muted)]">진료 시작 후 환자에게 질문하거나 음성으로 대화해 보세요.</p>}{transcript.length > 3 && <p className="pt-1 text-center text-[11px] text-[var(--color-muted)]">실제 시험처럼 최근 대화만 표시됩니다 · 전체 기록은 채점에 반영됩니다</p>}</div><form onSubmit={sendText} className="mt-3 flex gap-2"><input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={phase !== 'live'} placeholder="보조 텍스트 입력 — 음성 문진도 자동 전사됩니다" className="h-11 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)]"/><Button type="submit" variant="primary" disabled={phase !== 'live' || !draft.trim()}><Send className="h-4 w-4" />전송</Button></form></div></Card>
 
       <div className="space-y-6"><Card title="환자 정보" icon={<UserRound className="h-5 w-5" />}><div className="space-y-2 text-sm">{persona ? (<>{persona.child && <p className="text-xs font-bold text-[var(--color-primary)]">보호자 (대화 상대)</p>}<div className="space-y-1.5">{[['이름', revealed.name ? persona.name : null], ['나이', revealed.age ? `${persona.age}세` : null], ['성별', revealed.gender ? persona.gender : null]].map(([label, val]) => <div key={label} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div>{persona.child && (<><p className="pt-1 text-xs font-bold text-[var(--color-primary)]">환아</p><div className="space-y-1.5">{[['이름', revealed.name ? persona.child.name : null], ['나이', revealed.age ? (persona.child.ageDetail || `${persona.child.age}세`) : null], ['성별', revealed.gender ? persona.child.gender : null]].map(([label, val]) => <div key={`child-${label}`} className="flex items-center justify-between gap-2"><span className="text-[var(--color-muted)]">{label}</span><span className={val ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-muted)]'}>{val || '—'}</span></div>)}</div></>)}{(!revealed.name || !revealed.age || !revealed.gender) && <p className="text-xs text-[var(--color-muted)]">{persona.child ? '보호자에게 환아의 이름·나이·성별을 직접 확인하세요.' : '환자에게 이름·나이·성별을 직접 여쭤보세요.'}</p>}</>) : <p className="font-bold text-[var(--color-text)]">진료 시작 시 환자 정보가 확정됩니다.</p>}{practiceMode === 'random' ? <div className="rounded-[var(--radius-md)] bg-[var(--color-sage-100)] p-3"><p className="font-bold text-[var(--color-text)]">무작위 실전 증례</p><p className="mt-1 text-xs text-[var(--color-muted)]">진단과 시나리오 정보는 채점 전까지 공개되지 않습니다.</p></div> : <><p className="text-[var(--color-muted)]">{selected?.title}</p><p className="text-[var(--color-muted)]">{selected?.variant}</p></>}</div></Card><Card title="남은 시간" icon={<Clock3 className="h-5 w-5" />} action={<span className={`tnum text-2xl font-bold ${remaining < 120 ? 'text-[var(--color-warn)]' : 'text-[var(--color-primary)]'}`}>{formatTime(remaining)}</span>}><Button fullWidth variant="accent" onClick={finish} disabled={phase !== 'live'}><Activity className="h-4 w-4" />진료 종료 및 채점</Button></Card>
       {/* 신체진찰 — 전체 화면에서 우측 빈 공간(환자정보·남은시간 아래)에 배치.
@@ -572,7 +680,25 @@ export default function CpxPractice() {
       </Card>
     )}
 
-    {result && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">AI 생성 평가</b> · 학습 보조 결과이며 오류가 있을 수 있습니다. 항목별 근거를 확인하고 공식 평가나 의료 판단에 사용하지 마세요.</div>}
+    {/* 채점 실패 — 진료 화면으로 되돌리지 않고 사유와 재시도를 이 자리에 보여준다.
+        (되돌아간 진료 화면은 Live 연결이 끊긴 껍데기라 '이유 없이 튕긴' 것처럼 보였다) */}
+    {phase === 'failed' && (
+      <Card className="py-12">
+        <div className="mx-auto flex max-w-lg flex-col items-center text-center">
+          <ShieldAlert className="h-10 w-10 text-[var(--color-warn)]" />
+          <h2 className="mt-4 text-xl font-bold text-[var(--color-text)]">채점을 마치지 못했어요</h2>
+          <p role="alert" className="mt-2 text-sm text-[var(--color-warn)]">{error || '채점을 완료하지 못했습니다.'}</p>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">진료는 종료되었고 대화 기록은 저장돼 있어요. 다시 채점하거나, 나중에 <b className="text-[var(--color-text)]">나의 기록</b>에서 이어서 확인할 수 있습니다.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button variant="primary" size="lg" onClick={retryEvaluate}><RotateCcw className="h-4 w-4" /> 다시 채점하기</Button>
+            <Button variant="secondary" size="lg" onClick={() => { setPhase('ready'); setPracticeMode('direct'); setCaseId(''); setResult(null); setTranscript([]); setFindings([]); setShowTranscript(false); setSessionId(''); setPersona(null); setStatus('증례를 선택하고 진료를 시작하세요.'); setError(''); }}>
+              다른 증례로 다시 연습
+            </Button>
+          </div>
+        </div>
+      </Card>
+    )}
+
     {/* 순응도 낮은 환자 — 상시 무작위 배정(직접 선택 25% · 랜덤 실전 40%).
         어떤 저항 유형이었는지는 실제 SP 시험처럼 채점 후에만 공개한다. */}
     {result?.lowCompliance?.behaviors?.length > 0 && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">순응도 낮은 환자</b> · 이번 환자는 무작위로 배정된 순응도 낮은 환자였어요. 저항 유형: {result.lowCompliance.behaviors.map((b) => b.name).join(' · ')}. 저항의 이유를 먼저 묻고 공감한 뒤 설득했는지 대화록에서 확인해 보세요.</div>}
@@ -595,12 +721,15 @@ export default function CpxPractice() {
             {rows.length === 0 ? (
               <p className="text-sm text-[var(--color-muted)]">{s.violationCount !== undefined ? `위반 ${s.violationCount}건. 감점 영역은 위반 행위만 집계됩니다.` : '표시할 항목이 없습니다.'}</p>
             ) : (
-              <ul className="space-y-1.5">{rows.map((r) => (
+              // key: 영역을 바꾸면 페이저도 1쪽부터 — 같은 자리라 React가 쪽 상태를 물려준다
+              <CpxPagedList key={s.id} items={rows} unitLabel="개 항목">{(pageRows) => (
+              <ul className="space-y-1.5">{pageRows.map((r) => (
                 <li key={r.id} className="flex items-start gap-2 text-sm">
                   {r.kind === 'met' ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]" /> : r.kind === 'partial' ? <MinusCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warn)]" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-muted)]" />}
                   <span className={r.kind === 'missed' ? 'text-[var(--color-muted)]' : 'text-[var(--color-text)]'}>{tx[r.id] || r.id}{r.kind === 'partial' && <em className="ml-1 not-italic text-[var(--color-warn)]">(부분)</em>}</span>
                 </li>
               ))}</ul>
+              )}</CpxPagedList>
             )}
           </div>
         ); })()}
@@ -625,6 +754,10 @@ export default function CpxPractice() {
         </div>
       </>
     )}
+
+    {/* AI 생성 평가 고지 — 채점 결과 화면의 최하단(대화록·재연습 버튼 아래)에 둔다.
+        결과를 먼저 보여주고 면책은 맨 끝에서 읽히도록 한 배치. */}
+    {result && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">AI 생성 평가</b> · 학습 보조 결과이며 오류가 있을 수 있습니다. 항목별 근거를 확인하고 공식 평가나 의료 판단에 사용하지 마세요.</div>}
     </>)}
   </div>;
 }

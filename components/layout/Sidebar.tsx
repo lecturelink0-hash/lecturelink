@@ -52,6 +52,20 @@ export function Sidebar({ user }: SidebarProps) {
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const pendingMenuFocus = useRef<'first' | 'last' | null>(null);
 
+  // 메뉴에 마우스를 올리거나 포커스가 닿은 경로만 전체 데이터까지 미리 받아 둔다.
+  // (next/link 기본 프리페치는 동적 경로에서 loading 경계까지만 받아 오므로, 클릭한
+  //  뒤에야 본문 요청이 시작돼 전환이 느리게 느껴진다. 처음부터 prefetch 를 켜면
+  //  메뉴 전부를 미리 렌더하게 되어 서버 부하가 커지므로 hover 시점으로 미룬다.)
+  const [warmed, setWarmed] = useState<ReadonlySet<string>>(() => new Set());
+  const warmRoute = (href: string) => {
+    setWarmed((prev) => (prev.has(href) ? prev : new Set(prev).add(href)));
+  };
+  const warmHandlers = (href: string) => ({
+    onMouseEnter: () => warmRoute(href),
+    onFocus: () => warmRoute(href),
+    onTouchStart: () => warmRoute(href),
+  });
+
   // 경로 변경 시 모바일 드로어 / 프로필 드롭다운 자동 닫기
   useEffect(() => {
     setOpen(false);
@@ -246,6 +260,8 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={warmed.has(item.href) ? true : undefined}
+              {...warmHandlers(item.href)}
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={clsx('primary' in item && item.primary && 'primary', isActive(item.href) && 'active')}
             >
@@ -302,6 +318,8 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={warmed.has(item.href) ? true : undefined}
+                    {...warmHandlers(item.href)}
                     role="menuitem"
                     aria-current={pathname === item.href ? 'page' : undefined}
                     className={clsx(
@@ -385,6 +403,8 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={warmed.has(item.href) ? true : undefined}
+              {...warmHandlers(item.href)}
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={clsx(
                 'll-mobile-drawer-link',

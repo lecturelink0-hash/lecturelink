@@ -1,17 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import clsx from 'clsx';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 import { PLAN_CATALOG, planName } from '@/lib/payment/plans';
+import { QUOTA_UNLIMITED_DISPLAY_MIN } from '@/lib/types/domain';
 import { Check, Ticket, BarChart3 } from 'lucide-react';
+
+interface QuotaResource {
+  limit: number;
+  used: number;
+  bonus: number;
+  remaining: number;
+}
 
 interface QuotaSnapshot {
   plan_tier: 'free' | 'lite' | 'standard' | 'pro' | 'unlimited';
-  questions: { limit: number; used: number; bonus: number; remaining: number };
-  uploads: { limit: number; used: number; bonus: number; remaining: number };
-  images: { limit: number; used: number; bonus: number; remaining: number };
+  questions: QuotaResource;
+  uploads: QuotaResource;
+  /** 초 단위. 화면에는 분으로 환산해 보여준다. */
+  cpx_seconds: QuotaResource;
 }
 
 interface Plan {
@@ -24,16 +34,22 @@ interface Plan {
 }
 
 // 플랜 명칭·가격·설명은 PLAN_CATALOG(단일 소스)에서 — 이 페이지는 features 만 정의한다.
+//
+// 세 카드의 항목 수는 일부러 다르게 둔다(내신대비 4 · CPX 6 · 통합 8). 이전에는 셋 다
+// 6줄이라 분량이 같아 보였고, 값을 세 번 비교해야 차이를 알 수 있었다. 담는 기능이
+// 많을수록 목록이 길어지게 두면 훑기만 해도 상하 관계가 읽힌다. 줄여 쓴 쪽은 정보를
+// 버린 게 아니라 인접 항목을 한 줄로 합치거나 supportingText 로 내린 것이다.
 const PLANS: Plan[] = [
   {
     tier: 'lite' as const,
     ...PLAN_CATALOG.lite,
     features: [
       { text: '강의자료 업로드' },
-      { text: '월 500문항 생성' },
-      { text: '지식형 · 임상형 · 이미지형 문제 생성' },
-      { text: '기본 해설 + 오답노트' },
-      { text: '유사문제 자동 생성' },
+      {
+        text: '월 500문항 생성',
+        supportingText: '지식형 · 임상형 · 이미지형',
+      },
+      { text: '기본 해설 · 오답노트 · 유사문제' },
       { text: 'CPX 체험 1회' },
     ],
   },
@@ -57,15 +73,20 @@ const PLANS: Plan[] = [
     ...PLAN_CATALOG.pro,
     featured: true,
     features: [
+      { text: '내신대비 · CPX 플랜의 모든 기능' },
       { text: '강의자료 업로드' },
-      { text: '월 500문항 생성' },
-      { text: '지식형 · 임상형 · 이미지형 문제 생성' },
-      { text: '오답노트 + 유사문제 생성' },
+      {
+        text: '월 500문항 생성',
+        supportingText: '지식형 · 임상형 · 이미지형',
+      },
+      { text: '기본 해설 · 오답노트 · 유사문제' },
       {
         text: '월 CPX 240분',
         supportingText: '약 12분 × 20회 분량',
       },
-      { text: 'CPX 채점 및 피드백' },
+      { text: 'AI 환자 음성 문진 + 신체진찰' },
+      { text: '진료 종료 후 자동 채점 · 항목별 피드백' },
+      { text: '부족한 영역 다시 연습' },
     ],
   },
 ];
@@ -126,7 +147,7 @@ export default function PlanPage() {
   function handleCpxPassPurchase() {
     // CPX 이용권용 결제 kind/product ID와 entitlement가 아직 없어 기존 구독 결제로
     // 우회하지 않는다. 버튼은 현재 구독 상태와 무관하게 같은 진입점을 사용한다.
-    alert('CPX 5회 이용권은 결제 상품 연결 후 구매할 수 있어요. 현재는 상품 정보를 확인해 주세요.');
+    alert('CPX 60분 추가 이용권은 결제 상품 연결 후 구매할 수 있어요. 현재는 상품 정보를 확인해 주세요.');
   }
 
   const hasPaidPlan = quota != null && quota.plan_tier !== 'free';
@@ -237,14 +258,14 @@ export default function PlanPage() {
                   {/* CTA */}
                   <div className="plan-action">
                     {isCurrent ? (
-                      <button
-                        type="button"
-                        disabled
+                      // 현재 플랜 칸은 구독 관리(해지 포함) 화면 진입점을 겸한다.
+                      <Link
+                        href="/subscription"
                         aria-current="true"
                         className="plan-current-button"
                       >
-                        현재 이용 중
-                      </button>
+                        구독 관리
+                      </Link>
                     ) : (
                       <Button
                         fullWidth
@@ -269,10 +290,10 @@ export default function PlanPage() {
           <div className="cpx-pass-copy">
             <div className="cpx-pass-heading">
               <Ticket className="w-4 h-4" aria-hidden="true" />
-              <h2 id="cpx-pass-title">CPX 5회 이용권</h2>
+              <h2 id="cpx-pass-title">CPX 60분 추가 이용권</h2>
             </div>
             <p className="cpx-pass-price">
-              <strong>CPX 5회</strong>
+              <strong>CPX 60분</strong>
               <span aria-hidden="true">·</span>
               <strong>₩4,900</strong>
             </p>
@@ -286,14 +307,14 @@ export default function PlanPage() {
             onClick={handleCpxPassPurchase}
             aria-describedby="cpx-pass-description"
           >
-            CPX 5회 구매하기
+            CPX 60분 구매하기
           </Button>
         </section>
 
         {limitReached && (
           <div className="limit-notice" role="status">
             <strong>사용량 한도에 도달했어요.</strong>
-            <span>필요한 기능에 맞는 플랜이나 CPX 5회 이용권을 확인해 주세요.</span>
+            <span>필요한 기능에 맞는 플랜이나 CPX 60분 추가 이용권을 확인해 주세요.</span>
           </div>
         )}
 
@@ -308,8 +329,16 @@ export default function PlanPage() {
               현재 {PLAN_NAMES[quota.plan_tier]} 플랜
             </h2><p className="current-plan">현재 계정에서 이번 달 사용할 수 있는 학습 리소스입니다.</p>
             <div className="usage-grid">
-              <QuotaBar label="문항" data={quota.questions} />
+              {/* '문항'만 두면 보유 문항 수로 읽히는데 이 칸이 세는 건 이번 달 생성량이다. */}
+              <QuotaBar label="문항 생성" data={quota.questions} />
               <QuotaBar label="자료 업로드" data={quota.uploads} />
+              {/* 이미지 문항 바는 삭제. 이미지 문항에는 별도 한도가 없고 전체 문항 한도에
+                  포함된다(2026-08-14 정책, lib/payment/toss.ts CREDIT_PRICES 주석 참조) —
+                  없는 제한을 있는 것처럼 보여주던 칸이었다. 그 자리는 실제로 차감되는
+                  CPX 이용 시간이 대신한다. */}
+              {/* 이 칸의 큰 숫자는 '쓴 양 / 총량'이라 라벨도 사용 기준으로 읽어야 맞는다
+                  (마이페이지 바는 잔여를 보여주므로 거기 라벨은 '남은 시간' 그대로다). */}
+              <QuotaBar label="CPX 사용 시간" data={quota.cpx_seconds} unit="minutes" />
             </div>
           </section>
         )}
@@ -318,27 +347,58 @@ export default function PlanPage() {
   );
 }
 
-function QuotaBar({ label, data }: { label: string; data: { limit: number; used: number; bonus: number; remaining: number } }) {
+function QuotaBar({
+  label,
+  data,
+  unit = 'count',
+}: {
+  label: string;
+  data: QuotaResource;
+  /** 'minutes' 면 초 단위 값을 분으로 환산해 표시한다(CPX 이용 시간). */
+  unit?: 'count' | 'minutes';
+}) {
   const total = data.limit + data.bonus;
-  const unlimited = data.remaining >= 1_000_000 || data.limit >= 1_000_000;
+  const unlimited =
+    data.remaining >= QUOTA_UNLIMITED_DISPLAY_MIN || data.limit >= QUOTA_UNLIMITED_DISPLAY_MIN;
   const percent = unlimited ? 0 : total === 0 ? 0 : Math.min(100, (data.used / total) * 100);
+
+  // 사용분은 올림, 잔여는 내림 — 쓴 시간을 줄여 말하거나 남은 시간을 부풀리지 않는다.
+  // 총량은 정확히 나누어떨어지므로(720·14400초) 화면에서 사용+잔여 = 총량이 유지된다.
+  const fmt = (value: number, mode: 'up' | 'down' = 'up') =>
+    unit === 'minutes'
+      ? `${(mode === 'up' ? Math.ceil : Math.floor)(value / 60)}분`
+      : `${value}`;
+
   return (
     <div className="usage-item">
       <div className="usage-row">
         <span className="usage-label">{label}</span>
         <span className="usage-value">
-          {unlimited ? '무제한' : <>{data.used} <span className="text-[var(--color-muted)] font-medium">/ {total}</span></>}
+          {unlimited ? (
+            '무제한'
+          ) : (
+            <>
+              {fmt(data.used)}{' '}
+              <span className="text-[var(--color-muted)] font-medium">/ {fmt(total, 'down')}</span>
+            </>
+          )}
         </span>
       </div>
+      {/* 채움 막대는 span 이어야 한다 — .ll-plan-page .bar span 에만 색이 있어서,
+          div 로 두면 진행률이 아예 안 보였다. */}
       <div className="bar">
-        <div
-          style={{ width: `${percent}%` }}
-        />
+        <span style={{ width: `${percent}%` }} />
       </div>
-      <p className="remaining">잔여 {unlimited ? '무제한' : data.remaining}</p>
-      <div className="text-xs text-[var(--color-muted)] mt-2">
-        {unlimited ? '잔여 무제한' : <>잔여 {data.remaining}{data.bonus > 0 && ` (보너스 ${data.bonus})`}</>}
-      </div>
+      <p className="remaining">
+        {unlimited ? (
+          '잔여 무제한'
+        ) : (
+          <>
+            잔여 {fmt(data.remaining, 'down')}
+            {data.bonus > 0 && ` (보너스 ${fmt(data.bonus, 'down')})`}
+          </>
+        )}
+      </p>
     </div>
   );
 }

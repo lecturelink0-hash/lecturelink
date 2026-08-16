@@ -41,6 +41,7 @@ jobs:
       - run: npm run build
       - run: npm run typecheck
       - run: npm run cpx:bundle-check
+      - run: npm run cpx:sanitize-check
       - run: node --check scripts/test-cpx-deployment.mjs
 
   patient-engine:
@@ -63,3 +64,6 @@ jobs:
       - run: python test_all_cases_api.py
       - run: python test_lecturelink_auth.py
       - run: python test_prompt_context.py
+      - run: python test_patient_rules.py
+      # 적대적 QA 하니스의 판정 로직 회귀 — 모델 호출 없이 돈다(API 키·쿼터 불필요)
+      - run: python qa_leak_test.py selftest

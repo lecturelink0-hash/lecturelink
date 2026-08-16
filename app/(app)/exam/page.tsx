@@ -47,6 +47,13 @@ interface AttemptResponse {
   correct_index: number;
   explanation: string | null;
 }
+/** 문항 하나의 풀이 상태. 문항 id 로 보관해 앞뒤로 오가도 살아남는다. */
+interface AnswerState {
+  selected: number | null;
+  result: AttemptResponse | null;
+}
+const EMPTY_ANSWER: AnswerState = { selected: null, result: null };
+
 interface SetResult {
   questionId: string;
   subTopicId: string | null;
@@ -74,8 +81,10 @@ export default function ExamPage() {
   const [idx, setIdx] = useState(0);
   // 문항이 화면에 표시된 시각 — 제출 시 실제 소요시간(누적 학습시간) 측정에 사용.
   const shownAtRef = useRef<number>(Date.now());
-  const [selected, setSelected] = useState<number | null>(null);
-  const [result, setResult] = useState<AttemptResponse | null>(null);
+  // 문항 id → 고른 선지·채점 결과. 문항 이동(화살표·문항 그리드)으로 지우지 않는다.
+  // 스칼라 한 벌로 두면 이미 푼 문항으로 돌아왔을 때 화면이 비어 재제출이 가능해지고,
+  // user_attempts 행과 문항 quota 가 이중으로 차감된다.
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
   const [showQuestionGrid, setShowQuestionGrid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState<SetResult[]>([]);
@@ -84,6 +93,16 @@ export default function ExamPage() {
   const [savedNote, setSavedNote] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const current = questions[idx];
+  const { selected, result } = (current ? answers[current.id] : undefined) ?? EMPTY_ANSWER;
+
+  /** 현재 문항의 풀이 상태만 갈아끼운다. 다른 문항 상태는 건드리지 않는다. */
+  function patchAnswer(questionId: string, patch: Partial<AnswerState>) {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: { ...EMPTY_ANSWER, ...prev[questionId], ...patch },
+    }));
+  }
+
   useEffect(() => {
     if (!zoomImage) return;
     const onKey = (e: KeyboardEvent) => {
@@ -154,8 +173,8 @@ export default function ExamPage() {
       setLoadingQuestions(true);
       setQuestions([]);
       setIdx(0);
-      setSelected(null);
-      setResult(null);
+      // 새 세부주제 세트를 여는 순간에만 풀이 상태를 비운다.
+      setAnswers({});
       setShowQuestionGrid(false);
       setResults([]);
     setFinished(false);
@@ -179,7 +198,8 @@ export default function ExamPage() {
   }, [idx, active]);
 
   async function submit() {
-    if (selected === null || !current) return;
+    // 이미 채점된 문항은 재제출하지 않는다 — 중복 기록·quota 이중 차감 방지.
+    if (selected === null || !current || result) return;
     setSubmitting(true);
     // 문항 표시 시점부터 제출까지의 실제 경과 시간(초). 1~3600초로 클램프.
     const elapsedSeconds = Math.min(
@@ -193,7 +213,7 @@ export default function ExamPage() {
         time_spent_seconds: elapsedSeconds,
         track: 'smart_practice',
       });
-      setResult(res);
+      patchAnswer(current.id, { result: res });
       setResults((previous) => {
         const nextResult: SetResult = {
           questionId: current.id,
@@ -219,11 +239,10 @@ export default function ExamPage() {
     }
   }
 
+  // 문항 이동은 인덱스만 옮긴다 — 풀이 상태는 answers 에 문항별로 남는다.
   function goToQuestion(nextIndex: number) {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
     setIdx(nextIndex);
-    setSelected(null);
-    setResult(null);
     setShowQuestionGrid(false);
   }
 
@@ -649,7 +668,7 @@ export default function ExamPage() {
                       return (
                         <button
                           key={i}
-                           onClick={() => !result && setSelected(i)}
+                           onClick={() => !result && patchAnswer(current.id, { selected: i })}
                           disabled={result !== null}
                           className={`w-full text-left p-3.5 px-4 rounded-xl border flex items-center gap-3 transition-all ${
                             isCorrect

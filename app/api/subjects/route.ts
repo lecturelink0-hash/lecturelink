@@ -31,8 +31,14 @@ export const GET = withErrorHandling(async (request: Request) => {
 
   if (subjectsError) throw subjectsError;
 
+  // 과목/세부주제 구조는 드물게 바뀌므로 브라우저 캐시 허용(개인 캐시만) — 재방문 시 즉시 표시
+  const cacheControl = 'private, max-age=300, stale-while-revalidate=3600';
+
   if (!withSubTopics) {
-    return ok(subjects ?? []);
+    // 마이페이지 등에서 매번 호출하는 경로. 아래 전체 트리와 같은 캐시 정책을 적용한다.
+    const flat = ok(subjects ?? []);
+    flat.headers.set('Cache-Control', cacheControl);
+    return flat;
   }
 
   // sub_topics 조회 (한 번에 batch)
@@ -51,8 +57,7 @@ export const GET = withErrorHandling(async (request: Request) => {
     sub_topics: (subTopics ?? []).filter((st) => st.subject_id === subject.id),
   }));
 
-  // 과목/세부주제 구조는 드물게 바뀌므로 브라우저 캐시 허용(개인 캐시만) — 재방문 시 즉시 표시
   const res = ok(result);
-  res.headers.set('Cache-Control', 'private, max-age=300, stale-while-revalidate=3600');
+  res.headers.set('Cache-Control', cacheControl);
   return res;
 });

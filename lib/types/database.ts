@@ -322,6 +322,10 @@ export type SubscriptionRow = {
   started_at: string;
   expires_at: string | null;
   auto_renew: boolean;
+  /** 해지 시 사용자가 고른 사유(선택). 마이그레이션 00038 에서 추가. */
+  cancellation_reason: string | null;
+  /** 자동 갱신 해제를 요청한 시각. 마이그레이션 00038 에서 추가. */
+  cancelled_at: string | null;
   payment_provider: string | null;
   provider_subscription_id: string | null;
   created_at: string;

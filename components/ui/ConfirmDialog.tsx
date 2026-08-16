@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Button, type ButtonVariant } from './Button';
 
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
   description?: string;
+  /** 확인 전에 받을 추가 입력(해지 사유 등). 설명과 버튼 사이에 놓인다. */
+  children?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   confirmVariant?: ButtonVariant;
@@ -28,6 +30,7 @@ export function ConfirmDialog({
   open,
   title,
   description,
+  children,
   confirmLabel = '확인',
   cancelLabel = '취소',
   danger,
@@ -54,7 +57,10 @@ export function ConfirmDialog({
         return;
       }
       if (event.key !== 'Tab' || !dialogRef.current) return;
-      const focusables = dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled])');
+      // children 으로 라디오·입력이 들어올 수 있으므로 버튼만 잡으면 포커스 트랩이 그것들을 건너뛴다.
+      const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]',
+      );
       if (focusables.length === 0) return;
       const first = focusables[0];
       const last = focusables[focusables.length - 1];
@@ -102,6 +108,7 @@ export function ConfirmDialog({
             {description}
           </p>
         )}
+        {children}
         {error && (
           <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm leading-relaxed text-red-700">
             {error}

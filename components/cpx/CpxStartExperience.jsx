@@ -204,12 +204,20 @@ export default function CpxStartExperience({
     setSetup(null);
     onStart(pending.target, { mode: pending.mode });
   };
+  const handleCardKeyDown = (event, action) => {
+    if (event.target !== event.currentTarget || event.key === 'Escape') return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      action();
+    }
+  };
 
   return <div className="cpx-start-experience">
     <header className="cpx-start-header">
       <div>
         <span className="cpx-start-eyebrow">CPX 실기 연습</span>
-        <h1><span className="cpx-headline-accent">의사-환자 모의대화</span>를 통해 CPX를 대비해보세요</h1>
+        {/* 내신 대비(/notes)·내 문제집(/library) 제목과 같은 2줄 구성 — 강조 구절과 뒷문장을 <br/>로 나눈다. */}
+        <h1><span className="cpx-headline-accent">의사-환자 모의대화</span>를 통해<br />CPX를 대비해보세요</h1>
         <p>복습이 필요한 증례부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
       </div>
       <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ArrowRight aria-hidden /></Link>
@@ -220,7 +228,13 @@ export default function CpxStartExperience({
         <h2 id="cpx-quick-title">빠른 시작</h2>
       </div>
       <div className="cpx-quick-grid">
-        <article className="cpx-review-panel">
+        <article
+          className="cpx-review-panel"
+          role={recommendation ? 'button' : undefined}
+          tabIndex={recommendation ? 0 : undefined}
+          onClick={recommendation ? () => openSetup(recommendation.target, 'recommendation') : undefined}
+          onKeyDown={recommendation ? (event) => handleCardKeyDown(event, () => openSetup(recommendation.target, 'recommendation')) : undefined}
+        >
           <div className="cpx-quick-label">
             <span className="cpx-quick-icon"><TargetArrowIcon aria-hidden /></span>
             <div>
@@ -246,7 +260,7 @@ export default function CpxStartExperience({
                   : recommendation.totalScore !== null && <> · 총점 {recommendation.totalScore}점</>}
               </p>
             </div>
-            <button type="button" className="cpx-quick-cta" onClick={() => openSetup(recommendation.target, 'recommendation')}>
+            <button type="button" className="cpx-quick-cta" onClick={(event) => { event.stopPropagation(); openSetup(recommendation.target, 'recommendation'); }}>
               다시 연습하기 <ArrowRight aria-hidden />
             </button>
           </> : <div className="cpx-recommendation-empty">
@@ -256,7 +270,13 @@ export default function CpxStartExperience({
           </div>}
         </article>
 
-        <article className="cpx-random-panel">
+        <article
+          className="cpx-random-panel"
+          role={cases.length ? 'button' : undefined}
+          tabIndex={cases.length ? 0 : undefined}
+          onClick={cases.length ? openRandomSetup : undefined}
+          onKeyDown={cases.length ? (event) => handleCardKeyDown(event, openRandomSetup) : undefined}
+        >
           <div className="cpx-quick-label">
             <span className="cpx-quick-icon"><Shuffle aria-hidden /></span>
             <div><strong>랜덤 실전</strong></div>
@@ -265,7 +285,7 @@ export default function CpxStartExperience({
             <h3>증례 정보 없이 바로 시작</h3>
             <p>시험처럼 증례를 무작위로 진행해요</p>
           </div>
-          <button type="button" className="cpx-quick-cta" onClick={openRandomSetup} disabled={!cases.length}>
+            <button type="button" className="cpx-quick-cta" onClick={(event) => { event.stopPropagation(); openRandomSetup(); }} disabled={!cases.length}>
             시작하기 <ArrowRight aria-hidden />
           </button>
         </article>
@@ -374,7 +394,7 @@ export default function CpxStartExperience({
           {setup.mode === 'random' && <span>증례 비공개</span>}
         </div>
         {/* 순응도 낮은 환자는 상시 무작위 배정(직접 선택 25% · 랜덤 실전 40%) — 사용자 설정 불가, 유형은 채점 후 공개 */}
-        <p className="mt-2 text-xs text-[var(--color-muted)]">실제 시험처럼 순응도가 낮은 환자를 무작위로 만날 수 있어요. 어떤 유형이었는지는 채점 후에 알려드려요.</p>
+        <p className="cpx-dialog-note">실제 시험처럼 순응도가 낮은 환자를 무작위로 만날 수 있어요. 어떤 유형이었는지는 채점 후에 알려드려요.</p>
         <Button ref={startButtonRef} type="button" size="lg" fullWidth onClick={confirmStart}>
           진료 시작 <ArrowRight aria-hidden />
         </Button>
