@@ -35,7 +35,11 @@ import {
   PRIVATE_GENERATION_TOOL_SCHEMA,
   buildPrivateGenerationUserMessage,
 } from './prompts/private-generation';
-import { STORAGE_BUCKET } from '@/lib/storage/paths';
+import {
+  STORAGE_BUCKET,
+  questionImagePath,
+  questionImageIndex,
+} from '@/lib/storage/paths';
 import { parsePptx } from '@/lib/extract/pptx';
 import {
   renderPdfPages,
@@ -1603,8 +1607,10 @@ export async function generatePrivateQuestionsFromUpload(
       '임상형': '**임상형**: 아래 "임상형 문항 규격(C0~C11)"을 그대로 적용한다. 환자 한 명의 증례로 시작해 임상 판단 하나를 묻는다.',
       '이미지형':
         '**이미지형**: 자료의 의료 이미지를 판독·해석해야 푸는 문항을 가능한 한 많이 만든다(이미지가 있으면 우선). ' +
-        '**그림을 가려도 풀리는 문항은 이미지형이 아니다** — 표식(A·B·C)이 있으면 그것을 가리켜 묻고, ' +
-        '없으면 그림에서 읽어야만 알 수 있는 소견을 답의 근거로 삼는다.',
+        '**그림을 가려도 풀리는 문항은 이미지형이 아니다** — 그림에서 읽어야만 알 수 있는 소견' +
+        '(위치·모양·크기·분포·신호 강도·염색 양상)을 답의 근거로 삼는다. ' +
+        '표식(A·B·C)을 가리키는 문항은 판독 문항의 한 형태일 뿐이므로 **드물게만** 쓴다' +
+        '(허용 여부는 묶음별 지시를 따른다).',
     };
     const selectedTypes = input.questionTypes ?? [];
     const wantsClinical = selectedTypes.includes('임상형');
@@ -1641,6 +1647,21 @@ export async function generatePrivateQuestionsFromUpload(
         (i) => i >= 0,
       ),
     );
+    // 표식(A·B·C) 문항 빈도 제한 — 10문항당 1문항 이하(사용자 정책 2026-08-16).
+    //
+    // 처음에는 "표식 이미지를 받은 배치마다 최소 1문항"으로 요구했는데, 배치가 5개면
+    // 10문항 중 5문항이 표식 문항이 될 수 있다. 표식은 판독 문항의 한 형태일 뿐이라
+    // 그 정도 비중이면 문제집이 단조로워진다. 조합형과 같은 방식으로 억제한다.
+    // 이미지 배치는 뒤쪽에 몰려 있으므로(선발사 배치는 이미지를 못 받는다) 마지막
+    // 배치부터 허용해 "표식을 실제로 받은 배치"에 배분이 떨어지게 한다.
+    // 조합형 배치와는 겹치지 않게 고른다 — 한 배치가 조합형과 표식 문항을 동시에 떠맡으면
+    // 그 배치(2문항)가 통째로 특수 유형이 된다.
+    const markerQuota = Math.floor(desiredCount / 10);
+    const markerBatches = new Set<number>();
+    for (let i = batchSizes.length - 1; i >= 0 && markerBatches.size < markerQuota; i--) {
+      if (comboBatches.has(i)) continue;
+      markerBatches.add(i);
+    }
     let completedQuestions = 0;
     // 배치 비용 로그용 — 추출 완료 후 채워진다(선발사 배치는 추출 전에 시작하므로 0으로 기록).
     let extractedSlideCount = 0;
@@ -2018,7 +2039,9 @@ export async function generatePrivateQuestionsFromUpload(
         '- 다만 그림에서 읽은 라벨 글자를 발문·선지·해설에 그대로 옮겨 적으면 정답이 ' +
         '노출되므로 절대 쓰지 않는다.\n' +
         '- "표식 안내"가 붙은 이미지는 라벨 자리에 A·B·C 표식이 찍혀 있다. 그 표식을 ' +
-        '가리켜 물으면 그림을 보지 않고는 풀 수 없는 문항이 된다.';
+        '가리켜 물으면 그림을 보지 않고는 풀 수 없는 문항이 된다. ' +
+        '다만 표식 문항은 **드물게만** 쓴다 — 묶음별 지시에서 허용한 경우에만 만들고, ' +
+        '허용해도 최대 1문항이다. 나머지는 표식을 언급하지 말고 그림의 소견으로 출제한다.';
     }
 
     // 선별 텍스트 인페인팅(비용 최적화): 모든 featured 를 미리 인페인팅하지 않고,
@@ -2122,8 +2145,22 @@ export async function generatePrivateQuestionsFromUpload(
     // 여전히 지워진 채로 "가리킬 대상"만 생긴다.
     // 롤백: ENABLE_IMAGE_MARKERS=0
     const markersEnabled = process.env.ENABLE_IMAGE_MARKERS !== '0';
-    /** 학생에게 보여줄 이미지 + 그 이미지에 찍힌 표식(모델 전용 대응표). */
-    type DisplayImage = { png: Uint8Array; markers: PlacedMarker[] };
+    /**
+     * 학생에게 보여줄 이미지. **표식이 있는 판과 없는 판을 둘 다** 만든다.
+     *
+     * 왜 둘 다인가(2026-08-16 운영 지적): 표식은 이미지 정제 단계에서 찍히는데, 그 이미지를
+     * 쓰는 문항이 표식을 실제로 묻는지는 생성이 끝나야 안다. 한 판만 만들면 표식을 묻지
+     * 않는 문항에도 A~E 가 붙어 나간다 — 실측에서 8장 중 5장이 그랬다. 표식은 가리킬 것이
+     * 있을 때만 의미가 있고, 아니면 그림을 어지럽히는 낙서다.
+     * 정제(마스킹)는 공유하고 표식만 얹은 판을 따로 두므로 추가 비용은 캔버스 렌더 1회뿐이다.
+     */
+    type DisplayImage = {
+      /** 표식 없는 정제본 — 표식을 묻지 않는 문항이 쓴다. */
+      plain: Uint8Array;
+      /** 표식을 얹은 판. 표식이 없으면 plain 과 같은 참조. */
+      annotated: Uint8Array;
+      markers: PlacedMarker[];
+    };
     const displayCache = new Map<number, Promise<DisplayImage | null>>();
     const getDisplayPng = (i: number): Promise<DisplayImage | null> => {
       const fi = featuredImages[i];
@@ -2151,23 +2188,26 @@ export async function generatePrivateQuestionsFromUpload(
           png: Uint8Array,
           regions: Array<{ text: string; x0: number; y0: number; x1: number; y1: number }>,
         ): Promise<DisplayImage> => {
-          if (!markersEnabled || regions.length === 0) return { png, markers: [] };
+          if (!markersEnabled || regions.length === 0) {
+            return { plain: png, annotated: png, markers: [] };
+          }
           const sources = selectMarkerSources(regions, fi.c.widthPx, fi.c.heightPx);
           if (sources.length === 0) {
             rec.markers = 0;
-            return { png, markers: [] };
+            return { plain: png, annotated: png, markers: [] };
           }
           const out = await annotateMarkers(png, sources);
           rec.markers = out.markers.length;
           rec.markerLabels = out.markers.map((m) => `${m.letter}=${m.label}`);
-          return out;
+          // 표식을 못 찍었으면 두 판이 같다 — 대응표도 비어 있으므로 표식 문항이 안 나온다.
+          return { plain: png, annotated: out.png, markers: out.markers };
         };
         try {
           // 글자가 거의 없으면 손대지 않는다(정답 단서 위험 없음).
           // 지운 것이 없으니 표식을 찍을 자리도 없다.
           if (ocrLen < 8) {
             rec.result = 'no_text';
-            return { png: fi.c.png, markers: [] };
+            return { plain: fi.c.png, annotated: fi.c.png, markers: [] };
           }
 
           if (!legacyInpaint) {
@@ -2282,7 +2322,7 @@ export async function generatePrivateQuestionsFromUpload(
           // 생성형 인페인팅은 이미지를 재생성하므로 원본 좌표와 결과가 어긋난다 —
           // 표식을 찍을 수 없다(이 경로는 롤백용 옵션이다).
           rec.result = 'inpainted';
-          return { png: cleaned, markers: [] };
+          return { plain: cleaned, annotated: cleaned, markers: [] };
         } catch (e) {
           rec.result = 'error';
           rec.error = e instanceof Error ? e.message.slice(0, 80) : String(e).slice(0, 80);
@@ -2513,14 +2553,21 @@ export async function generatePrivateQuestionsFromUpload(
               : '') +
             // 표식(A·B·C)이 찍힌 이미지가 있으면 그것을 가리키는 문항을 반드시 만들게 한다.
             // 표식은 "그림을 봐야만 풀리는" 형태를 구조적으로 보장하는 유일한 장치다.
-            (markedImageCount > 0
-              ? `\n\n**표식 문항 최소 1문항**: 표식 안내가 붙은 이미지가 ${markedImageCount}장 있습니다. ` +
-                `그 중 최소 1문항은 "A로 표시된 구조는?", "B로 표시된 세포층에서 일어나는 일은?" 처럼 ` +
-                `**표식을 직접 가리키는** 문항으로 만드세요. ` +
+            // 표식 문항은 **드물게** 쓴다. 전체 10문항당 1문항 이하(사용자 정책 2026-08-16).
+            // 조합형과 같은 이유로 정량 배분이 필요하다 — 배치가 병렬이라 "10 %"를 말로
+            // 지시하면 배치마다 독립 판단해 과다 생성된다. 허용 배치를 정해 결정론적으로 나눈다.
+            (markedImageCount > 0 && markerBatches.has(batchIndex)
+              ? `\n\n**표식 문항 최대 1문항**: 표식 안내가 붙은 이미지가 ${markedImageCount}장 있습니다. ` +
+                `이번 묶음에서는 "A로 표시된 구조는?" 처럼 **표식을 직접 가리키는 문항을 최대 1문항까지** ` +
+                `만들 수 있습니다(적합하지 않으면 만들지 않아도 됩니다). ` +
                 `표식을 가리킬 때는 반드시 **"…로 표시된"** 표현을 쓰고(예: "C로 표시된 부위의 진단은?"), ` +
                 `image_indices 에 해당 이미지 번호를 넣으세요. ` +
                 `대응표에 적힌 라벨 원문은 발문·선지·해설에 그대로 쓰지 마세요(정답 노출).`
-              : '');
+              : markedImageCount > 0
+                ? `\n\n이번 묶음에서는 **표식(A·B·C…)을 가리키는 문항을 만들지 마세요.** ` +
+                  `표식 안내가 붙은 이미지가 있어도, 그 그림에서 읽어야 알 수 있는 소견으로 ` +
+                  `문항을 만드세요.`
+                : '');
       // 임상형 정량 지시. 이미지 유무와 무관하므로 noImageDirective 바깥에 둔다
       // (안에 두면 이미지를 못 받은 텍스트 배치가 이 지시를 통째로 놓친다).
       const clinicalDirective = buildClinicalQuotaDirective(batchSize, gen.clinicalQuota ?? 0);
@@ -2744,35 +2791,62 @@ export async function generatePrivateQuestionsFromUpload(
       for (const { q } of kept) {
         for (const i of q.image_indices ?? []) if (validImageIndex(i)) usedIndices.add(i);
       }
-      // key = 이 배치 안에서의 로컬 이미지 인덱스(모델이 응답한 image_indices 기준).
-      const indexToPath = new Map<number, string>();
+      // ── 표식은 "그 표식을 실제로 묻는 문항"에만 붙인다.
+      //
+      // 표식은 정제 단계에서 찍히는데, 그 이미지를 쓰는 문항이 표식을 묻는지는 생성이
+      // 끝나야 안다. 종전에는 한 판만 만들어 표식을 묻지 않는 문항에도 A~E 가 붙어
+      // 나갔다(실측 8장 중 5장). 이제 문항별로 어느 판을 쓸지 고른다.
+      // 같은 이미지가 두 문항에 걸리고 한쪽만 표식을 물으면 두 판을 각각 저장한다.
+      const wantsMarked = (stem: string) => stemReferencesMarker(sanitizeStemArtifacts(stem));
+      const variantsNeeded = new Map<number, Set<boolean>>();
+      for (const { q } of kept) {
+        const marked = wantsMarked(q.stem);
+        for (const i of q.image_indices ?? []) {
+          if (!validImageIndex(i)) continue;
+          const set = variantsNeeded.get(i) ?? new Set<boolean>();
+          set.add(marked);
+          variantsNeeded.set(i, set);
+        }
+      }
+      // key = `${로컬 이미지 인덱스}:${표식판 여부}`.
+      const indexToPath = new Map<string, string>();
       const tImages = Date.now();
+      let markedUploads = 0;
       // 이미지당 인페인팅(+검증 OCR)이 수십 초씩 걸릴 수 있어 직렬 대신 병렬로 정제·업로드.
       await Promise.all(
         [...usedIndices].map(async (i) => {
           const gi = featured[i].gi;
           const display = await gen.getDisplayPng(gi);
           if (!display) return; // 텍스트 제거 실패로 제외된 이미지 — 업로드/연결 안 함
-          const imgPath = `${uploadRow.user_id}/${uploadRow.id}/crops/q_image_${gi}.png`;
-          const { error: upErr } = await admin.storage
-            .from(STORAGE_BUCKET)
-            .upload(imgPath, Buffer.from(display.png), {
-              contentType: 'image/png',
-              upsert: true,
-            });
-          if (upErr) warnings.push(`이미지 ${gi} Storage 저장 실패 — ${upErr.message}`);
-          else indexToPath.set(i, imgPath);
+          const variants = variantsNeeded.get(i) ?? new Set([false]);
+          for (const marked of variants) {
+            // 표식이 없는 이미지는 두 판이 같으므로 표식판을 따로 만들지 않는다.
+            const useMarked = marked && display.markers.length > 0;
+            const imgPath = questionImagePath(uploadRow.user_id, uploadRow.id, gi, useMarked);
+            const { error: upErr } = await admin.storage
+              .from(STORAGE_BUCKET)
+              .upload(imgPath, Buffer.from(useMarked ? display.annotated : display.plain), {
+                contentType: 'image/png',
+                upsert: true,
+              });
+            if (upErr) warnings.push(`이미지 ${gi} Storage 저장 실패 — ${upErr.message}`);
+            else {
+              indexToPath.set(`${i}:${marked}`, imgPath);
+              if (useMarked) markedUploads += 1;
+            }
+          }
         }),
       );
       batchDiag.imageWorkMs = Date.now() - tImages;
       batchDiag.imagesUsed = indexToPath.size;
+      batchDiag.markedUploads = markedUploads;
       const imageRows = kept.flatMap(({ q }, qi) => {
         const qId = inserted[qi]?.id;
         if (!qId) return [];
         return (q.image_indices ?? [])
           .filter(validImageIndex)
           .map((i, order) => {
-            const storagePath = indexToPath.get(i);
+            const storagePath = indexToPath.get(`${i}:${wantsMarked(q.stem)}`);
             if (!storagePath) return null;
             const fi = featured[i];
             // 발문이 말하는 검사와 다른 종류의 이미지는 연결하지 않는다(예: 발문은
@@ -2815,7 +2889,8 @@ export async function generatePrivateQuestionsFromUpload(
       kept.forEach(({ q }, qi) => {
         const idx = (q.image_indices ?? []).filter(validImageIndex);
         if (idx.length === 0) return;
-        if (idx.some((i) => indexToPath.has(i))) return; // 살아남은 이미지가 하나라도 있으면 유지
+        // 살아남은 이미지가 하나라도 있으면 유지 (그 문항이 실제로 쓰는 판 기준).
+        if (idx.some((i) => indexToPath.has(`${i}:${wantsMarked(q.stem)}`))) return;
         const qid = inserted[qi]?.id;
         if (!qid) return;
         if (stemDependsOnImage(q.stem)) {
@@ -3030,11 +3105,18 @@ export async function generatePrivateQuestionsFromUpload(
           .eq('upload_id', upload.id),
       ]);
       const slotOf = new Map((slotRows ?? []).map((r) => [r.id, r.generation_slot ?? 0]));
+      // 같은 이미지의 표식판(`_m`)과 기본판은 **한 이미지로 묶어야** 한다. 경로로 묶으면
+      // 두 판이 각각 상한(MAX_QUESTIONS_PER_IMAGE)을 받아 한 그림이 4문항에 붙는다.
+      const imageKey = (p: string) => {
+        const gi = questionImageIndex(p ?? '');
+        return gi === null ? p : `gi:${gi}`;
+      };
       const byPath = new Map<string, { id: string; qid: string }[]>();
       for (const r of linkRows ?? []) {
-        const arr = byPath.get(r.storage_path) ?? [];
+        const key = imageKey(r.storage_path);
+        const arr = byPath.get(key) ?? [];
         arr.push({ id: r.id, qid: r.private_question_id });
-        byPath.set(r.storage_path, arr);
+        byPath.set(key, arr);
       }
       const removeLinkIds: string[] = [];
       for (const [, arr] of byPath) {
@@ -3102,9 +3184,9 @@ export async function generatePrivateQuestionsFromUpload(
         .select('storage_path')
         .eq('upload_id', uploadRow.id);
       for (const r of data ?? []) {
-        const m = /\/crops\/q_image_(\d+)\.png$/.exec(r.storage_path ?? '');
-        if (!m) continue;
-        const gi = Number(m[1]);
+        // `_m`(표식판)도 같은 gi 로 센다 — 아니면 재사용 상한이 두 배로 풀린다.
+        const gi = questionImageIndex(r.storage_path ?? '');
+        if (gi === null) continue;
         counts.set(gi, (counts.get(gi) ?? 0) + 1);
       }
       return counts;

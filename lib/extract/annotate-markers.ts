@@ -267,8 +267,12 @@ function drawMarkerGlyph(
     case 'D':
       ctx.moveTo(x0, y0);
       ctx.lineTo(x0, y1);
+      // 보울을 반지름 h/2 반원으로 그렸더니 폭이 0.5h 에 그쳐(다른 글자는 0.78h) 좁고
+      // 왼쪽으로 치우친 "찌그러진 D"가 됐다(운영 이미지 8배 확대로 확인).
+      // 제어점을 글자 폭 밖으로 빼서 보울이 x1 까지 닿게 한다(3차 베지에의 최대 도달점은
+      // 제어점 거리의 3/4 이라 w + w/3 을 주면 정확히 w 만큼 나간다).
       ctx.moveTo(x0, y0);
-      ctx.arc(x0, cy, h / 2, -Math.PI / 2, Math.PI / 2);
+      ctx.bezierCurveTo(x1 + w / 3, y0, x1 + w / 3, y1, x0, y1);
       break;
     case 'E':
       ctx.moveTo(x0, y0);

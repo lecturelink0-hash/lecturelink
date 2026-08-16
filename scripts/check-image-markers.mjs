@@ -14,6 +14,7 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { questionImagePath, questionImageIndex } from '../lib/storage/paths.ts';
 import { maskTextRegions, isShortFigureLabel as maskShortLabel } from '../lib/extract/mask-text.ts';
 import {
   looksLikeStructureLabel,
@@ -138,6 +139,24 @@ check('표식이 없으면 안내문도 없다', buildMarkerLegend(0, []) === ''
   check('학생에게 안 보인다고 명시한다', legend.includes('보이지 않음'));
   check('라벨 원문 사용 금지를 명시한다', legend.includes('그대로 적으면'));
   check('어긋나면 쓰지 말라고 안내한다', legend.includes('어긋나 보이면'));
+}
+
+console.log('문항 이미지 경로 규칙(questionImagePath / questionImageIndex)');
+{
+  // 표식판(`_m`)과 기본판은 **같은 이미지**다. 재사용 상한("한 그림당 최대 2문항")을
+  // 셀 때 경로로 묶으면 상한이 두 배로 풀린다 — 규칙이 세 곳에 흩어져 있어 여기서 고정한다.
+  const plain = questionImagePath('u1', 'up1', 3, false);
+  const marked = questionImagePath('u1', 'up1', 3, true);
+  check('기본판 경로', plain === 'u1/up1/crops/q_image_3.png', plain);
+  check('표식판 경로', marked === 'u1/up1/crops/q_image_3_m.png', marked);
+  check('marked 기본값은 기본판', questionImagePath('u1', 'up1', 3) === plain);
+  check('RLS 를 위해 user_id 가 첫 segment', plain.split('/')[0] === 'u1');
+  check('기본판에서 번호를 뽑는다', questionImageIndex(plain) === 3);
+  check('표식판도 같은 번호로 본다', questionImageIndex(marked) === 3);
+  check('두 판이 같은 이미지로 묶인다', questionImageIndex(plain) === questionImageIndex(marked));
+  check('두 자리 번호', questionImageIndex(questionImagePath('u', 'p', 12, true)) === 12);
+  check('크롭이 아닌 경로는 null', questionImageIndex('u1/up1/lecture.pdf') === null);
+  check('빈 값은 null', questionImageIndex('') === null);
 }
 
 console.log('표식 참조 발문 판정(stemReferencesMarker)');
