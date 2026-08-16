@@ -208,6 +208,10 @@
 }
 
 .ll-auth-page .login-brand-scene {
+  /* 캐릭터 폭. 흔드는 손이 이미지 오른쪽 끝에 닿아 있어(우측 여백 0.3 %) 캐릭터의 오른쪽
+     가장자리가 곧 손끝이다. 인사선(.login-brand-wave-lines)을 손과 겹치지 않게 두려면
+     이 값이 필요하므로 변수로 뽑아 두고, 반응형에서도 이 변수만 바꾼다. */
+  --login-character-w: clamp(190px, 32%, 226px);
   position: relative;
   width: min(100%, 690px);
   height: 330px;
@@ -246,7 +250,7 @@
   z-index: 2;
   top: 0;
   left: 50%;
-  width: clamp(190px, 32%, 226px);
+  width: var(--login-character-w);
   height: auto;
   transform: translateX(-50%);
   filter: drop-shadow(0 18px 22px color-mix(in oklch, var(--color-ink) 13%, transparent));
@@ -267,24 +271,30 @@
   transform: rotate(-3deg);
 }
 
+/* 말풍선 꼬리. 테두리를 두 변(우/하)만 그린 사각형을 기울여 만든다.
+   불투명한 몸통이 말풍선 테두리를 가리므로, 꼬리 입구의 두 꼭짓점이 말풍선의
+   우하단 곡선(border-radius 46 %) 위에 정확히 얹혀야 외곽선이 끊기지 않는다.
+   아래 값은 106x59 말풍선의 그 곡선에 맞춰 역산한 것이라 임의로 반올림하면 다시 벌어진다. */
 .ll-auth-page .login-brand-greeting::after {
   position: absolute;
-  right: 16px;
-  bottom: -8px;
-  width: 17px;
-  height: 14px;
+  right: 17.1px;
+  bottom: -7px;
+  width: 14.3px;
+  height: 17.3px;
   border-right: 1px solid color-mix(in oklch, var(--color-primary) 22%, transparent);
   border-bottom: 1px solid color-mix(in oklch, var(--color-primary) 22%, transparent);
   background: inherit;
   content: "";
-  transform: skewY(28deg) rotate(12deg);
+  transform: skewY(37.4deg) rotate(3.9deg);
 }
 
+/* 손끝(= 캐릭터 오른쪽 가장자리) 바깥에서 시작한다. 첫 번째 선이 -55deg 로 누워
+   왼쪽으로 약 11px 삐져나오므로, 그만큼을 더한 뒤 여백을 준 값이 18px 이다. */
 .ll-auth-page .login-brand-wave-lines {
   position: absolute;
   z-index: 3;
   top: 48px;
-  left: calc(50% + 86px);
+  left: calc(50% + var(--login-character-w) / 2 + 18px);
   width: 48px;
   height: 46px;
 }
@@ -504,15 +514,12 @@
   }
 
   .ll-auth-page .login-brand-scene {
+    --login-character-w: 210px;
     height: 290px;
   }
 
   .ll-auth-page .login-brand-landscape {
     top: 62px;
-  }
-
-  .ll-auth-page .login-cpx-character {
-    width: 210px;
   }
 
   .ll-auth-page .learning-flow-node {
@@ -564,6 +571,7 @@
   }
 
   .ll-auth-page .login-brand-scene {
+    --login-character-w: 146px;
     height: 220px;
     margin-top: 10px;
   }
@@ -577,10 +585,6 @@
     height: calc(100% - 46px);
   }
 
-  .ll-auth-page .login-cpx-character {
-    width: 146px;
-  }
-
   .ll-auth-page .login-brand-greeting {
     top: 14px;
     left: 6%;
@@ -588,16 +592,19 @@
     font-size: 12px;
   }
 
+  /* 71x39 로 작아진 말풍선의 우하단 곡선에 맞춰 다시 역산한 값 (위 데스크톱 주석 참고) */
   .ll-auth-page .login-brand-greeting::after {
-    right: 12px;
-    bottom: -6px;
-    width: 13px;
-    height: 10px;
+    right: 11.1px;
+    bottom: -4.9px;
+    width: 9.3px;
+    height: 11.1px;
+    transform: skewY(36.9deg) rotate(4deg);
   }
 
   .ll-auth-page .login-brand-wave-lines {
     top: 25px;
-    left: calc(50% + 52px);
+    /* scale(.7) 로 좌측 삐침도 함께 줄어드는 만큼 여백을 13px 로 줄여 간격을 맞춘다. */
+    left: calc(50% + var(--login-character-w) / 2 + 13px);
     transform: scale(.7);
     transform-origin: left top;
   }
@@ -675,11 +682,8 @@
 
 @media (max-width: 430px) {
   .ll-auth-page .login-brand-scene {
+    --login-character-w: 132px;
     height: 214px;
-  }
-
-  .ll-auth-page .login-cpx-character {
-    width: 132px;
   }
 
   .ll-auth-page .learning-flow-node {
@@ -710,11 +714,8 @@
   }
 
   .ll-auth-page .login-brand-scene {
+    --login-character-w: 128px;
     height: 208px;
-  }
-
-  .ll-auth-page .login-cpx-character {
-    width: 128px;
   }
 
   .ll-auth-page .learning-flow-node {
@@ -749,11 +750,8 @@
   }
 
   .ll-auth-page .login-brand-scene {
+    --login-character-w: 120px;
     height: 198px;
-  }
-
-  .ll-auth-page .login-cpx-character {
-    width: 120px;
   }
 
   .ll-auth-page .learning-flow-node {
