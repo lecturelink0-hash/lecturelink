@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { api, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/Button';
 import { PLAN_CATALOG, planName } from '@/lib/payment/plans';
+import { QUOTA_UNLIMITED_DISPLAY_MIN } from '@/lib/types/domain';
 import { Check, Ticket, BarChart3 } from 'lucide-react';
 
 interface QuotaResource {
@@ -356,7 +357,8 @@ function QuotaBar({
   unit?: 'count' | 'minutes';
 }) {
   const total = data.limit + data.bonus;
-  const unlimited = data.remaining >= 1_000_000 || data.limit >= 1_000_000;
+  const unlimited =
+    data.remaining >= QUOTA_UNLIMITED_DISPLAY_MIN || data.limit >= QUOTA_UNLIMITED_DISPLAY_MIN;
   const percent = unlimited ? 0 : total === 0 ? 0 : Math.min(100, (data.used / total) * 100);
 
   // 사용분은 올림, 잔여는 내림 — 쓴 시간을 줄여 말하거나 남은 시간을 부풀리지 않는다.

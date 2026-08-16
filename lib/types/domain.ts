@@ -233,13 +233,29 @@ export const PLAN_LIMITS: Record<
   PlanTier,
   { questions: number; uploads: number; images: number; price: number }
 > = {
+  // ⚠️ 한도의 단일 소스는 이 표가 아니라 DB 함수 check_user_quota / consume_quota_checked 다
+  // (supabase/migrations/00039_question_quota_500_all_paid_tiers.sql). 앱이 쓰는 한도는 전부
+  // lib/quota/check.ts → RPC 로만 흐르며 이 상수는 참조되지 않는다. 손으로 관리하는 사본이라
+  // 실제로 두 번 어긋났다(pro questions 2000, free uploads 1) — 값을 바꿀 일이 생기면
+  // 먼저 마이그레이션을 고치고 여기를 뒤따라 맞출 것.
   // 가격의 단일 소스는 lib/payment/plans.ts PLAN_CATALOG — 여기 값은 그와 일치해야 한다.
   // 2026-08 개편: 내신대비 7,900 / CPX 11,900 / 통합 16,900.
-  free: { questions: 50, uploads: 1, images: 5, price: 0 },
+  free: { questions: 50, uploads: 5, images: 5, price: 0 },
   lite: { questions: 500, uploads: 10, images: 30, price: 7900 },
   standard: { questions: 500, uploads: 5, images: 40, price: 11900 },
-  pro: { questions: 2000, uploads: 100, images: 200, price: 16900 },
+  pro: { questions: 500, uploads: 100, images: 200, price: 16900 },
 };
+
+/**
+ * 사용량 막대를 '무제한'으로 표시할 하한.
+ *
+ * DB 의 unlimited 티어 한도는 999999 이고(00039), 앱 레벨 우회 센티널은
+ * lib/quota/check.ts 의 QUOTA_UNLIMITED_VALUE = 9,999,999 다. 화면 쪽이 1,000,000 을
+ * 기준으로 삼는 바람에 정작 DB 값 999999 를 못 잡아 '0 / 999999' 로 그려졌다.
+ * 두 값을 모두 덮도록 999999 이상을 무제한으로 본다.
+ * (lib/quota/check.ts 는 서버 전용 모듈이라 클라이언트 화면에서 import 할 수 없어 여기에 둔다.)
+ */
+export const QUOTA_UNLIMITED_DISPLAY_MIN = 999_999;
 
 // ───────────── AI 생성 파이프라인 ─────────────
 
