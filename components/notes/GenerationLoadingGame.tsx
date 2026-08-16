@@ -152,20 +152,42 @@ export default function GenerationLoadingGame({
 
   // ── 남은 시간 추정: 진행률 증가 속도 기반, 초기엔 기본 1분 30초에서 카운트다운 ──
   const etaRef = useRef<{ start: number; p0: number }>({ start: 0, p0: 0 });
+  // 마지막으로 화면에 보여 준 남은 시간과 그 시각. 표시가 되돌아 늘어나지 않게 하는 기준.
+  const shownRef = useRef<{ secs: number; at: number }>({ secs: 90, at: 0 });
+  // 진행률이 마지막으로 "실제로" 움직인 시각 — 정체를 감지해 가짜 카운트다운을 멈춘다.
+  const movedRef = useRef<{ pct: number; at: number }>({ pct: -1, at: 0 });
   useEffect(() => {
-    etaRef.current = { start: performance.now(), p0: progress };
+    const now = performance.now();
+    etaRef.current = { start: now, p0: progress };
+    shownRef.current = { secs: 90, at: now };
+    movedRef.current = { pct: progress, at: now };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
+    // 진행률이 움직였으면 정체 타이머를 되감는다.
+    if (Math.round(progress) !== Math.round(movedRef.current.pct)) {
+      movedRef.current = { pct: progress, at: performance.now() };
+    }
     const tick = () => {
+      const now = performance.now();
       const { start, p0 } = etaRef.current;
-      const elapsed = (performance.now() - start) / 1000;
-      // 보통 1분 내외로 끝난다(병렬 소배치 생성) — "1분 30초 초과"로 안내하지 않는다.
-      // 남은 시간 = 기본 추정 1분 30초에서 경과 시간만큼 감소(최소 10초 표시 유지).
+      const elapsed = (now - start) / 1000;
+      const stalledFor = (now - movedRef.current.at) / 1000;
+
+      // ── 정체 안내
+      // 진행률이 한동안 그대로면 남은 시간을 지어내지 않는다. 종전에는 이때
+      //   secs = (100 - progress) * (elapsed / dp)
+      // 의 elapsed 만 계속 커져 "약 10초 → 20초 → 30초 → 40초 남았습니다" 처럼
+      // 남은 시간이 거꾸로 늘어났다(실측 영상에서 그대로 관찰됐다).
+      if (stalledFor > 45) {
+        setEtaText('예상보다 오래 걸리고 있습니다…');
+        return;
+      }
       if (elapsed > 100) {
         setEtaText('곧 완료됩니다…');
         return;
       }
+
       const dp = progress - p0;
       let secs: number;
       if (elapsed > 8 && dp > 1.5) {
@@ -175,7 +197,12 @@ export default function GenerationLoadingGame({
       }
       // 상한 1분 30초: 어떤 경우에도 그 이상으로 안내하지 않는다.
       secs = Math.min(90 - elapsed * 0.5, secs);
-      setEtaText(formatEta(Math.min(90, Math.max(10, secs))));
+      // ★ 표시는 절대 늘어나지 않는다 — 직전 표시에서 흐른 시간만큼은 최소한 줄어든다.
+      //   추정이 나빠져도 사용자에게는 "기다릴수록 늘어나는 시계"로 보이지 않게 한다.
+      const decayed = shownRef.current.secs - (now - shownRef.current.at) / 1000;
+      secs = Math.max(10, Math.min(secs, decayed));
+      shownRef.current = { secs, at: now };
+      setEtaText(formatEta(Math.min(90, secs)));
     };
     tick();
     const id = setInterval(tick, 1000);
