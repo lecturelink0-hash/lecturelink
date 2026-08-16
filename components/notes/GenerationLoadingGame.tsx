@@ -263,11 +263,16 @@ export default function GenerationLoadingGame({
   /** 스캔 경로(vision·ocr)에 처음 들어간 시각 — 이 경로는 소요 규모가 완전히 다르다. */
   const scanEnteredRef = useRef(0);
   /**
-   * 숫자를 한 번이라도 표시했는가.
-   * 아직 아무 숫자도 안 냈다면(= '계산 중') 경로가 확정되는 순간 기준선을 다시 잡아도
-   * 사용자에겐 "늘어난 시계"로 보이지 않는다. 이미 숫자를 냈다면 단조 감소를 지킨다.
+   * 직전 tick 이 숫자를 표시했는가.
+   *
+   * 단조 감소 기준선(shownRef)은 숫자를 표시할 때만 갱신된다. 그래서 '계산 중'·'예상보다
+   * 길어지는 중' 같은 문구 상태에 머무는 동안 기준선이 그대로 낡아 버리고, 거기서 빠져나와
+   * 다시 숫자를 낼 때 `decayed` 가 음수가 되어 **남은 시간이 넉넉한데도 '마무리 중'** 이
+   * 떠 버린다(정체 60초 후 진행률이 다시 움직이는 경우가 정확히 이것).
+   * 문구 상태를 거쳐 숫자로 복귀할 때는 기준선을 다시 잡는다 — 직전에 화면에 숫자가
+   * 없었으므로 사용자에겐 "늘어난 시계"로 보이지 않는다.
    */
-  const shownNumberRef = useRef(false);
+  const lastWasNumberRef = useRef(false);
 
   useEffect(() => {
     const now = performance.now();
@@ -293,12 +298,6 @@ export default function GenerationLoadingGame({
 
     // 스캔 자료 경로 진입 — 본문 텍스트가 없어 페이지 전체 OCR 로 떨어진 실행이다.
     // 이 경로에 들어왔다는 사실만으로 가벼운 예측은 무효가 된다(실측 96.4초 사례).
-    /** 경로가 확정되는 순간, 아직 숫자를 낸 적이 없다면 단조 감소 기준선을 다시 잡는다. */
-    const rebaseIfSilent = (elapsedSec: number) => {
-      if (shownNumberRef.current) return;
-      shownRef.current = { secs: Math.max(0, totalRef.current - elapsedSec), at: now };
-    };
-
     const scanning = stage === 'vision' || stage === 'ocr';
     if (scanning && scanEnteredRef.current === 0) {
       scanEnteredRef.current = now;
@@ -307,7 +306,6 @@ export default function GenerationLoadingGame({
         totalRef.current,
         elapsedSec + SCAN_PATH_MIN_REMAIN_SEC + waveSec + restSec,
       );
-      rebaseIfSilent(elapsedSec);
     }
     // 'generating' 진입 시점 = 준비(추출)가 실제로 끝난 시각. 예측의 준비 구간을
     // 실측치로 갈아끼운다 — 큰 강의록이면 늘고, 가벼우면 줄어든다.
@@ -316,7 +314,6 @@ export default function GenerationLoadingGame({
       genEnteredRef.current = now;
       const prepSec = (now - startRef.current) / 1000;
       totalRef.current = prepSec + waveSec + restSec;
-      rebaseIfSilent(prepSec);
     }
 
     const tick = () => {
@@ -354,8 +351,14 @@ export default function GenerationLoadingGame({
       setShownProgress((prev) => Math.min(99, Math.max(prev, progress, creep)));
 
       // ── 남은 시간
+      /** 문구 상태로 빠질 때 — 다음에 숫자로 돌아오면 기준선을 다시 잡게 표시해 둔다. */
+      const showStatus = (text: string) => {
+        lastWasNumberRef.current = false;
+        setEtaText(text);
+      };
+
       if (progress >= 97) {
-        setEtaText('곧 완료됩니다…');
+        showStatus('곧 완료됩니다…');
         return;
       }
       // '이미지형'을 안 고른 요청은 아직 어느 경로인지 모른다 — 본문 텍스트가 있는
@@ -364,24 +367,29 @@ export default function GenerationLoadingGame({
       // 단계가 갈릴 때까지(보통 1~2초) 숫자를 내지 않는다.
       // 이미지형을 고른 요청은 사용자의 선택 자체가 무거운 경로를 확정하므로 바로 안내한다.
       if (!withImages && genEnteredRef.current === 0 && scanEnteredRef.current === 0) {
-        setEtaText('시간 계산 중…');
+        showStatus('시간 계산 중…');
         return;
       }
       // 예측을 크게 벗어났으면 숫자 대신 상태를 말한다.
       if (elapsed > total * 1.6 || stalledFor > 60) {
-        setEtaText('예상보다 길어지는 중…');
+        showStatus('예상보다 길어지는 중…');
         return;
       }
-      const remaining = total - elapsed;
+      const remaining = Math.max(0, total - elapsed);
+      // 문구 상태를 거쳐 돌아왔다면 낡은 기준선을 버리고 현재 추정으로 다시 잡는다
+      // (그대로 두면 문구를 띄운 시간만큼 기준선이 썩어 '마무리 중'에 갇힌다).
+      if (!lastWasNumberRef.current) {
+        shownRef.current = { secs: remaining, at: t };
+      }
       // ★ 단조 감소 보장: 직전 표시에서 흐른 시간만큼은 반드시 줄어든다.
       const decayed = shownRef.current.secs - (t - shownRef.current.at) / 1000;
       const secs = Math.min(remaining, decayed);
       shownRef.current = { secs, at: t };
       if (secs < 3) {
-        setEtaText('마무리 중…');
+        showStatus('마무리 중…');
         return;
       }
-      shownNumberRef.current = true;
+      lastWasNumberRef.current = true;
       setEtaText(formatEta(secs));
     };
     tick();
