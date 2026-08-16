@@ -13,6 +13,7 @@
  * 규칙만 문자열로 확인하면 "표식을 찍었다고 믿었는데 안 찍힌" 상태를 잡지 못한다.
  */
 
+import { readFileSync } from 'node:fs';
 import { maskTextRegions, isShortFigureLabel as maskShortLabel } from '../lib/extract/mask-text.ts';
 import {
   looksLikeStructureLabel,
@@ -264,6 +265,32 @@ console.log('실제 렌더 — 마스킹 → 표식');
 
   const noSources = await annotateMarkers(masked.png, []);
   check('후보가 없으면 원본을 그대로 돌려준다', noSources.png === masked.png && noSources.markers.length === 0);
+}
+
+console.log('표식 글자 — 폰트 API 를 아예 쓰지 않는가');
+{
+  // 운영 사고의 근본 원인은 "폰트가 없는 런타임에서 fillText 를 썼다"는 것이다.
+  // 그 조건은 로컬에서 재현할 수 없다 — macOS 의 node-canvas 는 CoreText 를 쓰므로
+  // FONTCONFIG_FILE 을 비워도 글자가 그대로 그려진다(실제로 시도해 확인했다).
+  //
+  // 재현할 수 없는 조건은 **없앤 것을 증명**하는 쪽이 확실하다. 그리기 경로가 폰트
+  // API 를 한 번도 부르지 않으면 폰트 유무가 결과를 바꿀 수 없다.
+  const raw = readFileSync(new URL('../lib/extract/annotate-markers.ts', import.meta.url), 'utf8');
+  // 주석은 뺀다 — 사고 경위를 설명하려고 주석에 `ctx.fillText(…)` 를 적어 두었고,
+  // 그대로 검사하면 설명을 지워야 통과하는 검사가 된다.
+  const src = raw.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
+  const banned = ['fillText', 'strokeText', 'measureText', 'registerFont'];
+  const hits = banned.filter((name) => new RegExp(`\\b${name}\\s*\\(`).test(src));
+  check(
+    '폰트 렌더링 API 를 호출하지 않는다',
+    hits.length === 0,
+    `발견: ${hits.join(', ')} — 폰트 없는 런타임에서 두부(□)가 된다`,
+  );
+  check(
+    'ctx.font 을 설정하지 않는다',
+    !/\.font\s*=/.test(src),
+    'font 를 지정한다는 것은 폰트에 의존한다는 뜻이다',
+  );
 }
 
 console.log('표식 글자 — 폰트 없이 실제로 구별되게 그려지는가');
