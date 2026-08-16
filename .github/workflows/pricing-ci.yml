@@ -1,0 +1,35 @@
+name: Landing pricing consistency
+
+on:
+  pull_request:
+    paths:
+      - 'components/landing/Landing.tsx'
+      - 'lib/payment/plans.ts'
+      - 'public/landing.html'
+      - '.vercelignore'
+      - 'package.json'
+      - 'scripts/verify-pricing-consistency.mjs'
+      - '.github/workflows/pricing-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'components/landing/Landing.tsx'
+      - 'lib/payment/plans.ts'
+      - 'public/landing.html'
+      - '.vercelignore'
+      - 'package.json'
+      - 'scripts/verify-pricing-consistency.mjs'
+      - '.github/workflows/pricing-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/verify-pricing-consistency.mjs

@@ -6,8 +6,8 @@
   "scripts": {
     "design:css": "node scripts/build-redesign-css.mjs",
     "dev": "next dev",
-    "build": "node scripts/vercel-build-guard.mjs && next build",
-    "build:clean": "rm -rf .next && node scripts/vercel-build-guard.mjs && next build",
+    "build": "node scripts/verify-pricing-consistency.mjs && node scripts/vercel-build-guard.mjs && next build",
+    "build:clean": "rm -rf .next && node scripts/verify-pricing-consistency.mjs && node scripts/vercel-build-guard.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
