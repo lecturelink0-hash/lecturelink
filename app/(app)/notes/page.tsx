@@ -1280,10 +1280,24 @@ function QuestionCard({
 
   return (
     <Card>
-      <div className="flex items-start gap-3.5 mb-5">
+      {/*
+        번호를 flex 열이 아니라 float 로 띄운다. flex 로 두면 번호 칸(2.25rem + 간격 0.875rem)이
+        발문 마지막 줄까지 빈 열로 남아, 모바일에서 발문이 카드 폭의 3/4 만 쓰게 된다.
+        float 은 자기 높이(2.25rem)만큼만 줄을 밀어내므로 번호 줄과 그 아래 한 줄까지만
+        들여쓰이고, 그 아래부터는 발문이 카드 폭을 모두 쓴다.
+        (아래 여백을 더 줘서 들여쓰기를 한 줄 더 끌고 갈 수도 있으나, 그러면 발문이 짧은
+         카드가 그 여백만큼 오히려 커진다 — 여백을 줄이려는 목적과 어긋나 두지 않는다.)
+        overflow-hidden 은 발문이 짧을 때 float 이 아래 이미지·선택지로 새지 않도록 가둔다.
+      */}
+      <div className="mb-5 overflow-hidden">
         <span
-          className="ll-chip flex-shrink-0 text-sm font-bold tabular-nums"
-          style={{ width: '2.25rem', height: '2.25rem' }}
+          className="ll-chip text-sm font-bold tabular-nums"
+          style={{
+            float: 'left',
+            width: '2.25rem',
+            height: '2.25rem',
+            marginRight: '0.875rem',
+          }}
         >
           {index}
         </span>
