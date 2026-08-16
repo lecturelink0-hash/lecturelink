@@ -12,7 +12,10 @@ import { UploadDropZone } from '@/components/ui/UploadDropZone';
 import { UploadNextSteps } from '@/components/ui/UploadNextSteps';
 import { GuideLabel } from '@/components/ui/GuideLabel';
 import { Segmented } from '@/components/ui/Segmented';
-import GenerationLoadingGame from '@/components/notes/GenerationLoadingGame';
+import GenerationLoadingGame, {
+  STAGE_LABELS,
+  STAGE_RANGES,
+} from '@/components/notes/GenerationLoadingGame';
 import {
   FileText,
   Image as ImageIcon,
@@ -185,17 +188,10 @@ const LOCAL_ID_PREFIX = 'local-';
  * ocr=crop 수, generating=문항 수)로 0부터 다시 카운트한다. 이 값을 그대로 %로 쓰면
  * 게이지가 100%까지 찼다가 다음 단계에서 0%로 되돌아간다. 각 단계를 고정 가중 구간에
  * 매핑해 단계가 넘어갈수록 항상 앞으로만 가게 한다.
+ *
+ * 구간표(STAGE_RANGES)는 로딩 화면이 남은 시간 보정에도 같은 표를 쓰므로
+ * GenerationLoadingGame 에서 한 번만 정의하고 여기서 가져다 쓴다.
  */
-const STAGE_RANGES: Record<string, [number, number]> = {
-  queued: [2, 4],
-  downloading: [4, 8],
-  extracting: [8, 16],
-  vision: [16, 38],
-  ocr: [38, 58],
-  generating: [58, 100],
-  partially_completed: [58, 100],
-  completed: [100, 100],
-};
 
 function uploadStageProgress(u: UploadRow): number {
   // 완료/실패/취소 = 이 파일 몫은 끝 — 다음 파일로 진행률이 넘어가도록 100 취급.
@@ -678,7 +674,16 @@ export default function NotesPage() {
     );
     genMaxProgressRef.current = genProgress;
     return (
-      <GenerationLoadingGame progress={genProgress} fileName={pm?.file_name ?? undefined} />
+      <GenerationLoadingGame
+        progress={genProgress}
+        fileName={pm?.file_name ?? undefined}
+        stage={pm?.processing_stage ?? (pm?.status === 'processing' ? 'downloading' : 'queued')}
+        // 남은 시간 예측 입력 — 요청 규모는 시작 시점에 이미 알고 있다.
+        // '이미지형' 포함 여부가 소요를 4~5배 가른다(실측: 텍스트만 7.7초 vs 이미지 포함 32~53초).
+        desiredCount={count}
+        withImages={questionTypes.includes('이미지형')}
+        filesTotal={filesTotal}
+      />
     );
   }
 
@@ -1531,14 +1536,8 @@ function StatusLabel({
     );
   }
   if (isProcessing || status === 'processing') {
-    const stageLabel: Record<string, string> = {
-      downloading: '자료 불러오는 중',
-      extracting: '페이지 추출 중',
-      vision: '이미지 분석 중',
-      ocr: '텍스트 판독 중',
-      generating: '문항 생성 중',
-      partially_completed: '나머지 문항 생성 중',
-    };
+    // 로딩 화면과 같은 문구를 쓴다(중복 정의가 서로 어긋나지 않게).
+    const stageLabel = STAGE_LABELS;
     const progress =
       upload.progress_total > 0
         ? ` ${upload.progress_current}/${upload.progress_total}`
