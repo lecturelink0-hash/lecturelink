@@ -7,7 +7,7 @@
 - Changed files: `components/landing/Landing.tsx`, `package.json`, `.vercelignore`, `scripts/verify-pricing-consistency.mjs`, `.github/workflows/pricing-ci.yml`.
 - Main changes: landing pricing now reads names, prices, and descriptions from `PLAN_CATALOG` and renders three cards; legacy static `public/landing.html` is excluded from Vercel uploads; a pricing consistency check runs before every build and in CI; the existing main-only production build guard remains active.
 - Checks: pricing consistency check passed; `git diff --check` passed. Canonical dependency installation timed out without a lock error; full canonical typecheck/build could not run because `node_modules` was unavailable.
-- Production status: branch `codex/landing-pricing-three-20260816` is prepared for push/PR. Production remains unchanged until review, merge into `main`, automatic Vercel deployment, and live verification.
+- Production status: branch `codex/landing-pricing-three-20260816` was pushed with commit `b6a3520`. Production remains unchanged until PR review, merge into `main`, automatic Vercel deployment, and live verification.
 - Final status: conditional completion pending PR merge and production verification.
 
 ## 2026-08-14 sharp 타입 exports 배포 오류 수정
