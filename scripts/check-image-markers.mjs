@@ -266,6 +266,103 @@ console.log('실제 렌더 — 마스킹 → 표식');
   check('후보가 없으면 원본을 그대로 돌려준다', noSources.png === masked.png && noSources.markers.length === 0);
 }
 
+console.log('표식 글자 — 폰트 없이 실제로 구별되게 그려지는가');
+{
+  // 운영 사고 재발 방지. 첫 배포분은 ctx.fillText + 'sans-serif' 를 썼는데 Vercel
+  // 리눅스 런타임에 폰트가 없어 **모든 표식이 두부(□)로** 나갔다. 원과 테두리는 우리가
+  // 그리므로 "어두운 픽셀이 있는가"만 보는 검사로는 잡히지 않는다(그때 통과했다).
+  //
+  // 두부·빈 원은 다섯 글자가 **서로 똑같아진다.** 그래서 글자별 내부 픽셀이 전부
+  // 다른지를 본다 — 이건 폰트가 없으면 반드시 깨진다.
+  const { createCanvas, loadImage } = await import('canvas');
+  const IW = 400;
+  const IH = 600;
+  const base = createCanvas(IW, IH);
+  const bctx = base.getContext('2d');
+  bctx.fillStyle = '#ffffff';
+  bctx.fillRect(0, 0, IW, IH);
+
+  const BOX_H = 24;
+  const regions = Array.from({ length: 5 }, (_, i) => ({
+    text: `Structure number ${i}`,
+    x0: 40,
+    y0: 40 + i * 100,
+    x1: 140,
+    y1: 40 + i * 100 + BOX_H,
+  }));
+  const picked = selectMarkerSources(regions, IW, IH);
+  check('다섯 자리를 모두 고른다', picked.length === 5, `실제 ${picked.length}개`);
+
+  const res = await annotateMarkers(new Uint8Array(base.toBuffer('image/png')), picked);
+  check('다섯 표식을 반환한다', res.markers.length === 5);
+  check('A~E 를 순서대로 쓴다', res.markers.map((m) => m.letter).join('') === 'ABCDE');
+
+  const img = await loadImage(Buffer.from(res.png));
+  const out = createCanvas(IW, IH);
+  const octx = out.getContext('2d');
+  octx.drawImage(img, 0, 0);
+  const data = octx.getImageData(0, 0, IW, IH).data;
+  const dark = (x, y) => {
+    const o = (y * IW + x) * 4;
+    return 0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2] < 100;
+  };
+
+  // 반지름을 여기서 다시 계산하지 않는다(구현 공식과 이중으로 묶이면 크기를 조정할
+  // 때마다 검사가 엉뚱하게 깨진다). 그린 결과에서 원의 바깥 테두리를 찾아 역산한다.
+  const outerRadius = (cx, cy) => {
+    for (let d = 60; d > 3; d--) {
+      if (cx + d < IW && dark(cx + d, cy)) return d;
+    }
+    return 0;
+  };
+  const signatures = picked.map((s) => {
+    const cx = Math.round((s.x0 + s.x1) / 2);
+    const cy = Math.round((s.y0 + s.y1) / 2);
+    const R = outerRadius(cx, cy);
+    // 테두리를 빼고 **원 안쪽만** 본다 — 테두리는 글자와 무관하게 항상 같다.
+    // 글자 전체가 들어올 만큼 넓게 잡는다(너무 좁으면 C·D 처럼 획이 바깥에 있는
+    // 글자들의 중앙이 나란히 비어 서로 같아 보인다).
+    const inner = Math.round(R * 0.72);
+    let bits = '';
+    let ink = 0;
+    for (let y = cy - inner; y <= cy + inner; y++) {
+      for (let x = cx - inner; x <= cx + inner; x++) {
+        const d = dark(x, y);
+        bits += d ? '1' : '0';
+        if (d) ink += 1;
+      }
+    }
+    return { bits, ink, total: (inner * 2 + 1) ** 2 };
+  });
+
+  signatures.forEach((sig, i) => {
+    const letter = 'ABCDE'[i];
+    const ratio = sig.ink / sig.total;
+    check(
+      `${letter} — 원 안에 획이 그려졌다 (잉크 ${(ratio * 100).toFixed(1)}%)`,
+      ratio > 0.04,
+      '빈 원이다 — 글자가 아예 안 그려졌다',
+    );
+    check(
+      `${letter} — 원을 까맣게 칠하지 않았다`,
+      ratio < 0.7,
+      `잉크 ${(ratio * 100).toFixed(1)}% — 글자가 아니라 덩어리다`,
+    );
+  });
+
+  const dupes = [];
+  for (let i = 0; i < signatures.length; i++) {
+    for (let j = i + 1; j < signatures.length; j++) {
+      if (signatures[i].bits === signatures[j].bits) dupes.push(`${'ABCDE'[i]}=${'ABCDE'[j]}`);
+    }
+  }
+  check(
+    '다섯 글자가 서로 다르게 그려진다(두부·빈 원이면 여기서 깨진다)',
+    dupes.length === 0,
+    `같은 모양: ${dupes.join(', ')}`,
+  );
+}
+
 if (failed > 0) {
   console.error(`\n실패 ${failed}건`);
   process.exit(1);
