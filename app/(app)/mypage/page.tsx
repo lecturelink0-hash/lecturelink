@@ -21,6 +21,7 @@ import { StudyCalendar } from '@/components/ui/StudyCalendar';
 import { api, ApiError } from '@/lib/api/client';
 import { PLAN_CATALOG } from '@/lib/payment/plans';
 import { calcStreak, diffDayKeys, formatStudyTime, kstTodayKey } from '@/lib/utils/kst';
+import { QUOTA_UNLIMITED_DISPLAY_MIN } from '@/lib/types/domain';
 import type { UserProfile } from '@/lib/types/domain';
 import type { PlanTier } from '@/lib/types/database';
 
@@ -890,7 +891,8 @@ function QuotaRow({
   /** 'minutes' 면 초 단위로 받은 값을 분으로 환산해 표시한다(CPX 이용 시간). */
   unit?: 'count' | 'minutes';
 }) {
-  const unlimited = remaining >= 1_000_000 || total >= 1_000_000;
+  const unlimited =
+    remaining >= QUOTA_UNLIMITED_DISPLAY_MIN || total >= QUOTA_UNLIMITED_DISPLAY_MIN;
   // 비율은 환산 전 원값(초/개)으로 — 분 반올림이 막대 길이를 흔들지 않게
   const pct = unlimited ? 100 : total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
   // 잔여 20% 이하는 warn 색으로 — "잔여량" 막대임이 상태로 드러나게
