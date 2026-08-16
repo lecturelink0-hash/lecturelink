@@ -1,5 +1,15 @@
 # WORK LOG
 
+## 2026-08-16 Landing pricing drift fix
+
+- Request and purpose: restore the landing page pricing section from four cards to the intended three paid plans and prevent the old version from returning.
+- Root cause: production was serving an older `components/landing/Landing.tsx` implementation with four hardcoded plans, while the current payment catalog already defined three plans. This was deployment/source drift.
+- Changed files: `components/landing/Landing.tsx`, `package.json`, `.vercelignore`, `scripts/verify-pricing-consistency.mjs`, `.github/workflows/pricing-ci.yml`.
+- Main changes: landing pricing now reads names, prices, and descriptions from `PLAN_CATALOG` and renders three cards; legacy static `public/landing.html` is excluded from Vercel uploads; a pricing consistency check runs before every build and in CI; the existing main-only production build guard remains active.
+- Checks: pricing consistency check passed; `git diff --check` passed. Canonical dependency installation timed out without a lock error; full canonical typecheck/build could not run because `node_modules` was unavailable.
+- Production status: branch `codex/landing-pricing-three-20260816` is prepared for push/PR. Production remains unchanged until review, merge into `main`, automatic Vercel deployment, and live verification.
+- Final status: conditional completion pending PR merge and production verification.
+
 ## 2026-08-14 sharp 타입 exports 배포 오류 수정
 
 - 요청 및 목적: Vercel Production에서 `sharp` 동적 import 타입 해석 오류로 빌드가 실패하는 문제를 최소 변경으로 해결.
