@@ -85,18 +85,21 @@
     {
       "item": "전반적 외견",
       "method": "표정·긴장 상태 확인",
-      "expectedFinding": "다크서클, 굳은 표정, 긴장된 자세 가능",
-      "examConceptId": "body_habitus_assessment"
+      "expectedFinding": "다크서클이 뚜렷하고 표정이 굳어 있으며 자세가 긴장되어 있음",
+      "examConceptId": "body_habitus_assessment",
+      "polarity": "positive"
     },
     {
       "item": "활력징후",
       "method": "혈압·맥박 확인",
-      "expectedFinding": "긴장으로 빈맥/혈압 상승 가능"
+      "expectedFinding": "맥박 96회/분, 혈압 138/86 mmHg — 긴장으로 약간 상승",
+      "polarity": "positive"
     },
     {
       "item": "신경학적 진찰",
       "method": "뇌신경·운동·감각 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

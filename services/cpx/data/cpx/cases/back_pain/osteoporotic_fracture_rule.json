@@ -84,7 +84,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "척추 정렬",
@@ -101,17 +102,20 @@
     {
       "item": "하지직거상",
       "method": "SLR test 양측",
-      "expectedFinding": "음성"
+      "expectedFinding": "음성",
+      "polarity": "negative"
     },
     {
       "item": "하지 신경",
       "method": "하지 감각·근력·심부건반사 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "보행",
       "method": "보행 관찰",
-      "expectedFinding": "느리지만 정상 보행 가능"
+      "expectedFinding": "통증 때문에 걸음이 느리지만 부축 없이 걸음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

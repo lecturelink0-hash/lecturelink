@@ -85,23 +85,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "간헐적 미열 가능, 그 외 정상"
+      "expectedFinding": "체온 37.5°C, 그 외 활력징후는 정상 범위",
+      "polarity": "positive"
     },
     {
       "item": "옆구리",
       "method": "CVA 압통·종괴 확인",
-      "expectedFinding": "환측 옆구리 둔통·종괴 촉지 가능, 급성 CVA 압통은 없음",
+      "expectedFinding": "오른쪽 옆구리에서 단단한 종괴가 만져지고 둔통이 있으며 급성 CVA 압통은 없음",
       "polarity": "positive"
     },
     {
       "item": "하복부",
       "method": "하복부·치골상부 촉진",
-      "expectedFinding": "압통 없음, 방광 팽만 없음"
+      "expectedFinding": "압통 없음, 방광 팽만 없음",
+      "polarity": "negative"
     },
     {
       "item": "부종",
       "method": "눈꺼풀·하지 부종 및 혈압 확인",
-      "expectedFinding": "부종 없음"
+      "expectedFinding": "부종 없음",
+      "polarity": "negative"
     },
     {
       "item": "소변검사",

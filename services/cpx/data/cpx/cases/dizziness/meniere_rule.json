@@ -81,32 +81,38 @@
     {
       "item": "활력징후·기립",
       "method": "활력징후·기립 혈압 측정",
-      "expectedFinding": "정상, 기립성 저하 없음"
+      "expectedFinding": "정상, 기립성 저하 없음",
+      "polarity": "negative"
     },
     {
       "item": "안진",
       "method": "안진·안구운동 검사",
-      "expectedFinding": "발작 사이 시기 — 자발 안진 없음"
+      "expectedFinding": "발작 사이 시기로 자발 안진 없음",
+      "polarity": "negative"
     },
     {
       "item": "두위검사",
       "method": "Dix-Hallpike 검사",
-      "expectedFinding": "음성 (위치성 아님)"
+      "expectedFinding": "음성 (위치성 아님)",
+      "polarity": "negative"
     },
     {
       "item": "평형·보행",
       "method": "Romberg·보행 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "신경·소뇌",
       "method": "소뇌기능·신경학적 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "빈혈",
       "method": "결막 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "청력",

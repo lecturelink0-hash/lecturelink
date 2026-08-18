@@ -79,7 +79,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 정상"
+      "expectedFinding": "활력징후 정상",
+      "polarity": "negative"
     },
     {
       "item": "압통점",
@@ -96,12 +97,14 @@
     {
       "item": "Spurling",
       "method": "Spurling 확인",
-      "expectedFinding": "Spurling 음성(방사통 없음)"
+      "expectedFinding": "Spurling 음성(방사통 없음)",
+      "polarity": "negative"
     },
     {
       "item": "상지 신경",
       "method": "상지 신경 확인",
-      "expectedFinding": "상지 근력·감각·반사 정상"
+      "expectedFinding": "상지 근력·감각·반사 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -84,12 +84,14 @@
     {
       "item": "동공·안구·구강·혀·두부 외상",
       "method": "동공·안구·구강·혀·두부 외상 확인",
-      "expectedFinding": "동공 정상, 혀 깨문 흔적 가능, 두부 외상 없음"
+      "expectedFinding": "동공 정상, 혀 왼쪽 옆면에 깨문 상처가 있고 두부 외상 없음",
+      "polarity": "positive"
     },
     {
       "item": "수막자극징후",
       "method": "수막자극징후 확인",
-      "expectedFinding": "수막자극징후 음성"
+      "expectedFinding": "수막자극징후 음성",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
@@ -100,7 +102,8 @@
     {
       "item": "혈당",
       "method": "혈당 확인",
-      "expectedFinding": "혈당 정상"
+      "expectedFinding": "혈당 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

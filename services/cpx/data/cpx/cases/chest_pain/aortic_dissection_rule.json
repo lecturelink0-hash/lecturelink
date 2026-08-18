@@ -88,17 +88,20 @@
     {
       "item": "흉벽",
       "method": "흉벽 확인",
-      "expectedFinding": "흉벽 압통 없음"
+      "expectedFinding": "흉벽 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음 확인",
-      "expectedFinding": "이완기 심잡음 들릴 수 있음(대동맥판 역류)"
+      "expectedFinding": "흉골 좌측 상부에서 이완기 심잡음이 들림(대동맥판 역류)",
+      "polarity": "positive"
     },
     {
       "item": "호흡음",
       "method": "호흡음 확인",
-      "expectedFinding": "호흡음 정상"
+      "expectedFinding": "호흡음 정상",
+      "polarity": "negative"
     },
     {
       "item": "양팔 혈압·맥박",
@@ -109,7 +112,8 @@
     {
       "item": "심전도",
       "method": "심전도 확인",
-      "expectedFinding": "비특이적 소견(뚜렷한 ST 상승 없음)"
+      "expectedFinding": "비특이적 소견(뚜렷한 ST 상승 없음)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -80,32 +80,37 @@
     {
       "item": "활력징후·산소포화도·의식",
       "method": "혈압·맥박·체온·산소포화도와 의식 확인",
-      "expectedFinding": "체온 37.8, 맥박 88회, 산소포화도 98%, 의식 명료",
-      "examConceptId": "vital_signs"
+      "expectedFinding": "체온 37.8°C, 맥박 88회/분, 산소포화도 98 %, 의식 명료",
+      "examConceptId": "vital_signs",
+      "polarity": "positive"
     },
     {
       "item": "비강·구강·인두·결막",
       "method": "코피·잇몸 출혈과 인두, 결막 확인",
       "expectedFinding": "비강·구강 출혈 없고 결막 창백 없음",
-      "examConceptId": "oral_cavity_inspection"
+      "examConceptId": "oral_cavity_inspection",
+      "polarity": "negative"
     },
     {
       "item": "경부 림프절·피부 출혈",
       "method": "경부 림프절·점상출혈·멍 확인",
       "expectedFinding": "경부 림프절 종대·점상출혈·멍 없음",
-      "examConceptId": "neck_lymph_node"
+      "examConceptId": "neck_lymph_node",
+      "polarity": "negative"
     },
     {
       "item": "흉부 진찰",
       "method": "흉부 시진·타진과 양측 호흡음 청진",
       "expectedFinding": "양측에 드문 거친 호흡음이나 국소 수포음·천명·호흡음 감소 없음",
-      "examConceptId": "lung_auscultation"
+      "examConceptId": "lung_auscultation",
+      "polarity": "negative"
     },
     {
       "item": "복부·하지",
       "method": "간비장 비대·하지 부종·곤봉지·청색증 확인",
       "expectedFinding": "간비장 비대·부종·곤봉지·청색증 없음",
-      "examConceptId": "peripheral_edema"
+      "examConceptId": "peripheral_edema",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

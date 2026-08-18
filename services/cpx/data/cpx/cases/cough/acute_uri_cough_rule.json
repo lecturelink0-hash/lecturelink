@@ -84,7 +84,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 (열 없음)"
+      "expectedFinding": "정상 (열 없음)",
+      "polarity": "negative"
     },
     {
       "item": "인후",
@@ -96,17 +97,20 @@
     {
       "item": "림프절",
       "method": "경부 림프절 촉진",
-      "expectedFinding": "작은 림프절 촉지 (감기 경과 부합)"
+      "expectedFinding": "경부에 작은 림프절이 만져짐(감기 경과에 부합)",
+      "polarity": "positive"
     },
     {
       "item": "호흡음",
       "method": "호흡음 청진",
-      "expectedFinding": "깨끗함 (폐렴 시사 소견 없음)"
+      "expectedFinding": "깨끗함 (폐렴 시사 소견 없음)",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "코·부비동",

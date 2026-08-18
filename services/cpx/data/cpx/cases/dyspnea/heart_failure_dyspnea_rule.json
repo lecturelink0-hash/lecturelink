@@ -96,7 +96,8 @@
     {
       "item": "결막",
       "method": "결막 확인(빈혈)",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "경부",
@@ -113,7 +114,8 @@
     {
       "item": "신경학",
       "method": "전신 쇠약·근력 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

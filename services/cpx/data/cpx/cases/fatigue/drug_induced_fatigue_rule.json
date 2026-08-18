@@ -85,12 +85,14 @@
     {
       "item": "두경부",
       "method": "결막·림프절 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 촉진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "심폐",
@@ -101,12 +103,14 @@
     {
       "item": "복부",
       "method": "복부 진찰(간·비장)",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "부종",
       "method": "하지 부종 확인",
-      "expectedFinding": "없음"
+      "expectedFinding": "없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

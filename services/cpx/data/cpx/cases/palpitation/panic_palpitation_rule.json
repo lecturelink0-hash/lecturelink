@@ -86,37 +86,44 @@
     {
       "item": "활력징후",
       "method": "활력징후·맥박 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음·흉부 청진",
-      "expectedFinding": "규칙적, 잡음 없음 (정상)"
+      "expectedFinding": "규칙적, 잡음 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "경정맥·부종",
       "method": "경정맥 확장·하지 오목부종 확인",
-      "expectedFinding": "없음 (정상)"
+      "expectedFinding": "없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "갑상선·눈꺼풀",
       "method": "눈꺼풀·갑상선 촉진",
-      "expectedFinding": "비대 없음 (정상)"
+      "expectedFinding": "비대 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "손떨림",
       "method": "손떨림 확인",
-      "expectedFinding": "없음 (정상)"
+      "expectedFinding": "없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "빈혈",
       "method": "결막 확인",
-      "expectedFinding": "창백 없음 (정상)"
+      "expectedFinding": "창백 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심전도",
       "method": "심전도 검사",
-      "expectedFinding": "정상 동율동"
+      "expectedFinding": "정상 동율동",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

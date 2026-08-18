@@ -110,12 +110,14 @@
     {
       "item": "복부",
       "method": "복부 진찰(압통·종괴·간비장)",
-      "expectedFinding": "종괴·압통 없음"
+      "expectedFinding": "종괴·압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",
       "method": "DRE",
-      "expectedFinding": "정상 소견 (요청 시)"
+      "expectedFinding": "정상 소견 (요청 시)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

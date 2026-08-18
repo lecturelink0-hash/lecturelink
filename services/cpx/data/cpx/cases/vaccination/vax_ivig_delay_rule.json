@@ -83,17 +83,20 @@
     {
       "item": "활력징후",
       "method": "체온·활력징후 확인",
-      "expectedFinding": "체온 정상, 활력징후 안정"
+      "expectedFinding": "체온 정상, 활력징후 안정",
+      "polarity": "negative"
     },
     {
       "item": "발육·전신",
       "method": "체중·신장 등 발육·전반 상태 확인",
-      "expectedFinding": "발육 정상, 전신 상태 양호"
+      "expectedFinding": "발육 정상, 전신 상태 양호",
+      "polarity": "negative"
     },
     {
       "item": "인후·피부",
       "method": "인후·피부 확인",
-      "expectedFinding": "급성 질환 징후 없음"
+      "expectedFinding": "급성 질환 징후 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

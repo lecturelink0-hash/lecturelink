@@ -77,18 +77,20 @@
     {
       "item": "활력징후·결막",
       "method": "활력징후·결막 확인",
-      "expectedFinding": "활력징후 빈맥 가능, 결막 정상"
+      "expectedFinding": "맥박 108회/분, 혈압 138/72 mmHg, 결막 정상",
+      "polarity": "positive"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 확인",
-      "expectedFinding": "갑상샘 미만성 비대 가능",
+      "expectedFinding": "갑상샘이 미만성으로 부드럽게 커져 있고 혈류음이 들림",
       "polarity": "positive"
     },
     {
       "item": "안정떨림",
       "method": "안정떨림 확인",
-      "expectedFinding": "안정 시 떨림 없음"
+      "expectedFinding": "안정 시 떨림 없음",
+      "polarity": "negative"
     },
     {
       "item": "자세·동작 떨림",
@@ -99,12 +101,14 @@
     {
       "item": "신경학적 진찰",
       "method": "신경학적 진찰 확인",
-      "expectedFinding": "신경학적 진찰 정상"
+      "expectedFinding": "신경학적 진찰 정상",
+      "polarity": "negative"
     },
     {
       "item": "협응·보행",
       "method": "협응·보행 확인",
-      "expectedFinding": "협응·보행 정상"
+      "expectedFinding": "협응·보행 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -79,12 +79,14 @@
     {
       "item": "활력징후·의식·언어",
       "method": "활력징후·의식·언어 확인",
-      "expectedFinding": "활력징후 정상(호흡근 침범 시 주의), 의식·언어 정상"
+      "expectedFinding": "활력징후 정상(호흡근 침범 시 주의), 의식·언어 정상",
+      "polarity": "negative"
     },
     {
       "item": "뇌신경·동공",
       "method": "뇌신경·동공 확인",
-      "expectedFinding": "뇌신경 대체로 정상(안면 침범 가능)"
+      "expectedFinding": "뇌신경 검사 정상 — 안면 침범 없음",
+      "polarity": "negative"
     },
     {
       "item": "사지 근력·감각·반사",
@@ -95,12 +97,14 @@
     {
       "item": "소뇌기능·보행",
       "method": "소뇌기능·보행 확인",
-      "expectedFinding": "소뇌 정상, 보행 불안정"
+      "expectedFinding": "소뇌 검사는 정상이나 보행이 불안정함",
+      "polarity": "positive"
     },
     {
       "item": "혈당",
       "method": "혈당 확인",
-      "expectedFinding": "혈당 정상"
+      "expectedFinding": "혈당 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -78,12 +78,14 @@
     {
       "item": "전립선",
       "method": "직장수지검사/전립선 촉진",
-      "expectedFinding": "전립선 크기 비대, 표면 매끄럽고 탄력적, 통증 없음"
+      "expectedFinding": "전립선이 대칭적으로 커져 있고 표면은 매끄럽고 탄력적이며 압통·결절 없음",
+      "polarity": "positive"
     },
     {
       "item": "기본 심폐/갑상샘 진찰",
       "method": "맥박·심음·갑상샘·호흡음",
-      "expectedFinding": "문제 없음"
+      "expectedFinding": "문제 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

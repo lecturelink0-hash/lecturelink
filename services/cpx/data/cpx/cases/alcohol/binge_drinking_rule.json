@@ -81,17 +81,20 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "금단 징후",
       "method": "손떨림·발한 관찰",
-      "expectedFinding": "없음 (정상)"
+      "expectedFinding": "없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "복부·간",
       "method": "복부 진찰(간 촉진)",
-      "expectedFinding": "간비대 없음 (정상)"
+      "expectedFinding": "간비대 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "황달·영양",

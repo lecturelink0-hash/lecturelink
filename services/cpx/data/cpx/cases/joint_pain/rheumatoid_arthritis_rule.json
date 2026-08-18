@@ -82,7 +82,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위 (미열 경향)"
+      "expectedFinding": "체온 37.3°C, 그 외 활력징후는 정상 범위",
+      "polarity": "positive"
     },
     {
       "item": "관절 시진",
@@ -112,7 +113,8 @@
     {
       "item": "피부·눈",
       "method": "피부 발진·눈 확인",
-      "expectedFinding": "발진·건조 없음 (정상)"
+      "expectedFinding": "발진·건조 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

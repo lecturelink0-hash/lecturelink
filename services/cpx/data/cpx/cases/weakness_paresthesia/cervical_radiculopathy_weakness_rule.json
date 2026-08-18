@@ -78,12 +78,14 @@
     {
       "item": "활력징후·의식·언어",
       "method": "활력징후·의식·언어 확인",
-      "expectedFinding": "활력징후 정상, 의식·언어 정상"
+      "expectedFinding": "활력징후 정상, 의식·언어 정상",
+      "polarity": "negative"
     },
     {
       "item": "뇌신경·동공",
       "method": "뇌신경·동공 확인",
-      "expectedFinding": "뇌신경 정상"
+      "expectedFinding": "뇌신경 정상",
+      "polarity": "negative"
     },
     {
       "item": "사지 근력·감각·반사",
@@ -94,12 +96,14 @@
     {
       "item": "소뇌기능·보행",
       "method": "소뇌기능·보행 확인",
-      "expectedFinding": "소뇌·보행 정상"
+      "expectedFinding": "소뇌·보행 정상",
+      "polarity": "negative"
     },
     {
       "item": "혈당",
       "method": "혈당 확인",
-      "expectedFinding": "혈당 정상"
+      "expectedFinding": "혈당 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

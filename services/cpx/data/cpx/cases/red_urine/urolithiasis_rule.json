@@ -84,7 +84,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "통증으로 인한 빈맥 가능, 발열 없음"
+      "expectedFinding": "맥박 102회/분(통증에 의한 빈맥), 체온 36.8°C",
+      "polarity": "positive"
     },
     {
       "item": "옆구리",
@@ -95,17 +96,19 @@
     {
       "item": "하복부",
       "method": "하복부·치골상부 촉진",
-      "expectedFinding": "압통·종괴 없음"
+      "expectedFinding": "압통·종괴 없음",
+      "polarity": "negative"
     },
     {
       "item": "부종",
       "method": "눈꺼풀·하지 부종 및 혈압 확인",
-      "expectedFinding": "부종 없음, 혈압 정상"
+      "expectedFinding": "부종 없음, 혈압 정상",
+      "polarity": "negative"
     },
     {
       "item": "소변검사",
       "method": "요검사(딥스틱+현미경)",
-      "expectedFinding": "혈뇨(+), 정상 형태 적혈구 다수, 단백뇨 미미, 결정 관찰 가능",
+      "expectedFinding": "혈뇨(+), 정상 형태 적혈구 다수, 단백뇨는 미미함",
       "examConceptId": "urinalysis",
       "polarity": "positive"
     }

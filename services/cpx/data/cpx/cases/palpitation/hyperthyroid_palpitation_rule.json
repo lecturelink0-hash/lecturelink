@@ -89,12 +89,14 @@
     {
       "item": "심음",
       "method": "심음·흉부 청진",
-      "expectedFinding": "빠르지만 규칙적, 잡음 없음"
+      "expectedFinding": "빠르지만 규칙적, 잡음 없음",
+      "polarity": "negative"
     },
     {
       "item": "경정맥·부종",
       "method": "경정맥 확장·하지 오목부종 확인",
-      "expectedFinding": "없음 (정상)"
+      "expectedFinding": "없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "갑상선·눈꺼풀",
@@ -111,12 +113,14 @@
     {
       "item": "빈혈",
       "method": "결막 확인",
-      "expectedFinding": "창백 없음 (정상)"
+      "expectedFinding": "창백 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심전도",
       "method": "심전도 검사",
-      "expectedFinding": "동성빈맥"
+      "expectedFinding": "동성빈맥",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

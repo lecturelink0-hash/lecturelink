@@ -99,23 +99,26 @@
     {
       "item": "갑상샘",
       "method": "갑상샘 촉진",
-      "expectedFinding": "비대 없음 (정상)"
+      "expectedFinding": "비대 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심폐",
       "method": "심장·호흡음 청진",
-      "expectedFinding": "우측 상부에서 미세한 수포음 의심",
+      "expectedFinding": "우측 상부에서 미세한 수포음이 들림",
       "polarity": "positive"
     },
     {
       "item": "복부",
       "method": "복부 촉진(간·비장)",
-      "expectedFinding": "종대 없음 (정상)"
+      "expectedFinding": "종대 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "하지 부종",
       "method": "함요부종 확인",
-      "expectedFinding": "부종 없음 (정상)"
+      "expectedFinding": "부종 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

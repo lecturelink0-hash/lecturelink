@@ -75,22 +75,25 @@
     {
       "item": "활력징후·결막·하복부",
       "method": "활력징후·결막·하복부 확인",
-      "expectedFinding": "활력징후 정상, 하복부 압통 가능, 결막 정상"
+      "expectedFinding": "활력징후 정상, 하복부 깊은 촉진에서 경도 압통, 결막 정상",
+      "polarity": "positive"
     },
     {
       "item": "임신검사",
       "method": "임신검사 확인",
-      "expectedFinding": "임신검사 음성"
+      "expectedFinding": "임신검사 음성",
+      "polarity": "negative"
     },
     {
       "item": "질경 진찰",
       "method": "질경 진찰 확인",
-      "expectedFinding": "질경 진찰 대체로 정상"
+      "expectedFinding": "질경 진찰 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "양손 골반진찰",
       "method": "양손 골반진찰 확인",
-      "expectedFinding": "양손 골반진찰에서 자궁천골인대 압통·부속기 압통 가능",
+      "expectedFinding": "자궁천골인대에 압통이 있고 왼쪽 부속기 압통이 동반됨",
       "polarity": "positive"
     }
   ],

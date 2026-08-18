@@ -83,22 +83,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "하복부",
       "method": "하복부 촉진",
-      "expectedFinding": "압통·종괴 없음"
+      "expectedFinding": "압통·종괴 없음",
+      "polarity": "negative"
     },
     {
       "item": "옆구리",
       "method": "CVA 압통 확인",
-      "expectedFinding": "압통 없음 (정상)"
+      "expectedFinding": "압통 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",
       "method": "DRE(전립선 촉진)",
-      "expectedFinding": "경도 비대 외 결절 없음"
+      "expectedFinding": "전립선이 경도로 커져 있고 결절은 만져지지 않음",
+      "polarity": "positive"
     },
     {
       "item": "소변검사",

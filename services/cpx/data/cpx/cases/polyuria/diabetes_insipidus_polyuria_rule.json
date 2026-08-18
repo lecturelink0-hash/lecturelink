@@ -77,22 +77,26 @@
     {
       "item": "활력징후·탈수·구강 점막",
       "method": "활력징후·탈수·구강 점막 확인",
-      "expectedFinding": "활력징후 대체로 정상, 탈수 시 구강 건조"
+      "expectedFinding": "활력징후 정상, 구강 점막이 약간 건조함",
+      "polarity": "positive"
     },
     {
       "item": "결막·피부·하지 부종",
       "method": "결막·피부·하지 부종 확인",
-      "expectedFinding": "부종 없음"
+      "expectedFinding": "부종 없음",
+      "polarity": "negative"
     },
     {
       "item": "복부·방광·CVA 압통",
       "method": "복부·방광·CVA 압통 확인",
-      "expectedFinding": "방광 팽만 없음"
+      "expectedFinding": "방광 팽만 없음",
+      "polarity": "negative"
     },
     {
       "item": "시야·신경학적 상태",
       "method": "시야·신경학적 상태 확인",
-      "expectedFinding": "시야·신경학적 상태 대체로 정상(뇌하수체 병변 시 시야 이상 가능)"
+      "expectedFinding": "대면 시야검사와 신경학적 진찰 정상 — 시야 결손 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

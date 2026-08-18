@@ -85,13 +85,15 @@
       "item": "활력징후·전신 상태",
       "method": "혈압·맥박·체온과 전신 상태 확인",
       "expectedFinding": "혈압 118/74 mmHg, 맥박 72회/분, 체온 36.7°C, 전신 상태 안정",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "유방 시진",
       "method": "설명·동의 후 앉은 자세에서 양측 대칭, 피부·유두·함몰 확인",
       "expectedFinding": "양측 대칭, 피부 발적·함몰·오렌지껍질 변화·유두 함몰 없음",
-      "examConceptId": "breast_inspection"
+      "examConceptId": "breast_inspection",
+      "polarity": "negative"
     },
     {
       "item": "유방 촉진",
@@ -104,13 +106,15 @@
       "item": "액와 림프절",
       "method": "설명·동의 후 액와·쇄골상부 림프절 촉진",
       "expectedFinding": "액와·쇄골상부 림프절 종대 없음",
-      "examConceptId": "axillary_lymph_node_palpation"
+      "examConceptId": "axillary_lymph_node_palpation",
+      "polarity": "negative"
     },
     {
       "item": "유두 분비물",
       "method": "설명·동의 후 자발적 분비물 여부 확인",
       "expectedFinding": "자발적 유두 분비물 없음",
-      "examConceptId": "breast_inspection"
+      "examConceptId": "breast_inspection",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

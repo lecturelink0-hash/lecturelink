@@ -97,22 +97,26 @@
     {
       "item": "림프절·목",
       "method": "경부 림프절 촉진·목 강직 확인",
-      "expectedFinding": "종대·강직 없음 (정상)"
+      "expectedFinding": "종대·강직 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "흉부",
       "method": "호흡음·심음 청진",
-      "expectedFinding": "호흡음 깨끗함 (폐렴 시사 소견 없음)"
+      "expectedFinding": "호흡음 깨끗함 (폐렴 시사 소견 없음)",
+      "polarity": "negative"
     },
     {
       "item": "복부·옆구리",
       "method": "복부 진찰·CVA 압통 확인",
-      "expectedFinding": "특이소견 없음 (정상)"
+      "expectedFinding": "특이소견 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "피부",
       "method": "피부 발진·가피 확인",
-      "expectedFinding": "발진 없음 (정상)"
+      "expectedFinding": "발진 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

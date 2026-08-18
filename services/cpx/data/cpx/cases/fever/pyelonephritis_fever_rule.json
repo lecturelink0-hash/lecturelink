@@ -90,17 +90,20 @@
     {
       "item": "인후",
       "method": "인후·구강 시진",
-      "expectedFinding": "발적 없음 (정상)"
+      "expectedFinding": "발적 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "림프절·목",
       "method": "경부 림프절 촉진·목 강직 확인",
-      "expectedFinding": "종대·강직 없음 (정상)"
+      "expectedFinding": "종대·강직 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "흉부",
       "method": "호흡음·심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "복부·옆구리",
@@ -111,7 +114,8 @@
     {
       "item": "피부",
       "method": "피부 발진·가피 확인",
-      "expectedFinding": "발진·가피 없음 (정상)"
+      "expectedFinding": "발진·가피 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

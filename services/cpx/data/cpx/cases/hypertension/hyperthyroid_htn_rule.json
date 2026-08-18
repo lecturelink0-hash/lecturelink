@@ -84,7 +84,8 @@
     {
       "item": "양팔 혈압",
       "method": "양팔 혈압 비교",
-      "expectedFinding": "차이 없음"
+      "expectedFinding": "차이 없음",
+      "polarity": "negative"
     },
     {
       "item": "심장",
@@ -101,7 +102,8 @@
     {
       "item": "복부",
       "method": "복부 청진(잡음)·촉진",
-      "expectedFinding": "잡음 없음"
+      "expectedFinding": "잡음 없음",
+      "polarity": "negative"
     },
     {
       "item": "표적기관",

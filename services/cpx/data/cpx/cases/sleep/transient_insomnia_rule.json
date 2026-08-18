@@ -85,13 +85,15 @@
     {
       "item": "맥박/심음/갑상샘/호흡음",
       "method": "기본 진찰",
-      "expectedFinding": "문제 없음"
+      "expectedFinding": "문제 없음",
+      "polarity": "negative"
     },
     {
       "item": "구강",
       "method": "구강검사",
       "expectedFinding": "문제 없음",
-      "examConceptId": "oral_cavity_inspection"
+      "examConceptId": "oral_cavity_inspection",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

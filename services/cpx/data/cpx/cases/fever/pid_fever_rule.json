@@ -85,17 +85,20 @@
     {
       "item": "인후",
       "method": "인후·구강 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "림프절·목",
       "method": "림프절 촉진·경부 강직 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "흉부",
       "method": "호흡음·심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "복부·CVA",
@@ -106,7 +109,8 @@
     {
       "item": "피부",
       "method": "피부 발진·가피 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

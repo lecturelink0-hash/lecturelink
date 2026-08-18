@@ -90,7 +90,8 @@
     {
       "item": "전반적 외견",
       "method": "전신 상태·의식 확인",
-      "expectedFinding": "피곤해 보이나 의식 명료하고 대화 가능"
+      "expectedFinding": "피곤해 보이나 의식이 명료하고 대화에 무리가 없음",
+      "polarity": "positive"
     },
     {
       "item": "구강",
@@ -107,12 +108,14 @@
     {
       "item": "복부 촉진",
       "method": "복부 촉진",
-      "expectedFinding": "전반적으로 약한 불편감만 있고 국소 압통·반발통·강직 없음"
+      "expectedFinding": "전반적으로 약한 불편감만 있고 국소 압통·반발통·강직 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 상태",
       "method": "의식·경부 강직 확인",
-      "expectedFinding": "의식 명료, 경부 강직과 국소 신경학적 이상 없음"
+      "expectedFinding": "의식 명료, 경부 강직과 국소 신경학적 이상 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

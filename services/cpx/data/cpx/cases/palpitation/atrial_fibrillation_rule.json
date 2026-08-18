@@ -100,17 +100,20 @@
     {
       "item": "갑상선·눈꺼풀",
       "method": "눈꺼풀·갑상선 촉진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "손떨림",
       "method": "손떨림 확인",
-      "expectedFinding": "없음"
+      "expectedFinding": "없음",
+      "polarity": "negative"
     },
     {
       "item": "빈혈",
       "method": "결막 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "심전도",

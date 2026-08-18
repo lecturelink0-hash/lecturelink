@@ -85,12 +85,14 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "자해 흔적",
       "method": "자해 흔적 확인(배려 있게)",
-      "expectedFinding": "자해 흔적 없음"
+      "expectedFinding": "자해 흔적 없음",
+      "polarity": "negative"
     },
     {
       "item": "정신상태",

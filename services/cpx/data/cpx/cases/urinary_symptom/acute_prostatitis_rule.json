@@ -91,7 +91,8 @@
     {
       "item": "옆구리",
       "method": "CVA 압통 확인",
-      "expectedFinding": "없음 (신우신염 시사 없음)"
+      "expectedFinding": "없음 (신우신염 시사 없음)",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",

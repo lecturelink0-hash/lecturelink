@@ -82,7 +82,8 @@
     {
       "item": "성장 측정",
       "method": "성장 측정 확인",
-      "expectedFinding": "성장(키·몸무게·머리둘레) 대체로 정상"
+      "expectedFinding": "성장(키·몸무게·머리둘레) 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "발달 관찰",
@@ -99,12 +100,14 @@
     {
       "item": "신경학적 진찰",
       "method": "신경학적 진찰 확인",
-      "expectedFinding": "신경학적 진찰 국소 이상 없음"
+      "expectedFinding": "신경학적 진찰 국소 이상 없음",
+      "polarity": "negative"
     },
     {
       "item": "보행 관찰",
       "method": "보행 관찰 확인",
-      "expectedFinding": "보행 등 대운동 대체로 정상"
+      "expectedFinding": "보행 등 대운동 대체로 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

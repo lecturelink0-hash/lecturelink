@@ -86,38 +86,43 @@
     {
       "item": "활력징후",
       "method": "활력징후·심박수 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "체위별 혈압",
       "method": "누운·앉은·선 자세 혈압 측정",
-      "expectedFinding": "기립 시 유의한 저하 없음"
+      "expectedFinding": "기립 시 유의한 저하 없음",
+      "polarity": "negative"
     },
     {
       "item": "양팔 혈압",
       "method": "양팔 혈압 차 확인",
-      "expectedFinding": "차이 없음 (정상)"
+      "expectedFinding": "차이 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음·흉부 청진",
-      "expectedFinding": "좌흉골연 수축기 잡음 의심 소견",
+      "expectedFinding": "좌흉골연에서 수축기 잡음이 들림",
       "polarity": "positive"
     },
     {
       "item": "신경학적 이상",
       "method": "신경학적 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "빈혈·출혈",
       "method": "결막 확인",
-      "expectedFinding": "창백 없음 (정상)"
+      "expectedFinding": "창백 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심전도",
       "method": "심전도 검사",
-      "expectedFinding": "좌심실비대·ST-T 재분극 이상 의심 — 즉시 판독·심장 평가 필요",
+      "expectedFinding": "좌심실비대와 ST-T 재분극 이상 — 즉시 판독·심장 평가 필요",
       "polarity": "positive"
     }
   ],

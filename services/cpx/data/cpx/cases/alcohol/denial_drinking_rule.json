@@ -88,17 +88,20 @@
     {
       "item": "금단 징후",
       "method": "손떨림·발한 관찰",
-      "expectedFinding": "뚜렷하지 않음"
+      "expectedFinding": "뚜렷하지 않음",
+      "polarity": "negative"
     },
     {
       "item": "복부·간",
       "method": "복부 진찰(간 촉진)",
-      "expectedFinding": "특이소견 없음"
+      "expectedFinding": "특이소견 없음",
+      "polarity": "negative"
     },
     {
       "item": "황달·영양",
       "method": "공막 황달·영양 상태 확인",
-      "expectedFinding": "황달 없음"
+      "expectedFinding": "황달 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

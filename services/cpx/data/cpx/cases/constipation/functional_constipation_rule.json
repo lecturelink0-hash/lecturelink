@@ -85,7 +85,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "복부",
@@ -96,12 +97,14 @@
     {
       "item": "직장수지검사",
       "method": "DRE",
-      "expectedFinding": "단단한 변 촉지, 혈액 없음 (요청 시)"
+      "expectedFinding": "직장에 단단한 변이 만져지고 혈액은 묻지 않음",
+      "polarity": "positive"
     },
     {
       "item": "전신·갑상샘",
       "method": "얼굴·목·갑상샘 등 전신 확인",
-      "expectedFinding": "특이소견 없음 (정상)"
+      "expectedFinding": "특이소견 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

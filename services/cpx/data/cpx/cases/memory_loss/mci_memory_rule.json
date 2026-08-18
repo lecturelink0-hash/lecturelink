@@ -84,23 +84,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "인지선별",
       "method": "MMSE 등 인지기능 선별검사",
-      "expectedFinding": "MMSE 총점은 정상 범위일 수 있으나 MoCA 등에서 지연 회상 경미 감점",
+      "expectedFinding": "MMSE 28점으로 정상 범위이나 MoCA 23점 — 지연 회상에서 경미한 감점",
       "polarity": "positive"
     },
     {
       "item": "신경학적 이상",
       "method": "신경학적 검사(보행·근력·반사)",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 촉진",
-      "expectedFinding": "비대 없음 (정상)"
+      "expectedFinding": "비대 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

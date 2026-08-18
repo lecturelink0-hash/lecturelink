@@ -82,18 +82,21 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "콧물 성상·안면",
       "method": "콧물 성상과 얼굴·목 통증 확인",
       "examConceptId": "nasal_discharge_assessment",
-      "expectedFinding": "맑은 수양성 콧물, 안면 통증 없음"
+      "expectedFinding": "맑은 수양성 콧물, 안면 통증 없음",
+      "polarity": "positive"
     },
     {
       "item": "인후·편도",
       "method": "인후·편도 발적·부종 확인",
-      "expectedFinding": "특이소견 없음 (정상)"
+      "expectedFinding": "특이소견 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "코 내부",
@@ -105,7 +108,8 @@
     {
       "item": "부비동",
       "method": "부비동 압통 검사",
-      "expectedFinding": "압통 없음 (정상)"
+      "expectedFinding": "압통 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

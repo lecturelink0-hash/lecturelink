@@ -90,12 +90,14 @@
     {
       "item": "심음·호흡음·경정맥",
       "method": "심음·호흡음·경정맥 확인",
-      "expectedFinding": "심음·호흡음 정상(체액과다 시 수포음 가능)"
+      "expectedFinding": "양쪽 폐 하부에서 미세한 수포음이 들리고 경정맥이 약간 팽대되어 있음(체액 과다)",
+      "polarity": "positive"
     },
     {
       "item": "복부·방광·CVA 압통",
       "method": "복부·방광·CVA 압통 확인",
-      "expectedFinding": "방광 팽만 없음, CVA 압통 뚜렷치 않음"
+      "expectedFinding": "방광 팽만 없음, CVA 압통 뚜렷치 않음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

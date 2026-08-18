@@ -78,7 +78,7 @@
     {
       "item": "활력징후·결막",
       "method": "활력징후·결막 확인",
-      "expectedFinding": "미열 가능, 결막 창백(빈혈)",
+      "expectedFinding": "체온 37.6°C, 맥박 98회/분, 결막 창백(빈혈)",
       "polarity": "positive"
     },
     {
@@ -90,18 +90,19 @@
     {
       "item": "구강·잇몸",
       "method": "구강·잇몸 확인",
-      "expectedFinding": "잇몸 출혈·구내염"
+      "expectedFinding": "잇몸에서 스며 나오는 출혈과 구내염이 관찰됨",
+      "polarity": "positive"
     },
     {
       "item": "경부 림프절",
       "method": "경부 림프절 확인",
-      "expectedFinding": "경부·액와 림프절 종대 가능",
+      "expectedFinding": "양쪽 경부와 겨드랑에 1~2 cm 림프절이 여러 개 만져지고 압통은 없음",
       "polarity": "positive"
     },
     {
       "item": "복부·간비장",
       "method": "복부·간비장 확인",
-      "expectedFinding": "간·비장 비대 가능",
+      "expectedFinding": "간이 늑골하 2 cm, 비장이 늑골하 3 cm 만져짐",
       "polarity": "positive"
     }
   ],

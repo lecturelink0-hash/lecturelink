@@ -77,12 +77,14 @@
     {
       "item": "활력징후·결막",
       "method": "활력징후·결막 확인",
-      "expectedFinding": "활력징후 정상, 결막 정상"
+      "expectedFinding": "활력징후 정상, 결막 정상",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 확인",
-      "expectedFinding": "갑상샘 정상"
+      "expectedFinding": "갑상샘 정상",
+      "polarity": "negative"
     },
     {
       "item": "안정떨림",
@@ -93,7 +95,8 @@
     {
       "item": "자세·동작 떨림",
       "method": "자세·동작 떨림 확인",
-      "expectedFinding": "자세·동작 시 떨림 감소"
+      "expectedFinding": "자세·동작 시 떨림 감소",
+      "polarity": "positive"
     },
     {
       "item": "신경학적 진찰",

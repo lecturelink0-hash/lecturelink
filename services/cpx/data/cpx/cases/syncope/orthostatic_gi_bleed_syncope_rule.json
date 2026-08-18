@@ -98,17 +98,20 @@
     {
       "item": "양팔 혈압",
       "method": "양팔 혈압 차 확인",
-      "expectedFinding": "차이 없음 (정상)"
+      "expectedFinding": "차이 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음·흉부 청진",
-      "expectedFinding": "빠르지만 규칙적, 잡음 없음"
+      "expectedFinding": "빠르지만 규칙적, 잡음 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 이상",
       "method": "신경학적 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "빈혈·출혈",

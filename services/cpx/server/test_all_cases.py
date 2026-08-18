@@ -10,7 +10,12 @@
 새 조합이 생기면 케이스에 진찰 소견을 추가할지, 기본값이 그 증례에 맞는지 반드시 확인할 것.
 """
 
-from physical_exam import BUTTON_SETS, button_catalog, buttons_for, resolve_exam
+import re
+
+from physical_exam import (
+    BUTTON_SETS, POLARITY_ABNORMAL, POLARITY_NORMAL, POLARITY_VALUES,
+    button_catalog, buttons_for, resolve_exam,
+)
 from evaluate import load_rubric
 from prompt import list_cases, load_case
 
@@ -93,6 +98,115 @@ def check_default_findings_are_neutral() -> None:
     )
 
 
+# 진찰 소견은 표준화 환자 대본이다 — 사실만 적고 해석은 학생이 한다.
+# "간·비장 비대 가능", "혈관성 잡음 청진 의심", "갑상샘항진 변형이면 비대 가능" 같은 가정형은
+# ① 학생이 "그래서 있다는 건가"를 되묻게 만들고 ② 채점 근거가 되지 못하며
+# ③ 변형 선택 로직이 서버에 없어 두 변형이 한 환자에게 동시에 재생된다(2026-08-18 감사).
+_HEDGE_WORDS = (
+    '가능', '또는', '수 있', '일 수', '의심', '여부 확인', '경우', '이면', '추정', '조합에 따라',
+)
+# 검사·자세를 가리키는 '~ 시'(굴곡 시·강제 호기 시)와 수치 범위('1~2 cm')는 가정형이 아니다.
+
+
+def check_findings_are_determinate(cases: list[dict]) -> None:
+    offenders = []
+    for case in cases:
+        for rule in case.get('physicalExamRule') or []:
+            finding = rule.get('expectedFinding') or ''
+            hit = [w for w in _HEDGE_WORDS if w in finding]
+            if hit:
+                offenders.append(f"{case['id']}: {rule.get('item')} — 가정형 {hit} :: {finding}")
+    assert not offenders, (
+        '진찰 소견에 가정형 표현이 있다. 표준화 환자 카드는 "체온 38.4", "비장 늑골하 3 cm"처럼\n'
+        '확정값이어야 한다. 증례가 두 변형을 함께 담고 있으면 하나로 확정하라:\n'
+        + '\n'.join(offenders)
+    )
+
+
+def check_polarity_is_declared(cases: list[dict]) -> None:
+    """정상/비정상 배지의 근거는 polarity 뿐 — 누락되면 실제 이상이 초록으로 나간다.
+
+    예전에는 소견 문장에서 극성을 추론했고 양방향으로 틀렸다(정상 30건+을 빨강으로,
+    "소뇌 정상, 보행 불안정"을 초록으로). 추론을 폐기한 대신 여기서 누락을 막는다.
+    """
+    missing = []
+    for case in cases:
+        for rule in case.get('physicalExamRule') or []:
+            pol = rule.get('polarity')
+            if pol not in POLARITY_VALUES:
+                missing.append(f"{case['id']}: {rule.get('item')} — polarity={pol!r}")
+    assert not missing, (
+        f'physicalExamRule 에 polarity({POLARITY_ABNORMAL}/{POLARITY_NORMAL})가 없다.\n'
+        '소견이 정상이면 negative, 이상이면 positive 를 명시하라 — 문장에서 추론하지 않는다:\n'
+        + '\n'.join(missing)
+    )
+
+
+def check_normal_findings_read_normal(cases: list[dict]) -> None:
+    """negative 로 선언한 소견은 실제로 정상으로 읽혀야 한다 (오선언 방지)."""
+    offenders = []
+    for case in cases:
+        for rule in case.get('physicalExamRule') or []:
+            if rule.get('polarity') != POLARITY_NORMAL:
+                continue
+            finding = rule.get('expectedFinding') or ''
+            if not any(w in finding for w in _READS_NORMAL):
+                offenders.append(f"{case['id']}: {rule.get('item')} :: {finding}")
+    assert not offenders, (
+        'polarity=negative 인데 정상임을 알 수 있는 표현이 없다. 소견이 실제로 이상이면\n'
+        'positive 로 바꾸고, 정상이면 무엇이 정상인지 문장에 남겨라:\n' + '\n'.join(offenders)
+    )
+
+
+# negative 로 선언했지만 절 하나가 이상 소견을 단정하는 경우를 잡는다.
+# 문장 끝의 부정이 앞의 단정을 삼켜 정상으로 읽히는 게 이 결함의 전형이었다 —
+# DKA 의 "전반적 경도 압통(국소 반발통 뚜렷치 않음)"이 정상 배지로 나가고 있었고,
+# 급성 간염의 "피부 황달은 경미하고 … 없음"도 그랬다. 괄호와 연결어미까지 절로 쪼개서 본다.
+_ABNORMAL_ASSERTIONS = (
+    '압통', '종괴', '비대', '부종', '창백', '황달', '팽만', '잡음', '종대', '강직', '발적',
+    '수포', '출혈', '떨림', '빈맥', '서맥', '발열', '미열', '위약', '마비', '안진', '충혈',
+    '저하', '감소', '상승', '제한', '건조', '불안정',
+)
+_CLAUSE_NEGATIONS = ('없', '않', '음성', '아님', '미달', '이르지', '뚜렷하지', '뚜렷치')
+# 진찰은 정상이고 그 어구가 '병력' 또는 '기준 미달'을 서술하는, 검토를 마친 예외.
+_NORMAL_DESPITE_ASSERTION = {
+    ('temporal_arteritis_rule', '눈'),               # 일과성 시력 저하는 병력 — 현재 진찰은 정상
+    ('situational_syncope_rule', '체위별 혈압'),        # 15 mmHg 저하는 기립성 저혈압 기준 미달
+}
+
+
+def _clauses(text: str) -> list[str]:
+    parts: list[str] = []
+    for segment in re.split(r'[()]', text):
+        parts += re.split(r'[,，]|—|\s+외\s+|고\s+|며\s+|나\s+|으나\s+|지만\s+', segment)
+    return [p.strip() for p in parts if p.strip()]
+
+
+def check_no_normal_badge_on_abnormal_finding(cases: list[dict]) -> None:
+    offenders = []
+    for case in cases:
+        for rule in case.get('physicalExamRule') or []:
+            if rule.get('polarity') != POLARITY_NORMAL:
+                continue
+            if (case['id'], rule.get('item')) in _NORMAL_DESPITE_ASSERTION:
+                continue
+            for clause in _clauses(rule.get('expectedFinding') or ''):
+                if any(n in clause for n in _CLAUSE_NEGATIONS):
+                    continue
+                if any(w in clause for w in _READS_NORMAL):
+                    continue
+                hit = [w for w in _ABNORMAL_ASSERTIONS if w in clause]
+                if hit:
+                    offenders.append(
+                        f"{case['id']}: {rule.get('item')} — '{clause}' {hit} 를 단정하는데 polarity=negative"
+                    )
+    assert not offenders, (
+        'polarity=negative 인데 이상 소견을 단정하는 절이 있다. 실제로 이상이면 positive 로 바꾸고,\n'
+        '병력 서술이나 기준 미달이라 정상이 맞다면 _NORMAL_DESPITE_ASSERTION 에 근거와 함께 등록하라:\n'
+        + '\n'.join(offenders)
+    )
+
+
 def check_no_new_default_fallbacks(fallbacks: dict[str, set[str]]) -> None:
     unexpected = []
     for button_id, cases in sorted(fallbacks.items()):
@@ -113,9 +227,11 @@ def main() -> None:
     uncovered_rules: list[str] = []
     invalid_buttons: list[str] = []
     fallbacks: dict[str, set[str]] = {}
+    loaded: list[dict] = []
 
     for public_case in public_cases:
         case = load_case(public_case["id"])
+        loaded.append(case)
         rubric = load_rubric(case)
         assert rubric.get("totalScore") == 100, f"{case['id']}: 루브릭 총점 오류"
 
@@ -146,10 +262,20 @@ def main() -> None:
     assert not uncovered_rules, "버튼에서 접근할 수 없는 신체진찰:\n" + "\n".join(uncovered_rules)
     check_no_new_default_fallbacks(fallbacks)
     check_default_findings_are_neutral()
+    check_polarity_is_declared(loaded)
+    check_findings_are_determinate(loaded)
+    check_normal_findings_read_normal(loaded)
+    check_no_normal_badge_on_abnormal_finding(loaded)
     total_fallbacks = sum(len(v) for v in fallbacks.values())
+    rules = [r for c in loaded for r in (c.get("physicalExamRule") or [])]
+    abnormal = sum(1 for r in rules if r.get("polarity") == POLARITY_ABNORMAL)
     print(
         f"전체 {len(public_cases)}개 증례 루브릭·신체진찰 카드 연결 통과 "
         f"(기본값 폴백 {total_fallbacks}건 — 전부 등록된 조합)"
+    )
+    print(
+        f"진찰 소견 {len(rules)}건 전부 polarity 선언 "
+        f"(비정상 {abnormal} / 정상 {len(rules) - abnormal}) · 가정형 0건"
     )
 
 

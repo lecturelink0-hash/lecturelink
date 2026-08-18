@@ -87,7 +87,8 @@
     {
       "item": "흉벽",
       "method": "흉부 시진·촉진(흉벽 압통)",
-      "expectedFinding": "압통 없음 — 눌러도 재현 안 됨"
+      "expectedFinding": "압통 없음 — 눌러도 재현 안 됨",
+      "polarity": "negative"
     },
     {
       "item": "심음",
@@ -98,7 +99,8 @@
     {
       "item": "호흡음",
       "method": "호흡음 청진(양측 비교)",
-      "expectedFinding": "양측 깨끗함 (기흉·폐렴 시사 없음)"
+      "expectedFinding": "양측 깨끗함 (기흉·폐렴 시사 없음)",
+      "polarity": "negative"
     },
     {
       "item": "양팔 혈압·맥박",

@@ -87,7 +87,8 @@
     {
       "item": "직장수지검사",
       "method": "DRE",
-      "expectedFinding": "단단한 변, 출혈 없음"
+      "expectedFinding": "직장에 단단한 변이 만져지고 출혈은 없음",
+      "polarity": "positive"
     },
     {
       "item": "전신·갑상샘",

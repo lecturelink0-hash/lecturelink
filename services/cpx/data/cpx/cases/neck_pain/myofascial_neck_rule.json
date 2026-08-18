@@ -84,7 +84,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "압통점",
@@ -96,18 +97,21 @@
       "item": "운동범위",
       "method": "목 운동범위 확인",
       "examConceptId": "neck_range_of_motion",
-      "expectedFinding": "끝 범위에서 당김 외 대체로 정상"
+      "expectedFinding": "목 끝 범위에서 당기는 느낌이 있고 그 외 운동범위는 정상",
+      "polarity": "positive"
     },
     {
       "item": "Spurling",
       "method": "Spurling 검사·축성 압박",
       "examConceptId": "spurling_test",
-      "expectedFinding": "음성 (신경근 압박 시사 없음)"
+      "expectedFinding": "음성 (신경근 압박 시사 없음)",
+      "polarity": "negative"
     },
     {
       "item": "상지 신경",
       "method": "상지 감각·근력·반사 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

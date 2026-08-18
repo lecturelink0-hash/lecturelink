@@ -77,7 +77,8 @@
     {
       "item": "활력징후·전신 상태",
       "method": "활력징후·전신 상태 확인",
-      "expectedFinding": "활력징후 정상(고열·저혈압 시 중증반응 주의)"
+      "expectedFinding": "활력징후 정상(고열·저혈압 시 중증반응 주의)",
+      "polarity": "negative"
     },
     {
       "item": "피부 발진",
@@ -88,17 +89,20 @@
     {
       "item": "발진 촉진·눌림 반응",
       "method": "발진 촉진·눌림 반응 확인",
-      "expectedFinding": "눌림 시 창백, 대체로 인설 경미"
+      "expectedFinding": "누르면 창백해지고 인설은 경미함",
+      "polarity": "positive"
     },
     {
       "item": "눈·구강 점막",
       "method": "눈·구강 점막 확인",
-      "expectedFinding": "점막·눈 침범 여부 확인(중증 감별)"
+      "expectedFinding": "구강 점막과 결막에 침범 소견 없음 — 중증 약물이상반응 시사 소견 없음",
+      "polarity": "negative"
     },
     {
       "item": "경부 림프절",
       "method": "경부 림프절 확인",
-      "expectedFinding": "경부 림프절 종대 가능"
+      "expectedFinding": "경부 림프절 종대 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

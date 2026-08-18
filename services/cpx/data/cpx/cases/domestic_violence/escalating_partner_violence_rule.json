@@ -85,7 +85,8 @@
       "item": "활력징후·의식수준",
       "method": "활력징후와 의식수준·응급 손상 확인",
       "expectedFinding": "혈압 124/76 mmHg, 맥박 86회/분, 체온 36.6°C, 의식 명료",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "피부·사지 손상",
@@ -98,13 +99,15 @@
       "item": "머리·목·흉부·복부",
       "method": "설명·동의 후 머리·목·흉부·복부 손상과 호흡·발성·연하 확인",
       "expectedFinding": "머리·목·흉부·복부 외상과 압통 없고 쉰목소리·호흡곤란·연하곤란 없음",
-      "examConceptId": "skin_injury_inspection"
+      "examConceptId": "skin_injury_inspection",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "동공·근력·감각·보행을 포함한 신경학적 진찰",
       "expectedFinding": "신경학적 이상 없음",
-      "examConceptId": "neurologic_screening"
+      "examConceptId": "neurologic_screening",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {
@@ -148,7 +151,7 @@
     "educationTopics": [
       "피해자 책임이 아님을 확인",
       "개별 안전계획",
-      "상처 치료·기록과 지역 지원 선택지",
+      "상처 치료·사진 기록과 국내 지원 창구 — 여성긴급전화 1366(24시간)·해바라기센터·가정폭력 상담소, 긴급 시 112 신고와 임시조치·피해자보호명령",
       "지역 법·기관 정책에 따른 비밀보장 예외"
     ]
   },

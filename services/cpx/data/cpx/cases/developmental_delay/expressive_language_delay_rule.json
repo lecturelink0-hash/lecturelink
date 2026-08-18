@@ -86,7 +86,8 @@
       "item": "성장 측정",
       "method": "키·체중·두위 측정과 성장곡선 확인",
       "expectedFinding": "키·체중·두위가 성장곡선 추적 범위 안에 있음",
-      "examConceptId": "pediatric_growth_measurement"
+      "examConceptId": "pediatric_growth_measurement",
+      "polarity": "negative"
     },
     {
       "item": "발달 관찰",
@@ -98,19 +99,22 @@
     {
       "item": "시청각 반응",
       "method": "소리 자극 반응·이름 부르기 반응과 시각 추시 확인",
-      "expectedFinding": "이름을 부르면 돌아보고 소리 자극에 적절히 반응하며 시각 추시 정상 — 다만 언어 발달 지연에서는 정식 청력검사가 필요"
+      "expectedFinding": "이름을 부르면 돌아보고 소리 자극에 적절히 반응하며 시각 추시 정상 — 다만 언어 발달 지연에서는 정식 청력검사가 필요",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "근력·근긴장·반사·뇌신경 확인",
       "expectedFinding": "근력·근긴장·반사·뇌신경 특이소견 없음",
-      "examConceptId": "neurologic_screening"
+      "examConceptId": "neurologic_screening",
+      "polarity": "negative"
     },
     {
       "item": "보행 관찰",
       "method": "연령 적합 보행과 균형 관찰",
       "expectedFinding": "보행·균형에서 뚜렷한 이상 없음",
-      "examConceptId": "gait_observation"
+      "examConceptId": "gait_observation",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

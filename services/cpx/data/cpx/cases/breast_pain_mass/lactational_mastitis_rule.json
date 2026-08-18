@@ -77,7 +77,7 @@
     {
       "item": "활력징후·전신 상태",
       "method": "활력징후·전신 상태 확인",
-      "expectedFinding": "발열·빈맥 가능",
+      "expectedFinding": "체온 38.6°C, 맥박 104회/분",
       "polarity": "positive"
     },
     {
@@ -95,12 +95,14 @@
     {
       "item": "액와 림프절",
       "method": "액와 림프절 확인",
-      "expectedFinding": "동측 액와 림프절 압통 가능"
+      "expectedFinding": "같은 쪽 겨드랑 림프절이 만져지고 압통이 있음",
+      "polarity": "positive"
     },
     {
       "item": "유두 분비물",
       "method": "유두 분비물 확인",
-      "expectedFinding": "유두 상처 가능"
+      "expectedFinding": "유두에 갈라진 상처가 있음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

@@ -87,7 +87,8 @@
     {
       "item": "인후",
       "method": "인후·구강 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "림프절·목",
@@ -98,12 +99,14 @@
     {
       "item": "흉부",
       "method": "호흡음·심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "복부·CVA",
       "method": "복부 촉진·CVA 압통 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "피부",

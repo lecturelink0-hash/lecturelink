@@ -95,17 +95,20 @@
     {
       "item": "결막",
       "method": "결막 확인(빈혈)",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "경부",
       "method": "갑상샘·림프절·경정맥 확인",
-      "expectedFinding": "JVD 없음"
+      "expectedFinding": "JVD 없음",
+      "polarity": "negative"
     },
     {
       "item": "사지",
       "method": "하지 부종·곤봉지·청색증 확인",
-      "expectedFinding": "없음"
+      "expectedFinding": "없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학",

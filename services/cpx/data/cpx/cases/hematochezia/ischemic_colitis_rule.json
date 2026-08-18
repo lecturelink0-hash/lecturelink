@@ -80,17 +80,20 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 대체로 정상, 빈맥 가능"
+      "expectedFinding": "맥박 98회/분, 혈압 118/76 mmHg, 체온 37.2°C",
+      "polarity": "positive"
     },
     {
       "item": "전반적 외견",
       "method": "전반적 외견 확인",
-      "expectedFinding": "전반적 외견 대체로 양호"
+      "expectedFinding": "전반적 외견 대체로 양호",
+      "polarity": "negative"
     },
     {
       "item": "복부 시진",
       "method": "복부 시진 확인",
-      "expectedFinding": "복부 시진 정상"
+      "expectedFinding": "복부 시진 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",
@@ -101,12 +104,14 @@
     {
       "item": "항문 주위",
       "method": "항문 주위 확인",
-      "expectedFinding": "항문 주위 정상"
+      "expectedFinding": "항문 주위 정상",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",
       "method": "직장수지검사 확인",
-      "expectedFinding": "직장수지검사에서 혈액 가능"
+      "expectedFinding": "직장수지검사에서 장갑에 암적색 혈액이 묻어 나옴",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

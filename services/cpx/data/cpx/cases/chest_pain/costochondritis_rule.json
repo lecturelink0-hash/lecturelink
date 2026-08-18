@@ -82,7 +82,8 @@
     {
       "item": "생명징후",
       "method": "혈압·맥박·호흡수·산소포화도 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "흉벽",
@@ -93,22 +94,26 @@
     {
       "item": "심음",
       "method": "심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "호흡음",
       "method": "호흡음 청진(양측 비교)",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "양팔 혈압·맥박",
       "method": "양팔 혈압 비교·말초 맥박 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "심전도",
       "method": "심전도 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

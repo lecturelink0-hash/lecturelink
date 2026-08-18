@@ -79,7 +79,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 대체로 정상, 발열 없음"
+      "expectedFinding": "활력징후 대체로 정상, 발열 없음",
+      "polarity": "negative"
     },
     {
       "item": "공막",
@@ -96,18 +97,20 @@
     {
       "item": "복부 시진",
       "method": "복부 시진 확인",
-      "expectedFinding": "복부 팽만 없음, 만져지는 무통성 담낭 가능(Courvoisier)",
+      "expectedFinding": "복부 팽만 없고 온몸에 긁은 자국이 보임",
       "polarity": "positive"
     },
     {
       "item": "복부 촉진",
       "method": "복부 촉진 확인",
-      "expectedFinding": "우상복부 압통 뚜렷하지 않음"
+      "expectedFinding": "우상복부에서 매끄럽고 압통 없는 담낭이 만져짐(Courvoisier 징후) — 압통·반발통은 없음",
+      "polarity": "positive"
     },
     {
       "item": "신경학적 상태",
       "method": "신경학적 상태 확인",
-      "expectedFinding": "의식 정상"
+      "expectedFinding": "의식 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

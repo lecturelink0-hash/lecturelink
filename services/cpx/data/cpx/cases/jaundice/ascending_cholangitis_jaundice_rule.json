@@ -97,18 +97,20 @@
     {
       "item": "복부 시진",
       "method": "복부 시진·장음 청진",
-      "expectedFinding": "복부 팽만 없고 장음 정상"
+      "expectedFinding": "복부 팽만 없고 장음 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",
       "method": "간·우상복부 촉진",
-      "expectedFinding": "우상복부 압통과 Murphy 징후 양성, 반발통·강직 없음",
+      "expectedFinding": "우상복부 압통이 있으나 Murphy 징후는 음성이고 반발통·강직 없음",
       "polarity": "positive"
     },
     {
       "item": "신경학적 상태",
       "method": "의식·flapping tremor 확인",
-      "expectedFinding": "의식 명료, flapping tremor 없음"
+      "expectedFinding": "의식 명료, flapping tremor 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {
@@ -153,6 +155,6 @@
     ]
   },
   "additionalPromptRule": [],
-  "ruleText": "# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통·Murphy 양성.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\"",
-  "rawRuleText": "# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통·Murphy 양성.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\""
+  "ruleText": "# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통(Murphy 징후 음성) — 열·황달·복통의 Charcot 삼징.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\"",
+  "rawRuleText": "# 증례명 : 황달 (담관염 적신호)\n\n- 장소: 응급실\n- 요약: 열·오한·우상복부 통증 뒤 황달과 진한 소변.\n- 병력: 담석 진단력.\n- 진찰: 39.1도 발열·빈맥, 공막 황달, RUQ 압통(Murphy 징후 음성) — 열·황달·복통의 Charcot 삼징.\n\n추가 질문: \"열이 나는데 바로 큰 병원으로 가야 하나요?\""
 }

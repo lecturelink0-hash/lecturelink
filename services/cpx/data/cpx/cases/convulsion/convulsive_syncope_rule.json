@@ -78,27 +78,32 @@
     {
       "item": "활력징후·산소포화도·의식·지남력",
       "method": "활력징후·산소포화도·의식·지남력 확인",
-      "expectedFinding": "활력징후 정상(기립성 저혈압 가능), 의식 또렷"
+      "expectedFinding": "누운 자세 혈압 118/74 mmHg, 일어선 뒤 3분 혈압 96/62 mmHg로 저하(기립성 저혈압), 의식 또렷",
+      "polarity": "positive"
     },
     {
       "item": "동공·안구·구강·혀·두부 외상",
       "method": "동공·안구·구강·혀·두부 외상 확인",
-      "expectedFinding": "동공 정상, 혀 깨문 흔적 없음, 외상 확인"
+      "expectedFinding": "동공 정상, 혀 깨문 흔적 없고 두부·사지 외상 없음",
+      "polarity": "negative"
     },
     {
       "item": "수막자극징후",
       "method": "수막자극징후 확인",
-      "expectedFinding": "수막자극징후 음성"
+      "expectedFinding": "수막자극징후 음성",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "신경학적 진찰 확인",
-      "expectedFinding": "신경학적 진찰 정상"
+      "expectedFinding": "신경학적 진찰 정상",
+      "polarity": "negative"
     },
     {
       "item": "혈당",
       "method": "혈당 확인",
-      "expectedFinding": "혈당 정상"
+      "expectedFinding": "혈당 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

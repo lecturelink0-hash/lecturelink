@@ -85,12 +85,14 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "자해 흔적",
       "method": "자해 흔적 확인(배려 있게)",
-      "expectedFinding": "자해 흔적 없음"
+      "expectedFinding": "자해 흔적 없음",
+      "polarity": "negative"
     },
     {
       "item": "정신상태",
@@ -148,7 +150,7 @@
       "직접 물어봐 준 뒤 안전 계획 수립(방법 접근 차단, 위기 시 연락처)",
       "정신건강의학과 연계 — 필요시 입원 평가 설명",
       "가족에게 알리는 것의 필요성(비밀보장 한계) 합의",
-      "자살예방상담전화 1393 안내와 짧은 추적 약속, 회복 가능성 전달"
+      "자살예방 상담전화 109 안내와 짧은 추적 약속, 회복 가능성 전달"
     ]
   },
   "additionalPromptRule": [],

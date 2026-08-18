@@ -88,7 +88,8 @@
     {
       "item": "전반적 외견",
       "method": "전신 상태·의식 확인",
-      "expectedFinding": "피곤해 보이나 의식 명료"
+      "expectedFinding": "피곤해 보이나 의식 명료",
+      "polarity": "negative"
     },
     {
       "item": "구강",
@@ -99,17 +100,20 @@
     {
       "item": "복부 시진",
       "method": "복부 시진·장음 청진",
-      "expectedFinding": "복부 팽만 없고 장음 정상"
+      "expectedFinding": "복부 팽만 없고 장음 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",
       "method": "복부 촉진",
-      "expectedFinding": "복부 압통·반발통·강직 없음"
+      "expectedFinding": "복부 압통·반발통·강직 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 상태",
       "method": "의식·경부 강직 확인",
-      "expectedFinding": "의식 명료, 경부 강직과 국소 신경학적 이상 없음"
+      "expectedFinding": "의식 명료, 경부 강직과 국소 신경학적 이상 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

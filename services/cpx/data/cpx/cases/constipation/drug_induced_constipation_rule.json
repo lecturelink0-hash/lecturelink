@@ -84,7 +84,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "복부",
@@ -95,13 +96,14 @@
     {
       "item": "직장수지검사",
       "method": "DRE",
-      "expectedFinding": "직장에 단단한 변 가득 (분변 매복 의심)",
+      "expectedFinding": "직장에 단단한 변이 가득함(분변 매복)",
       "polarity": "positive"
     },
     {
       "item": "전신·갑상샘",
       "method": "얼굴·목·갑상샘 등 전신 확인",
-      "expectedFinding": "결막 창백 경미(기존 빈혈), 갑상샘 정상"
+      "expectedFinding": "결막이 경미하게 창백함(기존 빈혈), 갑상샘은 정상",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

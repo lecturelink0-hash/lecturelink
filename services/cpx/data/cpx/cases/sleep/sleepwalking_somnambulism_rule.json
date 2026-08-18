@@ -81,13 +81,15 @@
     {
       "item": "신경학적 진찰",
       "method": "뇌신경·근력·감각·반사 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "피부/구강",
       "method": "수면 중 손상·설소 상해 확인",
-      "expectedFinding": "타박상 가능, 간질 소견 없음",
-      "examConceptId": "skin_injury_inspection"
+      "expectedFinding": "오른쪽 정강이에 옅은 타박상 하나, 혀 깨문 흔적이나 요실금 흔적 없음",
+      "examConceptId": "skin_injury_inspection",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

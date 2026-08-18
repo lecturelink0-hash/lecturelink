@@ -83,7 +83,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "척추 정렬",
@@ -94,12 +95,14 @@
     {
       "item": "압통 부위",
       "method": "허리 촉진·압통 확인",
-      "expectedFinding": "국소 압통 뚜렷하지 않음"
+      "expectedFinding": "국소 압통 뚜렷하지 않음",
+      "polarity": "negative"
     },
     {
       "item": "하지직거상",
       "method": "SLR test 양측",
-      "expectedFinding": "양측 음성"
+      "expectedFinding": "양측 음성",
+      "polarity": "negative"
     },
     {
       "item": "하지 신경",

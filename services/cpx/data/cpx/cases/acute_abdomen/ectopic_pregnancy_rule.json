@@ -82,13 +82,14 @@
     {
       "item": "활력·탈수",
       "method": "활력징후·탈수 평가",
-      "expectedFinding": "혈압 95/60, 맥박 112회 — 출혈성 쇼크 초기 의심",
+      "expectedFinding": "혈압 95/60 mmHg, 맥박 112회/분 — 출혈성 쇼크 초기",
       "polarity": "positive"
     },
     {
       "item": "자세",
       "method": "오른편에 서서 바로 눕히고 무릎 세움",
-      "expectedFinding": "협조되나 창백함"
+      "expectedFinding": "자세 변경에 협조하나 얼굴이 창백함",
+      "polarity": "positive"
     },
     {
       "item": "시진",

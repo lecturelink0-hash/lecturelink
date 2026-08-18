@@ -75,12 +75,14 @@
     {
       "item": "활력징후·하복부",
       "method": "활력징후·하복부 확인",
-      "expectedFinding": "활력징후 정상, 하복부 경도 압통 가능"
+      "expectedFinding": "혈압 114/72 mmHg, 맥박 76회/분, 체온 36.8°C, 하복부 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "외음부 시진",
       "method": "외음부 시진 확인",
-      "expectedFinding": "외음부 대체로 정상"
+      "expectedFinding": "외음부 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "질경 진찰",
@@ -91,7 +93,8 @@
     {
       "item": "양손 골반진찰",
       "method": "양손 골반진찰 확인",
-      "expectedFinding": "양손 골반진찰 자궁경부 운동통 가능(골반염 시)"
+      "expectedFinding": "양손 골반진찰에서 자궁경부 운동통 없고 자궁·부속기 압통도 없음 — 상부 생식기 감염(골반염) 소견 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

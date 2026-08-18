@@ -77,12 +77,14 @@
     {
       "item": "활력징후·전신 상태",
       "method": "활력징후·전신 상태 확인",
-      "expectedFinding": "활력징후·전신 상태 양호"
+      "expectedFinding": "활력징후·전신 상태 양호",
+      "polarity": "negative"
     },
     {
       "item": "유방 시진",
       "method": "유방 시진 확인",
-      "expectedFinding": "유방 피부·유두 정상"
+      "expectedFinding": "유방 피부·유두 정상",
+      "polarity": "negative"
     },
     {
       "item": "유방 촉진",
@@ -93,12 +95,14 @@
     {
       "item": "액와 림프절",
       "method": "액와 림프절 확인",
-      "expectedFinding": "액와 림프절 없음"
+      "expectedFinding": "액와 림프절 없음",
+      "polarity": "negative"
     },
     {
       "item": "유두 분비물",
       "method": "유두 분비물 확인",
-      "expectedFinding": "유두 분비 없음"
+      "expectedFinding": "유두 분비 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

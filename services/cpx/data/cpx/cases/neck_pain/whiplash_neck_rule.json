@@ -80,7 +80,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "압통점",
@@ -99,12 +100,14 @@
       "item": "Spurling",
       "method": "Spurling 검사·축성 압박",
       "examConceptId": "spurling_test",
-      "expectedFinding": "음성"
+      "expectedFinding": "음성",
+      "polarity": "negative"
     },
     {
       "item": "상지 신경",
       "method": "상지 감각·근력·반사 확인",
-      "expectedFinding": "정상 (신경학적 이상 없음)"
+      "expectedFinding": "정상 (신경학적 이상 없음)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

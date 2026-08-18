@@ -87,7 +87,7 @@
     {
       "item": "ABC·활력징후·산소포화도",
       "method": "ABC·활력징후·산소포화도 확인",
-      "expectedFinding": "발열·빈맥·저혈압 경향, 산소포화도 저하 가능",
+      "expectedFinding": "체온 38.9°C, 맥박 116회/분, 혈압 88/54 mmHg, 호흡수 24회/분, 산소포화도 93 %",
       "polarity": "positive"
     },
     {
@@ -99,17 +99,20 @@
     {
       "item": "동공·구강·외상",
       "method": "동공·구강·외상 확인",
-      "expectedFinding": "동공 정상, 외상 없음"
+      "expectedFinding": "동공 정상, 외상 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "신경학적 진찰 확인",
-      "expectedFinding": "국소 마비 없음(전반적 처짐)"
+      "expectedFinding": "국소 마비 없음(전반적 처짐)",
+      "polarity": "negative"
     },
     {
       "item": "혈당",
       "method": "혈당 확인",
-      "expectedFinding": "혈당 정상"
+      "expectedFinding": "혈당 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

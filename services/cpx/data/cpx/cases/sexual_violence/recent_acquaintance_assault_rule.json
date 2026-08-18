@@ -86,7 +86,8 @@
       "item": "활력징후·의식수준",
       "method": "활력징후와 의식수준·응급 손상 확인",
       "expectedFinding": "혈압 118/72 mmHg, 맥박 88회/분, 호흡수 16회/분, 체온 36.7°C, 의식 명료",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "전신·피부 손상",
@@ -99,7 +100,8 @@
       "item": "구강 진찰",
       "method": "별도 설명·동의 후 구강 점막 손상 확인",
       "expectedFinding": "구강 점막 출혈·찰과상 없음",
-      "examConceptId": "oral_cavity_inspection"
+      "examConceptId": "oral_cavity_inspection",
+      "polarity": "negative"
     },
     {
       "item": "외음부 진찰",
@@ -111,8 +113,9 @@
     {
       "item": "접촉 부위 검체·골반 진찰",
       "method": "각 절차의 별도 동의 후 선택한 접촉 부위 검체 채취와 필요한 범위의 골반·질경 진찰",
-      "expectedFinding": "동의한 범위에서 검체 채취 가능하며 활동성 질출혈·심한 골반 압통 없음",
-      "examConceptId": "pelvic_speculum_exam"
+      "expectedFinding": "동의한 범위에서 검체를 채취했고 활동성 질출혈·심한 골반 압통은 없음",
+      "examConceptId": "pelvic_speculum_exam",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {
@@ -157,7 +160,7 @@
       "피해자 책임이 아님을 확인",
       "각 진찰·검체·법의학 절차의 별도 동의와 선택권",
       "사후피임·STI/HBV·HIV PEP의 신속한 평가",
-      "생존자 지원기관과 조기·후속 추적"
+      "해바라기센터(성폭력 피해자 통합지원센터)에서 증거 채취·의료·법률·심리 지원을 한 곳에서 받을 수 있음(가능하면 72시간 내), 여성긴급전화 1366·112 안내와 조기·후속 추적"
     ]
   },
   "additionalPromptRule": [],

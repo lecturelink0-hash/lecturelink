@@ -83,23 +83,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "인지선별",
       "method": "MMSE 등 인지기능 선별검사",
-      "expectedFinding": "초기에는 '모르겠다' 응답이 많으나 지지적 재질문 시 일부 수행 가능",
+      "expectedFinding": "MMSE 26점 — '모르겠다' 응답이 많으나 지지적으로 다시 물으면 상당 부분 정확히 수행",
       "polarity": "positive"
     },
     {
       "item": "신경학적 이상",
       "method": "신경학적 검사(보행·근력·반사)",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 촉진",
-      "expectedFinding": "비대 없음 (정상)"
+      "expectedFinding": "비대 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

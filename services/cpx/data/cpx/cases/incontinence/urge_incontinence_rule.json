@@ -77,27 +77,32 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 정상"
+      "expectedFinding": "활력징후 정상",
+      "polarity": "negative"
     },
     {
       "item": "하복부·방광",
       "method": "하복부·방광 확인",
-      "expectedFinding": "하복부·방광 팽만 없음"
+      "expectedFinding": "하복부·방광 팽만 없음",
+      "polarity": "negative"
     },
     {
       "item": "하지 신경학적 검사",
       "method": "하지 신경학적 검사 확인",
-      "expectedFinding": "하지 신경학적 정상"
+      "expectedFinding": "하지 신경학적 정상",
+      "polarity": "negative"
     },
     {
       "item": "골반저·기침 유발 검사",
       "method": "골반저·기침 유발 검사 확인",
-      "expectedFinding": "기침 유발 시 즉각 누출은 뚜렷치 않음(절박 시 누출)"
+      "expectedFinding": "기침 유발 시 즉각 누출은 뚜렷치 않음(절박 시 누출)",
+      "polarity": "negative"
     },
     {
       "item": "소변검사",
       "method": "소변검사 확인",
-      "expectedFinding": "요검사 대체로 정상(감염 음성)"
+      "expectedFinding": "요검사 대체로 정상(감염 음성)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

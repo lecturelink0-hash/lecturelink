@@ -83,7 +83,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "정신상태",
@@ -94,12 +95,14 @@
     {
       "item": "갑상샘",
       "method": "갑상샘 촉진",
-      "expectedFinding": "비대 없음 (산후 갑상선염 감별 위해 확인)"
+      "expectedFinding": "비대 없음 (산후 갑상선염 감별 위해 확인)",
+      "polarity": "negative"
     },
     {
       "item": "전신",
       "method": "전반 신체 상태 확인",
-      "expectedFinding": "산후 회복 경과 정상"
+      "expectedFinding": "산후 회복 경과 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

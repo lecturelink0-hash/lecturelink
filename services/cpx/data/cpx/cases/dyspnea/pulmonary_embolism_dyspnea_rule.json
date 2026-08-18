@@ -78,23 +78,26 @@
     {
       "item": "생체징후",
       "method": "생체징후 확인",
-      "expectedFinding": "생체징후 빈맥·빈호흡·산소포화도 저하 가능",
+      "expectedFinding": "맥박 112회/분, 호흡수 24회/분, 혈압 118/76 mmHg, 산소포화도 92 %",
       "polarity": "positive"
     },
     {
       "item": "흉부",
       "method": "흉부 확인",
-      "expectedFinding": "흉부 청진 대체로 깨끗(국소 이상 적음)"
+      "expectedFinding": "흉부 청진 대체로 깨끗(국소 이상 적음)",
+      "polarity": "negative"
     },
     {
       "item": "결막",
       "method": "결막 확인",
-      "expectedFinding": "결막 정상"
+      "expectedFinding": "결막 정상",
+      "polarity": "negative"
     },
     {
       "item": "경부",
       "method": "경부 확인",
-      "expectedFinding": "경부 경정맥 확장 가능"
+      "expectedFinding": "경정맥 팽대 없음",
+      "polarity": "negative"
     },
     {
       "item": "사지",
@@ -105,7 +108,8 @@
     {
       "item": "신경학",
       "method": "신경학 확인",
-      "expectedFinding": "신경학적 정상"
+      "expectedFinding": "신경학적 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

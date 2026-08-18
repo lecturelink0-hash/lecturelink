@@ -90,13 +90,15 @@
     {
       "item": "신경학적 진찰",
       "method": "파킨슨 징후, 보행, 손떨림, 인지기능 확인",
-      "expectedFinding": "조합에 따라 초기 퇴행성 단서 가능"
+      "expectedFinding": "근력·감각·반사·보행 정상, 안정 시 떨림과 서동 없음",
+      "polarity": "negative"
     },
     {
       "item": "외상 확인",
       "method": "타박상·찰과상 확인",
-      "expectedFinding": "수면 중 행동으로 인한 상처 가능",
-      "examConceptId": "skin_injury_inspection"
+      "expectedFinding": "왼쪽 아래팔에 아물어가는 찰과상 두 곳 — 침대에서 떨어질 때 생긴 것",
+      "examConceptId": "skin_injury_inspection",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

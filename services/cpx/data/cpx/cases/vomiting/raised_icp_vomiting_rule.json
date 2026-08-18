@@ -77,32 +77,37 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 대체로 정상"
+      "expectedFinding": "활력징후 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "전반적 외견",
       "method": "전반적 외견 확인",
-      "expectedFinding": "전반적 외견 정상"
+      "expectedFinding": "전반적 외견 정상",
+      "polarity": "negative"
     },
     {
       "item": "구강",
       "method": "구강 확인",
-      "expectedFinding": "구강 정상"
+      "expectedFinding": "구강 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부 시진",
       "method": "복부 시진 확인",
-      "expectedFinding": "복부 시진 정상"
+      "expectedFinding": "복부 시진 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",
       "method": "복부 촉진 확인",
-      "expectedFinding": "복부 압통 없음"
+      "expectedFinding": "복부 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 상태",
       "method": "신경학적 상태 확인",
-      "expectedFinding": "신경학적 이상(국소 위약·유두부종 가능)",
+      "expectedFinding": "왼쪽 팔다리 근력이 4등급으로 저하되고 안저에서 유두부종이 보임",
       "polarity": "positive"
     }
   ],

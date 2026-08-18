@@ -94,7 +94,8 @@
     {
       "item": "심음",
       "method": "심음 청진",
-      "expectedFinding": "빠르지만 규칙적"
+      "expectedFinding": "빠르지만 규칙적",
+      "polarity": "negative"
     },
     {
       "item": "호흡음",
@@ -105,12 +106,14 @@
     {
       "item": "양팔 혈압·맥박",
       "method": "양팔 혈압 비교·말초 맥박 확인",
-      "expectedFinding": "차이 없음"
+      "expectedFinding": "차이 없음",
+      "polarity": "negative"
     },
     {
       "item": "심전도",
       "method": "심전도 검사",
-      "expectedFinding": "동성빈맥 외 특이소견 없음"
+      "expectedFinding": "동성빈맥 외 특이소견 없음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {
