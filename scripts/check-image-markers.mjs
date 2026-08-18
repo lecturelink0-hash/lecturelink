@@ -13,6 +13,8 @@
  * 규칙만 문자열로 확인하면 "표식을 찍었다고 믿었는데 안 찍힌" 상태를 잡지 못한다.
  */
 
+import { readFileSync } from 'node:fs';
+import { questionImagePath, questionImageIndex } from '../lib/storage/paths.ts';
 import { maskTextRegions, isShortFigureLabel as maskShortLabel } from '../lib/extract/mask-text.ts';
 import {
   looksLikeStructureLabel,
@@ -139,6 +141,24 @@ check('표식이 없으면 안내문도 없다', buildMarkerLegend(0, []) === ''
   check('어긋나면 쓰지 말라고 안내한다', legend.includes('어긋나 보이면'));
 }
 
+console.log('문항 이미지 경로 규칙(questionImagePath / questionImageIndex)');
+{
+  // 표식판(`_m`)과 기본판은 **같은 이미지**다. 재사용 상한("한 그림당 최대 2문항")을
+  // 셀 때 경로로 묶으면 상한이 두 배로 풀린다 — 규칙이 세 곳에 흩어져 있어 여기서 고정한다.
+  const plain = questionImagePath('u1', 'up1', 3, false);
+  const marked = questionImagePath('u1', 'up1', 3, true);
+  check('기본판 경로', plain === 'u1/up1/crops/q_image_3.png', plain);
+  check('표식판 경로', marked === 'u1/up1/crops/q_image_3_m.png', marked);
+  check('marked 기본값은 기본판', questionImagePath('u1', 'up1', 3) === plain);
+  check('RLS 를 위해 user_id 가 첫 segment', plain.split('/')[0] === 'u1');
+  check('기본판에서 번호를 뽑는다', questionImageIndex(plain) === 3);
+  check('표식판도 같은 번호로 본다', questionImageIndex(marked) === 3);
+  check('두 판이 같은 이미지로 묶인다', questionImageIndex(plain) === questionImageIndex(marked));
+  check('두 자리 번호', questionImageIndex(questionImagePath('u', 'p', 12, true)) === 12);
+  check('크롭이 아닌 경로는 null', questionImageIndex('u1/up1/lecture.pdf') === null);
+  check('빈 값은 null', questionImageIndex('') === null);
+}
+
 console.log('표식 참조 발문 판정(stemReferencesMarker)');
 // 이걸 놓치면 이미지가 빠졌을 때 표식 문항이 그림 없이 살아남아 학생에게 나간다.
 check('A로 표시된', stemReferencesMarker('A로 표시된 세포층에서 유래하는 신경섬유는?'));
@@ -164,9 +184,11 @@ console.log('실제 렌더 — 마스킹 → 표식');
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
-  // 그림 몸통(표식이 침범하면 안 되는 영역)
+  // 그림 몸통(표식이 침범하면 안 되는 영역). 라벨과 가깝게 둔다 — 표식은 가리킬 대상이
+  // 탐색 범위 안에 있어야 찍히므로, 몸통이 멀면 표식이 전부 탈락한다(그 규칙은 아래
+  // '지시 대상 판정' 블록에서 따로 검사한다).
   ctx.fillStyle = '#cfe3f5';
-  ctx.fillRect(180, 40, 180, 220);
+  ctx.fillRect(150, 40, 210, 220);
   ctx.fillStyle = '#111111';
   ctx.font = '16px sans-serif';
   const labels = [
@@ -266,6 +288,106 @@ console.log('실제 렌더 — 마스킹 → 표식');
   check('후보가 없으면 원본을 그대로 돌려준다', noSources.png === masked.png && noSources.markers.length === 0);
 }
 
+console.log('지시 대상 판정 — 가리킬 것이 없으면 표식을 찍지 않는다');
+{
+  // 운영 지적(2026-08-16): 원본 그림의 라벨이 지시선 없이 위치만으로 구조를 가리키는
+  // 경우가 많아, 글자를 지우고 표식을 놓으면 배경 위에 동그라미가 떠 있게 된다.
+  // → 가리킬 대상을 못 찾거나 방향이 모호하면 표식을 아예 찍지 않는다.
+  const { createCanvas } = await import('canvas');
+  const IW = 400, IH = 300;
+  const make = (paint) => {
+    const c = createCanvas(IW, IH);
+    const x = c.getContext('2d');
+    x.fillStyle = '#ffffff';
+    x.fillRect(0, 0, IW, IH);
+    paint(x);
+    return new Uint8Array(c.toBuffer('image/png'));
+  };
+  const labelAt = (cx, cy) => [{ text: 'Structure', x0: cx - 30, y0: cy - 10, x1: cx + 30, y1: cy + 10 }];
+
+  {
+    // 사방이 텅 빈 곳에 뜬 표식 — 무엇을 가리키는지 알 수 없다.
+    const png = make(() => {});
+    const res = await annotateMarkers(png, labelAt(200, 150));
+    check('배경만 있으면 표식을 찍지 않는다', res.markers.length === 0, `실제 ${res.markers.length}개`);
+  }
+  {
+    // 한쪽에만 그림이 있다 — 그쪽으로 지시선을 긋고 표식을 남긴다.
+    // (탐색 범위는 짧은 변의 30 %다. 운영 그림에서 라벨과 대상 사이는 폭의 10 % 안쪽이라
+    //  넉넉하고, 그보다 먼 라벨은 애초에 무엇을 가리키는지 모호하다.)
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(200, 120, 90, 70);
+    });
+    const res = await annotateMarkers(png, labelAt(120, 150));
+    check('한쪽에 대상이 있으면 표식을 남긴다', res.markers.length === 1, `실제 ${res.markers.length}개`);
+  }
+  {
+    // 표식이 대상 위에 이미 얹혀 있다 — 선 없이 표식만.
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(150, 100, 120, 100);
+    });
+    const res = await annotateMarkers(png, labelAt(200, 150));
+    check('대상 위에 있으면 표식을 남긴다', res.markers.length === 1, `실제 ${res.markers.length}개`);
+  }
+  {
+    // 사방에 비슷한 거리로 그림이 있다 — 어느 것을 가리키는지 정할 수 없다.
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      for (const [bx, by] of [[200, 40], [200, 250], [40, 150], [350, 150]]) {
+        x.fillRect(bx - 22, by - 22, 44, 44);
+      }
+    });
+    const res = await annotateMarkers(png, labelAt(200, 150));
+    check(
+      '사방이 비슷하게 가까우면(모호) 표식을 찍지 않는다',
+      res.markers.length === 0,
+      `실제 ${res.markers.length}개`,
+    );
+  }
+  {
+    // 대상이 있는 표식과 없는 표식이 섞이면, 남은 것에 A 부터 다시 붙는다
+    // (건너뛴 글자가 생기면 대응표와 그림이 어긋난다).
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(300, 30, 70, 50);
+    });
+    const res = await annotateMarkers(png, [
+      { text: 'Far away', x0: 20, y0: 240, x1: 80, y1: 260 },
+      { text: 'Near target', x0: 200, y0: 45, x1: 260, y1: 65 },
+    ]);
+    check('탈락분이 있어도 글자는 A 부터 연속', res.markers.map((m) => m.letter).join('') === 'A', res.markers.map((m) => `${m.letter}=${m.label}`).join(','));
+    check('남은 표식의 라벨이 맞다', res.markers[0]?.label === 'Near target', res.markers[0]?.label);
+  }
+}
+
+console.log('표식 글자 — 폰트 API 를 아예 쓰지 않는가');
+{
+  // 운영 사고의 근본 원인은 "폰트가 없는 런타임에서 fillText 를 썼다"는 것이다.
+  // 그 조건은 로컬에서 재현할 수 없다 — macOS 의 node-canvas 는 CoreText 를 쓰므로
+  // FONTCONFIG_FILE 을 비워도 글자가 그대로 그려진다(실제로 시도해 확인했다).
+  //
+  // 재현할 수 없는 조건은 **없앤 것을 증명**하는 쪽이 확실하다. 그리기 경로가 폰트
+  // API 를 한 번도 부르지 않으면 폰트 유무가 결과를 바꿀 수 없다.
+  const raw = readFileSync(new URL('../lib/extract/annotate-markers.ts', import.meta.url), 'utf8');
+  // 주석은 뺀다 — 사고 경위를 설명하려고 주석에 `ctx.fillText(…)` 를 적어 두었고,
+  // 그대로 검사하면 설명을 지워야 통과하는 검사가 된다.
+  const src = raw.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
+  const banned = ['fillText', 'strokeText', 'measureText', 'registerFont'];
+  const hits = banned.filter((name) => new RegExp(`\\b${name}\\s*\\(`).test(src));
+  check(
+    '폰트 렌더링 API 를 호출하지 않는다',
+    hits.length === 0,
+    `발견: ${hits.join(', ')} — 폰트 없는 런타임에서 두부(□)가 된다`,
+  );
+  check(
+    'ctx.font 을 설정하지 않는다',
+    !/\.font\s*=/.test(src),
+    'font 를 지정한다는 것은 폰트에 의존한다는 뜻이다',
+  );
+}
+
 console.log('표식 글자 — 폰트 없이 실제로 구별되게 그려지는가');
 {
   // 운영 사고 재발 방지. 첫 배포분은 ctx.fillText + 'sans-serif' 를 썼는데 Vercel
@@ -281,6 +403,9 @@ console.log('표식 글자 — 폰트 없이 실제로 구별되게 그려지는
   const bctx = base.getContext('2d');
   bctx.fillStyle = '#ffffff';
   bctx.fillRect(0, 0, IW, IH);
+  // 표식은 가리킬 대상이 있어야 찍힌다 — 각 라벨 자리 옆에 그림 요소를 둔다.
+  bctx.fillStyle = '#cfe3f5';
+  bctx.fillRect(170, 20, 180, 560);
 
   const BOX_H = 24;
   const regions = Array.from({ length: 5 }, (_, i) => ({

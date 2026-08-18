@@ -267,8 +267,12 @@ function drawMarkerGlyph(
     case 'D':
       ctx.moveTo(x0, y0);
       ctx.lineTo(x0, y1);
+      // 보울을 반지름 h/2 반원으로 그렸더니 폭이 0.5h 에 그쳐(다른 글자는 0.78h) 좁고
+      // 왼쪽으로 치우친 "찌그러진 D"가 됐다(운영 이미지 8배 확대로 확인).
+      // 제어점을 글자 폭 밖으로 빼서 보울이 x1 까지 닿게 한다(3차 베지에의 최대 도달점은
+      // 제어점 거리의 3/4 이라 w + w/3 을 주면 정확히 w 만큼 나간다).
       ctx.moveTo(x0, y0);
-      ctx.arc(x0, cy, h / 2, -Math.PI / 2, Math.PI / 2);
+      ctx.bezierCurveTo(x1 + w / 3, y0, x1 + w / 3, y1, x0, y1);
       break;
     case 'E':
       ctx.moveTo(x0, y0);
@@ -286,6 +290,118 @@ function drawMarkerGlyph(
       ctx.moveTo(cx - w * 0.3, cy);
       ctx.lineTo(cx + w * 0.3, cy);
       break;
+  }
+  ctx.stroke();
+}
+
+/** 표식에서 대상까지의 지시선 탐색 결과. */
+type Designation =
+  | { kind: 'adjacent' } // 표식이 이미 대상에 닿아 있다 — 선이 필요 없다
+  | { kind: 'line'; angle: number; dist: number } // 지시선을 그린다
+  | { kind: 'none' }; // 가리킬 것을 못 찾았거나 방향이 모호하다 — 표식을 찍지 않는다
+
+/**
+ * 표식이 무엇을 가리키는지 찾는다.
+ *
+ * 왜 필요한가(2026-08-16 운영 지적): 원본 그림의 라벨이 **지시선 없이 위치만으로**
+ * 구조를 가리키는 경우가 많다. 글자를 지우고 그 자리에 표식을 놓으면 배경 위에 동그라미가
+ * 떠 있게 되어 "A가 무엇을 지칭하는지 분명하지 않다"가 된다.
+ *
+ * 라벨이 있던 자리에서 사방으로 광선을 쏴 가장 가까운 "그림 요소"를 찾는다. 방향이 한쪽으로
+ * 모이면 그쪽으로 지시선을 긋고, 사방에 흩어져 있으면(= 무엇을 가리키는지 특정 불가)
+ * 표식을 아예 찍지 않는다. **애매한 표식은 없느니만 못하다.**
+ */
+function findDesignation(
+  isContent: (x: number, y: number) => boolean,
+  cx: number,
+  cy: number,
+  r: number,
+  W: number,
+  H: number,
+): Designation {
+  const maxDist = Math.round(Math.min(W, H) * 0.3);
+  const hits: Array<{ angle: number; dist: number }> = [];
+  for (let deg = 0; deg < 360; deg += 4) {
+    const a = (deg * Math.PI) / 180;
+    const dx = Math.cos(a);
+    const dy = Math.sin(a);
+    for (let d = r + 2; d <= maxDist; d += 2) {
+      const x = Math.round(cx + dx * d);
+      const y = Math.round(cy + dy * d);
+      if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) break;
+      if (isContent(x, y)) {
+        hits.push({ angle: a, dist: d });
+        break;
+      }
+    }
+  }
+  if (hits.length === 0) return { kind: 'none' };
+
+  const minDist = Math.min(...hits.map((h) => h.dist));
+  // 이미 대상 위/옆에 있으면 선을 그으면 오히려 그림을 가린다.
+  if (minDist <= r * 1.3) return { kind: 'adjacent' };
+
+  // 최단 거리에 가까운 방향들이 한쪽으로 모이는지(원형 분산)를 본다.
+  // 사방이 다 비슷하게 가까우면 무엇을 가리키는지 정할 수 없다.
+  const near = hits.filter((h) => h.dist <= minDist * 1.25);
+  let sx = 0;
+  let sy = 0;
+  for (const h of near) {
+    sx += Math.cos(h.angle);
+    sy += Math.sin(h.angle);
+  }
+  const concentration = Math.hypot(sx, sy) / near.length;
+  if (concentration < 0.7) return { kind: 'none' };
+
+  return { kind: 'line', angle: Math.atan2(sy, sx), dist: minDist };
+}
+
+/**
+ * 표식에서 대상까지 지시선을 긋는다.
+ *
+ * 어두운 영상(X선·초음파)에서도 보이게 흰 테두리를 깔고 그 위에 검은 선을 얹는다.
+ * 끝에는 작은 화살촉을 달아 방향을 분명히 한다.
+ */
+function drawLeaderLine(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  angle: number,
+  dist: number,
+): void {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  const x0 = cx + dx * (r + 1);
+  const y0 = cy + dy * (r + 1);
+  // 대상에 닿기 직전에서 멈춘다 — 그림을 덮지 않게.
+  const end = Math.max(r + 4, dist - 3);
+  const x1 = cx + dx * end;
+  const y1 = cy + dy * end;
+
+  const w = Math.max(1.2, r * 0.14);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // 흰 테두리(어두운 배경 대비)
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = w * 2.6;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#111111';
+  ctx.lineWidth = w;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  // 화살촉
+  const head = Math.max(3, r * 0.42);
+  for (const s of [1, -1]) {
+    const a = angle + s * 2.5;
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 + Math.cos(a) * head, y1 + Math.sin(a) * head);
   }
   ctx.stroke();
 }
@@ -318,25 +434,81 @@ export async function annotateMarkers(
     const minSide = Math.min(W, H);
     const markers: PlacedMarker[] = [];
 
-    sources.slice(0, MARKER_LETTERS.length).forEach((src, i) => {
-      const letter = MARKER_LETTERS[i];
+    // ── 배경색 추정 + "그림 요소" 판정
+    //
+    // 표식이 무엇을 가리키는지 찾으려면 배경과 그림을 갈라야 한다. 배경은 테두리 픽셀의
+    // 최빈색(8단계 양자화)으로 잡는다 — 강의록 그림은 대개 바깥이 배경이다.
+    // 판정 문턱을 낮게 잡으면 종이 질감·연한 워터마크가 그림으로 잡혀 지시선이 엉뚱한
+    // 곳을 가리키므로 넉넉히 둔다.
+    const frame = ctx.getImageData(0, 0, W, H).data;
+    const bucket = new Map<string, { c: [number, number, number]; n: number }>();
+    const sampleBorder = (x: number, y: number) => {
+      const o = (y * W + x) * 4;
+      const c: [number, number, number] = [frame[o], frame[o + 1], frame[o + 2]];
+      const key = `${c[0] >> 5}_${c[1] >> 5}_${c[2] >> 5}`;
+      const cur = bucket.get(key);
+      if (cur) cur.n += 1;
+      else bucket.set(key, { c, n: 1 });
+    };
+    for (let x = 0; x < W; x += 2) {
+      sampleBorder(x, 0);
+      sampleBorder(x, H - 1);
+    }
+    for (let y = 0; y < H; y += 2) {
+      sampleBorder(0, y);
+      sampleBorder(W - 1, y);
+    }
+    let bg: [number, number, number] = [255, 255, 255];
+    let best = 0;
+    for (const { c, n } of bucket.values()) {
+      if (n > best) {
+        best = n;
+        bg = c;
+      }
+    }
+    const CONTENT_DELTA = 70;
+    const isContent = (x: number, y: number): boolean => {
+      // 낱개 픽셀(잡티·질감)은 그림으로 보지 않는다 — 3x3 안에 여러 개가 모여야 한다.
+      let hit = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const o = ((y + dy) * W + (x + dx)) * 4;
+          const d =
+            Math.abs(frame[o] - bg[0]) + Math.abs(frame[o + 1] - bg[1]) + Math.abs(frame[o + 2] - bg[2]);
+          if (d > CONTENT_DELTA) hit += 1;
+        }
+      }
+      return hit >= 5;
+    };
+
+    // 지시선은 원보다 **먼저** 그린다(선 끝이 글자를 가로지르지 않게).
+    // 그리기 전에 모든 표식의 지시 대상을 원본 픽셀로 계산해 둔다 — 먼저 그린 표식이
+    // 다음 표식의 "그림 요소" 판정을 오염시키지 않게.
+    const placements = sources.slice(0, MARKER_LETTERS.length).map((src) => {
       const boxH = Math.max(1, src.y1 - src.y0);
       // 지운 자리 높이에 맞추되(설계 제약 2), 그림 크기 대비 최소·최대 크기를 둔다.
-      //
-      // 하한을 8px → 10px, 비율 하한을 2 % → 2.5 % 로 올렸다. 운영 첫 배포분에서
-      // 표식이 육안으로 너무 작았다(넓은 모식도의 작은 라벨 자리는 boxH 가 작아
-      // 반지름이 하한에 걸린다). 표식이 지운 자리를 조금 넘어가는 것은 허용한다 —
-      // 실제 시험 그림의 표식도 그렇고, 읽히지 않는 표식은 없는 것과 같다.
+      // 하한 8px→10px, 비율 하한 2 %→2.5 %: 첫 배포분에서 표식이 육안으로 너무 작았다
+      // (넓은 모식도의 작은 라벨 자리는 boxH 가 작아 반지름이 하한에 걸린다).
+      // 지운 자리를 조금 넘어가는 것은 허용한다 — 읽히지 않는 표식은 없는 것과 같다.
       const r = Math.round(
-        Math.max(
-          Math.max(10, minSide * 0.025),
-          Math.min(boxH * 0.9, minSide * 0.055),
-        ),
+        Math.max(Math.max(10, minSide * 0.025), Math.min(boxH * 0.9, minSide * 0.055)),
       );
-      // 테두리가 잘리지 않게 가장자리에서 안쪽으로 밀어 넣는다.
       const cx = Math.round(Math.min(W - r - 2, Math.max(r + 2, (src.x0 + src.x1) / 2)));
       const cy = Math.round(Math.min(H - r - 2, Math.max(r + 2, (src.y0 + src.y1) / 2)));
+      return { src, r, cx, cy, designation: findDesignation(isContent, cx, cy, r, W, H) };
+    });
 
+    // 가리킬 것을 못 찾은 표식은 아예 찍지 않는다 — 애매한 표식은 없느니만 못하다.
+    const usable = placements.filter((p) => p.designation.kind !== 'none');
+    for (const p of usable) {
+      if (p.designation.kind === 'line') {
+        drawLeaderLine(ctx, p.cx, p.cy, p.r, p.designation.angle, p.designation.dist);
+      }
+    }
+
+    usable.forEach((p, i) => {
+      const letter = MARKER_LETTERS[i];
+      const { r, cx, cy, src } = p;
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
