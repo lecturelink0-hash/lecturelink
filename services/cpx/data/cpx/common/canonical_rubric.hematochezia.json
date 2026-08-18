@@ -261,5 +261,19 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "lower_gi_bleed_urgency",
+      "caseIds": [
+        "diverticular_bleed_rule"
+      ],
+      "requiredItemIds": [
+        "ed03",
+        "ed04"
+      ],
+      "maxOverallGrade": 1,
+      "message": "하부위장관 출혈에서 검사 계획을 설명하지 않았거나, 대량 출혈·실신 시 즉시 응급진료가 필요함을 안내하지 않았습니다."
+    }
+  ]
 }
