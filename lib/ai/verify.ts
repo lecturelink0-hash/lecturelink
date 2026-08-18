@@ -23,11 +23,18 @@ import {
 import {
   VERIFICATION_SYSTEM_PROMPT,
   VERIFICATION_TOOL_SCHEMA,
+  PRIVATE_VERIFICATION_SYSTEM_PROMPT,
   buildVerificationUserMessage,
+  buildPrivateVerificationUserMessage,
 } from './prompts/verification';
 import type { GeneratedQuestion, VerificationResult } from '@/lib/types/domain';
-
-export type VerificationSeverity = 'none' | 'minor' | 'major' | 'critical';
+// 폐기 판정은 무거운 의존이 없는 잎 모듈에 둔다(스크립트가 그것만 import 해 검사한다).
+export {
+  isPrivateVerifyFailure,
+  PRIVATE_VERIFY_REJECT_SCORE,
+  type VerificationSeverity,
+} from './verify-policy';
+import type { VerificationSeverity } from './verify-policy';
 
 export interface VerificationResponse extends VerificationResult {
   severity: VerificationSeverity;
@@ -39,6 +46,14 @@ export interface VerificationInput {
   subTopicName: string;
   isRiskCategory: boolean;
   question: GeneratedQuestion;
+  /**
+   * 'shared'(기본) — 공유풀 admission 용. F 규격까지 본다.
+   * 'private'      — 내신대비용. 형식은 코드가 보므로 **의학 내용 4가지만** 본다.
+   *                  (형식을 섞으면 모델이 형식 지적으로 issues 를 채우고 의학 오류를 놓친다)
+   */
+  mode?: 'shared' | 'private';
+  /** private 모드에서 "정답 근거가 자료에 있는가"를 대조할 원문. 앞부분만 실린다. */
+  sourceText?: string;
 }
 
 export async function verifyQuestion(
@@ -48,29 +63,38 @@ export async function verifyQuestion(
   const model = MODELS.verification();
   const startTime = Date.now();
 
-  const userMessage = buildVerificationUserMessage({
-    subjectName: input.subjectName,
-    subTopicName: input.subTopicName,
-    isRiskCategory: input.isRiskCategory,
-    question: input.question,
-  });
+  const isPrivate = input.mode === 'private';
+  const userMessage = isPrivate
+    ? buildPrivateVerificationUserMessage({
+        question: input.question,
+        sourceText: input.sourceText,
+      })
+    : buildVerificationUserMessage({
+        subjectName: input.subjectName,
+        subTopicName: input.subTopicName,
+        isRiskCategory: input.isRiskCategory,
+        question: input.question,
+      });
 
-  const response = await withRetry(() =>
-    createMessage(client, {
-      model,
-      max_tokens: 1500,
-      system: [
-        {
-          type: 'text',
-          text: VERIFICATION_SYSTEM_PROMPT,
-          cache_control: { type: 'ephemeral' },
-        },
-      ],
-      tools: [VERIFICATION_TOOL_SCHEMA],
-      tool_choice: { type: 'tool', name: 'verify_question' },
-      messages: [{ role: 'user', content: userMessage }],
-    }),
-    { maxAttempts: 5 },
+  const response = await withRetry(
+    () =>
+      createMessage(client, {
+        model,
+        max_tokens: 1500,
+        system: [
+          {
+            type: 'text',
+            text: isPrivate ? PRIVATE_VERIFICATION_SYSTEM_PROMPT : VERIFICATION_SYSTEM_PROMPT,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+        tools: [VERIFICATION_TOOL_SCHEMA],
+        tool_choice: { type: 'tool', name: 'verify_question' },
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+    // 내신 경로는 사용자가 화면 앞에서 기다리는 생성 흐름 안에서 돈다.
+    // 5회 재시도는 그 자리에서 수십 초를 쓴다 — 짧게 끊고 호출자가 통과로 처리한다.
+    { maxAttempts: isPrivate ? 2 : 5 },
   );
 
   const toolUseBlock = response.content.find(

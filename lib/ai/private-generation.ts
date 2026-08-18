@@ -19,6 +19,8 @@
  * 비용 추적: 모든 호출이 recordAiCost 로 ai_cost_log 에 기록됨.
  */
 
+import { createHash } from 'node:crypto';
+import type { PrivateQuestionKind } from '@/lib/types/database';
 import type Anthropic from '@anthropic-ai/sdk';
 import { createAdminClient } from '@/lib/db/admin';
 import {
@@ -74,7 +76,9 @@ import {
   CLINICAL_VIGNETTE_RULES,
   buildClinicalQuotaDirective,
 } from '@/lib/ai/prompts/clinical-vignette';
-import { measureClinicalYield } from '@/lib/ai/clinical-shape';
+import { isClinicalVignette, measureClinicalYield } from '@/lib/ai/clinical-shape';
+import { verifyQuestion } from './verify';
+import { isPrivateVerifyFailure, PRIVATE_VERIFY_REJECT_SCORE } from './verify-policy';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -101,6 +105,58 @@ const MAX_VISION_SLIDES = 40;
 const MAX_FEATURED_IMAGES_CAP = 20;
 // 이미지가 필요 없는 요청(이미지형 미선택)에서 쓰는 하한 — 종전 동작 유지용.
 const MIN_FEATURED_IMAGES = 8;
+/**
+ * "그 컬럼이 없다"를 나타내는 오류 코드 — 계층에 따라 다르다(2026-08-16 프로덕션 실측).
+ *   SELECT 에 없는 컬럼       → Postgres 판정    → 42703
+ *   INSERT/UPDATE 본문의 컬럼 → PostgREST 선차단 → PGRST204
+ * 내신 품질 계측 컬럼(00040)은 `db push` 금지 정책 때문에 SQL Editor 로 수동 적용한다.
+ * 그래서 **코드 배포가 마이그레이션보다 먼저 도착할 수 있다** — 그때 문항 저장 자체가
+ * 실패하면 생성 기능이 통째로 죽는다. 아래 코드는 그 경우 계측 필드만 빼고 진행한다.
+ */
+const MISSING_COLUMN_CODES = new Set(['42703', 'PGRST204']);
+
+function isMissingColumnError(error: { code?: string | null } | null): boolean {
+  return !!error?.code && MISSING_COLUMN_CODES.has(error.code);
+}
+
+/**
+ * 검증 1패스(P1) 운용 모드.
+ *
+ *   'off'      — 검증하지 않는다(사고 시 즉시 끌 수 있는 스위치).
+ *   'warn'     — 기준 미달을 경고·진단·점수로만 남기고 **저장한다**. (기본)
+ *   'discard'  — 기준 미달 문항을 버리고 보충 생성이 그 자리를 채운다.
+ *
+ * 왜 기본이 warn 인가: Flash 로 만든 문항의 오류를 Flash 검증이 실제로 얼마나 잡는지는
+ * 실측 전에는 모른다. 처음부터 discard 로 켜면 오탐이 멀쩡한 문항을 버리고 보충 생성으로
+ * 시간·비용만 늘어난다. 첫 주는 warn 으로 돌려 폐기 후보를 사람이 검토한 뒤 올린다.
+ */
+const VERIFY_MODE = ((): 'off' | 'warn' | 'discard' => {
+  const raw = (process.env.PRIVATE_VERIFY_MODE ?? 'warn').toLowerCase();
+  return raw === 'off' || raw === 'discard' ? raw : 'warn';
+})();
+/** 검증 한 건의 상한. 넘으면 판정 없이 통과시킨다(가용성 우선). */
+const VERIFY_TIMEOUT_MS = 8_000;
+/**
+ * 배치 하나 안에서 동시에 돌리는 검증 수.
+ * 배치들도 서로 병렬이라 무제한으로 열면 배치 수 × 배치 크기만큼 한꺼번에 나가 429 를
+ * 자초한다. 429 는 통과 처리로 흘러가 검증이 조용히 사라지므로 애초에 안 만드는 게 낫다.
+ */
+const VERIFY_CONCURRENCY = 6;
+
+/**
+ * 00040 미적용이 한 번 확인되면 이후 배치는 처음부터 계측 컬럼 없이 저장한다
+ * (배치마다 실패-재시도를 반복하지 않게 하는 프로세스 수명 캐시).
+ */
+let questionMetricColumnsSupported = true;
+
+/** 00040 이 추가한 private_questions 계측 컬럼(kind·ask_kind·verify_score)만 뺀 행. */
+function withoutMetricColumns<
+  T extends { kind?: unknown; ask_kind?: unknown; verify_score?: unknown },
+>(row: T): Omit<T, 'kind' | 'ask_kind' | 'verify_score'> {
+  const { kind: _kind, ask_kind: _askKind, verify_score: _verifyScore, ...rest } = row;
+  return rest;
+}
+
 /**
  * 이번 요청에서 확보할 문항 이미지 수. 장당 MAX_QUESTIONS_PER_IMAGE 문항까지 쓰므로
  * desiredCount 장이면 이론상 요청의 2배를 덮어 배치마다 이미지가 돌아가고 다양성도 남는다.
@@ -1374,19 +1430,40 @@ export async function generatePrivateQuestionsFromUpload(
   // 내로잉을 함수 본문에 전파하지 않는다 — non-null 로 확정된 별칭을 캡처시킨다.
   const uploadRow = upload;
 
-  await admin
+  // 처리 시작 상태 + **이번 요청이 무엇을 요구했는지**(P2).
+  // 요청 난이도·유형이 DB 에 없으면 "임상형을 요청했을 때 임상형이 몇 % 나왔나",
+  // "'상'을 요청했을 때 난이도 3 이 몇 % 인가" 를 SQL 로 물을 수 없다 —
+  // ② 이후의 프롬프트 수정이 개선인지 증명하는 기준선이 이 네 컬럼이다.
+  const progressUpdate = {
+    status: 'processing' as const,
+    processing_stage: 'downloading',
+    progress_current: 0,
+    progress_total: 0,
+    completed_question_count: 0,
+    target_question_count: desiredCount,
+    heartbeat_at: new Date().toISOString(),
+    error_message: null,
+  };
+  const requestConditions = {
+    requested_difficulty: input.difficulty ?? null,
+    requested_types: input.questionTypes ?? [],
+    generation_style: style,
+    reference_count: (input.referenceUploadIds ?? []).length,
+  };
+  const { error: startErr } = await admin
     .from('user_uploads')
-    .update({
-      status: 'processing',
-      processing_stage: 'downloading',
-      progress_current: 0,
-      progress_total: 0,
-      completed_question_count: 0,
-      target_question_count: desiredCount,
-      heartbeat_at: new Date().toISOString(),
-      error_message: null,
-    })
+    .update({ ...progressUpdate, ...requestConditions })
     .eq('id', upload.id);
+  if (startErr) {
+    // 00040 미적용 환경 — 계측을 포기하고 처리 상태만 다시 기록한다(기능 정지가 더 나쁘다).
+    if (isMissingColumnError(startErr)) {
+      console.warn('[private-gen] 요청 조건 컬럼 없음(00040 미적용) — 계측 생략');
+      await admin.from('user_uploads').update(progressUpdate).eq('id', upload.id);
+    } else {
+      // 그 밖의 실패는 종전과 같이 넘긴다. 상태가 안 박히면 고착 회복 크론이 정리한다.
+      console.warn('[private-gen] 처리 시작 상태 기록 실패:', startErr.message);
+    }
+  }
 
   // 살아있는 동안 heartbeat 를 주기적으로 갱신한다. 큐의 고착 회복 로직이
   // "heartbeat 가 오래됨 = 워커가 죽음" 으로 판단하므로, 대용량 PDF 추출처럼 단계 갱신
@@ -1419,6 +1496,16 @@ export async function generatePrivateQuestionsFromUpload(
       throw new Error(`Storage download failed: ${dlErr?.message}`);
     }
     const fileBuffer = await fileBlob.arrayBuffer();
+    // 원본 내용 해시 — 같은 자료를 다시 올렸는지 판정하는 축(P11 재생성 중복 방지가 쓴다).
+    // 파일명·크기는 같은 자료를 다른 이름으로 올리면 갈라지므로 내용으로 잰다.
+    const contentSha256 = createHash('sha256').update(Buffer.from(fileBuffer)).digest('hex');
+    const { error: shaErr } = await admin
+      .from('user_uploads')
+      .update({ content_sha256: contentSha256 })
+      .eq('id', upload.id);
+    if (shaErr && !isMissingColumnError(shaErr)) {
+      console.warn('[private-gen] content_sha256 기록 실패:', shaErr.message);
+    }
     // ── 진단 수집 시작. 단계별 소요와 세부 수치를 모아 마지막에 Storage 로 남긴다.
     const diag: {
       timings: Record<string, number>;
@@ -2758,10 +2845,13 @@ export async function generatePrivateQuestionsFromUpload(
       // 불명·선지 부족) 문항은 폐기한다. 폐기로 빈 슬롯이 생기면 보충 단계가 채운다.
       // 이후 이미지 연결·정리 로직은 모두 이 kept 배열 기준으로 인덱스를 맞춘다
       // (parsed.questions 를 그대로 쓰면 폐기분 때문에 inserted 와 어긋난다).
-      const kept: Array<{
+      // let — 검증(P1) 이 폐기 모드로 돌 때 걸러진 배열로 갈아끼운다.
+      let kept: Array<{
         q: GeneratedQuestion;
         choices: string[];
         answerIndex: number;
+        /** P1 검증 점수. 검증을 못 돌렸거나 시간 초과면 null. */
+        verifyScore?: number | null;
       }> = [];
       for (const q of parsed.questions) {
         if (kept.length >= batchSize) break;
@@ -2798,21 +2888,119 @@ export async function generatePrivateQuestionsFromUpload(
         throw new Error(`생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`);
       }
 
+      // ── 검증 1패스 (P1)
+      //
+      // 내신 경로에는 의학적 정확성 검사가 **하나도** 없었다. 감사에서 실물 해설
+      // "도파민은 억제성 신경전달물질로 운동 조절에 관여하며"가 그대로 저장돼 나갔다.
+      // 공유풀(admission)이 쓰는 verifyQuestion 을 'private' 모드로 재사용한다 —
+      // 형식(F 규격)은 코드가 이미 결정론적으로 보므로 의학 내용 4가지만 판정시킨다.
+      //
+      // 가용성 우선: 늦거나 실패한 검증은 **통과로 친다**. 검증 때문에 생성이 멈추는 쪽이
+      // 검증 없이 저장되는 쪽보다 나쁘다. 못 돌린 건수는 verifyUnavailable 로 남는다.
+      //
+      // ⚠ 여기서 쌓는 warnings 는 지금 진단에만 남는 내부 기록이다. 경고를 화면에 띄우는
+      //   P8 을 붙일 때 이 문구를 그대로 내보내지 말 것 — 검증기 판정문이 학생에게
+      //   "이 문항은 틀렸을 수 있다"로 읽히는데 정작 조치는 안 한 상태가 된다.
+      if (VERIFY_MODE !== 'off') {
+        const tVerify = Date.now();
+        const rejected = new Set<number>();
+        await mapWithConcurrency(kept, VERIFY_CONCURRENCY, async (k, i) => {
+          const verdict = await withDeadline(
+            verifyQuestion({
+              // private 모드 메시지는 과목·소주제를 쓰지 않는다(자료 기반이라 분류가 없다).
+              subjectName: '내신대비',
+              subTopicName: k.q.sub_topic_code ?? '미분류',
+              isRiskCategory: false,
+              mode: 'private',
+              sourceText: gen.contextText,
+              question: {
+                ...k.q,
+                choices: k.choices,
+                answer_index: k.answerIndex,
+              },
+            }).catch((e: unknown) => {
+              bumpGenDiag('verifyUnavailable');
+              console.warn(
+                '[private-gen] 검증 실패(통과 처리):',
+                e instanceof Error ? e.message.slice(0, 140) : String(e),
+              );
+              return null;
+            }),
+            VERIFY_TIMEOUT_MS,
+            null,
+            () => bumpGenDiag('verifyTimeout'),
+          );
+          if (!verdict) return;
+
+          k.verifyScore = verdict.score;
+          void recordAiCost({
+            userId: input.userId,
+            endpoint: 'private.verify',
+            model: verdict.usage.model,
+            costUsd: verdict.usage.costUSD,
+            inputTokens: verdict.usage.inputTokens,
+            outputTokens: verdict.usage.outputTokens,
+            metadata: { uploadId: uploadRow.id, batch: batchIndex + 1 },
+          });
+          totalCost += verdict.usage.costUSD;
+
+          if (!isPrivateVerifyFailure(verdict, PRIVATE_VERIFY_REJECT_SCORE)) return;
+
+          const reason = (verdict.issues ?? [])[0] ?? '사유 미상';
+          if (VERIFY_MODE === 'discard') {
+            rejected.add(i);
+            bumpGenDiag('verifyRejected');
+            warnings.push(
+              `의학 검증 미통과로 문항 1개 폐기(${verdict.severity}, ${verdict.score.toFixed(2)}) — ` +
+                `보충 생성으로 대체. ${String(reason).slice(0, 120)}`,
+            );
+          } else {
+            bumpGenDiag('verifyFlagged');
+            warnings.push(
+              `의학 검증 경고(${verdict.severity}, ${verdict.score.toFixed(2)}): ` +
+                String(reason).slice(0, 120),
+            );
+          }
+        });
+        batchDiag.verifyMs = Date.now() - tVerify;
+        batchDiag.verifyScored = kept.filter((k) => typeof k.verifyScore === 'number').length;
+        batchDiag.verifyMode = VERIFY_MODE;
+        if (rejected.size > 0) {
+          kept = kept.filter((_, i) => !rejected.has(i));
+          if (kept.length === 0) {
+            throw new Error(`생성된 문항이 모두 검증 미통과입니다 (batch=${batchIndex + 1})`);
+          }
+        }
+      }
+
       let unmatched = 0;
       const rows = kept.map((k, questionIndex) => {
         const subTopicId = k.q.sub_topic_code ? codeToId.get(k.q.sub_topic_code) ?? null : null;
         if (!subTopicId) unmatched += 1;
+        const stem = normalizeStemEnding(sanitizeStemArtifacts(k.q.stem));
+        // 실제로 만들어진 유형을 저장한다(P2). 요청 유형(user_uploads.requested_types)과
+        // 대조해 '수확률'을 낸다 — 임상형을 요청했는데 지식형이 나오는 실패는 로그에
+        // 흔적을 안 남겨서(저장 정상·문항 수 정상) 세지 않으면 아무도 모른다.
+        // 그림이 붙은 문항은 image, 아니면 증례 판정(isClinicalVignette)으로 clinical/knowledge.
+        const hasImage = (k.q.image_indices ?? []).some(validImageIndex);
+        const kind: PrivateQuestionKind = hasImage
+          ? 'image'
+          : isClinicalVignette(stem)
+            ? 'clinical'
+            : 'knowledge';
         return {
           user_id: input.userId,
           upload_id: uploadRow.id,
           sub_topic_id: subTopicId,
-          stem: normalizeStemEnding(sanitizeStemArtifacts(k.q.stem)),
+          stem,
           choices: k.choices,
           answer_index: k.answerIndex,
           explanation: k.q.explanation,
           concepts: k.q.concepts ?? [],
           difficulty: k.q.difficulty,
           generation_slot: slots[questionIndex],
+          kind,
+          verify_score: k.verifyScore ?? null,
         };
       });
 
@@ -2838,10 +3026,22 @@ export async function generatePrivateQuestionsFromUpload(
         }
       }
 
-      const { data: inserted, error: insertErr } = await admin
-        .from('private_questions')
-        .upsert(rows, { onConflict: 'upload_id,generation_slot' })
-        .select('id');
+      const upsertOptions = { onConflict: 'upload_id,generation_slot' } as const;
+      const saveWithoutMetrics = () =>
+        admin
+          .from('private_questions')
+          .upsert(rows.map(withoutMetricColumns), upsertOptions)
+          .select('id');
+
+      let { data: inserted, error: insertErr } = questionMetricColumnsSupported
+        ? await admin.from('private_questions').upsert(rows, upsertOptions).select('id')
+        : await saveWithoutMetrics();
+      // 00040 미적용 환경: 계측 컬럼 때문에 저장 전체가 거절되면 계측만 버리고 다시 넣는다.
+      if (insertErr && questionMetricColumnsSupported && isMissingColumnError(insertErr)) {
+        questionMetricColumnsSupported = false;
+        warnings.push('문항 유형 계측 컬럼이 없어 계측 없이 저장(마이그레이션 00040 미적용).');
+        ({ data: inserted, error: insertErr } = await saveWithoutMetrics());
+      }
       if (insertErr || !inserted) {
         throw new Error('생성된 문항을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
       }
@@ -2962,6 +3162,32 @@ export async function generatePrivateQuestionsFromUpload(
         await admin.from('private_questions').delete().in('id', orphanIds);
       }
       const orphanSet = new Set(orphanIds);
+
+      // kind 보정 — 그림 없이 살아남은 문항은 image 가 아니다.
+      // 저장은 생성 결과(image_indices)로 라벨을 붙이지만, 그 뒤 정제 실패·모달리티 불일치로
+      // 연결이 끊길 수 있다. 그대로 두면 '이미지형 수확률'이 실제보다 높게 잡혀
+      // 측정 자체가 거짓말을 한다.
+      if (questionMetricColumnsSupported) {
+        const withImage = new Set(imageRows.map((r) => r.private_question_id));
+        const demoted = new Map<PrivateQuestionKind, string[]>();
+        rows.forEach((row, qi) => {
+          const qid = inserted?.[qi]?.id;
+          if (!qid || orphanSet.has(qid)) return;
+          if (row.kind !== 'image' || withImage.has(qid)) return;
+          const corrected: PrivateQuestionKind = isClinicalVignette(row.stem)
+            ? 'clinical'
+            : 'knowledge';
+          demoted.set(corrected, [...(demoted.get(corrected) ?? []), qid]);
+        });
+        for (const [kind, ids] of demoted) {
+          const { error: kindErr } = await admin
+            .from('private_questions')
+            .update({ kind })
+            .in('id', ids);
+          if (kindErr) warnings.push(`문항 유형 보정 실패 — ${kindErr.message}`);
+        }
+      }
+
       const keptIds = inserted
         .map((row) => row.id)
         .filter((id): id is string => !!id && !orphanSet.has(id));

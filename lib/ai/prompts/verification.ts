@@ -106,6 +106,103 @@ verify_question 도구로 응답하세요.
 `.trim();
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// 내신대비(개인 자료 기반) 전용 검증 모드
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * 'private' 모드 시스템 프롬프트.
+ *
+ * 왜 따로 두는가: 위 공유풀 프롬프트는 절반이 F 규격(발문 문형·선지 정렬·용어 표기)이다.
+ * 내신대비 문항은 학생이 올린 강의자료를 그대로 따르므로 그 형식을 강요할 수 없고,
+ * 형식은 코드(kmle-format.ts·clinical-shape.ts)가 이미 결정론적으로 검사한다.
+ * 여기에 형식을 섞으면 모델이 형식 지적으로 issues 를 채우고 **정작 의학 오류를 놓친다**.
+ *
+ * 그래서 판정 대상을 네 가지로 좁힌다. 감사에서 실제로 통과해 나간 해설
+ * "도파민은 억제성 신경전달물질로 운동 조절에 관여하며"가 이 모드의 표적이다.
+ */
+export const PRIVATE_VERIFICATION_SYSTEM_PROMPT = `
+당신은 한국 의과대학 강의자료로 만든 객관식 문항을 검수하는 의학 검수자입니다.
+
+## 판정 대상은 네 가지뿐입니다
+
+### 1. 의학적 오류 — critical 또는 major
+기전·정의·분류·수치·약물·용량·검사 해석이 사실과 다른가.
+(예: "도파민은 억제성 신경전달물질" → 도파민은 억제성이 아니다. major.)
+환자 안전에 직결되는 오류(용량·금기·응급 처치 순서)는 critical.
+
+### 2. 정답과 해설의 불일치 — critical
+해설이 정당화하는 선지와 표시된 정답 번호가 다른가.
+해설이 정답을 전혀 정당화하지 못하는가.
+
+### 3. 정답 근거가 자료에 없음 — major
+아래 "자료 원문"에 정답의 근거가 없는가.
+**단, 자료는 앞부분만 잘려 들어올 수 있습니다.** 근거가 뒤쪽에 있을 가능성이 조금이라도
+있으면 지적하지 마십시오. 자료에 없다고 **확신할 때만** 지적합니다.
+자료 원문이 제공되지 않았다면 이 항목은 판정하지 않습니다.
+
+### 4. 해설이 오답 사유를 다루지 않음 — minor
+왜 나머지 선지가 틀렸는지 한 줄도 없는가.
+
+## 판정하지 않는 것 (매우 중요)
+
+다음은 **절대 지적하지 마십시오.** 지적하면 이 검수는 실패로 간주합니다.
+- 발문 문형("가장 적절한 것은?", "다음 중", "무엇인가")
+- 선지 길이·정렬·종결형·개수
+- "남자/여자" vs "남성/여성", "병원에 왔다" vs "내원하였다" 같은 표기
+- 활력징후 서식, 영문 약어 병기, 국시 형식 일반
+- 문체·어미·분량
+
+이것들은 코드가 따로 검사해 교정합니다. 당신의 몫은 **내용이 맞는가** 하나입니다.
+
+## severity 기준
+- critical = 환자 안전 위험 또는 정답-해설 모순
+- major    = 의학적으로 틀림, 또는 정답 근거가 자료에 없음(확신할 때)
+- minor    = 해설이 오답 사유를 안 다룸
+- none     = 위 넷 중 아무것도 없음
+
+## score
+0~1. 내용이 정확하고 해설이 정답과 오답을 모두 설명하면 0.9 이상.
+의학적으로 틀린 곳이 있으면 0.5 미만.
+
+verify_question 도구로만 응답하십시오. 자유 텍스트 금지.
+`.trim();
+
+/** private 모드에서 정답 근거 대조에 쓰는 자료 원문 상한(자). 비용 때문에 앞부분만 싣는다. */
+export const PRIVATE_VERIFICATION_SOURCE_CHARS = 12_000;
+
+export function buildPrivateVerificationUserMessage(input: {
+  question: {
+    stem: string;
+    choices: string[];
+    answer_index: number;
+    explanation: string;
+  };
+  sourceText?: string;
+}): string {
+  const source = (input.sourceText ?? '').slice(0, PRIVATE_VERIFICATION_SOURCE_CHARS).trim();
+  const sourceBlock = source
+    ? `## 자료 원문 (앞부분만 — 여기 없다고 근거가 없다고 단정하지 말 것)\n${source}\n\n`
+    : '## 자료 원문\n제공되지 않음 — 3번 항목(자료 근거)은 판정하지 마십시오.\n\n';
+
+  return `
+다음 문항을 검수하세요.
+
+${sourceBlock}## 문항
+**문제**: ${input.question.stem}
+
+**선지**:
+${input.question.choices.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+**모델이 표시한 정답**: ${input.question.answer_index + 1}번
+
+**해설**: ${input.question.explanation}
+
+verify_question 도구로 응답하세요.
+`.trim();
+}
+
 export const VERIFICATION_TOOL_SCHEMA = {
   name: 'verify_question',
   description: '문항 검수 결과를 반환합니다.',

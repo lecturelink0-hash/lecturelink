@@ -25,6 +25,8 @@
     "check:markers": "node --experimental-strip-types --no-warnings scripts/check-image-markers.mjs",
     "check:eta": "node --experimental-strip-types --no-warnings scripts/replay-eta-accuracy.mjs",
     "check:shuffle": "node --experimental-strip-types --no-warnings scripts/check-choice-shuffle.mjs",
+    "check:verify": "node --experimental-strip-types --no-warnings scripts/check-private-verify.mjs",
+    "check:naesin-quality": "node --experimental-strip-types --no-warnings scripts/check-naesin-quality.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",
