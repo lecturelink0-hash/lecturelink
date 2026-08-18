@@ -296,9 +296,90 @@ function drawMarkerGlyph(
 
 /** 표식에서 대상까지의 지시선 탐색 결과. */
 type Designation =
+  | { kind: 'anchored' } // 원본 그림의 지시선·브래킷이 이 자리에 붙어 있다 — 기호 필수
   | { kind: 'adjacent' } // 표식이 이미 대상에 닿아 있다 — 선이 필요 없다
   | { kind: 'line'; angle: number; dist: number } // 지시선을 그린다
   | { kind: 'none' }; // 가리킬 것을 못 찾았거나 방향이 모호하다 — 표식을 찍지 않는다
+
+/**
+ * 지운 라벨 자리에 원본 그림의 **지시선·브래킷이 붙어 있는지** 본다.
+ *
+ * 왜 필요한가(2026-08-18 운영 지적): 정제는 글자만 지우고 선은 남긴다. 그런데 표식을
+ * "문항이 물을 때만" 찍도록 바꾸자(#225), 라벨이 지워진 지시선이 **가리키는 것 없는 맨
+ * 선**으로 남았다. 뇌 사진에 선 3개가 허공을 가리키고, 대뇌 겉질 그림의 층 브래킷에는
+ * 아무 표시도 없었다.
+ *
+ * 원본에 지시선이 있다는 것은 **그 자리에 이름표가 있어야 한다는 뜻**이다. 그래서
+ * 지시선이 붙은 라벨 자리에는 문항이 묻든 말든 기호를 반드시 찍는다.
+ *
+ * 판정: 라벨 상자 가장자리 가까이에서 시작해 바깥으로 뻗는 **가늘고 긴** 잉크를 찾는다.
+ * 가늘어야(수직 두께가 얇아야) 선이고, 두꺼우면 그림 덩어리다.
+ */
+function hasAttachedPointer(
+  isContent: (x: number, y: number) => boolean,
+  src: MarkerSource,
+  W: number,
+  H: number,
+): boolean {
+  const midX = Math.round((src.x0 + src.x1) / 2);
+  const midY = Math.round((src.y0 + src.y1) / 2);
+  const boxH = Math.max(1, src.y1 - src.y0);
+  // 선은 라벨 바로 옆에서 시작한다. 너무 멀리서 찾으면 옆 그림을 선으로 오인한다.
+  const gapMax = Math.max(6, Math.round(boxH * 0.8));
+  const runMin = Math.max(10, Math.round(boxH * 0.9));
+  const thickMax = Math.max(3, Math.round(boxH * 0.45));
+
+  const dirs: Array<[number, number, number, number]> = [
+    // [dx, dy, 시작 x, 시작 y] — 좌·우·상·하
+    [-1, 0, src.x0, midY],
+    [1, 0, src.x1, midY],
+    [0, -1, midX, src.y0],
+    [0, 1, midX, src.y1],
+  ];
+
+  for (const [dx, dy, sx, sy] of dirs) {
+    // 선을 만날 때까지의 빈틈
+    let start = -1;
+    for (let g = 1; g <= gapMax; g++) {
+      const x = sx + dx * g;
+      const y = sy + dy * g;
+      if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) break;
+      if (isContent(x, y)) {
+        start = g;
+        break;
+      }
+    }
+    if (start < 0) continue;
+
+    // 이어지는 길이
+    let run = 0;
+    let miss = 0;
+    for (let d = start; d < start + runMin * 3; d++) {
+      const x = sx + dx * d;
+      const y = sy + dy * d;
+      if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) break;
+      if (isContent(x, y)) {
+        run = d - start + 1;
+        miss = 0;
+      } else if (++miss > 2) break; // 점선도 받아들인다
+    }
+    if (run < runMin) continue;
+
+    // 두께 — 선이면 얇다. 진행 방향의 수직으로 재 본다.
+    const px = dx === 0 ? 1 : 0;
+    const py = dx === 0 ? 0 : 1;
+    const probe = Math.round(start + run / 2);
+    let thick = 0;
+    for (let t = -thickMax - 2; t <= thickMax + 2; t++) {
+      const x = sx + dx * probe + px * t;
+      const y = sy + dy * probe + py * t;
+      if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) continue;
+      if (isContent(x, y)) thick += 1;
+    }
+    if (thick > 0 && thick <= thickMax) return true;
+  }
+  return false;
+}
 
 /**
  * 표식이 무엇을 가리키는지 찾는다.
@@ -419,6 +500,14 @@ function drawLeaderLine(
 export async function annotateMarkers(
   png: Uint8Array,
   sources: MarkerSource[],
+  options: {
+    /**
+     * true 면 **필수 기호만** 찍는다 — 원본 그림의 지시선·브래킷이 붙어 있어서
+     * 이름표가 없으면 그 선이 허공을 가리키게 되는 자리.
+     * 문항이 표식을 묻지 않는 경우에 쓰는 판이다.
+     */
+    onlyRequired?: boolean;
+  } = {},
 ): Promise<AnnotateResult> {
   if (sources.length === 0) return { png, markers: [] };
 
@@ -495,11 +584,18 @@ export async function annotateMarkers(
       );
       const cx = Math.round(Math.min(W - r - 2, Math.max(r + 2, (src.x0 + src.x1) / 2)));
       const cy = Math.round(Math.min(H - r - 2, Math.max(r + 2, (src.y0 + src.y1) / 2)));
-      return { src, r, cx, cy, designation: findDesignation(isContent, cx, cy, r, W, H) };
+      // 원본 지시선이 붙어 있으면 기호는 **선택이 아니라 필수**다.
+      const anchored = hasAttachedPointer(isContent, src, W, H);
+      const designation: Designation = anchored
+        ? { kind: 'anchored' }
+        : findDesignation(isContent, cx, cy, r, W, H);
+      return { src, r, cx, cy, designation, required: anchored };
     });
 
     // 가리킬 것을 못 찾은 표식은 아예 찍지 않는다 — 애매한 표식은 없느니만 못하다.
-    const usable = placements.filter((p) => p.designation.kind !== 'none');
+    const usable = placements.filter(
+      (p) => p.designation.kind !== 'none' && (!options.onlyRequired || p.required),
+    );
     for (const p of usable) {
       if (p.designation.kind === 'line') {
         drawLeaderLine(ctx, p.cx, p.cy, p.r, p.designation.angle, p.designation.dist);

@@ -362,6 +362,76 @@ console.log('지시 대상 판정 — 가리킬 것이 없으면 표식을 찍�
   }
 }
 
+console.log('지시선·브래킷이 붙은 라벨 — 기호는 필수');
+{
+  // 운영 지적(2026-08-18): #225 로 "문항이 물을 때만 표식"으로 바꾸자, 라벨이 지워진
+  // 지시선이 **가리키는 것 없는 맨 선**으로 남았다(뇌 사진의 선 3개, 대뇌 겉질의 층 브래킷).
+  // 원본에 지시선이 있으면 그 자리에는 이름표가 있어야 하므로 기호가 필수다.
+  const { createCanvas } = await import('canvas');
+  const IW = 500, IH = 300;
+  const build = (paint) => {
+    const c = createCanvas(IW, IH);
+    const x = c.getContext('2d');
+    x.fillStyle = '#ffffff';
+    x.fillRect(0, 0, IW, IH);
+    paint(x);
+    return new Uint8Array(c.toBuffer('image/png'));
+  };
+  // 라벨 자리(글자는 이미 지워진 상태) — 오른쪽에 지시선이 뻗어 구조를 가리킨다.
+  const label = { text: 'Cerebral cortex', x0: 330, y0: 140, x1: 430, y1: 160 };
+
+  {
+    const png = build((x) => {
+      x.fillStyle = '#c8a27a';
+      x.beginPath();
+      x.arc(120, 150, 70, 0, Math.PI * 2);
+      x.fill();
+      x.strokeStyle = '#111111';
+      x.lineWidth = 2;
+      x.beginPath();
+      x.moveTo(325, 150);
+      x.lineTo(190, 150); // 라벨에서 구조로 뻗는 지시선
+      x.stroke();
+    });
+    const all = await annotateMarkers(png, [label]);
+    const req = await annotateMarkers(png, [label], { onlyRequired: true });
+    check('지시선이 붙은 라벨에는 기호를 찍는다', all.markers.length === 1, `실제 ${all.markers.length}개`);
+    check(
+      '문항이 묻지 않는 기본판에도 그 기호가 남는다',
+      req.markers.length === 1,
+      `실제 ${req.markers.length}개 — 맨 지시선이 남는다`,
+    );
+  }
+  {
+    // 브래킷(층 구분)도 지시 표시다 — 대뇌 겉질 그림이 이 경우였다.
+    const bracketLabel = { text: 'Molecular layer', x0: 300, y0: 60, x1: 400, y1: 80 };
+    const png = build((x) => {
+      x.strokeStyle = '#111111';
+      x.lineWidth = 2;
+      x.beginPath();
+      x.moveTo(295, 70); x.lineTo(250, 70);   // 라벨 → 브래킷
+      x.moveTo(250, 40); x.lineTo(250, 100);  // 브래킷 세로
+      x.stroke();
+      x.fillStyle = '#d2691e';
+      x.fillRect(180, 30, 60, 240);
+    });
+    const req = await annotateMarkers(png, [bracketLabel], { onlyRequired: true });
+    check('브래킷이 붙은 라벨에도 기호를 찍는다', req.markers.length === 1, `실제 ${req.markers.length}개`);
+  }
+  {
+    // 지시선이 없는 자유 라벨은 기본판에서 빠진다(#225 의 "안 묻는데 붙는" 문제 유지).
+    const png = build((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(360, 120, 90, 70);
+    });
+    const free = { text: 'Free label', x0: 250, y0: 140, x1: 330, y1: 160 };
+    const all = await annotateMarkers(png, [free]);
+    const req = await annotateMarkers(png, [free], { onlyRequired: true });
+    check('지시선 없는 라벨은 표식판에만 나온다', all.markers.length === 1, `실제 ${all.markers.length}개`);
+    check('지시선 없는 라벨은 기본판에 안 나온다', req.markers.length === 0, `실제 ${req.markers.length}개`);
+  }
+}
+
 console.log('표식 글자 — 폰트 API 를 아예 쓰지 않는가');
 {
   // 운영 사고의 근본 원인은 "폰트가 없는 런타임에서 fillText 를 썼다"는 것이다.
