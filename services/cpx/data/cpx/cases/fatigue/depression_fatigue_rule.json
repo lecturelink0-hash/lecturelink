@@ -45,7 +45,7 @@
       "자살 사고: 깊이 물으면 '가끔 사는 게 부질없다' 수준(계획 없음)"
     ],
     "preferredVariants": [
-      "아내 성화에 옴",
+      "가족 성화에 옴",
       "몸의 병(간·갑상선)을 의심"
     ],
     "mustAbsent": [
@@ -65,7 +65,7 @@
   },
   "familyHistoryRule": {
     "recommended": [
-      "형 우울증 치료력"
+      "형제 우울증 치료력"
     ],
     "mustAbsent": []
   },

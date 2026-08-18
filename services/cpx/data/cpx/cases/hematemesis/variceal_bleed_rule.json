@@ -115,6 +115,12 @@
       "method": "복부 촉진",
       "expectedFinding": "뚜렷한 국소 압통은 없고 복수 의심 소견",
       "polarity": "positive"
+    },
+    {
+      "item": "직장수지검사",
+      "method": "동의를 받고 직장수지검사 시행",
+      "expectedFinding": "장갑에 검고 끈적한 흑색변이 묻어남",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

@@ -258,16 +258,35 @@ def build_system_instruction(
     if persona:
         child = persona.get('child')
         if child and persona.get('role'):
-            child_word = '남아' if child.get('gender') == '남성' else '여아'
-            persona_block = (
-                '[인적사항 확정 — 변경 금지]\n'
-                f"당신은 {persona['name']}, {persona['age']}세 {persona['gender']}이며, "
-                f"환아 {child['name']}({child.get('ageDetail', '')} {child_word})의 {persona['role']}다. "
-                '아이를 대신해 진료실에 왔고, 대화 내내 보호자로서 말한다. '
-                '당신과 아이의 이름·나이·성별을 한국어로 질문받으면 정확히 이대로 답하며, 다른 이름이나 성별을 '
-                '지어내지 않는다. 외국어로 물으면 아래 [언어] 규칙이 우선한다 — 알아듣지 못하므로 아무것도 답하지 않는다. '
-                '아이의 증상·생활은 보호자가 관찰한 사실로서 전달한다.'
-            )
+            is_minor = isinstance(child.get('age'), int) and child['age'] <= 12
+            if is_minor:
+                who = f"환아 {child['name']}({child.get('ageDetail', '')} "
+                who += '남아)' if child.get('gender') == '남성' else '여아)'
+                persona_block = (
+                    '[인적사항 확정 — 변경 금지]\n'
+                    f"당신은 {persona['name']}, {persona['age']}세 {persona['gender']}이며, "
+                    f"{who}의 {persona['role']}다. "
+                    '아이를 대신해 진료실에 왔고, 대화 내내 보호자로서 말한다. '
+                    '당신과 아이의 이름·나이·성별을 한국어로 질문받으면 정확히 이대로 답하며, 다른 이름이나 성별을 '
+                    '지어내지 않는다. 외국어로 물으면 아래 [언어] 규칙이 우선한다 — 알아듣지 못하므로 아무것도 답하지 않는다. '
+                    '아이의 증상·생활은 보호자가 관찰한 사실로서 전달한다.'
+                )
+            else:
+                # 성인 환자의 보호자 — 의식이 저하된 환자는 스스로 병력을 말할 수 없으므로
+                # 실제 시험처럼 보호자가 유일한 문진 상대가 된다. 1인 2역을 시키지 않는다.
+                persona_block = (
+                    '[인적사항 확정 — 변경 금지]\n'
+                    f"당신은 {persona['name']}, {persona['age']}세 {persona['gender']}이며, "
+                    f"환자 {child['name']}({child.get('ageDetail', '')} {child.get('gender', '')})의 "
+                    f"{persona['role']}다. 환자를 데리고 왔고, 대화 내내 보호자로서 말한다. "
+                    '당신과 환자의 이름·나이·성별을 한국어로 질문받으면 정확히 이대로 답하며, 다른 이름이나 '
+                    '성별을 지어내지 않는다. 외국어로 물으면 아래 [언어] 규칙이 우선한다 — 알아듣지 못하므로 '
+                    '아무것도 답하지 않는다.\n'
+                    '환자는 지금 의식이 또렷하지 않아 스스로 병력을 이야기할 수 없다. 너는 환자를 대신해 말하지 말고, '
+                    '보호자로서 직접 보고 들은 것만 전한다. 보지 못한 것은 "그건 제가 못 봐서 모르겠어요"처럼 모른다고 '
+                    '답한다. 학생이 환자에게 직접 물으면 환자를 연기하지 말고 보호자로서 상태를 전한다 '
+                    '(예: "지금 말씀을 잘 못 하세요. 제가 아는 대로 말씀드릴게요.").'
+                )
         else:
             persona_block = (
                 '[인적사항 확정 — 변경 금지]\n'
@@ -390,22 +409,38 @@ _AGE_KEYWORDS = [
 ]
 
 
+# 성별 표기의 뜻을 세 갈래로 나눈다 — 무작위('남녀 무관'), 가중('남성 우세'), 고정('여성').
+# '남녀 무관'의 '녀'가 '여'와 다른 글자라 여성 표기가 없는 것으로 판정되던 탓에 24개 케이스가
+# 100 % 남성으로 배정됐고, '우세'·'권장'도 가중이 아니라 고정으로 처리돼 86개 케이스가 한 성별로만
+# 나왔다(2026-08-18 감사). 그 결과 femalePatient 조건부 채점 항목이 해당 케이스에서 사문이 됐다.
+_GENDER_ANY = ('무관', '랜덤', '상관없', '무방')
+_GENDER_LEAN = ('우세', '권장', '많', '흔')
+_GENDER_LEAN_RATIO = 0.7
+
+
 def _resolve_gender(dem: dict, rng: random.Random) -> str:
-    """fixed 우선, recommended는 가중 선택, 없으면 50/50. 반환: '남성'|'여성'."""
+    """fixed 우선, recommended는 표기에 따라 고정·가중·무작위. 반환: '남성'|'여성'."""
     for scope in ('fixed', 'recommended'):
         v = dem.get(scope, {}) or {}
         raw = str(v.get('gender', v.get('sex', ''))).strip()
         if not raw:
             continue
-        has_m, has_f = ('남' in raw), ('여' in raw)
-        if has_m and not has_f:
-            return '남성'
-        if has_f and not has_m:
-            return '여성'
+        norm = raw.replace('녀', '여')
+        if any(k in norm for k in _GENDER_ANY):
+            break                                    # 어느 쪽이든 가능 → 아래 50/50
+        has_m, has_f = ('남' in norm), ('여' in norm)
         if has_m and has_f:
-            # '여성 권장, 남성 가능' / '남성 우세' 등 — 먼저 언급된 쪽을 70%로
-            first_f = raw.index('여') < raw.index('남')
-            return '여성' if rng.random() < (0.7 if first_f else 0.3) else '남성'
+            # '여성 권장, 남성 가능' 등 — 먼저 언급된 쪽을 우세로 본다
+            lean_female = norm.index('여') < norm.index('남')
+        elif has_m or has_f:
+            lean_female = has_f
+            # 고정 표기('여성', '여성 고정')는 그대로, 가중 표기('남성 우세')만 확률 배정
+            if scope == 'fixed' or not any(k in norm for k in _GENDER_LEAN):
+                return '여성' if lean_female else '남성'
+        else:
+            continue                                 # 성별을 알 수 없는 문자열
+        p_female = _GENDER_LEAN_RATIO if lean_female else 1 - _GENDER_LEAN_RATIO
+        return '여성' if rng.random() < p_female else '남성'
     return rng.choice(['남성', '여성'])
 
 
@@ -417,6 +452,12 @@ def _resolve_age(dem: dict, rng: random.Random) -> int:
             break
     if not raw or raw == '랜덤':
         return rng.randint(25, 70)
+    # 확정 나이를 숫자(21)나 단일 표기('21세', '만 21세')로 적은 케이스. 아래 범위 정규식은
+    # 두 숫자를 요구하므로 여기서 먼저 받지 않으면 전부 마지막 폴백(45세)으로 떨어진다 —
+    # 21세 월경통 환자가 45세로, 30세 초임부가 45세 고령 초임부로 나가던 원인.
+    m = re.fullmatch(r'만?\s*(\d+)\s*세?', raw)
+    if m:
+        return int(m.group(1))
     m = re.search(r'(\d+)\s*[~∼-]\s*(\d+)\s*세', raw)          # '48~55세', '만 17세~25세'
     if not m:
         m = re.search(r'(\d+)\s*세\s*[~∼-]\s*(\d+)', raw)
@@ -440,7 +481,11 @@ def _resolve_age(dem: dict, rng: random.Random) -> int:
 
 
 def _resolve_child(child_rule: dict, rng: random.Random) -> dict:
-    """demographicsRule.fixed.child → 환아 인적사항. gender '랜덤'은 세션 시드로 확정."""
+    """demographicsRule.fixed.child → 동반 환자 인적사항. gender '랜덤'은 세션 시드로 확정.
+
+    소아 보호자 케이스에서 시작했으나 의식장애처럼 성인 환자를 보호자가 데려오는 증례도 같은
+    구조를 쓴다(화자=보호자, child=진찰 대상). 13세 이상이면 성인 이름 풀에서 뽑는다.
+    """
     raw_gender = str(child_rule.get('gender', '랜덤'))
     has_m, has_f = ('남' in raw_gender), ('여' in raw_gender)
     if has_m and not has_f:
@@ -455,11 +500,17 @@ def _resolve_child(child_rule: dict, rng: random.Random) -> dict:
         age = 5
     # 시나리오 본문이 환아 이름을 지칭하는 케이스(예: '우리 서연이')는 name을 고정할 수 있다.
     fixed_name = str(child_rule.get('name') or '').strip()
+    if age <= 12:
+        pool = _BOY_NAMES if gender == '남성' else _GIRL_NAMES
+    else:
+        pool = _MALE_NAMES if gender == '남성' else _FEMALE_NAMES
     return {
-        'name': fixed_name or rng.choice(_BOY_NAMES if gender == '남성' else _GIRL_NAMES),
+        'name': fixed_name or rng.choice(pool),
         'age': age,
         'gender': gender,
         'ageDetail': str(child_rule.get('ageDetail', f'{age}세')),
+        # 화면 표기 — 소아는 '환아', 성인 환자를 보호자가 데려온 경우는 '환자'
+        'label': str(child_rule.get('label') or ('환아' if age <= 12 else '환자')),
     }
 
 

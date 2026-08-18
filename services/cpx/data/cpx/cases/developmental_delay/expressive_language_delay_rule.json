@@ -96,6 +96,11 @@
       "examConceptId": "developmental_observation"
     },
     {
+      "item": "시청각 반응",
+      "method": "소리 자극 반응·이름 부르기 반응과 시각 추시 확인",
+      "expectedFinding": "이름을 부르면 돌아보고 소리 자극에 적절히 반응하며 시각 추시 정상 — 다만 언어 발달 지연에서는 정식 청력검사가 필요"
+    },
+    {
       "item": "신경학적 진찰",
       "method": "근력·근긴장·반사·뇌신경 확인",
       "expectedFinding": "근력·근긴장·반사·뇌신경 특이소견 없음",

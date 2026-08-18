@@ -12,11 +12,12 @@
 """
 import datetime as dt
 import os
+from typing import Literal
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import db
 import prompt as prompt_mod
@@ -79,9 +80,44 @@ def resolve_time_limit(value: int | None) -> int:
 
 
 class TranscriptEvent(BaseModel):
-    role: str  # student | patient | system
-    text: str
-    tOffsetMs: int
+    """채점 근거가 되는 전사 한 줄.
+
+    Live 오디오는 브라우저와 Gemini 사이에서 직접 오가므로 서버는 대화를 독립적으로
+    관찰하지 못하고 클라이언트가 보낸 값을 그대로 채점 프롬프트에 싣는다. 최소한 형식만은
+    서버가 강제한다 — role 을 열거형으로 묶지 않으면 임의 화자를, 시각에 하한이 없으면
+    임의 순서를 만들어 넣을 수 있다.
+    """
+
+    role: Literal['student', 'patient', 'system']
+    text: str = Field(min_length=1, max_length=4000)
+    tOffsetMs: int = Field(ge=0, le=24 * 60 * 60 * 1000)
+
+
+# 제한시간을 넘겨 도착한 발화 허용 폭 — 전사 지연·마무리 발화를 넉넉히 받되,
+# 이 범위를 벗어난 시각은 저장하지 않는다(단계별 소요 시간 왜곡 방지).
+EVENT_OFFSET_GRACE_MS = 5 * 60 * 1000
+
+
+def _offset_ceiling_ms(session: dict) -> int:
+    import json as _json
+
+    config = _json.loads(session['config']) if session.get('config') else {}
+    limit = config.get('timeLimitSeconds') or DEFAULT_TIME_LIMIT_SECONDS
+    return int(limit) * 1000 + EVENT_OFFSET_GRACE_MS
+
+
+def require_open_session(session_id: str, user_id: str) -> dict:
+    """존재하고 아직 종료되지 않은 세션만 통과시킨다.
+
+    종료 뒤에도 전사·진찰을 계속 받으면 채점이 끝난 세션에 근거를 덧붙일 수 있다.
+    프론트는 /end 이전에 버퍼를 비우고 주기 전송도 진료 중에만 돌므로 정상 경로에는 영향이 없다.
+    """
+    session = db.get_session(session_id, user_id)
+    if not session:
+        raise HTTPException(404, '세션 없음')
+    if session.get('status') == 'ended' or session.get('ended_at'):
+        raise HTTPException(409, '이미 종료된 세션입니다.')
+    return session
 
 
 @app.get('/api/health')
@@ -182,10 +218,14 @@ def live_token(session_id: str, user_id: str = Depends(current_user_id)):
 
 @app.post('/api/sessions/{session_id}/events')
 def add_events(session_id: str, events: list[TranscriptEvent], user_id: str = Depends(current_user_id)):
-    if not db.get_session(session_id, user_id):
-        raise HTTPException(404, '세션 없음')
-    n = db.add_events(session_id, user_id, [e.model_dump() for e in events])
-    return {'saved': n}
+    session = require_open_session(session_id, user_id)
+    # 제한시간 + 유예를 넘긴 시각은 저장하지 않는다. 400 으로 막으면 클라이언트가 같은 배치를
+    # 계속 재전송하므로, 받아들이되 버리고 몇 건을 버렸는지 응답에 남긴다.
+    ceiling = _offset_ceiling_ms(session)
+    kept = [e for e in events if e.tOffsetMs <= ceiling]
+    dropped = len(events) - len(kept)
+    n = db.add_events(session_id, user_id, [e.model_dump() for e in kept]) if kept else 0
+    return {'saved': n, 'dropped': dropped} if dropped else {'saved': n}
 
 
 class UsageEvent(BaseModel):
@@ -254,8 +294,8 @@ def usage_summary(limit: int = 20, user_id: str = Depends(current_user_id)):
 
 
 class ExamRequest(BaseModel):
-    buttonId: str
-    tOffsetMs: int
+    buttonId: str = Field(min_length=1, max_length=64)
+    tOffsetMs: int = Field(ge=0, le=24 * 60 * 60 * 1000)
 
 
 @app.get('/api/exam-buttons')
@@ -276,16 +316,15 @@ def perform_exam(session_id: str, body: ExamRequest, user_id: str = Depends(curr
     """신체진찰 버튼 클릭 → 소견 반환 + 선언 문구를 전사에 기록(채점 근거, §8)."""
     import physical_exam
 
-    session = db.get_session(session_id, user_id)
-    if not session:
-        raise HTTPException(404, '세션 없음')
+    session = require_open_session(session_id, user_id)
     case = prompt_mod.load_case(session['case_id'])
     try:
         result = physical_exam.resolve_exam(case, body.buttonId)
     except KeyError as e:
         raise HTTPException(404, str(e))
     # 의사의 진찰 선언은 학생 발화로 기록 → pe02/pe03 등 채점 항목에 반영됨
-    db.add_events(session_id, user_id, [{'role': 'student', 'text': result['declaration'], 'tOffsetMs': body.tOffsetMs}])
+    offset = min(body.tOffsetMs, _offset_ceiling_ms(session))
+    db.add_events(session_id, user_id, [{'role': 'student', 'text': result['declaration'], 'tOffsetMs': offset}])
     return result
 
 
