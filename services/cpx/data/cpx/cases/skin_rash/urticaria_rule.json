@@ -76,7 +76,8 @@
     {
       "item": "활력징후·전신 상태",
       "method": "활력징후·전신 상태 확인",
-      "expectedFinding": "활력징후 정상(아나필락시스 시 주의)"
+      "expectedFinding": "활력징후 정상(아나필락시스 시 주의)",
+      "polarity": "negative"
     },
     {
       "item": "피부 발진",
@@ -87,17 +88,20 @@
     {
       "item": "발진 촉진·눌림 반응",
       "method": "발진 촉진·눌림 반응 확인",
-      "expectedFinding": "눌림 시 창백, 인설 없음"
+      "expectedFinding": "눌림 시 창백, 인설 없음",
+      "polarity": "positive"
     },
     {
       "item": "눈·구강 점막",
       "method": "눈·구강 점막 확인",
-      "expectedFinding": "눈·구강·입술 부종 여부 확인"
+      "expectedFinding": "입술·눈꺼풀·혀에 부종 없음 — 안지오부종 소견 없음",
+      "polarity": "negative"
     },
     {
       "item": "경부 림프절",
       "method": "경부 림프절 확인",
-      "expectedFinding": "림프절 종대 없음"
+      "expectedFinding": "림프절 종대 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

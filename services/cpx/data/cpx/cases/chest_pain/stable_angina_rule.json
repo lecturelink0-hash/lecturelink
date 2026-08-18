@@ -82,33 +82,38 @@
     {
       "item": "생명징후",
       "method": "혈압·맥박·호흡수·산소포화도 확인",
-      "expectedFinding": "혈압 135/85, 그 외 정상"
+      "expectedFinding": "혈압 135/85 mmHg(주의 혈압), 맥박·호흡수·체온은 정상 범위",
+      "polarity": "positive"
     },
     {
       "item": "흉벽",
       "method": "흉부 시진·촉진(흉벽 압통)",
-      "expectedFinding": "압통 없음"
+      "expectedFinding": "압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음 청진",
-      "expectedFinding": "규칙적, 잡음 없음"
+      "expectedFinding": "규칙적, 잡음 없음",
+      "polarity": "negative"
     },
     {
       "item": "호흡음",
       "method": "호흡음 청진(양측 비교)",
-      "expectedFinding": "깨끗함"
+      "expectedFinding": "깨끗함",
+      "polarity": "negative"
     },
     {
       "item": "양팔 혈압·맥박",
       "method": "양팔 혈압 비교·말초 맥박 확인",
-      "expectedFinding": "차이 없음 (정상)"
+      "expectedFinding": "차이 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심전도",
       "method": "심전도 검사",
       "expectedFinding": "안정 시 심전도 특이소견 없음 — 부하검사 필요",
-      "polarity": "positive"
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

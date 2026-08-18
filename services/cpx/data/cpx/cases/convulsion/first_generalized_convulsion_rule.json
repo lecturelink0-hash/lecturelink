@@ -85,7 +85,8 @@
       "item": "활력징후·산소포화도·의식·지남력",
       "method": "혈압·맥박·체온·산소포화도와 의식·지남력 확인",
       "expectedFinding": "혈압 122/76, 맥박 88회, 체온 36.8, 산소포화도 98%, 의식·지남력 명료",
-      "examConceptId": "mental_status_general"
+      "examConceptId": "mental_status_general",
+      "polarity": "negative"
     },
     {
       "item": "동공·안구·구강·혀·두부 외상",
@@ -98,19 +99,22 @@
       "item": "수막자극징후",
       "method": "경부 강직·Kernig·Brudzinski 징후 확인",
       "expectedFinding": "경부 강직 없고 Kernig·Brudzinski sign 음성",
-      "examConceptId": "meningeal_signs"
+      "examConceptId": "meningeal_signs",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "뇌신경·근력·감각·반사·소뇌기능·보행 확인",
       "expectedFinding": "국소 신경학적 이상·Todd 마비 없고 근력·감각·반사·보행 정상",
-      "examConceptId": "neurologic_screening"
+      "examConceptId": "neurologic_screening",
+      "polarity": "negative"
     },
     {
       "item": "혈당",
       "method": "손끝 혈당 측정",
-      "expectedFinding": "혈당 102 mg/dL",
-      "examConceptId": "blood_glucose"
+      "expectedFinding": "혈당 102 mg/dL — 정상 범위",
+      "examConceptId": "blood_glucose",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

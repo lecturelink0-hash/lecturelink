@@ -88,22 +88,26 @@
     {
       "item": "활력징후",
       "method": "혈압·체온·맥박 측정",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "뇌막자극징후",
       "method": "경부 강직·Kernig sign 확인",
-      "expectedFinding": "음성 (이상 없음)"
+      "expectedFinding": "음성 (이상 없음)",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 이상",
       "method": "팔다리 근력·감각 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "뇌압 상승",
       "method": "안저검사",
-      "expectedFinding": "유두부종 없음 (정상)"
+      "expectedFinding": "유두부종 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "머리·목 근육",
@@ -115,7 +119,8 @@
     {
       "item": "부비동염",
       "method": "부비동 압통 확인",
-      "expectedFinding": "압통 없음"
+      "expectedFinding": "압통 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -82,7 +82,8 @@
     {
       "item": "활력징후",
       "method": "활력징후·전반적 외견",
-      "expectedFinding": "체온 37.8, 맥박 92회, 의식 명료"
+      "expectedFinding": "체온 37.8°C, 맥박 92회/분, 의식 명료",
+      "polarity": "positive"
     },
     {
       "item": "공막",
@@ -93,12 +94,14 @@
     {
       "item": "피부",
       "method": "피부·손바닥 시진",
-      "expectedFinding": "피부 황달은 경미하고 출혈 반점·긁힌 자국 없음"
+      "expectedFinding": "피부에 경도의 황달이 있고 출혈 반점·긁힌 자국은 없음",
+      "polarity": "positive"
     },
     {
       "item": "복부 시진",
       "method": "복부 시진·장음 청진",
-      "expectedFinding": "팽만·복수 없고 장음 정상"
+      "expectedFinding": "팽만·복수 없고 장음 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",
@@ -109,7 +112,8 @@
     {
       "item": "신경학적 상태",
       "method": "의식·flapping tremor 확인",
-      "expectedFinding": "의식 명료, flapping tremor 없음"
+      "expectedFinding": "의식 명료, flapping tremor 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

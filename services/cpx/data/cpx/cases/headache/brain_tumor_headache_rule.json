@@ -78,12 +78,14 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 대체로 정상"
+      "expectedFinding": "활력징후 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "뇌막자극",
       "method": "뇌막자극 확인",
-      "expectedFinding": "뇌막자극징후 음성"
+      "expectedFinding": "뇌막자극징후 음성",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 검사",
@@ -94,23 +96,26 @@
     {
       "item": "안저",
       "method": "안저 확인",
-      "expectedFinding": "안저 유두부종 가능",
+      "expectedFinding": "양쪽 안저에서 시신경유두 경계가 흐리고 융기되어 있음(유두부종)",
       "polarity": "positive"
     },
     {
       "item": "두부 촉진",
       "method": "두부 촉진 확인",
-      "expectedFinding": "두부 압통 없음"
+      "expectedFinding": "두부 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "부비동",
       "method": "부비동 확인",
-      "expectedFinding": "부비동 압통 없음"
+      "expectedFinding": "부비동 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "눈",
       "method": "눈 확인",
-      "expectedFinding": "시야 결손 가능"
+      "expectedFinding": "대면 시야검사에서 시야 결손 없고 안구운동 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

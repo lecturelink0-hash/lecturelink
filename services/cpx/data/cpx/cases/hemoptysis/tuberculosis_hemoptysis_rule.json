@@ -94,7 +94,8 @@
       "item": "경부 림프절·피부 출혈",
       "method": "경부 림프절·점상출혈·멍 확인",
       "expectedFinding": "경부 림프절 뚜렷한 종대 없고 피부 출혈 소견 없음",
-      "examConceptId": "neck_lymph_node"
+      "examConceptId": "neck_lymph_node",
+      "polarity": "negative"
     },
     {
       "item": "흉부 진찰",
@@ -107,7 +108,8 @@
       "item": "복부·하지",
       "method": "간비장 비대·하지 부종·곤봉지·청색증 확인",
       "expectedFinding": "간비장 비대·부종·곤봉지·청색증 없음",
-      "examConceptId": "peripheral_edema"
+      "examConceptId": "peripheral_edema",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

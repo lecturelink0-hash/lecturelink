@@ -84,7 +84,8 @@
     {
       "item": "콧물 성상·안면",
       "method": "콧물 성상과 얼굴·목 통증 확인",
-      "expectedFinding": "수양성~약간 점성 콧물, 안면 통증 없음"
+      "expectedFinding": "약간 점성이 있는 콧물, 안면 통증 없음",
+      "polarity": "positive"
     },
     {
       "item": "인후·편도",
@@ -101,7 +102,8 @@
     {
       "item": "부비동",
       "method": "부비동 압통 검사",
-      "expectedFinding": "압통 없음"
+      "expectedFinding": "압통 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

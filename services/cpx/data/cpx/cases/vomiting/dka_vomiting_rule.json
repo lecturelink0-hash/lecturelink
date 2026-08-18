@@ -98,17 +98,20 @@
     {
       "item": "복부 시진",
       "method": "복부 시진 확인",
-      "expectedFinding": "복부 팽만 없음, 경도 압통 가능"
+      "expectedFinding": "복부 팽만 없고 호흡이 깊고 빠름(Kussmaul 호흡)",
+      "polarity": "positive"
     },
     {
       "item": "복부 촉진",
       "method": "복부 촉진 확인",
-      "expectedFinding": "전반적 경도 압통(국소 반발통 뚜렷치 않음)"
+      "expectedFinding": "복부 전반에 경도 압통이 있으나 국소 반발통·강직은 없음",
+      "polarity": "positive"
     },
     {
       "item": "신경학적 상태",
       "method": "신경학적 상태 확인",
-      "expectedFinding": "의식 처짐 가능"
+      "expectedFinding": "의식은 명료하나 반응이 느리고 기운이 없음, 국소 신경학적 이상 없음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

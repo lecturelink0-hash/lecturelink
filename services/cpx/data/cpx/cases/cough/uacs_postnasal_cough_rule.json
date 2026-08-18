@@ -35,13 +35,13 @@
     "mustAbsent": []
   },
   "scenarioRule": {
-    "caseSummary": "몇 주째 기침이 낫지 않는데, 목 뒤로 콧물이 넘어가는 느낌이 있어 자꾸 헛기침을 하고 목을 가다듬는다. 코막힘·콧물이 있고 아침에 특히 심하다. 눕거나 아침에 기침이 잦다.",
+    "caseSummary": "두 달이 넘게 기침이 낫지 않는데, 목 뒤로 콧물이 넘어가는 느낌이 있어 자꾸 헛기침을 하고 목을 가다듬는다. 코막힘·콧물이 있고 아침에 특히 심하다. 눕거나 아침에 기침이 잦다.",
     "mustInclude": [
       "목 뒤로 넘어가는 분비물감(후비루)",
       "잦은 헛기침·목 가다듬기",
       "코막힘·콧물 등 비증상 동반",
       "아침·누울 때 악화",
-      "만성(3~8주 이상) 지속"
+      "만성(8주 이상) 지속"
     ],
     "preferredVariants": [
       "알레르기 비염·부비동염 병력",
@@ -79,33 +79,37 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 정상"
+      "expectedFinding": "활력징후 정상",
+      "polarity": "negative"
     },
     {
       "item": "인후",
       "method": "인후 확인",
-      "expectedFinding": "인후 후벽 점액·조약돌 모양(cobblestone) 가능",
+      "expectedFinding": "인후 후벽에 점액이 흐르고 조약돌 모양(cobblestone) 림프 과형성이 보임",
       "polarity": "positive"
     },
     {
       "item": "림프절",
       "method": "림프절 확인",
-      "expectedFinding": "경부 림프절 없음"
+      "expectedFinding": "경부 림프절 없음",
+      "polarity": "negative"
     },
     {
       "item": "호흡음",
       "method": "호흡음 확인",
-      "expectedFinding": "호흡음 정상"
+      "expectedFinding": "호흡음 정상",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음 확인",
-      "expectedFinding": "심음 정상"
+      "expectedFinding": "심음 정상",
+      "polarity": "negative"
     },
     {
       "item": "코·부비동",
       "method": "코·부비동 확인",
-      "expectedFinding": "코점막 부종·분비물, 부비동 압통 가능",
+      "expectedFinding": "코점막이 부어 있고 맑은 분비물이 있으며 부비동 압통은 없음",
       "polarity": "positive"
     }
   ],

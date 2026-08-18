@@ -75,23 +75,25 @@
     {
       "item": "활력징후·결막·하복부",
       "method": "활력징후·결막·하복부 확인",
-      "expectedFinding": "활력징후 빈맥 가능, 결막 창백, 하복부 덩이감 가능",
+      "expectedFinding": "맥박 98회/분, 혈압 112/70 mmHg, 결막 창백, 하복부에서 덩이감이 만져짐",
       "polarity": "positive"
     },
     {
       "item": "임신검사",
       "method": "임신검사 확인",
-      "expectedFinding": "임신검사 음성"
+      "expectedFinding": "임신검사 음성",
+      "polarity": "negative"
     },
     {
       "item": "질경 진찰",
       "method": "질경 진찰 확인",
-      "expectedFinding": "질경 진찰 출혈원 확인"
+      "expectedFinding": "자궁경부는 깨끗하고 자궁 안쪽에서 나오는 소량의 암적색 혈액이 보임",
+      "polarity": "positive"
     },
     {
       "item": "양손 골반진찰",
       "method": "양손 골반진찰 확인",
-      "expectedFinding": "양손 골반진찰에서 자궁 커짐·불규칙(근종) 가능",
+      "expectedFinding": "자궁이 임신 10주 크기로 커져 있고 표면이 불규칙함(근종)",
       "polarity": "positive"
     }
   ],

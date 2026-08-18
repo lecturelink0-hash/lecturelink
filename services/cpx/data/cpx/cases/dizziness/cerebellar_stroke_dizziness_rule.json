@@ -99,7 +99,8 @@
       "item": "두위검사",
       "method": "Dix-Hallpike test",
       "expectedFinding": "음성 (특정 두위 유발 없음)",
-      "examConceptId": "dix_hallpike"
+      "examConceptId": "dix_hallpike",
+      "polarity": "negative"
     },
     {
       "item": "평형·보행",
@@ -116,12 +117,14 @@
     {
       "item": "빈혈",
       "method": "결막 확인",
-      "expectedFinding": "창백 없음 (정상)"
+      "expectedFinding": "창백 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "청력",
       "method": "Weber/Rinne 등 청력 검사",
-      "expectedFinding": "정상 (난청 없음)"
+      "expectedFinding": "정상 (난청 없음)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

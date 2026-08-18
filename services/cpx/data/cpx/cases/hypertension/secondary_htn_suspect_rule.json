@@ -89,28 +89,31 @@
     {
       "item": "양팔 혈압",
       "method": "양팔 혈압 비교",
-      "expectedFinding": "차이 없음"
+      "expectedFinding": "차이 없음",
+      "polarity": "negative"
     },
     {
       "item": "심장",
       "method": "심장 청진·촉진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "말초 맥박",
       "method": "말초·대퇴 맥박 검사",
-      "expectedFinding": "대퇴맥박 정상 (축착 시사 없음)"
+      "expectedFinding": "대퇴맥박 정상 (축착 시사 없음)",
+      "polarity": "negative"
     },
     {
       "item": "복부",
       "method": "복부 청진(잡음)·촉진",
-      "expectedFinding": "상복부·배꼽 주변에서 혈관성 잡음 청진 의심",
+      "expectedFinding": "상복부·배꼽 왼쪽에서 수축기 혈관성 잡음이 들림",
       "polarity": "positive"
     },
     {
       "item": "표적기관",
       "method": "안저검사·하지 부종 확인",
-      "expectedFinding": "안저 경도 고혈압성 변화 의심",
+      "expectedFinding": "안저에서 경도 고혈압성 변화(동맥 협소·정맥 교차 압박)가 보임",
       "polarity": "positive"
     }
   ],

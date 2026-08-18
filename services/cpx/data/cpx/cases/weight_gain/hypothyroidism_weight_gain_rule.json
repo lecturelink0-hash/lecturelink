@@ -97,20 +97,23 @@
     {
       "item": "갑상샘·쿠싱 양상",
       "method": "갑상샘 촉진과 얼굴·자색선조 확인",
-      "expectedFinding": "갑상샘 종대·압통, moon face·자색선조 없음",
-      "examConceptId": "thyroid_palpation"
+      "expectedFinding": "갑상샘이 전반적으로 단단하게 커져 있으나 압통은 없음, moon face·자색선조 없음",
+      "examConceptId": "thyroid_palpation",
+      "polarity": "positive"
     },
     {
       "item": "심음·호흡음·경정맥",
       "method": "심음·호흡음 청진과 경정맥 팽대 확인",
       "expectedFinding": "심음·호흡음 정상, 경정맥 팽대 없음",
-      "examConceptId": "jvp"
+      "examConceptId": "jvp",
+      "polarity": "negative"
     },
     {
       "item": "복부·간비장·하지 부종",
       "method": "복부 시진·촉진으로 복수·간비장 비대 확인 및 하지 부종 평가",
       "expectedFinding": "복수·간비장 비대·하지 함요부종 없음",
-      "examConceptId": "peripheral_edema"
+      "examConceptId": "peripheral_edema",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

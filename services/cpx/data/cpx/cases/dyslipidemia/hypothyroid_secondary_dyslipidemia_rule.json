@@ -95,7 +95,8 @@
       "item": "눈·피부 황색종",
       "method": "눈 주위·각막환과 손바닥 황색종 관찰",
       "expectedFinding": "황색판종·각막환·손바닥 황색종 없음",
-      "examConceptId": "xanthoma_xanthelasma_inspection"
+      "examConceptId": "xanthoma_xanthelasma_inspection",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘·피부",
@@ -107,14 +108,16 @@
     {
       "item": "경동맥·심음·말초 맥박",
       "method": "경동맥 잡음과 심음, 말초 맥박 확인",
-      "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 맥박은 느린 편",
-      "examConceptId": "heart_rhythm_auscultation"
+      "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 맥박 56회/분으로 느림",
+      "examConceptId": "heart_rhythm_auscultation",
+      "polarity": "positive"
     },
     {
       "item": "복부·하지 부종",
       "method": "간비대·복수와 하지 함요부종 확인",
       "expectedFinding": "간비대·복수·하지 함요부종 없음",
-      "examConceptId": "pretibial_pitting_edema"
+      "examConceptId": "pretibial_pitting_edema",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

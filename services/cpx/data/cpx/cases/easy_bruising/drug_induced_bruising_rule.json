@@ -79,7 +79,8 @@
     {
       "item": "활력징후·결막",
       "method": "활력징후·결막 확인",
-      "expectedFinding": "활력징후 정상, 결막 창백은 경미"
+      "expectedFinding": "활력징후 정상, 결막 창백은 경미함",
+      "polarity": "positive"
     },
     {
       "item": "피부 멍·점상출혈",
@@ -90,17 +91,20 @@
     {
       "item": "구강·잇몸",
       "method": "구강·잇몸 확인",
-      "expectedFinding": "잇몸 출혈 흔적 가능"
+      "expectedFinding": "잇몸 경계에 최근 출혈 흔적이 있음",
+      "polarity": "positive"
     },
     {
       "item": "경부 림프절",
       "method": "경부 림프절 확인",
-      "expectedFinding": "경부 림프절 없음"
+      "expectedFinding": "경부 림프절 없음",
+      "polarity": "negative"
     },
     {
       "item": "복부·간비장",
       "method": "복부·간비장 확인",
-      "expectedFinding": "간·비장 비대 없음"
+      "expectedFinding": "간·비장 비대 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

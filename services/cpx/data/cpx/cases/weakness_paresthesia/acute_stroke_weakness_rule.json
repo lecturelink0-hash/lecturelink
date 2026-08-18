@@ -111,8 +111,9 @@
     {
       "item": "혈당",
       "method": "손끝 혈당 측정",
-      "expectedFinding": "혈당 118 mg/dL",
-      "examConceptId": "blood_glucose"
+      "expectedFinding": "혈당 118 mg/dL — 정상 범위",
+      "examConceptId": "blood_glucose",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

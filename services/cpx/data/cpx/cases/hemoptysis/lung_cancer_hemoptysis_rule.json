@@ -78,28 +78,32 @@
     {
       "item": "활력징후·산소포화도·의식",
       "method": "활력징후·산소포화도·의식 확인",
-      "expectedFinding": "활력징후·산소포화도 대체로 정상, 의식 명료"
+      "expectedFinding": "활력징후·산소포화도 대체로 정상, 의식 명료",
+      "polarity": "negative"
     },
     {
       "item": "비강·구강·인두·결막",
       "method": "비강·구강·인두·결막 확인",
-      "expectedFinding": "비강·인두 출혈원 없음, 결막 창백 가능"
+      "expectedFinding": "비강·인두에 출혈원 없고 결막이 약간 창백함",
+      "polarity": "positive"
     },
     {
       "item": "경부 림프절·피부 출혈",
       "method": "경부 림프절·피부 출혈 확인",
-      "expectedFinding": "경부 쇄골상 림프절 촉지 가능",
+      "expectedFinding": "오른쪽 쇄골상 림프절이 단단하게 만져지고 압통은 없음",
       "polarity": "positive"
     },
     {
       "item": "흉부 진찰",
       "method": "흉부 진찰 확인",
-      "expectedFinding": "흉부 국소 이상음 가능"
+      "expectedFinding": "오른쪽 상부 흉부에서 호흡음이 감소하고 국소 수포음이 들림",
+      "polarity": "positive"
     },
     {
       "item": "복부·하지",
       "method": "복부·하지 확인",
-      "expectedFinding": "복부·하지 정상"
+      "expectedFinding": "복부·하지 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

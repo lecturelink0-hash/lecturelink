@@ -83,32 +83,38 @@
     {
       "item": "활력징후",
       "method": "활력징후·기립 시 증상 확인",
-      "expectedFinding": "혈압 118/74, 맥박 88회, 기립 시 어지럼 없음"
+      "expectedFinding": "혈압 118/74, 맥박 88회, 기립 시 어지럼 없음",
+      "polarity": "negative"
     },
     {
       "item": "전반적 외견",
       "method": "전반 신체 상태 확인",
-      "expectedFinding": "불안해 보이나 의식 명료하고 말이 또렷함"
+      "expectedFinding": "불안해 보이나 의식 명료하고 말이 또렷함",
+      "polarity": "negative"
     },
     {
       "item": "결막",
       "method": "결막 창백 확인",
-      "expectedFinding": "결막 창백 없음"
+      "expectedFinding": "결막 창백 없음",
+      "polarity": "negative"
     },
     {
       "item": "구강",
       "method": "구강·비강 출혈 확인",
-      "expectedFinding": "구강 및 비강에 활동성 출혈 없음"
+      "expectedFinding": "구강 및 비강에 활동성 출혈 없음",
+      "polarity": "negative"
     },
     {
       "item": "복부 시진",
       "method": "복부 시진·장음 청진",
-      "expectedFinding": "팽만 없음, 장음 정상"
+      "expectedFinding": "팽만 없음, 장음 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",
       "method": "복부 촉진",
-      "expectedFinding": "명치 부위 경미한 불편감만 있고 반발통·강직 없음"
+      "expectedFinding": "명치 부위 경미한 불편감만 있고 반발통·강직 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

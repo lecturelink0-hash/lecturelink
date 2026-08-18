@@ -91,27 +91,32 @@
     {
       "item": "양팔 혈압",
       "method": "양팔 혈압 비교",
-      "expectedFinding": "차이 없음"
+      "expectedFinding": "차이 없음",
+      "polarity": "negative"
     },
     {
       "item": "심장",
       "method": "심장 청진·촉진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "말초 맥박",
       "method": "말초·대퇴 맥박 검사",
-      "expectedFinding": "대칭·정상 (축착 시사 없음)"
+      "expectedFinding": "대칭·정상 (축착 시사 없음)",
+      "polarity": "negative"
     },
     {
       "item": "복부",
       "method": "복부 청진(잡음)·촉진",
-      "expectedFinding": "신동맥 잡음 없음 (정상)"
+      "expectedFinding": "신동맥 잡음 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "표적기관",
       "method": "안저검사·하지 부종 확인",
-      "expectedFinding": "안저 정상, 부종 없음"
+      "expectedFinding": "안저 정상, 부종 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -35,7 +35,7 @@
     "mustAbsent": []
   },
   "scenarioRule": {
-    "caseSummary": "2~3일 전부터 한쪽 옆구리(또는 얼굴)가 따갑고 아프더니, 그 자리에 붉은 바탕에 물집이 띠 모양으로 잡혔다. 몸의 정중선을 넘지 않고 한쪽에만 있다. 통증이 콕콕 쑤신다.",
+    "caseSummary": "2~3일 전부터 한쪽 옆구리가 따갑고 아프더니, 그 자리에 붉은 바탕에 물집이 띠 모양으로 잡혔다. 몸의 정중선을 넘지 않고 한쪽에만 있다. 통증이 콕콕 쑤신다.",
     "mustInclude": [
       "편측·피부분절을 따라 띠 모양으로 무리진 수포",
       "발진 전 그 부위의 통증·따가움(선행 통증)",
@@ -75,7 +75,8 @@
     {
       "item": "활력징후·전신 상태",
       "method": "활력징후·전신 상태 확인",
-      "expectedFinding": "활력징후 대체로 정상"
+      "expectedFinding": "활력징후 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "피부 발진",
@@ -86,17 +87,20 @@
     {
       "item": "발진 촉진·눌림 반응",
       "method": "발진 촉진·눌림 반응 확인",
-      "expectedFinding": "수포 압통·감각 이상"
+      "expectedFinding": "수포 압통·감각 이상",
+      "polarity": "positive"
     },
     {
       "item": "눈·구강 점막",
       "method": "눈·구강 점막 확인",
-      "expectedFinding": "눈 주위 침범 시 각막 침범 주의(안구 확인)"
+      "expectedFinding": "눈 주위와 코끝에 병변이 없어 안구 침범 소견 없고 구강 점막도 깨끗함",
+      "polarity": "negative"
     },
     {
       "item": "경부 림프절",
       "method": "경부 림프절 확인",
-      "expectedFinding": "해당 부위 림프절 압통 가능"
+      "expectedFinding": "발진과 같은 쪽 겨드랑 림프절이 만져지고 압통이 있으며 경부 림프절은 종대 없음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

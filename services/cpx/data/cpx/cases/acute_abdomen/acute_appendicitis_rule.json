@@ -87,17 +87,20 @@
     {
       "item": "자세",
       "method": "오른편에 서서 바로 눕히고 무릎 세움",
-      "expectedFinding": "자세 협조됨 (무릎 굽히면 편해함)"
+      "expectedFinding": "자세 협조됨 (무릎 굽히면 편해함)",
+      "polarity": "negative"
     },
     {
       "item": "시진",
       "method": "복부 팽만·긴장도 시진",
-      "expectedFinding": "팽만 없음, 호흡 시 움직임 다소 조심스러움"
+      "expectedFinding": "복부 팽만 없고 호흡할 때 배의 움직임을 조심스러워함",
+      "polarity": "positive"
     },
     {
       "item": "청진",
       "method": "복부 청진",
-      "expectedFinding": "장음 다소 감소"
+      "expectedFinding": "장음이 다소 감소되어 있음",
+      "polarity": "positive"
     },
     {
       "item": "촉진",

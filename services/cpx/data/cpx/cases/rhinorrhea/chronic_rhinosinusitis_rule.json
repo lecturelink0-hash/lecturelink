@@ -79,7 +79,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "콧물 성상·안면",
@@ -96,13 +97,14 @@
     {
       "item": "코 내부",
       "method": "비점막·비갑개·비중격 확인",
-      "expectedFinding": "양측 비강에 매끈한 회백색 종물(비용종 의심)",
+      "expectedFinding": "양측 비강에 매끈한 회백색 종물이 보임(비용종)",
       "polarity": "positive"
     },
     {
       "item": "부비동",
       "method": "부비동 압통 검사",
-      "expectedFinding": "경미한 충만감, 뚜렷한 압통 없음"
+      "expectedFinding": "경미한 충만감이 있고 뚜렷한 압통은 없음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

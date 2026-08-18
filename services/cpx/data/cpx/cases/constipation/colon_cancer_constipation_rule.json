@@ -82,12 +82,13 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "복부",
       "method": "복부 시진·청진·촉진·타진",
-      "expectedFinding": "좌하복부 깊은 촉진에서 저항감 의심, 뚜렷한 종괴는 불확실",
+      "expectedFinding": "좌하복부 깊은 촉진에서 저항감이 느껴지나 뚜렷한 종괴는 만져지지 않음",
       "polarity": "positive"
     },
     {

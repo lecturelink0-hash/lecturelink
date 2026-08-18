@@ -84,7 +84,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 (발열 없음)"
+      "expectedFinding": "정상 (발열 없음)",
+      "polarity": "negative"
     },
     {
       "item": "하복부",
@@ -95,12 +96,14 @@
     {
       "item": "옆구리",
       "method": "CVA 압통 확인",
-      "expectedFinding": "압통 없음 (신우신염 시사 없음)"
+      "expectedFinding": "압통 없음 (신우신염 시사 없음)",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",
       "method": "DRE(필요시)",
-      "expectedFinding": "해당 없음 — 시행 불필요 소견"
+      "expectedFinding": "해당 없음 — 시행 불필요 소견",
+      "polarity": "negative"
     },
     {
       "item": "소변검사",

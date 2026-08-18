@@ -95,7 +95,8 @@
     {
       "item": "갑상샘·림프절",
       "method": "갑상샘·림프절 촉진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "흉부",
@@ -112,7 +113,8 @@
     {
       "item": "직장수지검사",
       "method": "DRE(필요시)",
-      "expectedFinding": "해당 없음 — 시행 불필요"
+      "expectedFinding": "해당 없음 — 시행 불필요",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

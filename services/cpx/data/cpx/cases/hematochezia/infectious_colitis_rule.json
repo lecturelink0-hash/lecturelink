@@ -88,7 +88,8 @@
     {
       "item": "전반적 외견",
       "method": "전신 상태·결막 확인",
-      "expectedFinding": "피곤해 보이나 의식 명료, 결막 창백 없음"
+      "expectedFinding": "피곤해 보이나 의식 명료, 결막 창백 없음",
+      "polarity": "negative"
     },
     {
       "item": "복부 시진",
@@ -105,7 +106,8 @@
     {
       "item": "항문 주위",
       "method": "항문 주위 시진",
-      "expectedFinding": "설명과 동의 후 시행하면 외치핵·치열 소견 없음"
+      "expectedFinding": "설명과 동의 후 시행하면 외치핵·치열 소견 없음",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",

@@ -78,7 +78,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "척추 정렬",
@@ -101,7 +102,7 @@
     {
       "item": "하지 신경",
       "method": "하지 감각·근력·심부건반사 검사",
-      "expectedFinding": "양측 하지 근력 저하, 회음부 감각 저하, 항문 긴장도 감소 의심",
+      "expectedFinding": "양측 하지 근력 저하, 회음부 감각 저하, 항문 긴장도 감소",
       "polarity": "positive"
     },
     {

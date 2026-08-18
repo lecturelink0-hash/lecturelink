@@ -78,12 +78,14 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "관절 시진",
       "method": "관절 시진(부종·발적·변형)",
-      "expectedFinding": "이상 없음 — 부기·발적 관찰되지 않음"
+      "expectedFinding": "이상 없음 — 부기·발적 관찰되지 않음",
+      "polarity": "negative"
     },
     {
       "item": "관절 촉진",
@@ -100,12 +102,14 @@
     {
       "item": "다른 관절",
       "method": "다른 관절·대칭성 확인",
-      "expectedFinding": "반대측·타 관절 정상 — 목 움직임에 통증 재현 안 됨"
+      "expectedFinding": "반대측·타 관절 정상 — 목 움직임에 통증 재현 안 됨",
+      "polarity": "negative"
     },
     {
       "item": "피부·눈",
       "method": "피부 발진·눈 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

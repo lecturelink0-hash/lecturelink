@@ -84,33 +84,39 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위 (혈압 조절 양호)"
+      "expectedFinding": "정상 범위 (혈압 조절 양호)",
+      "polarity": "negative"
     },
     {
       "item": "인후",
       "method": "인후 시진",
       "examConceptId": "pharynx_tonsil",
-      "expectedFinding": "특이소견 없음 (정상)"
+      "expectedFinding": "특이소견 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "림프절",
       "method": "경부 림프절 촉진",
-      "expectedFinding": "종대 없음 (정상)"
+      "expectedFinding": "종대 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "호흡음",
       "method": "호흡음 청진",
-      "expectedFinding": "깨끗함, 천명 없음 (정상)"
+      "expectedFinding": "깨끗함, 천명 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "심음",
       "method": "심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "코·부비동",
       "method": "코 안·부비동 확인",
-      "expectedFinding": "후비루·압통 없음 (정상)"
+      "expectedFinding": "후비루·압통 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

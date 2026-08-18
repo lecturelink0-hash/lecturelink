@@ -89,7 +89,8 @@
     {
       "item": "인후",
       "method": "인후·구강 시진",
-      "expectedFinding": "경미한 발적 외 특이소견 없음"
+      "expectedFinding": "인후에 경미한 발적 외 특이소견 없음",
+      "polarity": "positive"
     },
     {
       "item": "림프절·목",
@@ -100,12 +101,14 @@
     {
       "item": "흉부",
       "method": "호흡음·심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "복부·옆구리",
       "method": "복부 진찰·CVA 압통 확인",
-      "expectedFinding": "특이소견 없음 (정상)"
+      "expectedFinding": "특이소견 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "피부",

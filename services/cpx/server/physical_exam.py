@@ -1069,27 +1069,24 @@ def _body_region_for_button(case: dict | None, button: dict) -> tuple[str, str, 
         return 'chest', '흉부', 'chest'
     return 'general', '전신·활력', 'chest'
 
-# 비정상 소견을 시사하는 단어
-_ABNORMAL_WORDS = ('비대', '폐쇄', '이상', '양성', '저하', '항진', '빈맥', '서맥', '부종', '늘어', '좁', '종괴', '압통 있', '잡음', '강직 (+', '높음')
-# 부정된 표현은 비정상 단어 검사 전에 제거 ('이상 없음'의 '이상'이 비정상으로 오판되는 것 방지)
-_NEGATED_PHRASES = ('이상 없음', '압통 없음', '문제 없음', '특이소견 없음', '부종 없음', '비대 없음',
-                    '잡음 없음', '강직 없음', '마비 없음', '반사 없음', '충혈·눈물 없음', '발열 없음',
-                    '종괴 없음', '종대 없음', '창백 없음', '황달 없음', '안진 없음', '난청 없음',
-                    '저하 없음', '뚜렷하지 않음', '비대·종대 없음', '발적·부종·변형 없음',
-                    '수양성')  # '수양성'은 '양성' 오매칭 방지용 선제거 (판정 중립 단어)
+# 정상/비정상 배지의 유일한 근거는 케이스 데이터의 polarity 다.
+#
+# 예전에는 소견 문장에서 키워드를 뽑아 극성을 추론했다. 그 추론은 양방향으로 틀렸다 —
+# "간비대·복수·하지 함요부종 없음"처럼 나열 부정을 못 걸러 정상 소견 30건 이상을 빨간
+# 비정상으로 칠했고(정상 활력징후·정상 자궁저부 높이·태아 심박 148·혈당 102 포함),
+# 반대로 "소뇌 정상, 보행 불안정"·"전반적 경도 압통" 같은 실제 이상은 초록 정상으로 칠했다.
+# 한국어 문장에서 극성을 되짚는 일은 원리적으로 불가능하므로(부정 범위가 문장 구조에
+# 달려 있다) 규칙마다 polarity 를 명시하는 쪽으로 바꾸고 추론을 폐기했다.
+#
+# 누락은 test_all_cases.py 의 전수 검사가 막는다. 여기서 조용히 추측하지 않는다.
+POLARITY_ABNORMAL = 'positive'
+POLARITY_NORMAL = 'negative'
+POLARITY_VALUES = (POLARITY_ABNORMAL, POLARITY_NORMAL)
 
 
 def _is_abnormal(pe: dict) -> bool:
-    if pe.get('polarity') == 'positive':
-        return True
-    finding = pe.get('expectedFinding', '')
-    stripped = finding
-    for n in sorted(_NEGATED_PHRASES, key=len, reverse=True):  # 긴 구부터 제거 ('비대·종대 없음' > '종대 없음')
-        stripped = stripped.replace(n, '')
-    if any(w in stripped for w in _ABNORMAL_WORDS):
-        return True
-    # 명시적 정상/음성/부재 표현이 있으면 정상
-    return not any(w in finding for w in ('정상', '없음', '깨끗', '음성', '않음', '안정적', '양호', '협조'))
+    """소견이 비정상인지 — polarity 만 본다. 값이 없거나 모르는 값이면 보수적으로 정상."""
+    return pe.get('polarity') == POLARITY_ABNORMAL
 
 
 def button_catalog(case: dict | None = None) -> list[dict]:

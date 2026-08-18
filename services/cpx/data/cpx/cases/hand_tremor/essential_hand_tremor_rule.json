@@ -85,19 +85,22 @@
       "item": "활력징후·결막",
       "method": "혈압·맥박·체온과 결막 창백 확인",
       "expectedFinding": "혈압 132/78 mmHg, 맥박 76회/분 규칙적, 발열·결막 창백 없음",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 시진·촉진",
       "expectedFinding": "갑상샘 비대·결절·압통 없음",
-      "examConceptId": "thyroid_palpation"
+      "examConceptId": "thyroid_palpation",
+      "polarity": "negative"
     },
     {
       "item": "안정떨림",
       "method": "양손을 무릎 위에 둔 상태에서 관찰",
       "expectedFinding": "안정 시 뚜렷한 떨림 없음",
-      "examConceptId": "tremor_observation"
+      "examConceptId": "tremor_observation",
+      "polarity": "negative"
     },
     {
       "item": "자세·동작 떨림",
@@ -110,13 +113,15 @@
       "item": "신경학적 진찰",
       "method": "안구운동·근력·감각·반사·근경직 확인",
       "expectedFinding": "뇌신경·근력·감각·심부건반사 정상, 근경직 없음",
-      "examConceptId": "neurologic_screening"
+      "examConceptId": "neurologic_screening",
+      "polarity": "negative"
     },
     {
       "item": "협응·보행",
       "method": "손가락-코·빠른 교대운동·보행·Tandem/Romberg 검사",
       "expectedFinding": "협응·보행·Tandem/Romberg 정상",
-      "examConceptId": "gait_observation"
+      "examConceptId": "gait_observation",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

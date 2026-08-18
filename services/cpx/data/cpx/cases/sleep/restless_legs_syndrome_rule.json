@@ -91,32 +91,38 @@
     {
       "item": "부정맥",
       "method": "맥박 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "심장질환",
       "method": "심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 촉진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "호흡기질환",
       "method": "호흡음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "하지 시진·운동",
       "method": "다리 관찰·근력·감각",
-      "expectedFinding": "정상, 겉으론 멀쩡하고 진찰 중 특이 소견 없음"
+      "expectedFinding": "정상, 겉으론 멀쩡하고 진찰 중 특이 소견 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학",
       "method": "하지 감각·반사",
-      "expectedFinding": "정상, 말초신경병증 시사 소견 없음"
+      "expectedFinding": "정상, 말초신경병증 시사 소견 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

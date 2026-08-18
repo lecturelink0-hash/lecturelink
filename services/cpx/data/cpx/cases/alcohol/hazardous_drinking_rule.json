@@ -83,23 +83,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "금단 징후",
       "method": "손떨림·발한 관찰",
-      "expectedFinding": "없음 (정상)"
+      "expectedFinding": "없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "복부·간",
       "method": "복부 진찰(간 촉진)",
-      "expectedFinding": "간 경계부 촉지 의심(경도), 압통 없음",
+      "expectedFinding": "간 경계부가 경도로 만져지고 압통은 없음",
       "polarity": "positive"
     },
     {
       "item": "황달·영양",
       "method": "공막 황달·영양 상태 확인",
-      "expectedFinding": "황달 없음, 복부 비만"
+      "expectedFinding": "황달은 없고 복부 비만이 뚜렷함",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

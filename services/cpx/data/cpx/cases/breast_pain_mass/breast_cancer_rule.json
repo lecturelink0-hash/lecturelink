@@ -78,7 +78,8 @@
     {
       "item": "활력징후·전신 상태",
       "method": "활력징후·전신 상태 확인",
-      "expectedFinding": "활력징후·전신 상태 대체로 양호"
+      "expectedFinding": "활력징후·전신 상태 대체로 양호",
+      "polarity": "negative"
     },
     {
       "item": "유방 시진",
@@ -101,7 +102,8 @@
     {
       "item": "유두 분비물",
       "method": "유두 분비물 확인",
-      "expectedFinding": "유두 혈성 분비 가능"
+      "expectedFinding": "유두 함몰 부위에서 자발적 분비물은 없고 짜도 분비물이 나오지 않음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

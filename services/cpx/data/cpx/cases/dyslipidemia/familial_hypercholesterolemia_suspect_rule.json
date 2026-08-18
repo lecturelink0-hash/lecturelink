@@ -87,7 +87,8 @@
       "item": "활력징후·체형·허리둘레",
       "method": "혈압·맥박 측정과 BMI·허리둘레 확인",
       "expectedFinding": "혈압 118/72, 맥박 68회, BMI 23.4, 허리둘레 정상 범위",
-      "examConceptId": "body_habitus_assessment"
+      "examConceptId": "body_habitus_assessment",
+      "polarity": "negative"
     },
     {
       "item": "눈·피부 황색종",
@@ -100,19 +101,22 @@
       "item": "갑상샘·피부",
       "method": "갑상샘 촉진과 피부 건조 확인",
       "expectedFinding": "갑상샘 비대·피부 건조 없음",
-      "examConceptId": "thyroid_palpation"
+      "examConceptId": "thyroid_palpation",
+      "polarity": "negative"
     },
     {
       "item": "경동맥·심음·말초 맥박",
       "method": "경동맥 잡음과 심음, 말초 맥박 확인",
       "expectedFinding": "경동맥 잡음 없고 심음 규칙적, 말초 맥박 대칭",
-      "examConceptId": "carotid_bruit"
+      "examConceptId": "carotid_bruit",
+      "polarity": "negative"
     },
     {
       "item": "복부·하지 부종",
       "method": "간비대·복수와 하지 함요부종 확인",
       "expectedFinding": "간비대·복수·하지 함요부종 없음",
-      "examConceptId": "pretibial_pitting_edema"
+      "examConceptId": "pretibial_pitting_edema",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

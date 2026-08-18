@@ -83,17 +83,20 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위, 발열 없음"
+      "expectedFinding": "정상 범위, 발열 없음",
+      "polarity": "negative"
     },
     {
       "item": "옆구리",
       "method": "CVA 압통 확인",
-      "expectedFinding": "압통 없음 (정상)"
+      "expectedFinding": "압통 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "하복부",
       "method": "하복부·치골상부 촉진",
-      "expectedFinding": "압통·종괴 없음"
+      "expectedFinding": "압통·종괴 없음",
+      "polarity": "negative"
     },
     {
       "item": "근육",
@@ -152,8 +155,8 @@
     "educationTopics": [
       "붉은 소변이 실제 혈뇨가 아니라 근육 손상 물질(미오글로빈)일 수 있음을 설명",
       "혈액검사(CK)·신장기능·소변검사로 감별·신장 보호 평가",
-      "충분한 수분 섭취와 무리한 운동 중단 교육",
-      "소변량 감소·전신 쇠약 시 즉시 내원(급성 콩팥손상 위험) 교육"
+      "이미 소변량이 줄었으므로 외래 수분 섭취 권고로 끝내지 않고 즉시 정맥 수액 치료·입원 관찰이 필요함을 설명",
+      "급성 콩팥손상이 이미 진행 중일 수 있어 CK·신장기능·전해질(고칼륨)을 즉시 확인해야 함을 교육"
     ]
   },
   "additionalPromptRule": [

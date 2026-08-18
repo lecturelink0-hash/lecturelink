@@ -88,17 +88,20 @@
     {
       "item": "활력징후",
       "method": "활력징후 측정",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "눈",
       "method": "결막·공막 확인",
-      "expectedFinding": "빈혈·황달 없음 (정상)"
+      "expectedFinding": "빈혈·황달 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "장음",
       "method": "복부 청진",
-      "expectedFinding": "정상 장음"
+      "expectedFinding": "정상 장음",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",
@@ -109,12 +112,14 @@
     {
       "item": "타진·간비장",
       "method": "복부 타진, 간·비장 종대 확인",
-      "expectedFinding": "종대 없음 (정상)"
+      "expectedFinding": "종대 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",
       "method": "DRE",
-      "expectedFinding": "흑색변 없음, 정상 소견 (요청 시 결과지 제시)"
+      "expectedFinding": "흑색변 없음, 정상 소견 (요청 시 결과지 제시)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

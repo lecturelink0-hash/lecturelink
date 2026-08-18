@@ -91,18 +91,20 @@
     {
       "item": "눈",
       "method": "결막·공막 확인",
-      "expectedFinding": "결막 창백 (빈혈 의심)",
+      "expectedFinding": "결막 창백(빈혈 소견)",
       "polarity": "positive"
     },
     {
       "item": "갑상샘·림프절",
       "method": "갑상샘·림프절 촉진",
-      "expectedFinding": "비대·종대 없음 (정상)"
+      "expectedFinding": "비대·종대 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "흉부",
       "method": "호흡음·심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "복부",

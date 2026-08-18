@@ -84,12 +84,14 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "척추 정렬",
       "method": "척추 시진(정렬 확인)",
-      "expectedFinding": "통증 회피 자세로 약간 기울어짐"
+      "expectedFinding": "통증 회피 자세로 약간 기울어짐",
+      "polarity": "positive"
     },
     {
       "item": "압통 부위",
@@ -112,7 +114,8 @@
     {
       "item": "보행",
       "method": "보행 관찰",
-      "expectedFinding": "가능하나 통증으로 조심스러움"
+      "expectedFinding": "보행은 하지만 오른쪽 다리를 조심스럽게 디디고 보폭이 짧으며, 발끝·발뒤꿈치 보행은 무리 없이 수행함",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

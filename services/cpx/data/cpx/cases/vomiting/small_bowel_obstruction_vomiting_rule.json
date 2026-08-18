@@ -112,7 +112,8 @@
     {
       "item": "신경학적 상태",
       "method": "의식·경부 강직 확인",
-      "expectedFinding": "의식 명료, 경부 강직 없음"
+      "expectedFinding": "의식 명료, 경부 강직 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

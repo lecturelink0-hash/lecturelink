@@ -83,17 +83,20 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "인후",
       "method": "인후 시진",
-      "expectedFinding": "특이소견 없음"
+      "expectedFinding": "특이소견 없음",
+      "polarity": "negative"
     },
     {
       "item": "림프절",
       "method": "경부 림프절 촉진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "호흡음",
@@ -104,12 +107,14 @@
     {
       "item": "심음",
       "method": "심음 청진",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "코·부비동",
       "method": "코 안·부비동 확인",
-      "expectedFinding": "후비루·압통 없음"
+      "expectedFinding": "후비루·압통 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

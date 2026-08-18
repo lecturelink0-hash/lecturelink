@@ -84,17 +84,20 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "하복부",
       "method": "하복부 촉진",
-      "expectedFinding": "방광 팽만 뚜렷하지 않음, 압통 없음"
+      "expectedFinding": "방광 팽만 뚜렷하지 않음, 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "옆구리",
       "method": "CVA 압통 확인",
-      "expectedFinding": "압통 없음 (정상)"
+      "expectedFinding": "압통 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "직장수지검사",
@@ -106,7 +109,8 @@
       "item": "소변검사",
       "method": "요검사(딥스틱)",
       "examConceptId": "urinalysis",
-      "expectedFinding": "정상 (감염·혈뇨 시사 없음)"
+      "expectedFinding": "정상 (감염·혈뇨 시사 없음)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

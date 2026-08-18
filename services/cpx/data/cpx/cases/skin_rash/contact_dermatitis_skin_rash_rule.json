@@ -82,7 +82,8 @@
       "item": "활력징후·전신 상태",
       "method": "혈압·맥박·체온과 전신 상태 확인",
       "expectedFinding": "체온 36.7, 혈압 116/74, 맥박 76회, 전신 상태 안정",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "피부 발진",
@@ -95,19 +96,22 @@
       "item": "발진 촉진·눌림 반응",
       "method": "열감·압통·부종과 눌렀을 때 변화 확인",
       "expectedFinding": "국소 열감·압통·부종 없고 눌렀을 때 옅어짐",
-      "examConceptId": "skin_rash_inspection"
+      "examConceptId": "skin_rash_inspection",
+      "polarity": "negative"
     },
     {
       "item": "눈·구강 점막",
       "method": "결막·눈꺼풀과 구강 점막 병변 확인",
       "expectedFinding": "결막 충혈·눈 통증·구강 궤양·점막 미란 없음",
-      "examConceptId": "oral_ulcer_or_lesion"
+      "examConceptId": "oral_ulcer_or_lesion",
+      "polarity": "negative"
     },
     {
       "item": "경부 림프절",
       "method": "경부 림프절 촉진",
       "expectedFinding": "경부 림프절 종대 없음",
-      "examConceptId": "neck_lymph_node"
+      "examConceptId": "neck_lymph_node",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -113,7 +113,7 @@
     {
       "item": "복부 촉진",
       "method": "복부 촉진",
-      "expectedFinding": "뚜렷한 국소 압통은 없고 복수 의심 소견",
+      "expectedFinding": "뚜렷한 국소 압통은 없고 이동성 둔탁음이 있음(복수)",
       "polarity": "positive"
     },
     {

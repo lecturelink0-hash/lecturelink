@@ -86,12 +86,14 @@
     {
       "item": "활력징후",
       "method": "혈압·맥박 측정(기립 포함)",
-      "expectedFinding": "정상, 기립 시 혈압 변화 없음"
+      "expectedFinding": "정상, 기립 시 혈압 변화 없음",
+      "polarity": "negative"
     },
     {
       "item": "안진",
       "method": "자발·주시 안진 확인",
-      "expectedFinding": "자발 안진 없음"
+      "expectedFinding": "자발 안진 없음",
+      "polarity": "negative"
     },
     {
       "item": "두위검사",
@@ -103,22 +105,26 @@
     {
       "item": "평형·보행",
       "method": "Romberg·Tandem gait 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 이상",
       "method": "뇌신경·소뇌기능(finger-to-nose) 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "빈혈",
       "method": "결막 확인",
-      "expectedFinding": "창백 없음 (정상)"
+      "expectedFinding": "창백 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "청력",
       "method": "Weber/Rinne 등 청력 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

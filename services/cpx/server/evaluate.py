@@ -81,13 +81,31 @@ def is_depression_related(case: dict) -> bool:
     return 'depression' in hay or '우울' in hay
 
 
+def patient_age(case: dict, persona: dict | None = None) -> int | None:
+    """진찰·평가 대상 환자의 나이. 보호자 동반 케이스에서는 화자가 아니라 환아가 대상이다."""
+    p = persona or {}
+    for holder in (p, case.get('demographicsRule', {}).get('fixed', {})):
+        child = holder.get('child')
+        if isinstance(child, dict) and isinstance(child.get('age'), int):
+            return child['age']
+    if isinstance(p.get('age'), int):
+        return p['age']
+    fixed_age = case.get('demographicsRule', {}).get('fixed', {}).get('age')
+    return fixed_age if isinstance(fixed_age, int) else None
+
+
 def build_context(case: dict, persona: dict | None = None) -> dict:
     """조건부 항목 판정용 컨텍스트 플래그 — 루브릭 conditional.flag와 이름을 맞춘다."""
     gender = (persona or {}).get('gender') or (case.get('demographicsRule', {}).get('fixed', {}).get('gender', ''))
+    age = patient_age(case, persona)
     return {
         'caseId': case.get('id'),
         'depressionRelated': is_depression_related(case),
         'femalePatient': '여' in str(gender),
+        # 소아·청소년에게 성인용 약물요법 설명을 요구하지 않기 위한 플래그.
+        # 금연 루브릭은 14세 중학생 증례에도 부프로피온·바레니클린 설명을 분모에 넣고 있었다
+        # (둘 다 만 18세 미만 미승인). 나이를 모르면 기존 동작을 유지한다(성인 취급).
+        'adultPatient': age is None or age >= 18,
         # 케이스가 명시적으로 false 를 선언한 경우에만 신체진찰 면제 (기본 True)
         'physicalExamRequired': case.get('physicalExamRequired', True) is not False,
     }
@@ -190,12 +208,19 @@ def build_case_brief(case: dict | None) -> str:
         lines.append('- 없는 것(물으면 아니라고 답함): ' + ' / '.join(use['negativeClues']))
     if use.get('educationTopics'):
         lines.append('- 환자교육에서 다뤄야 할 내용: ' + ' / '.join(use['educationTopics']))
+    # 정상/이상 표시를 함께 준다. 이게 없으면 채점기는 "무릎에 열감·부종"과 "무릎 정상"을
+    # 구분하지 못해, 이상 소견을 놓치거나 정상 소견을 병으로 읽은 학생을 똑같이 채점한다.
+    # 표시의 근거는 케이스의 polarity 뿐이다(문장에서 추론하지 않는다 — physical_exam.py 주석 참조).
     findings = [
-        f"{r.get('item')}={r.get('expectedFinding')}"
+        '{item}={finding} ({mark})'.format(
+            item=r.get('item'),
+            finding=r.get('expectedFinding'),
+            mark='이상 소견' if r.get('polarity') == 'positive' else '정상',
+        )
         for r in (case.get('physicalExamRule') or []) if r.get('expectedFinding')
     ]
     if findings:
-        lines.append('- 진찰하면 나오는 소견: ' + ' / '.join(findings))
+        lines.append('- 진찰하면 나오는 소견(괄호는 정상/이상 여부): ' + ' / '.join(findings))
     return '\n'.join(lines)
 
 

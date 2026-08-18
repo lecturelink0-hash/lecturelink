@@ -83,17 +83,20 @@
       "item": "전반적 외견",
       "method": "체형 확인",
       "expectedFinding": "비만이 아닌 정상 체형",
-      "examConceptId": "body_habitus_assessment"
+      "examConceptId": "body_habitus_assessment",
+      "polarity": "negative"
     },
     {
       "item": "두경부",
       "method": "구강·편도 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "뇌신경·근력·반사 확인",
-      "expectedFinding": "평시 정상"
+      "expectedFinding": "평시 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

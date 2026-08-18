@@ -79,7 +79,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "미열 가능, 활력징후 대체로 정상"
+      "expectedFinding": "체온 37.8°C, 그 외 활력징후는 정상 범위",
+      "polarity": "positive"
     },
     {
       "item": "공막",
@@ -90,12 +91,14 @@
     {
       "item": "피부",
       "method": "피부 확인",
-      "expectedFinding": "피부 황달·거미혈관종 가능"
+      "expectedFinding": "피부와 공막에 황달이 뚜렷하고 앞가슴에 거미혈관종이 보임",
+      "polarity": "positive"
     },
     {
       "item": "복부 시진",
       "method": "복부 시진 확인",
-      "expectedFinding": "복부 팽만 가능"
+      "expectedFinding": "복부가 전반적으로 팽만되어 있음",
+      "polarity": "positive"
     },
     {
       "item": "복부 촉진",
@@ -106,7 +109,8 @@
     {
       "item": "신경학적 상태",
       "method": "신경학적 상태 확인",
-      "expectedFinding": "의식 정상(중증 시 간성뇌증 주의)"
+      "expectedFinding": "의식 정상(중증 시 간성뇌증 주의)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {
@@ -145,7 +149,7 @@
     "educationTopics": [
       "음주에 의한 간 손상 가능성을 설명",
       "간기능·영양 검사와 금주의 중요성",
-      "비판단적으로 절주·치료 프로그램 안내"
+      "비판단적으로 완전 금주(절주로는 부족함)와 알코올 치료 프로그램 안내"
     ]
   },
   "additionalPromptRule": [

@@ -83,7 +83,8 @@
       "item": "활력징후·결막",
       "method": "혈압·맥박·체온과 결막 창백 확인",
       "expectedFinding": "혈압 118/72, 맥박 78회, 발열 없고 결막 창백 없음",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "피부 멍·점상출혈",
@@ -103,13 +104,15 @@
       "item": "경부 림프절",
       "method": "경부 림프절 촉진",
       "expectedFinding": "경부 림프절 종대 없음",
-      "examConceptId": "neck_lymph_node"
+      "examConceptId": "neck_lymph_node",
+      "polarity": "negative"
     },
     {
       "item": "복부·간비장",
       "method": "복부 촉진으로 간비장 비대·압통 확인",
       "expectedFinding": "복부 압통·간비장 비대 없음",
-      "examConceptId": "hepatomegaly_splenomegaly"
+      "examConceptId": "hepatomegaly_splenomegaly",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

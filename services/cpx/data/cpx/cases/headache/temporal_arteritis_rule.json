@@ -79,22 +79,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "미열 가능, 활력징후 대체로 정상"
+      "expectedFinding": "체온 37.6°C, 그 외 활력징후는 정상 범위",
+      "polarity": "positive"
     },
     {
       "item": "뇌막자극",
       "method": "뇌막자극 확인",
-      "expectedFinding": "뇌막자극징후 음성"
+      "expectedFinding": "뇌막자극징후 음성",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 검사",
       "method": "신경학적 검사 확인",
-      "expectedFinding": "신경학적 검사 대체로 정상"
+      "expectedFinding": "신경학적 검사 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "안저",
       "method": "안저 확인",
-      "expectedFinding": "안저 정상~창백(허혈 시)"
+      "expectedFinding": "안저 정상 — 시신경 창백·부종 없음",
+      "polarity": "negative"
     },
     {
       "item": "두부 촉진",
@@ -105,12 +109,14 @@
     {
       "item": "부비동",
       "method": "부비동 확인",
-      "expectedFinding": "부비동 압통 없음"
+      "expectedFinding": "부비동 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "눈",
       "method": "눈 확인",
-      "expectedFinding": "시력 일과성 저하 병력(현재 진찰은 대체로 정상)"
+      "expectedFinding": "시력·시야 검사 정상 — 일과성 시력 저하는 병력으로만 확인됨",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -95,12 +95,14 @@
     {
       "item": "심음·호흡음·경정맥",
       "method": "심음·호흡음·경정맥 확인",
-      "expectedFinding": "심음·호흡음 정상"
+      "expectedFinding": "심음·호흡음 정상",
+      "polarity": "negative"
     },
     {
       "item": "복부·간비장·하지 부종",
       "method": "복부·간비장·하지 부종 확인",
-      "expectedFinding": "복부 비만, 하지는 상대적으로 가늘고 근위약"
+      "expectedFinding": "복부 비만이 뚜렷하고 하지는 상대적으로 가늘며 근위부 근력이 약함",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

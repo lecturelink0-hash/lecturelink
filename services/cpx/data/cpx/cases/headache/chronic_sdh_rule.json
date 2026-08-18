@@ -82,12 +82,14 @@
     {
       "item": "활력징후",
       "method": "혈압·체온·맥박 측정",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "뇌막자극",
       "method": "경부 강직·Kernig 징후 검사",
-      "expectedFinding": "음성"
+      "expectedFinding": "음성",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 검사",
@@ -98,23 +100,26 @@
     {
       "item": "안저",
       "method": "안저검사(유두부종)",
-      "expectedFinding": "경계 불명확 경향 — 유두부종 의심",
+      "expectedFinding": "시신경유두 경계가 불명확함(초기 유두부종)",
       "polarity": "positive"
     },
     {
       "item": "두부 촉진",
       "method": "관자동맥·두피·근육 촉진",
-      "expectedFinding": "압통 없음"
+      "expectedFinding": "압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "부비동",
       "method": "부비동 압통 확인",
-      "expectedFinding": "없음"
+      "expectedFinding": "없음",
+      "polarity": "negative"
     },
     {
       "item": "눈",
       "method": "동공·충혈 확인",
-      "expectedFinding": "동공 대칭, 정상"
+      "expectedFinding": "동공 대칭, 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

@@ -77,7 +77,8 @@
     {
       "item": "활력징후·하복부",
       "method": "활력징후·하복부 확인",
-      "expectedFinding": "활력징후 정상, 하복부 압통 없음"
+      "expectedFinding": "활력징후 정상, 하복부 압통 없음",
+      "polarity": "negative"
     },
     {
       "item": "외음부 시진",
@@ -94,7 +95,8 @@
     {
       "item": "양손 골반진찰",
       "method": "양손 골반진찰 확인",
-      "expectedFinding": "양손 골반진찰 자궁경부 운동통 없음"
+      "expectedFinding": "양손 골반진찰 자궁경부 운동통 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

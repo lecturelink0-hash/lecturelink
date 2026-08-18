@@ -82,19 +82,22 @@
       "item": "활력징후",
       "method": "혈압·맥박·체중 확인",
       "expectedFinding": "혈압 122/76, 맥박 72회, 발열 없음",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "하복부·방광",
       "method": "하복부 촉진과 방광 팽만 확인",
       "expectedFinding": "하복부 압통·방광 팽만 없음",
-      "examConceptId": "abdominal_palpation"
+      "examConceptId": "abdominal_palpation",
+      "polarity": "negative"
     },
     {
       "item": "하지 신경학적 검사",
       "method": "하지 근력·감각·심부건반사와 보행 확인",
       "expectedFinding": "하지 근력·감각·반사와 보행 정상",
-      "examConceptId": "neurologic_screening"
+      "examConceptId": "neurologic_screening",
+      "polarity": "negative"
     },
     {
       "item": "골반저·기침 유발 검사",
@@ -107,7 +110,8 @@
       "item": "소변검사",
       "method": "소변검사·딥스틱 확인",
       "expectedFinding": "백혈구·아질산염·혈뇨·당·단백 음성",
-      "examConceptId": "urinalysis"
+      "examConceptId": "urinalysis",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

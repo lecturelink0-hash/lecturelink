@@ -112,13 +112,14 @@
     {
       "item": "타진",
       "method": "복부 타진",
-      "expectedFinding": "간 둔탁음 감소 의심(유리 공기 시사)",
+      "expectedFinding": "간 둔탁음이 감소되어 있음(유리 공기 시사)",
       "polarity": "positive"
     },
     {
       "item": "특수검사",
       "method": "Murphy·Rovsing 등 특수 징후",
-      "expectedFinding": "전복부 통증으로 국소 특수 징후 구분 어려움"
+      "expectedFinding": "전복부 강직으로 Murphy·Rovsing 등 국소 특수 징후를 구분할 수 없음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

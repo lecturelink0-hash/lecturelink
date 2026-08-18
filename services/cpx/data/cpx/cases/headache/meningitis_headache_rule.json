@@ -93,22 +93,26 @@
     {
       "item": "신경학적 검사",
       "method": "근력·감각·반사·Babinski 검사",
-      "expectedFinding": "국소 결손 없음, 의식 명료"
+      "expectedFinding": "국소 결손 없음, 의식 명료",
+      "polarity": "negative"
     },
     {
       "item": "안저",
       "method": "안저검사(유두부종)",
-      "expectedFinding": "유두부종 없음"
+      "expectedFinding": "유두부종 없음",
+      "polarity": "negative"
     },
     {
       "item": "두부 촉진",
       "method": "관자동맥·두피·근육 촉진",
-      "expectedFinding": "특이소견 없음"
+      "expectedFinding": "특이소견 없음",
+      "polarity": "negative"
     },
     {
       "item": "부비동",
       "method": "부비동 압통 확인",
-      "expectedFinding": "없음"
+      "expectedFinding": "없음",
+      "polarity": "negative"
     },
     {
       "item": "눈",

@@ -77,17 +77,20 @@
     {
       "item": "활력징후·체형·허리둘레",
       "method": "활력징후·체형·허리둘레 확인",
-      "expectedFinding": "활력징후 대체로 정상~빈맥, 체형은 부종성"
+      "expectedFinding": "맥박 98회/분, 혈압 124/78 mmHg, 전신이 부종성 체형",
+      "polarity": "positive"
     },
     {
       "item": "결막·공막·피부·모발",
       "method": "결막·공막·피부·모발 확인",
-      "expectedFinding": "결막·피부 대체로 정상"
+      "expectedFinding": "결막·피부 대체로 정상",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘·쿠싱 양상",
       "method": "갑상샘·쿠싱 양상 확인",
-      "expectedFinding": "갑상샘·쿠싱 양상 없음"
+      "expectedFinding": "갑상샘·쿠싱 양상 없음",
+      "polarity": "negative"
     },
     {
       "item": "심음·호흡음·경정맥",
@@ -98,7 +101,7 @@
     {
       "item": "복부·간비장·하지 부종",
       "method": "복부·간비장·하지 부종 확인",
-      "expectedFinding": "복부·간 울혈 가능, 양측 하지 오목 부종",
+      "expectedFinding": "간이 늑골하 2 cm 만져지고 압통이 있으며 양측 하지에 오목 부종",
       "polarity": "positive"
     }
   ],

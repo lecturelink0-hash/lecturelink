@@ -81,7 +81,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "복부",
@@ -92,13 +93,14 @@
     {
       "item": "직장수지검사",
       "method": "DRE·항문 시진",
-      "expectedFinding": "항문 후방 열상 관찰, 검사 시 심한 통증 — 부드럽게 진행",
+      "expectedFinding": "엉덩이를 벌려 시진하면 항문 후방 정중에 열상이 보임 — 통증이 심해 직장수지검사·항문경은 시행하지 않고 통증 조절 후로 미룸",
       "polarity": "positive"
     },
     {
       "item": "전신·갑상샘",
       "method": "얼굴·목·갑상샘 등 전신 확인",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

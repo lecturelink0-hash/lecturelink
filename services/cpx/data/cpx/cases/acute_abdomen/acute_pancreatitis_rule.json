@@ -117,7 +117,8 @@
     {
       "item": "특수검사",
       "method": "특수 징후·추가 확인",
-      "expectedFinding": "Murphy 음성 — 담낭 국한 패턴 아님"
+      "expectedFinding": "Murphy 음성 — 담낭 국한 패턴 아님",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

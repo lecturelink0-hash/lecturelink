@@ -82,25 +82,29 @@
       "item": "활력징후·결막·하복부",
       "method": "활력징후·결막 시진과 하복부 촉진",
       "expectedFinding": "혈압 110/68 mmHg, 맥박 70회/분, 체온 36.5°C, 결막 창백·하복부 압통·반발통 없음",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "임신검사",
       "method": "설명·동의 후 소변 임신검사",
       "expectedFinding": "소변 임신검사 음성",
-      "examConceptId": "urine_pregnancy_test"
+      "examConceptId": "urine_pregnancy_test",
+      "polarity": "negative"
     },
     {
       "item": "질경 진찰",
       "method": "설명·동의 후 질·자궁경부 출혈과 분비물 확인",
       "expectedFinding": "활동성 출혈·자궁경부 병변·비정상 분비물 없음",
-      "examConceptId": "pelvic_speculum_exam"
+      "examConceptId": "pelvic_speculum_exam",
+      "polarity": "negative"
     },
     {
       "item": "양손 골반진찰",
       "method": "설명·동의 후 자궁·부속기 종괴와 압통 확인",
       "expectedFinding": "자궁·부속기 종괴·압통·경부 이동 압통 없음",
-      "examConceptId": "bimanual_pelvic_exam"
+      "examConceptId": "bimanual_pelvic_exam",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

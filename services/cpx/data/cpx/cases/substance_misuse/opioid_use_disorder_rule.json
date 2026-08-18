@@ -77,23 +77,26 @@
     {
       "item": "활력징후·의식수준",
       "method": "활력징후·의식수준 확인",
-      "expectedFinding": "활력징후 대체로 정상, 의식 명료"
+      "expectedFinding": "활력징후 대체로 정상, 의식 명료",
+      "polarity": "negative"
     },
     {
       "item": "동공·신경학적 진찰",
       "method": "동공·신경학적 진찰 확인",
-      "expectedFinding": "금단 시 동공확대·불안(중독 시 축소), 신경학적 대체로 정상",
+      "expectedFinding": "동공이 5 mm로 확대되어 있고 하품·콧물·소름이 관찰됨(초기 금단), 근력·반사·보행은 정상",
       "polarity": "positive"
     },
     {
       "item": "심폐 청진",
       "method": "심폐 청진 확인",
-      "expectedFinding": "심폐 청진 정상"
+      "expectedFinding": "심폐 청진 정상",
+      "polarity": "negative"
     },
     {
       "item": "피부·주사 흔적",
       "method": "피부·주사 흔적 확인",
-      "expectedFinding": "주사 흔적·피부 소견 가능"
+      "expectedFinding": "왼쪽 팔오금을 따라 여러 개의 주사 흔적과 색소침착이 있음",
+      "polarity": "positive"
     }
   ],
   "liveApiContext": {

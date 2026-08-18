@@ -86,23 +86,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "인지선별",
       "method": "MMSE 등 인지기능 선별검사",
-      "expectedFinding": "MMSE 또는 MoCA에서 시간 지남력·최근 기억 회상 저하, 나머지 영역은 비교적 유지",
+      "expectedFinding": "MMSE 22점 — 시간 지남력과 최근 기억 회상에서 감점, 언어·시공간 영역은 비교적 유지",
       "polarity": "positive"
     },
     {
       "item": "신경학적 이상",
       "method": "신경학적 검사(보행·근력·반사)",
-      "expectedFinding": "정상 (국소 징후 없음)"
+      "expectedFinding": "정상 (국소 징후 없음)",
+      "polarity": "negative"
     },
     {
       "item": "갑상샘",
       "method": "갑상샘 촉진",
-      "expectedFinding": "비대 없음 (정상)"
+      "expectedFinding": "비대 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

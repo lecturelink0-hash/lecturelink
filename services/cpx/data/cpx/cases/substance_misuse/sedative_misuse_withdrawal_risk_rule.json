@@ -86,7 +86,8 @@
       "item": "활력징후·의식수준",
       "method": "혈압·맥박·호흡수·체온·산소포화도와 의식수준 확인",
       "expectedFinding": "혈압 128/78 mmHg, 맥박 92회/분, 호흡수 16회/분, 체온 36.7°C, 산소포화도 98%, 의식 명료",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "동공·신경학적 진찰",
@@ -99,13 +100,15 @@
       "item": "심폐 청진",
       "method": "심음과 호흡음 청진",
       "expectedFinding": "심음 규칙적, 잡음 없고 호흡음 깨끗함",
-      "examConceptId": "heart_auscultation"
+      "examConceptId": "heart_auscultation",
+      "polarity": "negative"
     },
     {
       "item": "피부·주사 흔적",
       "method": "설명·동의 후 피부 손상·주사 흔적·자해 흔적 확인",
       "expectedFinding": "주사 흔적·피부 감염·자해 흔적 없음",
-      "examConceptId": "skin_injury_inspection"
+      "examConceptId": "skin_injury_inspection",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

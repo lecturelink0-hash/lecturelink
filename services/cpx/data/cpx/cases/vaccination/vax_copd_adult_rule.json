@@ -80,17 +80,20 @@
     {
       "item": "활력징후",
       "method": "체온·활력징후 확인",
-      "expectedFinding": "체온 정상, 활력징후 안정"
+      "expectedFinding": "체온 정상, 활력징후 안정",
+      "polarity": "negative"
     },
     {
       "item": "발육·전신",
       "method": "전반 상태 확인",
-      "expectedFinding": "만성 병색이나 급성 악화 없음"
+      "expectedFinding": "만성 병색이나 급성 악화 없음",
+      "polarity": "negative"
     },
     {
       "item": "인후·피부",
       "method": "인후·피부 확인",
-      "expectedFinding": "급성 감염 징후 없음"
+      "expectedFinding": "급성 감염 징후 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {
@@ -136,10 +139,11 @@
       "발열 없음"
     ],
     "educationTopics": [
-      "만성 폐질환자는 인플루엔자(매년)+폐렴구균+Td/Tdap 권고 — 이유 설명",
+      "만성 폐질환자는 인플루엔자(매년) + 폐렴구균 + Td/Tdap 권고 — 폐렴구균은 접종력이 없으면 결합백신(PCV)을 먼저 접종하고 필요 시 다당백신(PPSV23)을 순차 접종하며, 다당백신 단독으로 갈음하지 않음",
       "계란 경증 알레르기는 접종 가능, 접종 후 30분 관찰",
       "인플루엔자 백신이 매년 필요한 이유(유행주 변경)",
-      "접종 후 이상반응·금연 지속 격려"
+      "접종 후 이상반응·금연 지속 격려",
+      "65세 이상 만성 폐질환자에게는 RSV 백신과 코로나19 백신 접종도 함께 상담"
     ]
   },
   "additionalPromptRule": [],

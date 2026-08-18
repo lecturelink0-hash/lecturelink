@@ -77,22 +77,26 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 정상"
+      "expectedFinding": "활력징후 정상",
+      "polarity": "negative"
     },
     {
       "item": "압통점",
       "method": "압통점 확인",
-      "expectedFinding": "경부 압통·경직"
+      "expectedFinding": "경부 압통·경직",
+      "polarity": "positive"
     },
     {
       "item": "운동범위",
       "method": "운동범위 확인",
-      "expectedFinding": "목 운동범위 제한"
+      "expectedFinding": "목 운동범위 제한",
+      "polarity": "positive"
     },
     {
       "item": "Spurling",
       "method": "Spurling 확인",
-      "expectedFinding": "Spurling에서 국소 방사통 뚜렷치 않을 수 있음"
+      "expectedFinding": "Spurling 검사에서 국소 방사통이 유발되지 않음",
+      "polarity": "negative"
     },
     {
       "item": "상지 신경",

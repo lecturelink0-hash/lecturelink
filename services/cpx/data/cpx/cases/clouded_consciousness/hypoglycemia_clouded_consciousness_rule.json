@@ -104,13 +104,15 @@
       "item": "동공·구강·외상",
       "method": "동공 빛반사, 구강·혀와 두부 외상 확인",
       "expectedFinding": "동공 크기·빛반사 대칭, 구강·혀 깨물림과 외상 없음",
-      "examConceptId": "pupil_light_reflex"
+      "examConceptId": "pupil_light_reflex",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "안구운동·얼굴 대칭·사지 근력·감각·반사 확인",
       "expectedFinding": "국소 신경학적 이상 없음",
-      "examConceptId": "neurologic_screening"
+      "examConceptId": "neurologic_screening",
+      "polarity": "negative"
     },
     {
       "item": "혈당",

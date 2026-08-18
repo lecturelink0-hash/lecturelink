@@ -48,7 +48,7 @@
       "음주 병용",
       "의식저하·졸림",
       "호흡 얕음·느림 가능",
-      "동공 축소 가능"
+      "동공은 정상 크기·빛반사 유지(아편유사제 중독과 달리 축소 없음)"
     ],
     "preferredVariants": [
       "빈 약통·약 봉투가 있었다",
@@ -86,29 +86,32 @@
     {
       "item": "ABC·활력징후·산소포화도",
       "method": "ABC·활력징후·산소포화도 확인",
-      "expectedFinding": "활력징후 호흡수 감소 가능, 산소포화도 저하 가능",
+      "expectedFinding": "호흡수 10회/분으로 감소, 산소포화도 92 %, 혈압 108/68 mmHg, 맥박 62회/분",
       "polarity": "positive"
     },
     {
       "item": "GCS·의식·지남력",
       "method": "GCS·의식·지남력 확인",
-      "expectedFinding": "의식 처짐·졸림"
+      "expectedFinding": "의식이 처져 졸려 하고 큰 소리로 부르면 눈을 뜸(GCS 13), 지남력 저하",
+      "polarity": "positive"
     },
     {
       "item": "동공·구강·외상",
       "method": "동공·구강·외상 확인",
-      "expectedFinding": "동공 축소, 외상 없음",
-      "polarity": "positive"
+      "expectedFinding": "동공 3.5 mm로 정상 크기이고 빛반사 유지 — 아편유사제 중독에서 보이는 뚜렷한 축소는 없음, 구강·두부 외상 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
       "method": "신경학적 진찰 확인",
-      "expectedFinding": "국소 마비 없음"
+      "expectedFinding": "국소 마비 없음",
+      "polarity": "negative"
     },
     {
       "item": "혈당",
       "method": "혈당 확인",
-      "expectedFinding": "혈당 정상"
+      "expectedFinding": "혈당 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {
@@ -158,5 +161,5 @@
     "환자는 졸리고 발음이 뭉개진다. 기도·호흡 안전을 우선하고 자해 위험을 배려 있게 확인한다."
   ],
   "ruleText": "# 증례명 : 의식장애(약물·물질 중독)\n- 인적사항 - 성별 랜덤, 20~50세, 응급실\n- 사례 요약 - 수면제+음주 후 의식저하·호흡저하, 곁에 약통.\n- 현 병력 - 발견 시 각성 저하, 발음 뭉개짐.",
-  "rawRuleText": "의식장애 — 진정제/알코올 중독 의심. 약물+음주 후 의식·호흡 저하, 동공 축소."
+  "rawRuleText": "의식장애 — 진정제/알코올 중독 의심. 약물+음주 후 의식·호흡 저하, 동공은 정상 크기·빛반사 유지."
 }

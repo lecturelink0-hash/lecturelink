@@ -88,7 +88,8 @@
     {
       "item": "ABC·활력징후·산소포화도",
       "method": "ABC·활력징후·산소포화도 확인",
-      "expectedFinding": "활력징후 혈압 상승 가능, 산소포화도 정상"
+      "expectedFinding": "혈압 178/96 mmHg, 맥박 92회/분으로 불규칙(심방세동), 산소포화도 97 %",
+      "polarity": "positive"
     },
     {
       "item": "GCS·의식·지남력",
@@ -99,7 +100,8 @@
     {
       "item": "동공·구강·외상",
       "method": "동공·구강·외상 확인",
-      "expectedFinding": "동공 정상, 외상 없음"
+      "expectedFinding": "동공 정상, 외상 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경학적 진찰",
@@ -110,7 +112,8 @@
     {
       "item": "혈당",
       "method": "혈당 확인",
-      "expectedFinding": "혈당 정상"
+      "expectedFinding": "혈당 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

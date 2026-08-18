@@ -83,7 +83,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "관절 시진",
@@ -107,12 +108,14 @@
       "item": "다른 관절",
       "method": "다른 관절·대칭성 확인",
       "examConceptId": "joint_inspection",
-      "expectedFinding": "손가락 등 다른 관절 정상"
+      "expectedFinding": "손가락 등 다른 관절 정상",
+      "polarity": "negative"
     },
     {
       "item": "피부·눈",
       "method": "피부 발진·눈 확인",
-      "expectedFinding": "발진·건조 없음 (정상)"
+      "expectedFinding": "발진·건조 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

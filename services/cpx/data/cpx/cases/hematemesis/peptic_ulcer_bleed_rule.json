@@ -102,7 +102,8 @@
     {
       "item": "복부 시진",
       "method": "복부 시진·장음 청진",
-      "expectedFinding": "팽만·수술흉터 없음, 장음은 들림"
+      "expectedFinding": "팽만·수술흉터 없음, 장음은 들림",
+      "polarity": "negative"
     },
     {
       "item": "복부 촉진",

@@ -97,7 +97,8 @@
     {
       "item": "전신",
       "method": "전신 신체검진",
-      "expectedFinding": "특이소견 없음"
+      "expectedFinding": "특이소견 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

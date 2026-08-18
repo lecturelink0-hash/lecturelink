@@ -78,7 +78,8 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "활력징후 정상"
+      "expectedFinding": "활력징후 정상",
+      "polarity": "negative"
     },
     {
       "item": "하복부·방광",
@@ -89,17 +90,20 @@
     {
       "item": "하지 신경학적 검사",
       "method": "하지 신경학적 검사 확인",
-      "expectedFinding": "하지 감각 저하 가능(신경인성)"
+      "expectedFinding": "양쪽 발의 진동·촉각 감각이 대칭적으로 둔하고 발목 반사가 감소함(당뇨병성 말초신경병증 소견)",
+      "polarity": "positive"
     },
     {
       "item": "골반저·기침 유발 검사",
       "method": "골반저·기침 유발 검사 확인",
-      "expectedFinding": "기침 유발 검사 음성"
+      "expectedFinding": "기침 유발 검사 음성",
+      "polarity": "negative"
     },
     {
       "item": "소변검사",
       "method": "소변검사 확인",
-      "expectedFinding": "요검사 대체로 정상"
+      "expectedFinding": "요검사 대체로 정상",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

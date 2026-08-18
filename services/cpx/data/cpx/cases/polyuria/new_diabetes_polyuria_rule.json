@@ -89,20 +89,23 @@
     {
       "item": "결막·피부·하지 부종",
       "method": "결막 창백·피부 상태·하지 부종 확인",
-      "expectedFinding": "결막 창백·하지 부종 없음, 피부가 약간 건조함",
-      "examConceptId": "peripheral_edema"
+      "expectedFinding": "결막 창백·하지 부종 없고 피부가 약간 건조함",
+      "examConceptId": "peripheral_edema",
+      "polarity": "positive"
     },
     {
       "item": "복부·방광·CVA 압통",
       "method": "복부 종괴·방광 팽만과 늑골척추각 압통 확인",
       "expectedFinding": "복부 종괴·방광 팽만·CVA 압통 없음",
-      "examConceptId": "cva_tenderness"
+      "examConceptId": "cva_tenderness",
+      "polarity": "negative"
     },
     {
       "item": "시야·신경학적 상태",
       "method": "시야 변화와 간단한 신경학적 상태 확인",
       "expectedFinding": "의식 명료, 국소 신경학적 이상·시야장애 없음",
-      "examConceptId": "neurologic_screening"
+      "examConceptId": "neurologic_screening",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

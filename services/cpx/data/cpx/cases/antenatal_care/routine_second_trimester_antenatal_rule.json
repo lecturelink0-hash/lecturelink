@@ -85,31 +85,36 @@
       "item": "혈압·체중·부종",
       "method": "혈압·체중 측정과 부종 확인",
       "expectedFinding": "혈압 112/70 mmHg, 급격한 체중 증가·함요부종 없음",
-      "examConceptId": "vital_signs"
+      "examConceptId": "vital_signs",
+      "polarity": "negative"
     },
     {
       "item": "자궁저부 높이",
       "method": "자궁저부 높이 측정",
       "expectedFinding": "자궁저부 높이 24 cm로 임신 주수에 부합",
-      "examConceptId": "uterine_fundal_height"
+      "examConceptId": "uterine_fundal_height",
+      "polarity": "negative"
     },
     {
       "item": "Leopold 촉진",
       "method": "복부 촉진으로 태위·태향 확인",
       "expectedFinding": "태위·태향에서 특이소견 없음",
-      "examConceptId": "leopold_maneuver"
+      "examConceptId": "leopold_maneuver",
+      "polarity": "negative"
     },
     {
       "item": "태아 심음",
       "method": "도플러로 태아 심박동 확인",
       "expectedFinding": "태아 심박동 148회/분, 규칙적",
-      "examConceptId": "fetal_heart_sound"
+      "examConceptId": "fetal_heart_sound",
+      "polarity": "negative"
     },
     {
       "item": "소변검사",
       "method": "소변 딥스틱으로 단백·당 확인",
       "expectedFinding": "소변 단백·당 음성",
-      "examConceptId": "urinalysis"
+      "examConceptId": "urinalysis",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

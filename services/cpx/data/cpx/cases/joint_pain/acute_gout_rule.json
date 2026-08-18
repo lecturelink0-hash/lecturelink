@@ -110,12 +110,14 @@
       "item": "다른 관절",
       "method": "다른 관절·대칭성 확인",
       "examConceptId": "joint_inspection",
-      "expectedFinding": "다른 관절 정상 (단관절)"
+      "expectedFinding": "다른 관절 정상 (단관절)",
+      "polarity": "negative"
     },
     {
       "item": "피부·눈",
       "method": "피부 발진·눈 확인",
-      "expectedFinding": "발진·건조 없음 (정상)"
+      "expectedFinding": "발진·건조 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

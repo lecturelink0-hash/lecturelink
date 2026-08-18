@@ -86,23 +86,27 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인(탈수·발열)",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "복부",
       "method": "복부 시진·청진·촉진",
-      "expectedFinding": "하복부 경미한 압통 외 정상, 종괴 없음"
+      "expectedFinding": "하복부에 경미한 압통이 있고 종괴는 만져지지 않음",
+      "polarity": "positive"
     },
     {
       "item": "탈수 평가",
       "method": "구강 점막·피부 긴장도 확인",
-      "expectedFinding": "정상 (탈수 없음)"
+      "expectedFinding": "정상 (탈수 없음)",
+      "polarity": "negative"
     },
     {
       "item": "전신",
       "method": "전신 신체검진",
       "examConceptId": "general_appearance",
-      "expectedFinding": "특이소견 없음 (정상)"
+      "expectedFinding": "특이소견 없음 (정상)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

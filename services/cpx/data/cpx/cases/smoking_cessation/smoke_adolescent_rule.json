@@ -75,18 +75,20 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "구강·손가락",
       "method": "구강 치아 착색·손가락 변색 확인",
       "expectedFinding": "착색 뚜렷하지 않음",
-      "polarity": "positive"
+      "polarity": "negative"
     },
     {
       "item": "호흡음",
       "method": "호흡음 청진",
-      "expectedFinding": "호흡음 깨끗함"
+      "expectedFinding": "호흡음 깨끗함",
+      "polarity": "negative"
     },
     {
       "item": "호기 CO",

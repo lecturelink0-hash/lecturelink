@@ -83,12 +83,14 @@
     {
       "item": "활력징후",
       "method": "활력징후 확인",
-      "expectedFinding": "정상 범위"
+      "expectedFinding": "정상 범위",
+      "polarity": "negative"
     },
     {
       "item": "척추 정렬",
       "method": "척추 시진(정렬 확인)",
-      "expectedFinding": "측만·후만 없음 (정상)"
+      "expectedFinding": "측만·후만 없음 (정상)",
+      "polarity": "negative"
     },
     {
       "item": "압통 부위",
@@ -99,17 +101,20 @@
     {
       "item": "하지직거상",
       "method": "SLR test 양측",
-      "expectedFinding": "양측 음성 (제한 없음)"
+      "expectedFinding": "양측 음성 (제한 없음)",
+      "polarity": "negative"
     },
     {
       "item": "하지 신경",
       "method": "하지 감각·근력·심부건반사 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "보행",
       "method": "보행 관찰",
-      "expectedFinding": "정상 (통증으로 조심스러울 뿐)"
+      "expectedFinding": "정상 (통증으로 조심스러울 뿐)",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {

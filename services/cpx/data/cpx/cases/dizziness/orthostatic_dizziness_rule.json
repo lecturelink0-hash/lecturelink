@@ -87,22 +87,26 @@
     {
       "item": "안진",
       "method": "안진·안구운동 검사",
-      "expectedFinding": "없음"
+      "expectedFinding": "없음",
+      "polarity": "negative"
     },
     {
       "item": "두위검사",
       "method": "Dix-Hallpike 검사",
-      "expectedFinding": "음성"
+      "expectedFinding": "음성",
+      "polarity": "negative"
     },
     {
       "item": "평형·보행",
       "method": "Romberg·보행 검사",
-      "expectedFinding": "보행 느리나 실조 없음"
+      "expectedFinding": "보행 느리나 실조 없음",
+      "polarity": "negative"
     },
     {
       "item": "신경·소뇌",
       "method": "소뇌기능·신경학적 검사",
-      "expectedFinding": "정상"
+      "expectedFinding": "정상",
+      "polarity": "negative"
     },
     {
       "item": "빈혈",
@@ -113,7 +117,8 @@
     {
       "item": "청력",
       "method": "청력 검사(Weber·Rinne)",
-      "expectedFinding": "양측 대칭 — 특이소견 없음"
+      "expectedFinding": "양측 대칭 — 특이소견 없음",
+      "polarity": "negative"
     }
   ],
   "liveApiContext": {
