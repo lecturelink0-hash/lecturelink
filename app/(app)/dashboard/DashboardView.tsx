@@ -7,14 +7,12 @@ import {
   ArrowUp,
   BookOpen,
   CalendarDays,
-  Check,
-  FileText,
-  Flame,
   Plus,
   Stethoscope,
 } from 'lucide-react';
 import { KakaoEmailPrompt } from '@/components/auth/KakaoEmailPrompt';
 import loginCpxCharacter from '@/public/login-cpx-character-v2.png';
+import questionGenIllust from '@/public/dashboard/question-gen-3d.png';
 
 interface Day {
   label: string;
@@ -88,6 +86,7 @@ export function DashboardView({
   nextLearningSet: LearningSet | null;
 }) {
   const learnerName = displayName.trim() || '학생';
+  void topWeakArea; // 학습 추천 개편으로 미사용 (추후 취약 스프린트에 재사용 예정)
   const isNewUser = totalSolved === 0;
   const studyTime = formatStudyTime(weekSeconds);
 
@@ -128,13 +127,6 @@ export function DashboardView({
             : '틀린 문제를 모아 다시 풀고 유사문제로 이어가세요.',
           href: '/wrong-notes',
         },
-        {
-          title: '학습 결과 확인하기',
-          description: topWeakArea
-            ? (<>가장 취약: <b>{topWeakArea.name} · 정답률 {topWeakArea.accuracy}%</b></>)
-            : '누적 정답률과 취약 영역을 확인해 다음 범위를 정하세요.',
-          href: '/analysis',
-        },
       ];
 
   return (
@@ -142,18 +134,19 @@ export function DashboardView({
       <KakaoEmailPrompt />
 
       <header className="dashboard-greeting" aria-labelledby="page-title">
-        <h1 id="page-title">안녕하세요, {learnerName}님</h1>
+        <h1 id="page-title">안녕하세요, <span className="greeting-name">{learnerName}</span>님</h1>
         <p>오늘도 학습을 시작해보세요.</p>
       </header>
 
       <section className="dashboard-priority-grid" aria-label="오늘의 우선 학습">
         <article className="dashboard-card dashboard-next-card">
           <div className="dashboard-next-copy">
-            <div className="dashboard-next-copy-content">
+            <div className="dashboard-card-title-row">
+              <BookOpen className="dashboard-card-icon" aria-hidden="true" />
               <h2>내신 대비 문항 생성하기</h2>
-              <p>강의자료를 올리면 내 시험 범위에 맞는 문항을 만들 수 있어요.</p>
             </div>
-
+            <p>학습자료를 올리면 내 시험 범위에 맞는 문항을 만들 수 있어요.</p>
+            <span className="dashboard-flow-line">자료 업로드 → 문항 생성 → 오답 복습</span>
             <div className="dashboard-next-actions">
               <Link href="/notes" className="dashboard-primary-action">
                 문항 생성하기
@@ -168,27 +161,22 @@ export function DashboardView({
             </div>
           </div>
 
-          <aside
-            className="dashboard-material-summary"
-            aria-label="강의자료 업로드 안내"
-          >
-            <div className="dashboard-document-visual" aria-hidden="true">
-              <span className="document-sheet document-sheet-back" />
-              <span className="document-sheet document-sheet-front"><FileText /></span>
-              <span className="document-book"><BookOpen /></span>
-            </div>
-            <div className="dashboard-material-copy">
-              <span>내신 대비</span>
-              <strong>강의자료로 문항 만들기</strong>
-              <small>PDF · PPTX · 문서 지원</small>
-            </div>
-          </aside>
+          <div className="dashboard-next-visual" aria-hidden="true">
+            <Image
+              src={questionGenIllust}
+              alt=""
+              className="dashboard-next-illust"
+              sizes="(max-width: 720px) 0px, 236px"
+            />
+          </div>
         </article>
 
         <article className="dashboard-card dashboard-cpx-card">
           <div className="dashboard-cpx-copy">
-            <Stethoscope className="dashboard-cpx-icon" aria-hidden="true" />
-            <h2>CPX 진료 연습</h2>
+            <div className="dashboard-card-title-row">
+              <Stethoscope className="dashboard-cpx-icon" aria-hidden="true" />
+              <h2>CPX 진료 연습</h2>
+            </div>
             <p>환자 진료 과정을 실전처럼 단계별로 연습하세요.</p>
             <span className="dashboard-cpx-flow">병력청취 → 신체진찰 → 환자교육</span>
             <Link href="/cpx" className="dashboard-primary-action dashboard-cpx-action">
@@ -212,15 +200,15 @@ export function DashboardView({
           <div className="dashboard-section-heading">
             <div>
               <h2>내 학습 현황</h2>
-              {streak > 0 ? (
-                <span className="dashboard-streak-line">
-                  <Flame aria-hidden="true" />
-                  {streak}일 연속 학습 중
-                </span>
-              ) : (
-                <p>오늘부터 학습 기록을 만들어보세요</p>
-              )}
+              {streak === 0 && <p>오늘부터 학습 기록을 만들어보세요</p>}
             </div>
+            <div className="dashboard-heading-side">
+            {streak > 0 && (
+              <span className="dashboard-streak-line">
+                <span className="streak-flame" aria-hidden="true">🔥</span>
+                {streak}일 연속 학습 중
+              </span>
+            )}
             {examDday ? (
               <Link href="/mypage#calendar" className="dashboard-dday-chip">
                 <CalendarDays aria-hidden="true" />
@@ -233,11 +221,9 @@ export function DashboardView({
                 시험 일정 등록
               </Link>
             )}
+            </div>
           </div>
 
-          <Link href="/analysis" className="dashboard-inline-link">
-            상세 분석 <ArrowRight aria-hidden="true" />
-          </Link>
 
           <dl className="dashboard-metrics">
             <div>
@@ -286,7 +272,7 @@ export function DashboardView({
                     aria-hidden="true"
                     className={day.studied ? 'is-complete' : day.isToday ? 'is-today' : ''}
                   >
-                    {day.studied && <Check aria-hidden="true" />}
+                    {'🔥'}
                   </i>
                 </li>
               );
