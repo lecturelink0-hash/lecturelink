@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api/client';
@@ -38,6 +38,8 @@ export default function SimilarPracticePage() {
   const [showQuestionGrid, setShowQuestionGrid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  // 풀이 시간 실측 — 문항이 화면에 뜬 시각(문항 이동마다 갱신). 종전에는 30초 고정값을 보냈다.
+  const shownAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
     api.get<{ items: PracticeQuestion[] }>(`/api/private-questions?upload_id=${uploadId}&limit=50&mode=quiz`)
@@ -60,6 +62,7 @@ export default function SimilarPracticePage() {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
     setIndex(nextIndex);
     setShowQuestionGrid(false);
+    shownAtRef.current = Date.now();
   }
 
   function selectChoice(choiceIndex: number) {
@@ -74,7 +77,7 @@ export default function SimilarPracticePage() {
       const response = await api.post<AttemptResult>('/api/attempts', {
         question_id: question.id,
         selected_index: selected,
-        time_spent_seconds: 30,
+        time_spent_seconds: Math.min(3600, Math.max(0, Math.round((Date.now() - shownAtRef.current) / 1000))),
         track: 'lecture_note',
       });
       setAttempts((previous) => ({ ...previous, [question.id]: { ...response, selected_index: selected } }));

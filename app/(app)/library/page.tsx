@@ -1399,6 +1399,11 @@ function PrivateExamSession({
   // resumeFromQuestionId 를 갱신해도, 풀이를 시작한 사용자를 보던 문항(해설)에서 이탈시키지 않는다.
   const interactedRef = useRef(false);
   const didResolveInitialPosition = useRef(false);
+  // 풀이 시간 실측 — 현재 문항이 화면에 뜬 시각(문항 이동마다 갱신). 종전에는 보내지 않았다.
+  const shownAtRef = useRef<number>(Date.now());
+  useEffect(() => {
+    shownAtRef.current = Date.now();
+  }, [index]);
   useEffect(() => {
     if (interactedRef.current || didResolveInitialPosition.current) return;
     if (!progressLoaded || questions.length === 0) return;
@@ -1473,7 +1478,12 @@ function PrivateExamSession({
     setSubmitError(null);
     const correct = selected === current.answer_index;
     try {
-      await api.post('/api/attempts', { question_id: current.id, selected_index: selected, track: 'lecture_note' });
+      await api.post('/api/attempts', {
+        question_id: current.id,
+        selected_index: selected,
+        time_spent_seconds: Math.min(3600, Math.max(0, Math.round((Date.now() - shownAtRef.current) / 1000))),
+        track: 'lecture_note',
+      });
       setAnswers((previous) => ({ ...previous, [current.id]: { selected, correct } }));
       onAnswered?.();
     } catch {

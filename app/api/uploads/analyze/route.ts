@@ -68,6 +68,12 @@ interface AnalyzeResult {
   keywords: string[];
   difficulty: Difficulty;
   question_type: QuestionType;
+  /**
+   * 실제로 모델이 자료를 읽고 낸 제안인지. false 면 텍스트를 못 뽑았거나(이미지·스캔본·.ppt)
+   * 모델 호출이 실패해 **기본값을 채운 것**이므로, 화면은 이 값을 "추천"으로 적용하면 안 된다
+   * (2026-08-18 감사: 스캔본을 올린 사용자의 유형·난이도 선택이 매번 '임상형·중'으로 덮였다).
+   */
+  analyzed: boolean;
 }
 
 const FALLBACK: AnalyzeResult = {
@@ -77,6 +83,7 @@ const FALLBACK: AnalyzeResult = {
   keywords: [],
   difficulty: '중',
   question_type: '임상형',
+  analyzed: false,
 };
 
 /**
@@ -165,6 +172,7 @@ function normalize(raw: unknown): AnalyzeResult {
     keywords,
     difficulty,
     question_type: questionType,
+    analyzed: true,
   };
 }
 

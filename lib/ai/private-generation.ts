@@ -30,6 +30,7 @@ import {
   type UsageRecord,
 } from './client';
 import { recordAiCost } from './cost-cap';
+import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
 import {
   PRIVATE_GENERATION_SYSTEM_PROMPT,
   PRIVATE_GENERATION_TOOL_SCHEMA,
@@ -645,6 +646,13 @@ export interface GenerationDiagnostics {
   fileSizeBytes: number | null;
   wantsImages: boolean;
   desiredCount: number;
+  /**
+   * 요청 조건 — DB 컬럼이 생기기 전까지 "요청 vs 결과"를 진단에서 셀 수 있게 남긴다
+   * (2026-08-18 감사: 요청 유형·난이도가 어디에도 저장되지 않아 임상형 수확률조차 못 쟀다).
+   */
+  requestedDifficulty?: '하' | '중' | '상' | null;
+  requestedTypes?: string[];
+  referenceImages?: number;
   /** 단계별 소요(ms). */
   timings: Record<string, number>;
   /** 추출 세부 수치(페이지 수·후보 수·생략 여부 등). */
@@ -882,7 +890,7 @@ async function extractFromBuffer(input: {
           //   그래서 "텍스트 배치를 먼저 출발시켜 전처리를 숨긴다"는 최적화가 사실상
           //   작동하지 않았다(실측: 텍스트준비 = 첫배치시작 = 11.3~14.0초, 매번 임베드
           //   분기 소요와 일치). 여기서 넘기면 텍스트 배치가 6~8초 일찍 출발한다.
-          sendEarlyText(parsed);
+          sendEarlyText(parsed.slice(0, MAX_GEN_TEXT_CHARS));
           return parsed;
         } catch (e) {
           warnings.push(
@@ -985,6 +993,13 @@ async function extractFromBuffer(input: {
     const fullText = parsedFullText ?? '';
     if (parsedFullText !== null) {
       allowWholePageOcrFallback = fullText.length < 1500;
+    }
+    if (fullText.length > MAX_GEN_TEXT_CHARS) {
+      // 종전에는 경고 없이 잘라 뒤쪽 내용이 출제 근거에서 조용히 빠졌다.
+      warnings.push(
+        `본문 텍스트 ${fullText.length.toLocaleString()}자 중 앞 ${MAX_GEN_TEXT_CHARS.toLocaleString()}자만 출제 근거로 사용(뒷부분 절삭).`,
+      );
+      if (input.diag) input.diag.extract.textTruncated = fullText.length - MAX_GEN_TEXT_CHARS;
     }
     pdfEmbeddedCrops = embeddedCropsResult;
     // 임베드가 소수만 나오면 벡터로 그려진 다이어그램·차트(래스터 객체 아님)가 못 잡힌
@@ -1388,6 +1403,8 @@ export async function generatePrivateQuestionsFromUpload(
   // 진단 기록 함수 — try 안에서 준비되지만 실패 경로(catch)에서도 호출해야 하므로 외부에 둔다.
   let writeDiagnostics: (() => Promise<void>) | null = null;
   let totalCost = 0;
+  // 진단 기록용 — 참고자료 로드 전(다운로드 실패 등)에도 안전하게 읽히도록 let 로 둔다.
+  let referenceImageCount = 0;
   let aggInputTokens = 0;
   let aggOutputTokens = 0;
   let modelUsed = MODELS.generation();
@@ -1433,6 +1450,9 @@ export async function generatePrivateQuestionsFromUpload(
           fileSizeBytes: fileBuffer.byteLength,
           wantsImages,
           desiredCount,
+          requestedDifficulty: input.difficulty ?? null,
+          requestedTypes: input.questionTypes ?? [],
+          referenceImages: referenceImageCount,
           timings: { ...diag.timings, totalMs: Date.now() - startTime },
           extract: diag.extract,
           embedded: diag.embedded,
@@ -1562,6 +1582,7 @@ export async function generatePrivateQuestionsFromUpload(
     // 참고자료는 선발사 배치가 클로저로 참조하므로 반드시 그 전에 확정해야 한다
     //  (const 초기화 전 접근 = ReferenceError). 추출과 병렬로 이미 시작돼 있어 대기 비용은 없다.
     const referenceImages = await referencePromise;
+    referenceImageCount = referenceImages.length;
 
     // 4) 분류 카탈로그·생성 프롬프트·배치 계획을 OCR "이전"에 준비한다 — 본문 텍스트가
     //    충분한 자료는 아래 "텍스트 선발사 배치"가 OCR 과 병행으로 먼저 출발할 수 있게.
@@ -2038,6 +2059,9 @@ export async function generatePrivateQuestionsFromUpload(
         '문항이 된다.\n' +
         '- 다만 그림에서 읽은 라벨 글자를 발문·선지·해설에 그대로 옮겨 적으면 정답이 ' +
         '노출되므로 절대 쓰지 않는다.\n' +
+        '- 원본 그림에 **지시선·브래킷**이 있던 자리는 라벨을 지운 뒤 반드시 기호(A·B·C…)로 ' +
+        '바꿔 둔다. 그러니 학생 화면의 지시선은 항상 기호를 달고 있다. 반대로 기호가 없는 ' +
+        '부분은 학생이 특정할 수 없으므로 그 부분을 지목하는 문항을 만들지 않는다.\n' +
         '- "표식 안내"가 붙은 이미지는 라벨 자리에 A·B·C 표식이 찍혀 있다. 그 표식을 ' +
         '가리켜 물으면 그림을 보지 않고는 풀 수 없는 문항이 된다. ' +
         '다만 표식 문항은 **드물게만** 쓴다 — 묶음별 지시에서 허용한 경우에만 만들고, ' +
@@ -2197,10 +2221,17 @@ export async function generatePrivateQuestionsFromUpload(
             return { plain: png, annotated: png, markers: [] };
           }
           const out = await annotateMarkers(png, sources);
+          // 기본판에도 **필수 기호**(원본 지시선·브래킷이 붙은 자리)는 찍는다.
+          //
+          // #225 에서 "문항이 물을 때만 표식을 찍는다"로 바꿨더니, 라벨이 지워진 지시선이
+          // 가리키는 것 없는 맨 선으로 남았다(2026-08-18 운영 지적: 뇌 사진의 지시선 3개,
+          // 대뇌 겉질 그림의 층 브래킷). 원본에 지시선이 있다는 것은 그 자리에 이름표가
+          // 있어야 한다는 뜻이므로, 그 기호는 문항과 무관하게 필수다.
+          const req = await annotateMarkers(png, sources, { onlyRequired: true });
           rec.markers = out.markers.length;
+          rec.requiredMarkers = req.markers.length;
           rec.markerLabels = out.markers.map((m) => `${m.letter}=${m.label}`);
-          // 표식을 못 찍었으면 두 판이 같다 — 대응표도 비어 있으므로 표식 문항이 안 나온다.
-          return { plain: png, annotated: out.png, markers: out.markers };
+          return { plain: req.png, annotated: out.png, markers: out.markers };
         };
         try {
           // 글자가 거의 없으면 손대지 않는다(정답 단서 위험 없음).
@@ -2545,11 +2576,24 @@ export async function generatePrivateQuestionsFromUpload(
                 `단, 같은 이미지는 최대 ${MAX_QUESTIONS_PER_IMAGE}문항까지만 사용하세요.\n\n` +
                 // 이미지형의 실패 형태는 "이미지가 안 붙는 것"이 아니라 "붙었는데 봐도
                 // 안 봐도 풀리는 것"이었다(사용자 지적 2026-08-16). 자기 점검을 못박는다.
-                `**가림 검사**: 이미지 판독 문항을 하나 쓸 때마다 "그림을 손으로 가려도 이 문항이 ` +
+                `**가림 검사(필수)**: 이미지 판독 문항을 하나 쓸 때마다 "그림을 손으로 가려도 이 문항이 ` +
                 `풀리는가?"를 자문하세요. 풀린다면 그것은 이미지 문항이 아니라 지식 문항입니다. ` +
-                `그림에서 읽어야만 알 수 있는 것(위치·모양·크기·분포·신호 강도·염색 양상·표식이 ` +
+                `그림에서 읽어야만 알 수 있는 것(위치·모양·크기·분포·신호 강도·염색 양상·기호가 ` +
                 `가리키는 대상)을 정답의 근거로 삼아 다시 쓰세요. ` +
-                `"…에 대한 설명으로 옳은 것은?" 처럼 그림과 무관하게 성립하는 문두는 쓰지 않습니다.`
+                `"…에 대한 설명으로 옳은 것은?" 처럼 그림과 무관하게 성립하는 문두는 쓰지 않습니다.\n` +
+                // 실측 실패 사례(2026-08-18): 뇌 단면도를 붙여 놓고 선지는 전부 신경전달물질
+                // 설명이었다. 그림은 장식이고 정답은 교과서 지식으로 갈렸다.
+                `- **선지 검사**: 다섯 선지가 모두 그림과 무관한 일반 지식 서술이면 그 문항은 ` +
+                `이미지형이 아닙니다. 정답을 가르는 근거가 지문·선지의 글이 아니라 **그림**에 ` +
+                `있어야 합니다.\n` +
+                // 실측 실패 사례(2026-08-18): 선지가 I~V층을 하나씩 설명하는데, 학생이 받는
+                // 그림에는 층을 가르는 표시가 하나도 없었다(원본 라벨은 정제로 지워진다).
+                `- **구획 문항 조건**: 특정 층·구역·구획을 선지에서 하나씩 지목하려면(예: "I층은 …", ` +
+                `"II층은 …"), 그 구획이 학생이 받는 그림에 **기호로 구분돼 있어야** 합니다. ` +
+                `아래 "표식 안내"에 없는 구획은 학생이 어느 부분인지 알 수 없으므로 그런 문항을 ` +
+                `만들지 마세요. 대신 그림에서 실제로 보이는 것(전체 형태·상대 위치·염색 양상)을 물으세요.\n` +
+                `- **학생이 보는 그림에는 라벨 글자가 없습니다.** 원본에서 읽은 라벨을 학생도 볼 수 ` +
+                `있다고 가정하지 마세요. 학생이 가리킬 수 있는 것은 기호(A·B·C…)뿐입니다.`
               : '') +
             // 표식(A·B·C)이 찍힌 이미지가 있으면 그것을 가리키는 문항을 반드시 만들게 한다.
             // 표식은 "그림을 봐야만 풀리는" 형태를 구조적으로 보장하는 유일한 장치다.
@@ -2733,7 +2777,22 @@ export async function generatePrivateQuestionsFromUpload(
             `선지 ${(q.choices ?? []).length}개 → ${REQUIRED_CHOICE_COUNT}개로 정규화(정답 유지).`,
           );
         }
-        kept.push({ q, choices: normalized.choices, answerIndex: normalized.answerIndex });
+        // 정답 길이 누출(F17-L): 정답만 유독 길어 길이만으로 답이 드러나는 문항은 폐기하고
+        // 보충 단계가 채우게 한다. 공유풀(admission)에서 검증된 규칙을 그대로 쓴다 —
+        // 운영 987문항 실측에서 정답=최장 선지 32.6 %(임상형 36.7 %), 기대 20 %.
+        const leakage = lintChoiceLeakage({
+          stem: String(q.stem ?? ''),
+          choices: normalized.choices,
+          answer_index: normalized.answerIndex,
+        }).filter((issue) => issue.rule === 'F17-L');
+        if (leakage.length > 0) {
+          bumpGenDiag('leakageDiscarded');
+          warnings.push(`정답 길이 누출로 문항 1개 폐기 — 보충 생성으로 대체. ${leakage[0].message}`);
+          continue;
+        }
+        // 정답 위치 셔플(조합형 제외) — 3번 쏠림(30.7 %)을 코드에서 없앤다.
+        const shuffled = shuffleChoices(normalized.choices, normalized.answerIndex);
+        kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex });
       }
       if (kept.length === 0) {
         throw new Error(`생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`);
