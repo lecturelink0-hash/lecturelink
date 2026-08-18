@@ -17,14 +17,13 @@
   "sourceTextFile": "(자체 제작 — 국시원 공개 CPX 항목 + 표준 임상 감별 지식 참조, 서사·인물 창작)",
   "demographicsRule": {
     "fixed": {
-      "location": "외래"
+      "location": "외래",
+      "gender": "남성"
     },
     "recommended": {
-      "gender": "남성 우세",
       "age": "60~80세"
     },
     "randomizable": [
-      "성별",
       "이름",
       "경제적 수준",
       "학력 수준",

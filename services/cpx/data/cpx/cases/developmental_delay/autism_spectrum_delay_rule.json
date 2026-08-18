@@ -91,6 +91,12 @@
       "polarity": "positive"
     },
     {
+      "item": "시청각 반응",
+      "method": "소리 자극 반응·이름 부르기 반응과 시각 추시 확인",
+      "expectedFinding": "소리 나는 장난감에는 고개를 돌려 반응하나 이름을 불러도 돌아보지 않음. 시각 추시는 정상 — 난청보다 사회적 반응 저하를 시사하며 정식 청력검사로 확인 필요",
+      "polarity": "positive"
+    },
+    {
       "item": "신경학적 진찰",
       "method": "신경학적 진찰 확인",
       "expectedFinding": "신경학적 진찰 국소 이상 없음"
