@@ -267,5 +267,19 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "cauda_equina_screen",
+      "caseIds": [
+        "spinal_metastasis_rule"
+      ],
+      "requiredItemIds": [
+        "ht08d",
+        "ed05"
+      ],
+      "maxOverallGrade": 0,
+      "message": "배뇨·배변 장애를 확인하지 않았거나, 적신호 발생 시 즉시 내원해야 함을 교육하지 않았습니다. 마미증후군은 수술이 늦으면 배뇨 기능이 돌아오지 않습니다."
+    }
+  ]
 }

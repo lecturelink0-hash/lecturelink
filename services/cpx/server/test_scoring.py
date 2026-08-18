@@ -122,7 +122,8 @@ def run():
     s = section(score_session(RUBRIC, partial_judgments, ctx_dep), 'history_taking')
     assert s['earnedItemUnits'] == 1.5 and s['partialIds'] == ['ht02'], s
 
-    # 11. 고위험 실신: 총점이 높아도 필수 응급행동 누락 시 전체 등급은 미흡으로 제한된다.
+    # 11. 고위험 실신: 필수 응급행동을 놓치면 등급과 함께 총점도 상한까지 내려간다.
+    #     (2026-08-18 감사 P0-2 이전에는 등급만 낮춰 "97점 / 미흡" 결과가 나왔다.)
     sy_gate = SYNCOPE_RUBRIC['safetyGates'][0]
     sy_miss = sy_gate['requiredItemIds'][-1]
     r = score_session(
@@ -130,7 +131,8 @@ def run():
         all_met_judgments(SYNCOPE_RUBRIC, {sy_miss}),
         {'caseId': sy_gate['caseIds'][0], 'depressionRelated': False},
     )
-    assert r['totalScore'] >= 90 and r['overallGradeLabel'] == '미흡', r
+    assert r['totalScore'] <= 49 and r['overallGradeLabel'] == '미흡', r
+    assert r['rawTotalScore'] >= 90, r          # 게이트 전 점수는 근거로 남는다
     assert r['safetyGate']['triggered'][0]['missingItemIds'] == [sy_miss], r['safetyGate']
 
     # 12. 우울증 관련 인지저하: 자살위험 안전안내 누락도 동일하게 차단한다.

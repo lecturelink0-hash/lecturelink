@@ -297,5 +297,19 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "leukemia_workup_urgency",
+      "caseIds": [
+        "acute_leukemia_bruising_rule"
+      ],
+      "requiredItemIds": [
+        "ed02",
+        "ed03"
+      ],
+      "maxOverallGrade": 0,
+      "message": "발열과 출혈 경향이 함께 있는 환자에서 혈구검사를 포함한 평가 계획을 설명하지 않았거나, 악화 시 즉시 진료받아야 함을 안내하지 않았습니다."
+    }
+  ]
 }

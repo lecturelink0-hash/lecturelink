@@ -169,6 +169,48 @@ export default function CpxResultDetail({ sessionId }) {
             {(result.sections || []).map((s) => <ScoreGauge key={s.id} section={s} />)}
           </div>
         </div>
+        {/* 안전 항목 누락 — 총점이 상한까지 깎였으므로 이유를 반드시 함께 보여준다.
+            이게 없으면 학생은 체크리스트를 다 채우고도 낮은 점수만 보게 된다. */}
+        {(result.safetyGate?.triggered || []).length > 0 && (
+          <div className="mt-5 rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4">
+            <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-danger)]">
+              <ShieldAlert className="h-4 w-4" aria-hidden />
+              안전 항목 누락 — 총점이 제한되었습니다
+            </div>
+            {typeof result.rawTotalScore === 'number' && (
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                체크리스트 기준 <b className="tnum">{result.rawTotalScore}점</b>이지만, 아래 항목을 놓쳐
+                <b className="tnum"> {result.totalScore}점</b>으로 제한했습니다.
+              </p>
+            )}
+            <ul className="mt-2 space-y-2 text-sm text-[var(--color-text)]">
+              {result.safetyGate.triggered.map((gate) => (
+                <li key={gate.id}>
+                  <p>{gate.message}</p>
+                  {(gate.missingItemIds || []).length > 0 && (
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      놓친 항목 — {gate.missingItemIds.map((id) => result.itemTexts?.[id] || id).join(' · ')}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {/* 임상추론 — 체크리스트를 다 채우고도 방향이 틀릴 수 있어 따로 짚는다 */}
+        {(result.feedback?.reasoningNotes || []).length > 0 && (
+          <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
+            <div className="text-sm font-bold text-[var(--color-text)]">임상 추론</div>
+            {result.clinicalReasoning?.statedImpression && (
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                말한 추정 진단 — “{result.clinicalReasoning.statedImpression}”
+              </p>
+            )}
+            <ul className="mt-2 space-y-1 text-sm text-[var(--color-muted)]">
+              {result.feedback.reasoningNotes.map((note, i) => <li key={i}>• {note}</li>)}
+            </ul>
+          </div>
+        )}
       </Card>
 
       {/* 단계별 시간 사용 + 신체진찰 면제 안내 — 과거 세션(채점 캐시)엔 없을 수 있어 조건부 */}

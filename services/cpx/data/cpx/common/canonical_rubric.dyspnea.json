@@ -315,5 +315,19 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "pe_dyspnea_vitals",
+      "caseIds": [
+        "pulmonary_embolism_dyspnea_rule"
+      ],
+      "requiredItemIds": [
+        "pe01",
+        "ed05"
+      ],
+      "maxOverallGrade": 1,
+      "message": "폐색전증이 의심되는 호흡곤란에서 산소포화도를 포함한 생체징후를 확인하지 않았거나, 악화 시 즉시 응급실로 가야 함을 안내하지 않았습니다."
+    }
+  ]
 }

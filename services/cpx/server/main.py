@@ -416,7 +416,7 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
         import concurrent.futures as _cf
         try:
             with _cf.ThreadPoolExecutor(max_workers=1) as pool:
-                future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context)
+                future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context, case)
                 judgments = future.result(timeout=75)
         except _cf.TimeoutError:
             raise HTTPException(504, '채점 시간이 초과되었습니다. 잠시 후 다시 시도해주세요. (API 응답 지연 또는 무료 티어 쿼터 소진 가능성)')
@@ -431,8 +431,11 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
     if eval_usage:
         db.add_usage_events(session_id, user_id, [eval_usage], kind='evaluate', model=ev.EVAL_MODEL)
 
+    reasoning = judgments.pop('clinicalReasoning', None)
     result = scoring.score_session(rubric, judgments, context)
-    result['feedback'] = ev.build_feedback(rubric, result)
+    # 임상추론 판정은 점수 계산에 직접 들어가지 않는다 — 항목 판정(내용 정확성)과 피드백으로만 쓴다.
+    result['clinicalReasoning'] = reasoning or ev.normalize_clinical_reasoning(None)
+    result['feedback'] = ev.build_feedback(rubric, result, result['clinicalReasoning'])
     result['judgments'] = judgments['items']  # 항목별 근거 인용 (§4.4-3)
     result['caseId'] = session['case_id']
     result['persona'] = _json.loads(session['persona']) if session.get('persona') else None

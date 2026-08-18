@@ -366,5 +366,20 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "seizure_workup_and_red_flags",
+      "caseIds": [
+        "first_generalized_convulsion_rule",
+        "alcohol_withdrawal_seizure_rule"
+      ],
+      "requiredItemIds": [
+        "ed01b",
+        "ed03"
+      ],
+      "maxOverallGrade": 1,
+      "message": "발작 후 응급 평가·뇌영상 필요성을 설명하지 않았거나, 즉시 응급 도움을 받아야 하는 상황(5분 이상 지속·반복·미회복·호흡 문제)을 안내하지 않았습니다."
+    }
+  ]
 }
