@@ -74,7 +74,7 @@ const KNOWLEDGE_ASK_PATTERNS: RegExp[] = [
 ];
 
 /** 지문의 마지막 물음표 문장(발문)만 잘라낸다. */
-function extractAsk(stem: string): string {
+export function extractAsk(stem: string): string {
   const flat = String(stem ?? '').replace(/\s+/g, ' ').trim();
   const match = flat.match(/[^.?!]*\?\s*$/);
   return (match ? match[0] : flat.slice(-40)).trim();

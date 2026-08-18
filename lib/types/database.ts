@@ -282,8 +282,20 @@ export type UserUploadRow = {
   target_question_count: number | null;
   heartbeat_at: string | null;
   processed_at: string | null;
+  /** 이 생성 요청이 무엇을 요구했는가 — 품질 계측의 기준선(마이그레이션 00040). */
+  requested_difficulty: string | null;
+  requested_types: string[] | null;
+  generation_style: string | null;
+  reference_count: number | null;
+  /** 원본 파일 내용 해시 — 같은 자료 재업로드 판정(P11). */
+  content_sha256: string | null;
+  /** 사용자에게 보여줄 경고(절삭·유형 미달 등) — P8 에서 화면에 띄운다. */
+  notice: Record<string, unknown> | null;
   created_at: string;
 }
+
+/** 실제로 만들어진 문항 유형. 요청 유형과 대조해 수확률을 낸다. */
+export type PrivateQuestionKind = 'knowledge' | 'clinical' | 'image';
 
 export type PrivateQuestionRow = {
   id: string;
@@ -298,6 +310,12 @@ export type PrivateQuestionRow = {
   concepts: string[];
   difficulty: 1 | 2 | 3;
   generation_slot: number | null;
+  /** 저장 시점에 코드가 판정한 실제 유형(마이그레이션 00040). */
+  kind: PrivateQuestionKind | null;
+  /** 세부 발문 유형(진단/치료/검사…) — P3·R2 에서 채운다. */
+  ask_kind: string | null;
+  /** P1 검증 1패스 점수(0~1). 검증을 못 돌렸으면 null. */
+  verify_score: number | null;
   created_at: string;
 }
 
