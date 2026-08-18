@@ -24,6 +24,7 @@
     "check:clinical": "node --experimental-strip-types --no-warnings scripts/check-clinical-vignette.mjs",
     "check:markers": "node --experimental-strip-types --no-warnings scripts/check-image-markers.mjs",
     "check:eta": "node --experimental-strip-types --no-warnings scripts/replay-eta-accuracy.mjs",
+    "check:shuffle": "node --experimental-strip-types --no-warnings scripts/check-choice-shuffle.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",

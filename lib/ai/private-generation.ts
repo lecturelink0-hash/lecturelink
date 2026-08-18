@@ -30,6 +30,7 @@ import {
   type UsageRecord,
 } from './client';
 import { recordAiCost } from './cost-cap';
+import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
 import {
   PRIVATE_GENERATION_SYSTEM_PROMPT,
   PRIVATE_GENERATION_TOOL_SCHEMA,
@@ -645,6 +646,13 @@ export interface GenerationDiagnostics {
   fileSizeBytes: number | null;
   wantsImages: boolean;
   desiredCount: number;
+  /**
+   * 요청 조건 — DB 컬럼이 생기기 전까지 "요청 vs 결과"를 진단에서 셀 수 있게 남긴다
+   * (2026-08-18 감사: 요청 유형·난이도가 어디에도 저장되지 않아 임상형 수확률조차 못 쟀다).
+   */
+  requestedDifficulty?: '하' | '중' | '상' | null;
+  requestedTypes?: string[];
+  referenceImages?: number;
   /** 단계별 소요(ms). */
   timings: Record<string, number>;
   /** 추출 세부 수치(페이지 수·후보 수·생략 여부 등). */
@@ -882,7 +890,7 @@ async function extractFromBuffer(input: {
           //   그래서 "텍스트 배치를 먼저 출발시켜 전처리를 숨긴다"는 최적화가 사실상
           //   작동하지 않았다(실측: 텍스트준비 = 첫배치시작 = 11.3~14.0초, 매번 임베드
           //   분기 소요와 일치). 여기서 넘기면 텍스트 배치가 6~8초 일찍 출발한다.
-          sendEarlyText(parsed);
+          sendEarlyText(parsed.slice(0, MAX_GEN_TEXT_CHARS));
           return parsed;
         } catch (e) {
           warnings.push(
@@ -985,6 +993,13 @@ async function extractFromBuffer(input: {
     const fullText = parsedFullText ?? '';
     if (parsedFullText !== null) {
       allowWholePageOcrFallback = fullText.length < 1500;
+    }
+    if (fullText.length > MAX_GEN_TEXT_CHARS) {
+      // 종전에는 경고 없이 잘라 뒤쪽 내용이 출제 근거에서 조용히 빠졌다.
+      warnings.push(
+        `본문 텍스트 ${fullText.length.toLocaleString()}자 중 앞 ${MAX_GEN_TEXT_CHARS.toLocaleString()}자만 출제 근거로 사용(뒷부분 절삭).`,
+      );
+      if (input.diag) input.diag.extract.textTruncated = fullText.length - MAX_GEN_TEXT_CHARS;
     }
     pdfEmbeddedCrops = embeddedCropsResult;
     // 임베드가 소수만 나오면 벡터로 그려진 다이어그램·차트(래스터 객체 아님)가 못 잡힌
@@ -1388,6 +1403,8 @@ export async function generatePrivateQuestionsFromUpload(
   // 진단 기록 함수 — try 안에서 준비되지만 실패 경로(catch)에서도 호출해야 하므로 외부에 둔다.
   let writeDiagnostics: (() => Promise<void>) | null = null;
   let totalCost = 0;
+  // 진단 기록용 — 참고자료 로드 전(다운로드 실패 등)에도 안전하게 읽히도록 let 로 둔다.
+  let referenceImageCount = 0;
   let aggInputTokens = 0;
   let aggOutputTokens = 0;
   let modelUsed = MODELS.generation();
@@ -1433,6 +1450,9 @@ export async function generatePrivateQuestionsFromUpload(
           fileSizeBytes: fileBuffer.byteLength,
           wantsImages,
           desiredCount,
+          requestedDifficulty: input.difficulty ?? null,
+          requestedTypes: input.questionTypes ?? [],
+          referenceImages: referenceImageCount,
           timings: { ...diag.timings, totalMs: Date.now() - startTime },
           extract: diag.extract,
           embedded: diag.embedded,
@@ -1562,6 +1582,7 @@ export async function generatePrivateQuestionsFromUpload(
     // 참고자료는 선발사 배치가 클로저로 참조하므로 반드시 그 전에 확정해야 한다
     //  (const 초기화 전 접근 = ReferenceError). 추출과 병렬로 이미 시작돼 있어 대기 비용은 없다.
     const referenceImages = await referencePromise;
+    referenceImageCount = referenceImages.length;
 
     // 4) 분류 카탈로그·생성 프롬프트·배치 계획을 OCR "이전"에 준비한다 — 본문 텍스트가
     //    충분한 자료는 아래 "텍스트 선발사 배치"가 OCR 과 병행으로 먼저 출발할 수 있게.
@@ -2756,7 +2777,22 @@ export async function generatePrivateQuestionsFromUpload(
             `선지 ${(q.choices ?? []).length}개 → ${REQUIRED_CHOICE_COUNT}개로 정규화(정답 유지).`,
           );
         }
-        kept.push({ q, choices: normalized.choices, answerIndex: normalized.answerIndex });
+        // 정답 길이 누출(F17-L): 정답만 유독 길어 길이만으로 답이 드러나는 문항은 폐기하고
+        // 보충 단계가 채우게 한다. 공유풀(admission)에서 검증된 규칙을 그대로 쓴다 —
+        // 운영 987문항 실측에서 정답=최장 선지 32.6 %(임상형 36.7 %), 기대 20 %.
+        const leakage = lintChoiceLeakage({
+          stem: String(q.stem ?? ''),
+          choices: normalized.choices,
+          answer_index: normalized.answerIndex,
+        }).filter((issue) => issue.rule === 'F17-L');
+        if (leakage.length > 0) {
+          bumpGenDiag('leakageDiscarded');
+          warnings.push(`정답 길이 누출로 문항 1개 폐기 — 보충 생성으로 대체. ${leakage[0].message}`);
+          continue;
+        }
+        // 정답 위치 셔플(조합형 제외) — 3번 쏠림(30.7 %)을 코드에서 없앤다.
+        const shuffled = shuffleChoices(normalized.choices, normalized.answerIndex);
+        kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex });
       }
       if (kept.length === 0) {
         throw new Error(`생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`);
