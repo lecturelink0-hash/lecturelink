@@ -306,45 +306,100 @@ export async function maskTextRegions(
     const fy0 = Math.max(0, iy0 - grow);
     const fx1 = Math.min(W - 1, ix1 + grow);
     const fy1 = Math.min(H - 1, iy1 + grow);
-
-    // (1') 채우기: 단색 사각형 대신 "주변 색 보간"으로 메운다.
-    //
-    // 흰 배경 위 캡션은 단색으로 충분했지만, 그림 위에 얹힌 글자를 단색으로 덮으면
-    // 회색 사각형 자국이 남는 문제가 실측에서 나왔다(사용자 확인).
-    // 각 픽셀을 좌/우 바깥 경계색의 가로 보간과 상/하 바깥 경계색의 세로 보간으로 채우면
-    // 배경의 색·그라데이션을 따라가 자국이 거의 보이지 않는다.
     const bw = fx1 - fx0 + 1;
     const bh = fy1 - fy0 + 1;
-    // 보간은 작은 영역에서만 자연스럽다. 넓은 영역에 쓰면 그림을 가로지르는 긴 번짐이
-    // 생긴다(실측에서 확인). 큰 박스는 단색(최빈 배경색)으로 덮는다.
-    if (bw * bh > W * H * 0.01) {
+
+    // (1') 채우기: **사각형을 통째로 덮지 않고 글자 획만 덮는다.**
+    //
+    // 실측 훼손(2026-08-18 운영 이미지): 라벨을 지운 자리에서 그림이 함께 사라졌다.
+    // 원인은 채우기 색이 아니라 **덮는 면적**이었다. 측정해 보니 채우기 방식을 바꿔도
+    // (단색↔보간) 훼손은 0.26 %→0.24 % 로 거의 그대로였고, 여백을 키우면(2패스 옵션)
+    // 0.26 %→0.52 % 로 정확히 두 배가 됐다. 면적이 지배 변수다.
+    //
+    // 글자 줄은 대부분이 글자 사이 배경이다. 사각형을 덮으면 그 배경 자리에 있던 그림
+    // (해부도의 선·질감)까지 같이 지워진다. 획만 덮으면 글자 사이 그림이 그대로 남는다.
+    //
+    // 각 획 픽셀은 "가장 가까운 글자 아닌 픽셀" 색으로 메운다. 그래야 배경이 단색이든
+    // 그라데이션이든 자국이 남지 않는다.
+    const inkMask = new Uint8Array(bw * bh);
+    for (let yy = 0; yy < bh; yy++) {
+      for (let xx = 0; xx < bw; xx++) {
+        const x = fx0 + xx;
+        const y = fy0 + yy;
+        if (x >= 0 && y >= 0 && x < W && y < H && isInk(x, y)) inkMask[yy * bw + xx] = 1;
+      }
+    }
+    // 안티에일리어싱 가장자리까지 덮도록 팽창시킨다(여백 grow 를 여기서 쓴다).
+    const dilate = Math.max(1, Math.min(grow, 4));
+    const dilated = new Uint8Array(bw * bh);
+    for (let yy = 0; yy < bh; yy++) {
+      for (let xx = 0; xx < bw; xx++) {
+        if (!inkMask[yy * bw + xx]) continue;
+        for (let dy = -dilate; dy <= dilate; dy++) {
+          const ny = yy + dy;
+          if (ny < 0 || ny >= bh) continue;
+          for (let dx = -dilate; dx <= dilate; dx++) {
+            const nx = xx + dx;
+            if (nx < 0 || nx >= bw) continue;
+            dilated[ny * bw + nx] = 1;
+          }
+        }
+      }
+    }
+    // 덮을 것이 없으면(잉크를 못 찾음) 종전처럼 사각형을 배경색으로 덮는다.
+    let inkCount = 0;
+    for (let i = 0; i < dilated.length; i++) inkCount += dilated[i];
+    if (inkCount === 0) {
       ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
       ctx.fillRect(fx0, fy0, bw, bh);
       masked += 1;
       regions.push({ text: box.text, x0: fx0, y0: fy0, x1: fx1, y1: fy1 });
       continue;
     }
+
+    // 각 픽셀을 "가장 가까운 글자 아닌 픽셀" 색으로 메운다.
+    // 상하좌우로 뻗어 덮을 대상이 아닌 첫 픽셀을 찾고, 찾은 것들의 평균을 쓴다.
+    const inside = (x: number, y: number) =>
+      x >= fx0 && x <= fx1 && y >= fy0 && y <= fy1 && dilated[(y - fy0) * bw + (x - fx0)] === 1;
+    const SEARCH = Math.max(6, Math.round((iy1 - iy0 + 1) * 1.2));
+    const sampleAway = (
+      sx: number,
+      sy: number,
+      dx: number,
+      dy: number,
+    ): [number, number, number] | null => {
+      for (let k = 1; k <= SEARCH; k++) {
+        const x = sx + dx * k;
+        const y = sy + dy * k;
+        if (x < 0 || y < 0 || x >= W || y >= H) return null;
+        if (!inside(x, y) && !isInk(x, y)) return at(x, y);
+      }
+      return null;
+    };
     const fill = ctx.createImageData(bw, bh);
-    const outside = (x: number, y: number): [number, number, number] =>
-      at(Math.max(0, Math.min(W - 1, x)), Math.max(0, Math.min(H - 1, y)));
+    // 원본을 그대로 복사한 뒤, 덮을 픽셀만 바꾼다(나머지 그림은 손대지 않는다).
     for (let yy = 0; yy < bh; yy++) {
-      const y = fy0 + yy;
-      const left = outside(fx0 - 1, y);
-      const right = outside(fx1 + 1, y);
       for (let xx = 0; xx < bw; xx++) {
         const x = fx0 + xx;
-        const top = outside(x, fy0 - 1);
-        const bottom = outside(x, fy1 + 1);
-        const tx = bw === 1 ? 0.5 : xx / (bw - 1);
-        const ty = bh === 1 ? 0.5 : yy / (bh - 1);
+        const y = fy0 + yy;
         const o = (yy * bw + xx) * 4;
-        for (let ch = 0; ch < 3; ch++) {
-          const horiz = left[ch] + (right[ch] - left[ch]) * tx;
-          const vert = top[ch] + (bottom[ch] - top[ch]) * ty;
-          // 가로/세로 추정의 평균. 한쪽이 글자 획에 걸려도 다른 쪽이 보정한다.
-          fill.data[o + ch] = Math.round((horiz + vert) / 2);
-        }
+        const src = at(Math.max(0, Math.min(W - 1, x)), Math.max(0, Math.min(H - 1, y)));
+        fill.data[o] = src[0];
+        fill.data[o + 1] = src[1];
+        fill.data[o + 2] = src[2];
         fill.data[o + 3] = 255;
+        if (!dilated[yy * bw + xx]) continue;
+        const samples: Array<[number, number, number]> = [];
+        for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]] as const) {
+          const c = sampleAway(x, y, dx, dy);
+          if (c) samples.push(c);
+        }
+        const use = samples.length > 0 ? samples : [bg];
+        for (let ch = 0; ch < 3; ch++) {
+          let sum = 0;
+          for (const c of use) sum += c[ch];
+          fill.data[o + ch] = Math.round(sum / use.length);
+        }
       }
     }
     ctx.putImageData(fill, fx0, fy0);

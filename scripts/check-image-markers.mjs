@@ -362,6 +362,105 @@ console.log('지시 대상 판정 — 가리킬 것이 없으면 표식을 찍�
   }
 }
 
+console.log('마스킹 훼손 — 글자만 지우고 그림은 남기는가');
+{
+  // 운영 훼손(2026-08-18): 라벨을 지운 자리에서 그림이 함께 사라졌다.
+  //
+  // 측정으로 원인을 좁혔다. 채우기 방식(단색↔보간)을 바꿔도 훼손은 거의 그대로였고
+  // (0.26 %→0.24 %), 여백을 키우면 정확히 두 배가 됐다(0.52 %). **덮는 면적**이 지배
+  // 변수였다. 그래서 사각형 대신 글자 획만 덮도록 바꿨다.
+  //
+  // 여기서는 "그림만 있는 판"과 "글자를 얹은 판"을 따로 만들어, 마스킹이 **글자가 없던
+  // 자리**를 얼마나 바꿨는지 센다. 그게 곧 훼손량이다.
+  const { createCanvas, loadImage } = await import('canvas');
+  const IW = 520, IH = 380;
+  const paintArt = (g) => {
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, IW, IH);
+    g.fillStyle = '#b9b9b9';
+    g.beginPath();
+    g.ellipse(260, 190, 170, 120, 0, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = '#444444';
+    g.lineWidth = 1;
+    for (let i = 0; i < 40; i++) {
+      g.beginPath();
+      g.moveTo(110 + i * 8, 80);
+      g.lineTo(120 + i * 8, 300);
+      g.stroke();
+    }
+    // 라벨이 얹히는 자리를 균일하지 않게 — 실제 해부도는 명암이 계속 변한다.
+    // (단색이면 사각형 채우기가 우연히 같은 색으로 복원돼 훼손이 안 잡힌다.)
+    const grad = g.createLinearGradient(120, 180, 420, 230);
+    grad.addColorStop(0, 'rgba(60,90,150,0.85)');
+    grad.addColorStop(0.5, 'rgba(200,160,90,0.85)');
+    grad.addColorStop(1, 'rgba(70,140,110,0.85)');
+    g.fillStyle = grad;
+    g.fillRect(120, 180, 300, 50);
+  };
+  const artC = createCanvas(IW, IH);
+  paintArt(artC.getContext('2d'));
+  const artPng = new Uint8Array(artC.toBuffer('image/png'));
+
+  const txtC = createCanvas(IW, IH);
+  const tg = txtC.getContext('2d');
+  paintArt(tg);
+  tg.fillStyle = '#000000';
+  tg.font = '20px sans-serif';
+  const labels = [
+    { t: 'Subthalamic nucleus', x: 40, y: 60 },
+    { t: 'Corpus callosum', x: 150, y: 200 }, // 그라데이션 위에 겹치는 라벨
+    { t: 'Cerebellum gyrus', x: 60, y: 340 },
+  ];
+  for (const l of labels) tg.fillText(l.t, l.x, l.y);
+  const textPng = new Uint8Array(txtC.toBuffer('image/png'));
+
+  // OCR 박스 흉내 — 실제처럼 글자보다 살짝 좁게 준다.
+  const boxes = labels.map((l) => ({
+    text: l.t,
+    x0: l.x - 1,
+    y0: l.y - 14,
+    x1: l.x + Math.ceil(tg.measureText(l.t).width) + 1,
+    y1: l.y + 3,
+  }));
+
+  const res = await maskTextRegions(textPng, boxes);
+  check('세 라벨을 모두 덮었다', res.masked === 3, `실제 ${res.masked}`);
+
+  const load = async (png) => {
+    const im = await loadImage(Buffer.from(png));
+    const c = createCanvas(IW, IH);
+    const x = c.getContext('2d');
+    x.drawImage(im, 0, 0);
+    return x.getImageData(0, 0, IW, IH).data;
+  };
+  const A = await load(artPng);
+  const T = await load(textPng);
+  const M = await load(res.png);
+  const dist = (P, Q, i) =>
+    Math.abs(P[i] - Q[i]) + Math.abs(P[i + 1] - Q[i + 1]) + Math.abs(P[i + 2] - Q[i + 2]);
+
+  let textPx = 0, artPx = 0, artBroken = 0, textLeft = 0;
+  for (let i = 0; i < IW * IH * 4; i += 4) {
+    if (dist(A, T, i) > 40) {
+      textPx++;
+      if (dist(T, M, i) < 20) textLeft++;
+    } else {
+      artPx++;
+      if (dist(A, M, i) > 40) artBroken++;
+    }
+  }
+  const leftPct = (textLeft / textPx) * 100;
+  const brokenPct = (artBroken / artPx) * 100;
+  check(`글자를 다 지웠다 (남은 글자 ${leftPct.toFixed(1)}%)`, leftPct < 2, '글자가 남으면 정답 단서다');
+  // 사각형으로 덮던 시절 이 표본의 훼손은 0.83 % 였다. 획만 덮으면 0.00 % 다.
+  check(
+    `그림을 거의 건드리지 않았다 (훼손 ${brokenPct.toFixed(2)}%)`,
+    brokenPct < 0.1,
+    '사각형 덮기로 되돌아갔거나 여백이 커졌다',
+  );
+}
+
 console.log('지시선·브래킷이 붙은 라벨 — 기호는 필수');
 {
   // 운영 지적(2026-08-18): #225 로 "문항이 물을 때만 표식"으로 바꾸자, 라벨이 지워진
