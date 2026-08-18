@@ -275,5 +275,55 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "mi_ecg_and_plan",
+      "caseIds": [
+        "acute_mi_rule"
+      ],
+      "requiredItemIds": [
+        "pe06",
+        "ed04"
+      ],
+      "maxOverallGrade": 0,
+      "message": "급성 심근경색이 의심되는 흉통에서 심전도를 시행·선언하지 않았거나, 입원·전원을 포함한 다음 단계를 설명하지 않았습니다. 재관류까지의 시간이 예후를 결정합니다."
+    },
+    {
+      "id": "dissection_bp_and_plan",
+      "caseIds": [
+        "aortic_dissection_rule"
+      ],
+      "requiredItemIds": [
+        "pe05",
+        "ed04"
+      ],
+      "maxOverallGrade": 0,
+      "message": "대동맥박리가 의심되는 흉통에서 양팔 혈압·말초 맥박 비교를 하지 않았거나, 즉시 영상·전원을 포함한 계획을 설명하지 않았습니다."
+    },
+    {
+      "id": "pe_workup_and_plan",
+      "caseIds": [
+        "pulmonary_embolism_rule"
+      ],
+      "requiredItemIds": [
+        "ed02b",
+        "ed04"
+      ],
+      "maxOverallGrade": 0,
+      "message": "폐색전증이 의심되는 흉통에서 필요한 검사와 입원·전원을 포함한 다음 단계를 설명하지 않았습니다."
+    },
+    {
+      "id": "pneumothorax_exam_and_plan",
+      "caseIds": [
+        "pneumothorax_rule"
+      ],
+      "requiredItemIds": [
+        "pe04",
+        "ed04"
+      ],
+      "maxOverallGrade": 0,
+      "message": "기흉이 의심되는 흉통에서 양측 호흡음을 비교하지 않았거나, 영상·처치를 포함한 다음 단계를 설명하지 않았습니다."
+    }
+  ]
 }

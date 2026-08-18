@@ -60,24 +60,51 @@ def item_credit(judgment: dict) -> float:
     return 1.0 if judgment.get('satisfied') else 0.0
 
 
+# 게이트가 제한하는 등급에 대응하는 총점 상한. 등급만 낮추고 총점을 그대로 두면
+# "92점 / 미흡" 같은 결과가 나와 무엇이 잘못됐는지 전달되지 않는다(2026-08-18 감사).
+GRADE_TOTAL_CAP = {0: 49.0, 1: 79.0}
+
+
+def applicable_item_ids(rubric: dict, context: dict) -> set[str]:
+    """이 세션에서 실제로 채점되는 항목 id — 조건부·영역 제외로 빠진 항목은 뺀다."""
+    out: set[str] = set()
+    for section in rubric['sections']:
+        if section['type'] == 'deduction':
+            continue
+        if section['id'] == 'physical_exam' and context.get('physicalExamRequired', True) is False:
+            continue
+        for item in applicable_items(section, context):
+            out.add(item['id'])
+    return out
+
+
 def evaluate_safety_gates(rubric: dict, context: dict, judgments: dict) -> list[dict]:
-    """케이스별 적신호 게이트. 핵심 안전행동이 빠지면 총점과 별개로 등급을 제한한다."""
+    """케이스별 적신호 게이트 — 핵심 안전행동이 빠지면 총점과 등급을 함께 제한한다.
+
+    부분 수행(partial)은 충족으로 보지 않는다. 안전 행동은 "했다/안 했다"로 갈리고,
+    절반만 한 것을 통과시키면 게이트의 뜻이 없어진다.
+    조건부로 채점 대상에서 빠진 항목(예: 남성 환자의 임신 가능성 확인)은 요구에서 제외한다 —
+    빼지 않으면 플래그가 꺼진 세션이 영구히 게이트에 걸린다.
+    """
     case_id = context.get('caseId')
+    scored_ids = applicable_item_ids(rubric, context)
     triggered = []
     for gate in rubric.get('safetyGates', []):
         if case_id not in gate.get('caseIds', []):
             continue
-        missing = [
-            item_id for item_id in gate.get('requiredItemIds', [])
-            if item_credit(judgments.get(item_id, {})) < 1.0
-        ]
-        if missing:
-            triggered.append({
-                'id': gate.get('id', 'safety_gate'),
-                'message': gate.get('message', '핵심 안전 항목이 누락되었습니다.'),
-                'missingItemIds': missing,
-                'maxOverallGrade': gate.get('maxOverallGrade', 0),
-            })
+        required = [i for i in gate.get('requiredItemIds', []) if i in scored_ids]
+        missing = [i for i in required if item_credit(judgments.get(i, {})) < 1.0]
+        if not missing:
+            continue
+        max_grade = gate.get('maxOverallGrade', 0)
+        triggered.append({
+            'id': gate.get('id', 'safety_gate'),
+            'message': gate.get('message', '핵심 안전 항목이 누락되었습니다.'),
+            'missingItemIds': missing,
+            'requiredItemIds': required,
+            'maxOverallGrade': max_grade,
+            'maxTotalScore': gate.get('maxTotalScore', GRADE_TOTAL_CAP.get(max_grade)),
+        })
     return triggered
 
 
@@ -138,8 +165,12 @@ def score_session(rubric: dict, judgments: dict, context: dict) -> dict:
         total = total * 100.0 / (100.0 - excluded_weight)
 
     total = round1(total)
-    overall_grade = 2 if total >= 80 else (1 if total >= 50 else 0)  # 파생 규칙 (원문에 총점 등급 없음)
+    raw_total = total
     safety_gates = evaluate_safety_gates(rubric, context, item_judgments)
+    caps = [g['maxTotalScore'] for g in safety_gates if g.get('maxTotalScore') is not None]
+    if caps:
+        total = min(total, round1(min(caps)))
+    overall_grade = 2 if total >= 80 else (1 if total >= 50 else 0)  # 파생 규칙 (원문에 총점 등급 없음)
     if safety_gates:
         overall_grade = min(overall_grade, min(gate['maxOverallGrade'] for gate in safety_gates))
     result = {
@@ -150,6 +181,9 @@ def score_session(rubric: dict, judgments: dict, context: dict) -> dict:
         'context': context,
         'safetyGate': {'triggered': safety_gates, 'passed': not safety_gates},
     }
+    if total != raw_total:
+        # 게이트로 깎이기 전 점수 — "체크리스트는 채웠지만 안전 행동을 놓쳤다"를 보여준다
+        result['rawTotalScore'] = raw_total
     if excluded_sections:
         result['excludedSections'] = excluded_sections
     return result

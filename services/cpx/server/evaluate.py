@@ -131,11 +131,75 @@ def empty_judgments(rubric: dict, context: dict) -> dict:
         },
         'violations': [],
         'phases': [],
+        'clinicalReasoning': normalize_clinical_reasoning(None),
         'usage': None,
     }
 
 
-def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> str:
+# 임상추론 판정 기본값 — 대화가 없거나 모델이 값을 빠뜨렸을 때 쓰는 중립값.
+# "판단하지 않았다"와 "잘못 판단했다"는 다르므로 not_stated 로 남긴다.
+_REASONING_DEFAULT = {
+    'statedImpression': '',
+    'impressionConsistent': 'not_stated',
+    'dangerousDiagnosisAddressed': False,
+    'planAppropriate': 'not_stated',
+    'evidence': [],
+}
+_IMPRESSION_VALUES = {'consistent', 'partly', 'contradictory', 'not_stated'}
+_PLAN_VALUES = {'appropriate', 'insufficient', 'harmful', 'not_stated'}
+
+
+def normalize_clinical_reasoning(raw: dict | None) -> dict:
+    """모델이 돌려준 임상추론 판정을 안전한 형태로 고정한다."""
+    raw = raw if isinstance(raw, dict) else {}
+    impression = raw.get('impressionConsistent')
+    plan = raw.get('planAppropriate')
+    return {
+        'statedImpression': str(raw.get('statedImpression') or '').strip(),
+        'impressionConsistent': impression if impression in _IMPRESSION_VALUES else 'not_stated',
+        'dangerousDiagnosisAddressed': bool(raw.get('dangerousDiagnosisAddressed')),
+        'planAppropriate': plan if plan in _PLAN_VALUES else 'not_stated',
+        'evidence': [str(x) for x in (raw.get('evidence') or []) if str(x).strip()],
+    }
+
+
+def build_case_brief(case: dict | None) -> str:
+    """채점자 전용 케이스 요약 — 학생·환자 모델에는 절대 가지 않는다.
+
+    이게 없으면 채점기는 이 환자가 거미막하출혈인지 긴장형 두통인지 모른 채 "설명을 했는가"만
+    보게 되고, 벼락두통 환자에게 "긴장형 두통 같으니 CT는 필요 없습니다"라고 해도 추정 진단
+    설명·검사 계획 항목이 충족으로 채점된다(2026-08-18 감사 P0-1).
+    """
+    if not case:
+        return ''
+    use = case.get('evaluationUse') or {}
+    scenario = case.get('scenarioRule') or {}
+    lines = [
+        '[증례 정답지 — 채점자 전용]',
+        '아래는 이 증례의 설계 정보다. 학생은 이것을 볼 수 없다. 학생 발화가 이 사실들과 맞는지',
+        '판단하는 데만 쓰고, 학생이 여기 적힌 표현을 그대로 말해야 한다고 요구하지 마라.',
+        f"- 실제 진단: {case.get('targetDiagnosis', '(미기재)')}",
+    ]
+    if scenario.get('caseSummary'):
+        lines.append(f"- 상황: {scenario['caseSummary']}")
+    if use.get('mustAsk'):
+        lines.append('- 이 증례에서 반드시 확인해야 할 것: ' + ' / '.join(use['mustAsk']))
+    if use.get('positiveClues'):
+        lines.append('- 환자가 가진 단서: ' + ' / '.join(use['positiveClues']))
+    if use.get('negativeClues'):
+        lines.append('- 없는 것(물으면 아니라고 답함): ' + ' / '.join(use['negativeClues']))
+    if use.get('educationTopics'):
+        lines.append('- 환자교육에서 다뤄야 할 내용: ' + ' / '.join(use['educationTopics']))
+    findings = [
+        f"{r.get('item')}={r.get('expectedFinding')}"
+        for r in (case.get('physicalExamRule') or []) if r.get('expectedFinding')
+    ]
+    if findings:
+        lines.append('- 진찰하면 나오는 소견: ' + ' / '.join(findings))
+    return '\n'.join(lines)
+
+
+def build_extraction_prompt(rubric: dict, events: list[dict], context: dict, case: dict | None = None) -> str:
     sections_desc = []
     for s in rubric_sections_for_context(rubric, context):
         if s['type'] == 'deduction':
@@ -157,6 +221,7 @@ def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> 
             sections_desc.append(f"## {s['name']}\n" + '\n'.join(items))
 
     rules = rubric['evaluationRules']
+    case_brief = build_case_brief(case)
     return f"""당신은 의과대학 CPX(진료수행시험) 채점을 위한 근거 추출기다.
 아래 [의사-환자 대화 로그]를 분석해, 각 채점 항목에 대해 의사(학생)가 해당 행위를 얼마나 수행했는지와 그 근거를 추출하라.
 
@@ -179,6 +244,15 @@ def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> 
 6. 임상예의 위반 탐지 시: 의료적 필수 인적사항 질문(성별·나이·생년월일·이름·경제수준·학력·직업·키·몸무게)은 절대 위반으로 보고하지 마라. 애매하면 exempt=true로 표시하라.
 7. status는 met(충분히 수행), partial(일부만 수행하거나 안전상 불완전), not_met(근거 없음) 중 하나다. partial은 관련 질문·설명은 했지만 핵심 요소가 빠진 경우에만 쓴다.
 8. 근거가 없으면 status=not_met, satisfied=false, evidence=[]로 하라. 추측으로 인정하지 마라.
+9. 진단·검사·치료 계획의 **내용**을 주장하는 항목(추정 진단 설명, 검사 계획 설명, 치료·다음 단계 설명,
+   교육 내용 등)은 말을 꺼냈다는 것만으로 충족이 아니다. 아래 [증례 정답지]와 견주어
+   그 내용이 이 환자에게 타당할 때만 met 으로 하라.
+   - 위험한 원인을 배제하지 않고 양성 질환으로 단정했거나, 필요한 검사를 "필요 없다"고 했거나,
+     이 증례에 해가 되는 계획을 말했으면 not_met 이다.
+   - 반대로 학생이 정답 병명을 정확히 말하지 못했더라도, 위험한 원인을 후보에 두고 그것을
+     확인·배제하는 방향으로 설명·계획했다면 met 으로 인정하라. CPX 는 병명 맞히기가 아니라
+     안전한 접근을 보는 시험이다.
+   - 정답지에 없는 내용을 학생이 말했다고 해서 감점하지 마라. 틀렸다고 볼 수 있을 때만 내린다.
 
 [진료 단계 구분 — phases 필드]
 진료는 보통 병력청취 → 신체진찰 → 환자교육(설명·계획) 순서로 진행된다. 각 단계가 시작된 로그 라인 번호(L001 형식의 숫자 부분)를 phases 배열로 보고하라.
@@ -186,6 +260,19 @@ def build_extraction_prompt(rubric: dict, events: list[dict], context: dict) -> 
 - physical_exam: 의사가 처음 진찰을 선언·시행한 라인 ("~진찰하겠습니다", "청진하겠습니다" 등). 진찰이 전혀 없으면 항목을 생략하라.
 - patient_education: 의사가 추정 진단·검사 계획·생활 교육 등 설명을 본격적으로 시작한 라인. 교육이 전혀 없으면 항목을 생략하라.
 각 단계는 최초 시작 라인 1개만 보고한다. 중간에 잠깐 되돌아간 것은 무시하라.
+
+[임상추론 판정 — clinicalReasoning 필드]
+학생이 이 환자를 어떻게 판단하고 무엇을 하려 했는지를 별도로 보고하라. 점수는 규칙 엔진이 정하므로
+너는 사실만 적는다.
+- statedImpression: 학생이 말한 추정 진단·인상을 그대로 옮긴다. 말하지 않았으면 빈 문자열.
+- impressionConsistent: 정답지와 견준 결과 — consistent(합치) / partly(일부만) /
+  contradictory(위험한 원인을 배제하지 않고 다른 것으로 단정) / not_stated(말하지 않음).
+- dangerousDiagnosisAddressed: 이 증례에서 놓치면 위험한 원인을 후보로 언급하거나 검사·의뢰로
+  확인·배제하려 했으면 true.
+- planAppropriate: appropriate(타당) / insufficient(부족) / harmful(해로움) / not_stated.
+- evidence: 위 판단의 근거가 된 의사 발화를 로그 라인 번호와 함께.
+
+{case_brief}
 
 [채점 항목]
 {chr(10).join(sections_desc)}
@@ -237,21 +324,40 @@ RESPONSE_SCHEMA = {
                 'required': ['phase', 'startLine'],
             },
         },
+        'clinicalReasoning': {
+            'type': 'OBJECT',
+            'properties': {
+                'statedImpression': {'type': 'STRING'},
+                'impressionConsistent': {
+                    'type': 'STRING',
+                    'enum': ['consistent', 'partly', 'contradictory', 'not_stated'],
+                },
+                'dangerousDiagnosisAddressed': {'type': 'BOOLEAN'},
+                'planAppropriate': {
+                    'type': 'STRING',
+                    'enum': ['appropriate', 'insufficient', 'harmful', 'not_stated'],
+                },
+                'evidence': {'type': 'ARRAY', 'items': {'type': 'STRING'}},
+            },
+            'required': ['statedImpression', 'impressionConsistent',
+                         'dangerousDiagnosisAddressed', 'planAppropriate'],
+        },
     },
-    'required': ['items', 'violations', 'phases'],
+    'required': ['items', 'violations', 'phases', 'clinicalReasoning'],
 }
 
 
 _CREDIT_ORDER = {'not_met': 0, 'partial': 1, 'met': 2}
 
 
-def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: dict) -> dict:
+def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: dict,
+                      case: dict | None = None) -> dict:
     """Gemini 근거 추출 호출 → scoring.py 입력 형태로 변환."""
     from google import genai
 
     # per-request 타임아웃(ms) — 단일 시도가 무한정 매달리지 않도록. 상위 스레드 데드라인과 이중 방어.
     client = genai.Client(api_key=api_key, http_options={'timeout': 60000})
-    prompt_text = build_extraction_prompt(rubric, events, context)
+    prompt_text = build_extraction_prompt(rubric, events, context, case)
     config = {
         'response_mime_type': 'application/json',
         'response_schema': RESPONSE_SCHEMA,
@@ -283,7 +389,13 @@ def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: d
         }
     valid_ids = {i['id'] for s in rubric_sections_for_context(rubric, context) if s['type'] != 'deduction' for i in s['items']}
     items = normalize_judgment_items(raw.get('items', []), valid_ids)
-    return {'items': items, 'violations': raw.get('violations', []), 'phases': raw.get('phases', []), 'usage': usage}
+    return {
+        'items': items,
+        'violations': raw.get('violations', []),
+        'phases': raw.get('phases', []),
+        'clinicalReasoning': normalize_clinical_reasoning(raw.get('clinicalReasoning')),
+        'usage': usage,
+    }
 
 
 def normalize_judgment_items(raw_items: list, valid_ids: set) -> dict:
@@ -392,7 +504,19 @@ def compute_time_analysis(
     }
 
 
-def build_feedback(rubric: dict, result: dict) -> dict:
+_REASONING_NOTE = {
+    'contradictory': '위험한 원인을 배제하지 않은 채 다른 진단으로 단정했습니다. 이 증례에서 놓치면 안 되는 원인을 먼저 후보에 두고 확인·배제하세요.',
+    'partly': '추정 진단이 이 증례와 부분적으로만 맞습니다. 놓친 축이 무엇인지 확인하세요.',
+    'not_stated': '추정 진단을 환자에게 설명하지 않았습니다. 무엇을 의심하는지 말로 정리하는 것까지가 진료입니다.',
+}
+_PLAN_NOTE = {
+    'harmful': '설명한 계획이 이 환자에게 해가 될 수 있습니다.',
+    'insufficient': '검사·치료 계획이 이 증례를 확인하기에 부족합니다.',
+    'not_stated': '다음 단계(검사·치료·재방문)를 설명하지 않았습니다.',
+}
+
+
+def build_feedback(rubric: dict, result: dict, reasoning: dict | None = None) -> dict:
     """결정론적 교정 피드백 — 놓친 항목을 영역별로 정리 (034 correctionFeedback 필드 충족)."""
     item_text = {i['id']: i['text'] for s in rubric['sections'] if s['type'] != 'deduction' for i in s['items']}
     missed = {}
@@ -401,8 +525,21 @@ def build_feedback(rubric: dict, result: dict) -> dict:
         if pending:
             missed[s['name']] = [item_text[i] for i in pending]
     strengths = [s['name'] for s in result['sections'] if s['grade'] == 2]
+    # 임상추론은 항목 점수와 별개로 짚어준다 — 체크리스트를 다 채우고도 방향이 틀릴 수 있다.
+    reasoning_notes = []
+    if reasoning:
+        note = _REASONING_NOTE.get(reasoning.get('impressionConsistent'))
+        if note:
+            reasoning_notes.append(note)
+        plan_note = _PLAN_NOTE.get(reasoning.get('planAppropriate'))
+        if plan_note:
+            reasoning_notes.append(plan_note)
+        if not reasoning.get('dangerousDiagnosisAddressed'):
+            reasoning_notes.append('이 증례에서 놓치면 위험한 원인을 언급하거나 확인·배제하려는 시도가 보이지 않습니다.')
     return {
         'strengths': strengths,
         'missedBySection': missed,
         'violationNotes': [v.get('reason') or v.get('evidence', '') for v in result['violations']],
+        'reasoningNotes': reasoning_notes,
+        'safetyGateNotes': [g.get('message', '') for g in result.get('safetyGate', {}).get('triggered', [])],
     }

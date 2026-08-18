@@ -280,5 +280,19 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "variceal_urgency",
+      "caseIds": [
+        "variceal_bleed_rule"
+      ],
+      "requiredItemIds": [
+        "ed01",
+        "ed04a"
+      ],
+      "maxOverallGrade": 0,
+      "message": "활력징후가 불안정한 토혈에서 응급 상황임을 설명하지 않았거나, 재출혈·실신 시 즉시 알려야 함을 안내하지 않았습니다."
+    }
+  ]
 }

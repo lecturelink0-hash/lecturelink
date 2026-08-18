@@ -273,5 +273,55 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "sah_impression_and_imaging",
+      "caseIds": [
+        "thunderclap_sah_rule"
+      ],
+      "requiredItemIds": [
+        "ed01",
+        "ed02"
+      ],
+      "maxOverallGrade": 0,
+      "message": "벼락두통에서 이차성 두통 가능성을 설명하지 않았거나, 뇌영상 등 감별 검사 계획을 세우지 않았습니다. 거미막하출혈은 첫 진료에서 배제하지 못하면 놓칩니다."
+    },
+    {
+      "id": "meningitis_impression_and_workup",
+      "caseIds": [
+        "meningitis_headache_rule"
+      ],
+      "requiredItemIds": [
+        "ed01",
+        "ed02"
+      ],
+      "maxOverallGrade": 0,
+      "message": "발열·경부 강직을 동반한 두통에서 수막염 가능성을 설명하지 않았거나, 검사 계획을 세우지 않았습니다."
+    },
+    {
+      "id": "gca_impression_and_workup",
+      "caseIds": [
+        "temporal_arteritis_rule"
+      ],
+      "requiredItemIds": [
+        "ed01",
+        "ed02"
+      ],
+      "maxOverallGrade": 0,
+      "message": "고령의 새 두통에서 거대세포동맥염 가능성과 검사 계획을 설명하지 않았습니다. 치료가 늦으면 영구 시력 소실로 이어집니다."
+    },
+    {
+      "id": "mass_lesion_impression_and_imaging",
+      "caseIds": [
+        "brain_tumor_headache_rule"
+      ],
+      "requiredItemIds": [
+        "ed01",
+        "ed02"
+      ],
+      "maxOverallGrade": 1,
+      "message": "적신호를 동반한 두통에서 이차성 원인 가능성과 영상 검사 계획을 설명하지 않았습니다."
+    }
+  ]
 }

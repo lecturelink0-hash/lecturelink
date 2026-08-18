@@ -255,5 +255,19 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "central_vertigo_workup",
+      "caseIds": [
+        "cerebellar_stroke_dizziness_rule"
+      ],
+      "requiredItemIds": [
+        "ed01",
+        "ed02"
+      ],
+      "maxOverallGrade": 0,
+      "message": "중추성 어지럼 가능성을 설명하지 않았거나, 뇌영상을 포함한 검사 계획을 세우지 않았습니다."
+    }
+  ]
 }
