@@ -305,5 +305,19 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "septic_joint_aspiration",
+      "caseIds": [
+        "septic_arthritis_rule"
+      ],
+      "requiredItemIds": [
+        "ed01",
+        "ed02"
+      ],
+      "maxOverallGrade": 0,
+      "message": "발열을 동반한 단관절염에서 화농성 관절염 가능성을 설명하지 않았거나, 관절액 검사를 포함한 검사 계획을 세우지 않았습니다. 진단이 늦으면 관절이 파괴됩니다."
+    }
+  ]
 }

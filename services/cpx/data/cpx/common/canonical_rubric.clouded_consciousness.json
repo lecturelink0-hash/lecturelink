@@ -325,5 +325,55 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "hypoglycemia_glucose",
+      "caseIds": [
+        "hypoglycemia_clouded_consciousness_rule"
+      ],
+      "requiredItemIds": [
+        "pe04b",
+        "ed01"
+      ],
+      "maxOverallGrade": 0,
+      "message": "의식이 저하된 환자에서 혈당을 확인하지 않았거나, 응급 평가가 필요함을 보호자에게 설명하지 않았습니다. 저혈당은 즉시 되돌릴 수 있는 원인이라 가장 먼저 확인해야 합니다."
+    },
+    {
+      "id": "stroke_last_known_well",
+      "caseIds": [
+        "stroke_altered_consciousness_rule"
+      ],
+      "requiredItemIds": [
+        "ht02a",
+        "ed02b"
+      ],
+      "maxOverallGrade": 0,
+      "message": "마지막으로 평소와 같았던 시각을 확인하지 않았거나, 뇌영상을 포함한 초기 평가 계획을 설명하지 않았습니다. 이 시각이 재관류 치료 가능 여부를 결정합니다."
+    },
+    {
+      "id": "sepsis_vitals_and_urgency",
+      "caseIds": [
+        "sepsis_encephalopathy_rule"
+      ],
+      "requiredItemIds": [
+        "ht01b",
+        "ed01"
+      ],
+      "maxOverallGrade": 0,
+      "message": "활력징후·산소포화도 평가를 선언하지 않았거나, 응급 평가 필요성을 설명하지 않았습니다. 감염에 의한 의식저하는 시간당 사망률이 올라갑니다."
+    },
+    {
+      "id": "overdose_abc_and_urgency",
+      "caseIds": [
+        "drug_overdose_altered_rule"
+      ],
+      "requiredItemIds": [
+        "pe01a",
+        "ed01"
+      ],
+      "maxOverallGrade": 0,
+      "message": "기도·호흡·순환을 확인하지 않았거나, 응급 평가 필요성을 설명하지 않았습니다. 진정제 중독은 호흡 억제로 진행할 수 있습니다."
+    }
+  ]
 }

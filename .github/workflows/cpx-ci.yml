@@ -67,6 +67,10 @@ jobs:
       - run: python test_patient_rules.py
       # 채점 입력 계약(역할·시각·종료 세션)과 인적사항 해석 회귀
       - run: python test_input_validation.py
+      # 적신호 안전 게이트 — 정의 검증 + 놓치면 걸리고 다 하면 안 걸리는지 양방향
+      - run: python test_safety_gates.py
+      # 채점기가 케이스·진단을 받는지 (오진해도 만점 방지)
+      - run: python test_case_aware_scoring.py
       - run: python test_low_compliance.py
       - run: python test_usage.py
       # 적대적 QA 하니스의 판정 로직 회귀 — 모델 호출 없이 돈다(API 키·쿼터 불필요)

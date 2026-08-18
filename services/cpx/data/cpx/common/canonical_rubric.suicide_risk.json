@@ -270,5 +270,35 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "suicide_risk_assessment",
+      "caseIds": [
+        "suicidal_ideation_depression_rule",
+        "post_attempt_assessment_rule",
+        "elderly_passive_si_rule"
+      ],
+      "requiredItemIds": [
+        "ht01",
+        "ht03a",
+        "ht04"
+      ],
+      "maxOverallGrade": 0,
+      "message": "자살 위험 평가의 핵심(사고 직접 확인·구체적 계획·수단 접근 가능성)이 확인되지 않았습니다. 이 세 가지는 위험도 판단과 처분을 가르는 항목이라 하나라도 빠지면 면담이 성립하지 않습니다."
+    },
+    {
+      "id": "suicide_safety_plan",
+      "caseIds": [
+        "suicidal_ideation_depression_rule",
+        "post_attempt_assessment_rule",
+        "elderly_passive_si_rule"
+      ],
+      "requiredItemIds": [
+        "ed01"
+      ],
+      "maxOverallGrade": 0,
+      "message": "위험 수단 제거·회피를 포함한 안전 계획 합의가 없었습니다. 자살 위험 면담은 평가에서 끝나지 않고 안전 계획까지 가야 합니다."
+    }
+  ]
 }

@@ -295,5 +295,31 @@
       "patient_personality",
       "patient_prompt_following"
     ]
-  }
+  },
+  "safetyGates": [
+    {
+      "id": "ectopic_pregnancy_check",
+      "caseIds": [
+        "ectopic_pregnancy_rule"
+      ],
+      "requiredItemIds": [
+        "ht11b",
+        "ed03"
+      ],
+      "maxOverallGrade": 0,
+      "message": "가임기 여성의 급성 복통에서 임신 가능성을 확인하지 않았거나, 응급 수술 평가를 포함한 검사 계획을 세우지 않았습니다. 자궁외임신 파열은 놓치면 출혈로 사망합니다."
+    },
+    {
+      "id": "perforation_surgical_plan",
+      "caseIds": [
+        "ulcer_perforation_rule"
+      ],
+      "requiredItemIds": [
+        "ed02",
+        "ed03"
+      ],
+      "maxOverallGrade": 0,
+      "message": "복막자극징후를 동반한 복통에서 수술 가능성을 설명하지 않았거나, 영상을 포함한 검사 계획을 세우지 않았습니다."
+    }
+  ]
 }
