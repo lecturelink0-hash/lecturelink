@@ -1,8 +1,10 @@
 /**
  * Track A (내 강의 노트) — 사용자 업로드 자료 기반 문항 생성 프롬프트
  *
- * Claude Sonnet 4.6 에 PDF/이미지 를 직접 입력하고
- * 강의 내용에 기반한 KMLE 스타일 문항을 생성한다.
+ * 생성 모델은 lib/ai/client.ts 의 MODELS.generation() 이 정한다 — 기본 provider 는
+ * Gemini(gemini-2.5-flash, AI_PROVIDER 미설정 시)이고 AI_PROVIDER=anthropic 이면
+ * claude-sonnet-4-6 이다. 추출 텍스트·크롭 이미지를 입력해 강의 내용에 기반한
+ * KMLE 스타일 문항을 생성한다.
  *
  * 공유 풀이 아닌 Private 풀이므로:
  *  - 검증·임베딩 스킵

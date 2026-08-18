@@ -285,3 +285,48 @@ export function lintChoiceLeakage(question: KmleQuestionShape): KmleLintIssue[] 
 
   return issues;
 }
+
+/**
+ * 순서가 의미를 갖는 라벨형 선지 묶음인지 — 조합형("ㄱ", "ㄱ, ㄴ", "ㄱ, ㄴ, ㄷ"), 표식 라벨
+ * ("A"~"E"), 원문자("①"~"⑤"). 이런 선지는 관례 순서로 놓여야 자연스러우므로 섞지 않는다.
+ */
+export function isOrderedLabelChoiceSet(choices: string[]): boolean {
+  if (choices.length === 0) return false;
+  const combo = /^[ㄱ-ㅎ](\s*,\s*[ㄱ-ㅎ])*$/;
+  const letter = /^[A-Ea-e]$/;
+  const circled = /^[①-⑤]$/;
+  return (
+    choices.every((c) => combo.test(c.trim())) ||
+    choices.every((c) => letter.test(c.trim())) ||
+    choices.every((c) => circled.test(c.trim()))
+  );
+}
+
+/**
+ * 정답 위치를 코드에서 균등하게 섞는다(Fisher–Yates) — 결정론적 후처리.
+ *
+ * 내신대비 운영 987문항 실측(2026-08-18): 정답이 3번인 비율 30.7 %, 1번 9.9 %(균등 기대 20 %).
+ * 모델에게 "골고루 배치하라"고 시키는 것은 확률적 방어라 저장 직전에 코드로 섞는다.
+ * 정답 텍스트를 따라가 answer_index 를 다시 계산하므로 채점은 흔들리지 않는다.
+ * 라벨형 선지(조합형·A~E·원문자)는 관례 순서를 유지한다.
+ */
+export function shuffleChoices(
+  choices: string[],
+  answerIndex: number,
+  random: () => number = Math.random,
+): { choices: string[]; answerIndex: number } {
+  if (isOrderedLabelChoiceSet(choices)) return { choices, answerIndex };
+  if (!Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex >= choices.length) {
+    return { choices, answerIndex };
+  }
+  const answerText = choices[answerIndex];
+  const shuffled = [...choices];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const nextIndex = shuffled.indexOf(answerText);
+  // 같은 배열을 섞었으므로 못 찾을 일은 없지만, 방어적으로 원본을 돌려준다.
+  if (nextIndex < 0) return { choices, answerIndex };
+  return { choices: shuffled, answerIndex: nextIndex };
+}

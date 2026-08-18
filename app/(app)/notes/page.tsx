@@ -107,6 +107,8 @@ interface AnalyzeRes {
   keywords: string[];
   difficulty: '하' | '중' | '상';
   question_type: '지식형' | '임상형' | '이미지형';
+  /** false = 텍스트를 못 읽어(이미지·스캔본) 기본값이 채워진 응답 — 추천으로 적용하지 않는다. */
+  analyzed?: boolean;
 }
 
 interface SubjectRow {
@@ -247,6 +249,9 @@ export default function NotesPage() {
   const [questionTypes, setQuestionTypes] =
     useState<Array<(typeof QUESTION_TYPES)[number]>>(['지식형']);
   const [count, setCount] = useState(10);
+  // 사용자가 난이도·유형을 직접 만졌는지 — 만진 뒤에는 AI 추천이 덮어쓰지 않는다.
+  const difficultyTouchedRef = useRef(false);
+  const typesTouchedRef = useRef(false);
 
   // AI 자동 분석 추천 설정
   const [analyzing, setAnalyzing] = useState(false);
@@ -371,11 +376,13 @@ export default function NotesPage() {
         return;
       }
       // 분석 대상 = 이미 업로드가 끝난 자료(서버 id) + 이번에 올린 자료.
+      // 방금 올린 파일을 맨 앞에 — 서버는 앞 2개만 분석하므로 뒤에 두면 3번째 파일부터
+      // 방금 올린 자료가 분석에서 빠진다.
       const idsForAnalyze = [
+        row.id,
         ...materialsRef.current
           .filter((m) => m.id !== tempId && !m.id.startsWith(LOCAL_ID_PREFIX))
           .map((m) => m.id),
-        row.id,
       ];
       setMaterials((prev) => prev.map((m) => (m.id === tempId ? row : m)));
       // 학습자료 업로드 완료 → AI 자동 분석으로 추천 설정/폼 채움.
@@ -418,8 +425,12 @@ export default function NotesPage() {
       // 사용자가 아직 입력하지 않은 필드만 자동 채움(사용자 수정 우선).
       setTitle((cur) => cur || res.title);
       setTopic((cur) => cur || res.topic);
-      if (res.difficulty) setDifficulty(res.difficulty);
-      if (res.question_type) setQuestionTypes([res.question_type]);
+      // 난이도·유형은 (a) 모델이 실제로 자료를 읽은 응답이고 (b) 사용자가 아직 안 만졌을 때만
+      // 채운다. 텍스트를 못 읽은 폴백('중'/'임상형')이 사용자의 선택을 덮어쓰던 문제(2026-08-18).
+      if (res.analyzed !== false) {
+        if (res.difficulty && !difficultyTouchedRef.current) setDifficulty(res.difficulty);
+        if (res.question_type && !typesTouchedRef.current) setQuestionTypes([res.question_type]);
+      }
       // 저장 폴더도 AI 추천 과목명으로 자동 지정(사용자 수정 가능).
       if (res.subject) {
         const match = subjects.find(
@@ -600,6 +611,11 @@ export default function NotesPage() {
         const qs = await kickoffProcessing(m.id);
         collected.push(...qs);
         genFilesDoneRef.current += 1;
+        // 파일이 끝날 때마다 결과 뷰를 갱신 — 부분 공개 뒤에도 문항이 이어서 늘어난다.
+        if (collected.length > 0) {
+          setGenerated({ total: collected.length, questions: [...collected] });
+          setShowResult(true);
+        }
       }
     } finally {
       setGenSession(false); // 생성 완료 → 즉시 게임 종료, 문제 화면으로 전환
@@ -652,6 +668,8 @@ export default function NotesPage() {
     setDifficulty('중');
     setQuestionTypes(['지식형']);
     setCount(10);
+    difficultyTouchedRef.current = false;
+    typesTouchedRef.current = false;
   }
 
   const isGenerating = processingId !== null;
@@ -660,7 +678,9 @@ export default function NotesPage() {
   // (L) 생성 대기 로딩 화면(미니게임) — 생성 세션 동안 최상단 표시.
   //     완료되면 genSession 이 false 가 되어 즉시 결과 뷰로 전환된다.
   // ─────────────────────────────────────────────────────────────
-  if (genSession) {
+  // 첫 문항이 도착해 결과 뷰가 열렸으면(showResult) 게임 대신 결과 뷰를 보여준다 —
+  // "첫 문항부터 바로 풀 수 있게" 하려던 부분 공개가 이 분기에 가려 한 번도 보이지 않았다.
+  if (genSession && !showResult) {
     const pm = materials.find((m) => m.id === processingId) ?? null;
     // 세션 전체 진행률 = (끝난 파일 수 + 현재 파일의 단계별 진행률) / 파일 수.
     // 단계 전환·파일 전환 시에도 이전 최대값을 유지해 게이지가 절대 뒤로 가지 않는다.
@@ -697,6 +717,8 @@ export default function NotesPage() {
         title={title}
         difficulty={difficulty}
         questionType={questionTypes.join(' · ')}
+        requestedTotal={count * Math.max(1, genFilesTotalRef.current || materials.length || 1)}
+        generating={genSession}
         onReset={resetForNew}
       />
     );
@@ -708,6 +730,10 @@ export default function NotesPage() {
   // 학습자료가 1회 이상 업로드되기 전에는 '학습자료' 칸만 노출한다.
   // (참고 자료 / 추천 설정 / 문제 세트 정보 / 생성 요약은 업로드 후 등장)
   const hasUploaded = materials.length > 0;
+  // 이번 생성에서 실제로 처리될 자료 수(아직 생성 안 됐거나 실패한 것) — 문항 수는 자료마다 곱해진다.
+  const pendingMaterialCount = materials.filter(
+    (m) => m.status === 'uploaded' || m.status === 'failed',
+  ).length;
   const folderName = subjects.find((s) => s.id === folder)?.name ?? '미지정';
   // 좌측 상단 STEP 필 — 자료 업로드 → AI 강의록 판독 중 → 판독 완료(문제 생성) 3단계.
   // analyzing이 판독 중, recommendation이 판독 결과이므로 그 둘로 단계를 판정한다.
@@ -727,7 +753,7 @@ export default function NotesPage() {
         <ArrowLeft className="w-4 h-4" />
         홈으로
       </Link>
-      <section className="page-head"><div><span className="eyebrow" aria-live="polite">{stepLabel}</span><h1><span className="headline-accent">내 학습자료</span>로<br/>문제를 만들어보세요</h1><p className="lead">강의자료와 기출문제를 업로드하고 원하는 범위의 예상 문제를 생성해 보세요.</p></div><div className="guide"><Link href="/tutorial" className="guide-trigger"><span className="guide-icon">?</span><GuideLabel /></Link><div className="guide-panel"><h2>어떻게 사용하나요?</h2><ol><li><strong>학습자료 업로드</strong>: 업로드한 자료를 기반으로 문제를 생성합니다.</li><li><strong>참고 자료 추가</strong>: 예시 문항의 형식과 난이도를 반영합니다.</li><li><strong>문제 세트 정보 확인</strong>: 이름과 주제를 확인하고 수정합니다.</li></ol></div></div></section>
+      <section className="page-head"><div><span className="eyebrow" aria-live="polite">{stepLabel}</span><h1><span className="headline-accent">내 학습자료</span>로<br/>문제를 만들어보세요</h1><p className="lead">강의자료와 기출문제를 업로드하고 원하는 범위의 예상 문제를 생성해 보세요.</p></div><div className="guide"><Link href="/tutorial" className="guide-trigger"><span className="guide-icon">?</span><GuideLabel /></Link><div className="guide-panel"><h2>어떻게 사용하나요?</h2><ol><li><strong>학습자료 업로드</strong>: 업로드한 자료를 기반으로 문제를 생성합니다.</li><li><strong>참고 자료 추가</strong>: 예시 문항의 형식(발문·선지 구성)을 참고합니다. 내용과 난이도의 근거로는 쓰지 않아요.</li><li><strong>문제 세트 정보 확인</strong>: 이름과 주제를 확인하고 수정합니다.</li></ol></div></div></section>
 
       <div
         className={clsx(
@@ -853,7 +879,7 @@ export default function NotesPage() {
                 </Field>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="단원 / 주제" hint="문제가 다룰 핵심 주제예요. 이 주제를 중심으로 문항이 생성돼요.">
+                  <Field label="단원 / 주제" hint="문제집 표시용 주제예요. (지금은 문항 생성 조건에는 반영되지 않고, 자료 전체 내용에서 출제돼요.)">
                     <input
                       type="text"
                       value={topic}
@@ -862,7 +888,7 @@ export default function NotesPage() {
                       className="w-full h-10 px-3 rounded-lg border border-[var(--color-border)] text-sm text-sage-800 bg-white focus:outline-none focus:border-sage-500"
                     />
                   </Field>
-                  <Field label="저장 폴더" hint="문제집이 저장될 과목 폴더예요. 자료 내용에 맞춰 AI가 자동 선택하며, 내 문제집에서 이 폴더로 찾을 수 있어요.">
+                  <Field label="저장 폴더" hint="자료 내용에 맞춰 AI가 제안한 과목이에요. 실제 분류는 생성된 문항의 세부주제를 기준으로 자동 지정돼요.">
                     <select
                       value={folder}
                       onChange={(e) => setFolder(e.target.value)}
@@ -883,7 +909,10 @@ export default function NotesPage() {
                     <Segmented
                       options={DIFFICULTIES}
                       value={difficulty}
-                      onChange={setDifficulty}
+                      onChange={(v) => {
+                        difficultyTouchedRef.current = true;
+                        setDifficulty(v);
+                      }}
                     />
                   </Field>
                   <Field
@@ -893,7 +922,10 @@ export default function NotesPage() {
                     <MultiSegmented
                       options={QUESTION_TYPES}
                       values={questionTypes}
-                      onChange={setQuestionTypes}
+                      onChange={(v) => {
+                        typesTouchedRef.current = true;
+                        setQuestionTypes(v);
+                      }}
                     />
                   </Field>
                 </div>
@@ -1068,10 +1100,16 @@ export default function NotesPage() {
                         </div>
                       )}
                     </dl>
-                    <div className="flex items-center gap-1.5 mt-4 text-xs font-medium text-sage-700">
-                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                      추천 설정이 적용되었습니다.
-                    </div>
+                    {recommendation.analyzed === false ? (
+                      <div className="mt-4 text-xs font-medium text-[var(--color-muted)]">
+                        자료에서 텍스트를 읽지 못해 추천을 만들지 못했어요. 아래 난이도·유형을 직접 확인해 주세요.
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 mt-4 text-xs font-medium text-sage-700">
+                        <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        추천 설정이 적용되었습니다.
+                      </div>
+                    )}
                   </>
                 )
               ) : (
@@ -1093,7 +1131,14 @@ export default function NotesPage() {
                 <SummaryRow label="학습자료" value={`${materials.length}개`} />
                 <SummaryRow label="참고 자료" value={`${references.length}개`} />
                 <SummaryRow label="난이도" value={difficulty} />
-                <SummaryRow label="문항 수" value={`${count}문항`} />
+                <SummaryRow
+                  label="문항 수"
+                  value={
+                    pendingMaterialCount > 1
+                      ? `${count}문항 × ${pendingMaterialCount}개 자료 = ${count * pendingMaterialCount}문항`
+                      : `${count}문항`
+                  }
+                />
               </dl>
 
               <Button
@@ -1124,12 +1169,18 @@ function ResultView({
   title,
   difficulty,
   questionType,
+  requestedTotal,
+  generating = false,
   onReset,
 }: {
   result: GeneratedResult;
   title: string;
   difficulty: string;
   questionType: string;
+  /** 요청한 총 문항 수(문항 수 × 학습자료 수) — 실제 생성 수가 이보다 적으면 알려 준다. */
+  requestedTotal?: number;
+  /** 아직 나머지 문항을 만드는 중인지(부분 공개 상태). */
+  generating?: boolean;
   onReset: () => void;
 }) {
   const [outcomes, setOutcomes] = useState<Record<string, QuestionOutcome>>({});
@@ -1167,11 +1218,15 @@ function ResultView({
       {/* 헤더 */}
       <div className="mb-8">
         <h1 className="text-[2.4rem] leading-[1.1] font-bold text-sage-800 tracking-[-0.03em]">
-          문제집이 완성됐어요
+          {generating ? '먼저 도착한 문항부터 풀어보세요' : '문제집이 완성됐어요'}
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Badge variant="private">{result.total}문항</Badge>
-          <Badge variant="default">난이도 {difficulty}</Badge>
+          {generating && <Badge variant="default">나머지 문항 만드는 중…</Badge>}
+          {!generating && requestedTotal !== undefined && result.total < requestedTotal && (
+            <Badge variant="default">요청 {requestedTotal}문항 중 {result.total}문항 생성됨</Badge>
+          )}
+          <Badge variant="default">요청 난이도 {difficulty}</Badge>
           <Badge variant="default">{questionType}</Badge>
           {title && (
             <span className="text-sm text-[var(--color-muted)]">· {title}</span>
@@ -1265,14 +1320,34 @@ function QuestionCard({
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // 풀이 시간 실측 — 카드가 화면에 절반 이상 들어온 시점(또는 첫 선택 시점 중 이른 쪽)부터
+  // 제출까지. 종전에는 시간을 아예 안 보냈다(오답 사유 분석이 쓸 수 있는 신호가 없었다).
+  const shownAtRef = useRef<number | null>(null);
+  const stemRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stemRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (shownAtRef.current === null && entries.some((e) => e.isIntersecting)) {
+          shownAtRef.current = Date.now();
+        }
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   async function submitAnswer() {
     if (selected === null || outcome) return;
     setSubmitting(true);
     try {
+      const startedAt = shownAtRef.current ?? Date.now();
       const response = await api.post<AttemptResponse>('/api/attempts', {
         question_id: q.id,
         selected_index: selected,
+        time_spent_seconds: Math.min(3600, Math.max(0, Math.round((Date.now() - startedAt) / 1000))),
         track: 'lecture_note',
       });
       onGraded({ ...response, selected_index: selected });
@@ -1294,7 +1369,7 @@ function QuestionCard({
          카드가 그 여백만큼 오히려 커진다 — 여백을 줄이려는 목적과 어긋나 두지 않는다.)
         overflow-hidden 은 발문이 짧을 때 float 이 아래 이미지·선택지로 새지 않도록 가둔다.
       */}
-      <div className="mb-5 overflow-hidden">
+      <div ref={stemRef} className="mb-5 overflow-hidden">
         <span
           className="ll-chip text-sm font-bold tabular-nums"
           style={{
@@ -1336,7 +1411,11 @@ function QuestionCard({
             >
               <button
                 type="button"
-                onClick={() => !outcome && setSelected(ci)}
+                onClick={() => {
+                  if (outcome) return;
+                  if (shownAtRef.current === null) shownAtRef.current = Date.now();
+                  setSelected(ci);
+                }}
                 disabled={outcome !== null}
                 className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-left text-sm transition-colors ${
                   isCorrect
