@@ -3675,3 +3675,427 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
     min-width: 0;
   }
 }
+
+/* ==================================================================
+   0720 하이브리드 시안 (검토용 — 7/20 룩 일부 롤백)
+   ① h1 타이포·이름 강조 롤백  ② 진입 카드 2종에 7/20 그라데이션·버튼
+   ③ 내 학습 현황 여백 정리  ④ 주간 기록 불꽃 이모지 롤백
+   ================================================================== */
+
+.student-dashboard .dashboard-greeting h1 {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 780;
+  letter-spacing: -0.008em;
+  line-height: 1.25;
+}
+
+.student-dashboard .dashboard-greeting h1 .greeting-name { color: #1F5C43; }
+
+.student-dashboard .dashboard-greeting p { font-size: 13.5px; }
+
+/* 7/20 continue-card 배경·보더를 두 진입 카드에 적용 */
+.student-dashboard .dashboard-next-card,
+.student-dashboard .dashboard-cpx-card {
+  border-color: #C9DEBE;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(166, 199, 176, .35), transparent 32%),
+    linear-gradient(135deg, #FFFFFF 0%, #F1F8F2 46%, #DDEFE2 100%);
+  box-shadow: 0 10px 30px -20px rgba(31, 92, 67, .36);
+}
+
+/* 7/20 버튼 스타일 (btn-focus / btn-ghost) */
+.student-dashboard .dashboard-primary-action {
+  min-height: 50px;
+  border: 1px solid rgba(20, 60, 44, .12);
+  border-radius: 12px;
+  padding: 0 16px;
+  background: #1F5C43;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 12px 26px -14px rgba(31, 92, 67, .62), 0 0 0 4px rgba(243, 198, 78, .22);
+}
+
+.student-dashboard .dashboard-primary-action:hover {
+  background: #194B37;
+  box-shadow: 0 16px 30px -16px rgba(31, 92, 67, .72), 0 0 0 5px rgba(243, 198, 78, .28);
+}
+
+.student-dashboard .dashboard-secondary-action {
+  min-height: 44px;
+  border: 1px solid #C9DEBE;
+  border-radius: 12px;
+  background: #fff;
+  color: #1F5C43;
+  font-size: 14px;
+}
+
+.student-dashboard .dashboard-secondary-action:hover {
+  border-color: #C9DEBE;
+  background: #EAF3ED;
+}
+
+/* 내 학습 현황: 상단 46px 여백을 다른 카드와 같은 리듬으로 */
+@media (min-width: 921px) {
+  .student-dashboard .dashboard-weekly-card { padding: 30px 30px 26px; }
+}
+
+/* 주간 학습 기록: 체크 원형 → 7/20 불꽃 이모지 */
+.student-dashboard .study-day i,
+.student-dashboard .study-day i.is-complete,
+.student-dashboard .study-day i.is-today {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--dashboard-muted);
+  font-size: 17px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.student-dashboard .study-day i:not(.is-complete) { font-size: 24px; font-weight: 700; }
+
+/* ==================================================================
+   타이포 위계 정리 (하이브리드 시안 2차)
+   L1 인사 h1 34px > L2 진입 카드 제목 31px > L3 카드 섹션 제목 20px
+   > 데이터 숫자 24px(강조용 예외) > L4 항목 제목 15px > L5 설명 13.5–14px
+   ================================================================== */
+
+/* L1 — 페이지 앵커 */
+.student-dashboard .dashboard-greeting h1 {
+  font-size: clamp(26px, 3.2vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.student-dashboard .dashboard-greeting p { font-size: 14px; }
+
+/* L2 — 시선이 머무는 진입 카드 제목 2종: 동급으로 통일, h1보다 한 단계 아래 */
+.student-dashboard .dashboard-next-copy h2,
+.student-dashboard .dashboard-cpx-card h2 {
+  font-size: clamp(24px, 2.7vw, 31px);
+  font-weight: 800;
+  line-height: 1.24;
+}
+
+/* L3 — 섹션 카드 제목 2종: 동급 20px (기존 30.2px/21.6px 불일치 해소) */
+.student-dashboard .dashboard-section-heading h2,
+.student-dashboard .dashboard-queue-heading h2 {
+  font-size: 20px;
+  font-weight: 760;
+}
+
+/* 데이터 숫자 — 강조는 유지하되 L2를 넘보지 않게 상한 24px */
+.student-dashboard .dashboard-metrics dd {
+  font-size: clamp(19px, 2.1vw, 24px);
+}
+
+/* L5 — 설명 문구 통일 */
+.student-dashboard .dashboard-next-copy-content > p,
+.student-dashboard .dashboard-cpx-card p {
+  font-size: 14px;
+}
+
+.student-dashboard .dashboard-section-heading p,
+.student-dashboard .dashboard-queue-heading p {
+  font-size: 13.5px;
+}
+
+@media (max-width: 480px) {
+  .student-dashboard .dashboard-section-heading h2,
+  .student-dashboard .dashboard-queue-heading h2 { font-size: 18px; }
+}
+
+/* 한국어 줄바꿈 — 제목·설명이 단어 중간("생성\n하기", "연습하세\n요")에서 꺾이지 않게 */
+.student-dashboard .dashboard-next-copy h2,
+.student-dashboard .dashboard-cpx-card h2,
+.student-dashboard .dashboard-next-copy-content > p,
+.student-dashboard .dashboard-cpx-card p {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* ==================================================================
+   진입 카드 병렬 구조 (하이브리드 시안 3차)
+   두 카드 공통 패턴: 아이콘 → 제목 → 설명 → 단계 플로우 → CTA (+ 우측 비주얼)
+   ================================================================== */
+
+.student-dashboard .dashboard-card-icon {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 21px;
+  color: var(--dashboard-forest);
+  stroke-width: 1.8;
+}
+
+.student-dashboard .dashboard-next-copy {
+  justify-content: flex-start;
+}
+
+.student-dashboard .dashboard-next-copy > p {
+  max-width: 590px;
+  margin: 11px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 14px;
+  font-weight: 520;
+  line-height: 1.55;
+}
+
+.student-dashboard .dashboard-flow-line {
+  margin-top: 16px;
+  margin-bottom: 14px;
+  color: var(--dashboard-forest);
+  font-size: clamp(13px, 1.05vw, 14px);
+  font-weight: 680;
+  line-height: 1.3;
+}
+
+.student-dashboard .dashboard-next-actions {
+  margin-top: auto;
+}
+
+.student-dashboard .dashboard-next-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.student-dashboard .dashboard-next-visual svg {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+}
+
+/* CPX 설명 폭 — 캐릭터 옆에서 어절 단위로 안정적으로 접히게 */
+.student-dashboard .dashboard-cpx-card p { max-width: 340px; }
+
+/* ==================================================================
+   반응형 줄바꿈 규칙
+   제목: keep-all + balance (두 줄이 되면 행 길이 균형, 외자 꼬리 방지)
+   설명: keep-all + pretty (마지막 행 고아 단어 방지)
+   플로우: 미디어쿼리에서 nowrap (기존 규칙 유지)
+   ================================================================== */
+
+.student-dashboard .dashboard-greeting h1,
+.student-dashboard .dashboard-next-copy h2,
+.student-dashboard .dashboard-cpx-card h2,
+.student-dashboard .dashboard-section-heading h2,
+.student-dashboard .dashboard-queue-heading h2 {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.student-dashboard .dashboard-greeting p,
+.student-dashboard .dashboard-next-copy > p,
+.student-dashboard .dashboard-cpx-card p,
+.student-dashboard .dashboard-section-heading p,
+.student-dashboard .dashboard-queue-heading p,
+.student-dashboard .dashboard-next-queue small {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+@media (max-width: 720px) {
+  .student-dashboard .dashboard-next-visual { display: none; }
+  .student-dashboard .dashboard-next-card { grid-template-columns: 1fr; }
+  .student-dashboard .dashboard-flow-line { white-space: nowrap; font-size: clamp(11.5px, 3.05vw, 13px); }
+}
+
+/* 카드 설명(≤2줄 짧은 문단)은 balance — 짧은 꼬리 행("수 있어요.")이 생기지 않게 행 길이 균형 */
+.student-dashboard .dashboard-next-copy > p,
+.student-dashboard .dashboard-cpx-card p {
+  text-wrap: balance;
+}
+
+/* 플로우 라인 — 어절 단위 줄바꿈("오답 복/습" 방지) */
+.student-dashboard .dashboard-flow-line,
+.student-dashboard .dashboard-cpx-flow {
+  word-break: keep-all;
+}
+
+/* ==================================================================
+   진입 카드 4차 — 제목 한 줄 고정 + 일러스트 우하단 + 여백 압축
+   두 카드 공통 리듬: 아이콘(mb14) → 제목 1줄 → 설명 2줄 → 플로우 → CTA(bottom)
+   ================================================================== */
+
+.student-dashboard .dashboard-next-card {
+  display: flex;
+  position: relative;
+  min-height: 304px;
+  grid-template-columns: none;
+  gap: 0;
+  padding: 28px 32px;
+  overflow: hidden;
+}
+
+.student-dashboard .dashboard-cpx-card {
+  min-height: 304px;
+  padding: 28px 32px;
+}
+
+.student-dashboard .dashboard-next-copy {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+}
+
+/* 제목 한 줄 고정 — 좌우 카드의 제목·설명 기준선 일치 */
+.student-dashboard .dashboard-next-copy h2 {
+  white-space: nowrap;
+  max-width: none;
+}
+
+/* 설명은 일러스트 옆에서 2줄로 — CPX 설명과 같은 높이 리듬 */
+.student-dashboard .dashboard-next-copy > p { max-width: 330px; }
+
+/* 아이콘-제목 간격 압축 (양쪽 동일) */
+.student-dashboard .dashboard-card-icon,
+.student-dashboard .dashboard-cpx-icon { margin-bottom: 14px; }
+
+.student-dashboard .dashboard-next-copy > p,
+.student-dashboard .dashboard-cpx-card p { margin-top: 8px; }
+
+.student-dashboard .dashboard-flow-line,
+.student-dashboard .dashboard-cpx-flow { margin-top: 12px; margin-bottom: 12px; }
+
+/* 일러스트 — 우하단 고정, 바닥에 밀착해 빈 공간을 채움 */
+.student-dashboard .dashboard-next-visual {
+  position: absolute;
+  z-index: 1;
+  right: 14px;
+  bottom: -6px;
+  width: 236px;
+  min-width: 0;
+}
+
+.student-dashboard .dashboard-next-illust {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 480px) {
+  /* 좁은 폭에서는 한 줄 고정 해제 (오버플로 방지) */
+  .student-dashboard .dashboard-next-copy h2 { white-space: normal; }
+}
+
+/* ==================================================================
+   하이브리드 시안 5차 — 아이콘 인라인·여백 압축·타이포 재조정
+   ================================================================== */
+
+/* ① 아이콘을 제목 옆으로 — 카드 상단 여백 축소 */
+.student-dashboard .dashboard-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-dashboard .dashboard-card-title-row .dashboard-card-icon,
+.student-dashboard .dashboard-card-title-row .dashboard-cpx-icon {
+  margin-bottom: 0;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+/* ② 카드 높이·일러스트 위치 재조정 */
+.student-dashboard .dashboard-next-card,
+.student-dashboard .dashboard-cpx-card {
+  min-height: 264px;
+  padding: 26px 32px;
+}
+
+.student-dashboard .dashboard-next-visual {
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-46%);
+  width: 224px;
+}
+
+/* ③ 내 학습 현황 — 상세 분석 제거 후 리듬 */
+.student-dashboard .dashboard-weekly-card { padding: 26px 30px 24px; min-height: 0; }
+.student-dashboard .dashboard-metrics { margin-top: 24px; }
+.student-dashboard .dashboard-weekly-card .study-week { margin: 24px 0 0; }
+
+/* ④ 섹션 제목 2종 동급 22px — 카드 내부 숫자(≤22px)보다 작지 않게 */
+.student-dashboard .dashboard-section-heading h2,
+.student-dashboard .dashboard-queue-heading h2 {
+  font-size: 22px;
+  font-weight: 770;
+}
+
+.student-dashboard .dashboard-metrics dd {
+  font-size: clamp(19px, 2vw, 22px);
+}
+
+/* ⑤ 서브 텍스트 전반 상향 (교육 SaaS 통상 secondary 14–15px, 캡션 최소 12.5px) */
+.student-dashboard .dashboard-greeting p { font-size: 15px; }
+.student-dashboard .dashboard-next-copy > p,
+.student-dashboard .dashboard-cpx-card p { font-size: 15px; }
+.student-dashboard .dashboard-flow-line,
+.student-dashboard .dashboard-cpx-flow { font-size: 14px; }
+.student-dashboard .dashboard-section-heading p,
+.student-dashboard .dashboard-queue-heading p { font-size: 14px; }
+.student-dashboard .dashboard-streak-line { font-size: 14px; }
+.student-dashboard .dashboard-metrics dt { font-size: 13.5px; }
+.student-dashboard .dashboard-delta { font-size: 13px; }
+.student-dashboard .study-day { font-size: 12.5px; }
+.student-dashboard .dashboard-dday-chip { font-size: 14px; }
+
+/* ⑥ 스파크라인 높이 축소 — 74%가 이웃 숫자보다 내려앉던 문제 */
+.student-dashboard .dashboard-spark {
+  height: 20px;
+  width: auto;
+  margin-bottom: 3px;
+}
+
+/* ==================================================================
+   하이브리드 시안 6차 — 미세 여백·연속학습 재배치·배경 토큰 정합
+   ================================================================== */
+
+/* 공통 배경 토큰 #FCFAF4 적용 (기존 셸 배경은 #FBF8EF 근사값이었음) */
+.ll-app-shell { --color-bg: #FCFAF4; }
+
+/* CPX 청진기 글리프의 우측 광학 여백 보정 — 제목과의 간격 축소 */
+.student-dashboard .dashboard-card-title-row .dashboard-cpx-icon { margin-right: -5px; }
+
+/* 제목-설명 간격 확대, 카드 높이 축소로 플로우-버튼 잔여 여백 감소 */
+.student-dashboard .dashboard-next-copy > p,
+.student-dashboard .dashboard-cpx-card p { margin-top: 13px; }
+
+.student-dashboard .dashboard-next-card,
+.student-dashboard .dashboard-cpx-card { min-height: 250px; }
+
+/* 연속 학습 배지 — D-day 칩 좌측 인라인 */
+.student-dashboard .dashboard-heading-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.student-dashboard .dashboard-streak-line { margin-top: 0; }
+
+.student-dashboard .streak-flame { font-size: 15px; line-height: 1; }
+
+/* 주간 기록 — 학습일 🔥 / 미학습일은 꺼진(회색) 불꽃 */
+.student-dashboard .study-day i:not(.is-complete) {
+  font-size: 17px;
+  font-weight: 400;
+  filter: grayscale(1) opacity(.35);
+}
+
+/* 우측 큐 — 위 정렬 + 마지막 항목 바로 아래에서 마감 (하단 잔여 여백 제거) */
+.student-dashboard .dashboard-next-queue {
+  justify-content: flex-start;
+  align-self: start;
+  padding: 22px 0 4px;
+}
+
+/* 지표 라벨도 어절 단위 줄바꿈 (모바일 "정답\n률" 방지) */
+.student-dashboard .dashboard-metrics dt { word-break: keep-all; }
