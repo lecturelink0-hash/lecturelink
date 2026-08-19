@@ -4200,3 +4200,25 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
 @media (max-width: 480px) {
   .student-dashboard { padding-top: 40px; }
 }
+
+/* 9차 — 상·하단 여백을 각각 절반으로
+   하단 140px = 대시보드 pb 56 + 페이지 프레임 pb 60 + 푸터 margin-top 24.
+   푸터 여백은 전역이라 두고, 앞의 두 값만 줄여 70px 로 맞춘다.
+   상단 90px = 프레임 pt(88) − 헤더(60) + 대시보드 pt(62) → 45px 로 맞춘다. */
+
+.student-dashboard {
+  padding-top: 17px;
+  padding-bottom: 22px;
+}
+
+.ll-page-frame:has(> .student-dashboard) {
+  padding-bottom: 24px;
+}
+
+@media (max-width: 920px) {
+  .student-dashboard { padding-top: 10px; }
+}
+
+@media (max-width: 480px) {
+  .student-dashboard { padding-top: 6px; }
+}
