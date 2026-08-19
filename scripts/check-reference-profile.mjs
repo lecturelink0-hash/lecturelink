@@ -148,6 +148,44 @@ check(
   /발문 종결을 뽑지 못함/.test(genCode) && /문항 형태가 없음/.test(genCode),
 );
 
+console.log('\n형식 우선이 쿼터에도 적용되는가 (2026-08-19 재실측 대응)');
+// 재실측에서 프로파일이 negative_ratio 0.4 였는데 생성은 부정형 0/4 였다.
+// 원인은 부정형 허용 묶음을 정하는 코드가 프로파일을 안 보고 기본 20 % 로 눌렀던 것.
+// 배치 지시는 시스템 프롬프트보다 뒤·구체적이라 실제로는 배치 지시가 이긴다.
+check(
+  '부정형 쿼터가 프로파일 비율을 따른다',
+  /negativeQuota = isUsableProfile\(referenceProfile\)/.test(genCode) &&
+    /referenceProfile\.negative_ratio \* desiredCount/.test(genCode),
+);
+check(
+  '조합형 쿼터가 프로파일의 사용 여부를 따른다',
+  /comboQuota = isUsableProfile\(referenceProfile\)/.test(genCode) &&
+    /referenceProfile\.combo_used/.test(genCode),
+);
+check(
+  '참고 자료가 없으면 종전 기본값을 쓴다',
+  /Math\.max\(1, Math\.round\(desiredCount \/ 10\) \* 2\)/.test(genCode) &&
+    /Math\.floor\(desiredCount \/ 10\)/.test(genCode),
+);
+check(
+  '허용 묶음 수는 배치 수를 넘지 않는다',
+  /Math\.min\(batchSizes\.length, Math\.round\(referenceProfile\.negative_ratio/.test(genCode),
+);
+// vignette_ratio 는 일부러 반영하지 않는다 — 사용자가 고른 문항 유형을 프로파일이 뒤집으면
+// 요청 위반이다(지식형을 골랐는데 증례가 나오는 것).
+check(
+  '증례 비율은 쿼터에 반영하지 않는다(사용자가 고른 유형이 우선)',
+  !/vignette_ratio \*/.test(genCode) && !/clinicalQuota[^\n]*vignette_ratio/.test(genCode),
+);
+{
+  // 계산 재현: 프로파일 0.4 · 10문항 · 배치 5개 → 허용 묶음 4개(문항 기준 40 %).
+  const batches = 5;
+  const q = Math.min(batches, Math.round(0.4 * 10));
+  check('0.4 × 10문항 → 허용 묶음 4개', q === 4, `${q}`);
+  const none = Math.min(batches, Math.round(0 * 10));
+  check('부정형을 안 쓰는 학교면 허용 묶음 0개', none === 0);
+}
+
 console.log('\n텍스트 추출 범위');
 check('PDF 텍스트를 읽는다', /REFERENCE_PDF_MAX_PAGES/.test(genCode));
 check('PPTX 를 읽는다', /parsePptx\(buffer\)[\s\S]{0,120}slides/.test(genCode));
