@@ -71,6 +71,8 @@ jobs:
       - run: python test_safety_gates.py
       # 채점기가 케이스·진단을 받는지 (오진해도 만점 방지)
       - run: python test_case_aware_scoring.py
+      # 채점 하드 타임아웃이 실제로 응답을 끊는지 — 옛 구조는 못 끊었음을 시간으로 재현
+      - run: python test_evaluate_timeout.py
       - run: python test_low_compliance.py
       - run: python test_usage.py
       # 적대적 QA 하니스의 판정 로직 회귀 — 모델 호출 없이 돈다(API 키·쿼터 불필요)

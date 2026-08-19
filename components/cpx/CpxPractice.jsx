@@ -156,6 +156,16 @@ export default function CpxPractice() {
   const noticeRef = useRef(null); // 처리 안내 배너 — 미확인 상태로 시작을 누르면 여기로 스크롤한다.
   const startErrorRef = useRef(null); // 진료 시작 실패 배너 — 실패할 때마다 여기로 스크롤한다.
   const lastStartRef = useRef(null); // 마지막 시작 인자 — 기존 연습을 종료한 뒤 같은 조건으로 재시도한다.
+  const reconnectRef = useRef(null); // Live 끊김 복구 — onStatus('offline')에서 호출한다.
+  const reconnectingRef = useRef(false); // 재연결 중복 방지 (close 이벤트가 연달아 올 수 있다)
+  const reconnectTriesRef = useRef(0);
+  // 재연결 콜백은 live.js 안에서 불리므로 그때의 최신 값을 봐야 한다 — state 를 그대로 닫으면
+  // 세션 시작 시점의 낡은 값(phase='starting', sessionId='')을 보고 아무것도 하지 않는다.
+  const phaseRef = useRef('ready');
+  const sessionIdRef = useRef('');
+  // 의도적으로 끊는 경우(종료·시작 실패·언마운트)에는 재연결하지 않는다.
+  // phase state 는 비동기라 disconnect 와 같은 tick 에서는 아직 'live' 로 읽힌다 — 동기 플래그가 필요하다.
+  const teardownRef = useRef(false);
 
   const remaining = Math.max(0, limitSeconds - elapsed);
   const push = useCallback((role, text) => {
@@ -256,6 +266,7 @@ export default function CpxPractice() {
 
   useEffect(() => () => {
     micRef.current?.stop?.();
+    teardownRef.current = true;
     liveRef.current?.disconnect?.({ silent: true });
   }, []);
 
@@ -352,6 +363,8 @@ export default function CpxPractice() {
     lastStartRef.current = { target, startOptions };
     setBlockedSessionId('');
     setPracticeMode(startOptions.mode || 'direct');
+    // 새 세션이니 이전 세션의 끊김 복구 상태를 초기화한다.
+    teardownRef.current = false; reconnectingRef.current = false; reconnectTriesRef.current = 0;
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     usageRef.current = [];
@@ -373,7 +386,13 @@ export default function CpxPractice() {
       setSessionId(created.sessionId); setPersona(created.persona); startedAtRef.current = Date.now(); setElapsed(0);
       const token = await request(`/sessions/${created.sessionId}/live-token`, { method: 'POST' });
       const live = new GeminiLivePatient({
-        onStatus: (_state, nextStatus) => setStatus(nextStatus),
+        onStatus: (state, nextStatus) => {
+          setStatus(nextStatus);
+          // ephemeral token 은 1회용이라, 중간에 연결이 끊기면 예전에는 복구 경로가 없어
+          // 남은 시간을 통째로 잃었다. 그동안 하트비트는 계속 나가 12분이 정산됐다
+          // (2026-08-18 감사 다3). 끊기면 새 토큰을 받아 다시 붙는다.
+          if (state === 'offline') reconnectRef.current?.();
+        },
         onPatientText: (text) => push('patient', sanitizePatientText(text)),
         onInputText: (text, meta) => { if (meta?.final) push('student', text); },
         onAudioLevel: setAudioLevel,
@@ -393,6 +412,7 @@ export default function CpxPractice() {
       // 배지는 상태만 짧게 — 안내 문구는 아래 대화창 플레이스홀더가 같은 말을 이미 한다.
       setPhase('live'); setStatus('진료 중');
     } catch (nextError) {
+      teardownRef.current = true;
       liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null;
       micRef.current?.stop?.(); micRef.current = null;
       // 세션이 만들어진 뒤(토큰 발급·Live 연결·마이크 단계)에 실패하면 서버 세션이 active 로 남는다.
@@ -411,6 +431,42 @@ export default function CpxPractice() {
       setStartErrorSeq((seq) => seq + 1);
     }
   };
+
+  // Live 끊김 복구. ephemeral token 은 1회용이라 재발급이 필요하고, 서버의 live-token
+  // 엔드포인트는 같은 세션으로 다시 부를 수 있다. 남은 시간은 계속 흐르고 정산도 계속되므로
+  // 끊긴 채 두면 학생이 그 시간을 통째로 잃는다 — 조용히 다시 붙이고 상태만 알려준다.
+  // 진료 중(phase==='live')일 때만, 최대 3회까지, 간격을 늘려가며 시도한다.
+  const RECONNECT_MAX_TRIES = 3;
+  const reconnectLive = useCallback(async () => {
+    if (reconnectingRef.current || teardownRef.current) return;
+    if (phaseRef.current !== 'live' || !sessionIdRef.current) return;
+    if (reconnectTriesRef.current >= RECONNECT_MAX_TRIES) {
+      setError('환자와의 연결이 끊어졌고 재연결에 실패했습니다. 지금까지의 대화로 채점할 수 있습니다.');
+      return;
+    }
+    reconnectingRef.current = true;
+    reconnectTriesRef.current += 1;
+    const attempt = reconnectTriesRef.current;
+    setStatus(`연결이 끊겨 다시 연결하는 중입니다 (${attempt}/${RECONNECT_MAX_TRIES})`);
+    try {
+      await new Promise((resolve) => window.setTimeout(resolve, 400 * attempt));
+      if (phaseRef.current !== 'live' || teardownRef.current) return;
+      const token = await request(`/sessions/${sessionIdRef.current}/live-token`, { method: 'POST' });
+      await liveRef.current?.connect(token);
+      liveRef.current?.setMuted(!voiceOn);
+      reconnectTriesRef.current = 0;
+      setStatus('진료 중');
+    } catch {
+      setStatus('재연결 실패');
+      // 다음 close 이벤트나 다음 시도에서 이어간다 — 여기서 더 재귀하지 않는다.
+    } finally {
+      reconnectingRef.current = false;
+    }
+  }, [voiceOn]);
+
+  useEffect(() => { reconnectRef.current = reconnectLive; }, [reconnectLive]);
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
+  useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
 
   // 다른 탭·이전 연습이 살아 있어 시작이 막혔을 때의 복구 — 그 세션을 종료하고 같은 조건으로 재시도한다.
   // 진행 중인 연습을 끊는 동작이라 자동으로 하지 않고 사용자가 명시적으로 누를 때만 실행한다.
@@ -475,6 +531,7 @@ export default function CpxPractice() {
     if (!sessionId || phase !== 'live') return;
     setError(''); setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
     try {
+      teardownRef.current = true;
       micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush(); await flushUsage();
       await request(`/sessions/${sessionId}/end`, { method: 'POST' });
       const evaluation = await request(`/sessions/${sessionId}/evaluate`, { method: 'POST' });

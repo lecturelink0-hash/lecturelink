@@ -413,11 +413,17 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
     else:
         # LLM 근거 추출을 하드 타임아웃으로 감싼다 — 쿼터 소진 시 SDK가 무한 재시도로
         # 매달려 결과 화면이 영원히 로딩되는 것을 방지 (실측 2분+ 행 확인).
+        #
+        # 이 타임아웃은 한동안 아무것도 막지 못했다. `with ThreadPoolExecutor(...)` 를 쓰면
+        # 블록을 벗어날 때 shutdown(wait=True) 가 실행돼 작업 스레드가 끝날 때까지 기다린다.
+        # 그래서 75초 뒤 TimeoutError 가 나도 504 응답은 LLM 호출이 다 끝난 뒤에야 나갔고,
+        # 주석이 막으려던 "결과 화면 무한 로딩"이 그대로 발생했다(2026-08-18 감사 다1).
+        # 컨텍스트 매니저를 쓰지 않고 wait=False 로 내려 응답을 즉시 내보낸다.
         import concurrent.futures as _cf
+        pool = _cf.ThreadPoolExecutor(max_workers=1)
         try:
-            with _cf.ThreadPoolExecutor(max_workers=1) as pool:
-                future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context, case)
-                judgments = future.result(timeout=75)
+            future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context, case)
+            judgments = future.result(timeout=75)
         except _cf.TimeoutError:
             raise HTTPException(504, '채점 시간이 초과되었습니다. 잠시 후 다시 시도해주세요. (API 응답 지연 또는 무료 티어 쿼터 소진 가능성)')
         except Exception as e:  # noqa: BLE001
@@ -425,6 +431,11 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
             if '429' in msg or 'RESOURCE_EXHAUSTED' in msg:
                 raise HTTPException(429, '무료 티어 채점 쿼터를 모두 사용했습니다. 잠시 후(또는 다음 날) 다시 시도하거나 유료 플랜으로 전환해주세요.')
             raise HTTPException(502, f'근거 추출 실패: {msg}')
+        finally:
+            # wait=False 가 핵심 — 성공했으면 유휴 스레드가 바로 정리되고,
+            # 타임아웃이면 매달린 호출을 기다리지 않고 응답이 나간다.
+            # 매 요청마다 새 실행기를 만들므로 여기서 반드시 내려야 스레드가 쌓이지 않는다.
+            pool.shutdown(wait=False, cancel_futures=True)
 
     # 채점 호출 토큰 → usage_events(kind=evaluate) 기록. scoring 입력에서는 분리.
     eval_usage = judgments.pop('usage', None)
@@ -488,9 +499,25 @@ def review_notes(caseId: str | None = None, user_id: str = Depends(current_user_
     return {'notes': db.get_review_notes(user_id, caseId)}
 
 
+# 세션 행에는 학생이 세션 중에 알아서는 안 되는 것이 함께 들어 있다 —
+# case_id(증례 비공개 모드에서 감춰야 할 정답)와 config.lowCompliance(배정된 저항 유형).
+# 시작 응답은 이들을 빼고 내려주는데 대화록 API 는 행을 통째로 돌려주고 있어서,
+# 학생이 이 엔드포인트를 직접 부르면 랜덤 모드의 증례와 저항 유형을 알 수 있었다
+# (2026-08-18 감사 다4). config 는 서버 내부값이라 언제나 빼고, case_id 는 세션이
+# 끝난 뒤에만 준다 — 결과 화면에서는 정답을 밝혀도 되기 때문이다.
+_SESSION_INTERNAL_FIELDS = ('config',)
+
+
+def public_session(session: dict) -> dict:
+    out = {k: v for k, v in session.items() if k not in _SESSION_INTERNAL_FIELDS}
+    if not session.get('ended_at'):
+        out.pop('case_id', None)
+    return out
+
+
 @app.get('/api/sessions/{session_id}/transcript')
 def transcript(session_id: str, user_id: str = Depends(current_user_id)):
     session = db.get_session(session_id, user_id)
     if not session:
         raise HTTPException(404, '세션 없음')
-    return {'session': session, 'events': db.get_transcript(session_id, user_id)}
+    return {'session': public_session(session), 'events': db.get_transcript(session_id, user_id)}

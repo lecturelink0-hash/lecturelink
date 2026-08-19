@@ -196,7 +196,25 @@ def run():
     assert r['totalScore'] == 38.0, r['totalScore']
     assert 'excludedSections' not in r
 
-    print('전체', 14, '개 테스트 그룹 통과 ✅ (전 루브릭', checked, '종 회귀 포함)')
+    # 15. 조건부 항목이 빠져 분모가 줄면 등급 컷오프도 같은 비율로 낮춰야 한다.
+    #     예전에는 컷오프가 절대 개수라, 임신 항목이 빠진 남성 환자나 성인 약물 항목이 빠진
+    #     청소년이 같은 '우수'를 받으려고 더 높은 비율을 채워야 했다(2026-08-18 감사 다6).
+    from scoring import _grade_checklist
+    probe_section = {
+        'items': [{'id': f'x{i}'} for i in range(10)],
+        'gradeCutoffs': {'excellent': 7, 'fairMin': 4},
+    }
+    probe_ctx = {}
+    # 10개 전부 대상일 때: 7개(70 %)면 우수
+    assert _grade_checklist(probe_section, 7, 10, probe_ctx) == 2
+    assert _grade_checklist(probe_section, 6.5, 10, probe_ctx) == 1
+    # 2개가 조건부로 빠져 8개가 대상일 때도 같은 비율(약 70 % = 5.5~6개)이면 우수여야 한다.
+    assert _grade_checklist(probe_section, 5.5, 8, probe_ctx) == 2, '분모가 줄었는데 우수 기준이 그대로다'
+    assert _grade_checklist(probe_section, 4, 8, probe_ctx) == 1
+    # 되살림 검사 — 비례 보정이 없으면 5.5는 우수가 될 수 없다(7 이상을 요구하므로).
+    assert 5.5 < probe_section['gradeCutoffs']['excellent'], '이 검사의 전제가 낡았다'
+
+    print('전체', 15, '개 테스트 그룹 통과 ✅ (전 루브릭', checked, '종 회귀 포함)')
 
 
 if __name__ == '__main__':
