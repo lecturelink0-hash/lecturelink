@@ -1722,6 +1722,11 @@ export async function generatePrivateQuestionsFromUpload(
       catalogText,
     );
     // 사용자 지정 난이도·문항유형을 생성 지시로 반영.
+    // 선택된 유형은 난이도 지시(지식형 전용 문단)에서 먼저 참조하므로 여기서 확정한다.
+    const selectedTypes = input.questionTypes ?? [];
+    const wantsClinical = selectedTypes.includes('임상형');
+    const wantsKnowledge = selectedTypes.includes('지식형');
+
     // P4 난이도 조작적 정의.
     //
     // 종전에는 "쉬운/표준/어려운 난이도 위주(difficulty 1~2 / 2 / 2~3)" 한 줄이었다. 무엇이
@@ -1747,11 +1752,37 @@ export async function generatePrivateQuestionsFromUpload(
         '다만 자료가 뒷받침하지 않는 수치·소견을 지어내면서까지 어렵게 만들지는 않는다 — ' +
         '그럴 땐 감별을 좁히는 조건을 지문에 더 넣어 난이도를 올린다.',
     };
+    // 지식형에 적용할 난이도 지침 — 위 정의는 증례 언어로 쓰여 있어 지식형에는 '상'이 없다.
+    //
+    // 2026-08-19 실측(요청 '상', 지식형+임상형 10문항): difficulty 3 다섯 문항이 **전부 임상 증례형**이고
+    // 지식형 다섯 문항은 1~2 에 머물렀다(Stanford 분류·기전·위험인자). 위 '상' 정의가 요구하는 것
+    // (비전형 양상·2단계 추론·수술 시점)이 전부 환자를 전제하므로, 증례를 쓰지 않는 지식형(K0)은
+    // 따를 지침이 없었던 것이다. 요청 '하'는 7/10, '중'은 7/8 로 지식형만으로도 맞았으므로
+    // 구멍은 '상' 하나다 — 지식형을 어렵게 만드는 방법을 따로 적어 준다.
+    const KNOWLEDGE_DIFFICULTY_DIRECTIVES: Record<'하' | '중' | '상', string> = {
+      '하':
+        '지식형에서는 자료에 그대로 적힌 사실 하나를 묻는다(정의·대표 소견·분류 이름).',
+      '중':
+        '지식형에서는 두 개념의 관계를 묻는다 — 기전이 증상으로 이어지는 경로, 분류에 따라 달라지는 처치 원칙, ' +
+        '검사 소견이 가리키는 병태.',
+      '상':
+        '지식형에서 난이도 3은 증례 없이도 만들 수 있다. 다음 중 하나를 쓴다: ' +
+        '**(a) 예외·금기** — 원칙이 뒤집히는 조건(“이 약을 단독으로 쓰면 안 되는 이유는?”), ' +
+        '**(b) 경계 수치** — 판단이 갈리는 값과 그 근거(“수술을 고려하는 직경 기준은?”), ' +
+        '**(c) 기전의 하위 단계** — 한 단계 더 들어간 물음(“이 손상이 일어나는 벽의 층은?”), ' +
+        '**(d) 유사 개념 감별** — 헷갈리는 두 개념을 가르는 결정적 차이 하나, ' +
+        '**(e) 흔한 오개념 정면 겨냥** — 학생이 반대로 알기 쉬운 방향을 정답이 가르게 한다. ' +
+        '오답 4개는 모두 “그럴듯한데 한 조건에서 틀린” 진술이어야 한다. ' +
+        '증례를 붙여 어렵게 만들려 하지 않는다 — 그건 임상형의 몫이다.',
+    };
     // 요청 난이도의 정수 대응(1/2/3) — 모델 신고값과 대조해 mismatch 를 센다(P4).
     const requestedDifficultyLevel: 1 | 2 | 3 | null =
       input.difficulty === '하' ? 1 : input.difficulty === '중' ? 2 : input.difficulty === '상' ? 3 : null;
     const diffDirective = input.difficulty
       ? DIFFICULTY_DIRECTIVES[input.difficulty] +
+        // 지식형을 고른 요청에만 붙인다. 임상형만 고른 요청에 붙이면 "증례 없이" 지침이
+        // 증례 문항까지 눌러 임상형이 약해진다(규격 첨부와 같은 원칙).
+        (wantsKnowledge ? `\n${KNOWLEDGE_DIFFICULTY_DIRECTIVES[input.difficulty]}` : '') +
         '\n각 문항의 `difficulty` 에는 **요청 난이도가 아니라 그 문항이 실제로 요구하는 수준**' +
         '(1=재인, 2=적용, 3=분석)을 정직하게 적는다. 요청에 맞추려고 값을 올리거나 내리지 않는다.'
       : '';
@@ -1771,9 +1802,6 @@ export async function generatePrivateQuestionsFromUpload(
         '표식(A·B·C)을 가리키는 문항은 판독 문항의 한 형태일 뿐이므로 **드물게만** 쓴다' +
         '(허용 여부는 묶음별 지시를 따른다).',
     };
-    const selectedTypes = input.questionTypes ?? [];
-    const wantsClinical = selectedTypes.includes('임상형');
-    const wantsKnowledge = selectedTypes.includes('지식형');
     const typeDirective = selectedTypes.length
       ? `선택된 문항 유형(${selectedTypes.join(', ')})을 전체 문항에 고르게 배분한다.\n${selectedTypes.map((type) => typeDirectives[type]).join('\n')}`
       : '';
@@ -1942,8 +1970,16 @@ export async function generatePrivateQuestionsFromUpload(
       if (!wantsKnowledge) return [];
       const pool = KNOWLEDGE_ASK_KINDS;
       const need = Math.max(1, knowledgeQuotaFor(batchSize));
-      // 배치마다 시작점을 옮겨 전체적으로 고르게 돈다(같은 배치 안에서는 서로 다른 유형).
-      const start = (batchIndex * need) % pool.length;
+      // 배치의 시작점을 **누적 슬롯 수**로 잡는다.
+      //
+      // 종전 `batchIndex * need` 는 배치 크기가 쿼터와 다르면(혼합 유형 요청) 시작점이
+      // 겹쳐, 7종을 다 쓰기도 전에 앞쪽 유형이 반복됐다(2026-08-19 실측: 10문항에
+      // mechanism 3회·고유 유형 6/10). 앞선 배치들이 실제로 소비한 칸 수를 세면
+      // 첫 7칸이 7종을 모두 덮은 뒤에 순환한다.
+      const consumed = batchSizes
+        .slice(0, batchIndex)
+        .reduce((sum, size) => sum + Math.max(1, knowledgeQuotaFor(size)), 0);
+      const start = consumed % pool.length;
       return Array.from({ length: Math.min(need, pool.length) }, (_, k) => pool[(start + k) % pool.length]);
     };
 
