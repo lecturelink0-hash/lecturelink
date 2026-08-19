@@ -440,6 +440,9 @@ export default function CpxPractice() {
   const reconnectLive = useCallback(async () => {
     if (reconnectingRef.current || teardownRef.current) return;
     if (phaseRef.current !== 'live' || !sessionIdRef.current) return;
+    // 종료 경로가 liveRef 를 비운 뒤라면 붙일 대상이 없다. 옵셔널 체이닝으로 그냥 넘어가면
+    // 아무것도 연결하지 않고 '진료 중'이라고 표시하게 된다.
+    if (!liveRef.current) return;
     if (reconnectTriesRef.current >= RECONNECT_MAX_TRIES) {
       setError('환자와의 연결이 끊어졌고 재연결에 실패했습니다. 지금까지의 대화로 채점할 수 있습니다.');
       return;
@@ -452,8 +455,9 @@ export default function CpxPractice() {
       await new Promise((resolve) => window.setTimeout(resolve, 400 * attempt));
       if (phaseRef.current !== 'live' || teardownRef.current) return;
       const token = await request(`/sessions/${sessionIdRef.current}/live-token`, { method: 'POST' });
-      await liveRef.current?.connect(token);
-      liveRef.current?.setMuted(!voiceOn);
+      if (!liveRef.current) return;
+      await liveRef.current.connect(token);
+      liveRef.current.setMuted(!voiceOn);
       reconnectTriesRef.current = 0;
       setStatus('진료 중');
     } catch {
