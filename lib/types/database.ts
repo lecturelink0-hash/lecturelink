@@ -289,8 +289,12 @@ export type UserUploadRow = {
   reference_count: number | null;
   /** 원본 파일 내용 해시 — 같은 자료 재업로드 판정(P11). */
   content_sha256: string | null;
-  /** 사용자에게 보여줄 경고(절삭·유형 미달 등) — P8 에서 화면에 띄운다. */
-  notice: Record<string, unknown> | null;
+  /**
+   * 사용자에게 보여줄 알림 배열(부족 생성·이미지 없음·본문 절삭 등) — P8.
+   * 실제 형태는 lib/ai/upload-notice.ts 의 UploadNotice[] 이고, jsonb 라 배열도 담긴다.
+   * (여기서 lib/ai 를 import 하면 타입 계층이 역전되므로 구조만 느슨하게 적는다.)
+   */
+  notice: Array<{ code: string; count?: number; detail?: string }> | null;
   created_at: string;
 }
 

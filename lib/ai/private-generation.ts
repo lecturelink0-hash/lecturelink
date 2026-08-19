@@ -33,6 +33,7 @@ import {
 } from './client';
 import { recordAiCost } from './cost-cap';
 import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
+import { buildUploadNotices } from './upload-notice';
 import {
   PRIVATE_GENERATION_SYSTEM_PROMPT,
   PRIVATE_GENERATION_TOOL_SCHEMA,
@@ -159,6 +160,9 @@ const VERIFY_CONCURRENCY = 6;
  * (배치마다 실패-재시도를 반복하지 않게 하는 프로세스 수명 캐시).
  */
 let questionMetricColumnsSupported = true;
+
+/** 같은 이유의 프로세스 수명 캐시 — user_uploads.notice(P8) 컬럼 유무. */
+let uploadNoticeColumnSupported = true;
 
 /** 00040 이 추가한 private_questions 계측 컬럼(kind·ask_kind·verify_score)만 뺀 행. */
 function withoutMetricColumns<
@@ -757,8 +761,8 @@ const MAX_REFERENCE_IMAGES = 6;
 async function loadReferenceImages(input: {
   uploadIds: string[];
   userId: string;
-}): Promise<Uint8Array[]> {
-  if (input.uploadIds.length === 0) return [];
+}): Promise<{ images: Uint8Array[]; skipped: number }> {
+  if (input.uploadIds.length === 0) return { images: [], skipped: 0 };
 
   const admin = createAdminClient();
   const { data: uploads, error } = await admin
@@ -770,6 +774,10 @@ async function loadReferenceImages(input: {
 
   const byId = new Map((uploads ?? []).map((upload) => [upload.id, upload]));
   const images: Uint8Array[] = [];
+  // 형식을 못 읽어 반영하지 못한 참고 자료 수 — P8 로 사용자에게 알린다.
+  // 종전에는 PPTX·DOCX 를 아무 표시 없이 건너뛰어서, 족보를 올린 사용자가 그것이
+  // 반영되지 않았다는 사실을 알 방법이 없었다.
+  let skipped = 0;
   for (const id of input.uploadIds) {
     if (images.length >= MAX_REFERENCE_IMAGES) break;
     const upload = byId.get(id);
@@ -777,12 +785,16 @@ async function loadReferenceImages(input: {
     const { data: blob, error: downloadError } = await admin.storage
       .from(STORAGE_BUCKET)
       .download(upload.storage_path);
-    if (downloadError || !blob) continue;
+    if (downloadError || !blob) {
+      skipped += 1;
+      continue;
+    }
     const buffer = await blob.arrayBuffer();
 
     if (upload.file_type.startsWith('image/')) {
       const png = await normalizeToPng(new Uint8Array(buffer));
       if (png) images.push(png);
+      else skipped += 1;
       continue;
     }
     if (upload.file_type === 'application/pdf') {
@@ -791,16 +803,21 @@ async function loadReferenceImages(input: {
           maxPages: Math.min(3, MAX_REFERENCE_IMAGES - images.length),
           maxEdgePx: PDF_RENDER_EDGE_PX,
         });
+        if (pages.length === 0) skipped += 1;
         images.push(...pages.map((page) => page.png));
       } catch (error) {
+        skipped += 1;
         console.warn(
           '[private-generation] reference PDF render skipped:',
           error instanceof Error ? error.message : String(error),
         );
       }
+      continue;
     }
+    // PPTX·DOCX·기타 — 현재 참고 자료는 이미지로만 반영하므로 읽지 못한다(P7 에서 텍스트화 예정).
+    skipped += 1;
   }
-  return images.slice(0, MAX_REFERENCE_IMAGES);
+  return { images: images.slice(0, MAX_REFERENCE_IMAGES), skipped };
 }
 
 /**
@@ -1505,6 +1522,8 @@ export async function generatePrivateQuestionsFromUpload(
   let totalCost = 0;
   // 진단 기록용 — 참고자료 로드 전(다운로드 실패 등)에도 안전하게 읽히도록 let 로 둔다.
   let referenceImageCount = 0;
+  /** 형식을 못 읽어 반영하지 못한 참고 자료 수(P8 알림). */
+  let referenceSkippedCount = 0;
   let aggInputTokens = 0;
   let aggOutputTokens = 0;
   let modelUsed = MODELS.generation();
@@ -1691,8 +1710,15 @@ export async function generatePrivateQuestionsFromUpload(
       .select('id, code, name, subject:subjects ( name )');
     // 참고자료는 선발사 배치가 클로저로 참조하므로 반드시 그 전에 확정해야 한다
     //  (const 초기화 전 접근 = ReferenceError). 추출과 병렬로 이미 시작돼 있어 대기 비용은 없다.
-    const referenceImages = await referencePromise;
+    const referenceLoaded = await referencePromise;
+    const referenceImages = referenceLoaded.images;
     referenceImageCount = referenceImages.length;
+    referenceSkippedCount = referenceLoaded.skipped;
+    if (referenceSkippedCount > 0) {
+      warnings.push(
+        `참고 자료 ${referenceSkippedCount}건은 형식을 읽지 못해 반영하지 못했습니다(PDF·이미지만 지원).`,
+      );
+    }
 
     // 4) 분류 카탈로그·생성 프롬프트·배치 계획을 OCR "이전"에 준비한다 — 본문 텍스트가
     //    충분한 자료는 아래 "텍스트 선발사 배치"가 OCR 과 병행으로 먼저 출발할 수 있게.
@@ -3837,6 +3863,22 @@ export async function generatePrivateQuestionsFromUpload(
       0,
     );
 
+    // ── 사용자 알림(P8). 완료 시점의 사실에서 조립한다 — warnings 문자열은 리팩터마다
+    // 바뀌므로 태그를 달면 조용히 사라진다. 의학 검증 플래그는 넣지 않는다(warn 모드의
+    // 오탐이 멀쩡한 문항까지 의심하게 만든다 — 사람 검토로 오탐률을 낮춘 뒤 재검토).
+    const notices = buildUploadNotices({
+      desiredCount,
+      savedCount: generatedCount,
+      wantsImages,
+      featuredImageCount: refinedUsableGis.size,
+      truncatedChars: Number(diag.extract.textTruncated ?? 0),
+      referenceSkipped: referenceSkippedCount,
+      batchFailureReasons,
+      leakageDiscarded: Number(diag.generation.leakageDiscarded ?? 0),
+      verifyRejected: Number(diag.generation.verifyRejected ?? 0),
+    });
+    diag.generation.notices = notices;
+
     const titleTrim = input.title?.trim();
     await admin
       .from('user_uploads')
@@ -3851,10 +3893,37 @@ export async function generatePrivateQuestionsFromUpload(
         processed_at: new Date().toISOString(),
         extracted_text: contentSummary.slice(0, 2000),
         error_message: null,
+        // 00040 미적용 환경에서도 생성이 죽지 않게 컬럼이 있을 때만 싣는다
+        // (계측 컬럼과 같은 폴백 원칙 — 알림 하나 때문에 완료 처리가 거절되면 안 된다).
+        ...(uploadNoticeColumnSupported ? { notice: notices } : {}),
         // 사용자가 지정한 문제집 이름이 있으면 세트 표시명으로 저장.
         ...(titleTrim ? { file_name: titleTrim } : {}),
       })
-      .eq('id', upload.id);
+      .eq('id', upload.id)
+      .then(async (res) => {
+        // notice 컬럼이 없으면 PGRST204 — 알림만 빼고 한 번 더 쓴다.
+        if (res.error && isMissingColumnError(res.error) && uploadNoticeColumnSupported) {
+          uploadNoticeColumnSupported = false;
+          warnings.push('알림 컬럼이 없어 알림 없이 완료 처리(마이그레이션 00040 미적용).');
+          await admin
+            .from('user_uploads')
+            .update({
+              status: 'completed',
+              processing_stage: 'completed',
+              progress_current: generatedCount,
+              progress_total: desiredCount,
+              completed_question_count: generatedCount,
+              target_question_count: desiredCount,
+              heartbeat_at: new Date().toISOString(),
+              processed_at: new Date().toISOString(),
+              extracted_text: contentSummary.slice(0, 2000),
+              error_message: null,
+              ...(titleTrim ? { file_name: titleTrim } : {}),
+            })
+            .eq('id', upload.id);
+        }
+        return res;
+      });
 
     await writeDiagnostics();
 

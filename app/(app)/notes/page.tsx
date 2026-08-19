@@ -66,6 +66,15 @@ interface UploadRow {
   completed_question_count: number;
   target_question_count: number | null;
   heartbeat_at: string | null;
+  /** 생성 결과에서 사용자에게 알릴 사실(P8). 서버가 완료 시 채운다. */
+  notice?: UploadNoticeItem[] | null;
+}
+
+/** lib/ai/upload-notice.ts 의 UploadNotice 와 같은 형태(서버 응답을 그대로 받는다). */
+interface UploadNoticeItem {
+  code: string;
+  count?: number;
+  detail?: string;
 }
 
 interface InitUploadRes {
@@ -672,6 +681,20 @@ export default function NotesPage() {
     typesTouchedRef.current = false;
   }
 
+  // 이번 생성 결과의 알림(P8) — 여러 자료를 돌렸으면 같은 코드끼리 합산해 한 줄로 보여준다
+  // (자료 3개에서 같은 경고가 세 줄로 반복되면 사용자가 읽지 않는다).
+  const sessionNotices: UploadNoticeItem[] = (() => {
+    const merged = new Map<string, UploadNoticeItem>();
+    for (const m of materials) {
+      for (const n of m.notice ?? []) {
+        const prev = merged.get(n.code);
+        if (prev) prev.count = (prev.count ?? 0) + (n.count ?? 0);
+        else merged.set(n.code, { ...n });
+      }
+    }
+    return [...merged.values()];
+  })();
+
   const isGenerating = processingId !== null;
 
   // ─────────────────────────────────────────────────────────────
@@ -719,6 +742,7 @@ export default function NotesPage() {
         questionType={questionTypes.join(' · ')}
         requestedTotal={count * Math.max(1, genFilesTotalRef.current || materials.length || 1)}
         generating={genSession}
+        notices={sessionNotices}
         onReset={resetForNew}
       />
     );
@@ -1164,6 +1188,43 @@ export default function NotesPage() {
 // ─────────────────────────────────────────────────────────────
 // 생성 결과 뷰 컴포넌트
 // ─────────────────────────────────────────────────────────────
+/**
+ * 생성 알림 문구(P8). 서버는 코드·개수만 주고 문구는 화면이 만든다 —
+ * 문구를 서버에 두면 표현을 바꿀 때마다 배포가 필요하고, 코드가 화면 언어에 묶인다.
+ */
+const NOTICE_TEXT: Record<string, (n: UploadNoticeItem) => string> = {
+  shortfall: (n) => `요청한 문항 중 ${n.count ?? 0}개를 만들지 못했어요.`,
+  no_image: () => '이미지형을 골랐지만 자료에서 쓸 만한 의료 이미지를 찾지 못했어요.',
+  text_truncated: () => '자료가 길어 앞부분을 중심으로 출제했어요.',
+  reference_ignored: (n) => `참고 자료 ${n.count ?? 0}건은 형식을 읽지 못해 반영하지 못했어요.`,
+  transient_error: () => '생성 중 일시적인 오류가 있었어요.',
+};
+
+function GenerationNotices({ notices }: { notices: UploadNoticeItem[] }) {
+  if (notices.length === 0) return null;
+  return (
+    <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2,#fbfaf7)] px-4 py-3">
+      <ul className="space-y-1.5">
+        {notices.map((n, i) => {
+          const headline = NOTICE_TEXT[n.code]?.(n);
+          if (!headline) return null;
+          return (
+            <li key={`${n.code}-${i}`} className="flex gap-2 text-sm text-sage-800">
+              <span aria-hidden className="mt-[0.15rem] text-[var(--color-muted)]">·</span>
+              <span>
+                {headline}
+                {n.detail && (
+                  <span className="text-[var(--color-muted)]"> {n.detail}</span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function ResultView({
   result,
   title,
@@ -1171,6 +1232,7 @@ function ResultView({
   questionType,
   requestedTotal,
   generating = false,
+  notices = [],
   onReset,
 }: {
   result: GeneratedResult;
@@ -1181,6 +1243,8 @@ function ResultView({
   requestedTotal?: number;
   /** 아직 나머지 문항을 만드는 중인지(부분 공개 상태). */
   generating?: boolean;
+  /** 생성 결과에서 사용자에게 알릴 사실(P8) — 이번 세션의 학습자료들에서 모은다. */
+  notices?: UploadNoticeItem[];
   onReset: () => void;
 }) {
   const [outcomes, setOutcomes] = useState<Record<string, QuestionOutcome>>({});
@@ -1233,6 +1297,9 @@ function ResultView({
           )}
         </div>
       </div>
+
+      {/* 생성 알림(P8) — 생성 중에는 확정되지 않았으므로 완료 후에만 보여준다. */}
+      {!generating && <GenerationNotices notices={notices} />}
 
       {/* 상단 액션 */}
       <div className="flex flex-wrap gap-3 mb-6">
