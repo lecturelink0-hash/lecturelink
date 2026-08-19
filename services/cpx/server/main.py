@@ -163,7 +163,27 @@ def create_session(body: SessionCreate, user_id: str = Depends(current_user_id))
         config_dict['lowCompliance'] = {'behaviors': behaviors, 'probability': probability}
     config = _json.dumps(config_dict, ensure_ascii=False)
     session_id = db.create_session(body.caseId, user_id, _json.dumps(persona, ensure_ascii=False), config)
-    return {'sessionId': session_id, 'persona': persona, 'timeLimitSeconds': time_limit}
+    # 문 앞 정보 — 실제 시험은 입실 전에 인적사항과 활력징후를 준다. 여기서는 활력징후가
+    # 버튼 뒤에 있어 쇼크 수준 혈압이 결정적인 증례에서도 클릭해야만 보였다(2026-08-18 감사 가8).
+    # 채점에는 영향이 없다 — 활력징후 항목 80개는 전부 '확인 또는 선언'을 요구하는 말의 행위라,
+    # 값을 미리 알려줘도 학생은 여전히 확인하겠다고 말해야 인정된다.
+    import physical_exam as _pe
+    door_chart = {
+        'name': persona.get('name'),
+        'age': persona.get('age'),
+        'gender': persona.get('gender'),
+        'chiefComplaint': case.get('category'),
+        'location': ((case.get('demographicsRule') or {}).get('fixed') or {}).get('location'),
+        'vitals': _pe.door_chart_vitals(case),
+    }
+    child = persona.get('child')
+    if isinstance(child, dict):
+        door_chart['child'] = {
+            'name': child.get('name'), 'age': child.get('ageDetail') or child.get('age'),
+            'gender': child.get('gender'), 'label': child.get('label'),
+        }
+    return {'sessionId': session_id, 'persona': persona, 'timeLimitSeconds': time_limit,
+            'doorChart': door_chart}
 
 
 @app.post('/api/sessions/{session_id}/live-token')
@@ -322,10 +342,20 @@ def perform_exam(session_id: str, body: ExamRequest, user_id: str = Depends(curr
         result = physical_exam.resolve_exam(case, body.buttonId)
     except KeyError as e:
         raise HTTPException(404, str(e))
-    # 의사의 진찰 선언은 학생 발화로 기록 → pe02/pe03 등 채점 항목에 반영됨
+    # 버튼 클릭은 학생 발화로 전사에 들어간다 — 학생은 그 문장을 말한 적이 없다.
+    # 그래서 다섯 번 클릭으로 진찰 항목 대부분이 충족되는 일이 생겼다(2026-08-18 감사 가2).
+    # 무엇을 인정할지는 제품 정체성(시험 재현 vs 학습 도구)에 달린 별도 결정이므로 여기서
+    # 채점 정책은 바꾸지 않는다. 다만 **말한 것이 아니라 버튼으로 수행한 행위**임을 표시해
+    # 채점기와 학생이 둘을 구별할 수 있게 한다. 새 role 을 만들지 않는 이유는 Supabase
+    # cpx_transcript_events.role 에 CHECK 제약(student/patient/system)이 있고, 미러 실패가
+    # 이제 조용히 넘어가므로(감사 다2 수정) 제약 위반이 소리 없이 전사를 누락시키기 때문이다.
+    kind = physical_exam.button_kind(body.buttonId)
+    marker = '[검사 지시]' if kind == physical_exam.KIND_TEST else '[진찰 수행]'
+    transcript_text = f"{marker} {result['declaration']}"
     offset = min(body.tOffsetMs, _offset_ceiling_ms(session))
-    db.add_events(session_id, user_id, [{'role': 'student', 'text': result['declaration'], 'tOffsetMs': offset}])
-    return result
+    db.add_events(session_id, user_id, [{'role': 'student', 'text': transcript_text, 'tOffsetMs': offset}])
+    # 클라이언트도 같은 문장을 로컬 전사에 넣도록 서버가 확정한 문자열을 함께 돌려준다.
+    return {**result, 'kind': kind, 'transcriptText': transcript_text}
 
 
 @app.post('/api/sessions/{session_id}/end')
