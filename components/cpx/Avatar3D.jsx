@@ -647,7 +647,9 @@ function useResolvedModel(gender, age) {
     ;(async () => {
       for (const candidate of candidates) {
         try {
-          const res = await fetch(candidate, { method: 'GET' })
+          // 존재 확인은 HEAD 로. GET 이면 후보마다 수 MB 짜리 모델을 통째로 받고,
+          // 그 뒤 useGLTF 가 다시 받아 같은 파일을 두 번 내려받는다(2026-08-18 감사 P2).
+          const res = await fetch(candidate, { method: 'HEAD' })
           const type = res.headers.get('content-type') || ''
           if (res.ok && !type.includes('text/html')) {
             if (alive) setUrl(candidate)

@@ -33,12 +33,30 @@ def _case_files():
     return sorted(CASES_ROOT.glob('*/*.json'))
 
 
+# 증례 파일은 배포 이미지에 고정돼 있고 런타임에 바뀌지 않는다. 그런데도 목록 조회·케이스 로드가
+# 매번 243개 파일을 다시 glob 하고 파싱했다 — 목록 API 한 번에 243회 JSON 파싱이다
+# (2026-08-18 감사 P2). 파일 mtime 이 바뀌면 자동으로 다시 읽으므로 개발 중 편집도 반영된다.
+_case_cache: dict[str, tuple[float, dict]] = {}
+_index_cache: tuple[tuple[tuple[str, float], ...], list[dict]] | None = None
+
+
+def _read_case(path) -> dict:
+    stat = path.stat()
+    cached = _case_cache.get(str(path))
+    if cached and cached[0] == stat.st_mtime:
+        return cached[1]
+    data = json.loads(path.read_text(encoding='utf-8'))
+    _case_cache[str(path)] = (stat.st_mtime, data)
+    return data
+
+
 def load_case(case_id: str) -> dict:
     """규칙카드 로드. case_id는 파일명(stem)과 일치(밸리데이터 보장)."""
     # 경로 조작 방지: 파일 목록에서 일치 항목만 허용
     for p in _case_files():
         if nfc(p.stem) == nfc(case_id):
-            return json.loads(p.read_text(encoding='utf-8'))
+            # 호출부가 반환값을 고쳐 쓰는 곳이 있어 캐시 원본을 그대로 주지 않는다.
+            return json.loads(json.dumps(_read_case(p)))
     raise KeyError(f'케이스 없음: {case_id}')
 
 
@@ -75,13 +93,15 @@ def public_case(case: dict) -> dict:
 
 def list_cases(release_ready_only: bool = False) -> list[dict]:
     """프론트 노출용 인덱스 — 진단명(targetDiagnosis)·단서는 제외한다."""
-    out = []
-    for p in _case_files():
-        d = json.loads(p.read_text(encoding='utf-8'))
-        if release_ready_only and not is_release_ready(d):
-            continue
-        out.append(public_case(d))
-    return out
+    global _index_cache
+    files = _case_files()
+    signature = tuple((str(p), p.stat().st_mtime) for p in files)
+    if _index_cache is None or _index_cache[0] != signature:
+        _index_cache = (signature, [public_case(_read_case(p)) for p in files])
+    return [
+        c for c in _index_cache[1]
+        if not release_ready_only or content_status(c) in RELEASE_STATUSES
+    ]
 
 
 # 주호소(카테고리)별 환자 발성 연기 지침 — 음색·속도·말투·입으로 내는 소리.

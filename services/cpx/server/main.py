@@ -11,6 +11,7 @@
     venv/bin/uvicorn main:app --port 8787 --reload
 """
 import datetime as dt
+import hmac
 import os
 from typing import Literal
 
@@ -28,7 +29,10 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 LIVE_MODEL = os.environ.get('GEMINI_LIVE_MODEL', 'gemini-3.1-flash-live-preview')
 # 개발 편의: constraints 잠금이 문제를 일으키면 false로 두고 클라이언트 구성 폴백 사용
 LOCK_CONSTRAINTS = os.environ.get('LOCK_CONSTRAINTS', 'true').lower() != 'false'
-REQUIRE_LECTURELINK_AUTH = os.environ.get('REQUIRE_LECTURELINK_AUTH', 'false').lower() == 'true'
+# 기본값은 '켜짐'이다. 예전 기본값은 false 라, 환경변수를 빠뜨린 배포가 조용히 인증 없이
+# 열렸다 — 안전 실패(fail-closed)여야 할 자리에서 열린 쪽으로 실패했다(2026-08-18 감사 P2).
+# 로컬 개발은 .env 에 REQUIRE_LECTURELINK_AUTH=false 를 명시해서 끈다.
+REQUIRE_LECTURELINK_AUTH = os.environ.get('REQUIRE_LECTURELINK_AUTH', 'true').lower() != 'false'
 CPX_PROXY_SHARED_SECRET = os.environ.get('CPX_PROXY_SHARED_SECRET', '')
 # 운영에서는 사용자 임상 승인이 끝난 케이스만 노출한다. 로컬 작성·검수 환경은 기본값(false)으로
 # 전체 케이스를 보되, 실제 서비스 환경에서만 true로 설정한다.
@@ -55,7 +59,9 @@ def current_user_id(
     if REQUIRE_LECTURELINK_AUTH:
         if not CPX_PROXY_SHARED_SECRET:
             raise HTTPException(503, 'CPX_PROXY_SHARED_SECRET가 설정되지 않았습니다.')
-        if x_cpx_proxy_secret != CPX_PROXY_SHARED_SECRET:
+        # 상수시간 비교 — `!=` 는 첫 불일치 바이트에서 끊기므로 응답 시간으로 앞자리부터
+        # 한 글자씩 맞춰 볼 수 있다. 공유 비밀이 뚫리면 임의 사용자 id 로 세션을 만들 수 있다.
+        if not hmac.compare_digest(x_cpx_proxy_secret or '', CPX_PROXY_SHARED_SECRET):
             raise HTTPException(401, '인증된 LectureLink CPX 프록시 요청이 아닙니다.')
         if not x_lecturelink_user_id:
             raise HTTPException(401, 'LectureLink 사용자 정보가 없습니다.')
@@ -423,6 +429,11 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
     # 이미 채점됨 → 캐시 반환 (재현성: 동일 세션 재채점 방지)
     if session.get('result'):
         return with_item_texts(_json.loads(session['result']))
+    # 진행 중인 세션을 채점하면 그 시점까지의 부분 결과가 캐시로 굳어, 진짜 최종 결과를
+    # 영영 만들 수 없다(위 캐시 분기 때문). 정상 경로는 항상 /end 다음에 /evaluate 를
+    # 부르므로 영향이 없다 — 실수나 외부 호출로 세션이 잠기는 것만 막는다(2026-08-18 감사 P2).
+    if not (session.get('ended_at') or session.get('status') == 'ended'):
+        raise HTTPException(409, '아직 진행 중인 세션입니다. 진료를 종료한 뒤 채점할 수 있습니다.')
     if not GEMINI_API_KEY:
         raise HTTPException(503, 'GEMINI_API_KEY가 설정되지 않았습니다 (server/.env).')
 

@@ -13,3 +13,17 @@ server/cpx.sqlite3
 server/cpx.sqlite3-*
 server/**/__pycache__
 server/**/*.pyc
+
+# 어떤 런타임 코드도 읽지 않는 저작·참고 자료 308 KB (2026-08-18 감사 P2).
+# 저장소에는 남긴다 — 콘텐츠 작성·검수에 쓰는 원자료다. 운영 이미지에만 싣지 않는다.
+# (여기 있는 파일을 코드가 읽게 되면 이 목록에서 빼야 한다.)
+data/cpx/common/physical_exam_ontology.json
+data/cpx/common/physical_exam_ontology_patch.atomic_core.json
+data/cpx/common/physical_exam_result_catalog.json
+data/cpx/common/physical_exam_result_catalog_patch.atomic_core.json
+data/cpx/common/common_cpx_rubric.json
+data/cpx/common/case_applicability.json
+data/cpx/common/reference_index.json
+data/cpx/common/034_sleep_disorder.reference.json
+data/cpx/common/exception_rules_v_final.txt
+data/cpx/common/rubric_insomnia_v_final.txt
