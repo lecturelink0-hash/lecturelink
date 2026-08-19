@@ -118,6 +118,12 @@ interface AnalyzeRes {
   question_type: '지식형' | '임상형' | '이미지형';
   /** false = 텍스트를 못 읽어(이미지·스캔본) 기본값이 채워진 응답 — 추천으로 적용하지 않는다. */
   analyzed?: boolean;
+  /** 의학 자료로 보이는지(P6). false 면 생성 전에 확인을 받는다(차단하지 않는다). */
+  is_medical?: boolean;
+  /** 자료 성격. 'exam'(기출·족보)이면 참고 자료로 옮기기를 권유한다. */
+  material_kind?: string;
+  /** 판정 확신도 0~1. 낮으면 확인을 받는다. */
+  confidence?: number;
 }
 
 interface SubjectRow {
@@ -552,7 +558,12 @@ export default function NotesPage() {
       const sendProcess = () =>
         api.post<ProcessRes>(`/api/uploads/${uploadId}/process`, {
           desired_count: count,
+          // style 은 현행 유지(사용자 결정 2026-08-19) — 바꾸면 전 사용자 출제 톤이
+          // 즉시 달라지므로 기준선 대비 A/B 후에 정한다.
           style: 'professor',
+          // P5 — 화면의 '단원/주제'·'핵심 키워드'를 실제로 싣는다.
+          topic: topic.trim() || undefined,
+          keywords: recommendation?.keywords?.length ? recommendation.keywords : undefined,
           difficulty,
           question_types: questionTypes,
           title: title.trim() || undefined,
@@ -608,6 +619,31 @@ export default function NotesPage() {
     if (pending.length === 0) {
       alert('생성할 학습자료를 먼저 업로드해주세요.');
       return;
+    }
+    // ── 자료 판정 확인(P6). **차단하지 않는다** — 오탐으로 정상 강의록을 막는 쪽이 더 나쁘다.
+    // 확인을 취소하면 생성 자체가 시작되지 않으므로 쿼터도 차감되지 않는다.
+    if (recommendation?.analyzed !== false) {
+      const notMedical = recommendation?.is_medical === false;
+      const lowConfidence = (recommendation?.confidence ?? 1) < 0.5;
+      const looksLikeExam = recommendation?.material_kind === 'exam';
+      if (notMedical || lowConfidence) {
+        const message = notMedical
+          ? '올리신 자료가 의학 학습자료가 아닌 것 같아요.\n그래도 문제를 만들까요? 문항 품질을 보장하기 어렵습니다.'
+          : '자료에서 내용을 충분히 읽지 못했어요(표지·목차만 있는 자료일 수 있어요).\n그래도 문제를 만들까요?';
+        if (!confirm(message)) return;
+      } else if (looksLikeExam) {
+        // 기출·족보는 학습자료로 두면 그 문항이 그대로 다시 나온다(감사에서 국시 기출로 실증).
+        // 지금은 권유만 한다 — 강제 전환·차단은 별도 정책(R6)에서 정한다.
+        if (
+          !confirm(
+            '올리신 자료가 기출·족보처럼 이미 문제 형태로 보여요.\n' +
+              '학습자료로 두면 그 문항이 거의 그대로 다시 나올 수 있어요. ' +
+              '왼쪽 “참고 자료”로 올리면 형식만 참고합니다.\n\n그래도 이대로 생성할까요?',
+          )
+        ) {
+          return;
+        }
+      }
     }
     const collected: GenQ[] = [];
     // 세션 전체 진행률 초기화(파일 수 기준) — 진행 바는 세션 동안 단조 증가한다.

@@ -39,6 +39,9 @@ export interface EnqueueInput {
   difficulty?: '하' | '중' | '상';
   questionTypes?: Array<'지식형' | '임상형' | '이미지형'>;
   title?: string;
+  /** P5 — 출제 초점(단원/주제·핵심 키워드). 생성 프롬프트에 실린다. */
+  topic?: string;
+  keywords?: string[];
   referenceUploadIds?: string[];
 }
 
@@ -329,6 +332,8 @@ export async function executeProcessUpload(
       difficulty: input.difficulty,
       questionTypes: input.questionTypes,
       title: input.title,
+      topic: input.topic,
+      keywords: input.keywords,
       referenceUploadIds: input.referenceUploadIds,
     });
     // generatePrivateQuestionsFromUpload 내부에서 completed 마킹함.

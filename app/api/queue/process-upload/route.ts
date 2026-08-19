@@ -29,6 +29,10 @@ const bodySchema = z.object({
   difficulty: z.enum(['하', '중', '상']).optional(),
   questionTypes: z.array(z.enum(['지식형', '임상형', '이미지형'])).min(1).max(3).optional(),
   title: z.string().max(100).optional(),
+  // P5 — 출제 초점. 큐 payload 는 워커가 재검증하므로 여기에도 넣어야 전달된다
+  // (desiredCount 가 min(5) 로 남아 요청이 영구 고착됐던 것과 같은 계열의 함정).
+  topic: z.string().max(60).optional(),
+  keywords: z.array(z.string().max(30)).max(8).optional(),
   referenceUploadIds: z.array(z.string().uuid()).max(10).optional(),
 });
 
