@@ -466,6 +466,14 @@ def _resolve_age(dem: dict, rng: random.Random) -> int:
     m = re.search(r'(\d+)\s*세 이상', raw)                      # '60세 이상'
     if m:
         return int(m.group(1)) + rng.randint(0, 12)
+    # '20대~50대'처럼 양쪽 모두 '대'로 적은 형태를 먼저 받는다. 아래 '20~30대' 정규식은
+    # 앞자리 뒤의 '대' 때문에 매칭에 실패하고, 그러면 마지막 '(\d+)대'가 앞 십년대만 잡아
+    # '20대~50대'가 20~29세로, '20대~30대 초반'이 20~23세로 좁아졌다. 배정값이 그럴듯해
+    # 드러나지 않던 결함이다.
+    m = re.search(r'(\d+)\s*대\s*[~∼-]\s*(\d+)\s*대', raw)       # '20대~50대'
+    if m:
+        hi = int(m.group(2)) + (3 if '초반' in raw else 9)
+        return rng.randint(int(m.group(1)), hi)
     m = re.search(r'(\d+)\s*[~∼-]\s*(\d+)대', raw)              # '20~30대'
     if m:
         hi = int(m.group(2)) + (3 if '초반' in raw else 9)

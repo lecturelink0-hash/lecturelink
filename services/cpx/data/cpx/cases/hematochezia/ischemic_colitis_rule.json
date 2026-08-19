@@ -56,7 +56,7 @@
   "pastHistoryRule": {
     "mustInclude": [
       "고혈압",
-      "심방세동 또는 동맥경화"
+      "고혈압·이상지질혈증에 의한 동맥경화"
     ],
     "mustAbsent": [
       "치핵 반복 출혈만"

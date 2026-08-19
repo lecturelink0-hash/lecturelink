@@ -31,13 +31,27 @@ def applicable_items(section: dict, context: dict) -> list[dict]:
 
 
 def _grade_checklist(section: dict, satisfied: float, applicable_count: int, context: dict) -> int:
-    """원 루브릭 0/1/2 컷오프 — 등급 표시용."""
+    """원 루브릭 0/1/2 컷오프 — 등급 표시용.
+
+    컷오프는 '전체 항목 수' 기준의 절대 개수로 적혀 있다. 조건부 항목이 빠져 분모가 줄면
+    같은 개수를 채우기가 그만큼 어려워진다 — 남성 환자에서 임신 관련 항목이 빠지거나,
+    청소년에게 성인용 금연 약물 항목이 빠질 때 그 학생만 더 엄격하게 채점됐다.
+    부분점수(score)는 earned/applicable 비례식이라 무사했고 등급 라벨만 어긋났다.
+    분모가 줄어든 만큼 컷오프도 같은 비율로 낮춰 기준을 일치시킨다(2026-08-18 감사 다6).
+    """
     cutoffs = section['gradeCutoffs']
     cond = section.get('conditionalGradeCutoffs')
     if cond and not context.get('depressionRelated', False):
         excellent, fair_min = cond['excellent'], cond['fairMin']
     else:
         excellent, fair_min = cutoffs['excellent'], cutoffs['fairMin']
+    total = len(section.get('items') or [])
+    if applicable_count and total and applicable_count != total:
+        ratio = applicable_count / total
+        # 충족 개수는 0.5 단위로만 움직이므로(부분점수) 환산값도 0.5 단위로 반올림한다.
+        # 올림으로 두면 5.6이 6.0이 되어 줄어든 분모에서 다시 더 엄격해진다.
+        excellent = round(excellent * ratio * 2) / 2
+        fair_min = round(fair_min * ratio * 2) / 2
     if satisfied >= excellent:
         return 2
     if satisfied >= fair_min:
