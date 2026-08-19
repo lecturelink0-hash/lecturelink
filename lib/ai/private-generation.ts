@@ -1873,8 +1873,19 @@ export async function generatePrivateQuestionsFromUpload(
     });
     diag.generation.referenceTexts = referenceLoaded.texts.length;
     diag.generation.referenceProfile = referenceProfile;
+    // 프로파일을 못 쓰게 된 사유. "문항이 없어서"와 "종결 형태가 의미 없어서"는 원인이 다르고,
+    // 후자는 프로파일 품질 문제라 프롬프트를 고쳐야 한다(실측에서 영문 자료가 그랬다).
+    // isUsableProfile 은 타입 술어라 부정 분기 안에서는 referenceProfile 이 null 로 좁혀진다 —
+    // 그래서 사유는 **분기 밖에서** 미리 계산해 둔다.
+    const referenceProfileWhy = !referenceProfile
+      ? '요약 호출 실패'
+      : referenceProfile.observed_questions <= 0
+        ? '문항 형태가 없음'
+        : '발문 종결을 뽑지 못함';
     if (referenceLoaded.texts.length > 0 && !isUsableProfile(referenceProfile)) {
-      warnings.push('참고 자료에서 문항 형식을 읽지 못해 형식 프로파일 없이 생성합니다.');
+      warnings.push(
+        `참고 자료 형식 프로파일을 쓰지 못했습니다(${referenceProfileWhy}) — 기본 규격으로 생성합니다.`,
+      );
     }
 
     // 4) 분류 카탈로그·생성 프롬프트·배치 계획을 OCR "이전"에 준비한다 — 본문 텍스트가
