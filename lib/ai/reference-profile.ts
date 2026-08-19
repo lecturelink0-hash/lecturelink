@@ -125,9 +125,48 @@ summarize_reference_format 도구로 답하세요.
 `.trim();
 }
 
-/** 프로파일이 쓸 만한지 — 문항을 하나도 못 읽었으면 프롬프트에 붙이지 않는다. */
+/**
+ * 의미 있는 형식 정보인지 — 문장부호·공백만 남은 값을 걸러낸다.
+ *
+ * 2026-08-19 실측: 영문 시험지를 참고 자료로 주니 모델이 `ask_endings: ["?"]`,
+ * `sample_ask_shapes: ["?"]` 를 돌려줬다. 한국어 종결 형태를 뽑는 필드에 영문 자료를
+ * 넣었으니 뽑을 게 없었던 것이다. 문제는 그 값이 그대로 프롬프트에 실려
+ * "발문 종결: "?"" 라는 무의미한 지시가 되고, 그것이 **규격보다 우선**한다는 점이다.
+ */
+function isMeaningfulShape(v: string): boolean {
+  // 한글·영문·숫자가 2자 이상 남아야 형식이라고 볼 수 있다.
+  return v.replace(/[^0-9A-Za-z가-힣]/g, '').length >= 2;
+}
+
+/**
+ * 모델 응답을 프롬프트에 싣기 전에 다듬는다.
+ *
+ * 못 믿을 값은 **버린다**(0/빈 배열). 프로파일은 규격을 이기는 지시라, 틀린 값이 실리면
+ * 규격이 지켜 주던 것까지 무너진다. 모르면 말하지 않는 편이 낫다.
+ */
+export function sanitizeProfile(p: ReferenceFormatProfile): ReferenceFormatProfile {
+  const clamp01 = (v: number) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0);
+  return {
+    ...p,
+    ask_endings: p.ask_endings.filter(isMeaningfulShape).slice(0, 3),
+    sample_ask_shapes: p.sample_ask_shapes.filter(isMeaningfulShape).slice(0, 3),
+    // 30자 미만은 지문 길이로 성립하지 않는다(발문 하나도 그보다 길다) — 모름(0)으로 둔다.
+    avg_stem_chars:
+      Number.isFinite(p.avg_stem_chars) && p.avg_stem_chars >= 30 && p.avg_stem_chars <= 2000
+        ? Math.round(p.avg_stem_chars)
+        : 0,
+    negative_ratio: clamp01(p.negative_ratio),
+    vignette_ratio: clamp01(p.vignette_ratio),
+  };
+}
+
+/**
+ * 프로파일이 쓸 만한지 — 문항을 읽었고, **의미 있는 발문 종결이 하나라도** 남아야 한다.
+ * 종결을 못 뽑았으면 형식을 안다고 말할 수 없으므로 붙이지 않는다(종전에는 `["?"]` 도 통과했다).
+ */
 export function isUsableProfile(p: ReferenceFormatProfile | null): p is ReferenceFormatProfile {
-  return !!p && p.observed_questions > 0 && p.ask_endings.length > 0;
+  if (!p || p.observed_questions <= 0) return false;
+  return p.ask_endings.some(isMeaningfulShape);
 }
 
 /**
@@ -140,20 +179,25 @@ export function isUsableProfile(p: ReferenceFormatProfile | null): p is Referenc
  * 된다는 뜻은 아니다.
  */
 export function buildReferenceProfileSection(p: ReferenceFormatProfile): string {
-  const endings = p.ask_endings.slice(0, 3).map((e) => `"${e}"`).join(', ');
-  const shapes = p.sample_ask_shapes.slice(0, 3).map((s) => `  · ${s}`).join('\n');
-  const pct = (v: number) => `${Math.round(Math.max(0, Math.min(1, v)) * 100)} %`;
+  const q = sanitizeProfile(p);
+  const endings = q.ask_endings.map((e) => `"${e}"`).join(', ');
+  const shapes = q.sample_ask_shapes.map((s) => `  · ${s}`).join('\n');
+  const pct = (v: number) => `${Math.round(v * 100)} %`;
+  // 모르는 값은 줄 자체를 뺀다 — 빈칸을 채우려고 틀린 숫자를 적으면 그 숫자가 규격을 이긴다.
+  const lines = [
+    `- 발문 종결: ${endings}`,
+    `- 선지 형식: ${q.choice_style}`,
+    q.avg_stem_chars > 0 ? `- 지문 평균 길이: 약 ${q.avg_stem_chars}자` : null,
+    `- 부정형("옳지 않은") 비율: ${pct(q.negative_ratio)}`,
+    `- 조합형(ㄱ/ㄴ/ㄷ): ${q.combo_used ? '사용함' : '사용 안 함'}`,
+    `- 증례형 비율: ${pct(q.vignette_ratio)}`,
+  ].filter(Boolean);
   return `
 ## 참고 자료 형식 프로파일 (이번 요청)
 
-학생이 올린 기출·족보 ${p.observed_questions}문항에서 뽑은 **형식**이다. 내용이 아니라 겉모습이다.
+학생이 올린 기출·족보 ${q.observed_questions}문항에서 뽑은 **형식**이다. 내용이 아니라 겉모습이다.
 
-- 발문 종결: ${endings || '(관찰 안 됨)'}
-- 선지 형식: ${p.choice_style}
-- 지문 평균 길이: 약 ${p.avg_stem_chars}자
-- 부정형("옳지 않은") 비율: ${pct(p.negative_ratio)}
-- 조합형(ㄱ/ㄴ/ㄷ): ${p.combo_used ? '사용함' : '사용 안 함'}
-- 증례형 비율: ${pct(p.vignette_ratio)}
+${lines.join('\n')}
 ${shapes ? `- 발문 골격 예시(의학 명사는 지워져 있다):\n${shapes}` : ''}
 
 ### 이 프로파일을 어떻게 쓰는가

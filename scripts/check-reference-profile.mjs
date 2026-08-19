@@ -21,6 +21,7 @@ import {
   buildReferenceProfileUserMessage,
   buildReferenceProfileSection,
   isUsableProfile,
+  sanitizeProfile,
 } from '../lib/ai/reference-profile.ts';
 import { readFileSync } from 'node:fs';
 
@@ -81,6 +82,23 @@ check('문항 0 이면 쓰지 않는다', !isUsableProfile({ ...profile, observe
 check('발문 종결을 못 뽑았으면 쓰지 않는다', !isUsableProfile({ ...profile, ask_endings: [] }));
 check('null 이면 쓰지 않는다', !isUsableProfile(null));
 
+console.log('\n퇴화된 프로파일 방어 (2026-08-19 실측 대응)');
+// 영문 시험지를 참고 자료로 줬더니 ask_endings=["?"], avg_stem_chars=25 가 돌아왔다.
+// 그 값이 그대로 실리면 "발문 종결: "?"" 라는 무의미한 지시가 **규격을 이긴다**.
+{
+  const degenerate = { ...profile, ask_endings: ['?'], sample_ask_shapes: ['?'], avg_stem_chars: 25 };
+  check('문장부호만 남은 종결은 쓸 수 없다고 판정', !isUsableProfile(degenerate));
+  const cleaned = sanitizeProfile(degenerate);
+  check('의미 없는 종결을 버린다', cleaned.ask_endings.length === 0);
+  check('의미 없는 예시를 버린다', cleaned.sample_ask_shapes.length === 0);
+  check('말이 안 되는 평균 길이는 0(모름)으로 둔다', cleaned.avg_stem_chars === 0);
+  const sec = buildReferenceProfileSection({ ...profile, avg_stem_chars: 25 });
+  check('모르는 길이는 줄 자체를 빼고 출력한다', !/지문 평균 길이/.test(sec));
+  const ok = sanitizeProfile(profile);
+  check('정상 프로파일은 그대로 둔다', ok.ask_endings.length === 3 && ok.avg_stem_chars === 140);
+  check('비율은 0~1 로 조인다', sanitizeProfile({ ...profile, negative_ratio: 3 }).negative_ratio === 1);
+}
+
 console.log('\n프롬프트 절 — 형식 우선, 안전 규칙 예외 (결정 사항)');
 {
   const sec = buildReferenceProfileSection(profile);
@@ -125,6 +143,10 @@ check(
   /isUsableProfile\(referenceProfile\) \? \[\] : referenceImages/.test(genCode),
 );
 check('진단에 프로파일을 남긴다', /diag\.generation\.referenceProfile/.test(genCode));
+check(
+  '프로파일을 못 쓴 사유를 경고에 남긴다',
+  /발문 종결을 뽑지 못함/.test(genCode) && /문항 형태가 없음/.test(genCode),
+);
 
 console.log('\n텍스트 추출 범위');
 check('PDF 텍스트를 읽는다', /REFERENCE_PDF_MAX_PAGES/.test(genCode));
