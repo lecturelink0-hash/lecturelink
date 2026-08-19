@@ -27,6 +27,12 @@ const check = (name, ok, detail = '') => {
 
 const read = (rel) => readFileSync(new URL(rel, import.meta.url), 'utf8');
 const analyzeSrc = read('../app/api/uploads/analyze/route.ts');
+// 주석을 걷어낸 본문 — "종전에는 이랬다"는 설명 주석이 코드로 오인되면 검사가 사실이
+// 아닌 것을 잡는다(check:knowledge 에서 한 번 겪었고 여기서 또 겪었다).
+const analyzeCode = analyzeSrc
+  .split('\n')
+  .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+  .join('\n');
 const notesSrc = read('../app/(app)/notes/page.tsx');
 const genSrc = read('../lib/ai/private-generation.ts');
 const migration = read('../supabase/migrations/00041_naesin_material_verdict_and_topic.sql');
@@ -59,6 +65,23 @@ check('취소하면 생성이 시작되지 않는다(쿼터 미차감)', /if \(!
 check('기출이면 참고 자료로 옮기기를 권유한다', /참고 자료.{0,12}올리면 형식만 참고/.test(notesSrc));
 check('기출도 강행할 수 있다', /그래도 이대로 생성할까요/.test(notesSrc));
 check('판정 주의는 로그로 남긴다', /자료 판정 주의/.test(analyzeSrc));
+
+console.log('\n판정 저장은 응답 전에 끝난다 (2026-08-19 실측 대응)');
+// 처음에는 `void (async () => …)()` 로 띄워 보냈는데, 서버리스는 응답 직후 함수를
+// 얼려서 그 프로미스가 실행되지 않는다 — 00041 적용 직후 판정이 한 건도 저장되지 않았다.
+// "저장했다고 생각했는데 안 된" 실패는 로그도 안 남기므로 코드로 고정한다.
+check(
+  '판정 UPDATE 를 fire-and-forget 으로 띄우지 않는다',
+  !/void \(async \(\) =>/.test(analyzeCode),
+);
+check(
+  '판정 UPDATE 를 await 한다',
+  /await admin[\s\S]{0,200}analyze_confidence/.test(analyzeSrc),
+);
+check(
+  '판정 저장 실패가 응답을 막지 않는다(try/catch)',
+  /catch \(verdictError\)/.test(analyzeSrc),
+);
 
 console.log('\n표본 추출(앞·중·뒤 3구간)');
 check('sampleAcross 가 있다', /function sampleAcross/.test(analyzeSrc));

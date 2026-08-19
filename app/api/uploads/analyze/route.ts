@@ -413,9 +413,15 @@ export const POST = withErrorHandling(async (request: Request) => {
     const result = normalize(toolUse.input);
 
     // P6 — 판정을 남긴다(권유·로그, 차단 없음). 분석 대상이었던 업로드에 기록한다.
+    //
+    // ⚠️ **응답 전에 await 한다.** 처음에는 `void (async () => …)()` 로 띄워 보냈는데,
+    // 서버리스에서는 응답을 돌려준 순간 함수가 얼어붙어(freeze) 그 뒤의 프로미스가
+    // 실행되지 않는다 — 00041 적용 직후 실측에서 판정이 **한 건도 저장되지 않았다**.
+    // 이 UPDATE 는 수십 ms 인데 요청은 이미 모델 호출로 수 초를 쓰므로 체감이 없다.
+    //
     // 실패해도 추천 자체는 돌려준다: 판정 기록은 부가 정보이고, 그것 때문에 업로드
     // 화면이 멈추면 안 된다(00041 미적용 환경 포함 — 컬럼 없음이면 조용히 건너뛴다).
-    void (async () => {
+    try {
       const { error: verdictErr } = await admin
         .from('user_uploads')
         .update({
@@ -427,13 +433,18 @@ export const POST = withErrorHandling(async (request: Request) => {
       if (verdictErr && !MISSING_COLUMN_CODES.has(verdictErr.code ?? '')) {
         console.warn('[uploads/analyze] 자료 판정 기록 실패:', verdictErr.message);
       }
-      // 비의학·기출은 로그로 남겨 빈도를 보고 나중에 정책(R6)을 정한다.
-      if (!result.is_medical || result.material_kind === 'exam') {
-        console.warn(
-          `[uploads/analyze] 자료 판정 주의 — is_medical=${result.is_medical} kind=${result.material_kind} conf=${result.confidence} uploads=${ordered.length}`,
-        );
-      }
-    })();
+    } catch (verdictError) {
+      console.warn(
+        '[uploads/analyze] 자료 판정 기록 예외:',
+        verdictError instanceof Error ? verdictError.message : String(verdictError),
+      );
+    }
+    // 비의학·기출은 로그로 남겨 빈도를 보고 나중에 정책(R6)을 정한다.
+    if (!result.is_medical || result.material_kind === 'exam') {
+      console.warn(
+        `[uploads/analyze] 자료 판정 주의 — is_medical=${result.is_medical} kind=${result.material_kind} conf=${result.confidence} uploads=${ordered.length}`,
+      );
+    }
 
     return ok(result);
   } catch (e) {
