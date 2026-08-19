@@ -86,6 +86,15 @@ export function DashboardView({
   nextLearningSet: LearningSet | null;
 }) {
   const learnerName = displayName.trim() || '학생';
+  // 주간 기록은 '오늘'이 가운데(4번째)에 오도록 순환 배치한다. 오늘 이후 칸은
+  // 아직 지나지 않은 날이므로 불꽃 대신 점으로 비워 둔다.
+  const todayIndex = weekDays.findIndex((day) => day.isToday);
+  const centeredWeek = todayIndex >= 0
+    ? Array.from({ length: 7 }, (_, index) => ({
+        ...weekDays[(todayIndex - 3 + index + 7) % 7],
+        isUpcoming: index > 3,
+      }))
+    : weekDays.map((day) => ({ ...day, isUpcoming: false }));
   void topWeakArea; // 학습 추천 개편으로 미사용 (추후 취약 스프린트에 재사용 예정)
   const isNewUser = totalSolved === 0;
   const studyTime = formatStudyTime(weekSeconds);
@@ -262,17 +271,29 @@ export function DashboardView({
             </div>
           </dl>
 
-          <ul className="study-week" aria-label="월요일부터 일요일까지의 학습 기록">
-            {weekDays.map((day) => {
-              const status = day.studied ? '학습 완료' : day.isToday ? '오늘, 아직 학습 전' : '학습 기록 없음';
+          <ul className="study-week" aria-label="오늘을 기준으로 한 최근 7일 학습 기록">
+            {centeredWeek.map((day, index) => {
+              const status = day.isUpcoming
+                ? '아직 지나지 않은 날'
+                : day.studied
+                  ? '학습 완료'
+                  : day.isToday
+                    ? '오늘, 아직 학습 전'
+                    : '학습 기록 없음';
               return (
-                <li key={day.label} className="study-day" aria-label={`${day.label}: ${status}`}>
+                <li
+                  key={`${day.label}-${index}`}
+                  className={day.isToday ? 'study-day is-today-cell' : 'study-day'}
+                  aria-label={`${day.label}: ${status}`}
+                >
                   <span aria-hidden="true">{day.label}</span>
                   <i
                     aria-hidden="true"
-                    className={day.studied ? 'is-complete' : day.isToday ? 'is-today' : ''}
+                    className={
+                      day.isUpcoming ? 'is-upcoming' : day.studied ? 'is-complete' : ''
+                    }
                   >
-                    {'🔥'}
+                    {day.isUpcoming ? '·' : '🔥'}
                   </i>
                 </li>
               );
@@ -339,7 +360,14 @@ function MetricDelta({
   format: (absValue: number) => string;
   minUnit?: number;
 }) {
-  if (delta === null || Math.abs(delta) < minUnit) return null;
+  if (delta === null || Math.abs(delta) < minUnit) {
+    // 세 지표의 줄 수를 맞춘다 — 하나만 델타가 없으면 숫자 baseline 이 어긋난다.
+    return (
+      <span className="dashboard-delta is-flat">
+        <small>지난주와 같음</small>
+      </span>
+    );
+  }
   const isDown = delta < 0;
   return (
     <span className={isDown ? 'dashboard-delta is-down' : 'dashboard-delta'}>
