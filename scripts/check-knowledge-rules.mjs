@@ -33,6 +33,17 @@ import {
   PRIVATE_GENERATION_TOOL_SCHEMA,
 } from '../lib/ai/prompts/private-generation.ts';
 import { hasForbiddenAsk } from '../lib/ai/clinical-shape.ts';
+import { buildClinicalQuotaDirective } from '../lib/ai/prompts/clinical-vignette.ts';
+
+const srcRaw = await import('node:fs').then((fs) =>
+  fs.readFileSync(new URL('../lib/ai/private-generation.ts', import.meta.url), 'utf8'),
+);
+// 주석을 걷어낸 뒤 본다 — "종전에는 이랬다"는 설명 주석이 지시문으로 오인되면
+// 검사가 사실이 아닌 것을 잡는다(첫 실행에서 실제로 걸렸다).
+const src = srcRaw
+  .split('\n')
+  .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+  .join('\n');
 
 let failed = 0;
 const check = (name, ok, detail = '') => {
@@ -101,6 +112,56 @@ check('쿼터가 배치 전부면 "전부"로 말한다', dAll.includes('**전�
 check('부정형 허용 시 상한 1문항을 말한다', dAll.includes('최대 1문항까지 허용'));
 check('quota 0 이면 빈 문자열', buildKnowledgeQuotaDirective({ batchSize: 2, quota: 0, assignedAskKinds: [], allowNegative: false }) === '');
 
+console.log('\n임상형 배치 지시에도 금지어가 있는가 (2026-08-19 실측 대응)');
+// 유일하게 걸린 위반이 임상 증례형이었다 — C9 는 시스템 프롬프트에 있었지만 배치 지시에는
+// 없어서 Flash 가 놓쳤다. 지식형에만 있던 금지 문구를 임상형 쿼터 지시에도 넣었는지 본다.
+const cd = buildClinicalQuotaDirective(2, 1);
+check('임상형 지시가 "가장 적절한"을 금지한다', cd.includes('가장 적절한'));
+check('임상형 지시가 "다음 중"을 금지한다', cd.includes('다음 중'));
+check('허용 예외를 함께 말한다', cd.includes('가장 흔한 원인은?'));
+check('quota 0 이면 빈 문자열', buildClinicalQuotaDirective(2, 0) === '');
+
+console.log('\n지식형 난이도 지침 (상이 증례 없이도 3이 되게)');
+check(
+  '지식형 전용 난이도 지시가 있다',
+  src.includes('KNOWLEDGE_DIFFICULTY_DIRECTIVES'),
+);
+check(
+  '지식형 상이 예외·금기/경계 수치/기전 하위 단계를 제시한다',
+  /예외·금기/.test(src) && /경계 수치/.test(src) && /기전의 하위 단계/.test(src),
+);
+check(
+  '지식형에 "증례를 붙여 어렵게 만들지 말라"고 못박는다',
+  src.includes('증례를 붙여 어렵게 만들려 하지 않는다'),
+);
+check(
+  '지식형을 고른 요청에만 붙인다',
+  src.includes('wantsKnowledge ? `\\n${KNOWLEDGE_DIFFICULTY_DIRECTIVES'),
+);
+
+console.log('\n발문 유형 배정이 7종을 먼저 덮는가');
+// 종전 batchIndex*need 방식은 7종을 다 쓰기 전에 앞쪽 유형이 반복됐다(실측 고유 6/10).
+// 누적 슬롯 기준이면 첫 7칸이 7종을 모두 덮는다. 여기서는 같은 계산을 재현해 확인한다.
+{
+  const pool = KNOWLEDGE_ASK_KINDS;
+  const batchSizes = [2, 2, 2, 2, 2];
+  const quotaFor = (n) => n; // 지식형 단독 요청
+  const plan = (bi) => {
+    const need = Math.max(1, quotaFor(batchSizes[bi]));
+    const consumed = batchSizes.slice(0, bi).reduce((a, n) => a + Math.max(1, quotaFor(n)), 0);
+    const start = consumed % pool.length;
+    return Array.from({ length: Math.min(need, pool.length) }, (_, k) => pool[(start + k) % pool.length]);
+  };
+  const all = batchSizes.map((_, i) => plan(i)).flat();
+  check('첫 7칸이 7종을 모두 덮는다', new Set(all.slice(0, 7)).size === 7, all.slice(0, 7).join(','));
+  check('10칸에서 고유 유형이 7종이다(최대치)', new Set(all).size === 7, `${new Set(all).size}종`);
+  check('같은 배치 안에서는 유형이 겹치지 않는다', batchSizes.every((_, i) => new Set(plan(i)).size === plan(i).length));
+}
+
+console.log('\n배정 문구가 이탈을 허용하되 흔적을 남기게 하는가');
+check('"배정" 표현으로 조인다', d.includes('배정'));
+check('바꿀 때 concepts 에 흔적을 남기게 한다', d.includes('#유형변경'));
+
 console.log('\n금지 발문 판정(hasForbiddenAsk)');
 const forbidden = [
   '65세 남자가 등 통증으로 병원에 왔다. 치료로 가장 적절한 것은?',
@@ -120,15 +181,6 @@ const allowed = [
 for (const stem of allowed) check(`허용형을 통과시킨다: ${stem.slice(-20)}`, !hasForbiddenAsk(stem));
 
 console.log('\n난이도 정의(P4)');
-const srcRaw = await import('node:fs').then((fs) =>
-  fs.readFileSync(new URL('../lib/ai/private-generation.ts', import.meta.url), 'utf8'),
-);
-// 주석을 걷어낸 뒤 본다 — "종전에는 이랬다"는 설명 주석이 지시문으로 오인되면
-// 검사가 사실이 아닌 것을 잡는다(첫 실행에서 실제로 걸렸다).
-const src = srcRaw
-  .split('\n')
-  .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
-  .join('\n');
 check('하/중/상 지시가 각각 인지 수준을 말한다', /난이도 하\(재인\)/.test(src) && /난이도 중\(적용\)/.test(src) && /난이도 상\(분석\)/.test(src));
 check('지시문(주석 제외)에 겹치는 범위(1~2 / 2~3)가 없다', !src.includes('difficulty 1~2') && !src.includes('difficulty 2~3'));
 check('요청값에 맞춰 신고값을 조정하지 말라고 지시한다(A안)', src.includes('요청에 맞추려고 값을 올리거나 내리지 않는다'));
