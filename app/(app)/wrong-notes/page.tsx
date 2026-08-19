@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Copy,
   Undo2,
+  FileText,
 } from 'lucide-react';
 import { QuestionStem } from '@/components/ui/QuestionStem';
 import CpxPagedList from '@/components/cpx/CpxPagedList';
@@ -60,7 +61,15 @@ interface WrongAnswerItem {
   subjectName: string;
   subTopicName: string;
   subTopicId: string | null;
+  /** 문항이 나온 업로드 자료. 내 자료(내신 대비) 기반 문항에만 있다. */
+  sourceFileId: string | null;
+  sourceFileName: string | null;
 }
+
+/** 자료가 없는(=공유 풀) 문항까지 한 폴더로 묶기 위한 표시 이름. */
+const NO_FILE_LABEL = '자료 없음';
+const fileKeyOf = (item: WrongAnswerItem) => item.sourceFileId ?? '__nofile__';
+const fileNameOf = (item: WrongAnswerItem) => item.sourceFileName ?? NO_FILE_LABEL;
 
 interface SimilarQuestion {
   id: string;
@@ -148,6 +157,62 @@ function QuestionImages({ images }: { images: QuestionImage[] }) {
         </figure>
       ))}
     </div>
+  );
+}
+
+/**
+ * 카드 머리 — 출처 자료(업로드 파일명) 한 줄.
+ *
+ * 원래는 과목/세부주제/난이도 배지 3개였다. 그런데 오답노트에 실제로 쌓이는 문항은
+ * 내신 대비(내 자료 기반)에서 틀린 것들이라 공유 풀 분류인 과목·세부주제가 대부분 비어 있고,
+ * 학생이 알아보는 단위도 "어떤 강의자료에서 나온 문제인지"다. 그래서 파일명 하나로 바꿨다.
+ * 삭제 버튼은 카드 우상단이라는 원래 위치를 유지한 채 이 줄 끝에 붙는다.
+ */
+function WrongMeta({
+  item,
+  onDelete,
+  disabled,
+}: {
+  item: WrongAnswerItem;
+  onDelete: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="wrong-meta">
+      <FileText className="w-3.5 h-3.5 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+      <span className="source-file" title={fileNameOf(item)}>{fileNameOf(item)}</span>
+      <button
+        onClick={onDelete}
+        disabled={disabled}
+        className="remove"
+        title="오답노트에서 제거"
+        aria-label="오답노트에서 제거"
+        aria-haspopup="dialog"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * 내 답 / 정답 대조.
+ *
+ * 빨강·초록으로 채운 상자 두 개를 나란히 두는 대신, 얇은 좌측 룰만 남긴 2행 표로 둔다.
+ * 색 대조(내 답=warn / 정답=forest)는 라벨과 룰에 남기고 면적만 없앤 것이다.
+ */
+function AnswerTable({ mine, answer }: { mine: string; answer: string }) {
+  return (
+    <dl className="answer-table">
+      <div className="answer-row is-mine">
+        <dt>내 답</dt>
+        <dd>{mine}</dd>
+      </div>
+      <div className="answer-row is-answer">
+        <dt>정답</dt>
+        <dd>{answer}</dd>
+      </div>
+    </dl>
   );
 }
 
@@ -291,6 +356,7 @@ function SimilarPanel({ state, isPrivate, sourceQuestionId, onChange }: SimilarP
         <Button
           variant="accent"
           size="sm"
+          className="wn-action wn-action-ai"
           onClick={loadSimilar}
           disabled={state.similarLoading}
         >
@@ -421,7 +487,7 @@ export default function WrongNotesPage() {
 
   // ── Filtering ─────────────────────────────────────────────────────────────
 
-  type SubTopicEntry = { id: string | null; name: string; count: number };
+  type FileEntry = { key: string; name: string; count: number };
 
   const reviewFilteredItems = items.filter((item) =>
     reviewFolder === 'need' ? !item.resolved : item.resolved,
@@ -431,22 +497,25 @@ export default function WrongNotesPage() {
     done: items.filter((item) => item.resolved).length,
   };
 
-  // 세부 주제 폴더 목록
-  const subTopics: SubTopicEntry[] = (() => {
-    const map = new Map<string, SubTopicEntry>();
+  // 자료 폴더 목록 — 세부 주제(공유 풀 분류) 대신 문항이 나온 업로드 자료로 묶는다.
+  // 파일명 가나다순으로 두되 '자료 없음'(공유 풀 문항)은 항상 맨 뒤로 보낸다.
+  const sourceFiles: FileEntry[] = (() => {
+    const map = new Map<string, FileEntry>();
     reviewFilteredItems.forEach((item) => {
-      const key = item.subTopicId ?? '__null__';
-      if (!map.has(key)) {
-        map.set(key, { id: item.subTopicId, name: item.subTopicName, count: 0 });
-      }
+      const key = fileKeyOf(item);
+      if (!map.has(key)) map.set(key, { key, name: fileNameOf(item), count: 0 });
       map.get(key)!.count++;
     });
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.key === '__nofile__') return 1;
+      if (b.key === '__nofile__') return -1;
+      return a.name.localeCompare(b.name, 'ko');
+    });
   })();
 
   const filteredItems = selectedSubTopicId === null
     ? reviewFilteredItems
-    : reviewFilteredItems.filter((item) => item.subTopicId === selectedSubTopicId);
+    : reviewFilteredItems.filter((item) => fileKeyOf(item) === selectedSubTopicId);
 
   // ── UI state helpers ──────────────────────────────────────────────────────
 
@@ -549,6 +618,7 @@ export default function WrongNotesPage() {
               <Button
                 variant="secondary"
                 size="sm"
+                className="wn-action wn-action-retry"
                 onClick={() => patchUI(item.id, initUIState(true))}
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -602,31 +672,22 @@ export default function WrongNotesPage() {
 
     return (
       <Card className="wrong-card">
-        {/* Header row — 과목/세부주제 배지 + 삭제 */}
-        <div className="badges">
-          <div className="badges">
-            <Badge variant="gray">{item.subjectName}</Badge>
-            <Badge variant="gray">{item.subTopicName}</Badge>
-            {q && <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>}
-          </div>
-          <button
-            onClick={() => handleDelete(item.id)}
-            disabled={deleting && deleteTarget === item.id}
-            className="remove"
-            title="오답노트에서 제거"
-            aria-label="오답노트에서 제거"
-            aria-haspopup="dialog"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Header row — 과목 · 세부주제 · 난이도 메타 한 줄 + 삭제 */}
+        <WrongMeta
+          item={item}
+          onDelete={() => handleDelete(item.id)}
+          disabled={deleting && deleteTarget === item.id}
+        />
 
         {/* Stem preview — 다시 풀기(펼침) 중에는 발문 요약·내 답·정답을 모두 감춘다.
             아래 풀이 영역이 같은 발문을 다시 보여주는 데다, 정답이 위에 떠 있으면 다시 풀 이유가 없다. */}
         {!q ? (
           <p className="text-sm text-[var(--color-muted)] mb-3">문제를 불러올 수 없습니다.</p>
         ) : !ui.expanded ? (
-          <><QuestionStem className="question" text={q.stem} /><div className="answer-grid"><div className="answer wrong"><div className="answer-label">내 답</div><div className="answer-text">{myAnswer}</div></div><div className="answer correct"><div className="answer-label">정답</div><div className="answer-text">{correctAnswer}</div></div></div></>
+          <>
+            <QuestionStem className="wrong-stem" text={q.stem} />
+            <AnswerTable mine={myAnswer} answer={correctAnswer} />
+          </>
         ) : null}
 
         {/* Expanded content — 다시 풀기. 위 요약이 사라진 상태라 구분선 없이 바로 발문부터 그린다. */}
@@ -645,6 +706,7 @@ export default function WrongNotesPage() {
             <Button
               variant="secondary"
               size="sm"
+              className="wn-action wn-action-retry"
               onClick={() => patchUI(item.id, { expanded: true })}
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -670,28 +732,18 @@ export default function WrongNotesPage() {
 
     return (
       <Card className="wrong-card">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <Badge variant="gray">{item.subjectName}</Badge>
-            <Badge variant="gray">{item.subTopicName}</Badge>
-            {q && <Badge variant="warn">난이도 {'★'.repeat(q.difficulty)}</Badge>}
-          </div>
-          <button
-            onClick={() => handleDelete(item.id)}
-            disabled={deleting && deleteTarget === item.id}
-            className="flex-shrink-0 p-1.5 rounded-lg hover:bg-[var(--color-warn-bg)] text-[var(--color-muted)] hover:text-[var(--color-warn)] transition-colors"
-            title="오답노트에서 제거"
-            aria-label="오답노트에서 제거"
-            aria-haspopup="dialog"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Header — 요약 보기와 같은 메타 한 줄. 보기 모드를 바꿔도 카드 상단이 달라지지 않게 한다. */}
+        <WrongMeta
+          item={item}
+          onDelete={() => handleDelete(item.id)}
+          disabled={deleting && deleteTarget === item.id}
+        />
 
         {q ? (
           <>
-            <QuestionStem className="text-[15px] leading-7 text-sage-800 mb-4" text={q.stem} />
+            {/* 전체 보기의 발문은 '읽고 푸는 본문'이라 요약 카드의 제목형(620) 규격을 쓰지 않는다.
+                커밋된 크기·행간·색을 그대로 두고 줄바꿈 정책만 얹는다. */}
+            <QuestionStem className="wrong-stem-wrap text-[15px] leading-7 text-sage-800 mb-4" text={q.stem} />
             <QuestionImages images={q.images} />
 
             <Choices
@@ -702,6 +754,8 @@ export default function WrongNotesPage() {
               onSelect={(i) => patchUI(item.id, { selected: i })}
             />
 
+            {/* 제출 + 유사문제 생성은 한 줄에 둔다. 전에는 두 블록이 따로 렌더돼
+                전체 보기에서만 두 버튼이 위아래로 나뉘어 있었다(요약 보기는 원래 한 줄). */}
             {!ui.submitted && (
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
@@ -711,6 +765,12 @@ export default function WrongNotesPage() {
                 >
                   제출
                 </Button>
+                <SimilarPanel
+                  state={ui}
+                  isPrivate={item.isPrivate}
+                  sourceQuestionId={q.id}
+                  onChange={(patch) => patchUI(item.id, patch)}
+                />
               </div>
             )}
 
@@ -724,6 +784,7 @@ export default function WrongNotesPage() {
                   <Button
                     variant="secondary"
                     size="sm"
+                    className="wn-action wn-action-retry"
                     onClick={() => patchUI(item.id, initUIState(false))}
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -739,16 +800,6 @@ export default function WrongNotesPage() {
               </>
             )}
 
-            {!ui.submitted && (
-              <div className="mt-2">
-                <SimilarPanel
-                  state={ui}
-                  isPrivate={item.isPrivate}
-                  sourceQuestionId={q.id}
-                  onChange={(patch) => patchUI(item.id, patch)}
-                />
-              </div>
-            )}
           </>
         ) : (
           <p className="text-sm text-[var(--color-muted)]">문제를 불러올 수 없습니다.</p>
@@ -770,7 +821,9 @@ export default function WrongNotesPage() {
 
   return (
     <div className="ll-wrong-page content">
-      <section className="page-head"><div><span className="eyebrow"><FolderOpen className="icon"/>오답노트</span><h1>틀린 문제를 모아<br/><span className="headline-accent">다시 복습하세요</span></h1><p className="lead">저장한 오답을 확인하고, 다시 풀거나 유사문제로 부족한 개념을 복습할 수 있어요.</p></div><div className="stats"><span className="stat-pill">복습할 문제 <strong>{items.length}</strong>개</span></div></section>
+      {/* h1 의 강제 <br/> 은 span 으로 바꾼다 — 820px 이하에서 CSS 가 inline 으로 되돌려
+          한 줄에 들어가는 폭에서는 쪼개지지 않게 한다(줄바꿈 정책). */}
+      <section className="page-head"><div><span className="eyebrow"><FolderOpen className="icon"/>오답노트</span><h1>틀린 문제를 모아 <span className="h1-tail headline-accent">다시 복습하세요</span></h1><p className="lead">저장한 오답을 확인하고, 다시 풀거나 유사문제로 부족한 개념을 복습할 수 있어요.</p></div><div className="stats"><span className="stat-pill">복습할 문제 <strong>{reviewFolderCounts.need}</strong>개</span></div></section>
 
       {items.length === 0 ? (
         // ── Empty state
@@ -835,8 +888,8 @@ export default function WrongNotesPage() {
                 <div className="border-t border-[var(--color-border)] my-2" />
                 <div className="px-2.5 py-2">
                   <span className="ll-eyebrow">
-                    <Folder className="w-3.5 h-3.5" strokeWidth={2.4} />
-                    세부 주제
+                    <FileText className="w-3.5 h-3.5" strokeWidth={2.4} />
+                    자료
                   </span>
                 </div>
                 <ul className="topic-list">
@@ -861,28 +914,27 @@ export default function WrongNotesPage() {
                       }`}>{reviewFilteredItems.length}</span>
                     </button>
                   </li>
-                  {/* SubTopic folders */}
-                  {subTopics.map((st) => {
-                    const active = selectedSubTopicId === st.id;
+                  {/* 자료(업로드 파일)별 폴더 */}
+                  {sourceFiles.map((f) => {
+                    const active = selectedSubTopicId === f.key;
                     return (
-                      <li key={st.id ?? '__null__'}>
+                      <li key={f.key}>
                         <button
-                          onClick={() => setSelectedSubTopicId(st.id)}
+                          onClick={() => setSelectedSubTopicId(f.key)}
+                          title={f.name}
                           className={`topic ${
                             active
                               ? 'bg-[var(--color-sage-100)] text-sage-700 font-semibold'
                               : 'text-sage-800 hover:bg-sage-50'
                           }`}
                         >
-                          {active
-                            ? <FolderOpen className="w-4 h-4 flex-shrink-0 text-sage-700" />
-                            : <Folder className="w-4 h-4 flex-shrink-0 text-[var(--color-sage-400)]" />}
-                          <span className="flex-1 truncate">{st.name}</span>
+                          <FileText className={`w-4 h-4 flex-shrink-0 ${active ? 'text-sage-700' : 'text-[var(--color-sage-400)]'}`} />
+                          <span className="flex-1 truncate">{f.name}</span>
                           <span className={`text-xs tabular-nums px-2 py-0.5 rounded-full ${
                             active
                               ? 'bg-sage-700 text-white'
                               : 'bg-[var(--color-sage-100)] text-[var(--color-muted)]'
-                          }`}>{st.count}</span>
+                          }`}>{f.count}</span>
                         </button>
                       </li>
                     );
@@ -908,9 +960,8 @@ export default function WrongNotesPage() {
                     전체 보기
                   </button>
                 </div>
-                <span className="result-count">
-                  {filteredItems.length}개
-                </span>
+                {/* 상단 '복습할 문제 N개' 필과 같은 수를 두 번 말하게 되어 제거.
+                    쪽 정보는 목록 아래 페이저가 담당한다. */}
               </div>
 
               {filteredItems.length === 0 ? (

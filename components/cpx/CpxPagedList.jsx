@@ -1,16 +1,21 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const DEFAULT_PAGE_SIZE = 6;
 
+/** 한 번에 보여줄 쪽 번호 개수. 이보다 쪽이 많으면 현재 쪽 주변만 잘라 보여주고 처음·끝 버튼을 붙인다. */
+const WINDOW = 5;
+
 // 세부 채점 항목은 한 영역에 20개 넘게 쌓인다. 모바일에서 전부 펼치면
 // 한 영역을 지나가는 데만 화면 여러 장을 스크롤해야 해 끝까지 내리기 어렵다.
-// 기본 6개씩 끊어 보여주고 ‹ › 로 넘긴다(10개는 근거 인용구까지 붙으면 여전히
-// 한 화면을 넘겼다). 한 쪽에 다 들어가면 컨트롤을 그리지 않는다.
-// unitLabel 은 카운터 접미사 전용('21개 항목') — aria 문구에 그대로 끼우면
-// '다음 개 항목' 처럼 읽히므로 버튼 라벨은 고정 문구를 쓴다.
+// 기본 6개씩 끊어 보여주고 아래 페이저로 넘긴다. 한 쪽에 다 들어가면 컨트롤을 그리지 않는다.
+//
+// 페이저는 쪽 번호를 직접 누르는 방식이다. 이전에는 "5–8 / 8개 오답 · 2/2쪽" 처럼
+// 숫자를 세 번 말하면서도 원하는 쪽으로 한 번에 갈 수는 없었다.
+// 쪽이 WINDOW 보다 많으면 « (첫 쪽) ‹ (이전) [번호…] › (다음) » (마지막 쪽) 이 붙고,
+// 적으면 ‹ [1][2] › 처럼 번호를 전부 펼친다. 갈 수 없는 방향의 버튼은 disabled.
 export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_SIZE, unitLabel = '항목' }) {
   const list = Array.isArray(items) ? items : [];
   const total = list.length;
@@ -35,37 +40,64 @@ export default function CpxPagedList({ items, children, pageSize = DEFAULT_PAGE_
   const current = Math.min(page, pageCount - 1);
   const start = current * pageSize;
   const slice = list.slice(start, start + pageSize);
-  const go = (next) => { pagedRef.current = true; setPage(next); };
+  const go = (next) => {
+    const clamped = Math.max(0, Math.min(next, pageCount - 1));
+    if (clamped === current) return;
+    pagedRef.current = true;
+    setPage(clamped);
+  };
+
+  // 현재 쪽을 가운데 두되 양 끝에서는 창을 안쪽으로 붙여 항상 WINDOW 개가 보이게 한다.
+  const windowPages = useMemo(() => {
+    const size = Math.min(WINDOW, pageCount);
+    let from = Math.max(0, current - Math.floor(size / 2));
+    from = Math.min(from, pageCount - size);
+    return Array.from({ length: size }, (_, i) => from + i);
+  }, [current, pageCount]);
+
+  const showEdges = pageCount > WINDOW;
+  const atFirst = current === 0;
+  const atLast = current === pageCount - 1;
 
   return (
     <div ref={anchorRef}>
       {children(slice)}
       {pageCount > 1 && (
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-3">
-          <button
-            type="button"
-            onClick={() => go(current - 1)}
-            disabled={current === 0}
-            aria-label="이전 항목"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-          >
+        <nav className="ll-pager" aria-label={`${total}${unitLabel} 쪽 이동`}>
+          {showEdges && (
+            <button type="button" className="ll-pager-step" onClick={() => go(0)} disabled={atFirst} aria-label="첫 쪽">
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
+          )}
+          <button type="button" className="ll-pager-step" onClick={() => go(current - 1)} disabled={atFirst} aria-label="이전 쪽">
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="tnum text-xs font-semibold text-[var(--color-muted)]">
-            {start + 1}–{start + slice.length} / {total}{unitLabel}
-            <span className="ml-1 text-[var(--color-border)]">·</span>
-            <span className="ml-1">{current + 1}/{pageCount}쪽</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => go(current + 1)}
-            disabled={current >= pageCount - 1}
-            aria-label="다음 항목"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white text-[var(--color-text)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-          >
+
+          <ol className="ll-pager-pages">
+            {windowPages.map((p) => (
+              <li key={p}>
+                <button
+                  type="button"
+                  className={`ll-pager-page${p === current ? ' is-current' : ''}`}
+                  onClick={() => go(p)}
+                  aria-label={`${p + 1}쪽`}
+                  aria-current={p === current ? 'page' : undefined}
+                >
+                  {p + 1}
+                </button>
+              </li>
+            ))}
+          </ol>
+
+          <button type="button" className="ll-pager-step" onClick={() => go(current + 1)} disabled={atLast} aria-label="다음 쪽">
             <ChevronRight className="h-4 w-4" />
           </button>
-        </div>
+          {showEdges && (
+            <button type="button" className="ll-pager-step" onClick={() => go(pageCount - 1)} disabled={atLast} aria-label="마지막 쪽">
+              <ChevronsRight className="h-4 w-4" />
+            </button>
+          )}
+        </nav>
       )}
     </div>
   );

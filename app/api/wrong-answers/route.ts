@@ -37,7 +37,8 @@ export const GET = withErrorHandling(async () => {
       ),
       private_question:private_questions (
         id, stem, choices, answer_index, explanation, difficulty,
-        images:private_question_images ( storage_path, kind, caption, sort_order )
+        images:private_question_images ( storage_path, kind, caption, sort_order ),
+        upload:user_uploads ( id, file_name )
       ),
       sub_topic:sub_topics (
         id, name, subject:subjects ( id, name )
@@ -118,6 +119,11 @@ export const GET = withErrorHandling(async () => {
       subjectName: subject?.name ?? (isPrivate ? '내 강의 노트' : '기타'),
       subTopicName: st?.name ?? '미분류',
       subTopicId: r.sub_topic_id,
+      // 오답노트에 쌓이는 문항은 사실상 전부 내 자료(내신 대비) 기반이라,
+      // 과목/세부주제(공유 풀 분류)는 대부분 '미분류'로 비어 있다.
+      // 실제로 학생이 알아보는 단위는 '어떤 강의자료에서 나온 문제인지'라서 업로드 파일명을 함께 내려준다.
+      sourceFileId: r.private_question?.upload?.id ?? null,
+      sourceFileName: r.private_question?.upload?.file_name ?? null,
     };
   });
 

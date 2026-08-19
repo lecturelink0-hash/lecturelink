@@ -4388,3 +4388,278 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   font-size: 14px;
   font-weight: 720;
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   오답노트(/wrong-notes) — 타이포 정돈 + 문제 카드 표 언어 이식
+   redesign-reference.css 는 생성 파일이라 손대지 않고 여기서 덮어쓴다.
+
+   범위: ① 페이지 헤더 타이포를 공통 페이지 헤드 토큰으로
+        ② 줄바꿈 정책(keep-all + balance, 강제 br 은 좁은 폭에서 해제)
+        ③ 오답 카드 내부(배지·답안 대조)를 CPX '증례 직접 선택'의 표 언어로
+   그 외(2열 격자·카드 크기·사이드바·페이저·세그먼트·공용 Button)는 커밋 상태 유지.
+
+   ── 길이 값에 관한 메모 ────────────────────────────────────────────────────
+   #243 이 페이지 헤드 전용 토큰(--text-page-head-*)을 px 로 신설해서, 헤더 타이포는
+   /notes·요금제와 같은 토큰을 그대로 참조한다. 그 밖의 크기 토큰은 아직 rem 이고
+   이 앱의 루트 글자 크기는 17px 라(globals.css 의 html{font-size:17px}) 16px 기준으로
+   적어둔 값보다 6.25% 크게 풀린다 — --radius-lg 는 16px 이 아니라 17px, --space-6 은
+   24px 이 아니라 25.5px. 그래서 헤더 밖의 길이는 기존 페이지와 같은 px 로 적는다.
+
+   색 토큰도 건드리지 않는다. var(--color-primary)는 #005D35(oklch)로 풀리고 이 페이지의
+   --forest / text-sage-700 은 #1F5C43 이라 서로 다른 초록이다(ΔRGB 34). 지역 팔레트를
+   var(--color-*)로 바꾸면 페이지 색이 통째로 달라진다. (별도 안건)
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── ① 페이지 헤더 — /notes·요금제와 같은 페이지 헤드 토큰(#243)을 그대로 참조 ── */
+.ll-wrong-page .eyebrow {
+  font-size: var(--text-page-head-eyebrow);
+  font-weight: var(--font-weight-page-head-eyebrow);   /* 760 → 800 */
+}
+
+.ll-wrong-page h1 {
+  font-size: var(--text-page-head-title);              /* clamp(28,3.5vw,40) → clamp(29,3.8vw,42) */
+  line-height: var(--leading-page-head-title);         /* 1.16 (동일) */
+  font-weight: var(--font-weight-page-head-title);     /* 780 → 820 */
+  letter-spacing: var(--tracking-page-head-title);     /* -0.012em (동일) */
+}
+
+.ll-wrong-page .lead {
+  font-size: var(--text-page-head-lead);
+  line-height: var(--leading-page-head-lead);
+  font-weight: var(--font-weight-page-head-lead);      /* 460 → 500 */
+}
+
+.ll-wrong-page .page-head { margin-bottom: 22px; }         /* 20px → 22px */
+
+/* ── ② 줄바꿈 정책 — CPX 4차와 같은 규칙 ─────────────────────────────────
+      keep-all 로 어절 중간 절단을 막고, balance 로 줄 길이를 고르게 나눈다.
+      적용 전 실측: 리드가 480px 에서 [430,43](마지막줄/최장줄 0.10),
+      430px 에서 "복 / 습할 수 있어요."로 어절 중간 절단.
+      적용 후: 1440~360px 18개 폭에서 비율 0.45 이상, 가로 오버플로 0. */
+.ll-wrong-page h1,
+.ll-wrong-page .lead {
+  text-wrap: balance;
+  word-break: keep-all;
+}
+/* 발문은 줄 수가 정해지지 않은 문단이라 balance 가 아니라 pretty — 고아 줄만 막는다.
+   (QuestionStem 이 white-space:pre-wrap 을 인라인으로 걸어도 text-wrap-style 은 살아남는다.) */
+.ll-wrong-page .wrong-stem,
+.ll-wrong-page .wrong-stem-wrap { text-wrap: pretty; word-break: keep-all; }
+
+/* 제목의 강제 줄바꿈은 좁은 폭에서 푼다 — 한 줄에 들어가는데도 둘로 쪼개지지 않도록 */
+.ll-wrong-page .h1-tail { display: block; }
+@media (max-width: 820px) {
+  .ll-wrong-page .h1-tail { display: inline; }
+}
+
+/* ── ③ 오답 카드 내부 — CPX 표 언어 이식 (격자·카드 크기는 그대로) ──────────── */
+
+/* 카드 리프트 제거 — CPX 표 행은 배경 틴트만 바뀐다. 두 페이지의 hover 언어를 맞춘다. */
+.ll-wrong-page .wrong-card:hover {
+  transform: none;
+  border-color: var(--sage-400);
+  box-shadow: var(--shadow-lift);
+}
+
+/* 카드 머리 — 출처 자료(파일명) 한 줄.
+   원래는 과목·세부주제·난이도 배지 3개였는데, 오답노트에 실제로 쌓이는 문항은
+   내신 대비(내 자료 기반)라 공유 풀 분류가 대부분 비어 있다. 학생이 알아보는 단위인
+   '어떤 강의자료에서 나온 문제인지'로 바꾼다. */
+.ll-wrong-page .wrong-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 640;
+}
+.ll-wrong-page .wrong-meta > svg { color: var(--sage-400); }
+.ll-wrong-page .wrong-meta .source-file {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ll-wrong-page .wrong-meta .remove {
+  margin-left: auto;
+  flex: 0 0 auto;
+  opacity: .5;
+}
+.ll-wrong-page .wrong-meta .remove:hover { opacity: 1; }
+
+/* 요약 카드의 발문 — 스캔용 제목 역할이라 굵기를 올린다(전체 보기 발문은 커밋 그대로 둠) */
+.ll-wrong-page .wrong-stem {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 620;
+  line-height: 1.6;
+  letter-spacing: -.012em;
+}
+
+/* 답안 대조: 채운 상자 2개(빨강/초록) → 얇은 좌측 룰만 남긴 2행 표.
+   색 대조는 라벨과 룰에 남기고 면적을 없앤다 — 카드에서 색이 경쟁하던 가장 큰 원인. */
+.ll-wrong-page .answer-table {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 14px;
+}
+.ll-wrong-page .answer-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 5px 0 5px 11px;
+  border-left: 3px solid var(--line);
+}
+.ll-wrong-page .answer-row dt {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 780;
+  letter-spacing: .01em;
+}
+.ll-wrong-page .answer-row dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 520;
+  line-height: 1.45;
+  word-break: keep-all;
+}
+/* '내 답'은 중립색으로 둔다 — 오답노트에 있는 항목은 전부 틀린 문제라
+   내 답에 경고 빨강을 또 칠하는 건 정보가 아니라 소음이다.
+   대비는 '정답 = 초록' 한쪽에만 남긴다. 빨강은 유사문제 생성 버튼 하나만 쓴다. */
+.ll-wrong-page .answer-row.is-mine { border-left-color: var(--ink-faint); }
+.ll-wrong-page .answer-row.is-mine dt { color: var(--ink-soft); }
+.ll-wrong-page .answer-row.is-mine dd { color: var(--ink-soft); }
+.ll-wrong-page .answer-row.is-answer { border-left-color: var(--forest); }
+.ll-wrong-page .answer-row.is-answer dt { color: var(--forest); }
+.ll-wrong-page .answer-row.is-answer dd { font-weight: 640; }
+
+@media (max-width: 620px) {
+  .ll-wrong-page .answer-row { grid-template-columns: 34px minmax(0, 1fr); gap: 9px; }
+}
+
+
+/* ── 액션 버튼 통일 — '다시 풀기'와 '유사문제 생성' ─────────────────────────
+   전에는 둘 다 공용 Button size="sm" 이라 크기는 같았는데, secondary 는 흰 카드 위에
+   흰 배경 + 흐린 보더라 버튼으로 안 보이고 accent 는 채운 주황이라 혼자 튀었다.
+   같은 높이·라운드·굵기로 맞추고, 위계는 '채움(주요) / 세이지 라인(보조)'로만 준다. */
+.ll-wrong-page {
+  /* 유사문제 생성 버튼 — 포레스트 그라디언트.
+     기존 코랄(#E0743A)은 흰 글자 대비 3.1:1 로 WCAG AA 미달이었고, 크림 배경 + 포레스트 그린 옆에
+     따뜻한 계열 빨강을 놓으면 보색이 정면으로 부딪혀 채도를 어떻게 잡아도 튄다.
+     팔레트를 초록 하나로 유지하고, 평면 초록(제출 버튼)과는 광택으로만 구분해
+     '같은 계열인데 한 단계 위'로 읽히게 한다. 가장 밝은 정지점(#2C7A5A)도 흰 글자 대비 5.2:1 로 AA(4.5:1)를 넘는다. */
+  --ai-grad-from: #2C7A5A;
+  --ai-grad-mid: #1F5C43;
+  --ai-grad-to: #17492F;
+}
+.ll-wrong-page .wn-action {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-weight: 700;
+  gap: 7px;
+}
+.ll-wrong-page .wn-action-ai {
+  background: linear-gradient(135deg, var(--ai-grad-from) 0%, var(--ai-grad-mid) 58%, var(--ai-grad-to) 100%);
+  border-color: transparent;
+  color: #fff;
+  /* 안쪽 1px 하이라이트가 광택을 만든다 — 이게 없으면 그냥 어두운 초록 사각형으로 보인다. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 6px 16px -10px rgba(23, 73, 47, .7);
+}
+.ll-wrong-page .wn-action-ai:hover:not(:disabled) { filter: brightness(1.08); }
+.ll-wrong-page .wn-action-ai:active:not(:disabled) { filter: brightness(.96); }
+.ll-wrong-page .wn-action-retry {
+  background: var(--sage);
+  border-color: var(--sage-200, #DCEBE0);
+  color: var(--forest-800);
+}
+.ll-wrong-page .wn-action-retry:hover:not(:disabled) {
+  background: #DCEBE0;
+  border-color: var(--sage-400);
+  color: var(--forest-800);
+}
+/* AI 유사문제 패널의 아이콘 칩도 같은 계열로 (코랄 → 포레스트) */
+.ll-wrong-page .ll-chip-accent { color: var(--forest); }
+
+/* ── 페이저 — 쪽 번호를 직접 누르는 방식 ──────────────────────────────────
+   공용 컴포넌트(CpxPagedList)라 CPX 세부 채점·내 문제집에도 같이 적용된다. */
+.ll-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+.ll-pager-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 4px;
+  padding: 0;
+  list-style: none;
+}
+.ll-pager-step,
+.ll-pager-page {
+  min-width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 13.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--dur-short) ease, color var(--dur-short) ease, border-color var(--dur-short) ease;
+}
+.ll-pager-step:hover:not(:disabled),
+.ll-pager-page:hover:not(.is-current) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.ll-pager-step:disabled {
+  color: var(--color-border);
+  cursor: default;
+}
+.ll-pager-page.is-current {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 750;
+  cursor: default;
+}
+.ll-pager-step:focus-visible,
+.ll-pager-page:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+@media (max-width: 480px) {
+  .ll-pager-step, .ll-pager-page { min-width: 32px; height: 32px; padding: 0 6px; font-size: 13px; }
+  .ll-pager, .ll-pager-pages { gap: 3px; }
+}
+
+/* ── 자료 폴더 목록 — 파일명이 길어 넘치던 것 ────────────────────────────────
+   .topic-list 는 grid 인데 트랙이 auto 라 항목이 콘텐츠 폭만큼 벌어져 카드 밖으로 나갔다
+   (세부 주제 이름은 짧아서 드러나지 않던 문제다). 트랙을 minmax(0,1fr)로 묶어 안에서 줄인다. */
+.ll-wrong-page .topic-list { grid-template-columns: minmax(0, 1fr); }
+.ll-wrong-page .topic-list > li { min-width: 0; }
+.ll-wrong-page .topic { min-width: 0; }
+.ll-wrong-page .topic > span:last-child { flex: 0 0 auto; }
+
+/* 파일명이 주 라벨이 되면서 240px 로는 대부분 잘린다 — 사이드바를 조금 넓힌다. */
+.ll-wrong-page .layout { grid-template-columns: 264px minmax(0, 1fr); }
+@media (max-width: 960px) {
+  .ll-wrong-page .layout { grid-template-columns: 1fr; }
+}
