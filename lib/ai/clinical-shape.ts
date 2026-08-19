@@ -148,6 +148,28 @@ const FORBIDDEN_ASK_PATTERNS: Array<[RegExp, string]> = [
   [/단계는\s*\?/, 'C9: "다음 단계는?" 대신 "처치는?" "검사는?"을 쓴다'],
 ];
 
+/**
+ * 유형을 가리지 않고 **모든 문항에 금지되는 발문 표현**(P3).
+ *
+ * C9(FORBIDDEN_ASK_PATTERNS)는 임상형 전용이라 지식형·이미지형에는 적용되지 않았고,
+ * 기본 프롬프트가 오히려 "가장 적절한 것은?"을 예시로 권장하고 있었다. 그 결과 운영
+ * 987문항의 51 %에 "가장"이 들어갔다(국시 공개 기출 79문항에는 0건).
+ *
+ * "가장 흔한 ~", "가장 먼저 ~"는 사실 자체가 최빈값·순서를 가리키므로 허용한다 —
+ * 금지 대상은 선지 사이의 우열을 모호하게 만드는 "가장 적절한/올바른/가능성 높은" 류다.
+ */
+const FORBIDDEN_ASK_ANY: RegExp[] = [
+  /가장\s*(?:적절|적합|올바른|바람직|가능성|타당|합당|우선적으로\s*적절)/,
+  /다음\s*중/,
+  /무엇인가/,
+];
+
+/** 발문(마지막 물음표 문장)에 유형 공통 금지 표현이 있는지 — 세기 위한 판정이다. */
+export function hasForbiddenAsk(stem: string): boolean {
+  const ask = extractAsk(stem);
+  return FORBIDDEN_ASK_ANY.some((re) => re.test(ask));
+}
+
 /** C4 — 증례 지문 최소 길이(자). 도입 한 줄(40자 남짓)로 끝나는 것을 막는다. */
 const MIN_VIGNETTE_CHARS = 80;
 

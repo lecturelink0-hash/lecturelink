@@ -73,10 +73,21 @@ import {
   type PlacedMarker,
 } from '@/lib/extract/annotate-markers';
 import {
+  KNOWLEDGE_RULES,
+  KNOWLEDGE_ASK_KINDS,
+  ALL_ASK_KINDS,
+  buildKnowledgeQuotaDirective,
+} from '@/lib/ai/prompts/knowledge-rules';
+import {
   CLINICAL_VIGNETTE_RULES,
   buildClinicalQuotaDirective,
 } from '@/lib/ai/prompts/clinical-vignette';
-import { isClinicalVignette, measureClinicalYield } from '@/lib/ai/clinical-shape';
+import {
+  isClinicalVignette,
+  measureClinicalYield,
+  hasForbiddenAsk,
+  hasPatientIntro,
+} from '@/lib/ai/clinical-shape';
 import { verifyQuestion } from './verify';
 import { isPrivateVerifyFailure, PRIVATE_VERIFY_REJECT_SCORE } from './verify-policy';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
@@ -503,6 +514,18 @@ function normalizeChoiceSet(
   const insertAt = Math.min(cleaned.indexOf(answerText), REQUIRED_CHOICE_COUNT - 1);
   distractors.splice(insertAt, 0, answerText);
   return { choices: distractors.slice(0, REQUIRED_CHOICE_COUNT), answerIndex: insertAt };
+}
+
+/**
+ * 모델이 신고한 발문 유형(ask_kind)을 카탈로그 값으로 정규화한다(P3).
+ *
+ * 카탈로그 밖 값(오탈자·한국어·창작)은 null 로 버린다 — 측정용 라벨이므로 정확하지 않으면
+ * 없는 것만 못하다. 대소문자·공백·하이픈만 관대하게 받는다.
+ */
+function normalizeAskKind(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const v = raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return (ALL_ASK_KINDS as readonly string[]).includes(v) ? v : null;
 }
 
 /**
@@ -1699,16 +1722,44 @@ export async function generatePrivateQuestionsFromUpload(
       catalogText,
     );
     // 사용자 지정 난이도·문항유형을 생성 지시로 반영.
-    const diffDirective =
-      input.difficulty === '하'
-        ? '전체 문항을 **쉬운(기본 개념) 난이도** 위주로 생성한다(difficulty 1~2).'
-        : input.difficulty === '상'
-          ? '전체 문항을 **어렵고 지엽적/응용 난이도** 위주로 생성한다(difficulty 2~3).'
-          : input.difficulty === '중'
-            ? '전체 문항을 **표준(중간) 난이도** 위주로 생성한다(difficulty 2).'
-            : '';
+    // P4 난이도 조작적 정의.
+    //
+    // 종전에는 "쉬운/표준/어려운 난이도 위주(difficulty 1~2 / 2 / 2~3)" 한 줄이었다. 무엇이
+    // 어려워지는지(인지 수준·감별 폭·수치 해석 유무·오답 근접도)를 말하지 않으니 모델도 알 수
+    // 없었고, 하(1~2)와 상(2~3)이 2 에서 겹쳐 요청이 달라도 결과가 같았다.
+    // 실측: 저장된 difficulty 의 85 %가 2, 요청 '상' 에서도 3 이 6/10 뿐.
+    //
+    // 값은 요청에 맞춰 올리라고 하지 않는다(A안 — 정직 신고). 모델이 만든 문항의 실제 수준을
+    // 적게 하고, 서버가 요청값과 대조해 mismatch 를 센다. 강제 일치시키면 신고값이 요청값의
+    // 사본이 되어 "요청대로 나왔는가"를 재는 신호가 사라진다.
+    const DIFFICULTY_DIRECTIVES: Record<'하' | '중' | '상', string> = {
+      '하':
+        '**난이도 하(재인)**: 자료가 가르친 개념 하나를 그대로 묻는다 — 정의·대표 소견·1차 약물·' +
+        '대표 위험인자. 증례를 쓴다면 전형적인 양상으로만 쓰고, 소견 하나로 답이 정해지게 한다. ' +
+        '오답은 범주가 달라도 된다(명백히 다른 질환군).',
+      '중':
+        '**난이도 중(적용)**: 두 개 이상의 소견·조건을 통합해야 답이 나오게 한다 — 진단 후 표준 치료, ' +
+        '금기 하나를 반영한 약물 선택, 검사 결과와 증상의 결합. 감별 후보 2~3개가 실제로 경합해야 하고, ' +
+        '오답은 정답과 같은 범주(같은 장기·같은 약물군·같은 분류 축)에서 고른다.',
+      '상':
+        '**난이도 상(분석)**: 비전형 양상, 검사 수치 해석(참고치 대비 방향), 2단계 추론(진단 → 다음 검사·처치), ' +
+        '예외·금기·용량 조절 중 하나를 반드시 포함한다. 오답은 정답과 소견 한두 개 차이로 갈리게 만든다. ' +
+        '다만 자료가 뒷받침하지 않는 수치·소견을 지어내면서까지 어렵게 만들지는 않는다 — ' +
+        '그럴 땐 감별을 좁히는 조건을 지문에 더 넣어 난이도를 올린다.',
+    };
+    // 요청 난이도의 정수 대응(1/2/3) — 모델 신고값과 대조해 mismatch 를 센다(P4).
+    const requestedDifficultyLevel: 1 | 2 | 3 | null =
+      input.difficulty === '하' ? 1 : input.difficulty === '중' ? 2 : input.difficulty === '상' ? 3 : null;
+    const diffDirective = input.difficulty
+      ? DIFFICULTY_DIRECTIVES[input.difficulty] +
+        '\n각 문항의 `difficulty` 에는 **요청 난이도가 아니라 그 문항이 실제로 요구하는 수준**' +
+        '(1=재인, 2=적용, 3=분석)을 정직하게 적는다. 요청에 맞추려고 값을 올리거나 내리지 않는다.'
+      : '';
     const typeDirectives: Record<string, string> = {
-      '지식형': '**지식형**: 개념·정의·기전을 확인하는 단답/개념 확인 문항 위주로 만든다(긴 증례보다 핵심 지식).',
+      // 종전에는 이 한 줄이 지식형 규격 전부였다(임상형에는 C0~C11, 이미지형에는 가림 검사가
+      // 있는데 지식형만). 그 결과 발문의 48 %가 두 문형에 몰리고 껍데기 증례가 나왔다.
+      // 실제 규격은 아래 KNOWLEDGE_RULES(K0~K7) 가 전담한다.
+      '지식형': '**지식형**: 아래 "지식형 문항 규격(K0~K7)"을 그대로 적용한다. 환자 증례로 감싸지 말고 자료가 가르친 개념을 직접 묻는다.',
       // 임상형의 실제 규격은 아래 CLINICAL_VIGNETTE_RULES 가 전담한다. 여기서는 어느
       // 규격을 따르라는 포인터만 둔다 — 예전처럼 이 한 줄이 규격 전부이면 모델이
       // 지식형으로 되돌아간다(2026-08-16 실측: 임상형 10문항이 전부 지식형이었다).
@@ -1722,6 +1773,7 @@ export async function generatePrivateQuestionsFromUpload(
     };
     const selectedTypes = input.questionTypes ?? [];
     const wantsClinical = selectedTypes.includes('임상형');
+    const wantsKnowledge = selectedTypes.includes('지식형');
     const typeDirective = selectedTypes.length
       ? `선택된 문항 유형(${selectedTypes.join(', ')})을 전체 문항에 고르게 배분한다.\n${selectedTypes.map((type) => typeDirectives[type]).join('\n')}`
       : '';
@@ -1732,6 +1784,11 @@ export async function generatePrivateQuestionsFromUpload(
     // 증례를 달게 되어 사용자가 고른 유형과 어긋난다.
     if (wantsClinical) {
       systemPrompt += `\n\n${CLINICAL_VIGNETTE_RULES}`;
+    }
+    // 지식형을 고른 요청에만 붙인다. 임상형·이미지형만 고른 요청에 붙이면 K0("증례를 쓰지 않는다")가
+    // 증례 문항까지 눌러 임상형이 지식형으로 되돌아간다(임상형 규격을 반대로 붙였을 때와 같은 사고).
+    if (wantsKnowledge) {
+      systemPrompt += `\n\n${KNOWLEDGE_RULES}`;
     }
     const client = getAnthropic();
     modelUsed = MODELS.generation();
@@ -1869,6 +1926,36 @@ export async function generatePrivateQuestionsFromUpload(
       return Math.max(1, Math.min(batchSize, Math.ceil(batchSize / selectedTypes.length)));
     };
 
+    // 배치의 "지식형 최소 수" — clinicalQuotaFor 와 같은 이유(병렬 배치의 독립 판단).
+    const knowledgeQuotaFor = (batchSize: number): number => {
+      if (!wantsKnowledge) return 0;
+      if (selectedTypes.length <= 1) return batchSize;
+      return Math.max(1, Math.min(batchSize, Math.ceil(batchSize / selectedTypes.length)));
+    };
+
+    // 발문 유형(ask_kind) 배분.
+    //
+    // "한 묶음 안에서 유형을 겹치지 말라"는 지시만으로는 배치 간 중복을 못 막는다 — 배치는
+    // 서로를 못 보므로 전부 '치료'와 '총론'으로 몰린다(실측: 치료 28 %·총론 23 % vs 기전 2 %).
+    // 조합형·표식과 같은 방식으로 **코드가 배치마다 다른 유형을 배정**한다.
+    const knowledgeAskPlan = (batchIndex: number, batchSize: number): string[] => {
+      if (!wantsKnowledge) return [];
+      const pool = KNOWLEDGE_ASK_KINDS;
+      const need = Math.max(1, knowledgeQuotaFor(batchSize));
+      // 배치마다 시작점을 옮겨 전체적으로 고르게 돈다(같은 배치 안에서는 서로 다른 유형).
+      const start = (batchIndex * need) % pool.length;
+      return Array.from({ length: Math.min(need, pool.length) }, (_, k) => pool[(start + k) % pool.length]);
+    };
+
+    // 부정형("옳지 않은 것은?") 허용 묶음 — 조합형과 같은 방식으로 상한을 결정론적으로 배분한다.
+    // 전체의 20 % 이하(10문항당 2문항)로 두되, 조합형·표식 묶음과 겹치지 않게 앞쪽부터 고른다.
+    const negativeQuota = Math.max(1, Math.round(desiredCount / 10) * 2);
+    const negativeBatches = new Set<number>();
+    for (let i = 0; i < batchSizes.length && negativeBatches.size < negativeQuota; i++) {
+      if (comboBatches.has(i) || markerBatches.has(i)) continue;
+      negativeBatches.add(i);
+    }
+
     type SettledBatch = { ok: true; v: BatchResult } | { ok: false; e: unknown };
     const prefired: Array<Promise<SettledBatch> | null> = batchSizes.map((_, batchIndex) =>
       batchIndex < prefireCount
@@ -1878,6 +1965,9 @@ export async function generatePrivateQuestionsFromUpload(
             getDisplayPng: async () => null,
             segmented: prefireSegmented,
             clinicalQuota: clinicalQuotaFor(batchSizes[batchIndex]),
+            knowledgeQuota: knowledgeQuotaFor(batchSizes[batchIndex]),
+            knowledgeAskKinds: knowledgeAskPlan(batchIndex, batchSizes[batchIndex]),
+            allowNegativeAsk: negativeBatches.has(batchIndex),
           }).then(
             (v): SettledBatch => ({ ok: true, v }),
             (e: unknown): SettledBatch => ({ ok: false, e }),
@@ -1885,6 +1975,10 @@ export async function generatePrivateQuestionsFromUpload(
         : null,
     );
     diag.generation.batchCount = batchSizes.length;
+    // P3·P4 계획값 — 결과(배치별 forbiddenAsk·askKinds·difficultyMismatch)와 대조해 읽는다.
+    diag.generation.requestedDifficultyLevel = requestedDifficultyLevel;
+    diag.generation.negativeBatches = [...negativeBatches];
+    diag.generation.knowledgeQuotaPerBatch = batchSizes.map((n) => knowledgeQuotaFor(n));
     diag.generation.prefireCount = prefireCount;
     diag.generation.prefireSegments = prefireSegments;
     diag.generation.imageQuestionTarget = imageQuestionTarget;
@@ -2461,6 +2555,8 @@ export async function generatePrivateQuestionsFromUpload(
       explanation: string;
       concepts: string[];
       difficulty: 1 | 2 | 3;
+      /** P3 — 발문 유형(definition·mechanism·diagnosis…). 모델이 신고하고 저장·측정에 쓴다. */
+      ask_kind?: string | null;
       image_indices: number[];
       sub_topic_code: string | null;
     };
@@ -2505,6 +2601,15 @@ export async function generatePrivateQuestionsFromUpload(
        * 독립 판단해 임상형이 0개인 배치가 나온다(실측: 임상형 10문항 전부 지식형).
        */
       clinicalQuota?: number;
+      /**
+       * 이 배치에서 K0~K7 규격의 지식형으로 만들 최소 문항 수(P3).
+       * clinicalQuota 와 같은 이유로 정량 지시가 필요하다.
+       */
+      knowledgeQuota?: number;
+      /** 이 배치에 배정된 지식형 발문 유형(ask_kind) — 배치 간 유형 편중을 코드가 막는다. */
+      knowledgeAskKinds?: readonly string[];
+      /** 이 배치에서 부정형("옳지 않은 것은?") 발문을 허용하는지. */
+      allowNegativeAsk?: boolean;
       /**
        * 429(rate limit) 재시도 대기 상한. 보충 배치는 본 배치들이 방금 끝난 직후에
        * 실행돼 429 를 맞기 쉬운데, 기본 상한(45초)을 그대로 기다리면 그 대기가 전체
@@ -2702,6 +2807,13 @@ export async function generatePrivateQuestionsFromUpload(
       // 임상형 정량 지시. 이미지 유무와 무관하므로 noImageDirective 바깥에 둔다
       // (안에 두면 이미지를 못 받은 텍스트 배치가 이 지시를 통째로 놓친다).
       const clinicalDirective = buildClinicalQuotaDirective(batchSize, gen.clinicalQuota ?? 0);
+      // 지식형 정량 지시(P3) — 배정된 발문 유형·부정형 허용 여부까지 숫자로 못박는다.
+      const knowledgeDirective = buildKnowledgeQuotaDirective({
+        batchSize,
+        quota: gen.knowledgeQuota ?? 0,
+        assignedAskKinds: gen.knowledgeAskKinds ?? [],
+        allowNegative: gen.allowNegativeAsk ?? false,
+      });
       // 조합형 빈도 제한(요청에 별도 조건이 없을 때).
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
@@ -2711,7 +2823,7 @@ export async function generatePrivateQuestionsFromUpload(
         text:
           `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
           (gen.contextText || '(추출된 텍스트·이미지 없음)') +
-          `\n\n${userMessage}${batchDirective}${noImageDirective}${clinicalDirective}${comboDirective}`,
+          `\n\n${userMessage}${batchDirective}${noImageDirective}${clinicalDirective}${knowledgeDirective}${comboDirective}`,
       });
 
       // 해설 길이 상한(350자) 적용 후 문항당 실출력은 ~1,000토큰대. 다만 지시 이탈로
@@ -3000,9 +3112,43 @@ export async function generatePrivateQuestionsFromUpload(
           difficulty: k.q.difficulty,
           generation_slot: slots[questionIndex],
           kind,
+          // P3 — 모델이 신고한 발문 유형. 카탈로그 밖 값은 버린다(오탈자·창작 방지).
+          ask_kind: normalizeAskKind(k.q.ask_kind),
           verify_score: k.verifyScore ?? null,
         };
       });
+
+      // ── P3·P4 계측: 발문 규칙 위반·유형 편중·난이도 신고 대조.
+      //
+      // 임상형 수확량과 같은 이유로 "세기만" 한다. 발문을 자동으로 고치면 의미가 바뀌고
+      // (예: "가장 적절한 치료는?" → "치료는?" 은 선지 우열 판정을 바꾼다), 난이도는
+      // 애초에 코드가 판정할 수 없다. 첫 주는 경고·진단으로만 남겨 프롬프트 효과를 본다.
+      {
+        const forbidden = rows.filter((r) => hasForbiddenAsk(r.stem));
+        const shells = rows.filter((r) => r.kind === 'knowledge' && hasPatientIntro(r.stem));
+        const askKinds = rows.map((r) => r.ask_kind).filter(Boolean) as string[];
+        const dupAsk = askKinds.length - new Set(askKinds).size;
+        batchDiag.forbiddenAsk = forbidden.length;
+        batchDiag.knowledgeShell = shells.length;
+        batchDiag.askKindDup = dupAsk;
+        batchDiag.askKinds = askKinds;
+        if (forbidden.length > 0) {
+          warnings.push(
+            `배치 ${batchIndex + 1}: 금지 발문("가장 적절한"·"다음 중") ${forbidden.length}문항 — ` +
+              `예: ${forbidden[0].stem.slice(-24)}`,
+          );
+        }
+        if (shells.length > 0) {
+          warnings.push(
+            `배치 ${batchIndex + 1}: 껍데기 증례(환자 도입 + 지식형 발문) ${shells.length}문항.`,
+          );
+        }
+        if (requestedDifficultyLevel !== null) {
+          const mismatched = rows.filter((r) => r.difficulty !== requestedDifficultyLevel).length;
+          batchDiag.difficultyMismatch = mismatched;
+          batchDiag.difficultyReported = rows.map((r) => r.difficulty);
+        }
+      }
 
       // 임상형 수확량 계측.
       //
@@ -3312,6 +3458,9 @@ export async function generatePrivateQuestionsFromUpload(
         getDisplayPng,
         segmented: segmentCount > 1,
         clinicalQuota: clinicalQuotaFor(batchSizes[batchIndex] ?? 1),
+        knowledgeQuota: knowledgeQuotaFor(batchSizes[batchIndex] ?? 1),
+        knowledgeAskKinds: knowledgeAskPlan(batchIndex, batchSizes[batchIndex] ?? 1),
+        allowNegativeAsk: negativeBatches.has(batchIndex),
       };
     };
 
@@ -3615,6 +3764,9 @@ export async function generatePrivateQuestionsFromUpload(
             // 보충 문항도 사용자가 고른 유형을 지켜야 한다. 빼먹으면 폐기가 일어날 때마다
             // 임상형이 지식형으로 조용히 치환된다(이미지 재투입을 넣은 것과 같은 이유).
             clinicalQuota: clinicalQuotaFor(slots.length),
+            knowledgeQuota: knowledgeQuotaFor(slots.length),
+            knowledgeAskKinds: knowledgeAskPlan(batchSizes.length + round, slots.length),
+            allowNegativeAsk: false,
           });
         } catch (e) {
           warnings.push(
