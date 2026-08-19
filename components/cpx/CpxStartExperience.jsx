@@ -4,16 +4,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
-  BarChart3,
   ChevronRight,
   Clock3,
+  Info,
   Mic,
   MicOff,
   Search,
   Shuffle,
   X,
 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
 
 // 시안의 '다시 연습' 아이콘은 다트가 꽂힌 과녁 — lucide에 없는 형태라 인라인 SVG로 재현.
 function TargetArrowIcon(props) {
@@ -124,25 +123,18 @@ export default function CpxStartExperience({
     () => buildRecommendation(historySessions, cases),
     [historySessions, cases],
   );
-  const displayParts = useMemo(() => {
-    const coreIds = new Set(['history', 'exam', 'psych']);
-    const core = rawPartGroups.filter((group) => coreIds.has(group.id));
-    const coreCats = new Set(core.flatMap((group) => group.cats));
-    const otherCats = categories.filter((category) => !coreCats.has(category));
-    return [
-      { id: 'all', label: '전체', Icon: null, cats: categories },
-      ...core,
-      { id: 'other', label: '기타', Icon: BarChart3, cats: otherCats },
-    ].filter((group) => group.cats.length);
-  }, [categories, rawPartGroups]);
+  // 시나리오 작성 기준 파트를 그대로 노출한다. 한때 병력청취·진찰·정신행동 3개만 남기고 나머지를
+  // '기타'로 합쳐뒀는데, 상담·의사소통 / 여성·산과 / 소아·특수 상황이 통째로 '기타'에 묻혀
+  // 원래 분류를 아는 사용자가 증례를 찾지 못했다. rawPartGroups(=실제 데이터가 있는 파트)를 그대로 쓴다.
+  const displayParts = useMemo(() => [
+    { id: 'all', label: '전체', Icon: null, cats: categories },
+    ...rawPartGroups,
+  ].filter((group) => group.cats.length), [categories, rawPartGroups]);
   const [selectedPart, setSelectedPart] = useState('all');
   const activePart = displayParts.find((part) => part.id === selectedPart) || displayParts[0];
   const [selectedCategory, setSelectedCategory] = useState('');
   const [query, setQuery] = useState('');
-  const [setup, setSetup] = useState(null);
   const directRef = useRef(null);
-  const startButtonRef = useRef(null);
-  const previousFocusRef = useRef(null);
 
   const casesByCategory = useMemo(() => {
     const grouped = {};
@@ -158,26 +150,6 @@ export default function CpxStartExperience({
     if (!partCategories.includes(selectedCategory)) setSelectedCategory(partCategories[0] || '');
   }, [activePart, selectedCategory]);
 
-  useEffect(() => {
-    if (!setup) return undefined;
-    previousFocusRef.current = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const frame = window.requestAnimationFrame(() => startButtonRef.current?.focus());
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') setSetup(null);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      // preventScroll: 진료 시작이 안내 미확인으로 막히면 페이지가 안내 배너로 스크롤되는데,
-      // 포커스 복원의 기본 스크롤이 그 이동을 다시 위로 끌어올리지 않도록 막는다.
-      previousFocusRef.current?.focus?.({ preventScroll: true });
-    };
-  }, [setup]);
-
   const q = normalize(query);
   const activeCategories = activePart?.cats || [];
   const visibleCategories = q
@@ -192,18 +164,14 @@ export default function CpxStartExperience({
       && normalize(`${item.category}${item.title}${item.description || ''}${item.variant || ''}${item.tags || ''}`).includes(q))
     : (casesByCategory[selectedCategory] || []);
 
-  const openSetup = (target, mode) => {
+  // 진료 시간·음성 문진은 헤더에서 상시 조절하므로 시작 전에 따로 물을 것이 없다 —
+  // 카드/행을 누르면 바로 진료가 시작된다(연습 설정 모달 제거).
+  const startCase = (target, mode) => {
     if (!target) return;
-    setSetup({ target, mode });
+    onStart(target, { mode });
   };
   const scrollToDirect = () => directRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const openRandomSetup = () => openSetup(pickRandomCase(cases), 'random');
-  const confirmStart = () => {
-    const pending = setup;
-    if (!pending) return;
-    setSetup(null);
-    onStart(pending.target, { mode: pending.mode });
-  };
+  const startRandom = () => startCase(pickRandomCase(cases), 'random');
   const handleCardKeyDown = (event, action) => {
     if (event.target !== event.currentTarget || event.key === 'Escape') return;
     if (event.key === 'Enter' || event.key === ' ') {
@@ -214,26 +182,56 @@ export default function CpxStartExperience({
 
   return <div className="cpx-start-experience">
     <header className="cpx-start-header">
-      <div>
+      <div className="cpx-start-copy">
         <span className="cpx-start-eyebrow">CPX 실기 연습</span>
-        {/* 내신 대비(/notes)·내 문제집(/library) 제목과 같은 2줄 구성 — 강조 구절과 뒷문장을 <br/>로 나눈다. */}
-        <h1><span className="cpx-headline-accent">의사-환자 모의대화</span>를 통해<br />CPX를 대비해보세요</h1>
+        {/* 내신 대비(/notes)·내 문제집(/library) 제목과 같은 2줄 구성 — 뒷문장을 블록 span 으로 내린다.
+            좁은 폭에서는 이 강제 줄바꿈이 오히려 "통해"만 남는 짧은 줄을 만들어 CSS 에서 inline 으로 되돌린다.
+            <br/> 을 display:none 으로 지우면 "통해CPX를" 처럼 공백 없이 붙으므로 span + 공백 조합을 쓴다. */}
+        <h1>
+          <span className="cpx-headline-accent">의사-환자 모의대화</span>를 통해{' '}
+          <span className="cpx-h1-tail">CPX를 대비해보세요</span>
+        </h1>
         <p>복습이 필요한 증례부터 랜덤 실전까지 원하는 방식으로 연습할 수 있어요.</p>
       </div>
-      <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ArrowRight aria-hidden /></Link>
+      <div className="cpx-start-controls">
+        <div
+          className="cpx-time-seg"
+          role="radiogroup"
+          aria-label="진료 시간"
+          title="실전(12분)보다 짧게 설정해 시간 압박에 대비할 수 있어요"
+        >
+          <Clock3 aria-hidden />
+          {timeOptions.map((option) => <button
+            key={option.seconds}
+            type="button"
+            role="radio"
+            aria-checked={limitSeconds === option.seconds}
+            onClick={() => onLimitChange(option.seconds)}
+          >{option.label}</button>)}
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={voiceOn}
+          className={`cpx-voice-btn ${voiceOn ? 'is-on' : ''}`}
+          title="시끄러운 곳에서는 음성을 끄고 텍스트로만 진료할 수 있어요"
+          onClick={() => onVoiceChange(!voiceOn)}
+        >{voiceOn ? <Mic aria-hidden /> : <MicOff aria-hidden />}음성 {voiceOn ? 'ON' : 'OFF'}</button>
+        <Link href="/cpx/history" className="cpx-record-link">나의 CPX 기록 <ArrowRight aria-hidden /></Link>
+      </div>
     </header>
 
     <section className="cpx-quick-section" aria-labelledby="cpx-quick-title">
       <div className="cpx-section-heading">
-        <h2 id="cpx-quick-title">빠른 시작</h2>
+        <h2 id="cpx-quick-title"><span className="cpx-sec-num" aria-hidden>1</span>빠른 시작</h2>
       </div>
       <div className="cpx-quick-grid">
         <article
           className="cpx-review-panel"
           role={recommendation ? 'button' : undefined}
           tabIndex={recommendation ? 0 : undefined}
-          onClick={recommendation ? () => openSetup(recommendation.target, 'recommendation') : undefined}
-          onKeyDown={recommendation ? (event) => handleCardKeyDown(event, () => openSetup(recommendation.target, 'recommendation')) : undefined}
+          onClick={recommendation ? () => startCase(recommendation.target, 'recommendation') : undefined}
+          onKeyDown={recommendation ? (event) => handleCardKeyDown(event, () => startCase(recommendation.target, 'recommendation')) : undefined}
         >
           <div className="cpx-quick-label">
             <span className="cpx-quick-icon"><TargetArrowIcon aria-hidden /></span>
@@ -260,7 +258,7 @@ export default function CpxStartExperience({
                   : recommendation.totalScore !== null && <> · 총점 {recommendation.totalScore}점</>}
               </p>
             </div>
-            <button type="button" className="cpx-quick-cta" onClick={(event) => { event.stopPropagation(); openSetup(recommendation.target, 'recommendation'); }}>
+            <button type="button" className="cpx-quick-cta" onClick={(event) => { event.stopPropagation(); startCase(recommendation.target, 'recommendation'); }}>
               다시 연습하기 <ArrowRight aria-hidden />
             </button>
           </> : <div className="cpx-recommendation-empty">
@@ -274,29 +272,32 @@ export default function CpxStartExperience({
           className="cpx-random-panel"
           role={cases.length ? 'button' : undefined}
           tabIndex={cases.length ? 0 : undefined}
-          onClick={cases.length ? openRandomSetup : undefined}
-          onKeyDown={cases.length ? (event) => handleCardKeyDown(event, openRandomSetup) : undefined}
+          onClick={cases.length ? startRandom : undefined}
+          onKeyDown={cases.length ? (event) => handleCardKeyDown(event, startRandom) : undefined}
         >
           <div className="cpx-quick-label">
             <span className="cpx-quick-icon"><Shuffle aria-hidden /></span>
-            <div><strong>랜덤 실전</strong></div>
+            {/* 좌측 카드에만 보조 설명이 있으면 두 카드가 비대칭으로 읽혀, 같은 위치에 한 줄을 둔다. */}
+            <div><strong>랜덤 실전</strong><span>시험처럼 증례를 모른 채 진행해요</span></div>
           </div>
           <div className="cpx-random-copy">
             <h3>증례 정보 없이 바로 시작</h3>
-            <p>시험처럼 증례를 무작위로 진행해요</p>
+            <p>어떤 증례가 나올지는 진료 시작 후에 공개돼요</p>
           </div>
-            <button type="button" className="cpx-quick-cta" onClick={(event) => { event.stopPropagation(); openRandomSetup(); }} disabled={!cases.length}>
+          <button type="button" className="cpx-quick-cta" onClick={(event) => { event.stopPropagation(); startRandom(); }} disabled={!cases.length}>
             시작하기 <ArrowRight aria-hidden />
           </button>
         </article>
       </div>
+      {/* 연습 설정 모달에 있던 순응도 안내 — 모달을 없앴으므로 빠른 시작 바로 아래에 남긴다. */}
+      <p className="cpx-quick-note"><Info aria-hidden /><span>실제 시험처럼 순응도가 낮은 환자를 무작위로 만날 수 있어요. 어떤 유형이었는지는 채점 후에 알려드려요.</span></p>
     </section>
 
     <section ref={directRef} className="cpx-direct-section" aria-labelledby="cpx-direct-title">
       <div className="cpx-direct-heading">
         <div className="cpx-section-heading">
-          <h2 id="cpx-direct-title">증례 직접 선택</h2>
-          <p>파트별 증상 및 주호소와 시나리오를 차례로 선택해봐요.</p>
+          <h2 id="cpx-direct-title"><span className="cpx-sec-num" aria-hidden>2</span>증례 직접 선택</h2>
+          <p>파트별 증상 및 주호소와 시나리오를 차례로 선택해보세요.</p>
         </div>
         <label className="cpx-direct-search">
           <Search aria-hidden />
@@ -346,7 +347,7 @@ export default function CpxStartExperience({
             <b>{visibleCases.length}</b>
           </div>
           <div className="cpx-scenario-list">
-            {visibleCases.map((item) => <button key={item.id} type="button" className="cpx-scenario-row" onClick={() => openSetup(item, 'direct')}>
+            {visibleCases.map((item) => <button key={item.id} type="button" className="cpx-scenario-row" onClick={() => startCase(item, 'direct')}>
               <span className="cpx-scenario-copy">
                 {q && <span className="cpx-scenario-category">{item.category}</span>}
                 <span className="cpx-scenario-name">{item.title}</span>
@@ -360,45 +361,5 @@ export default function CpxStartExperience({
       </div>
     </section>
 
-    {setup && <div className="cpx-setup-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setSetup(null); }}>
-      <section className="cpx-setup-dialog" role="dialog" aria-modal="true" aria-labelledby="cpx-setup-title">
-        <button type="button" className="cpx-dialog-close" onClick={() => setSetup(null)} aria-label="연습 설정 닫기"><X aria-hidden /></button>
-        <div className="cpx-dialog-heading">
-          <h2 id="cpx-setup-title">연습 설정</h2>
-          {setup.mode === 'random'
-            ? <p>무작위 증례는 진료가 시작될 때 공개됩니다.</p>
-            : <p><strong>{setup.target.category}</strong> · {setup.target.title}</p>}
-        </div>
-        <div className="cpx-setting-group">
-          <div className="cpx-setting-label"><Clock3 aria-hidden /><div><strong>진료 시간</strong></div></div>
-          <div className="cpx-time-options" role="radiogroup" aria-label="진료 시간">
-            {timeOptions.map((option) => <div key={option.seconds} className="cpx-time-option">
-              <button
-                type="button"
-                role="radio"
-                aria-checked={limitSeconds === option.seconds}
-                aria-describedby={option.seconds === 720 ? 'cpx-time-real' : undefined}
-                onClick={() => onLimitChange(option.seconds)}
-              >{option.label}</button>
-              {option.seconds === 720 && <span id="cpx-time-real" className="cpx-time-tag">실전</span>}
-            </div>)}
-          </div>
-        </div>
-        <button type="button" role="switch" aria-checked={voiceOn} aria-describedby="cpx-voice-description" className="cpx-setting-group cpx-voice-setting" onClick={() => onVoiceChange(!voiceOn)}>
-          <span className="cpx-setting-label">{voiceOn ? <Mic aria-hidden /> : <MicOff aria-hidden />}<span className="cpx-setting-copy"><strong>음성 문진</strong><span id="cpx-voice-description">{voiceOn ? '음성으로 환자와 문진할 수 있어요.' : '끄면 텍스트로만 진료할 수 있어요.'}</span></span></span>
-          <span className={`cpx-voice-switch ${voiceOn ? 'is-on' : ''}`} aria-hidden><i /></span>
-        </button>
-        <div className="cpx-dialog-summary">
-          <span>{timeOptions.find((option) => option.seconds === limitSeconds)?.label}</span>
-          <span>음성 문진 {voiceOn ? 'ON' : 'OFF'}</span>
-          {setup.mode === 'random' && <span>증례 비공개</span>}
-        </div>
-        {/* 순응도 낮은 환자는 상시 무작위 배정(직접 선택 25% · 랜덤 실전 40%) — 사용자 설정 불가, 유형은 채점 후 공개 */}
-        <p className="cpx-dialog-note">실제 시험처럼 순응도가 낮은 환자를 무작위로 만날 수 있어요. 어떤 유형이었는지는 채점 후에 알려드려요.</p>
-        <Button ref={startButtonRef} type="button" size="lg" fullWidth onClick={confirmStart}>
-          진료 시작 <ArrowRight aria-hidden />
-        </Button>
-      </section>
-    </div>}
   </div>;
 }

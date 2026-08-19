@@ -2588,6 +2588,39 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   color: var(--color-text);
 }
 
+/* ── 줄바꿈 정책 (CPX 시작 화면 공통) ─────────────────────────────
+   한국어 화면에서 "마지막 줄만 유난히 짧은" 줄바꿈은 불안정하게 읽힌다.
+   폭이 줄어드는 모든 구간에서 아래 3단 규칙으로 처리한다.
+     ① word-break: keep-all — 어절 중간에서 끊지 않는다(한국어 필수).
+     ② text-wrap: balance   — 제목류(2~4줄)는 줄 길이를 고르게 나눈다.
+     ③ text-wrap: pretty    — 본문류는 마지막 줄 고아(단어 1개)만 방지한다.
+   하드 <br> 은 그 줄이 통째로 들어가는 폭에서만 유지하고, 그보다 좁아지면
+   숨겨서 balance 에 맡긴다(파일 하단 미디어쿼리 참조).
+   balance/pretty 미지원 브라우저에서는 ①만 적용돼 기존 동작으로 안전하게 내려간다. */
+.cpx-start-header h1,
+.cpx-start-header p,
+.cpx-section-heading h2,
+.cpx-section-heading p,
+.cpx-quick-note span,
+.cpx-quick-label > div > span,
+.cpx-recommendation-case h3,
+.cpx-recommendation-case p,
+.cpx-recommendation-empty h3,
+.cpx-recommendation-empty p,
+.cpx-random-copy h3,
+.cpx-random-copy p,
+.cpx-scenario-name {
+  text-wrap: balance;
+  word-break: keep-all;
+}
+
+/* 줄 수를 -webkit-line-clamp 로 이미 고정한 문단은 balance 를 쓰면 안 된다(잘리는 위치가 흔들린다).
+   마지막 줄 고아만 막는 pretty 로 둔다. */
+.cpx-scenario-description {
+  text-wrap: pretty;
+  word-break: keep-all;
+}
+
 .cpx-start-header {
   display: flex;
   align-items: flex-end;
@@ -2595,6 +2628,19 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   gap: var(--space-6);
   padding: var(--space-4) 0 var(--space-6);
   border-bottom: 1px solid var(--color-border);
+}
+
+.cpx-start-copy { min-width: 0; }
+
+/* 진료 시간·음성 문진·기록 — 헤더 우측 상시 노출 컨트롤 줄.
+   연습 설정 모달(#154)에 들어가 있던 두 설정을 8/12 배치대로 되돌린 것이다. */
+.cpx-start-controls {
+  flex: 0 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 /* 좌측 상단 초록 필 — 내신 대비(.ll-upload-page .eyebrow)·내 문제집과 같은 규격.
@@ -2629,7 +2675,6 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   font-weight: 820;
   line-height: 1.18;
   letter-spacing: -.038em;
-  word-break: keep-all;
 }
 
 .cpx-start-header p {
@@ -2638,29 +2683,100 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   color: var(--color-muted);
   font-size: 16.5px;
   line-height: 1.6;
-  word-break: keep-all;
 }
 
-/* 나의 CPX 기록 — 시안대로 화살표 딸린 초록 텍스트 링크 */
-.cpx-record-link {
-  flex: 0 0 auto;
+/* 제목 뒷문장 — 넓은 폭에서는 블록으로 떨어뜨려 의도한 2줄 구성을 만든다. */
+.cpx-h1-tail { display: block; }
+
+/* 진료 시간 세그먼트 — 흰 컨테이너 + 선택 칸만 진초록 채움.
+   '활성 = 진초록 채움'은 음성 ON, 파트 탭과 같은 언어를 쓴다. */
+.cpx-time-seg {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 2px;
-  color: var(--color-primary-strong);
-  font-size: 21.5px;
-  font-weight: 790;
-  letter-spacing: -.01em;
-  transition: color var(--dur-short) ease;
+  gap: 2px;
+  height: 38px;
+  padding: 0 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
-.cpx-record-link:hover { color: var(--color-primary); }
+.cpx-time-seg > svg {
+  width: 16px;
+  height: 16px;
+  margin: 0 3px;
+  color: var(--color-muted);
+}
+
+.cpx-time-seg button {
+  height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-short) ease, background-color var(--dur-short) ease;
+}
+
+.cpx-time-seg button:hover { color: var(--color-primary); }
+.cpx-time-seg button[aria-checked="true"] { background: var(--color-primary); color: white; }
+.cpx-time-seg button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* 음성 문진 토글 — 8/12 버전은 경고색(주황)이었으나 페이지 톤과 어긋나 초록 계열로 바꿨다.
+   ON = 진초록 채움(활성), OFF = 흰 배경 + 회색 보더(비활성). */
+.cpx-voice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-short) ease, background-color var(--dur-short) ease, border-color var(--dur-short) ease;
+}
+
+.cpx-voice-btn svg { width: 16px; height: 16px; }
+.cpx-voice-btn:hover { border-color: var(--color-line-strong); color: var(--color-primary); }
+.cpx-voice-btn.is-on { border-color: var(--color-primary); background: var(--color-primary); color: white; }
+.cpx-voice-btn.is-on:hover { background: var(--color-primary-strong); border-color: var(--color-primary-strong); color: white; }
+.cpx-voice-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* 나의 CPX 기록 — 텍스트 링크로는 버튼으로 읽히지 않아 보조 버튼 규격으로 바꿨다.
+   설정 컨트롤과 같은 높이(38px)로 한 줄에 정렬된다. */
+.cpx-record-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: color var(--dur-short) ease, background-color var(--dur-short) ease, border-color var(--dur-short) ease;
+}
+
+.cpx-record-link:hover { border-color: var(--color-primary); background: var(--color-primary-soft); }
 .cpx-record-link:hover svg { transform: translateX(2px); }
+.cpx-record-link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
 .cpx-record-link svg {
-  width: 25px;
-  height: 25px;
+  width: 16px;
+  height: 16px;
   transition: transform var(--dur-short) ease;
 }
 
@@ -2669,14 +2785,33 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
 }
 
 .cpx-section-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 11px;
   margin: 0;
   font-size: 25px;
   font-weight: 770;
   letter-spacing: -.025em;
 }
 
+/* 섹션 번호 — 빠른 시작 ① → 증례 직접 선택 ② 라는 순서를 눈에 보이게 한다. */
+.cpx-sec-num {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0;
+  box-shadow: 0 0 0 4px var(--color-primary-soft);
+}
+
 .cpx-section-heading p {
-  margin: 7px 0 0;
+  margin: 7px 0 0 38px;
   color: var(--color-muted);
   font-size: 16px;
   line-height: 1.55;
@@ -2750,29 +2885,46 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   line-height: 1.5;
 }
 
-/* 카드 우하단 텍스트 CTA */
+/* 카드 CTA — 텍스트 링크로는 버튼으로 읽히지 않아 8/12 의 Button(size lg) 규격으로 되돌렸다. */
 .cpx-quick-cta {
   margin-top: auto;
   align-self: flex-end;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 2px;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 28px;
   border: 0;
-  background: transparent;
-  color: var(--color-primary-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: white;
   font-size: 16px;
-  font-weight: 790;
-  letter-spacing: -.01em;
+  font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
-  transition: color var(--dur-short) ease;
+  transition: background-color 150ms ease-out, transform 150ms ease-out;
 }
 
-.cpx-quick-cta:hover { color: var(--color-primary); }
-.cpx-quick-cta:hover svg { transform: translateX(2px); }
-.cpx-quick-cta:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+.cpx-quick-cta:hover { background: var(--color-primary-strong); }
+.cpx-quick-cta:active { transform: translateY(1px); }
+.cpx-quick-cta:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .cpx-quick-cta:disabled { cursor: not-allowed; opacity: .5; }
-.cpx-quick-cta svg { width: 19px; height: 19px; transition: transform var(--dur-short) ease; }
+.cpx-quick-cta svg { width: 17px; height: 17px; }
+
+/* 순응도 안내 — 연습 설정 모달에 있던 문구. 모달을 없앴으므로 빠른 시작 하단 캡션으로 옮긴다. */
+.cpx-quick-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: var(--space-4) 2px 0;
+  color: var(--color-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.cpx-quick-note svg { flex: 0 0 auto; width: 15px; height: 15px; margin-top: 2px; color: var(--color-faint, var(--color-muted)); }
+.cpx-quick-note span { display: block; min-width: 0; }
 
 .cpx-recommendation-case {
   margin: var(--space-6) 0 var(--space-4);
@@ -2807,7 +2959,6 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   font-weight: 780;
   line-height: 1.25;
   letter-spacing: -.035em;
-  word-break: keep-all;
 }
 
 .cpx-random-copy p {
@@ -2816,7 +2967,6 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   color: var(--color-muted);
   font-size: 15px;
   line-height: 1.6;
-  word-break: keep-all;
 }
 
 .cpx-review-panel:hover,
@@ -2833,7 +2983,7 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
 
 .cpx-review-panel:hover > .cpx-quick-cta,
 .cpx-random-panel:hover > .cpx-quick-cta {
-  color: var(--color-primary-strong);
+  background: var(--color-primary-strong);
 }
 
 .cpx-review-panel > .cpx-quick-cta svg,
@@ -3166,156 +3316,10 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
 .cpx-list-empty { margin: 0; padding: var(--space-12) var(--space-4); color: var(--color-muted); text-align: center; font-size: 13px; }
 .cpx-mobile-complaint-select { display: none; }
 
-.cpx-setup-backdrop {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: var(--space-5);
-  background: rgba(12, 28, 21, .46);
-  backdrop-filter: blur(3px);
-}
-
-.cpx-setup-dialog {
-  position: relative;
-  width: min(100%, 510px);
-  max-height: calc(100dvh - 40px);
-  overflow-y: auto;
-  padding: clamp(24px, 4vw, 34px);
-  border: 1px solid var(--color-border);
-  border-radius: calc(var(--radius-lg) + 2px);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-menu);
-}
-
-.cpx-dialog-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--color-muted);
-}
-
-.cpx-dialog-close:hover { background: var(--color-surface-muted); color: var(--color-text); }
-.cpx-dialog-close svg { width: 20px; height: 20px; }
-.cpx-dialog-heading { padding-right: 36px; }
-.cpx-dialog-heading h2 { margin: 0; font-size: 25px; font-weight: 830; letter-spacing: -.03em; }
-.cpx-dialog-heading p { margin: 8px 0 0; color: var(--color-muted); font-size: 13.5px; line-height: 1.5; }
-.cpx-dialog-heading strong { color: var(--color-primary); }
-
-.cpx-setting-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-5) 0;
-  border-top: 1px solid var(--color-border);
-}
-
-.cpx-dialog-heading + .cpx-setting-group { margin-top: var(--space-6); }
-.cpx-setting-label { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.cpx-setting-label > svg { flex: 0 0 auto; width: 20px; height: 20px; color: var(--color-primary); }
-.cpx-setting-label strong { display: block; font-size: 14px; font-weight: 780; }
-.cpx-setting-label > div > span,
-.cpx-setting-copy > span { display: block; margin-top: 3px; color: var(--color-muted); font-size: 12px; }
-
-.cpx-voice-setting {
-  width: 100%;
-  border-right: 0;
-  border-bottom: 0;
-  border-left: 0;
-  background: transparent;
-  color: var(--color-text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.cpx-voice-setting:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 3px;
-  border-radius: var(--radius-sm);
-}
-
-.cpx-time-options {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-}
-
-/* 버튼 세 개는 같은 높이를 유지하고, '실전' 표기는 12분 버튼 아래 캡션으로 뺀다. */
-.cpx-time-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.cpx-time-options button {
-  width: 100%;
-  min-width: 66px;
-  min-height: 48px;
-  padding: 6px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 13px;
-  font-weight: 760;
-  font-variant-numeric: tabular-nums;
-}
-
-.cpx-time-tag { color: var(--color-primary); font-size: 10.5px; font-weight: 740; letter-spacing: .02em; }
-.cpx-time-options button[aria-checked="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-strong); box-shadow: inset 0 0 0 1px var(--color-primary); }
-
-.cpx-voice-switch {
-  flex: 0 0 auto;
-  position: relative;
-  display: block;
-  align-items: center;
-  width: 50px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: color-mix(in oklch, var(--color-muted) 38%, var(--color-surface));
-  transition: background-color 160ms ease;
-}
-
-.cpx-voice-switch i { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: white; box-shadow: 0 2px 7px rgba(0,0,0,.18); transform: translateX(0); transition: transform 160ms ease; }
-.cpx-voice-switch.is-on { background: var(--color-primary); }
-.cpx-voice-switch.is-on i { transform: translateX(22px); }
-
-.cpx-dialog-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: var(--space-2) 0 var(--space-3);
-}
-
-/* 순응도 안내 문구. 아래 '진료 시작' 버튼과 맞닿지 않도록 하단 여백을 직접 갖는다
-   (전에는 margin-bottom 이 없어 모바일에서 버튼에 그대로 붙었다). */
-.cpx-dialog-note {
-  margin: 0 0 var(--space-5);
-  color: var(--color-muted);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.cpx-dialog-summary span {
-  padding: 5px 9px;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-muted);
-  color: var(--color-muted);
-  font-size: 11.5px;
-  font-weight: 650;
+@media (max-width: 1080px) {
+  /* 헤더 우측 컨트롤 3종이 제목과 한 줄에 들어가지 못하는 폭 — 아래로 내려 왼쪽 정렬한다. */
+  .cpx-start-header { align-items: flex-start; flex-direction: column; gap: var(--space-4); }
+  .cpx-start-controls { justify-content: flex-start; }
 }
 
 @media (max-width: 900px) {
@@ -3324,13 +3328,24 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   .cpx-browser-grid { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); }
 }
 
+/* 제목 강제 줄바꿈 해제 지점 — 이보다 좁으면 1행("의사-환자 모의대화를 통해")이 한 줄에
+   들어가지 않아 "통해"만 남는 3줄이 된다. inline 으로 되돌리면 balance 가 두 줄을 고르게 나눈다. */
+@media (max-width: 820px) {
+  .cpx-start-header .cpx-h1-tail { display: inline; }
+}
+
 @media (max-width: 680px) {
-  .cpx-start-header { align-items: flex-start; padding-top: 0; }
+  .cpx-start-header { padding-top: 0; }
   .cpx-start-header p { font-size: 14px; }
-  .cpx-record-link { align-self: flex-start; }
+  .cpx-start-controls { width: 100%; }
+  /* 세 컨트롤이 한 줄에 다 들어가지 않는 폭 — 시간 세그먼트가 한 줄을 통째로 쓰고,
+     음성·기록 버튼이 그 아래 줄에 나란히 선다. */
+  .cpx-time-seg { flex: 1 1 100%; justify-content: space-between; }
+  .cpx-time-seg button { flex: 1 1 0; min-width: 0; padding: 0 4px; }
   .cpx-quick-section { padding: var(--space-8) 0 var(--space-12); }
   .cpx-review-panel, .cpx-random-panel { min-height: 0; padding: var(--space-6); }
   .cpx-random-panel h3 { font-size: 26px; }
+  .cpx-quick-cta { width: 100%; }
   .cpx-direct-heading { align-items: stretch; flex-direction: column; }
   .cpx-direct-search { flex-basis: auto; width: 100%; }
   .cpx-part-tabs { flex-wrap: nowrap; margin-right: calc(var(--space-4) * -1); padding-right: var(--space-4); overflow-x: auto; scrollbar-width: none; }
@@ -3345,24 +3360,22 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
   .cpx-complaint-list, .cpx-scenario-list { max-height: none; overflow: visible; }
   .cpx-scenario-row { grid-template-columns: 1fr; gap: var(--space-3); padding: var(--space-5) 2px; }
   .cpx-scenario-action { justify-self: start; }
-  .cpx-setup-backdrop { align-items: end; padding: 0; }
-  .cpx-setup-dialog { width: 100%; max-height: min(92dvh, 720px); padding: 27px var(--space-5) var(--space-6); border-width: 1px 0 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
-  .cpx-setting-group { align-items: flex-start; flex-direction: column; }
-  .cpx-time-options { width: 100%; }
-  .cpx-time-option { flex: 1 1 0; min-width: 0; }
-  .cpx-time-options button { min-width: 0; }
-  .cpx-voice-setting { align-items: center; flex-direction: row; }
 }
 
 @media (max-width: 480px) {
-  .cpx-start-header { flex-direction: column; gap: var(--space-3); }
-  .cpx-record-link { margin-left: -4px; }
-  .cpx-random-panel h3 br { display: none; }
+  /* 카드 제목의 하드 줄바꿈도 같은 이유로 해제 — 아래는 balance 가 맡는다. */
+  .cpx-random-copy h3 br { display: none; }
+  .cpx-section-heading p { margin-left: 0; }
+  .cpx-time-seg { padding: 0 4px; }
+  .cpx-time-seg > svg { margin: 0 2px; }
+  .cpx-time-seg button { font-size: 13px; }
+  .cpx-voice-btn, .cpx-record-link { flex: 1 1 0; justify-content: center; min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cpx-loading-bar { animation: none; }
 }
+
 
 /* Shared guide trigger label: stable on desktop, intentional split on narrow phones. */
 :is(.guide-trigger, .formative-guide-trigger) {

@@ -1,7 +1,11 @@
 /* LectureLink shared design tokens */
 :root {
-  --color-paper: oklch(97.8% 0.012 92);
-  --color-paper-raised: oklch(99.2% 0.006 92);
+  /* 전 페이지 공통 배경 — /notes(.ll-upload-page) 의 --cream/--card 실측값과 같은 쌍으로 맞춘다.
+     이전 oklch 근사값은 #FBF8EF 로 풀려, 자기 배경을 직접 칠하는 /notes·내 문제집 본문 기둥만
+     밝고 그 바깥 여백은 어둡게 보이는 이중 톤을 만들었다(CPX 는 배경을 안 칠해 통째로 어두웠다).
+     bg 를 올리면서 surface 를 흰색으로 함께 올려야 카드가 배경에 묻히지 않는다. */
+  --color-paper: #FCFAF4;
+  --color-paper-raised: #FFFFFF;
   --color-paper-muted: oklch(94.8% 0.018 96);
   --color-ink: oklch(25% 0.035 158);
   --color-ink-soft: oklch(47% 0.025 158);
