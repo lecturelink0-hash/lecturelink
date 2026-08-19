@@ -23,21 +23,33 @@ export const GET = withErrorHandling(async () => {
   const session = await requireAuthUser();
   const supabase = await createServerClient();
 
-  const { data, error } = await supabase
-    .from('user_uploads')
-    .select(
-      `
+  const BASE_COLUMNS = `
       id, file_name, file_type, file_size_bytes, status,
       page_count, processed_at, created_at, error_message,
       processing_stage, progress_current, progress_total,
       completed_question_count, target_question_count, heartbeat_at
-    `,
-    )
-    .eq('user_id', session.userId)
-    .order('created_at', { ascending: false })
-    .limit(100);
+  `;
 
-  if (error) throw error;
+  const list = (columns: string) =>
+    supabase
+      .from('user_uploads')
+      .select(columns)
+      .eq('user_id', session.userId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+  // notice(P8) 는 00040 이 추가한 컬럼이다. 미적용 환경에서 목록 전체가 죽지 않도록
+  // '컬럼 없음'(SELECT 는 42703)이면 알림 없이 한 번 더 조회한다 — 알림은 부가 정보이고
+  // 목록은 화면의 뼈대라, 부가 정보 때문에 뼈대가 무너지면 안 된다.
+  const { data, error } = await list(`${BASE_COLUMNS}, notice`);
+  if (error) {
+    if (error.code === '42703') {
+      const fallback = await list(BASE_COLUMNS);
+      if (fallback.error) throw fallback.error;
+      return ok(fallback.data ?? []);
+    }
+    throw error;
+  }
   return ok(data ?? []);
 });
 
