@@ -98,6 +98,10 @@ export function buildPrivateGenerationUserMessage(input: {
   subTopicCatalog: Array<{ code: string; name: string; subject_name: string }>;
   desiredCount: number;
   style: 'kmle' | 'professor' | 'internal';
+  /** 사용자가 지정한 단원/주제(P5). 없으면 자료 전체에서 출제한다. */
+  topic?: string;
+  /** 사용자가 지정한 핵심 키워드(P5). */
+  keywords?: string[];
 }): string {
   const catalogText = input.subTopicCatalog
     .map(
@@ -112,11 +116,26 @@ export function buildPrivateGenerationUserMessage(input: {
         ? '교수 강의 스타일 — 강의 내용 심화'
         : '내신 시험 스타일 — 학교 정기시험 수준';
 
+  // 출제 초점(P5). 화면의 '단원/주제'·'핵심 키워드'가 종전에는 전송조차 되지 않아
+  // 출제에 아무 영향이 없었다(#228 에서 힌트 문구만 "표시용"으로 정직하게 바꿔 뒀다).
+  // 70 % 규칙을 두는 이유: 초점을 100 % 강제하면 자료의 나머지가 통째로 빠져
+  // "자료 전체를 고르게 커버" 원칙과 정면으로 부딪힌다.
+  const focusLines: string[] = [];
+  if (input.topic?.trim()) focusLines.push(`- 주제: ${input.topic.trim()}`);
+  const kw = (input.keywords ?? []).map((k) => k.trim()).filter(Boolean);
+  if (kw.length > 0) focusLines.push(`- 키워드: ${kw.join(', ')}`);
+  const focusBlock =
+    focusLines.length > 0
+      ? `\n\n## 출제 초점\n${focusLines.join('\n')}\n` +
+        '- 문항의 **70 % 이상**을 이 범위에서 출제하고, 나머지는 자료의 다른 핵심 내용에서 냅니다.\n' +
+        '- **자료가 다루지 않는 주제·키워드는 무시합니다.** 초점을 맞추려고 자료에 없는 내용을 지어내지 않습니다.'
+      : '';
+
   return `
 업로드된 자료를 기반으로 ${input.desiredCount}개의 의학 문항을 생성하세요.
 
 ## 스타일
-${styleDesc}
+${styleDesc}${focusBlock}
 
 ## 분류 카탈로그
 ${catalogText}

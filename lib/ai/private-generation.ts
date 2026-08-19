@@ -686,6 +686,10 @@ export interface PrivateGenerationInput {
   questionTypes?: Array<'지식형' | '임상형' | '이미지형'>;
   /** 사용자 지정 문제집 이름 — 세트 표시명으로 저장. */
   title?: string;
+  /** 사용자 지정 출제 초점(P5) — 화면의 '단원/주제'. */
+  topic?: string;
+  /** 사용자 지정 핵심 키워드(P5). */
+  keywords?: string[];
   /** 기출 형식 참고 자료. 문항 구조만 참고하고 내용 근거로 사용하지 않는다. */
   referenceUploadIds?: string[];
 }
@@ -1489,6 +1493,10 @@ export async function generatePrivateQuestionsFromUpload(
     requested_types: input.questionTypes ?? [],
     generation_style: style,
     reference_count: (input.referenceUploadIds ?? []).length,
+    // P5 — 무엇을 초점으로 요청했는지. "주제를 준 요청이 실제로 그 주제를 다뤘나"를
+    // 나중에 재려면 요청값이 남아 있어야 한다(요청 유형·난이도를 남긴 것과 같은 이유).
+    requested_topic: input.topic?.trim() || null,
+    requested_keywords: (input.keywords ?? []).map((k) => k.trim()).filter(Boolean),
   };
   const { error: startErr } = await admin
     .from('user_uploads')
@@ -2752,6 +2760,8 @@ export async function generatePrivateQuestionsFromUpload(
         subTopicCatalog: catalog,
         desiredCount: batchSize,
         style,
+        topic: input.topic,
+        keywords: input.keywords,
       });
       const userContent: Anthropic.MessageParam['content'] = [];
       for (let i = 0; i < referenceImages.length; i++) {

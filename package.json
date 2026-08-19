@@ -27,6 +27,7 @@
     "check:shuffle": "node --experimental-strip-types --no-warnings scripts/check-choice-shuffle.mjs",
     "check:knowledge": "node --experimental-strip-types --no-warnings scripts/check-knowledge-rules.mjs",
     "check:notice": "node --experimental-strip-types --no-warnings scripts/check-upload-notice.mjs",
+    "check:material": "node --experimental-strip-types --no-warnings scripts/check-material-focus.mjs",
     "check:verify": "node --experimental-strip-types --no-warnings scripts/check-private-verify.mjs",
     "check:naesin-quality": "node --experimental-strip-types --no-warnings scripts/check-naesin-quality.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",

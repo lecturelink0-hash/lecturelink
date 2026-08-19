@@ -33,6 +33,10 @@ const bodySchema = z.object({
   difficulty: z.enum(['하', '중', '상']).optional(),
   question_types: z.array(z.enum(['지식형', '임상형', '이미지형'])).min(1).max(3).optional(),
   title: z.string().max(100).optional(),
+  // P5 — 출제 초점. 화면의 '단원/주제'·'핵심 키워드'가 여기로 실려 생성 프롬프트에 들어간다
+  // (종전에는 화면에만 있고 전송되지 않아 출제에 아무 영향이 없었다).
+  topic: z.string().max(60).optional(),
+  keywords: z.array(z.string().max(30)).max(8).optional(),
   reference_upload_ids: z.array(z.string().uuid()).max(10).default([]),
 });
 
@@ -110,6 +114,8 @@ export const POST = withErrorHandling(async (
     difficulty: body.difficulty,
     questionTypes: body.question_types,
     title: body.title,
+    topic: body.topic,
+    keywords: body.keywords,
     referenceUploadIds: body.reference_upload_ids,
   });
 
@@ -147,6 +153,8 @@ export const POST = withErrorHandling(async (
       difficulty: body.difficulty,
       questionTypes: body.question_types,
       title: body.title,
+      topic: body.topic,
+      keywords: body.keywords,
       referenceUploadIds: body.reference_upload_ids,
     }).catch((e) => {
       // 생성 함수 내부에서 status='failed' 로 갱신하지만, 예기치 못한 예외를 로깅.

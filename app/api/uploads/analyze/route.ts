@@ -32,6 +32,11 @@ import {
   createMessage,
 } from '@/lib/ai/client';
 import { recordAiCost } from '@/lib/ai/cost-cap';
+/**
+ * '컬럼 없음' 코드 — SELECT 는 Postgres 가 42703, INSERT/UPDATE 본문은 PostgREST 가
+ * 선차단해 PGRST204 를 준다. 둘 다 봐야 쓰기 경로에서 폴백이 사문이 되지 않는다.
+ */
+const MISSING_COLUMN_CODES = new Set(['42703', 'PGRST204']);
 import { parsePptx } from '@/lib/extract/pptx';
 import { STORAGE_BUCKET } from '@/lib/storage/paths';
 import { ok, withErrorHandling, ApiException } from '@/lib/utils/api';
@@ -41,10 +46,35 @@ export const maxDuration = 60;
 // ─────── 상한 (비용/메모리 보호) ───────
 const MAX_UPLOADS = 2; // 분석에 사용할 최대 업로드 수
 const MAX_INPUT_CHARS = 12_000; // Claude 입력 텍스트 길이 제한
-const PER_FILE_CHARS = 8_000; // 파일 1개당 앞부분 추출 한도
-// 분석은 앞부분 텍스트(PER_FILE_CHARS)만 쓰므로 전체 페이지를 파싱할 이유가 없다.
-// 대용량(수십 페이지) PDF 에서 pdf-parse 가 수 초씩 걸리는 것을 막는 페이지 상한.
-const MAX_PDF_PAGES = 12;
+const PER_FILE_CHARS = 9_000; // 파일 1개당 표본 총량(앞·중·뒤 3구간 합)
+/** 3구간 표본 — 앞부분만 보면 목차·표지가 판정을 지배한다(P6). */
+const SAMPLE_SEGMENTS = 3;
+// 뒤쪽 구간을 보려면 앞 12쪽만 파싱해서는 안 된다. 다만 대용량 PDF 에서 pdf-parse 가
+// 수 초씩 걸리므로 상한 자체는 유지하되, 판정에 필요한 만큼만 올린다.
+const MAX_PDF_PAGES = 40;
+
+/**
+ * 텍스트를 앞·중·뒤 3구간에서 고르게 뽑는다(P6).
+ *
+ * 종전에는 앞 8,000자만 썼다. 강의록은 앞이 표지·목차·학습목표라 "무엇에 대한 자료인가"를
+ * 판정하기에 가장 나쁜 구간이고, 기출 PDF 는 앞쪽에 표지·응시 안내가 있어 문항 형태가
+ * 드러나지 않는다. 세 구간을 이으면 목차만 보고 판단하는 문제가 줄어든다.
+ */
+function sampleAcross(text: string, total = PER_FILE_CHARS, segments = SAMPLE_SEGMENTS): string {
+  const t = text.trim();
+  if (t.length <= total) return t;
+  const per = Math.floor(total / segments);
+  const parts: string[] = [];
+  for (let i = 0; i < segments; i++) {
+    // 구간 시작점을 균등 배치하되 마지막 구간은 끝에서 잘라 뒤쪽을 반드시 포함한다.
+    const start =
+      i === segments - 1
+        ? Math.max(0, t.length - per)
+        : Math.floor((t.length - per) * (i / (segments - 1)));
+    parts.push(t.slice(start, start + per));
+  }
+  return parts.join('\n…\n');
+}
 
 const PPTX_MIME =
   'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -57,9 +87,15 @@ const bodySchema = z.object({
 
 const DIFFICULTIES = ['하', '중', '상'] as const;
 const QUESTION_TYPES = ['지식형', '임상형', '이미지형'] as const;
+/**
+ * 자료 성격(P6). 지금은 판정만 하고 **막지 않는다** — 기출/족보는 "참고 자료로 옮기기"를
+ * 권유하고 로그만 남긴다(강제 차단은 R6 콘텐츠 정책 게이트에서 결정).
+ */
+const MATERIAL_KINDS = ['lecture', 'exam', 'notes', 'checklist', 'textbook', 'other'] as const;
 
 type Difficulty = (typeof DIFFICULTIES)[number];
 type QuestionType = (typeof QUESTION_TYPES)[number];
+type MaterialKind = (typeof MATERIAL_KINDS)[number];
 
 interface AnalyzeResult {
   title: string;
@@ -68,6 +104,15 @@ interface AnalyzeResult {
   keywords: string[];
   difficulty: Difficulty;
   question_type: QuestionType;
+  /**
+   * 의학 자료로 보이는지(P6). false 면 화면이 생성 전에 확인을 받는다.
+   * 지금은 차단하지 않는다 — 오탐으로 정상 강의록을 막는 쪽이 더 나쁘다.
+   */
+  is_medical: boolean;
+  /** 자료 성격. 'exam' 이면 화면이 "참고 자료로 옮기기"를 권유한다. */
+  material_kind: MaterialKind;
+  /** 판정 확신도 0~1. 낮으면 화면이 확인을 받는다. */
+  confidence: number;
   /**
    * 실제로 모델이 자료를 읽고 낸 제안인지. false 면 텍스트를 못 뽑았거나(이미지·스캔본·.ppt)
    * 모델 호출이 실패해 **기본값을 채운 것**이므로, 화면은 이 값을 "추천"으로 적용하면 안 된다
@@ -83,6 +128,12 @@ const FALLBACK: AnalyzeResult = {
   keywords: [],
   difficulty: '중',
   question_type: '임상형',
+  // 판정하지 못했을 때는 "의학 자료가 아니다"라고 단정하지 않는다 — 텍스트를 못 읽은 것과
+  // 비의학인 것은 다르다. analyzed:false 가 이미 "판정 못 함"을 말하므로 여기서는
+  // 화면이 막지 않도록 관대한 기본값을 둔다.
+  is_medical: true,
+  material_kind: 'other',
+  confidence: 0,
   analyzed: false,
 };
 
@@ -103,7 +154,7 @@ async function extractTextPreview(input: {
     if (fileType === 'application/pdf') {
       const { default: pdfParse } = await import('pdf-parse');
       const result = await pdfParse(Buffer.from(buffer), { max: MAX_PDF_PAGES });
-      return (result.text ?? '').replace(/\s+/g, ' ').trim().slice(0, PER_FILE_CHARS);
+      return sampleAcross((result.text ?? '').replace(/\s+/g, ' '));
     }
     if (fileType === DOCX_MIME) {
       // DOCX → LibreOffice PDF 변환 → pdf-parse (분석용 앞부분 텍스트).
@@ -119,19 +170,19 @@ async function extractTextPreview(input: {
         const pdfBuf = await fsp.readFile(pdfPath);
         const { default: pdfParse } = await import('pdf-parse');
         const result = await pdfParse(pdfBuf, { max: MAX_PDF_PAGES });
-        return (result.text ?? '').replace(/\s+/g, ' ').trim().slice(0, PER_FILE_CHARS);
+        return sampleAcross((result.text ?? '').replace(/\s+/g, ' '));
       } finally {
         await fsp.rm(tmpRoot, { recursive: true, force: true }).catch(() => {});
       }
     }
     if (fileType === PPTX_MIME) {
       const parsed = parsePptx(buffer);
-      return parsed.slides
-        .map((s) => s.text)
+      const joined = parsed.slides
+        .map((slide) => slide.text)
         .join('\n')
         .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, PER_FILE_CHARS);
+        .trim();
+      return sampleAcross(joined);
     }
   } catch (e) {
     console.warn(
@@ -172,6 +223,14 @@ function normalize(raw: unknown): AnalyzeResult {
     keywords,
     difficulty,
     question_type: questionType,
+    is_medical: typeof o.is_medical === 'boolean' ? o.is_medical : true,
+    material_kind: MATERIAL_KINDS.includes(o.material_kind as MaterialKind)
+      ? (o.material_kind as MaterialKind)
+      : 'other',
+    confidence:
+      typeof o.confidence === 'number' && Number.isFinite(o.confidence)
+        ? Math.min(1, Math.max(0, o.confidence))
+        : 0.5,
     analyzed: true,
   };
 }
@@ -211,6 +270,22 @@ const ANALYZE_TOOL = {
         description:
           '적합한 문항 유형. 지식형=암기/개념, 임상형=증례/판단, 이미지형=영상/사진 판독',
       },
+      is_medical: {
+        type: 'boolean',
+        description:
+          '의학·보건 계열 학습자료인가. 요리·법률·소설·일반 통계·회사 소개처럼 의학과 무관하면 false. 확실하지 않으면 true 로 두고 confidence 를 낮춘다.',
+      },
+      material_kind: {
+        type: 'string',
+        enum: ['lecture', 'exam', 'notes', 'checklist', 'textbook', 'other'],
+        description:
+          '자료의 성격. lecture=강의 슬라이드·강의록, exam=이미 문항 형태인 기출·족보·문제지(번호와 선지가 나열됨), notes=필기·요약, checklist=술기·OSCE 체크리스트, textbook=교과서 발췌, other=그 밖.',
+      },
+      confidence: {
+        type: 'number',
+        description:
+          '위 판정(is_medical·material_kind)의 확신도 0~1. 텍스트가 짧거나 목차만 보이는 등 근거가 약하면 0.5 미만으로 낮춘다.',
+      },
     },
     required: [
       'title',
@@ -219,14 +294,25 @@ const ANALYZE_TOOL = {
       'keywords',
       'difficulty',
       'question_type',
+      'is_medical',
+      'material_kind',
+      'confidence',
     ],
   },
 };
 
 const SYSTEM_PROMPT =
-  '당신은 한국 의과대학 강의자료를 분석하는 보조자입니다. ' +
+  '당신은 한국 의과대학 학습자료를 분석하는 보조자입니다. ' +
   '제공된 자료 텍스트를 바탕으로 문제 세트 메타데이터를 제안하세요. ' +
-  '반드시 suggest_meta 도구를 호출해 한국어로 응답하고, 추측이 어려운 필드는 빈 문자열 또는 가장 그럴듯한 값을 쓰세요.';
+  '반드시 suggest_meta 도구를 호출해 한국어로 응답합니다.\n' +
+  // 종전에는 "추측이 어려운 필드는 가장 그럴듯한 값을 쓰세요"라고만 했다. 그래서 요리책을
+  // 넣어도 과목명을 지어냈고, 국시 기출 PDF 가 학습자료로 들어와 기출 문항이 그대로
+  // 재생성됐다(2026-08-18 감사 실증). 이제 "모르면 모른다"고 말할 자리를 만든다.
+  '- 의학·보건 계열 자료가 아니면 is_medical=false 로 두고 subject·topic 은 빈 문자열로 둡니다. ' +
+  '억지로 의학 과목명을 지어내지 마세요.\n' +
+  '- 이미 문항 형태인 자료(기출·족보·문제지 — 번호와 선지가 나열됨)는 material_kind="exam" 으로 표시합니다.\n' +
+  '- 근거가 약하면(텍스트가 짧거나 목차·표지만 보임) confidence 를 0.5 미만으로 낮춥니다. ' +
+  '나머지 필드는 추측이 어려우면 빈 문자열로 두어도 됩니다.';
 
 export const POST = withErrorHandling(async (request: Request) => {
   const session = await requireSession();
@@ -324,7 +410,32 @@ export const POST = withErrorHandling(async (request: Request) => {
     if (!toolUse) {
       return ok(FALLBACK);
     }
-    return ok(normalize(toolUse.input));
+    const result = normalize(toolUse.input);
+
+    // P6 — 판정을 남긴다(권유·로그, 차단 없음). 분석 대상이었던 업로드에 기록한다.
+    // 실패해도 추천 자체는 돌려준다: 판정 기록은 부가 정보이고, 그것 때문에 업로드
+    // 화면이 멈추면 안 된다(00041 미적용 환경 포함 — 컬럼 없음이면 조용히 건너뛴다).
+    void (async () => {
+      const { error: verdictErr } = await admin
+        .from('user_uploads')
+        .update({
+          is_medical: result.is_medical,
+          material_kind: result.material_kind,
+          analyze_confidence: result.confidence,
+        })
+        .in('id', ordered.map((u) => u.id));
+      if (verdictErr && !MISSING_COLUMN_CODES.has(verdictErr.code ?? '')) {
+        console.warn('[uploads/analyze] 자료 판정 기록 실패:', verdictErr.message);
+      }
+      // 비의학·기출은 로그로 남겨 빈도를 보고 나중에 정책(R6)을 정한다.
+      if (!result.is_medical || result.material_kind === 'exam') {
+        console.warn(
+          `[uploads/analyze] 자료 판정 주의 — is_medical=${result.is_medical} kind=${result.material_kind} conf=${result.confidence} uploads=${ordered.length}`,
+        );
+      }
+    })();
+
+    return ok(result);
   } catch (e) {
     console.warn(
       '[uploads/analyze] 모델 호출 실패 — 기본값 반환:',

@@ -289,6 +289,15 @@ export type UserUploadRow = {
   reference_count: number | null;
   /** 원본 파일 내용 해시 — 같은 자료 재업로드 판정(P11). */
   content_sha256: string | null;
+  /** 추천 분석(P6)의 의학 자료 판정 — 차단이 아니라 확인·권유에만 쓴다. */
+  is_medical: boolean | null;
+  /** 자료 성격(lecture|exam|notes|checklist|textbook|other) — P6. */
+  material_kind: string | null;
+  /** P6 판정 확신도 0~1. */
+  analyze_confidence: number | null;
+  /** 사용자가 지정한 출제 초점(P5) — 생성 프롬프트에 실린다. */
+  requested_topic: string | null;
+  requested_keywords: string[] | null;
   /**
    * 사용자에게 보여줄 알림 배열(부족 생성·이미지 없음·본문 절삭 등) — P8.
    * 실제 형태는 lib/ai/upload-notice.ts 의 UploadNotice[] 이고, jsonb 라 배열도 담긴다.
