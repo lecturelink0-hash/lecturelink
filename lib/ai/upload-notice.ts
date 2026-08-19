@@ -117,7 +117,9 @@ export function buildUploadNotices(input: BuildNoticeInput): UploadNotice[] {
     notices.push({
       code: 'reference_ignored',
       count: input.referenceSkipped,
-      detail: 'PDF·이미지 형식의 참고 자료만 형식 참고에 반영돼요.',
+      // P7 이후 PDF·PPTX·DOCX·이미지를 읽는다. 그래도 못 읽는 경우가 남는다
+      // (빈 슬라이드, 변환 실패, 지원하지 않는 형식) — 그때 무엇이 문제인지 알려 준다.
+      detail: '글자를 읽을 수 있는 PDF·PPTX·DOCX 나 이미지 형식만 형식 참고에 반영돼요.',
     });
   }
 
