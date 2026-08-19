@@ -4099,3 +4099,84 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
 
 /* 지표 라벨도 어절 단위 줄바꿈 (모바일 "정답\n률" 방지) */
 .student-dashboard .dashboard-metrics dt { word-break: keep-all; }
+
+/* ==================================================================
+   하이브리드 시안 7차 — 섹션 제목 상향·지표 중앙 정렬·주간 창 재배치
+   ================================================================== */
+
+/* ① 섹션 제목 2종을 지표 숫자(상한 22px)보다 확실히 크게 */
+.student-dashboard .dashboard-section-heading h2,
+.student-dashboard .dashboard-queue-heading h2 {
+  font-weight: 770;
+}
+
+@media (min-width: 481px) {
+  .student-dashboard .dashboard-section-heading h2,
+  .student-dashboard .dashboard-queue-heading h2 {
+    font-size: 25px;
+  }
+}
+
+/* 좁은 폭에서는 '내 학습 현/황' 잘림 방지용 축소값을 두 제목에 함께 적용 */
+@media (max-width: 480px) {
+  .student-dashboard .dashboard-section-heading h2,
+  .student-dashboard .dashboard-queue-heading h2 {
+    font-size: calc(18px * 1.34);
+  }
+}
+
+/* ② 지표 3종을 각 칸 중앙으로 — 좌측 정렬 때 남던 우측 여백 제거 */
+.student-dashboard .dashboard-metrics > div {
+  padding-inline: 12px;
+  text-align: center;
+}
+
+.student-dashboard .dashboard-metrics > div + div {
+  padding-left: 12px;
+}
+
+.student-dashboard .dashboard-metrics dd {
+  justify-content: center;
+  row-gap: 6px;
+}
+
+/* ③ 델타 줄: 세 지표 모두 같은 높이. 변화 없을 때는 중립 톤 */
+.student-dashboard .dashboard-delta {
+  justify-content: center;
+  min-height: 18px;
+}
+
+.student-dashboard .dashboard-delta.is-flat {
+  color: var(--dashboard-muted);
+  font-weight: 520;
+}
+
+/* ④ 카드 폭 재배분 — 현황 카드를 줄이고 추천 리스트를 넓힌다.
+      (현황 카드는 진입 카드 1장보다는 넓게 유지해 4등분처럼 보이지 않게)
+      960px 이하는 1단 규칙이 있으므로 데스크톱에서만 적용한다. */
+@media (min-width: 961px) {
+  .student-dashboard .dashboard-progress-grid {
+    grid-template-columns: minmax(0, 1.24fr) minmax(320px, 0.96fr);
+  }
+}
+
+/* ⑤ 주간 기록: 오늘 칸 강조 + 아직 지나지 않은 날은 점 */
+.student-dashboard .study-day.is-today-cell > span {
+  color: var(--dashboard-forest);
+  font-weight: 780;
+}
+
+.student-dashboard .study-day i.is-upcoming {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--dashboard-line);
+  filter: none;
+}
+
+/* ⑥ CPX 캐릭터: 카드 밖으로 나가 잘리던 머리 우측을 안으로 들인다.
+      (좁은 폭에는 별도 프레임 규칙이 있으므로 데스크톱에만 적용) */
+@media (min-width: 961px) {
+  .student-dashboard .dashboard-cpx-character-frame {
+    right: 4px;
+  }
+}
