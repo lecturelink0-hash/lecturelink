@@ -246,11 +246,14 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
         responseBody,
       });
     } catch (error) {
-      console.error('[cpx persistence] mirror failed:', error);
-      return NextResponse.json(
-        { detail: 'CPX 기록을 저장하지 못했습니다. 입력은 보존되어 재시도할 수 있습니다.' },
-        { status: 503 },
-      );
+      // 여기까지 왔다는 것은 Fly 저장이 이미 성공했다는 뜻이다(response.ok).
+      // 예전에는 미러 실패에 503을 돌려줬는데, 클라이언트의 flush 는 실패한 이벤트를
+      // 버퍼에 되돌려 3초 뒤 그대로 다시 보낸다. 그래서 Fly 에는 같은 발화가 두 벌·세 벌
+      // 쌓였고, 그 로그로 채점되면서 근거 줄 번호까지 어긋났다(2026-08-18 감사 다2).
+      //
+      // 채점의 원본은 Fly 이고 Supabase 는 이력 조회용 사본이다. 사본 실패로 원본에
+      // 중복을 만드는 것보다, 사본이 일부 비는 편이 낫다 — 성공을 그대로 돌려주고 로그만 남긴다.
+      console.error('[cpx persistence] mirror failed (Fly 저장은 성공, 재전송 유발 방지를 위해 성공 응답):', error);
     }
   }
 

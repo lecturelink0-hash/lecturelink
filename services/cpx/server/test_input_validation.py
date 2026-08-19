@@ -172,6 +172,28 @@ def test_gender_resolution() -> None:
     print('  성별 해석 통과')
 
 
+def test_transcript_hides_the_answer_during_session(client) -> None:
+    """대화록 API 가 세션 중에 정답(케이스 id)과 배정된 저항 유형을 흘리지 않는가.
+
+    증례 비공개(랜덤) 모드에서 학생이 이 엔드포인트를 직접 부르면 무슨 증례인지,
+    어떤 저항 행동이 배정됐는지 알 수 있었다(2026-08-18 감사 다4).
+    """
+    sid = _start(client)
+    live = client.get(f'/api/sessions/{sid}/transcript', headers=HEADERS)
+    assert live.status_code == 200, live.text
+    session = live.json()['session']
+    assert 'config' not in session, 'config(배정된 저항 유형)가 그대로 나간다'
+    assert 'case_id' not in session, '세션 중에 증례 id 가 노출된다'
+    assert CASE_ID not in live.text, f'응답 어딘가에 증례 id 가 남아 있다: {live.text[:200]}'
+
+    # 세션이 끝난 뒤에는 결과 화면에서 증례를 밝혀도 된다.
+    client.post(f'/api/sessions/{sid}/end', headers=HEADERS)
+    ended = client.get(f'/api/sessions/{sid}/transcript', headers=HEADERS)
+    assert ended.json()['session'].get('case_id') == CASE_ID, '종료 후에는 증례를 돌려줘야 한다'
+    assert 'config' not in ended.json()['session'], 'config 는 종료 후에도 내부값이다'
+    print('  대화록 정답 비공개 통과')
+
+
 def main_() -> None:
     with tempfile.TemporaryDirectory(prefix='cpx-input-validation-') as tmpdir:
         db.DB_PATH = Path(tmpdir) / 'cpx.sqlite3'
@@ -179,6 +201,7 @@ def main_() -> None:
         with TestClient(main.app) as client:
             test_transcript_contract(client)
             test_closed_session_is_read_only(client)
+            test_transcript_hides_the_answer_during_session(client)
     test_evidence_required_for_credit()
     test_transcript_injection_is_flattened()
     test_age_resolution()

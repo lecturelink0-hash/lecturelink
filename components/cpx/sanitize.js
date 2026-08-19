@@ -13,7 +13,10 @@ const MEDICAL_TOPIC = /의사|의료|의학|병원|의원|응급실|119|전문�
 
 // 청자를 향한 권고·지시 어미(문장 끝). 환자 화법(해요체 진술·과거형·질문)에는 나타나지
 // 않는 형태만 나열한다. -시- 존칭이 붙은 가능형("받으실 수 있습니다")은 청자 대상 안내문.
-const ADVICE_ENDING = new RegExp(
+const SENTENCE_TAIL = '\\s*[.!?…"\'”’)\\s]*$'
+
+// (가) 무조건 청자를 향한 지시·권고. 환자가 의사에게 쓸 일이 없는 형태다.
+const LISTENER_DIRECTIVE = new RegExp(
   '(?:' +
     [
       '십시오',
@@ -29,12 +32,23 @@ const ADVICE_ENDING = new RegExp(
       '(?:는|시는)\\s*(?:것이|게)\\s*좋(?:습니다|겠습니다)',
       '시는\\s*(?:것이|게)\\s*좋(?:을\\s*것\\s*같아요|겠어요|아요)',
       '(?:하|받으|가|보)실\\s*수\\s*있습니다',
-      '(?<!불)가능합니다',
-      '필요합니다',
-      '(?:해야|받아야|가야)\\s*합니다',
+      // 존대형 당위("받으셔야 합니다")는 주어가 청자다 — 아래 서술 어미와 달리 무조건 권고.
+      '(?:하|받으|가|보|오|드)셔야\\s*(?:합니다|해요|됩니다)',
     ].join('|') +
-    ')\\s*[.!?…"\'”’)\\s]*$'
+    ')' + SENTENCE_TAIL
 )
+
+// (나) 자기 사정을 말할 때도 쓰는 서술 어미. 이것만 보고 지우면 환자의 정상 대사가 사라진다 —
+// "회사에 낼 진단서가 필요합니다", "저는 병원에 가야 합니다"가 통째로 삭제되고 있었다
+// (2026-08-18 감사 다5). 청자를 향한 존대 표지가 함께 있을 때만 권고로 본다.
+const SELF_OR_ADVICE_ENDING = new RegExp(
+  '(?:(?<!불)가능합니다|필요합니다|(?:해야|받아야|가야)\\s*합니다)' + SENTENCE_TAIL
+)
+const ADDRESSES_LISTENER = /주시|주세요|셔야|하시는|하시면|받으시|가시면|오시는|하십|드리겠습니다/
+
+// (다) 남의 말을 옮기는 문장은 권고가 아니다. "동네 의사 선생님이 그냥 쉬라고 하세요"의
+// '하세요'는 청자에 대한 지시가 아니라 인용 동사다.
+const REPORTED_SPEECH = /(?:라고|다고|자고|냐고|라며|다며|래요|대요|라는|다는)\s*(?:하|해|했|말|그러|얘기|이야기)/
 
 // 어미와 무관하게 문장 자체가 면책·AI 자기지칭인 경우.
 const HARD_BREAK_PATTERNS = [
@@ -73,10 +87,18 @@ function trimEdgeQuotes(s) {
   return s.replace(/^[\s"“”'‘’]+/, '').replace(/[\s"“”'‘’]+$/, '').trim()
 }
 
+// 의료 주제 + 권고 어미로만 판정하면 환자가 자기 사정을 말하거나 남의 말을 옮기는 문장까지
+// 지운다. 권고가 '청자를 향한 것'임이 드러날 때만 이탈로 본다.
+function isAdviceToListener(sentence) {
+  if (REPORTED_SPEECH.test(sentence)) return false
+  if (LISTENER_DIRECTIVE.test(sentence)) return true
+  return SELF_OR_ADVICE_ENDING.test(sentence) && ADDRESSES_LISTENER.test(sentence)
+}
+
 function isPersonaBreak(sentence) {
   for (const p of HARD_BREAK_PATTERNS) if (p.test(sentence)) return true
   if (MODEL_VOCAB.test(sentence) && !CONFUSED_PATIENT.test(sentence) && !isEchoQuestion(sentence)) return true
-  return MEDICAL_TOPIC.test(sentence) && ADVICE_ENDING.test(sentence)
+  return MEDICAL_TOPIC.test(sentence) && isAdviceToListener(sentence)
 }
 
 // 환자 발화 텍스트에서 페르소나 이탈 문장(면책·상담 권고·AI 자기지칭)과 제어 태그를 제거한다.

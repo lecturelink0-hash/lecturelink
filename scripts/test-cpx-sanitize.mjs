@@ -55,11 +55,27 @@ const KEEP = [
   '6개월 전부터 그랬어요... 그때부터 계속 무겁고 뭉치네요.',
   '속이 좀 답답해서 왔어요.',
   '그 결과는 잘 모르겠어요.',
+  // 2026-08-18 감사 다5 — 정상 환자 대사가 통째로 삭제되던 것들.
+  // '의사'+'하세요'와 '진단(서)'+'필요합니다'가 의료 주제+권고 어미 규칙에 걸렸다.
+  // 오디오는 이미 나간 뒤라 자막만 비고 채점 근거도 사라졌다.
+  '동네 의사 선생님이 그냥 쉬라고 하세요.',
+  '회사에 낼 진단서가 필요합니다.',
+  '저는 병원에 가야 합니다.',
+  '보건소에서 검사받으라고 하대요.',
+  '남편이 큰 병원 가보라고 해요.',
+  '진료 시간이 언제까지 가능합니까?',
+];
+
+// 청자(의사)를 향한 권고는 여전히 지워져야 한다 — 위 보존 규칙을 넓히다 이쪽이 뚫리면 안 된다.
+const REMOVE_ADVICE = [
+  ['검사를 받으셔야 합니다.', ''],
+  ['가까운 병원에 가보시는 게 좋겠습니다.', ''],
+  ['전문의와 상담하시기 바랍니다.', ''],
 ];
 
 let failed = 0;
 
-for (const [input, expected] of REMOVE) {
+for (const [input, expected] of [...REMOVE, ...REMOVE_ADVICE]) {
   const actual = sanitizePatientText(input);
   if (actual !== expected) {
     failed += 1;
@@ -79,4 +95,4 @@ if (failed) {
   console.error(`\n새니타이저 검사 실패 ${failed}건`);
   process.exit(1);
 }
-console.log(`새니타이저 검사 통과 — 제거 ${REMOVE.length}종 · 보존 ${KEEP.length}종`);
+console.log(`새니타이저 검사 통과 — 제거 ${REMOVE.length + REMOVE_ADVICE.length}종 · 보존 ${KEEP.length}종`);
