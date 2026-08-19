@@ -61,6 +61,19 @@
   --text-page-title-mobile: 1.8125rem;
   --text-body: 1rem;
 
+  /* 학생용 페이지 헤드 공통 타이포 — 요금제(.ll-plan-page)·내신 대비(.ll-upload-page)가
+     같은 값을 참조한다. 페이지마다 h1 크기·굵기를 따로 적어두던 것을 여기 한 곳으로 모은 것.
+     (기존 --text-page-title 은 /onboarding 이 쓰고 있어 값을 건드리지 않았다.) */
+  --text-page-head-title: clamp(29px, 3.8vw, 42px);
+  --leading-page-head-title: 1.16;
+  --tracking-page-head-title: -0.012em;
+  --font-weight-page-head-title: 820;
+  --text-page-head-eyebrow: 12px;
+  --font-weight-page-head-eyebrow: 800;
+  --text-page-head-lead: 14.5px;
+  --leading-page-head-lead: 1.65;
+  --font-weight-page-head-lead: 500;
+
   --measure-heading: 40rem;
   --measure-copy: 42rem;
   --measure-form-wide: 56rem;

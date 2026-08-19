@@ -22,7 +22,6 @@ import {
   Presentation,
   Loader2,
   Plus,
-  ArrowLeft,
   ArrowRight,
   Check,
   ChevronDown,
@@ -805,14 +804,7 @@ export default function NotesPage() {
 
   return (
     <div className="ll-upload-page content">
-      {/* 헤더 */}
-      <Link
-        href="/dashboard"
-        className="back"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        홈으로
-      </Link>
+      {/* 헤더 — 상단 내비로 바로 들어오는 페이지라 '홈으로' 링크는 두지 않는다. */}
       <section className="page-head"><div><span className="eyebrow" aria-live="polite">{stepLabel}</span><h1><span className="headline-accent">내 학습자료</span>로<br/>문제를 만들어보세요</h1><p className="lead">강의자료와 기출문제를 업로드하고 원하는 범위의 예상 문제를 생성해 보세요.</p></div><div className="guide"><Link href="/tutorial" className="guide-trigger"><span className="guide-icon">?</span><GuideLabel /></Link><div className="guide-panel"><h2>어떻게 사용하나요?</h2><ol><li><strong>학습자료 업로드</strong>: 업로드한 자료를 기반으로 문제를 생성합니다.</li><li><strong>참고 자료 추가</strong>: 예시 문항의 형식(발문·선지 구성)을 참고합니다. 내용과 난이도의 근거로는 쓰지 않아요.</li><li><strong>문제 세트 정보 확인</strong>: 이름과 주제를 확인하고 수정합니다.</li></ol></div></div></section>
 
       <div
