@@ -4180,3 +4180,23 @@ input[type="date"]::-webkit-datetime-edit { padding: 0; }
     right: 4px;
   }
 }
+
+/* ==================================================================
+   하이브리드 시안 8차 — 상·하단 여백 재배분
+   .ll-dashboard-page 의 min-height:100vh 는 이 스타일시트가 독립 문서였을 때의
+   잔재로, 앱 셸 안에서는 콘텐츠 아래에 빈 공간만 만든다(1440×1000 기준 약 330px).
+   이를 걷어내 하단 여백을 줄이고, 그만큼을 상단(내비 ~ 인사말)에 돌려준다.
+   ================================================================== */
+
+.student-dashboard {
+  min-height: 0;
+  padding-top: 62px;
+}
+
+@media (max-width: 920px) {
+  .student-dashboard { padding-top: 48px; }
+}
+
+@media (max-width: 480px) {
+  .student-dashboard { padding-top: 40px; }
+}
