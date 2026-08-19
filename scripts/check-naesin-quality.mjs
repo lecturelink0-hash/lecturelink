@@ -31,6 +31,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
   extractAsk,
+  hasForbiddenAsk,
   hasPatientIntro,
   isClinicalVignette,
 } from '../lib/ai/clinical-shape.ts';
@@ -140,7 +141,7 @@ for (let i = 0; i < uploadIds.length; i += 200) {
   const chunk = uploadIds.slice(i, i + 200);
   const part = await fetchAll(
     'private_questions',
-    'id, upload_id, stem, choices, answer_index, explanation, difficulty, kind, verify_score, created_at',
+    'id, upload_id, stem, choices, answer_index, explanation, difficulty, kind, ask_kind, verify_score, created_at',
     (q) => q.in('upload_id', chunk),
     'id, upload_id, stem, choices, answer_index, explanation, difficulty, created_at',
   );
@@ -275,6 +276,28 @@ for (const q of questions) {
 }
 const topAsks = [...askCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, topN);
 
+// ── 5-b) 금지 발문(P3)·ask_kind 분포
+// "'가장' 포함"은 "가장 흔한 원인은?" 같은 정당한 발문까지 세므로 개선을 과소평가한다.
+// 실제로 막으려는 것(선지 우열을 흐리는 "가장 적절한" 류)만 따로 센다.
+let forbiddenAsk = 0;
+const askKindCounts = new Map();
+let askKindLabeled = 0;
+for (const q of questions) {
+  if (hasForbiddenAsk(String(q.stem ?? ''))) forbiddenAsk += 1;
+  const ak = q.ask_kind ?? null;
+  if (ak) {
+    askKindLabeled += 1;
+    askKindCounts.set(ak, (askKindCounts.get(ak) ?? 0) + 1);
+  }
+}
+const topAskKinds = [...askKindCounts.entries()].sort((a, b) => b[1] - a[1]);
+// 같은 업로드 안에서 같은 ask_kind 가 반복된 정도(유형 편중) — 라벨이 있는 문항만.
+let askKindRepeat = 0;
+for (const [, list] of byUpload) {
+  const labeled = list.map((q) => q.ask_kind).filter(Boolean);
+  askKindRepeat += labeled.length - new Set(labeled).size;
+}
+
 // ── 6) 해설 길이
 const explanationLengths = questions
   .map((q) => String(q.explanation ?? '').length)
@@ -381,13 +404,28 @@ for (const [requested, acc] of Object.entries(difficultyByRequest)) {
 }
 
 console.log('\n⑤ 발문');
-line("'가장' 포함", `${mostFrequentAsk}/${questions.length} ${fmtPct(pct(mostFrequentAsk, questions.length))}`);
+line(
+  '금지 발문("가장 적절한"류)',
+  `${forbiddenAsk}/${questions.length} ${fmtPct(pct(forbiddenAsk, questions.length))}`,
+);
+line("'가장' 포함(예외 포함)", `${mostFrequentAsk}/${questions.length} ${fmtPct(pct(mostFrequentAsk, questions.length))}`);
 line('임상 증례형', `${clinicalShaped}/${questions.length} ${fmtPct(pct(clinicalShaped, questions.length))}`);
 line('껍데기 증례', `${shellVignette}/${questions.length} ${fmtPct(pct(shellVignette, questions.length))}`);
 console.log(`  발문 문미 top${topN}`);
 topAsks.forEach(([ask, n], i) => {
   console.log(`    ${String(i + 1).padStart(2)}. ${n}회 ${fmtPct(pct(n, questions.length))}  ${ask.slice(0, 46)}`);
 });
+
+console.log('\n⑤-b 발문 유형(ask_kind)');
+if (askKindLabeled === 0) {
+  line('-', '라벨 없음(P3 배포 전 문항이거나 00040 미적용)');
+} else {
+  line('라벨된 문항', `${askKindLabeled}/${questions.length} ${fmtPct(pct(askKindLabeled, questions.length))}`);
+  line('같은 업로드 내 유형 반복', `${askKindRepeat}건`);
+  topAskKinds.forEach(([k, n]) => {
+    console.log(`    · ${String(k).padEnd(24)} ${n}회 ${fmtPct(pct(n, askKindLabeled))}`);
+  });
+}
 
 console.log('\n⑥ 해설 길이 (자)');
 line('중앙값 / p90 / 최대', `${quantile(explanationLengths, 0.5)} / ${quantile(explanationLengths, 0.9)} / ${explanationLengths[explanationLengths.length - 1] ?? 0}`);
