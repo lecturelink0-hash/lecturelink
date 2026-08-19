@@ -63,6 +63,8 @@ export interface BuildNoticeInput {
   leakageDiscarded: number;
   /** 검증 폐기 수(discard 모드에서만 0 이 아니다). */
   verifyRejected: number;
+  /** 그림 없이도 풀려 폐기된 이미지 문항 수(P9). */
+  blindDiscarded?: number;
 }
 
 /** 사용자에게 노출해도 되는 수준으로 실패 사유를 뭉뚱그린다. */
@@ -90,7 +92,7 @@ export function buildUploadNotices(input: BuildNoticeInput): UploadNotice[] {
         ? '요청이 한꺼번에 몰려 일부 묶음을 만들지 못했어요. 잠시 후 다시 생성하면 채워집니다.'
         : failure === 'api_error'
           ? '생성 중 일시적인 오류가 있었어요. 다시 생성하면 채워집니다.'
-          : input.leakageDiscarded + input.verifyRejected > 0
+          : input.leakageDiscarded + input.verifyRejected + (input.blindDiscarded ?? 0) > 0
             // "검토가 필요한 문항"처럼 검증을 연상시키는 말은 쓰지 않는다 — 학생이 받은
             // 문항까지 의심하게 만든다(검증 플래그 미노출 결정). 걸러낸 사실만 담담히 적는다.
             ? '정답이 드러나거나 품질 기준에 못 미친 문항을 걸러내면서 수가 줄었어요.'

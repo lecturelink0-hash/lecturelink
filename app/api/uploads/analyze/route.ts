@@ -76,6 +76,31 @@ function sampleAcross(text: string, total = PER_FILE_CHARS, segments = SAMPLE_SE
   return parts.join('\n…\n');
 }
 
+/**
+ * 텍스트 추출 결과 (P10). 텍스트만 돌려주던 것을 쪽 수·원본 글자 수까지 담게 바꿨다 —
+ * 로딩 화면의 남은 시간이 그 둘을 필요로 한다(쪽 수는 소요와 r = 0.50, 본문 글자 수는
+ * 스캔본 판정의 축이다).
+ */
+interface TextPreview {
+  /** 모델에 넣을 표본 텍스트(구간별로 잘라 이어 붙인 것). */
+  text: string;
+  /** 문서 전체 쪽 수. PPTX 는 슬라이드 수. 모르면 0. */
+  pageCount: number;
+  /** 표본으로 자르기 **전** 추출 글자 수. 스캔본 판정은 이 값으로 한다. */
+  rawChars: number;
+}
+
+function preview(raw: string, pageCount: number): TextPreview {
+  const trimmed = raw.trim();
+  return { text: sampleAcross(trimmed), pageCount, rawChars: trimmed.length };
+}
+
+/**
+ * 스캔본 판정 임계(자). 이보다 본문이 적으면 페이지 전체 OCR 경로로 떨어진다 —
+ * 실측에서 그 경로는 같은 요청의 텍스트본보다 8배 넘게 걸렸다(96.4초 vs 11초).
+ */
+const SCAN_TEXT_CHARS = 1_500;
+
 const PPTX_MIME =
   'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 const DOCX_MIME =
@@ -119,6 +144,17 @@ interface AnalyzeResult {
    * (2026-08-18 감사: 스캔본을 올린 사용자의 유형·난이도 선택이 매번 '임상형·중'으로 덮였다).
    */
   analyzed: boolean;
+  /**
+   * 자료 전체 쪽 수(PPTX 는 슬라이드 수). 모르면 0 (P10).
+   * 로딩 화면의 남은 시간이 쓴다 — 이미지형 소요와 상관 r = 0.50 으로, 문항 수(r = 0.08)보다
+   * 훨씬 강한 변수다.
+   */
+  page_count: number;
+  /**
+   * 본문 텍스트가 거의 없는 스캔본인지 (P10). 페이지 전체 OCR 경로라 소요 규모가 다르다.
+   * 이 값을 안 쓰던 종전 예측은 실측 96.4초짜리 실행을 9초로 예고했다(10.7배).
+   */
+  is_scan: boolean;
 }
 
 const FALLBACK: AnalyzeResult = {
@@ -135,6 +171,8 @@ const FALLBACK: AnalyzeResult = {
   material_kind: 'other',
   confidence: 0,
   analyzed: false,
+  page_count: 0,
+  is_scan: false,
 };
 
 /**
@@ -148,13 +186,14 @@ const FALLBACK: AnalyzeResult = {
 async function extractTextPreview(input: {
   buffer: ArrayBuffer;
   fileType: string;
-}): Promise<string> {
+}): Promise<TextPreview> {
   const { buffer, fileType } = input;
   try {
     if (fileType === 'application/pdf') {
       const { default: pdfParse } = await import('pdf-parse');
       const result = await pdfParse(Buffer.from(buffer), { max: MAX_PDF_PAGES });
-      return sampleAcross((result.text ?? '').replace(/\s+/g, ' '));
+      // numpages 는 max 와 무관한 문서 전체 쪽 수다(max 는 텍스트를 뽑을 쪽만 제한한다).
+      return preview((result.text ?? '').replace(/\s+/g, ' '), result.numpages ?? 0);
     }
     if (fileType === DOCX_MIME) {
       // DOCX → LibreOffice PDF 변환 → pdf-parse (분석용 앞부분 텍스트).
@@ -170,7 +209,7 @@ async function extractTextPreview(input: {
         const pdfBuf = await fsp.readFile(pdfPath);
         const { default: pdfParse } = await import('pdf-parse');
         const result = await pdfParse(pdfBuf, { max: MAX_PDF_PAGES });
-        return sampleAcross((result.text ?? '').replace(/\s+/g, ' '));
+        return preview((result.text ?? '').replace(/\s+/g, ' '), result.numpages ?? 0);
       } finally {
         await fsp.rm(tmpRoot, { recursive: true, force: true }).catch(() => {});
       }
@@ -182,7 +221,8 @@ async function extractTextPreview(input: {
         .join('\n')
         .replace(/\s+/g, ' ')
         .trim();
-      return sampleAcross(joined);
+      // 슬라이드 1장을 1쪽으로 센다 — 소요 예측에서 PDF 쪽 수와 같은 축이다.
+      return preview(joined, parsed.slides.length);
     }
   } catch (e) {
     console.warn(
@@ -190,11 +230,12 @@ async function extractTextPreview(input: {
       e instanceof Error ? e.message : String(e),
     );
   }
-  return '';
+  return { text: '', pageCount: 0, rawChars: 0 };
 }
 
 /** Claude 응답을 안전하게 AnalyzeResult 로 정규화. */
-function normalize(raw: unknown): AnalyzeResult {
+// page_count·is_scan 은 모델 응답이 아니라 파일에서 잰 사실이므로 여기서 채우지 않는다.
+function normalize(raw: unknown): Omit<AnalyzeResult, 'page_count' | 'is_scan'> {
   const o = (raw ?? {}) as Record<string, unknown>;
 
   const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
@@ -343,25 +384,32 @@ export const POST = withErrorHandling(async (request: Request) => {
   }
 
   // 2) 텍스트 앞부분 추출 (다운로드 실패는 무시). 파일별 다운로드+파싱은 병렬.
-  const texts = (
-    await Promise.all(
-      ordered.map(async (u) => {
-        if (!u.storage_path) return '';
-        const { data: blob, error: dlErr } = await admin.storage
-          .from(STORAGE_BUCKET)
-          .download(u.storage_path);
-        if (dlErr || !blob) return '';
-        const buffer = await blob.arrayBuffer();
-        return extractTextPreview({ buffer, fileType: u.file_type });
-      }),
-    )
-  ).filter((text) => text.length > 0);
+  const previews = await Promise.all(
+    ordered.map(async (u): Promise<TextPreview> => {
+      if (!u.storage_path) return { text: '', pageCount: 0, rawChars: 0 };
+      const { data: blob, error: dlErr } = await admin.storage
+        .from(STORAGE_BUCKET)
+        .download(u.storage_path);
+      if (dlErr || !blob) return { text: '', pageCount: 0, rawChars: 0 };
+      const buffer = await blob.arrayBuffer();
+      return extractTextPreview({ buffer, fileType: u.file_type });
+    }),
+  );
+  const texts = previews.map((p) => p.text).filter((text) => text.length > 0);
+
+  // 소요 예측용 사실(P10). 쪽 수는 합, 스캔본 판정은 **쪽은 있는데 본문이 없는** 경우다.
+  // 텍스트 추출이 실패해 아래에서 기본값을 돌려주는 경로에서도 이 둘은 함께 보낸다 —
+  // 스캔본이 정확히 그 경로로 오기 때문에, 여기서 빠뜨리면 가장 오래 걸리는 실행이
+  // 가장 짧은 예고를 받는다.
+  const pageCount = previews.reduce((sum, p) => sum + p.pageCount, 0);
+  const rawChars = previews.reduce((sum, p) => sum + p.rawChars, 0);
+  const isScan = pageCount > 0 && rawChars < SCAN_TEXT_CHARS;
 
   const compositeText = texts.join('\n\n---\n\n').slice(0, MAX_INPUT_CHARS).trim();
 
   // 추출된 텍스트가 전혀 없으면 Claude 호출 없이 기본값.
   if (!compositeText) {
-    return ok(FALLBACK);
+    return ok({ ...FALLBACK, page_count: pageCount, is_scan: isScan });
   }
 
   // 3) Claude 호출 — 메타 제안 (가벼운 모델). 실패 시 폴백.
@@ -408,9 +456,9 @@ export const POST = withErrorHandling(async (request: Request) => {
     });
 
     if (!toolUse) {
-      return ok(FALLBACK);
+      return ok({ ...FALLBACK, page_count: pageCount, is_scan: isScan });
     }
-    const result = normalize(toolUse.input);
+    const result: AnalyzeResult = { ...normalize(toolUse.input), page_count: pageCount, is_scan: isScan };
 
     // P6 — 판정을 남긴다(권유·로그, 차단 없음). 분석 대상이었던 업로드에 기록한다.
     //
@@ -452,6 +500,6 @@ export const POST = withErrorHandling(async (request: Request) => {
       '[uploads/analyze] 모델 호출 실패 — 기본값 반환:',
       e instanceof Error ? e.message : String(e),
     );
-    return ok(FALLBACK);
+    return ok({ ...FALLBACK, page_count: pageCount, is_scan: isScan });
   }
 });
