@@ -207,6 +207,59 @@ def check_no_normal_badge_on_abnormal_finding(cases: list[dict]) -> None:
     )
 
 
+# 같은 카테고리에 같은 진단이 두 번 있으면 두 증례는 같은 체크리스트로 채점되고
+# 학생은 둘을 구별할 수 없다(편타손상이 그랬다 — 서사·진찰 5항목까지 사실상 같았다).
+# 카테고리를 넘는 중복은 주호소가 다르므로 정당한 설계다(폐색전증이 호흡곤란과 가슴통증에
+# 하나씩) — 그건 막지 않는다.
+def _diagnosis_key(case: dict) -> str:
+    dx = re.sub(r'\([^)]*\)', '', case.get('targetDiagnosis') or '')
+    dx = dx.replace('의심', '').replace('연관', '').replace('에 의한', ' ')
+    return re.sub(r'\s+', ' ', dx).strip()
+
+
+def check_no_same_category_duplicate(cases: list[dict]) -> None:
+    seen: dict[tuple[str, str], list[str]] = {}
+    for case in cases:
+        key = (case.get('category') or '', _diagnosis_key(case))
+        if not key[1]:
+            continue
+        seen.setdefault(key, []).append(case['id'])
+    dupes = [(k, v) for k, v in sorted(seen.items()) if len(v) > 1]
+    assert not dupes, (
+        '같은 카테고리에 같은 진단이 둘 이상이다. 같은 루브릭으로 채점되어 변별이 되지 않는다.\n'
+        '증례를 임상적으로 갈라내거나 하나로 합쳐라:\n'
+        + '\n'.join(f"  [{cat}] {dx} — {', '.join(ids)}" for (cat, dx), ids in dupes)
+    )
+
+
+# 표준화 환자는 정해진 한 사람을 연기한다. "장거리 비행/침상안정/수술 중 하나"처럼
+# 결정적 사실을 열어 두면 세션마다 다른 병력이 재생되고 채점 근거도 흔들린다.
+# 선택이 설계상 열려 있는 recommended 필드와, 전부 부재인 mustAbsent 는 대상이 아니다.
+_OPEN_CHOICE = re.compile(r'또는|중 하나')
+_FIXED_FACT_FIELDS = [
+    ('scenarioRule', 'mustInclude'), ('pastHistoryRule', 'mustInclude'),
+    ('socialHistoryRule', 'fixed'), ('familyHistoryRule', 'mustInclude'),
+]
+
+
+def check_fixed_facts_are_decided(cases: list[dict]) -> None:
+    offenders = []
+    for case in cases:
+        for top, key in _FIXED_FACT_FIELDS:
+            node = case.get(top) or {}
+            values = node.get(key) if isinstance(node, dict) else None
+            if not isinstance(values, list):
+                continue
+            for value in values:
+                if isinstance(value, str) and _OPEN_CHOICE.search(value):
+                    offenders.append(f"{case['id']}: {top}.{key} :: {value}")
+    assert not offenders, (
+        '반드시 연기해야 하는 사실이 둘 중 하나로 열려 있다. 하나를 골라 못박아라 —\n'
+        '고를 수 있게 두려면 recommended 로 옮겨라(그쪽은 설계상 선택 가능이다):\n'
+        + '\n'.join(offenders)
+    )
+
+
 def check_no_new_default_fallbacks(fallbacks: dict[str, set[str]]) -> None:
     unexpected = []
     for button_id, cases in sorted(fallbacks.items()):
@@ -266,6 +319,8 @@ def main() -> None:
     check_findings_are_determinate(loaded)
     check_normal_findings_read_normal(loaded)
     check_no_normal_badge_on_abnormal_finding(loaded)
+    check_no_same_category_duplicate(loaded)
+    check_fixed_facts_are_decided(loaded)
     total_fallbacks = sum(len(v) for v in fallbacks.values())
     rules = [r for c in loaded for r in (c.get("physicalExamRule") or [])]
     abnormal = sum(1 for r in rules if r.get("polarity") == POLARITY_ABNORMAL)

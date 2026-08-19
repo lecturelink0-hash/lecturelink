@@ -63,7 +63,7 @@
   },
   "pastHistoryRule": {
     "mustInclude": [
-      "당뇨 또는 만성질환 가능"
+      "제2형 당뇨병"
     ],
     "mustAbsent": [
       "최근 외상"
