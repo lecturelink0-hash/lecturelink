@@ -55,7 +55,7 @@
   },
   "pastHistoryRule": {
     "mustInclude": [
-      "고혈압 또는 심장질환 가능"
+      "고혈압 병력"
     ],
     "mustAbsent": []
   },
