@@ -14,6 +14,7 @@ import { sanitizePatientText } from './sanitize';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PRIVACY_VERSION } from '@/lib/legal/config';
+import { apiErrorMessage } from './apiError';
 
 // 서버 하트비트 주기. 스윕 임계(마지막 하트비트 + 10분)보다 크게 짧아야 하고,
 // 너무 잦으면 미러 쓰기가 늘어난다 — 정책 7장 권고(15~30초)의 중앙값.
@@ -73,7 +74,7 @@ function request(path, options = {}) {
     if (!response.ok) {
       // 상태코드와 본문을 오류에 실어 보낸다 — 동시 세션 409는 본문의 activeSessionId 로
       // '기존 연습 종료하고 시작' 복구 동선을 만들 수 있어야 한다.
-      const failure = new Error(body.detail || `요청 실패 (${response.status})`);
+      const failure = new Error(apiErrorMessage(body, response.status));
       failure.status = response.status;
       failure.payload = body;
       throw failure;

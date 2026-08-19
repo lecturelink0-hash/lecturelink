@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ChevronRight, Clock3, History, ShieldAlert, Stethoscope } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import { apiErrorMessage } from './apiError';
 
 function request(path) {
   return fetch(`/api/cpx${path}`, { cache: 'no-store' }).then(async (response) => {
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.detail || `요청 실패 (${response.status})`);
+    if (!response.ok) throw new Error(apiErrorMessage(body, response.status));
     return body;
   });
 }

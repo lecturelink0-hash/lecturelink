@@ -11,11 +11,12 @@ import { Card } from '@/components/ui/Card';
 import CpxPagedList from './CpxPagedList';
 import CpxTimeAnalysis from './CpxTimeAnalysis';
 import CpxTranscriptView from './CpxTranscriptView';
+import { apiErrorMessage } from './apiError';
 
 function request(path, init) {
   return fetch(`/api/cpx${path}`, { cache: 'no-store', ...init }).then(async (response) => {
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.detail || `요청 실패 (${response.status})`);
+    if (!response.ok) throw new Error(apiErrorMessage(body, response.status));
     return body;
   });
 }

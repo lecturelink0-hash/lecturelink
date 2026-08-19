@@ -60,10 +60,15 @@ CREATE INDEX IF NOT EXISTS idx_usage_session ON usage_events(session_id, id);
 """
 
 
-def connect() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+# 스키마·마이그레이션은 프로세스당 한 번만 돌린다.
+# 예전에는 connect() 마다 executescript(SCHEMA) + PRAGMA table_info + ALTER 검사 + CREATE INDEX 를
+# 전부 실행했다. 요청 하나가 여러 번 connect() 하므로 매 요청이 DDL 을 반복했고, SQLite 에서
+# DDL 은 쓰기 잠금을 잡기 때문에 동시 접속 시 서로를 막았다(2026-08-18 감사 P2).
+# 파일 경로가 바뀌면(테스트가 DB_PATH 를 갈아끼운다) 다시 초기화한다.
+_initialized_for: Path | None = None
+
+
+def _initialize(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     # 기존 DB 마이그레이션: 누락 컬럼 추가
     cols = {r[1] for r in conn.execute('PRAGMA table_info(sessions)')}
@@ -74,6 +79,23 @@ def connect() -> sqlite3.Connection:
             else:
                 conn.execute(f'ALTER TABLE sessions ADD COLUMN {col} TEXT')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_sessions_user_started ON sessions(user_id, started_at DESC)')
+    conn.commit()
+
+
+def connect() -> sqlite3.Connection:
+    global _initialized_for
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    # WAL: 읽기가 쓰기를 막지 않는다. 하트비트·전사 저장·조회가 동시에 오는 구조라
+    # 기본 rollback journal 로는 읽기 하나가 쓰기 전체를 세운다.
+    # busy_timeout: 잠금이 잡혀 있으면 즉시 'database is locked' 로 죽지 않고 기다린다.
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA busy_timeout=5000')
+    conn.execute('PRAGMA foreign_keys=ON')
+    if _initialized_for != DB_PATH:
+        _initialize(conn)
+        _initialized_for = DB_PATH
     return conn
 
 
@@ -99,9 +121,15 @@ def get_session(session_id: str, user_id: str):
 
 
 def end_session(session_id: str, user_id: str) -> None:
+    """종료 시각은 처음 한 번만 기록한다.
+
+    예전에는 조건 없이 덮어써서, 스윕이 이미 정산한 세션에 뒤늦은 종료 요청이 오면
+    종료 시각이 그때로 밀렸다 — 정산에 쓴 시각과 기록이 어긋난다(2026-08-18 감사 P2).
+    """
     with connect() as conn:
         conn.execute(
-            "UPDATE sessions SET ended_at = ?, status = 'ended' WHERE id = ? AND user_id = ?",
+            "UPDATE sessions SET ended_at = COALESCE(ended_at, ?), status = 'ended' "
+            "WHERE id = ? AND user_id = ?",
             (time.time(), session_id, user_id),
         )
 
