@@ -35,6 +35,14 @@ import { recordAiCost } from './cost-cap';
 import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
 import { buildUploadNotices } from './upload-notice';
 import {
+  REFERENCE_PROFILE_SYSTEM_PROMPT,
+  REFERENCE_PROFILE_TOOL,
+  buildReferenceProfileUserMessage,
+  buildReferenceProfileSection,
+  isUsableProfile,
+  type ReferenceFormatProfile,
+} from './reference-profile';
+import {
   PRIVATE_GENERATION_SYSTEM_PROMPT,
   PRIVATE_GENERATION_TOOL_SCHEMA,
   buildPrivateGenerationUserMessage,
@@ -761,12 +769,16 @@ export interface GenerationDiagnostics {
 }
 
 const MAX_REFERENCE_IMAGES = 6;
+/** 참고 자료 1건에서 형식 분석에 쓸 텍스트 상한(자). 형식만 보므로 앞부분이면 충분하다. */
+const MAX_REFERENCE_TEXT_CHARS = 20_000;
+/** 참고 PDF 텍스트 추출 페이지 상한. 형식 파악에 필요한 만큼만 읽어 지연을 막는다. */
+const REFERENCE_PDF_MAX_PAGES = 30;
 
 async function loadReferenceImages(input: {
   uploadIds: string[];
   userId: string;
-}): Promise<{ images: Uint8Array[]; skipped: number }> {
-  if (input.uploadIds.length === 0) return { images: [], skipped: 0 };
+}): Promise<{ images: Uint8Array[]; texts: string[]; skipped: number }> {
+  if (input.uploadIds.length === 0) return { images: [], texts: [], skipped: 0 };
 
   const admin = createAdminClient();
   const { data: uploads, error } = await admin
@@ -778,12 +790,14 @@ async function loadReferenceImages(input: {
 
   const byId = new Map((uploads ?? []).map((upload) => [upload.id, upload]));
   const images: Uint8Array[] = [];
+  const texts: string[] = [];
   // 형식을 못 읽어 반영하지 못한 참고 자료 수 — P8 로 사용자에게 알린다.
-  // 종전에는 PPTX·DOCX 를 아무 표시 없이 건너뛰어서, 족보를 올린 사용자가 그것이
-  // 반영되지 않았다는 사실을 알 방법이 없었다.
   let skipped = 0;
+
+  /** 텍스트가 이만큼도 안 나오면 스캔본으로 보고 이미지 경로로 넘어간다. */
+  const MIN_REFERENCE_TEXT = 300;
+
   for (const id of input.uploadIds) {
-    if (images.length >= MAX_REFERENCE_IMAGES) break;
     const upload = byId.get(id);
     if (!upload) continue;
     const { data: blob, error: downloadError } = await admin.storage
@@ -795,13 +809,55 @@ async function loadReferenceImages(input: {
     }
     const buffer = await blob.arrayBuffer();
 
+    // 사진으로 찍은 족보 — 텍스트가 없으므로 이미지로만 쓸 수 있다.
     if (upload.file_type.startsWith('image/')) {
+      if (images.length >= MAX_REFERENCE_IMAGES) continue;
       const png = await normalizeToPng(new Uint8Array(buffer));
       if (png) images.push(png);
       else skipped += 1;
       continue;
     }
+
+    // ── 텍스트 우선(P7). 종전에는 PDF 를 앞 3쪽 그림으로만 봤고 PPTX·DOCX 는 통째로 무시했다.
+    let text = '';
+    try {
+      if (upload.file_type === 'application/pdf') {
+        const { default: pdfParse } = await import('pdf-parse');
+        const parsed = await pdfParse(Buffer.from(buffer), { max: REFERENCE_PDF_MAX_PAGES });
+        text = (parsed.text ?? '').replace(/\s+/g, ' ').trim();
+      } else if (upload.file_type === PPTX_MIME) {
+        text = parsePptx(buffer)
+          .slides.map((slide) => slide.text)
+          .join('\n')
+          .replace(/\s+/g, ' ')
+          .trim();
+      } else if (upload.file_type === DOCX_MIME) {
+        // DOCX 는 직접 파서가 없다 — 기존 Office→PDF 변환 경로를 재사용한다.
+        const converted = await convertOfficeToPdfBuffer(buffer, 'docx');
+        if (converted) {
+          const { default: pdfParse } = await import('pdf-parse');
+          const parsed = await pdfParse(Buffer.from(converted), { max: REFERENCE_PDF_MAX_PAGES });
+          text = (parsed.text ?? '').replace(/\s+/g, ' ').trim();
+        }
+      }
+    } catch (error) {
+      console.warn(
+        '[private-generation] reference text extract failed:',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+
+    if (text.length >= MIN_REFERENCE_TEXT) {
+      texts.push(text.slice(0, MAX_REFERENCE_TEXT_CHARS));
+      continue;
+    }
+
+    // 텍스트가 없으면(스캔본) 종전처럼 앞쪽 페이지를 그림으로 넘긴다.
     if (upload.file_type === 'application/pdf') {
+      if (images.length >= MAX_REFERENCE_IMAGES) {
+        skipped += 1;
+        continue;
+      }
       try {
         const pages = await renderPdfPages(buffer, {
           maxPages: Math.min(3, MAX_REFERENCE_IMAGES - images.length),
@@ -818,10 +874,89 @@ async function loadReferenceImages(input: {
       }
       continue;
     }
-    // PPTX·DOCX·기타 — 현재 참고 자료는 이미지로만 반영하므로 읽지 못한다(P7 에서 텍스트화 예정).
+
+    // PPTX·DOCX 인데 텍스트가 없거나(빈 슬라이드) 변환이 실패한 경우, 그 밖의 형식.
     skipped += 1;
   }
-  return { images: images.slice(0, MAX_REFERENCE_IMAGES), skipped };
+  return { images: images.slice(0, MAX_REFERENCE_IMAGES), texts, skipped };
+}
+
+/**
+ * 참고 자료 텍스트에서 **형식 프로파일**을 1회 호출로 뽑는다 (P7).
+ *
+ * 왜 1회인가: 프로파일은 시스템 프롬프트에 붙고 시스템은 캐시 대상이라, 배치가 5개든
+ * 10개든 한 번만 만들면 된다. 종전처럼 이미지 6장을 배치마다 재전송하던 것과 정반대다.
+ *
+ * 실패는 조용히 null — 프로파일이 없으면 종전대로 기본 규격으로 만들면 되고, 참고 자료
+ * 하나 때문에 생성이 멈추면 안 된다.
+ */
+async function summarizeReferenceFormat(input: {
+  texts: string[];
+  userId: string;
+  onCost: (usd: number) => void;
+}): Promise<ReferenceFormatProfile | null> {
+  if (input.texts.length === 0) return null;
+  const joined = input.texts.join('\n\n---\n\n');
+  const model = MODELS.verification();
+  try {
+    const client = getAnthropic();
+    const response = await withRetry(
+      () =>
+        createMessage(client, {
+          model,
+          max_tokens: 1024,
+          system: REFERENCE_PROFILE_SYSTEM_PROMPT,
+          tools: [REFERENCE_PROFILE_TOOL as unknown as Anthropic.Tool],
+          tool_choice: { type: 'tool', name: REFERENCE_PROFILE_TOOL.name },
+          messages: [{ role: 'user', content: buildReferenceProfileUserMessage(joined) }],
+        }),
+      { maxAttempts: 2, backoffMs: 500, maxDelayMs: 4_000 },
+    );
+    input.onCost(
+      calculateCost(
+        model,
+        response.usage.input_tokens,
+        response.usage.output_tokens,
+        response.usage.cache_read_input_tokens ?? 0,
+        response.usage.cache_creation_input_tokens ?? 0,
+      ),
+    );
+    await recordAiCost({
+      userId: input.userId,
+      endpoint: 'private.reference-profile',
+      model,
+      costUsd: 0,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      metadata: { references: input.texts.length },
+    }).catch(() => undefined);
+    const block = response.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+    );
+    if (!block) return null;
+    const raw = block.input as Partial<ReferenceFormatProfile>;
+    return {
+      ask_endings: Array.isArray(raw.ask_endings) ? raw.ask_endings.slice(0, 3).map(String) : [],
+      choice_style:
+        raw.choice_style === '명사구' || raw.choice_style === '문장' ? raw.choice_style : '혼합',
+      avg_stem_chars: Number.isFinite(raw.avg_stem_chars) ? Number(raw.avg_stem_chars) : 0,
+      negative_ratio: Number.isFinite(raw.negative_ratio) ? Number(raw.negative_ratio) : 0,
+      combo_used: Boolean(raw.combo_used),
+      vignette_ratio: Number.isFinite(raw.vignette_ratio) ? Number(raw.vignette_ratio) : 0,
+      sample_ask_shapes: Array.isArray(raw.sample_ask_shapes)
+        ? raw.sample_ask_shapes.slice(0, 3).map(String)
+        : [],
+      observed_questions: Number.isFinite(raw.observed_questions)
+        ? Number(raw.observed_questions)
+        : 0,
+    };
+  } catch (error) {
+    console.warn(
+      '[private-generation] reference profile failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
 }
 
 /**
@@ -1724,8 +1859,22 @@ export async function generatePrivateQuestionsFromUpload(
     referenceSkippedCount = referenceLoaded.skipped;
     if (referenceSkippedCount > 0) {
       warnings.push(
-        `참고 자료 ${referenceSkippedCount}건은 형식을 읽지 못해 반영하지 못했습니다(PDF·이미지만 지원).`,
+        `참고 자료 ${referenceSkippedCount}건은 형식을 읽지 못해 반영하지 못했습니다(PDF·PPTX·DOCX·이미지 지원).`,
       );
+    }
+    // 참고 자료 형식 프로파일(P7) — 텍스트를 읽은 자료가 있으면 1회 호출로 요약한다.
+    // 요약은 시스템 프롬프트(캐시 대상)에 붙으므로 배치가 늘어도 비용이 늘지 않는다.
+    const referenceProfile = await summarizeReferenceFormat({
+      texts: referenceLoaded.texts,
+      userId: input.userId,
+      onCost: (usd) => {
+        totalCost += usd;
+      },
+    });
+    diag.generation.referenceTexts = referenceLoaded.texts.length;
+    diag.generation.referenceProfile = referenceProfile;
+    if (referenceLoaded.texts.length > 0 && !isUsableProfile(referenceProfile)) {
+      warnings.push('참고 자료에서 문항 형식을 읽지 못해 형식 프로파일 없이 생성합니다.');
     }
 
     // 4) 분류 카탈로그·생성 프롬프트·배치 계획을 OCR "이전"에 준비한다 — 본문 텍스트가
@@ -1851,6 +2000,11 @@ export async function generatePrivateQuestionsFromUpload(
     // 증례 문항까지 눌러 임상형이 지식형으로 되돌아간다(임상형 규격을 반대로 붙였을 때와 같은 사고).
     if (wantsKnowledge) {
       systemPrompt += `\n\n${KNOWLEDGE_RULES}`;
+    }
+    // 형식 프로파일은 **규격 뒤에** 붙인다. 뒤에 오는 지시가 앞의 규격을 덮어쓰는 것이
+    // 이번 의도다(사용자 결정: 참고 자료 형식이 기본 규격보다 우선, 안전 규칙만 예외).
+    if (isUsableProfile(referenceProfile)) {
+      systemPrompt += `\n\n${buildReferenceProfileSection(referenceProfile)}`;
     }
     const client = getAnthropic();
     modelUsed = MODELS.generation();
@@ -2764,7 +2918,14 @@ export async function generatePrivateQuestionsFromUpload(
         keywords: input.keywords,
       });
       const userContent: Anthropic.MessageParam['content'] = [];
-      for (let i = 0; i < referenceImages.length; i++) {
+      // 형식 프로파일을 뽑았으면 그림을 배치마다 다시 보내지 않는다(P7).
+      //
+      // 종전에는 참고 이미지 6장을 **모든 배치에** 실었다 — 배치 5개면 30장 분량이 오갔고,
+      // 그러면서도 앞 3쪽만 본 셈이었다. 프로파일은 시스템 프롬프트(캐시 대상)에 한 번만
+      // 붙으므로 더 많은 내용을 보고도 전송량이 준다. 스캔본이라 텍스트를 못 읽었을 때만
+      // 종전처럼 그림을 싣는다.
+      const referenceImagesForBatch = isUsableProfile(referenceProfile) ? [] : referenceImages;
+      for (let i = 0; i < referenceImagesForBatch.length; i++) {
         userContent.push({
           type: 'text',
           text: `[기출 형식 참고 ${i + 1}] 내용은 출제 근거로 사용하지 말고 문항의 구조, 질문 방식, 선지 구성 방식만 참고하세요.`,
@@ -2774,7 +2935,7 @@ export async function generatePrivateQuestionsFromUpload(
           source: {
             type: 'base64',
             media_type: 'image/png',
-            data: Buffer.from(referenceImages[i]).toString('base64'),
+            data: Buffer.from(referenceImagesForBatch[i]).toString('base64'),
           },
         } as Anthropic.ImageBlockParam);
       }
