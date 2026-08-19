@@ -79,6 +79,7 @@ import {
   selectMarkerSources,
   buildMarkerLegend,
   stemReferencesMarker,
+  stemReferencesMarkerLoose,
   type PlacedMarker,
 } from '@/lib/extract/annotate-markers';
 import {
@@ -3693,7 +3694,11 @@ export async function generatePrivateQuestionsFromUpload(
       // 끝나야 안다. 종전에는 한 판만 만들어 표식을 묻지 않는 문항에도 A~E 가 붙어
       // 나갔다(실측 8장 중 5장). 이제 문항별로 어느 판을 쓸지 고른다.
       // 같은 이미지가 두 문항에 걸리고 한쪽만 표식을 물으면 두 판을 각각 저장한다.
-      const wantsMarked = (stem: string) => stemReferencesMarker(sanitizeStemArtifacts(stem));
+      // 판을 고를 때는 **넓은 쪽**을 쓴다. 여기서 미탐하면 표식 없는 판이 배정돼
+      // 학생이 못 푸는 문항이 나가고("D 단계에서…"), 오탐해도 안 물어본 표식이
+      // 보일 뿐이다. 그림 의존 판정(isImageDependentStem)은 오탐 대가가 문항 삭제라
+      // 좁은 쪽을 그대로 쓴다 — 같은 규칙을 두 자리에 쓴 것이 이번 결함의 원인이었다.
+      const wantsMarked = (stem: string) => stemReferencesMarkerLoose(sanitizeStemArtifacts(stem));
       const variantsNeeded = new Map<number, Set<boolean>>();
       for (const { q } of kept) {
         const marked = wantsMarked(q.stem);
@@ -3718,6 +3723,17 @@ export async function generatePrivateQuestionsFromUpload(
           for (const marked of variants) {
             // 표식이 없는 이미지는 두 판이 같으므로 표식판을 따로 만들지 않는다.
             const useMarked = marked && display.markers.length > 0;
+            // 발문은 표식을 가리키는데 그 그림에 찍힌 표식이 하나도 없는 경우.
+            // 조용히 기본판이 나가면 학생에게는 "가리킬 대상이 없는 문항"이 된다.
+            // 지금은 세기만 한다 — 여기서 문항을 지우면 보충 생성이 돌아 시간이 늘고,
+            // 표식 0개의 원인(정제가 라벨을 다 지움)은 이 자리에서 고칠 수 없다.
+            if (marked && display.markers.length === 0) {
+              bumpGenDiag('markerAskedButNone');
+              warnings.push(
+                `이미지 ${gi}: 발문이 표식을 가리키는데 그 그림에 찍힌 표식이 0개 — ` +
+                  `학생은 가리킬 대상을 볼 수 없습니다.`,
+              );
+            }
             const imgPath = questionImagePath(uploadRow.user_id, uploadRow.id, gi, useMarked);
             const { error: upErr } = await admin.storage
               .from(STORAGE_BUCKET)

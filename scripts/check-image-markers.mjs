@@ -23,6 +23,7 @@ import {
   buildMarkerLegend,
   isShortFigureLabel as annotateShortLabel,
   stemReferencesMarker,
+  stemReferencesMarkerLoose,
   MAX_MARKERS_PER_IMAGE,
 } from '../lib/extract/annotate-markers.ts';
 
@@ -174,6 +175,47 @@ check('"A형 간염"은 아니다', stemReferencesMarker('A형 간염의 예방 
 check('"B형 위축"은 아니다', stemReferencesMarker('B형 위축위염의 진단은?') === false);
 check('영문 단어 안의 글자는 아니다', stemReferencesMarker('Astrocyte가 가리키는 세포는?') === false);
 check('표식이 없는 발문은 아니다', stemReferencesMarker('62세 남자의 진단은?') === false);
+
+console.log('판 선택용 넓은 판정(stemReferencesMarkerLoose)');
+// 좁은 규칙을 판 선택에도 쓰다가, 운영에서 "D 단계"를 묻는 문항이 표식 없는 판을
+// 받아 학생이 풀 수 없는 채로 나갔다(2026-08-19, 표식 문항 2건 중 1건).
+// 여기서 미탐하면 못 푸는 문항이 나가고, 오탐해도 안 물어본 표식이 보일 뿐이다.
+const PROD_MISS = '아래 그림은 뇌 연결성 분석의 한 과정을 보여준다. 이 그림의 D 단계에서 얻을 수 있는 정보와 관련된 뇌파는?';
+check('운영에서 놓쳤던 그 발문("D 단계")', stemReferencesMarkerLoose(PROD_MISS));
+check(
+  '그 발문은 좁은 규칙에는 여전히 안 걸린다(그림 의존 판정은 넓히지 않았다)',
+  stemReferencesMarker(PROD_MISS) === false,
+);
+check('A 부위', stemReferencesMarkerLoose('A 부위에서 관찰되는 소견은?'));
+check('B의 구조물', stemReferencesMarkerLoose('B의 구조물이 하는 일은?'));
+check('C 단면', stemReferencesMarkerLoose('C 단면에서 확인되는 것은?'));
+check('동그라미 글자 Ⓑ', stemReferencesMarkerLoose('Ⓑ가 나타내는 세포는?'));
+check('괄호 글자 (C)', stemReferencesMarkerLoose('(C) 지점에서 일어나는 변화는?'));
+// 좁은 규칙이 참이면 넓은 규칙도 반드시 참이어야 한다(포함 관계).
+for (const s of [
+  'A로 표시된 세포층에서 유래하는 신경섬유는?',
+  'C가 가리키는 세포는?',
+  '표식 E 부위의 진단은?',
+]) {
+  check(`좁은 규칙을 품는다 — ${s.slice(0, 12)}…`, stemReferencesMarkerLoose(s));
+}
+// 넓혔어도 홑글자가 분류명·물질명으로 쓰인 경우까지 받으면 안 된다.
+// (여기가 무너지면 표식을 안 묻는 문항에 A~E 가 다시 찍힌다 — #225 로 되돌아간다.)
+check('"B형 간염"은 아니다', stemReferencesMarkerLoose('B형 간염의 예방 조치는?') === false);
+check(
+  '"비타민 D 결핍"은 아니다',
+  stemReferencesMarkerLoose('비타민 D 결핍으로 생기는 질환은?') === false,
+);
+check('"B 세포"는 아니다', stemReferencesMarkerLoose('B 세포가 분비하는 물질은?') === false);
+check(
+  '"비타민 C에 해당하는"은 아니다',
+  stemReferencesMarkerLoose('비타민 C에 해당하는 결핍 증상은?') === false,
+);
+check(
+  '영문 단어 안의 글자는 아니다',
+  stemReferencesMarkerLoose('Astrocyte 부위의 기능은?') === false,
+);
+check('표식이 없는 발문은 아니다', stemReferencesMarkerLoose('62세 남자의 진단은?') === false);
 
 console.log('실제 렌더 — 마스킹 → 표식');
 {
