@@ -2033,7 +2033,14 @@ export async function generatePrivateQuestionsFromUpload(
     // 조합형(ㄱ/ㄴ/ㄷ) 빈도 제한: 학교 시험에서 매우 드문 유형이라 요청에 별도 조건이 없으면
     // 10문항당 1문항 이하로 억제한다. 배치가 병렬이라 "전체의 10%"를 프롬프트로 지시해도
     // 배치마다 독립 판단해 과다 생성되므로, 허용 배치를 정해 결정론적으로 배분한다.
-    const comboQuota = Math.floor(desiredCount / 10);
+    // 참고 자료가 있으면 그 학교가 실제로 조합형을 쓰는지에 맞춘다(P7 형식 우선).
+    // 안 쓰는 학교면 0 — 기본값(10문항당 1)은 "학교 시험에서 드물다"는 일반론이고,
+    // 프로파일은 그 학교의 실제 관찰이라 더 구체적이다.
+    const comboQuota = isUsableProfile(referenceProfile)
+      ? referenceProfile.combo_used
+        ? Math.max(1, Math.floor(desiredCount / 10))
+        : 0
+      : Math.floor(desiredCount / 10);
     const comboBatches = new Set(
       Array.from({ length: comboQuota }, (_, i) => batchSizes.length - 1 - i).filter(
         (i) => i >= 0,
@@ -2183,8 +2190,18 @@ export async function generatePrivateQuestionsFromUpload(
     };
 
     // 부정형("옳지 않은 것은?") 허용 묶음 — 조합형과 같은 방식으로 상한을 결정론적으로 배분한다.
-    // 전체의 20 % 이하(10문항당 2문항)로 두되, 조합형·표식 묶음과 겹치지 않게 앞쪽부터 고른다.
-    const negativeQuota = Math.max(1, Math.round(desiredCount / 10) * 2);
+    // 허용된 묶음은 최대 1문항이므로 "허용 묶음 수 ≈ 목표 부정형 문항 수"가 된다.
+    //
+    // 참고 자료가 있으면 **그 비율을 따른다**(P7 형식 우선). 2026-08-19 실측에서 프로파일이
+    // `negative_ratio: 0.4`(표본 5문항 중 2문항이 부정형 — 정확)였는데도 이 계산이 프로파일을
+    // 안 봐서 기본 20 % 로 눌렸다. 배치 지시는 시스템 프롬프트보다 뒤·구체적이라 실제로는
+    // 배치 지시가 이긴다 — 즉 "형식은 프로파일 우선"이 여기서만 지켜지지 않고 있었다.
+    //
+    // 유형 비율(vignette_ratio)은 일부러 반영하지 않는다. 그건 사용자가 화면에서 고른
+    // 문항 유형(지식형·임상형)의 몫이고, 프로파일이 그것까지 뒤집으면 요청 위반이 된다.
+    const negativeQuota = isUsableProfile(referenceProfile)
+      ? Math.min(batchSizes.length, Math.round(referenceProfile.negative_ratio * desiredCount))
+      : Math.max(1, Math.round(desiredCount / 10) * 2);
     const negativeBatches = new Set<number>();
     for (let i = 0; i < batchSizes.length && negativeBatches.size < negativeQuota; i++) {
       if (comboBatches.has(i) || markerBatches.has(i)) continue;
