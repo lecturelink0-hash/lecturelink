@@ -243,6 +243,12 @@ def build_system_instruction(
         'ruleText', 'rawRuleText',
         # 발성 지침은 별도의 [음성·말투 연기] 블록으로 주입하므로 ruleContext에서는 제외(중복 방지).
         'voiceStyleRule', 'classificationStandard',
+        # targetDiagnosis 만 빼는 것으로는 진단명이 가려지지 않는다. 216/243 증례의 title 이
+        # '급성 복통 (충수염 의심)' 꼴이고 tags 207건·description 60건·variant 55건에도 병명이 들어 있어,
+        # 환자 모델이 사실상 자기 병명을 알고 연기했다(2026-08-18 감사 가1).
+        # 이 네 필드는 작성자용 메타데이터이지 환자 연기에 필요한 사실이 아니다 —
+        # 연기에 쓰이는 것은 scenarioRule·각종 History·liveApiContext 다.
+        'title', 'variant', 'description', 'tags',
     }
     rule_context = {k: v for k, v in case.items() if k not in private_keys}
     # 일부 Fable 초안의 patientContextFocus에는 숨겨야 할 진단명이 문장으로 들어 있다.

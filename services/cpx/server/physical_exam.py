@@ -1089,6 +1089,28 @@ def _is_abnormal(pe: dict) -> bool:
     return pe.get('polarity') == POLARITY_ABNORMAL
 
 
+# 신체진찰이 아니라 '검사 지시'인 버튼. 손으로 보고 만지는 진찰과 달리 검체·기기를 거치며,
+# 실제 시험에서도 진찰과 구분된다. 한 묶음으로 두면 학생이 "진찰을 했다"와 "검사를 냈다"를
+# 구별하지 못하고, 자궁외임신 증례의 '특수 징후' 버튼처럼 문진 없이 정답을 알려주기도 한다
+# (2026-08-18 감사 가3). 여기서는 분류만 바로잡는다 — 채점 항목 재배치는 루브릭 재작성 몫이다.
+TEST_BUTTON_IDS = frozenset({
+    'ecg',            # 심전도
+    'glucose',        # 혈당
+    'urinalysis',     # 소변검사(딥스틱)
+    'urine_screen',   # 소변 단백·당
+    'psg',            # 수면다원검사
+    'co_test',        # 호기 일산화탄소
+    'pregnancy_test',  # 임신반응검사
+    'mmse',           # 인지선별검사
+})
+KIND_EXAM = 'exam'
+KIND_TEST = 'test'
+
+
+def button_kind(button_id: str) -> str:
+    return KIND_TEST if button_id in TEST_BUTTON_IDS else KIND_EXAM
+
+
 def button_catalog(case: dict | None = None) -> list[dict]:
     catalog = []
     for button in buttons_for(case):
@@ -1099,8 +1121,25 @@ def button_catalog(case: dict | None = None) -> list[dict]:
             'bodyRegion': body_region,
             'bodyRegionLabel': body_region_label,
             'avatarTarget': avatar_target,
+            'kind': button_kind(button['id']),
         })
     return catalog
+
+
+# 실제 시험은 입실 전에 인적사항과 활력징후를 준다. 여기서는 활력징후가 버튼 뒤에 있어
+# 쇼크 수준 혈압이 결정적인 증례에서도 클릭해야만 보였다(2026-08-18 감사 가8).
+_VITALS_ITEM = ('활력', '생체')
+
+
+def door_chart_vitals(case: dict) -> str | None:
+    """문 앞 정보에 실을 활력징후 — 케이스의 활력징후 진찰 소견을 그대로 쓴다."""
+    for rule in case.get('physicalExamRule') or []:
+        item = str(rule.get('item') or '')
+        if any(k in item for k in _VITALS_ITEM):
+            finding = (rule.get('expectedFinding') or '').strip()
+            if finding:
+                return finding
+    return None
 
 
 def resolve_exam(case: dict, button_id: str) -> dict:
