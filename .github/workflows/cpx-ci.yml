@@ -73,6 +73,8 @@ jobs:
       - run: python test_case_aware_scoring.py
       # 진단명이 환자 모델 프롬프트로 새지 않는지 (제목·태그에 병명이 들어 있다)
       - run: python test_diagnosis_hidden.py
+      # 런타임 위생 — 스키마 1회 실행·WAL·인증 기본값·정산 시각·조기 채점 차단
+      - run: python test_runtime_hygiene.py
       # 버튼 행위 표시·검사 분리·문 앞 정보
       - run: python test_exam_actions.py
       # 채점 하드 타임아웃이 실제로 응답을 끊는지 — 옛 구조는 못 끊었음을 시간으로 재현
