@@ -7,6 +7,10 @@ import { persistCpxExchange } from '@/lib/cpx/persistence';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+// 실행 시간 상한. 지정하지 않으면 플랫폼 기본값(짧다)에 걸려 채점처럼 오래 걸리는 호출이
+// 중간에 잘리고, 클라이언트는 그 실패를 재시도로 받는다(2026-08-18 감사 P2).
+// Fly 쪽 채점 하드 타임아웃이 75초이므로 그보다 넉넉히 잡는다.
+export const maxDuration = 120;
 
 const ALLOWED_ROOTS = new Set(['cases', 'sessions', 'exam-buttons', 'history', 'review-notes', 'usage', 'account-data']);
 
@@ -151,8 +155,13 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
 
   // CPX 시간 차감 정책(v1.0) — 세션 시작 게이트.
   if (request.method === 'POST' && path.length === 1 && path[0] === 'sessions') {
-    // 잔여 시간 1분 미만이면 시작 불가 (정책 4-5). 한도·잔여는 cpx_seconds quota 기준.
-    await requireQuota(session.userId, 'cpx_seconds', 60);
+    // 시작하려는 연습의 길이만큼 잔여 시간이 있어야 한다. 예전에는 60초만 확인해서,
+    // 1분 남은 사용자가 12분짜리 세션을 시작하고 도중에 시간이 끊겼다(2026-08-18 감사 P2).
+    // clone() 으로 읽어야 아래 forward 단계에서 본문을 다시 읽을 수 있다.
+    const startBody = await request.clone().json().catch(() => ({} as Record<string, unknown>));
+    const requested = Number((startBody as Record<string, unknown>).timeLimitSeconds);
+    const needSeconds = [720, 690, 660].includes(requested) ? requested : 720;
+    await requireQuota(session.userId, 'cpx_seconds', needSeconds);
 
     // 동시 진행 세션 1개 (확정 파라미터) — 살아있는(active + 하트비트 10분 이내) 세션이
     // 있으면 차단한다. 하트비트가 끊긴 세션은 스윕 크론이 정산하므로 여기서 막지 않는다.
