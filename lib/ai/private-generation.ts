@@ -99,6 +99,22 @@ import {
 } from '@/lib/ai/clinical-shape';
 import { verifyQuestion } from './verify';
 import { isPrivateVerifyFailure, PRIVATE_VERIFY_REJECT_SCORE } from './verify-policy';
+import { blindSolveOnce } from './blind-solve';
+import { BLIND_ATTEMPTS, isBlindSolvable } from './blind-policy';
+import {
+  extractFocusTopics,
+  assignFocus,
+  buildFocusDirective,
+  buildPriorStemsDirective,
+  PRIOR_STEM_LIMIT,
+} from './material-outline';
+import {
+  normalizeExplanation,
+  countDistractorsMentioned,
+  EXPLANATION_TARGET_CHARS,
+  EXPLANATION_SOFT_LIMIT_CHARS,
+  MIN_DISTRACTORS_MENTIONED,
+} from './explanation-format';
 import { preprocessForOcr, normalizeToPng } from '@/lib/extract/preprocess';
 import { runOcr } from '@/lib/ocr/engine';
 
@@ -162,6 +178,37 @@ const VERIFY_TIMEOUT_MS = 8_000;
  * 자초한다. 429 는 통과 처리로 흘러가 검증이 조용히 사라지므로 애초에 안 만드는 게 낫다.
  */
 const VERIFY_CONCURRENCY = 6;
+
+/**
+ * 블라인드 풀이 검사(P9) 동작 모드. `PRIVATE_BLIND_MODE` = off | warn | discard.
+ *
+ * 왜 기본이 discard 인가 — 검증(P1)이 warn 으로 시작한 것과 반대다. P1 은 모델이
+ * "의학적으로 틀렸다"고 **주장**하는 것이라 그 주장 자체가 틀릴 수 있어(실제로 오탐이
+ * 확인됐다) 사람 검토를 앞에 뒀다. P9 가 세는 것은 주장이 아니라 **사건**이다 —
+ * 그림을 빼고 실제로 풀었더니 연속으로 맞혔다. 우연 정답률 4 %는 계산으로 고정돼 있고,
+ * 통과시키는 쪽의 대가(그림이 장식인 이미지형이 그대로 학생에게 나감)가 폐기하는 쪽의
+ * 대가(문항 1개를 다시 만듦)보다 크다.
+ */
+const BLIND_MODE = ((): 'off' | 'warn' | 'discard' => {
+  const raw = (process.env.PRIVATE_BLIND_MODE ?? 'discard').toLowerCase();
+  return raw === 'off' || raw === 'warn' ? raw : 'discard';
+})();
+/**
+ * 한 문항의 블라인드 시도 전체(BLIND_ATTEMPTS 회 병렬)에 주는 상한.
+ * 검증(8초)보다 조금 길다 — 두 번을 함께 기다리기 때문이다. 넘으면 판정 없이 통과.
+ */
+const BLIND_TIMEOUT_MS = 12_000;
+/**
+ * 동시에 블라인드 검사하는 문항 수. 문항 하나가 BLIND_ATTEMPTS 회를 열므로
+ * 실제 동시 호출은 이 값 × BLIND_ATTEMPTS 다 — VERIFY_CONCURRENCY 보다 낮게 잡는다.
+ */
+const BLIND_CONCURRENCY = 3;
+
+/**
+ * 이전 발문 조회(P11 세션 간)를 배치가 기다리는 상한.
+ * 중복 방지는 있으면 좋은 것이지 필수가 아니다 — 조회가 늦으면 없는 셈 치고 출발한다.
+ */
+const PRIOR_STEMS_TIMEOUT_MS = 2_500;
 
 /**
  * 00040 미적용이 한 번 확인되면 이후 배치는 처음부터 계측 컬럼 없이 저장한다
@@ -1691,6 +1738,44 @@ export async function generatePrivateQuestionsFromUpload(
     if (shaErr && !isMissingColumnError(shaErr)) {
       console.warn('[private-gen] content_sha256 기록 실패:', shaErr.message);
     }
+    // ── 세션 간 중복 방지 (P11): 같은 자료를 전에 올린 적이 있으면 그때 만든 발문을 가져온다.
+    //
+    // 운영 전체에서 발문이 완전히 동일한 문항이 37건 있었다 — 같은 파일 재업로드다.
+    // 임베딩 유사도 대신 발문 앞부분을 그대로 보여 주고 피하게 한다(Voyage 임베딩이
+    // 2026-07-21 이후 죽어 있어 그 경로는 지금 없다).
+    //
+    // 지금 await 하지 않는다 — 텍스트 선발사(prefire)가 이 조회를 기다리면 안 된다.
+    // 배치가 자기 지시문을 만들 때 짧은 상한으로 받아 간다.
+    const priorStemsPromise: Promise<string[]> = (async () => {
+      try {
+        const { data: sameFileUploads, error: upErr } = await admin
+          .from('user_uploads')
+          .select('id')
+          .eq('user_id', upload.user_id)
+          .eq('content_sha256', contentSha256)
+          .neq('id', upload.id)
+          .limit(10);
+        if (upErr || !sameFileUploads?.length) return [];
+        const { data: priorQuestions, error: qErr } = await admin
+          .from('private_questions')
+          .select('stem, created_at')
+          .in(
+            'upload_id',
+            sameFileUploads.map((u) => u.id),
+          )
+          .order('created_at', { ascending: false })
+          .limit(PRIOR_STEM_LIMIT);
+        if (qErr || !priorQuestions) return [];
+        return priorQuestions.map((q) => String(q.stem ?? ''));
+      } catch (e: unknown) {
+        // 조회 실패는 생성을 막지 않는다 — 중복 방지는 있으면 좋은 것이지 필수가 아니다.
+        console.warn(
+          '[private-gen] 이전 발문 조회 실패(생략):',
+          e instanceof Error ? e.message.slice(0, 140) : String(e),
+        );
+        return [];
+      }
+    })();
     // ── 진단 수집 시작. 단계별 소요와 세부 수치를 모아 마지막에 Storage 로 남긴다.
     const diag: {
       timings: Record<string, number>;
@@ -2075,6 +2160,15 @@ export async function generatePrivateQuestionsFromUpload(
     //   실패는 즉시 던지지 않고 감싸 두었다가 본배치 단계에서 전체 컨텍스트로 재시도한다.
     const earlyFullText = await earlyText;
     const canPrefire = batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
+
+    // ── 배치별 출제 초점 (P11 · 세션 내 중복 방지)
+    //
+    // 한 번 정하면 바꾸지 않는다. 선발사 배치는 여기(원문 텍스트)에서 뽑은 목록으로
+    // 배정을 받고, 뒤이어 뜨는 배치도 **같은 목록**을 봐야 배정이 겹치지 않는다.
+    // 나중에 만들어지는 compositeText(OCR 포함)로 목록을 갈아끼우면 이미 출발한 배치와
+    // 경계가 어긋나 두 배치가 같은 주제를 맡는다.
+    let focusTopics: readonly string[] = extractFocusTopics(earlyFullText);
+    diag.generation.focusTopicSource = focusTopics.length > 0 ? 'early' : 'none';
     // 조기 출발 폭. 이미지형이라도 "이미지가 실제로 필요한 배치"만 전처리를 기다리면 된다.
     //   실측 근거: 텍스트는 1.6초에 준비되는데 이미지형은 첫 배치가 10초에야 출발했다.
     //
@@ -2333,6 +2427,15 @@ export async function generatePrivateQuestionsFromUpload(
       }
     }
     const compositeText = contextBlocks.join('\n\n');
+
+    // 원문 텍스트에서 초점을 못 뽑았을 때만(스캔본 등 earlyText 가 비었을 때) 슬라이드
+    // 구조에서 다시 뽑는다. 이미 뽑았으면 건드리지 않는다 — 선발사 배치가 그 목록으로
+    // 이미 출발했다.
+    if (focusTopics.length === 0) {
+      focusTopics = extractFocusTopics(compositeText);
+      if (focusTopics.length > 0) diag.generation.focusTopicSource = 'composite';
+    }
+    diag.generation.focusTopicCount = focusTopics.length;
 
     // ── 배치별 구간 분할
     // 지금까지는 모든 배치가 자료 전체(최대 15만 자)를 실어 동시에 호출했다. 그래서
@@ -3003,6 +3106,19 @@ export async function generatePrivateQuestionsFromUpload(
             (batchIndex === 0
               ? ' 핵심·기본 개념 문항을 포함하세요.'
               : ' 전형적인 기본 정의 문항보다 응용·감별 문항을 우선하세요.');
+      // 초점 배정(P11) — "N번째 구간을 우선하라"는 말만으로는 배치들이 같은 증례를 만든다.
+      // 같은 텍스트를 받은 모델들이 각자 고른 "N번째 구간"은 서로 다르지 않기 때문이다.
+      // 자료의 소제목을 코드가 겹치지 않게 나눠 주고, 다른 묶음 몫도 함께 알려 준다.
+      const focusDirective = buildFocusDirective(
+        assignFocus(focusTopics, batchIndex, batchCount),
+      );
+      if (focusDirective) batchDiag.focusAssigned = true;
+      // 세션 간 중복(P11) — 같은 파일을 다시 올린 경우. 이전 발문 앞부분을 보여 주고 피하게 한다.
+      const priorStems = await withDeadline(priorStemsPromise, PRIOR_STEMS_TIMEOUT_MS, [], () =>
+        bumpGenDiag('priorStemsTimeout'),
+      );
+      const priorDirective = buildPriorStemsDirective(priorStems ?? []);
+      if (priorDirective) batchDiag.priorStems = (priorStems ?? []).length;
       // 이미지를 받지 못한 배치가 발문에서 그림을 가리키면(예: "다음은 …모식도이다")
       // 학생 화면에 그림 없는 문항이 나온다. 배치 단위로 명시 금지한다.
       const noImageDirective =
@@ -3084,7 +3200,7 @@ export async function generatePrivateQuestionsFromUpload(
         text:
           `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
           (gen.contextText || '(추출된 텍스트·이미지 없음)') +
-          `\n\n${userMessage}${batchDirective}${noImageDirective}${clinicalDirective}${knowledgeDirective}${comboDirective}`,
+          `\n\n${userMessage}${batchDirective}${focusDirective}${priorDirective}${noImageDirective}${clinicalDirective}${knowledgeDirective}${comboDirective}`,
       });
 
       // 해설 길이 상한(350자) 적용 후 문항당 실출력은 ~1,000토큰대. 다만 지시 이탈로
@@ -3346,6 +3462,89 @@ export async function generatePrivateQuestionsFromUpload(
         }
       }
 
+      // ── 이미지형 블라인드 풀이 검사 (P9)
+      //
+      // 프롬프트에는 "이 이미지를 빼도 풀 수 있는가를 자문하라"는 가림 검사가 있다.
+      // 그런데 그건 모델의 자기점검이라 통과율이 100 %에 수렴했고, 실물에서
+      // "뇌 단면도 … 설명으로 옳은 것은?"(그림 없이 풀리는 이미지형)이 그대로 나갔다.
+      // 자문을 실측으로 바꾼다 — 그림을 빼고 실제로 풀려 보고, 독립 시도가 전부 정답이면
+      // 그 그림은 장식이므로 폐기하고 보충이 채운다.
+      //
+      // 검증(P1)과 같은 가용성 원칙: 늦거나 실패한 시도는 판정하지 않는다.
+      if (BLIND_MODE !== 'off') {
+        const targets = kept
+          .map((k, i) => ({ k, i }))
+          .filter(({ k }) => (k.q.image_indices ?? []).some(validImageIndex));
+        if (targets.length > 0) {
+          const tBlind = Date.now();
+          const blindRejected = new Set<number>();
+          await mapWithConcurrency(targets, BLIND_CONCURRENCY, async ({ k, i }) => {
+            const attempts = await withDeadline(
+              Promise.all(
+                Array.from({ length: BLIND_ATTEMPTS }, () =>
+                  blindSolveOnce({ stem: String(k.q.stem ?? ''), choices: k.choices }).catch(
+                    (e: unknown) => {
+                      bumpGenDiag('blindUnavailable');
+                      console.warn(
+                        '[private-gen] 블라인드 풀이 실패(통과 처리):',
+                        e instanceof Error ? e.message.slice(0, 140) : String(e),
+                      );
+                      return null;
+                    },
+                  ),
+                ),
+              ),
+              BLIND_TIMEOUT_MS,
+              null,
+              () => bumpGenDiag('blindTimeout'),
+            );
+            if (!attempts) return;
+
+            for (const a of attempts) {
+              if (!a) continue;
+              void recordAiCost({
+                userId: input.userId,
+                endpoint: 'private.blind',
+                model: a.usage.model,
+                costUsd: a.usage.costUSD,
+                inputTokens: a.usage.inputTokens,
+                outputTokens: a.usage.outputTokens,
+                metadata: { uploadId: uploadRow.id, batch: batchIndex + 1 },
+              });
+              totalCost += a.usage.costUSD;
+            }
+            bumpGenDiag('blindChecked');
+
+            const picks = attempts.map((a) => a?.answerIndex ?? null);
+            if (!isBlindSolvable(picks, k.answerIndex)) return;
+
+            // 왜 골랐는지는 폐기를 사람이 재검토할 때만 쓴다 — 사용자에게는 안 나간다.
+            const basis = attempts.find((a) => a?.basis)?.basis ?? '';
+            if (BLIND_MODE === 'discard') {
+              blindRejected.add(i);
+              bumpGenDiag('blindDiscarded');
+              warnings.push(
+                `그림 없이도 답이 정해져 이미지 문항 1개 폐기 — 보충 생성으로 대체. ${basis.slice(0, 120)}`,
+              );
+            } else {
+              bumpGenDiag('blindFlagged');
+              warnings.push(`블라인드 풀이 경고(그림 없이 ${BLIND_ATTEMPTS}회 정답): ${basis.slice(0, 120)}`);
+            }
+          });
+          batchDiag.blindMs = Date.now() - tBlind;
+          batchDiag.blindTargets = targets.length;
+          batchDiag.blindMode = BLIND_MODE;
+          if (blindRejected.size > 0) {
+            kept = kept.filter((_, i) => !blindRejected.has(i));
+            if (kept.length === 0) {
+              throw new Error(
+                `이미지 문항이 모두 그림 없이 풀립니다 (batch=${batchIndex + 1})`,
+              );
+            }
+          }
+        }
+      }
+
       let unmatched = 0;
       const rows = kept.map((k, questionIndex) => {
         const subTopicId = k.q.sub_topic_code ? codeToId.get(k.q.sub_topic_code) ?? null : null;
@@ -3361,6 +3560,37 @@ export async function generatePrivateQuestionsFromUpload(
           : isClinicalVignette(stem)
             ? 'clinical'
             : 'knowledge';
+        // ── 해설 규격(P12): 어미는 고치고, 길이·오답 언급은 재기만 한다.
+        //
+        // 어미만 결정론적으로 바꾼다(형태라서 의미가 안 변한다). 길이는 자르지 않는다 —
+        // 의학 해설을 글자 수로 자르면 "…따라서 금기는" 에서 끊겨 틀린 문항이 된다.
+        // 오답 언급도 세기만 한다: 해설을 코드가 이어 붙이면 근거 없는 문장이 생긴다.
+        const toned = normalizeExplanation(String(k.q.explanation ?? ''));
+        if (toned.changed) bumpGenDiag('explanationToneFixed');
+        if (toned.unresolved.length > 0) {
+          bumpGenDiag('explanationToneUnresolved');
+          warnings.push(
+            `해설 어미를 통일하지 못함(변환표에 없는 어미: ${toned.unresolved.slice(0, 3).join(', ')}) — 원문 유지.`,
+          );
+        }
+        const explanation = toned.text;
+        if (explanation.length > EXPLANATION_SOFT_LIMIT_CHARS) {
+          bumpGenDiag('explanationTooLong');
+          warnings.push(
+            `해설이 ${explanation.length}자로 상한(${EXPLANATION_TARGET_CHARS}자)을 넘음 — 자르지 않고 기록만 함.`,
+          );
+        }
+        const coverage = countDistractorsMentioned({
+          explanation,
+          choices: k.choices,
+          answerIndex: k.answerIndex,
+        });
+        if (coverage.mentioned < MIN_DISTRACTORS_MENTIONED) {
+          bumpGenDiag('explanationThinDistractors');
+          warnings.push(
+            `해설이 오답 ${coverage.total}개 중 ${coverage.mentioned}개만 다룸(누락 ${coverage.missing.join('·')}번).`,
+          );
+        }
         return {
           user_id: input.userId,
           upload_id: uploadRow.id,
@@ -3368,7 +3598,7 @@ export async function generatePrivateQuestionsFromUpload(
           stem,
           choices: k.choices,
           answer_index: k.answerIndex,
-          explanation: k.q.explanation,
+          explanation,
           concepts: k.q.concepts ?? [],
           difficulty: k.q.difficulty,
           generation_slot: slots[questionIndex],
@@ -4075,6 +4305,7 @@ export async function generatePrivateQuestionsFromUpload(
       batchFailureReasons,
       leakageDiscarded: Number(diag.generation.leakageDiscarded ?? 0),
       verifyRejected: Number(diag.generation.verifyRejected ?? 0),
+      blindDiscarded: Number(diag.generation.blindDiscarded ?? 0),
     });
     diag.generation.notices = notices;
 

@@ -38,9 +38,27 @@ const arg = (n) => {
   const i = argv.indexOf(`--${n}`);
   return i >= 0 ? argv[i + 1] : undefined;
 };
-const LIMIT = Number(arg('limit') ?? 20);
+const LIMIT = Number(arg('limit') ?? 200);
 /** 실행별 오차 중앙값의 중앙값 허용 상한(초). */
 const MEDIAN_ERROR_BUDGET_SEC = 10;
+/**
+ * 초기 안내 대비 실제 소요의 p90 배율 허용 상한.
+ *
+ * 오차 중앙값만 보면 **꼬리를 못 본다.** 2026-08-19 재보정 전 상태가 정확히 그랬다:
+ * 오차 중앙값은 5.5초로 멀쩡한데 스캔본 한 건이 실제/예측 10.7배였다(96초를 9초로 예고).
+ * 남은 시간이 0 에 닿은 채로 한참 서 있는 화면은 "계산 중"보다 나쁘다.
+ */
+const RATIO_P90_BUDGET = 1.6;
+/**
+ * 며칠 치를 볼 것인가.
+ *
+ * 왜 전량이 아닌가 — 옛 실행에는 **입력으로 설명되지 않는 1회성 정체**가 섞여 있다.
+ * 실측: 2026-07-26 이미지형 세 건이 260초인데, 같은 25쪽 자료를 같은 조건으로 돌린 이웃
+ * 실행은 42~70초다. 갈린 것은 `visionMs` 하나(207초 vs 17~21초)로, 쪽 수·문항 수·유형
+ * 어느 것으로도 예측되지 않는 공급자 측 지연이다. 그런 표본까지 맞추면 정상 실행에까지
+ * 6배 긴 시간을 예고하게 된다. 창을 넓혀 보려면 `--days` 로 명시한다.
+ */
+const DAYS = Number(arg('days') ?? 14);
 
 // ── GenerationLoadingGame.tsx 와 동일해야 하는 값들 ───────────────────
 const STAGE_RANGES = {
@@ -54,12 +72,57 @@ const STAGE_RANGES = {
   completed: [100, 100],
 };
 const WAVE_QUESTIONS = 16;
-const PREP_SEC = { image: 10, text: 3 };
-const WAVE_SEC = { image: 30, text: 6 };
+// 재보정 계수(P10, 2026-08-19). GenerationLoadingGame.tsx 와 **같은 값**이어야 한다.
+const TEXT_BASE_SEC = 5;
+const TEXT_WAVE_SEC = 9;
+const IMAGE_PAGE_SEC = 0.8;
+const IMAGE_WAVE_SEC = 30;
+const IMAGE_PAGE_CAP = 100;
+const SCAN_BASE_SEC = 40;
+const SCAN_PAGE_SEC = 2;
+const SCAN_PAGE_CAP = 120;
+const DEFAULT_PAGE_COUNT = 25;
+const MIN_PREDICT_SEC = 8;
 const SCAN_PATH_MIN_REMAIN_SEC = 40;
-const predictPerFileSec = (n, img) =>
-  PREP_SEC[img ? 'image' : 'text'] +
-  WAVE_SEC[img ? 'image' : 'text'] * Math.max(1, Math.ceil(Math.max(1, n) / WAVE_QUESTIONS));
+const wavesFor = (n) => Math.max(1, Math.ceil(Math.max(1, n) / WAVE_QUESTIONS));
+const predictPerFileSec = (n, img, pageCount = 0, isScan = false) => {
+  const waves = wavesFor(n);
+  const pages = pageCount > 0 ? pageCount : DEFAULT_PAGE_COUNT;
+  const sec = isScan
+    ? SCAN_BASE_SEC + SCAN_PAGE_SEC * Math.min(pages, SCAN_PAGE_CAP) + TEXT_WAVE_SEC * waves
+    : img
+      ? IMAGE_PAGE_SEC * Math.min(pages, IMAGE_PAGE_CAP) + IMAGE_WAVE_SEC * waves
+      : TEXT_BASE_SEC + TEXT_WAVE_SEC * waves;
+  return Math.max(MIN_PREDICT_SEC, sec);
+};
+
+// ── 상수 표류 감시
+//
+// 이 재생은 화면(GenerationLoadingGame.tsx)과 **같은 수식**을 돌 때만 의미가 있다.
+// 종전에는 "같은 값을 유지해야 한다"는 주석만 있었다 — 주석은 한쪽만 고치는 것을 막지 못한다.
+// 실제로 한쪽만 바꾸면 이 스크립트는 화면과 다른 것을 재면서 "이상 없음"을 찍는다.
+{
+  const src = readFileSync(new URL('../components/notes/GenerationLoadingGame.tsx', import.meta.url), 'utf8');
+  const pairs = [
+    ['TEXT_BASE_SEC', TEXT_BASE_SEC], ['TEXT_WAVE_SEC', TEXT_WAVE_SEC],
+    ['IMAGE_PAGE_SEC', IMAGE_PAGE_SEC], ['IMAGE_WAVE_SEC', IMAGE_WAVE_SEC],
+    ['IMAGE_PAGE_CAP', IMAGE_PAGE_CAP], ['SCAN_BASE_SEC', SCAN_BASE_SEC],
+    ['SCAN_PAGE_SEC', SCAN_PAGE_SEC], ['SCAN_PAGE_CAP', SCAN_PAGE_CAP],
+    ['DEFAULT_PAGE_COUNT', DEFAULT_PAGE_COUNT], ['MIN_PREDICT_SEC', MIN_PREDICT_SEC],
+    ['WAVE_QUESTIONS', WAVE_QUESTIONS],
+  ];
+  const drift = [];
+  for (const [name, here] of pairs) {
+    const m = src.match(new RegExp(`const ${name} = ([0-9.]+);`));
+    if (!m) drift.push(`${name}: 화면에서 찾지 못함`);
+    else if (Number(m[1]) !== here) drift.push(`${name}: 화면 ${m[1]} vs 재생 ${here}`);
+  }
+  if (drift.length > 0) {
+    console.error('소요 모델 상수가 화면과 어긋났다 — 이 재생은 다른 것을 재고 있다.');
+    for (const d of drift) console.error(`  - ${d}`);
+    process.exit(1);
+  }
+}
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -69,10 +132,12 @@ if (!url || !key) {
 }
 const db = createClient(url, key, { auth: { persistSession: false } });
 
+const since = new Date(Date.now() - DAYS * 86_400_000).toISOString();
 const { data: rows, error } = await db
   .from('ai_cost_log')
   .select('created_at, metadata')
   .eq('endpoint', 'private.diagnostics')
+  .gte('created_at', since)
   .order('created_at', { ascending: false })
   .limit(LIMIT);
 if (error) {
@@ -121,14 +186,25 @@ function buildTimeline(m) {
     else if (stage === 'ocr') frac = ocrMs > 0 ? Math.min(1, (ms - extractDone) / ocrMs) : 0;
     samples.push({ ms, stage, pct: lo + (hi - lo) * frac });
   }
-  return { samples, totalSec: total / 1000, desired, withImages: !!m.wantsImages };
+  // 쪽 수·스캔 판정은 화면이 `/api/uploads/analyze` 에서 받는 것과 같은 축이다
+  // (진단에는 pdfPages·textChars 로 남아 있다).
+  const pageCount = Number(m.extract?.pdfPages ?? 0);
+  const rawChars = Number(m.extract?.textChars ?? 0);
+  return {
+    samples,
+    totalSec: total / 1000,
+    desired,
+    withImages: !!m.wantsImages,
+    pageCount,
+    isScan: pageCount > 0 && rawChars < 1500,
+  };
 }
 
 /** GenerationLoadingGame 의 남은 시간 계산과 같은 절차. 숫자 또는 문구 상태를 돌려준다. */
-function replayEta({ samples, desired, withImages }) {
-  const waves = Math.max(1, Math.ceil(desired / WAVE_QUESTIONS));
-  const waveSec = (withImages ? WAVE_SEC.image : WAVE_SEC.text) * waves;
-  let total = predictPerFileSec(desired, withImages);
+function replayEta({ samples, desired, withImages, pageCount, isScan }) {
+  const waves = wavesFor(desired);
+  const waveSec = (withImages ? IMAGE_WAVE_SEC : TEXT_WAVE_SEC) * waves;
+  let total = predictPerFileSec(desired, withImages, pageCount, isScan);
   let shown = { secs: total, at: 0 };
   let moved = { pct: samples[0]?.pct ?? 0, at: 0 };
   let genEntered = 0;
@@ -175,6 +251,8 @@ const median = (a) => (a.length ? [...a].sort((x, y) => x - y)[Math.floor(a.leng
 
 let increases = 0;
 const perRunMedian = [];
+/** 초기 안내(숫자였을 때) 대비 실제 소요의 배율 — 꼬리를 보는 지표. */
+const startRatios = [];
 console.log(
   `${'실행'.padEnd(12)}${'실제'.padStart(8)}${'초기안내'.padStart(11)}${'오차중앙'.padStart(10)}${'역증가'.padStart(8)}`,
 );
@@ -199,7 +277,9 @@ for (const r of rows) {
   });
   const med = median(errs);
   if (Number.isFinite(med)) perRunMedian.push(med);
-  const first = typeof vals[0] === 'number' ? `${vals[0].toFixed(0)}초` : String(vals[0]);
+  const firstNum = typeof vals[0] === 'number' ? vals[0] : null;
+  if (firstNum && firstNum > 0) startRatios.push({ ratio: tl.totalSec / firstNum, at: r.created_at });
+  const first = firstNum != null ? `${firstNum.toFixed(0)}초` : String(vals[0]);
   console.log(
     r.created_at.slice(5, 16).padEnd(12) +
     `${tl.totalSec.toFixed(1)}초`.padStart(8) +
@@ -210,10 +290,20 @@ for (const r of rows) {
 }
 
 const overall = median(perRunMedian);
+const ratios = startRatios.map((r) => r.ratio).sort((a, b) => a - b);
+const ratioP90 = ratios.length ? ratios[Math.floor(0.9 * (ratios.length - 1))] : 0;
+const worst = startRatios.length
+  ? startRatios.reduce((a, b) => (b.ratio > a.ratio ? b : a))
+  : null;
 console.log('\n─────');
+console.log(`대상 기간                   : 최근 ${DAYS}일`);
 console.log(`실행 수                     : ${perRunMedian.length}`);
 console.log(`남은 시간 역증가 합계       : ${increases}회   (허용 0회)`);
 console.log(`실행별 오차 중앙값의 중앙값 : ${overall.toFixed(1)}초   (허용 ${MEDIAN_ERROR_BUDGET_SEC}초)`);
+console.log(
+  `초기 안내 대비 실제 p90     : ${ratioP90.toFixed(2)}배   (허용 ${RATIO_P90_BUDGET}배)` +
+    (worst ? `  · 최악 ${worst.ratio.toFixed(2)}배 (${worst.at.slice(5, 16)})` : ''),
+);
 
 const problems = [];
 if (increases > 0) {
@@ -221,6 +311,12 @@ if (increases > 0) {
 }
 if (!(overall <= MEDIAN_ERROR_BUDGET_SEC)) {
   problems.push(`오차 중앙값 ${overall.toFixed(1)}초가 허용치를 넘었다 — 소요 모델 상수를 재보정할 때다.`);
+}
+if (ratioP90 > RATIO_P90_BUDGET) {
+  problems.push(
+    `초기 안내 대비 실제가 p90 ${ratioP90.toFixed(2)}배다 — 중앙값이 멀쩡해도 꼬리에서 ` +
+      `남은 시간이 0 에 닿는다. 어떤 입력이 예고보다 오래 걸리는지 진단으로 확인할 것.`,
+  );
 }
 if (problems.length > 0) {
   console.log('\n이상 신호');

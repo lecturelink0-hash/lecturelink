@@ -127,14 +127,63 @@ function formatEta(secs: number): string {
 // 생성 배치는 최대 8개 동시 × 2문항 = 16문항까지 사실상 병렬이라 총 소요가 문항 수에
 // 비례하지 않는다(위 10문항 7.7초 vs 4문항 9.6초). 그래서 "묶음(wave)" 단위로 센다.
 const WAVE_QUESTIONS = 16; // GEN_BATCH_MAX_QUESTIONS(2) × GEN_CONCURRENCY(8)
-const PREP_SEC = { image: 10, text: 3 };
-const WAVE_SEC = { image: 30, text: 6 };
 
-/** 파일 1개에 대한 총 소요 예측(초). */
-function predictPerFileSec(desiredCount: number, withImages: boolean): number {
-  const k = withImages ? 'image' : 'text';
-  const waves = Math.max(1, Math.ceil(Math.max(1, desiredCount) / WAVE_QUESTIONS));
-  return PREP_SEC[k] + WAVE_SEC[k] * waves;
+// ── 재보정 (2026-08-19, P10) — 최근 14일 진단 44건으로 `npm run check:eta` 지표에 직접 적합
+//
+// 무엇이 달라졌나
+//  ① **쪽 수를 쓴다.** 이미지형 소요와 쪽 수의 상관은 r = 0.50, 문항 수와는 r = 0.08 이다
+//     (문항 수가 소요를 정하지 않는다는 wave 모델의 전제가 재확인됐다). 종전의 고정
+//     기저 10초를 쪽 수 비례항으로 바꿨다 — 정제·크롭이 쪽 수를 따라 늘기 때문이다.
+//  ② **스캔본을 따로 센다.** 본문 텍스트가 없는 스캔 PDF 는 페이지 전체 OCR 이 유일한
+//     내용원이라 규모가 다르다(실측 96.4초 vs 같은 요청 텍스트본 11초). 종전 모델은
+//     이 실행을 9초로 예고했다 — 남은 시간이 0 에 닿은 채 한참 서 있었다는 뜻이다.
+//     이 실행의 오차 중앙값이 25초 → 4초가 됐다.
+//  실측 전/후: 오차 중앙값 6.0 → 3.4초, 초기 안내 대비 실제 p90 0.93배(과소예고 없음).
+//
+// ⚠ 계수는 **최근 실행에만** 맞춘다. 7월 표본에는 260초짜리 실행이 셋 있는데, 그 셋은
+//   같은 25쪽 자료를 같은 조건으로 돌린 이웃 실행이 17~21초인데도 `visionMs` 만 207초였다
+//   — 입력으로 설명되지 않는 **공급자 측 정체**다(코드 경로가 바뀐 것이 아니다. vision 은
+//   지금도 쓴다). 그런 1회성 정체까지 맞추면 모든 사용자에게 6배 긴 시간을 예고하게 된다.
+//   파이프라인을 크게 바꾸면 계수를 다시 맞춰야 하고, `check:eta` 가 그 시점을 알려 준다.
+const TEXT_BASE_SEC = 5;
+const TEXT_WAVE_SEC = 9;
+/** 이미지형은 고정 기저 없이 쪽 수에 비례한다. */
+const IMAGE_PAGE_SEC = 0.8;
+const IMAGE_WAVE_SEC = 30;
+const IMAGE_PAGE_CAP = 100;
+const SCAN_BASE_SEC = 40;
+const SCAN_PAGE_SEC = 2;
+const SCAN_PAGE_CAP = 120;
+/** 쪽 수를 모를 때(PPTX·분석 실패) 쓰는 값 — 실측 중앙값. */
+const DEFAULT_PAGE_COUNT = 25;
+/** 어떤 조합에서도 이보다 짧게 예고하지 않는다(0쪽 자료의 하한). */
+const MIN_PREDICT_SEC = 8;
+
+/** 남은 시간 예측에 쓰는 wave 수. */
+function wavesFor(desiredCount: number): number {
+  return Math.max(1, Math.ceil(Math.max(1, desiredCount) / WAVE_QUESTIONS));
+}
+
+/**
+ * 파일 1개에 대한 총 소요 예측(초).
+ *
+ * `pageCount` 를 모르면(0 이하) 실측 중앙값을 쓴다 — 0 으로 두면 이미지형 예측이
+ * wave 항만 남아 크게 모자란다(남은 시간이 0 에 닿는 것이 가장 나쁜 실패다).
+ */
+function predictPerFileSec(
+  desiredCount: number,
+  withImages: boolean,
+  pageCount = 0,
+  isScan = false,
+): number {
+  const waves = wavesFor(desiredCount);
+  const pages = pageCount > 0 ? pageCount : DEFAULT_PAGE_COUNT;
+  const sec = isScan
+    ? SCAN_BASE_SEC + SCAN_PAGE_SEC * Math.min(pages, SCAN_PAGE_CAP) + TEXT_WAVE_SEC * waves
+    : withImages
+      ? IMAGE_PAGE_SEC * Math.min(pages, IMAGE_PAGE_CAP) + IMAGE_WAVE_SEC * waves
+      : TEXT_BASE_SEC + TEXT_WAVE_SEC * waves;
+  return Math.max(MIN_PREDICT_SEC, sec);
 }
 
 /**
@@ -221,6 +270,8 @@ export default function GenerationLoadingGame({
   desiredCount = 10,
   withImages = true,
   filesTotal = 1,
+  pageCount = 0,
+  isScan = false,
 }: {
   progress: number;
   fileName?: string;
@@ -232,6 +283,16 @@ export default function GenerationLoadingGame({
   withImages?: boolean;
   /** 이번 세션에서 처리할 파일 수. */
   filesTotal?: number;
+  /**
+   * 자료의 쪽 수(`/api/uploads/analyze` 의 `page_count`). 0 이면 모른다는 뜻이고
+   * 실측 중앙값으로 대체한다.
+   */
+  pageCount?: number;
+  /**
+   * 본문 텍스트가 없는 스캔본인지(`is_scan`). 페이지 전체 OCR 경로라 규모가 다르다 —
+   * 이걸 모르고 예측하면 실제가 예측의 10배가 된다(실측 96.4초 vs 예측 9초).
+   */
+  isScan?: boolean;
 }) {
   const [gender, setGender] = useState<Gender>('male');
   const [muted, setMuted] = useState(false);
@@ -276,7 +337,7 @@ export default function GenerationLoadingGame({
 
   useEffect(() => {
     const now = performance.now();
-    const perFile = predictPerFileSec(desiredCount, withImages);
+    const perFile = predictPerFileSec(desiredCount, withImages, pageCount, isScan);
     const total = perFile * Math.max(1, filesTotal);
     startRef.current = now;
     totalRef.current = total;
@@ -291,10 +352,10 @@ export default function GenerationLoadingGame({
     if (Math.round(progress) !== Math.round(movedRef.current.pct)) {
       movedRef.current = { pct: progress, at: now };
     }
-    const waves = Math.max(1, Math.ceil(Math.max(1, desiredCount) / WAVE_QUESTIONS));
-    const waveSec = (withImages ? WAVE_SEC.image : WAVE_SEC.text) * waves;
+    const waves = wavesFor(desiredCount);
+    const waveSec = (withImages ? IMAGE_WAVE_SEC : TEXT_WAVE_SEC) * waves;
     const restFiles = Math.max(0, Math.max(1, filesTotal) - 1);
-    const restSec = predictPerFileSec(desiredCount, withImages) * restFiles;
+    const restSec = predictPerFileSec(desiredCount, withImages, pageCount, isScan) * restFiles;
 
     // 스캔 자료 경로 진입 — 본문 텍스트가 없어 페이지 전체 OCR 로 떨어진 실행이다.
     // 이 경로에 들어왔다는 사실만으로 가벼운 예측은 무효가 된다(실측 96.4초 사례).
@@ -395,7 +456,7 @@ export default function GenerationLoadingGame({
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [progress, stage, desiredCount, withImages, filesTotal]);
+  }, [progress, stage, desiredCount, withImages, filesTotal, pageCount, isScan]);
 
   // 여러 파일을 처리하는 세션이면 몇 번째인지도 알려 준다.
   const stageText = (() => {

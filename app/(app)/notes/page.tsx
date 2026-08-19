@@ -123,6 +123,10 @@ interface AnalyzeRes {
   material_kind?: string;
   /** 판정 확신도 0~1. 낮으면 확인을 받는다. */
   confidence?: number;
+  /** 자료 쪽 수(PPTX 는 슬라이드 수). 로딩 화면의 남은 시간이 쓴다(P10). */
+  page_count?: number;
+  /** 본문 텍스트가 없는 스캔본인지. 페이지 전체 OCR 경로라 소요가 다르다(P10). */
+  is_scan?: boolean;
 }
 
 interface SubjectRow {
@@ -761,6 +765,10 @@ export default function NotesPage() {
         desiredCount={count}
         withImages={questionTypes.includes('이미지형')}
         filesTotal={filesTotal}
+        // 남은 시간 예측의 실제 변수(P10). 분석이 실패했으면 0 이 가고, 그때는 화면이
+        // 실측 중앙값을 쓴다 — 0 을 쪽 수로 그대로 믿으면 예측이 크게 모자란다.
+        pageCount={recommendation?.page_count ?? 0}
+        isScan={recommendation?.is_scan ?? false}
       />
     );
   }
