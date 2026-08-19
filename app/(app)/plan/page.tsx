@@ -156,6 +156,7 @@ export default function PlanPage() {
   return (
     <div className="ll-plan-page content">
       <section className="page-head">
+        <span className="eyebrow">요금 안내</span>
         <h1>
           <span className="headline-accent">학습 방식에 맞는</span>
           <br />
@@ -168,7 +169,7 @@ export default function PlanPage() {
         <div className={clsx('plan-selection', showFreeTrial && 'has-trial')}>
           {showFreeTrial && (
             <div className="notice">
-              <strong>무료로 먼저 체험해보세요</strong>
+              <strong>가입 후 <span className="hl">첫 달, 무료</span>로 먼저 체험해보세요</strong>
               <span>문제 생성 30문항 + CPX 1회를 무료로 이용할 수 있어요.</span>
             </div>
           )}
@@ -264,7 +265,7 @@ export default function PlanPage() {
                         aria-current="true"
                         className="plan-current-button"
                       >
-                        구독 관리
+                        현재 구독 중인 플랜
                       </Link>
                     ) : (
                       <Button
@@ -288,13 +289,12 @@ export default function PlanPage() {
 
         <section className="cpx-pass" aria-labelledby="cpx-pass-title">
           <div className="cpx-pass-copy">
+            <span className="pass-chip">추가 이용권</span>
             <div className="cpx-pass-heading">
               <Ticket className="w-4 h-4" aria-hidden="true" />
-              <h2 id="cpx-pass-title">CPX 60분 추가 이용권</h2>
+              <h2 id="cpx-pass-title">CPX 60분</h2>
             </div>
             <p className="cpx-pass-price">
-              <strong>CPX 60분</strong>
-              <span aria-hidden="true">·</span>
               <strong>₩4,900</strong>
             </p>
             <p id="cpx-pass-description">구독 없이 필요한 만큼 이용하거나, 기존 플랜에 추가할 수 있어요.</p>
@@ -326,7 +326,7 @@ export default function PlanPage() {
               <span className="ll-eyebrow">이번 달 사용량</span>
             </div>
             <h2>
-              현재 {PLAN_NAMES[quota.plan_tier]} 플랜
+              현재 <span className="usage-plan-name">{PLAN_NAMES[quota.plan_tier]}</span> 플랜
             </h2><p className="current-plan">현재 계정에서 이번 달 사용할 수 있는 학습 리소스입니다.</p>
             <div className="usage-grid">
               {/* '문항'만 두면 보유 문항 수로 읽히는데 이 칸이 세는 건 이번 달 생성량이다. */}
