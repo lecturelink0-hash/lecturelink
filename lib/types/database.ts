@@ -242,6 +242,12 @@ export type UserAttemptRow = {
   selected_index: number;
   is_correct: boolean;
   time_spent_seconds: number | null;
+  /** 풀이 시점 확신도 1(낮음)~3(높음). null = 미응답 (00044 · 가이드 §8.1). */
+  confidence: number | null;
+  /** 해설을 실제로 읽었는지 — 화면에 일정 시간 이상 보였는지로 판정 (00044). */
+  explanation_viewed: boolean;
+  /** 해설이 화면에 실제로 보인 누적 시간(ms) (00044). */
+  explanation_dwell_ms: number;
   created_at: string;
 }
 
@@ -411,6 +417,30 @@ export type AiCostLogRow = {
   metadata: Record<string, unknown> | null;
   /** 요청 단위 드릴다운 키 (00042). 배치·크론 호출은 null. */
   request_id: string | null;
+  created_at: string;
+}
+
+/** 학생이 올린 문항 오류 신고 (00044 · 가이드 §8.1 · 분담표 A14). */
+export type QuestionReportRow = {
+  id: string;
+  user_id: string;
+  question_id: string | null;
+  private_question_id: string | null;
+  attempt_id: string | null;
+  reason:
+    | 'wrong_answer'
+    | 'multiple_answers'
+    | 'stem_error'
+    | 'choice_error'
+    | 'explanation_error'
+    | 'image_problem'
+    | 'out_of_scope'
+    | 'other';
+  note: string | null;
+  status: 'open' | 'reviewing' | 'resolved' | 'rejected';
+  resolved_by: string | null;
+  resolved_at: string | null;
+  resolution_note: string | null;
   created_at: string;
 }
 
@@ -755,6 +785,16 @@ export interface Database {
         Insert: Insert<AiCostLogRow>;
         Update: Update<AiCostLogRow>;
         Relationships: [FK<'ai_cost_log', 'user_id', 'users'>];
+      };
+      question_reports: {
+        Row: QuestionReportRow;
+        Insert: Insert<QuestionReportRow>;
+        Update: Update<QuestionReportRow>;
+        Relationships: [
+          FK<'question_reports', 'user_id', 'users'>,
+          FK<'question_reports', 'question_id', 'questions'>,
+          FK<'question_reports', 'private_question_id', 'private_questions'>,
+        ];
       };
       material_chunks: {
         Row: MaterialChunkRow;

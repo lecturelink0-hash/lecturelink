@@ -11,6 +11,7 @@ import {
   analyzeItems,
   computeKr20,
   summarizeItemStats,
+  summarizeConfidence,
   MIN_SAMPLE_PER_ITEM,
 } from '../lib/stats/item-analysis.ts';
 import {
@@ -154,6 +155,36 @@ console.log('\n[A13] 요약 — 불안정 문항이 평균을 흔들지 않는�
   check('불안정 문항 수', s.unstable === 1, String(s.unstable));
   check('평균 정답률은 안정 문항만 (0.5)', near(s.meanCorrectRate, 0.5), String(s.meanCorrectRate));
   check('안정 문항 수', s.stable === 6, String(s.stable));
+}
+
+console.log('\n[A14] 확신도 보정 — 과신·과소신');
+{
+  // '확실함'(3) 10개 중 6개 정답 → 과신율 0.4
+  // '잘 모르겠음'(1) 10개 중 3개 정답 → 과소신율 0.3
+  const attempts = [];
+  for (let i = 0; i < 10; i += 1) attempts.push({ ...mk(`u${i}`, 'Q', 0, i < 6), confidence: 3 });
+  for (let i = 0; i < 10; i += 1) attempts.push({ ...mk(`v${i}`, 'Q', 0, i < 3), confidence: 1 });
+  // 미응답 5개 — 분모에서 빠져야 한다
+  for (let i = 0; i < 5; i += 1) attempts.push({ ...mk(`w${i}`, 'Q', 0, true), confidence: null });
+
+  const c = summarizeConfidence(attempts);
+  check('미응답은 분모에서 제외', c.answered === 20 && c.total === 25, `${c.answered}/${c.total}`);
+  check('응답률 0.8', c.responseRate === 0.8, String(c.responseRate));
+  check("'확실함' 정답률 0.6", c.byLevel.find((b) => b.level === 3).correctRate === 0.6);
+  check("'잘 모르겠음' 정답률 0.3", c.byLevel.find((b) => b.level === 1).correctRate === 0.3);
+  check('보정 격차 0.3', near(c.discriminationGap, 0.3), String(c.discriminationGap));
+  check('과신율 0.4', near(c.overconfidentRate, 0.4), String(c.overconfidentRate));
+  check('과소신율 0.3', near(c.underconfidentRate, 0.3), String(c.underconfidentRate));
+  check('관측되지 않은 수준은 빼고 낸다', c.byLevel.length === 2, JSON.stringify(c.byLevel.map((b) => b.level)));
+
+  // 확신도가 하나도 없으면 지표를 만들지 않는다 — 0 이 아니라 null
+  const none = summarizeConfidence([mk('a', 'Q', 0, true)]);
+  check('확신도 미수집 → null', none.discriminationGap === null && none.overconfidentRate === null);
+  check('확신도 미수집 → 응답률 0', none.responseRate === 0, String(none.responseRate));
+
+  // 범위 밖 값은 응답으로 세지 않는다
+  const bad = summarizeConfidence([{ ...mk('a', 'Q', 0, true), confidence: 9 }]);
+  check('범위 밖 확신도 무시', bad.answered === 0, String(bad.answered));
 }
 
 // ── 층화 추출 ────────────────────────────────────────────────────────────────

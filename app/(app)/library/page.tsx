@@ -7,6 +7,12 @@ import { api, ApiError } from '@/lib/api/client';
 import { findNextUnansweredQuestionId } from '@/lib/library-progress';
 import { generatedSetLabel, isGeneratedSet } from '@/lib/generated-sets';
 import { Card } from '@/components/ui/Card';
+import {
+  ConfidenceSelector,
+  QuestionReportButton,
+  useExplanationDwell,
+  type Confidence,
+} from '@/components/study/LearningSignals';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -1372,7 +1378,20 @@ function PrivateExamSession({
     );
   });
   const [selections, setSelections] = useState<Record<string, number>>({});
+  // 학습 신호 (A14 · 가이드 §8.1) — 문항별로 남겨 앞뒤 이동에도 유지된다.
+  const [confidences, setConfidences] = useState<Record<string, Confidence | null>>({});
+  const [attemptIds, setAttemptIds] = useState<Record<string, string | null>>({});
   const [index, setIndex] = useState(0);
+  // 해설 노출 시간 측정 (A14). 해설이 항상 펼쳐져 있어 '열었다'가 신호가 되지 않으므로
+  // 화면에 실제로 보인 시간을 잰다.
+  //
+  // **조기 반환보다 위에 있어야 한다** — 아래에 두면 questions.length === 0 분기에서
+  // 훅 호출 순서가 달라져 React 가 상태를 잘못 짚는다(Rules of Hooks). 그래서 current 가
+  // 아직 없는 시점이라도 여기서 부르고, 문항 id 는 방어적으로 꺼낸다.
+  const currentQuestionId = questions[index]?.id ?? null;
+  const { ref: explanationRef } = useExplanationDwell(
+    currentQuestionId ? attemptIds[currentQuestionId] ?? null : null,
+  );
   const [showQuestionGrid, setShowQuestionGrid] = useState(false);
   const [finished, setFinished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -1471,6 +1490,9 @@ function PrivateExamSession({
     setSelections((previous) => ({ ...previous, [current.id]: choiceIndex }));
   }
 
+  // 확신도는 문항별로 남긴다 — 앞뒤로 이동해도 고른 값이 유지돼야 한다 (A14).
+  const confidence = confidences[current.id] ?? null;
+
   async function submitCurrent() {
     if (selected === null || submitted || submitting) return;
     interactedRef.current = true;
@@ -1478,12 +1500,16 @@ function PrivateExamSession({
     setSubmitError(null);
     const correct = selected === current.answer_index;
     try {
-      await api.post('/api/attempts', {
+      const res = await api.post<{ attempt_id?: string }>('/api/attempts', {
         question_id: current.id,
         selected_index: selected,
         time_spent_seconds: Math.min(3600, Math.max(0, Math.round((Date.now() - shownAtRef.current) / 1000))),
         track: 'lecture_note',
+        // 확신도는 선택 응답이라 고르지 않았으면 아예 뺀다 (A14 · 가이드 §8.1).
+        ...(confidence ? { confidence } : {}),
       });
+      // 해설 체류 측정과 오류 신고가 이 id 로 붙는다.
+      setAttemptIds((previous) => ({ ...previous, [current.id]: res?.attempt_id ?? null }));
       setAnswers((previous) => ({ ...previous, [current.id]: { selected, correct } }));
       onAnswered?.();
     } catch {
@@ -1576,7 +1602,25 @@ function PrivateExamSession({
             </button>;
           })}
         </div>
-        {submitted && current.explanation && <div className="mt-5 ll-tint rounded-2xl p-5 border border-[var(--color-border)]"><span className="ll-eyebrow mb-3">해설</span><div className="text-sm text-sage-800 leading-relaxed whitespace-pre-line">{current.explanation}</div></div>}
+        {/* 확신도 — 채점 전에만 (A14). 정답을 본 뒤 물으면 사후과잉확신이 섞인다. */}
+        {!submitted && (
+          <ConfidenceSelector
+            value={confidence}
+            onChange={(next) => setConfidences((previous) => ({ ...previous, [current.id]: next }))}
+            disabled={submitting}
+          />
+        )}
+        {submitted && current.explanation && (
+          <div ref={explanationRef} className="mt-5 ll-tint rounded-2xl p-5 border border-[var(--color-border)]">
+            <span className="ll-eyebrow mb-3">해설</span>
+            <div className="text-sm text-sage-800 leading-relaxed whitespace-pre-line">{current.explanation}</div>
+            <QuestionReportButton
+              questionId={current.id}
+              isPrivate
+              attemptId={attemptIds[current.id] ?? null}
+            />
+          </div>
+        )}
       </Card>
 
       {submitError && <p role="alert" className="mb-3 text-right text-sm text-[var(--color-warn)]">{submitError}</p>}
