@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import CpxPagedList from './CpxPagedList';
 import CpxTimeAnalysis from './CpxTimeAnalysis';
 import CpxTranscriptView from './CpxTranscriptView';
+import ScoreGauge, { sectionMax } from './ScoreGauge';
 import { apiErrorMessage } from './apiError';
 
 function request(path, init) {
@@ -34,38 +35,6 @@ function gradeVariant(grade) {
   if (grade === '우수') return 'default';
   if (grade === '미흡') return 'warn';
   return 'beta';
-}
-
-// 게이지 채움 색 — 등급별. 우수=초록, 미흡=경고, 그 외(보통)=차분한 세이지.
-function gaugeColor(grade) {
-  if (grade === '우수') return 'var(--color-primary)';
-  if (grade === '미흡') return 'var(--color-warn)';
-  return '#5a8b70';
-}
-
-// 영역 만점 = weightPercent(총점 100 기준). 없으면 점수를 만점으로 간주(100%).
-function sectionMax(s) {
-  return typeof s.weightPercent === 'number' ? s.weightPercent : (s.maxScore ?? s.score ?? 0);
-}
-
-// 가로 점수 게이지 (라벨 + 내점수/만점 + 막대)
-function ScoreGauge({ section }) {
-  const max = sectionMax(section);
-  const pct = max > 0 ? Math.max(0, Math.min(100, (section.score / max) * 100)) : 0;
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-        <span className="font-semibold text-[var(--color-text)]">{section.name}</span>
-        <span className="tnum text-[var(--color-muted)]">
-          <b className="text-[var(--color-text)]">{section.score}</b> / {max}점
-          {section.gradeLabel ? <span className="ml-1">· {section.gradeLabel}</span> : null}
-        </span>
-      </div>
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--color-border)]">
-        <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, background: gaugeColor(section.gradeLabel) }} />
-      </div>
-    </div>
-  );
 }
 
 export default function CpxResultDetail({ sessionId }) {
