@@ -129,7 +129,7 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
   .sheet.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   th,tr.sec td,.callout,.step{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
-@media (max-width:820px){.sheet{width:auto;margin:0;padding:8mm;min-height:0}.two,.steps{grid-template-columns:1fr}}
+@media screen and (max-width:820px){.sheet{width:auto;margin:0;padding:8mm;min-height:0}.two,.steps{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -142,7 +142,7 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
   <p class="cover-sub">AI 표준화 환자와 혼자 하는 진료수행 연습 —<br>무엇을 만들었고, 무엇을 검수받고 싶은가</p>
   <div class="cover-meta">
     <b>제안</b><span>렉처링크 개발팀 · 전재현, 장유림 (계명대학교 의학과)</span>
-    <b>요청</b><span>CPX 시나리오·채점표 의학 검수, 정식 협약 논의 개시</span>
+    <b>요청</b><span>CPX 시나리오·채점표 의학 검수, 공동연구, 정식 협약 논의 개시</span>
     <b>일자</b><span>2026년 9월</span>
     <b>최신본</b><span>lecturelink.kro.kr (이 문서의 갱신본은 웹에서 확인하실 수 있습니다)</span>
   </div>
@@ -157,7 +157,7 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
     <span class="n">07</span><span>결과 화면과 피드백</span><span class="p">9</span>
     <span class="n">08</span><span>자체 검증 결과와 한계</span><span class="p">10</span>
     <span class="n">09</span><span>의학 검수 요청서</span><span class="p">11</span>
-    <span class="n">10</span><span>협약 제안</span><span class="p">12</span>
+    <span class="n">10</span><span>공동연구 제안</span><span class="p">12</span>
     <span class="n">A</span><span>부록 A · 주호소 __N_CC__개와 증례 __N_CASES__개 목록</span><span class="p">13</span>
     <span class="n">B</span><span>부록 B · 수면장애 채점표 전문</span><span class="p">15</span>
   </div>
@@ -179,7 +179,7 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
     <div class="step"><p class="k">2단계 · 약 4주</p><p class="t">증례 블라인드 검수</p><p class="d">층화 추출 표본 약 30건을 검수 화면에서. 소요 약 10시간.</p></div>
     <div class="step"><p class="k">3단계 · 약 6주</p><p class="t">학생 파일럿</p><p class="d">센터 실습 전 자율 연습, 결과 공동 분석.</p></div>
   </div>
-  <p class="body">검수 화면·표본 추출·수정 반영·검수 이력 보관은 저희가 준비합니다. 센터에서는 <b>판단</b>만 해 주시면 됩니다. 오늘 여쭙는 것은 한 가지 — <b>정식 협약 논의를 시작해 주시겠습니까.</b></p>
+  <p class="body">검수 화면·표본 추출·수정 반영·검수 이력 보관은 저희가 준비합니다. 센터에서는 <b>판단</b>만 해 주시면 됩니다. 검수가 끝나면 같은 자료로 채점 타당도와 학습 효과를 함께 연구하고 싶습니다(10절). 오늘 여쭙는 것은 한 가지 — <b>정식 협약 논의를 시작해 주시겠습니까.</b></p>
   <div class="ft"><span>LectureLink CPX 제안서</span><span>2</span></div>
 </section>
 
@@ -383,24 +383,47 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
 </section>
 
 <!-- 10 -->
-<section class="sheet">
-  <div class="hd"><span>10 · 협약 제안</span><span>LectureLink CPX</span></div>
-  <h2>정식 협약 논의를 제안드립니다</h2>
-  <p class="lead">협약서 초안이 아니라, 논의의 범위를 제안하는 쪽입니다. 아래 항목은 모두 협의 대상입니다.</p>
-  <div class="kv">
-    <b>범위</b><span>CPX 콘텐츠 의학 검수(09절) · 학생 파일럿 · 검수 결과의 공동 발표</span>
-    <b>역할</b><span>센터: 의학적 판단과 검수 명의. 렉처링크: 도구·표본·반영·운영·비용.</span>
-    <b>데이터</b><span>학생 연습 기록은 협약 범위 안에서만 사용하고 개인 식별 정보는 제외합니다. 센터 채점표 원본은 대조 목적으로만 보관하고 콘텐츠에 옮겨 쓰지 않습니다.</span>
-    <b>표기</b><span>검수 완료 콘텐츠에 센터 검수 표기. 검수 전 콘텐츠는 "검수 전"으로 구분 표시.</span>
-    <b>저작권</b><span>증례·채점표의 저작권은 렉처링크에 있고, 검수 의견의 반영 결과는 센터와 공유합니다. 교재 인용 금지 원칙은 유지합니다.</span>
-    <b>일정</b><span>논의 개시 → 1단계 2주 → 2단계 4주 → 파일럿 6주</span>
-    <b>센터에 남는 것</b><span>학생 자율 연습 채널(SP·실습실 부하 분산), 실습 전 학생 수준 파악 자료, 검수된 교육 콘텐츠와 공동 성과</span>
+<section class="sheet dense">
+  <div class="hd"><span>10 · 공동연구 제안</span><span>LectureLink CPX</span></div>
+  <h2>함께 하고 싶은 연구</h2>
+  <p class="lead">검수는 콘텐츠를 고치는 일이고, 연구는 이 도구가 교육적으로 쓸모 있는지를 <b>센터의 기준으로</b> 확인하는 일입니다. 어떤 연구를 하고 싶은지만 적었습니다. 표본 규모·일정·설계·역할은 저희가 먼저 정하지 않고 협의로 정하겠습니다.</p>
+  <h3>선례와, 그 연구가 남긴 빈칸</h3>
+  <p class="body">연세대 CPX-MATE(npj Digital Medicine, 2026)는 AI 채점과 전문가 채점의 일치도 0.959를 보고했고, 교수·연구원·의대생 합동 연구팀으로 개발되었습니다. 그 연구가 답하지 않은 것 — ① 다른 구조의 시스템에서도 같은 일치도가 나오는가 ② AI와 교수가 갈리는 항목이 따로 있는가 ③ 학습 효과가 플랫폼 밖 준거로도 확인되는가 — 가 저희 연구 질문의 출발점입니다.</p>
+  <div class="two">
+    <div>
+      <h3>연구 ① 채점 타당도 — 얼마나, 어디서 갈리는가</h3>
+      <table class="left"><tr><th style="width:12mm">RQ</th><th>질문</th></tr>
+        <tr><td>1</td><td>AI 판정과 전문가 판정의 일치도는 어느 수준인가</td></tr>
+        <tr><td>2</td><td>불일치는 어떤 영역·항목에 몰리는가 (병력청취인가, 환자의사관계인가)</td></tr>
+        <tr><td>3</td><td>판정에 인용된 대화 근거가 실제 발화와 맞는가</td></tr>
+        <tr><td>4</td><td>같은 대화를 재채점해도 같은 결과가 재현되는가</td></tr>
+      </table>
+      <p class="body" style="margin-top:2mm">연구 ①의 결과가 곧 서비스의 임상 승인 데이터가 됩니다. 검수(09절)와 연구 ①은 같은 작업의 두 얼굴입니다.</p>
+    </div>
+    <div>
+      <h3>연구 ② 학습 효과 — 플랫폼 밖의 준거로</h3>
+      <table class="left"><tr><th style="width:12mm">RQ</th><th>질문</th></tr>
+        <tr><td>5</td><td>실습 평가 등 플랫폼 밖의 준거로 수행이 향상되는가</td></tr>
+        <tr><td>6</td><td>피드백 방식(즉시/지연, 상세/요약)에 따라 효과가 다른가</td></tr>
+        <tr><td>7</td><td>같은 증례 반복과 증례 변형 중 어느 쪽이 학습에 낫는가</td></tr>
+        <tr><td>8</td><td>센터 실습 과정에 통합할 수 있는가, 어떤 형태가 적절한가</td></tr>
+      </table>
+      <p class="body" style="margin-top:2mm">연구 ②는 연구 ①에서 채점을 믿을 수 있다고 확인된 뒤에만 의미가 있습니다.</p>
+    </div>
   </div>
-  <div class="callout"><b>회신</b> — 2026년 9월 __일까지 협약 논의 개시 여부를 알려 주시면, 다음 주에 1단계 대조표를 보내 드리겠습니다.</div>
-  <div class="kv" style="margin-top:4mm">
-    <b>연락</b><span>전재현 · 장유림 (계명대학교 의학과) · 연락처 · 이메일</span>
-    <b>최신본</b><span>lecturelink.kro.kr</span>
+  <h3>지키려는 두 원칙</h3>
+  <ul class="body">
+    <li><b>채점 타당도를 먼저, 학습 효과는 그다음.</b> 채점을 믿을 수 없으면 "점수가 올랐다"는 해석이 불가능합니다.</li>
+    <li><b>종속변수는 플랫폼 밖에 둡니다.</b> 플랫폼 점수를 학습 효과라 부르면 순환논증이 됩니다. 플랫폼 점수는 독립변수로만 씁니다.</li>
+  </ul>
+  <h3>저희가 먼저 약속하는 것 — 이해충돌</h3>
+  <p class="body">렉처링크는 이 시스템의 개발사이자 영리 사업체입니다. 그래서 착수 조건으로 먼저 약속합니다: <b>① 부정적 결과도 발표에 동의</b> · <b>② 데이터셋과 분석 코드 공개</b> · <b>③ 분석 계획의 사전 등록 검토.</b> 참여 학생의 참여는 자발적이며 성적과 무관하고, 민감 증례(자살·가정폭력·성폭력 등)는 안전 프로토콜이 정해지기 전까지 비공개로 둡니다.</p>
+  <h3>함께 정하고 싶은 것 — 저희가 먼저 제시하지 않는 항목</h3>
+  <div class="two">
+    <ul class="body"><li>최소 표본 규모와 수집 경로</li><li>채점 배점(38·16·16·30)의 타당도</li><li>영역 등급 기준의 대체안</li></ul>
+    <ul class="body"><li>민감 증례의 안전·윤리 프로토콜</li><li>실습 과정과의 연계 방식</li><li>일정·역할 분담·IRB 절차</li></ul>
   </div>
+  <div class="callout"><b>오늘 여쭙는 것</b> — 의학 검수(09절)와 이 공동연구를 위한 <b>정식 협약 논의를 시작해 주시겠습니까.</b> 회신: 2026년 9월 __일까지. 연락: 전재현 · 장유림 (계명대학교 의학과) · 연락처 · 이메일 · 최신본 lecturelink.kro.kr</div>
   <div class="ft"><span>LectureLink CPX 제안서</span><span>12</span></div>
 </section>
 

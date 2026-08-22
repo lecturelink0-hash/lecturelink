@@ -106,7 +106,7 @@ text(s, 7, 24, 75, 14, 'LectureLink CPX', 120, bold=True)
 text(s, 7, 38, 80, 16, 'AI 표준화 환자와 혼자 하는\n진료수행 연습', 62, bold=True, line=1.2)
 hline(s, 7, 57, 51)
 for i, (k, v) in enumerate([('제안', '렉처링크 개발팀 · 전재현, 장유림 (계명의대 의학과)'),
-                            ('요청', 'CPX 콘텐츠 의학 검수 · 정식 협약 논의'),
+                            ('요청', 'CPX 콘텐츠 의학 검수 · 공동연구 · 정식 협약 논의'),
                             ('자료', '상세 문서 별첨 (인쇄본) · lecturelink.kro.kr')]):
     text(s, 7, 60 + i * 6.2, 9, 5, k, 30, bold=True)
     text(s, 16, 60 + i * 6.2, 70, 5, v, 30)
@@ -199,12 +199,23 @@ for i, (k, t, d, on) in enumerate(steps):
     text(s, x + 2.5, 47, 25, 10, t, 40, bold=True, line=1.2)
     text(s, x + 2.5, 60, 25, 18, d, FINE, color=INK2, line=1.35)
 
-# ───────────────────────── S09 센터에 남는 것
+# ───────────────────────── S09 공동연구 제안
 s = prs.slides.add_slide(BLANK); content_bg(s)
-title_block(s, '센터에 남는 것', [('학생 자율 연습 채널과 ', {}), ('검수된 교육 콘텐츠', {'color': GREEN})])
-panel(s)
-for i, lab in enumerate(['아이콘 자리\n\nSP·실습실 부하 분산', '아이콘 자리\n\n학생 연습 기록\n→ 실습 전 진단', '아이콘 자리\n\n센터 검수 명기\n공동 성과']):
-    placeholder(s, 6 + i * 30, 36, 27.5, 50, lab)
+title_block(s, '함께 하고 싶은 연구',
+            [('채점 타당도', {'color': GREEN}), ('를 먼저, 학습 효과는 그다음 — 설계와 일정은 함께 정합니다', {})])
+cols = [('연구 ①  채점 타당도', 'AI 판정과 전문가 판정은 얼마나, 어디서 갈리는가',
+         ['일치도는 어느 수준인가', '불일치는 어떤 항목에 몰리는가', '인용한 대화 근거가 실제와 맞는가', '재채점해도 같은 결과가 나오는가']),
+        ('연구 ②  학습 효과', '플랫폼 밖의 준거로 확인하는 학습 효과',
+         ['실습 평가 등 외부 준거로 향상되는가', '피드백 방식에 따라 달라지는가', '같은 증례 반복과 변형 중 무엇이 낫는가', '실습 과정에 통합할 수 있는가'])]
+for i, (head, sub, qs) in enumerate(cols):
+    x = 4 + i * 47
+    rect(s, x, 32, 45, 46, WHITE); rect(s, x, 32, 45, 1.6, GREEN if i == 0 else MINT)
+    text(s, x + 3, 36, 40, 6, head, 36, bold=True)
+    text(s, x + 3, 42.5, 40, 6, sub, 26, color=INK3)
+    text(s, x + 3, 50, 40, 32, '\n'.join('▷ ' + q for q in qs), FINE, color=INK2, line=1.45)
+text(s, 4, 83, 92, 8, [('저희가 먼저 약속하는 것  ', {'bold': True, 'color': INK}),
+                        ('부정적 결과도 발표에 동의 · 데이터와 분석 코드 공개 · 분석 계획 사전 등록', {})],
+     26, color=INK2, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
 prs.save(OUT)
 print('saved', OUT, len(prs.slides), 'slides')
