@@ -14,9 +14,9 @@
       "path": "services/cpx/server/fixtures/repeatability_transcript.json",
       "description": "CPX 채점 반복 생성 안정성 고정 입력 (가이드 §4.2). 같은 전사를 N회 재채점해 판정 변동을 잰다.",
       "owner": "cpx",
-      "locked": false,
-      "sha256": null,
-      "note": "PR #253 머지 후 'npm run check:datasets -- --lock cpx-repeatability-v1' 로 봉인한다. 내용을 바꾸면 이전 측정치와 비교할 수 없다 — 바꿔야 하면 새 id 로 등록한다."
+      "locked": true,
+      "sha256": "0cb6c0bb983dbc4cac2334862e4bac8f7cc95f9e3c7ee28263ce3f025b6890af",
+      "note": "PR #253 머지 후 봉인 완료(2026-08-22). 내용을 바꾸면 이전 측정치와 비교할 수 없다 — 바꿔야 하면 새 id 로 등록한다."
     },
     {
       "id": "ocr-goldenset-v1",
