@@ -31,6 +31,7 @@
     "check:metrics": "node --experimental-strip-types --no-warnings scripts/check-metrics.mjs",
     "check:datasets": "node scripts/check-dataset-split.mjs",
     "check:ocr-goldenset": "node scripts/check-ocr-goldenset.mjs",
+    "check:item-stats": "node --experimental-strip-types --no-warnings scripts/check-item-stats.mjs",
     "check:gen-repeat": "node --experimental-strip-types --no-warnings scripts/check-generation-repeatability.mjs",
     "check:reference": "node --experimental-strip-types --no-warnings scripts/check-reference-profile.mjs",
     "check:verify": "node --experimental-strip-types --no-warnings scripts/check-private-verify.mjs",
