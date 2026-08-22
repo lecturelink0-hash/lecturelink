@@ -149,6 +149,7 @@ ${catalogText}
 - 자료 전체에서 다양한 챕터·섹션 커버 (한 영역에 집중 X)
 - 각 문항을 카탈로그의 sub_topic_code 로 분류
 - 자료에 명시되지 않은 정보를 추측해서 추가 금지
+- 각 문항마다 근거가 있는 슬라이드 번호를 source_pages 에 적기 (출제 근거의 "## 슬라이드 N" 헤더 기준, 없으면 빈 배열)
 
 generate_private_questions 도구로 응답하세요.
 `.trim();
@@ -210,6 +211,12 @@ export const PRIVATE_GENERATION_TOOL_SCHEMA = {
               type: ['string', 'null'],
               description: '카탈로그의 sub_topic code. 매칭 안 되면 null.',
             },
+            source_pages: {
+              type: 'array',
+              items: { type: 'integer' },
+              description:
+                '이 문항의 근거가 있는 **슬라이드 번호** 목록. 출제 근거 본문의 "## 슬라이드 N" 헤더에 적힌 번호를 그대로 쓴다. 여러 슬라이드를 종합했으면 모두 적는다. **주지 않은 번호를 지어내지 않는다** — 없으면 빈 배열 []. 이 값은 나중에 사람이 원문을 찾아 근거를 확인하는 데 쓰인다.',
+            },
           },
           required: [
             'stem',
@@ -221,6 +228,9 @@ export const PRIVATE_GENERATION_TOOL_SCHEMA = {
             'ask_kind',
             'image_indices',
             'sub_topic_code',
+            // 빈 배열은 허용하되 필드 자체는 반드시 채우게 한다 — 선택 필드로 두면
+            // 모델이 조용히 빼먹어 출처 신고율이 0 에 가까워진다(image_indices 와 같은 이유).
+            'source_pages',
           ],
         },
       },
