@@ -189,15 +189,20 @@ text(s, 20, 48, 75, 20, [('▷ 검수를 마친 증례 ', {}), ('0', {'color': R
 s = prs.slides.add_slide(BLANK); content_bg(s)
 title_block(s, '의학 검수를 부탁드립니다',
             [('도구와 표본은 저희가 준비하고, ', {}), ('판단', {'color': GREEN}), ('만 맡겨 주십시오', {})])
-steps = [('1단계 · 2주', '채점표 정본 대조', '센터 채점표 1~2종과\n항목 단위 비교', True),
-         ('2단계 · 4주', '증례 블라인드 검수', '층화 추출 표본,\n검수 화면 제공', False),
-         ('3단계 · 6주', '학생 파일럿', '센터 실습과 병행,\n결과 공동 분석', False)]
-for i, (k, t, d, on) in enumerate(steps):
-    x = 4 + i * 31
-    rect(s, x, 36, 30, 44, WHITE); rect(s, x, 36, 30, 1.6, GREEN if on else MINT)
-    text(s, x + 2.5, 41, 25, 5, k, 24, color=INK3)
-    text(s, x + 2.5, 47, 25, 10, t, 40, bold=True, line=1.2)
-    text(s, x + 2.5, 60, 25, 18, d, FINE, color=INK2, line=1.35)
+cards = [('C1', '채점표 대조', '자체 채점표 54종을\n센터 채점 원칙과'),
+         ('C2', '증례 정확도', '표본 20~30개의\n병력·소견·감별'),
+         ('C3', '환자 정보 공개 규칙', '무엇을 먼저, 무엇은\n물어야, 무엇은 끝까지'),
+         ('C4', '실제 시험 구현성', '세션 시간·화면·장비\n운영 흐름')]
+for i, (k, t, d) in enumerate(cards):
+    x = 4 + i * 23.25
+    rect(s, x, 33, 22, 40, WHITE); rect(s, x, 33, 22, 1.6, GREEN)
+    text(s, x + 2, 37, 19, 5, k + ' · 최우선', 22, color=INK3)
+    text(s, x + 2, 42.5, 19, 12, t, 32, bold=True, line=1.2)
+    text(s, x + 2, 56, 19, 16, d, 24, color=INK2, line=1.35)
+text(s, 4, 77, 92, 6, [('기준이 정해진 뒤  ', {'bold': True, 'color': INK}),
+                        ('신체진찰 소견 검수 · 전문가 독립 채점으로 AI 채점 비교 · 학생 파일럿 · 데이터 동의·보관 기준', {})],
+     26, color=INK2, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+text(s, 4, 84, 92, 5, '표본 수와 일정은 센터 기준에 맞춥니다', 24, color=INK3, align=PP_ALIGN.CENTER)
 
 # ───────────────────────── S09 공동연구 제안
 s = prs.slides.add_slide(BLANK); content_bg(s)

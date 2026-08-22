@@ -157,9 +157,9 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
     <span class="n">07</span><span>결과 화면과 피드백</span><span class="p">9</span>
     <span class="n">08</span><span>자체 검증 결과와 한계</span><span class="p">10</span>
     <span class="n">09</span><span>의학 검수 요청서</span><span class="p">11</span>
-    <span class="n">10</span><span>공동연구 제안</span><span class="p">12</span>
-    <span class="n">A</span><span>부록 A · 주호소 __N_CC__개와 증례 __N_CASES__개 목록</span><span class="p">13</span>
-    <span class="n">B</span><span>부록 B · 수면장애 채점표 전문</span><span class="p">15</span>
+    <span class="n">10</span><span>공동연구 제안</span><span class="p">13</span>
+    <span class="n">A</span><span>부록 A · 주호소 __N_CC__개와 증례 __N_CASES__개 목록</span><span class="p">14</span>
+    <span class="n">B</span><span>부록 B · 수면장애 채점표 전문</span><span class="p">16</span>
   </div>
   <div class="ft"><span>LectureLink CPX 제안서</span><span>1</span></div>
 </section>
@@ -173,11 +173,11 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
     <div class="callout"><b>만든 것</b><br>국시원 공개 CPX 항목표의 주호소 __N_CC__개 전부에 대해 감별진단별 증례 __N_CASES__개, 주호소별 채점표 54종, 표준화 환자의 행동 규칙, 규칙 기반 채점.</div>
     <div class="callout red"><b>증명하지 못한 것</b><br>증례의 병력·소견이 의학적으로 정확한지, 채점표가 임상적으로 타당한지. 임상 검수를 마친 증례는 __N_CASES__개 중 0건입니다.</div>
   </div>
-  <h3>부탁드리는 것 — 의학 검수 3단계</h3>
+  <h3>부탁드리는 것 — 의학 검수 8항목, 3단계 순서</h3>
   <div class="steps">
-    <div class="step on"><p class="k">1단계 · 약 2주</p><p class="t">채점표 정본 대조</p><p class="d">센터 채점표 1~2종과 항목 단위 비교. 소요 약 2시간.</p></div>
-    <div class="step"><p class="k">2단계 · 약 4주</p><p class="t">증례 블라인드 검수</p><p class="d">층화 추출 표본 약 30건을 검수 화면에서. 소요 약 10시간.</p></div>
-    <div class="step"><p class="k">3단계 · 약 6주</p><p class="t">학생 파일럿</p><p class="d">센터 실습 전 자율 연습, 결과 공동 분석.</p></div>
+    <div class="step on"><p class="k">1단계</p><p class="t">기준 정렬</p><p class="d">채점표 대조 · 환자 정보 공개 규칙 · 실제 시험 구현성 (C1·C3·C4)</p></div>
+    <div class="step"><p class="k">2단계</p><p class="t">표본 검수와 채점 비교</p><p class="d">증례 20~30개 · 신체진찰 소견 · 전문가 독립 채점 (C2·C5·C6)</p></div>
+    <div class="step"><p class="k">3단계</p><p class="t">확대 검수와 파일럿</p><p class="d">범위 확대 · 사전–사후 수행평가 · 데이터 기준 (C7·C8)</p></div>
   </div>
   <p class="body">검수 화면·표본 추출·수정 반영·검수 이력 보관은 저희가 준비합니다. 센터에서는 <b>판단</b>만 해 주시면 됩니다. 검수가 끝나면 같은 자료로 채점 타당도와 학습 효과를 함께 연구하고 싶습니다(10절). 오늘 여쭙는 것은 한 가지 — <b>정식 협약 논의를 시작해 주시겠습니까.</b></p>
   <div class="ft"><span>LectureLink CPX 제안서</span><span>2</span></div>
@@ -361,25 +361,62 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
 </section>
 
 <!-- 09 -->
-<section class="sheet">
-  <div class="hd"><span>09 · 검수 요청서</span><span>LectureLink CPX</span></div>
-  <h2>의학 검수 요청</h2>
-  <p class="lead">세 단계로 나누었고, 앞 단계의 결론이 뒷 단계의 기준이 됩니다. 1단계가 먼저여야 하는 이유는, 채점표 기준이 바뀌면 증례 검수를 다시 해야 하기 때문입니다.</p>
+<section class="sheet dense">
+  <div class="hd"><span>09 · 검수 요청서 (1/2)</span><span>LectureLink CPX</span></div>
+  <h2>의학 검수 요청 — 무엇을 검수받고 싶은가</h2>
+  <p class="lead">요청 역할은 CPX 서비스의 <b>의학적 정확도, 표준화 환자 역할의 일관성, 채점·피드백의 교육적 타당성, 실제 CPX 시험 환경에서의 구현 가능성</b>을 검수·자문해 주시는 것입니다. 센터 내부 자료는 제공 가능한 범위와 비식별·보안 기준을 우선 따르겠습니다.</p>
+  <h3>최우선 — 기준을 먼저 정하는 네 가지</h3>
   <table class="left">
-    <tr><th style="width:30mm">단계</th><th>센터에서 하실 일</th><th>저희가 준비하는 것</th><th style="width:20mm">소요</th></tr>
-    <tr><td><b>1 · 채점표 정본 대조</b><br><span class="mono">약 2주</span></td><td>센터 채점표 1~2종(수면장애 권장, 부록 B)과 항목 단위로 대조하고 차이·누락·불필요 항목을 표시</td><td>대조표 양식, 항목별 출처 주석, 수정 반영</td><td>약 2시간</td></tr>
-    <tr><td><b>2 · 증례 블라인드 검수</b><br><span class="mono">약 4주</span></td><td>층화 추출 표본 약 30건을 검수 화면에서 읽고 정오·수정 의견 기록. 대화 기록 5~10건의 환자 규칙 위반 표시</td><td>검수 화면(증례 출처 가림), 표본 추출, 의견 취합·반영, 검수 이력 보관</td><td>약 10시간</td></tr>
-    <tr><td><b>3 · 학생 파일럿</b><br><span class="mono">약 6주</span></td><td>실습 전 학생 자율 연습 허용, 결과 공동 분석, 실습 평가와의 관계 확인</td><td>학생 계정, 연습 기록 집계, 분석 보고서 초안</td><td>협의</td></tr>
+    <tr><th style="width:34mm">항목</th><th>요청 내용</th><th style="width:44mm">기대 결과물</th></tr>
+    <tr><td><b>C1 채점표 대조</b></td><td>자체 채점표 54종을 센터의 실제 CPX 채점 원칙과 대조. 채점표 원문 제공이 어려우면 필수 항목·중대 누락·배점 원칙·피드백 기준을 공개 가능한 범위에서 검토</td><td>주호소별 적합·수정 의견, 필수·중대 항목 기준</td></tr>
+    <tr><td><b>C2 증례 정확도</b></td><td>우선 표본 20~30개의 병력·증상·위험징후·진찰 소견·감별 맥락·금기 표현 검수. 증례별 승인·수정·보류 상태를 남기고 기준이 안정되면 범위 확대</td><td>증례별 판정과 수정 사유, 중대 오류 기준</td></tr>
+    <tr><td><b>C3 환자 정보 공개 규칙</b></td><td>어떤 정보는 첫 답변에서, 어떤 정보는 특정 질문을 받아야, 어떤 표현은 끝까지 먼저 말하지 않아야 하는지의 증례별 규칙. 반복·우회·모호한 질문에 대한 자연스러운 대응과 위험한 조기 노출 기준</td><td>정보별 공개 조건, 금지 정보, 역할 일관성 판정표</td></tr>
+    <tr><td><b>C4 시험 구현 가능성</b></td><td>세션 시간(11분·11분 30초·12분), 문진→진찰→종료→채점 흐름, 응시자·평가자 화면, 장비·실습실 환경, 중단·재시작·시간 초과 처리가 실제 센터 운영과 맞는지</td><td>권장 세션 시간, 운영 흐름, 공간·장비·인력 요건</td></tr>
   </table>
-  <h3>산출물</h3>
-  <ul class="body">
-    <li>단계별 검수 보고서 — 센터 명의 병기, 검수 완료 콘텐츠에 "계명의대 임상수기센터 검수" 표기</li>
-    <li>검수 이력 — 누가 언제 무엇을 바꿨는지, 이후 분쟁이나 연구 자료로 쓸 수 있도록 보관</li>
-  </ul>
-  <h3>기한</h3>
-  <p class="body">1단계는 협약 논의 개시 후 2주 안에 시작하기를 제안드립니다. 2·3단계 일정은 협약에서 정합니다.</p>
-  <p class="fn">※ 소요 시간 산출 근거 — 1단계: 32항목 × 항목당 3분 + 전체 검토 30분. 2단계: 증례 1건 읽기·의견 15분 × 30건 + 대화 기록 10건 × 10분.</p>
+  <h3>우선 · 후속 — 기준이 정해진 뒤</h3>
+  <table class="left">
+    <tr><th style="width:34mm">항목</th><th>요청 내용</th><th style="width:44mm">기대 결과물</th></tr>
+    <tr><td><b>C5 신체진찰 검수</b></td><td>진찰 항목(156개 진찰 개념)과 소견 표현이 실제 진찰 소견·교육 수준·센터 장비 환경에 맞는지. AI가 제공하면 안 되는 결과, 필수 관찰 정보, 표현 표준화</td><td>항목별 적합·수정·삭제 의견, 표준 표현</td></tr>
+    <tr><td><b>C6 AI 채점 임상 검증</b></td><td>같은 대화 전사를 평가자 2명 이상이 독립 채점해 수행 여부·근거·총점·중대 누락을 표시. AI의 누락 지적과 피드백이 교육적으로 정확하고 과도하지 않은지</td><td>전문가 기준 라벨 — AI 채점 비교의 근거</td></tr>
+    <tr><td><b>C7 파일럿</b></td><td>동일 증례 암기 효과를 피하도록 동등 난이도 증례 A(사전)·B(연습 후)·C(지연)로 구성, 순서를 가린 평가자가 채점하는 파일럿의 협의</td><td>파일럿 설계, 평가자·학생·실습실 협조 범위</td></tr>
+    <tr><td><b>C8 데이터 기준</b></td><td>대화 전사·수행 기록·채점 결과를 쓸 때의 학생 동의, 비식별화, 접근 권한, 보관 기간, 연구·발표 활용 범위를 센터 기준에 맞춤. 연구 승인 필요 여부는 담당 부서 판단을 따름</td><td>동의·비식별·보관·활용 원칙과 협의 경로</td></tr>
+  </table>
+  <p class="fn">※ 진행 순서는 기준 정렬(C1·C3·C4) → 표본 검수(C2·C5) → 채점 비교(C6) → 확대·파일럿(C7, C8은 병행). 표본 수 20~30개는 저희 제안이며 센터 기준에 맞추겠습니다.</p>
   <div class="ft"><span>LectureLink CPX 제안서</span><span>11</span></div>
+</section>
+<section class="sheet dense">
+  <div class="hd"><span>09 · 검수 요청서 (2/2)</span><span>LectureLink CPX</span></div>
+  <h2>어떻게 진행하고, 무엇을 준비해 드리는가</h2>
+  <h3>부탁드리는 협업 방식</h3>
+  <table class="left">
+    <tr><th style="width:34mm">단계</th><th>센터에서</th><th>저희가</th></tr>
+    <tr><td><b>기준 정렬 미팅</b></td><td>센터 운영 방식, 채점 기준, 제공 가능한 자료 범위 확인</td><td>현행 구조·쟁점·자료팩 준비</td></tr>
+    <tr><td><b>파일럿 증례 검수</b></td><td>표본을 승인·수정·보류로 판정하고 기준 보정</td><td>검수 화면 제공, 수정 반영, 검수 이력 보관</td></tr>
+    <tr><td><b>SP·평가자 자문</b></td><td>정보 공개 규칙과 전문가 채점 라벨을 독립 작성</td><td>블라인드 채점 화면(모델 정보 가림, 독립 저장)</td></tr>
+    <tr><td><b>현장 구현성 점검</b></td><td>화면 흐름, 세션 시간, 장비·공간·인력, 장애 대응 확인</td><td>운영안 초안과 시연 환경</td></tr>
+    <tr><td><b>확대 검수·파일럿</b></td><td>기준 안정화 후 증례 범위 확대, 사전–사후 수행평가 협의</td><td>개선 반영, 결과 집계·보고서 초안</td></tr>
+  </table>
+  <h3>저희가 센터에 제공할 자료</h3>
+  <table class="left">
+    <tr><th style="width:34mm">자료</th><th>내용</th></tr>
+    <tr><td>증례 목록</td><td>__N_CASES__개 증례와 주호소 __N_CC__종 분류, 임상 검수 상태, 우선 표본 (부록 A)</td></tr>
+    <tr><td>채점표·산식</td><td>자체 채점표 54종 요약, 체크리스트와 점수 계산 방식 (06절, 부록 B)</td></tr>
+    <tr><td>환자 동작 자료</td><td>환자 행동 규칙, 공개·비공개 정보 초안, 대표 정상·실패 대화 기록</td></tr>
+    <tr><td>검수 도구</td><td>증례 승인·수정 화면, 전사 채점 화면, 블라인드 독립 평가 화면</td></tr>
+    <tr><td>운영안</td><td>세션 흐름, 시간 옵션, 신체진찰 화면, 장애·재시작, 데이터 보관 초안</td></tr>
+  </table>
+  <h3>센터에 확인받고 싶은 핵심 결정</h3>
+  <ul class="body">
+    <li>CPX 증례를 서비스에 공개할 수 있는 <b>최소 임상 승인 기준</b></li>
+    <li>주호소별 필수 문진·위험징후·중대 누락과 <b>채점 원칙</b></li>
+    <li>표준화 환자 정보의 <b>공개 시점</b>과 자연스러운 역할 수행 규칙</li>
+    <li>실제 시험 흐름에 맞는 <b>세션 시간·화면·장비·운영 조건</b></li>
+    <li>AI 채점·피드백을 교육용으로 쓸 수 있는 <b>허용 범위와 차단 조건</b></li>
+    <li>대화 전사와 평가 데이터를 검증·발표에 활용할 수 있는 <b>절차</b></li>
+    <li>검수 결과와 서비스·대외 발표에서의 <b>기관·전문가 표기 방식</b></li>
+  </ul>
+  <div class="callout"><b>요청 원칙</b> — 구현과 자료 정리는 저희가 먼저 하고, 센터에는 전문성이 필요한 판단만 구조화해 요청합니다. 확정되지 않은 성능 수치나 자체 검수 결과를 독립 검증으로 표현하지 않습니다. 검수 완료 콘텐츠에는 센터 검수 표기, 검수 전 콘텐츠는 "검수 전"으로 구분합니다.</div>
+  <div class="ft"><span>LectureLink CPX 제안서</span><span>12</span></div>
 </section>
 
 <!-- 10 -->
@@ -424,7 +461,7 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
     <ul class="body"><li>민감 증례의 안전·윤리 프로토콜</li><li>실습 과정과의 연계 방식</li><li>일정·역할 분담·IRB 절차</li></ul>
   </div>
   <div class="callout"><b>오늘 여쭙는 것</b> — 의학 검수(09절)와 이 공동연구를 위한 <b>정식 협약 논의를 시작해 주시겠습니까.</b> 회신: 2026년 9월 __일까지. 연락: 전재현 · 장유림 (계명대학교 의학과) · 연락처 · 이메일 · 최신본 lecturelink.kro.kr</div>
-  <div class="ft"><span>LectureLink CPX 제안서</span><span>12</span></div>
+  <div class="ft"><span>LectureLink CPX 제안서</span><span>13</span></div>
 </section>
 
 <!-- 부록 A -->
@@ -433,12 +470,12 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
   <h2>주호소 __N_CC__개 · 증례 __N_CASES__개</h2>
   <p class="body">증례 수 내림차순. 감별진단 이름은 증례 제목의 표적 진단을 그대로 옮겼습니다.</p>
   <table style="font-size:8.6pt"><tr><th>주호소</th><th>증례 (표적 진단)</th><th>수</th></tr>__APPX_A_1__</table>
-  <div class="ft"><span>LectureLink CPX 제안서</span><span>13</span></div>
+  <div class="ft"><span>LectureLink CPX 제안서</span><span>14</span></div>
 </section>
 <section class="sheet">
   <div class="hd"><span>부록 A · 증례 목록 (2/2)</span><span>LectureLink CPX</span></div>
   <table style="font-size:8.6pt"><tr><th>주호소</th><th>증례 (표적 진단)</th><th>수</th></tr>__APPX_A_2__</table>
-  <div class="ft"><span>LectureLink CPX 제안서</span><span>14</span></div>
+  <div class="ft"><span>LectureLink CPX 제안서</span><span>15</span></div>
 </section>
 
 <!-- 부록 B -->
@@ -447,13 +484,13 @@ tr.sec td{background:var(--mint-3);font-weight:700;color:var(--ink);text-align:l
   <h2>__SLEEP_TITLE__</h2>
   <p class="body">총점 100 · 충족 / 부분 / 미충족. 오른쪽 칸은 센터 채점표와 대조하실 때 쓰시는 표시란입니다(□ 일치 · □ 차이 · □ 불필요). 1단계 검수에서 이 쪽을 그대로 쓰실 수 있습니다.</p>
   <table class="left" style="font-size:8.8pt"><tr><th style="width:14mm">번호</th><th>항목</th><th style="width:22mm">대조</th></tr>__APPX_B_1__</table>
-  <div class="ft"><span>LectureLink CPX 제안서</span><span>15</span></div>
+  <div class="ft"><span>LectureLink CPX 제안서</span><span>16</span></div>
 </section>
 <section class="sheet">
   <div class="hd"><span>부록 B · 수면장애 채점표 전문 (2/2)</span><span>LectureLink CPX</span></div>
   <table class="left" style="font-size:8.8pt"><tr><th style="width:14mm">번호</th><th>항목</th><th style="width:22mm">대조</th></tr>__APPX_B_2__</table>
   <p class="fn">※ 판정 원칙: 단어가 아니라 문맥으로 인정 · 말로 선언하면 시행으로 간주 · 모든 판정에 대화 근거 인용 · 음성 인식 오류는 문맥으로 복원. 원 루브릭의 0/1/2 등급은 영역 등급(우수/보통/미흡)으로 병기합니다.</p>
-  <div class="ft"><span>LectureLink CPX 제안서</span><span>16</span></div>
+  <div class="ft"><span>LectureLink CPX 제안서</span><span>17</span></div>
 </section>
 
 </body>
