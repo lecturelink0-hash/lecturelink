@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="infographic.css"></head>
+<body>
+<div class="page c2">
+  <header>
+    <div class="kicker">내신대비 문항 생성 · RAG 구조 후보 2 / 3</div>
+    <h1>자가교정형 RAG <em>— 검색 평가기 + 생성 비평기 + 수정 루프 (CRAG × Self-RAG)</em></h1>
+    <div class="tagline">후보 1의 선형 구조에 두 개의 판정 루프를 더한다. ① 검색 결과를 등급화해 재질의·확장·포기를 결정(CRAG), ② 생성된 문항을 근거 지지·의학 정확성·단일 정답·형식 4축으로 비평하고 최대 2회 수정(Self-RAG). 생성기와 비평기의 <b>모델을 분리</b>하고, 모든 지적에 <b>인용 quote</b>를 요구해 현행 오탐 50%를 낮춘 뒤 <b>차단 모드</b>로 전환한다.</div>
+    <div class="stats">
+      <div class="stat"><div class="v">+10~35 콜</div><div class="l">비평 10 · 검색 평가 ≤15 · 수정 ≤10 (10문항 기준, 상한 코드 강제)</div></div>
+      <div class="stat"><div class="v">≈ $0.20</div><div class="l">업로드당 LLM 비용 개산 (현행 ≈ $0.10의 약 2배)</div></div>
+      <div class="stat"><div class="v">+15~30초</div><div class="l">전체 지연 · 첫 5문항 선공개 정책으로 체감 완화</div></div>
+      <div class="stat"><div class="v">+3주</div><div class="l">후보 1 완료 후 추가 구현 기간 (1인)</div></div>
+      <div class="stat"><div class="v">R1 · R2 해소</div><div class="l">warn → 차단 모드 전환 · 생성기≠검증기 · "방어선 0" 종료</div></div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="num">1</span>파이프라인 (8단계 + 루프 3개)
+      <span class="legend"><span class="chip keep">후보 1 공통</span><span class="chip new">신규</span><span class="chip mod">변경</span></span></h2>
+    <div class="flow-wrap">
+      <svg width="1488" height="110" viewBox="0 0 1488 110" style="display:block" aria-hidden="true">
+        <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#eb6834"/></marker></defs>
+        <!-- box centers: w=168.5, gap=20 → cx_i = 84 + i*188.5 -->
+        <!-- loop A: 교정 행동(4) → 검색(2) -->
+        <path d="M 838 108 C 838 70, 461 70, 461 108" fill="none" stroke="#eb6834" stroke-width="3" marker-end="url(#ah)"/>
+        <text x="650" y="72" text-anchor="middle" font-size="14" font-weight="700" fill="#b9471d">루프 A · 재질의·확장 후 재검색 (≤1회)</text>
+        <!-- loop B: 결정(7) → 생성(5) -->
+        <path d="M 1404 108 C 1404 70, 1027 70, 1027 108" fill="none" stroke="#eb6834" stroke-width="3" marker-end="url(#ah)"/>
+        <text x="1215" y="72" text-anchor="middle" font-size="14" font-weight="700" fill="#b9471d">루프 B · REVISE 표적 수정 (≤2회)</text>
+        <!-- loop C: 결정(7) → 검색(2) -->
+        <path d="M 1430 108 C 1430 -20, 484 -20, 484 108" fill="none" stroke="#eb6834" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#ah)"/>
+        <text x="960" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="#b9471d">루프 C · REGENERATE 근거 팩 교체 (1회)</text>
+      </svg>
+      <div class="flow">
+        <div class="stage"><div class="t">인덱싱 · 출제 계획</div><div class="s">후보 1 공통</div>
+          <ul><li>계층·멀티모달 청크 + 임베딩</li><li>출제 단위 N개 (쿼터 배정)</li></ul>
+          <div class="llm">LLM 1콜</div></div>
+        <div class="stage"><div class="t">질의 생성</div><div class="s">후보 1 공통</div>
+          <ul><li>단위당 3질의 + HyDE</li><li>자체 약어·한영 사전</li></ul>
+          <div class="llm">LLM 0</div></div>
+        <div class="stage"><div class="t">하이브리드 검색 · 리랭킹</div><div class="s">후보 1 공통</div>
+          <ul><li>RRF → 리랭커 top-6 → MMR</li><li>근거 팩 [E1..E6]</li></ul>
+          <div class="llm">LLM 0~1</div></div>
+        <div class="stage new"><div class="t">검색 평가기</div><div class="s">신규 · CRAG</div>
+          <ul><li>리랭크 점수 τ + 소형 LLM 판정</li><li><b>CORRECT / AMBIGUOUS / INCORRECT</b></li><li>τ는 골든셋 Recall 0.9 지점</li></ul>
+          <div class="llm">LLM 단위당 ≤1콜 (소형)</div></div>
+        <div class="stage new"><div class="t">교정 행동</div><div class="s">신규</div>
+          <ul><li>CORRECT → 지식 정제(문장 필터)</li><li>AMBIGUOUS → 질의 재작성 + 부모·인접 확장 → 루프 A</li><li>INCORRECT → 재작성 1회, 실패 시 <b>단위 포기</b> + P8 알림</li></ul>
+          <div class="llm">LLM ≤1콜 · 웹 검색 없음</div></div>
+        <div class="stage mod"><div class="t">생성 (표적 수정 모드)</div><div class="s">변경</div>
+          <ul><li>초안: 후보 1과 동일 (인용 강제)</li><li>비평 노트가 있으면 지적 항목만 수정</li><li>점수가 오르지 않으면 즉시 중단</li></ul>
+          <div class="llm">LLM 배치당 1콜 (+수정)</div></div>
+        <div class="stage new"><div class="t">비평기 (모델 분리)</div><div class="s">신규 · Self-RAG reflection</div>
+          <ul><li>IsSupported · IsCorrect · IsUnique · IsUseful</li><li>critical/major는 <b>quote 필수</b> — 없으면 minor 강등</li><li>블라인드 2회와 합산</li></ul>
+          <div class="llm">LLM 문항당 1콜 (haiku-4-5 / 2.5-pro)</div></div>
+        <div class="stage new"><div class="t">결정 · 기록 · 저장</div><div class="s">신규</div>
+          <ul><li>ACCEPT / REVISE → 루프 B / REGENERATE → 루프 C / REJECT → 보충</li><li><code>question_reviews</code> 이력 저장</li><li><code>confidence A/B/C</code> 부여</li></ul>
+          <div class="llm">LLM 0</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>핵심 메커니즘</h2>
+    <div class="cards">
+      <div class="card"><h3>검색 평가기의 3등급과 행동</h3><p>top-1 리랭크 점수 ≥ τ_hi 이고 LLM 판정 "충분"이면 CORRECT, &lt; τ_lo 또는 "무관"이면 INCORRECT, 사이는 AMBIGUOUS. 원 CRAG의 웹 검색 보정은 <b>자료 기반 원칙</b> 때문에 쓰지 않고 "출제 단위 포기"를 택한다(외부 교과 지식 보정 허용 여부는 Q6).</p></div>
+      <div class="card"><h3>비평기 4축 스키마</h3><ul><li><b>IsSupported</b> — 주장별 supported + evidence_id + quote</li><li><b>IsCorrect</b> — severity(none/minor/major/critical) + rationale + quote 또는 "자료 밖 지식" 표기</li><li><b>IsUnique</b> — 오답 4개 방어 가능성, 복수 정답 여부</li><li><b>IsUseful</b> — 코드 린트(F·K·C) 결과를 입력으로</li></ul></div>
+      <div class="card"><h3>생성기 ≠ 비평기</h3><p>1차안: 생성 gemini-2.5-flash / 비평 claude-haiku-4-5 또는 gemini-2.5-pro. 벤더를 달리하면 상관 오류가 줄지만 키·비용 관리가 는다. 비평기 2종 합의(2-of-2) 차단은 오탐을 더 줄이되 비용 2배 — 골든셋 오탐/미탐 곡선으로 결정.</p></div>
+      <div class="card"><h3>오탐 억제 · 루프 중단</h3><p>현행 P1의 "자가당착 오탐"(지적이 문항과 무관)을 막기 위해 모든 critical/major 지적은 quote를 동반해야 하며 코드가 quote를 찾지 못하면 minor로 강등. 루프는 최대 2회, 점수 미개선 시 즉시 중단, 업로드당 추가 콜 상한 = 문항 수 × 3.</p></div>
+    </div>
+  </section>
+
+  <div class="row three">
+    <section>
+      <h2><span class="num">3</span>데이터 모델 변경</h2>
+      <table>
+        <tr><th>대상</th><th>추가</th></tr>
+        <tr><td><code>question_reviews</code> (신규)</td><td><code>iteration</code>, <code>critic_model</code>, <code>retrieval_grade</code>, <code>claims jsonb</code>, <code>medical_error jsonb</code>, <code>single_answer jsonb</code>, <code>decision</code>, <code>expert_label jsonb</code></td></tr>
+        <tr><td><code>private_questions</code></td><td><code>confidence</code> A/B/C (A = 전 주장 지지 + 블라인드 통과 + 비평 none)</td></tr>
+        <tr><td>env</td><td><code>PRIVATE_VERIFY_MODE</code> warn → <b>discard</b> (보정 후), <code>CRITIC_MODEL</code>, 루프·콜 상한</td></tr>
+      </table>
+      <div class="sub"><code>expert_label</code>이 C1(중대/경미 정의) 보정의 원자료가 되고, 표본 추출기(A12)·블라인드 평가 도구(A11)가 <code>confidence</code>로 우선순위를 정한다.</div>
+    </section>
+    <section>
+      <h2><span class="num">4</span>장점</h2>
+      <ul class="pros">
+        <li>문항 단위 품질 보증 — "의학 정확성 방어선 0"을 없애는 유일한 후보</li>
+        <li>비평 기록이 전문가 검수(C4)·표본 추출(A12)에 직접 쓰임</li>
+        <li>가이드의 "중대/경미 오류율" 조작적 정의를 코드에 심을 수 있음</li>
+        <li>검색 실패를 "근거 부족"으로 정직하게 알림 (억지 출제 감소)</li>
+        <li>후보 1 위에 레이어로 얹혀 점진 도입·롤백이 쉬움</li>
+      </ul>
+    </section>
+    <section>
+      <h2><span class="num">5</span>단점 · 위험</h2>
+      <ul class="cons">
+        <li>비용 약 2배, 지연 +15~30초</li>
+        <li>루프로 인한 비결정성 → 반복 안정성 지표 악화 가능</li>
+        <li>비평기 편향(보수적 → 미탐 / 공격적 → 오탐)을 전문가 라벨로 보정해야 함</li>
+        <li>"자료 밖 표준 지식"과 "자료 내 근거"를 혼동해 정확한 문항을 거부할 수 있음</li>
+        <li>차단 모드 전환 시 문항 수 부족 → 보충 라운드 의존 증가</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="row wide-left">
+    <section>
+      <h2><span class="num">6</span>평가 지표 · 기준값 (후보 1 지표에 추가)</h2>
+      <table>
+        <tr><th>지표</th><th>정의</th><th>기준</th><th>방법</th></tr>
+        <tr><td>비평기–전문가 일치도</td><td>severity 판정 Cohen's κ, 오탐/미탐률</td><td>κ ≥ 0.6</td><td>100문항 2인 독립 라벨(C1)</td></tr>
+        <tr><td>중대 오류율 (초안 → 최종)</td><td>major 이상 비율의 paired 차이</td><td>최종 ≤ 2%</td><td>골든셋 + 전문가</td></tr>
+        <tr><td>1차 수락률 · 루프 횟수</td><td>ACCEPT 비율, 문항당 평균 루프</td><td>≥ 60% · ≤ 0.6</td><td>question_reviews</td></tr>
+        <tr><td>근거 부족 포기율</td><td>출제 단위 중 INCORRECT 포기 비율</td><td>≤ 10%</td><td>코드 자동</td></tr>
+        <tr><td>반복 안정성</td><td>10회 반복 루프 횟수·최종 문항 수 분포</td><td>계약층 통과</td><td>check:gen-repeat</td></tr>
+      </table>
+      <div class="timeline">
+        <div class="phase"><b>Phase 0·1</b>후보 1 (인덱싱 · 인용 생성)</div>
+        <div class="phase hot"><b>Phase 2a · 1.5주</b>검색 평가기 · 교정 행동 · 지식 정제</div>
+        <div class="phase hot"><b>Phase 2b · 1.5주</b>비평기 · 수정 루프 · question_reviews</div>
+        <div class="phase warm"><b>보정</b>전문가 100문항 라벨 → τ·차단 기준 확정 → discard 전환</div>
+      </div>
+    </section>
+    <section>
+      <h2><span class="num">7</span>교수님께 여쭙는 점</h2>
+      <ol class="q">
+        <li>비평기 스키마에 심을 <b>중대/경미 오류 분류(C1)</b> — "정답이 바뀌면 중대, 해설 표현 오류는 경미"로 충분한지</li>
+        <li>생성기·비평기 벤더 분리의 실익을 검증할 실험 설계(상관 오류 측정)</li>
+        <li>"자료 근거 부족" 시 단위 포기 vs 표준 교과 지식 보정 — 교육적·저작권적 타당성</li>
+        <li>루프 중단 기준(2회·점수 미개선)과 차단 임계의 보정에 필요한 라벨 규모</li>
+      </ol>
+      <div class="rating" style="margin-top:10px">
+        <div>구현 복잡도</div><div class="dots">●●●<span>●●</span></div>
+        <div>근거 추적 측정 가능성</div><div class="dots">●●●●●</div>
+        <div>의학 정확성 방어선</div><div class="dots">●●●●●</div>
+        <div>오답 품질 개선</div><div class="dots">●●●<span>●●</span></div>
+        <div>비용 효율</div><div class="dots">●●<span>●●●</span></div>
+      </div>
+    </section>
+  </div>
+
+  <footer><span>LectureLink · 내신대비 RAG 전환 계획서 부록 · 2026-08-23 · 기준 코드 main f7fcfa5</span><span>검토: 의료정보학교실 이승보 교수님 · 후보 2 / 3</span></footer>
+</div>
+</body></html>
