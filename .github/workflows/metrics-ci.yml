@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'lib/metrics/**'
+      - 'lib/stats/**'
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
       - 'lib/ai/quality-gate.ts'
@@ -14,6 +15,7 @@ on:
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
       - 'scripts/check-metrics.mjs'
+      - 'scripts/check-item-stats.mjs'
       - 'scripts/check-dataset-split.mjs'
       - 'scripts/check-ocr-goldenset.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
@@ -23,6 +25,7 @@ on:
     branches: [main]
     paths:
       - 'lib/metrics/**'
+      - 'lib/stats/**'
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
       - 'lib/ai/quality-gate.ts'
@@ -30,6 +33,7 @@ on:
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
       - 'scripts/check-metrics.mjs'
+      - 'scripts/check-item-stats.mjs'
       - 'scripts/check-dataset-split.mjs'
       - 'scripts/check-ocr-goldenset.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
@@ -51,6 +55,8 @@ jobs:
       - run: npm ci
       # 산식 회귀 — 백분위·분모·재시도 판정·기능 이름·품질 게이트
       - run: npm run check:metrics
+      # 문항 통계·층화 추출 산식 — KR-20·변별도·point-biserial 손계산 대조 (분담표 A12·A13)
+      - run: npm run check:item-stats
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)
       - run: npm run check:datasets
       # OCR 골든셋 구성·완결성 — 구축 중에는 경고만, --complete 로 완성 판정 (분담표 A5)
