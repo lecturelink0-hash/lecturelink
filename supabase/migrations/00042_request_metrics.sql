@@ -13,7 +13,11 @@
 -- 테이블을 합치지 않고 필드 의미만 맞춘다 — 두 대시보드가 같은 산식을 쓴다.
 
 create table if not exists public.request_metrics (
-    id            uuid primary key default uuid_generate_v4(),
+    -- gen_random_uuid() 를 쓴다. uuid_generate_v4 는 uuid-ossp 확장 함수인데, Supabase 는
+    -- 확장을 extensions 스키마에 두고 마이그레이션 러너의 search_path 에는 넣지 않는다 —
+    -- 00001 이 확장을 만들어 뒀어도 push 세션에서는 함수를 찾지 못한다(2026-08-22 배포에서
+    -- 42883 으로 실패). gen_random_uuid 는 PG13+ 내장이라 확장 의존이 없다.
+    id            uuid primary key default gen_random_uuid(),
     -- 요청 추적 ID. 응답 헤더 x-request-id 로도 나가 사용자 제보와 로그를 잇는다.
     request_id    text not null,
     -- 기능 이름. 경로를 그대로 쓰면 uuid 가 축에 섞여 집계가 요청 수만큼 쪼개진다.
