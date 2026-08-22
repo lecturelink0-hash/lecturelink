@@ -330,6 +330,8 @@ export type PrivateQuestionRow = {
   /** P1 검증 1패스 점수(0~1). 검증을 못 돌렸으면 null. */
   verify_score: number | null;
   created_at: string;
+  /** 문항이 나온 위치 — 파일 해시·페이지·청크 id (00043, 가이드 §12.2). */
+  source_refs: Record<string, unknown> | null;
 }
 
 export type PrivateQuestionImageRow = {
@@ -409,6 +411,20 @@ export type AiCostLogRow = {
   metadata: Record<string, unknown> | null;
   /** 요청 단위 드릴다운 키 (00042). 배치·크론 호출은 null. */
   request_id: string | null;
+  created_at: string;
+}
+
+/** 강의자료의 슬라이드/문단 단위 원문 — 문항 출처 추적 (00043 · 분담표 A8). */
+export type MaterialChunkRow = {
+  id: string;
+  upload_id: string;
+  user_id: string;
+  chunk_index: number;
+  page_index: number;
+  kind: 'slide_text' | 'ocr';
+  text: string;
+  char_count: number;
+  content_sha: string;
   created_at: string;
 }
 
@@ -739,6 +755,15 @@ export interface Database {
         Insert: Insert<AiCostLogRow>;
         Update: Update<AiCostLogRow>;
         Relationships: [FK<'ai_cost_log', 'user_id', 'users'>];
+      };
+      material_chunks: {
+        Row: MaterialChunkRow;
+        Insert: Insert<MaterialChunkRow>;
+        Update: Update<MaterialChunkRow>;
+        Relationships: [
+          FK<'material_chunks', 'upload_id', 'user_uploads'>,
+          FK<'material_chunks', 'user_id', 'users'>,
+        ];
       };
       request_metrics: {
         Row: RequestMetricRow;
