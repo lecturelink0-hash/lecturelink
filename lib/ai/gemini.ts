@@ -1,8 +1,8 @@
 /**
  * Gemini (Google Generative Language API) 어댑터
  *
- * Gemini를 기본 제공자로 사용하고, 환경변수 `AI_PROVIDER=anthropic`을 명시한 경우에만
- * Claude 경로를 사용한다. Anthropic `messages.create` 파라미터를
+ * **기본 모델은 gemini-2.5-flash 다.** Gemini를 기본 제공자로 사용하고,
+ * 환경변수 `AI_PROVIDER=anthropic`을 명시한 경우에만 Claude 경로를 사용한다. Anthropic `messages.create` 파라미터를
  * Gemini `generateContent` 요청으로 변환하고, 응답을 다시 Anthropic `Message`
  * (tool_use 블록 포함) 형태로 되돌려 기존 소비자 코드가 수정 없이 동작하게 한다.
  *

@@ -2,9 +2,9 @@
 /**
  * 데모 (Gemini 무료 API 버전): PDF·이미지 → Gemini → 예상문제 생성
  *
- * Anthropic 키가 없을 때 무료로 빠르게 테스트하는 용도.
- * 프로덕션 코드는 Anthropic Claude 를 쓰지만, 출력 품질의 방향성을 보는 데에는
- * Gemini 2.5 Flash 도 충분히 가늠됨.
+ * **프로덕션 기본 모델과 같은 gemini-2.5-flash 를 쓴다** — AI_PROVIDER 를 설정하지 않은
+ * 운영 환경이 부르는 모델이 이것이다. Anthropic 키 없이 돌아가고, 운영 기본값의 출력
+ * 방향성을 가장 가깝게 보여 준다.
  *
  * API 키 발급 (무료, 신용카드 없음):
  *   https://aistudio.google.com/apikey
@@ -342,6 +342,6 @@ parsed.questions.forEach((q, i) => {
 console.log('═══════════════════════════════════════════════════════════');
 console.log('✅ 완료. 생성 문항이 적절한지 검토해주세요.');
 console.log('');
-console.log('  ※ 프로덕션 서비스는 Anthropic Claude Sonnet 4.6 사용 예정.');
+console.log('  ※ 프로덕션 기본 모델도 gemini-2.5-flash 입니다 (AI_PROVIDER 미설정 시).');
 console.log('     Gemini 결과는 방향성 검증용이며 실제 품질은 더 높을 것으로 예상.');
 console.log('═══════════════════════════════════════════════════════════\n');

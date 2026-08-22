@@ -8,7 +8,7 @@
 |------|------|
 | Framework | Next.js 15 (App Router) |
 | DB · Auth · Storage | Supabase (PostgreSQL + pgvector) |
-| AI | Anthropic Claude (Sonnet 4.6 + Haiku 4.5) |
+| AI | Google Gemini — 기본 모델 `gemini-2.5-flash` (생성·검증·Vision·OCR). `AI_PROVIDER=anthropic` 시 Anthropic Claude Sonnet 4.6 + Haiku 4.5 |
 | Hosting | Vercel |
 | Type System | TypeScript 5.6 (strict) |
 | Validation | Zod |
@@ -20,7 +20,7 @@ backend/
 ├── app/                          # Next.js App Router
 │   └── api/                      # API 엔드포인트 (Checkpoint 2+에서 추가)
 ├── lib/
-│   ├── ai/                       # Anthropic 클라이언트, 프롬프트 (Checkpoint 3)
+│   ├── ai/                       # AI 클라이언트(기본 gemini-2.5-flash), 프롬프트 (Checkpoint 3)
 │   ├── db/                       # Supabase 클라이언트 (Checkpoint 2)
 │   ├── types/
 │   │   ├── database.ts           # DB row 타입 (스키마 1:1)

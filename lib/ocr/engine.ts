@@ -3,15 +3,20 @@
  *
  * 백엔드:
  *   - 'tesseract'         : tesseract.js (브라우저·Node 둘 다, kor+eng traineddata 자동 로드)
- *   - 'claude'            : Claude Vision 호출 (의학 약어·표 구조 가장 강함, 비용 ↑)
- *   - 'auto'              : Claude 우선, 실패 시 Tesseract 폴백
+ *   - 'claude'            : Vision 모델 호출 (의학 약어·표 구조 가장 강함, 비용 ↑)
+ *   - 'auto'              : Vision 모델 우선, 실패 시 Tesseract 폴백
+ *
+ * ⚠ 'claude' 는 **역사적인 이름일 뿐 모델 이름이 아니다.** 이 백엔드는 lib/ai/client.ts 의
+ *   createMessage 를 타므로 실제로 호출되는 모델은 활성 제공자의 검증 모델이고,
+ *   기본값은 **gemini-2.5-flash** 다. `AI_PROVIDER=anthropic` 일 때만 claude-haiku 로 간다.
+ *   (env 값 자체는 이미 배포된 설정과의 호환 때문에 그대로 둔다.)
  *
  * 환경변수:
  *   OCR_BACKEND=tesseract|claude|auto    (기본 claude — worker 512MB 메모리 보호: tesseract wasm 미로드)
  *
  * 의존성:
  *   npm install tesseract.js
- *   (Claude 백엔드는 기존 @anthropic-ai/sdk 재사용)
+ *   (Vision 백엔드는 기존 @anthropic-ai/sdk 래퍼를 재사용 — 실제 전송은 제공자별 어댑터가 한다)
  */
 
 import type Anthropic from '@anthropic-ai/sdk';
@@ -53,8 +58,9 @@ export interface OcrResult {
 function pickBackend(): OcrBackend {
   const v = process.env.OCR_BACKEND;
   if (v === 'tesseract' || v === 'claude' || v === 'auto') return v;
-  // 기본 claude: tesseract.js(wasm + 한국어 데이터 수백 MB)를 동적 import 하지 않아
-  // worker(512MB) 메모리를 아낀다. 폴백이 필요하면 OCR_BACKEND=auto 로 명시.
+  // 기본 'claude': 백엔드 이름일 뿐 모델 이름이 아니다(실제 모델은 기본 gemini-2.5-flash).
+  // tesseract.js(wasm + 한국어 데이터 수백 MB)를 동적 import 하지 않아 worker(512MB)
+  // 메모리를 아낀다. 폴백이 필요하면 OCR_BACKEND=auto 로 명시.
   return 'claude';
 }
 
@@ -201,7 +207,7 @@ OCR 결과만 출력. 설명·머리말 금지.`;
 
   return {
     text,
-    // Claude 는 confidence 를 직접 주지 않음 — 텍스트 길이/응답 일관성으로 휴리스틱
+    // Vision 모델은 confidence 를 직접 주지 않음 — 텍스트 길이/응답 일관성으로 휴리스틱
     confidence: text.length > 5 ? 0.9 : 0.4,
     backend: 'claude',
     costUsd: cost,
@@ -307,11 +313,11 @@ export async function runOcr(input: {
   } else if (backend === 'claude') {
     raw = await ocrClaude(input);
   } else {
-    // auto: Claude 우선
+    // auto: Vision 모델(기본 gemini-2.5-flash) 우선
     try {
       raw = await ocrClaude(input);
     } catch (e) {
-      console.warn('[ocr] Claude 실패, Tesseract 로 폴백:', e);
+      console.warn('[ocr] Vision OCR 실패, Tesseract 로 폴백:', e);
       raw = await ocrTesseract(input.png);
     }
   }

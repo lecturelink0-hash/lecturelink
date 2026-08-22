@@ -2,7 +2,7 @@
  * 슬라이드 이미지에서 의료 이미지(ECG·X-ray·CT·MRI·병리·해부 등) 영역 자동 절단.
  *
  * 전략:
- *   1. 슬라이드 PNG 를 Claude Vision 에 넘겨 의료 이미지 영역의 정규화 좌표 [0..1] 요청
+ *   1. 슬라이드 PNG 를 Vision 모델(기본 gemini-2.5-flash)에 넘겨 의료 이미지 영역의 정규화 좌표 [0..1] 요청
  *   2. tool_use 로 구조화 응답 받기
  *   3. @napi-rs/canvas 로 해당 영역만 잘라 PNG 산출
  *
@@ -43,7 +43,7 @@ export interface CropRegion {
   width: number;
   height: number;
   caption?: string;
-  /** Claude 의 자신감 0~1 */
+  /** 검출 모델의 자신감 0~1 */
   confidence: number;
 }
 

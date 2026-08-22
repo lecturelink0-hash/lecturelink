@@ -70,6 +70,33 @@ export function versionForFeature(feature: string): string {
 }
 
 /**
+ * 실제로 돌아간 모델 id 를 이름으로 남긴다.
+ *
+ * 종전에는 환경변수가 비어 있으면 `'default'` 라는 문자열을 남겼다. 그 값으로는 나중에
+ * "그때 어떤 모델이었나"에 답할 수 없다 — 기본값이 바뀌면 같은 `'default'` 가 서로 다른
+ * 모델을 뜻하게 되어 §10.2 가 막으려던 바로 그 혼선이 생긴다. 활성 제공자의 기본 모델을
+ * 그대로 적는다. **기본 제공자는 Gemini 이므로 미설정 시 gemini-2.5-flash 다.**
+ *
+ * lib/ai/client.ts 를 import 하지 않는 이유: 이 파일은 검사 스크립트가 SDK·API 키 없이
+ * 불러 산식을 확인할 수 있어야 한다(sibling 잎 모듈과 같은 원칙). 그래서 기본값 판정만
+ * 여기 옮겨 적는다 — 바꿀 때 client.ts 와 gemini.ts 를 함께 고쳐야 한다.
+ */
+function resolveModels(): Record<string, string> {
+  const anthropic = (process.env.AI_PROVIDER ?? 'gemini').toLowerCase() === 'anthropic';
+  return anthropic
+    ? {
+        genModel: process.env.ANTHROPIC_GEN_MODEL ?? 'claude-sonnet-4-6',
+        verifyModel: process.env.ANTHROPIC_VERIFY_MODEL ?? 'claude-haiku-4-5-20251001',
+        visionModel: process.env.ANTHROPIC_VISION_MODEL ?? 'claude-sonnet-4-6',
+      }
+    : {
+        genModel: process.env.GEMINI_GEN_MODEL ?? 'gemini-2.5-flash',
+        verifyModel: process.env.GEMINI_VERIFY_MODEL ?? 'gemini-2.5-flash',
+        visionModel: process.env.GEMINI_VISION_MODEL ?? 'gemini-2.5-flash',
+      };
+}
+
+/**
  * 결과 보고에 함께 싣는 설정 스냅샷 (가이드 §10.2).
  * 지표 파일이나 보고서에 이 객체를 그대로 붙이면 재현 조건이 남는다.
  */
@@ -78,9 +105,7 @@ export function configSnapshot(): Record<string, unknown> {
     promptVersions: { ...PROMPT_VERSIONS },
     embeddingModel: EMBEDDING_MODEL,
     duplicateThreshold: DUPLICATE_SIMILARITY_THRESHOLD,
-    genModel: process.env.ANTHROPIC_GEN_MODEL ?? process.env.GEMINI_GEN_MODEL ?? 'default',
-    verifyModel: process.env.ANTHROPIC_VERIFY_MODEL ?? process.env.GEMINI_VERIFY_MODEL ?? 'default',
-    visionModel: process.env.ANTHROPIC_VISION_MODEL ?? process.env.GEMINI_VISION_MODEL ?? 'default',
+    ...resolveModels(),
     // RAG 는 아직 없다. 검색 계층(A9)이 들어오면 topK·리랭커 버전이 여기 붙는다.
     retrieval: null,
   };

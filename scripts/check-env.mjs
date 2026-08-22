@@ -98,18 +98,35 @@ const RULES = [
     purpose: '서버 전용 admin key. 누락 시 API 라우트 전부 깨짐.',
   },
 
-  // Anthropic
+  // AI 제공자 — 기본 모델은 gemini-2.5-flash
+  {
+    name: 'AI_PROVIDER',
+    kind: 'optional',
+    purpose: "미설정 시 'gemini' — 생성·검증·Vision·OCR 이 모두 gemini-2.5-flash 로 돈다.",
+  },
+  {
+    name: 'GEMINI_API_KEY',
+    kind: 'optional',
+    purpose: '기본 제공자(gemini)의 API key. 누락 시 문항 생성/검증/OCR 실패.',
+  },
+  {
+    name: 'GEMINI_GEN_MODEL',
+    kind: 'optional',
+    purpose: '미설정 시 gemini-2.5-flash 사용(기본 모델).',
+  },
+
+  // Anthropic — AI_PROVIDER=anthropic 일 때만 쓰이는 대체 경로
   {
     name: 'ANTHROPIC_API_KEY',
     kind: 'required',
     pattern: /^sk-ant-/,
     placeholders: ['sk-ant-xxxx'],
-    purpose: 'Claude API key. 누락 시 문항 생성/OCR 실패.',
+    purpose: 'Claude API key. AI_PROVIDER=anthropic 경로와 SDK 래퍼 초기화에 쓰인다.',
   },
   {
     name: 'ANTHROPIC_GEN_MODEL',
     kind: 'optional',
-    purpose: '미설정 시 claude-sonnet-4-6 사용.',
+    purpose: 'AI_PROVIDER=anthropic 일 때만 유효. 미설정 시 claude-sonnet-4-6 사용.',
   },
   {
     name: 'ANTHROPIC_TIMEOUT_MS',

@@ -1,7 +1,16 @@
 /**
- * Anthropic Claude 클라이언트
+ * AI 모델 클라이언트 (기본 제공자: Gemini)
+ *
+ * **기본 모델은 gemini-2.5-flash 다.** `AI_PROVIDER` 를 설정하지 않으면 생성·검증·Vision·
+ * OCR 이 모두 이 모델로 돌아간다(lib/ai/gemini.ts). Anthropic 경로는 `AI_PROVIDER=anthropic`
+ * 을 명시했을 때만 쓰이는 대체 경로다.
  *
  * 환경변수로 모델을 분리하여 운영 중 모델 교체 가능:
+ *  - GEMINI_GEN_MODEL       : 문항 생성 (기본: gemini-2.5-flash)
+ *  - GEMINI_VERIFY_MODEL    : 검증·OCR (기본: gemini-2.5-flash)
+ *  - GEMINI_VISION_MODEL    : 의료 이미지 처리 (기본: gemini-2.5-flash)
+ *
+ * `AI_PROVIDER=anthropic` 인 경우에만 아래 값이 쓰인다:
  *  - ANTHROPIC_GEN_MODEL    : 문항 생성 (기본: claude-sonnet-4-6)
  *  - ANTHROPIC_VERIFY_MODEL : 검증 (기본: claude-haiku-4-5-20251001)
  *  - ANTHROPIC_VISION_MODEL : 의료 이미지 처리 (기본: claude-sonnet-4-6)
@@ -96,7 +105,8 @@ export async function createMessage(
   params: MessageCreateParams,
 ): Promise<ExtendedMessage> {
   // 기본 provider인 Gemini로 위임한다(응답은 Anthropic 형태로 반환).
-  // AI_PROVIDER=anthropic을 명시한 환경에서만 아래 Claude 경로를 사용한다.
+  // 기본 제공자는 Gemini(gemini-2.5-flash) 다 — AI_PROVIDER=anthropic 을 명시한
+  // 환경에서만 아래 Claude 경로를 사용한다.
   if (isGeminiProvider()) {
     return geminiCreateMessage(params);
   }
@@ -166,6 +176,12 @@ export function getAnthropic(): Anthropic {
 
 // ───────────── 모델 ID 헬퍼 ─────────────
 
+/**
+ * 실제로 호출될 모델 id.
+ *
+ * 기본 제공자는 Gemini 이므로 아무 환경변수도 없으면 셋 다 **gemini-2.5-flash** 다.
+ * `AI_PROVIDER=anthropic` 일 때만 claude-* 기본값이 쓰인다.
+ */
 export const MODELS = {
   generation: () =>
     isGeminiProvider()

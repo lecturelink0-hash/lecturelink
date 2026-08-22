@@ -1,7 +1,7 @@
 /**
  * POST /api/uploads/analyze
  *
- * 업로드된 학습자료 텍스트 일부를 추출해 Claude(가벼운 모델)로 메타데이터를 제안한다.
+ * 업로드된 학습자료 텍스트 일부를 추출해 가벼운 모델(기본 gemini-2.5-flash)로 메타데이터를 제안한다.
  * 업로드 페이지의 "추천 설정 / 문제 세트 정보" 폼 자동 채움에 사용된다.
  *
  * Body:  { upload_ids: string[] }
@@ -45,7 +45,7 @@ export const maxDuration = 60;
 
 // ─────── 상한 (비용/메모리 보호) ───────
 const MAX_UPLOADS = 2; // 분석에 사용할 최대 업로드 수
-const MAX_INPUT_CHARS = 12_000; // Claude 입력 텍스트 길이 제한
+const MAX_INPUT_CHARS = 12_000; // 모델 입력 텍스트 길이 제한
 const PER_FILE_CHARS = 9_000; // 파일 1개당 표본 총량(앞·중·뒤 3구간 합)
 /** 3구간 표본 — 앞부분만 보면 목차·표지가 판정을 지배한다(P6). */
 const SAMPLE_SEGMENTS = 3;
@@ -233,7 +233,7 @@ async function extractTextPreview(input: {
   return { text: '', pageCount: 0, rawChars: 0 };
 }
 
-/** Claude 응답을 안전하게 AnalyzeResult 로 정규화. */
+/** 모델 응답을 안전하게 AnalyzeResult 로 정규화. */
 // page_count·is_scan 은 모델 응답이 아니라 파일에서 잰 사실이므로 여기서 채우지 않는다.
 function normalize(raw: unknown): Omit<AnalyzeResult, 'page_count' | 'is_scan'> {
   const o = (raw ?? {}) as Record<string, unknown>;
@@ -407,12 +407,12 @@ export const POST = withErrorHandling(async (request: Request) => {
 
   const compositeText = texts.join('\n\n---\n\n').slice(0, MAX_INPUT_CHARS).trim();
 
-  // 추출된 텍스트가 전혀 없으면 Claude 호출 없이 기본값.
+  // 추출된 텍스트가 전혀 없으면 모델 호출 없이 기본값.
   if (!compositeText) {
     return ok({ ...FALLBACK, page_count: pageCount, is_scan: isScan });
   }
 
-  // 3) Claude 호출 — 메타 제안 (가벼운 모델). 실패 시 폴백.
+  // 3) 모델 호출 — 메타 제안 (가벼운 모델, 기본 gemini-2.5-flash). 실패 시 폴백.
   const model = MODELS.verification();
   try {
     const client = getAnthropic();

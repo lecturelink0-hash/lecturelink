@@ -5,6 +5,12 @@
  * (lib/ai/prompts/private-generation.ts 를 그대로 import 한다 — 하니스용 사본을 두면
  *  프롬프트가 바뀔 때 측정 대상과 실물이 갈라진다.)
  *
+ * ⚠ **모델은 아직 갈라져 있다.** 프로덕션 기본 모델은 gemini-2.5-flash 인데(AI_PROVIDER
+ *   미설정 시) 이 하니스는 Anthropic SDK 를 직접 불러 claude-sonnet-4-6 을 잰다. 따라서
+ *   여기서 나온 반복 안정성 수치는 **운영 기본값의 수치가 아니다.** 운영값을 재려면 호출을
+ *   lib/ai/client.ts 의 createMessage(제공자 라우터)로 옮겨야 한다 — 옮기는 순간 측정 대상이
+ *   바뀌므로 기존에 기록한 수치와는 같은 축에 놓을 수 없다.
+ *
  *   npm run check:gen-repeat -- --selftest          # 산식만 (API 키 불필요, CI 에서 돈다)
  *   ANTHROPIC_API_KEY=... npm run check:gen-repeat -- --runs 10 --fixture <id>
  *   npm run check:gen-repeat -- --list              # 등록된 고정 입력 목록
@@ -212,6 +218,8 @@ async function measure(fixture, runs) {
     import('../lib/ai/prompts/private-generation.ts'),
   ]);
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  // Anthropic SDK 직결 하니스라 Anthropic 기본값을 쓴다. 프로덕션 기본 모델은 gemini-2.5-flash
+  // — 위 헤더의 경고 참고(이 수치는 운영 기본값의 수치가 아니다).
   const model = process.env.ANTHROPIC_GEN_MODEL ?? 'claude-sonnet-4-6';
 
   const catalog = fixture.subTopicCatalog ?? [

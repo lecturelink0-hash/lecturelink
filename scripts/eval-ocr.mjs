@@ -44,7 +44,7 @@ const USAGE = `사용:
 주의:
   - 본 스크립트는 .ts 모듈을 직접 import 합니다. 'node' 단독으로는 .ts 를 못 읽으므로
     반드시 'npx tsx' 또는 빌드된 .js 를 통해 실행하세요.
-  - 실행 시 OCR 백엔드에 따라 Claude/Voyage API 가 실제로 호출됩니다 (비용 발생).
+  - 실행 시 OCR 백엔드에 따라 Vision 모델(기본 gemini-2.5-flash)/Voyage API 가 실제로 호출됩니다 (비용 발생).
 `;
 
 if (!dir || dir === '--help' || dir === '-h') {

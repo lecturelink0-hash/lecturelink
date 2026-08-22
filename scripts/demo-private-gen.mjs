@@ -1,8 +1,13 @@
 // @ts-check
 /**
- * 데모: PDF·이미지 → Claude → 예상문제 12개 생성
+ * 데모: PDF·이미지 → Claude → 예상문제 12개 생성 (**Anthropic 전용 경로**)
  *
  * Supabase·인증·UI 다 우회하고 AI 생성 파이프라인만 검증.
+ *
+ * ⚠ 프로덕션 기본 모델은 gemini-2.5-flash 다(AI_PROVIDER 미설정 시). 이 데모는 Anthropic
+ *   SDK 를 직접 부르므로 모델 기본값이 claude-sonnet-4-6 로 남아 있다 — 여기서 본 출력은
+ *   운영 기본값의 출력이 아니다. 운영과 같은 모델로 보려면 scripts/demo-private-gen-gemini.mjs
+ *   를 쓴다.
  *
  * 사용:
  *   $env:ANTHROPIC_API_KEY="sk-ant-..."
@@ -214,6 +219,7 @@ function calcCost(model, inT, outT, cacheRead = 0, cacheWrite = 0) {
 }
 
 // ───────── Anthropic 호출 (fetch 직접) ─────────
+// Anthropic 전용 데모라 Anthropic 기본값을 쓴다. 프로덕션 기본 모델은 gemini-2.5-flash.
 const model = process.env.ANTHROPIC_GEN_MODEL ?? 'claude-sonnet-4-6';
 
 console.log(`⏳ ${model} 호출 중...\n`);
