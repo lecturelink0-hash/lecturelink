@@ -131,6 +131,26 @@ check('모드 기본값이 discard', /PRIVATE_BLIND_MODE\s*\?\?\s*'discard'/.tes
 check('warn 모드가 있다(폐기 없이 계측만)', /bumpGenDiag\('blindFlagged'\)/.test(gen));
 check('블라인드 비용을 private.blind 로 기록', /endpoint:\s*'private\.blind'/.test(gen));
 
+// ⑥-2 폐기가 요청 수량을 깎지 않는지 (2026-08-22 신고: 이미지형 10문항 → 5문항).
+//
+// 그림 없이 풀린 문항을 무조건 버리면 슬롯이 비고, 보충이 같은 이미지로 또 이미지 문항을
+// 만들어 또 걸리는 순환이 생긴다. 이미지형 단독 요청은 전 문항이 검사 대상이라 그 순환이
+// 그대로 최종 수량이 됐다. 아래 세 가지가 그 재발을 막는 결정이다.
+console.log('\n⑥-2 폐기가 수량을 깎지 않는다');
+check(
+  '그림을 선언한 발문만 폐기한다',
+  /if\s*\(stemDeclaresFigure\(String\(k\.q\.stem/.test(gen),
+);
+check(
+  '나머지는 이미지 연결만 끊고 문항은 살린다',
+  /k\.q\.image_indices\s*=\s*\[\]/.test(gen) && /bumpGenDiag\('blindDemoted'\)/.test(gen),
+);
+check(
+  '묶음이 비어도 throw 하지 않는다(보충이 채운다)',
+  /return emptyBatchResult\(/.test(gen) &&
+    !/throw new Error\(\s*`이미지 문항이 모두 그림 없이 풀립니다/.test(gen),
+);
+
 console.log('\n⑦ 사용자 알림(P8) 연결');
 const notice = stripComments(read('../lib/ai/upload-notice.ts'));
 check('blindDiscarded 를 부족분 사유에 포함', /blindDiscarded/.test(notice));
