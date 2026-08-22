@@ -32,6 +32,7 @@ import {
   type UsageRecord,
 } from './client';
 import { recordAiCost } from './cost-cap';
+import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
 import { buildUploadNotices } from './upload-notice';
 import {
@@ -462,71 +463,17 @@ function sanitizeErrorMessage(raw: unknown): string {
 }
 
 /**
- * 발문이 "제시된 그림을 봐야만 풀리는" 문항인지 판정.
+ * 그림 지칭 판정 = 발문 표현(figure-stem.ts) + 표식 참조(annotate-markers.ts).
  *
- * 이미지가 정제(텍스트 제거) 실패나 재사용 상한으로 빠지면, 그림을 가리키는 발문은
- * 풀 수 없으므로 문항을 삭제해야 한다. 반대로 모델이 이미지를 곁들이기만 하고 발문은
- * 텍스트만으로 완결된 경우(흔함)까지 삭제하면 요청 수가 모자라 보충 생성이 돌고,
- * 그 보충 호출이 전체 시간을 수십 초 늘린다. 그래서 발문 표현으로 구분한다.
- * (판정이 애매하면 삭제 쪽으로 — 못 푸는 문항을 남기는 것이 더 나쁘다.)
+ * 표식 문항("A로 표시된 …")에는 그림 명사가 하나도 없어 발문 정규식이 못 잡는다.
+ * figure-stem.ts 는 회귀 검사가 import 할 수 있도록 의존성을 두지 않으므로, 두 판정의
+ * 결합은 여기서 한다(둘 다 "그림이 없으면 못 푸는 문항"을 가리킨다).
  */
-const IMAGE_DEIXIS =
-  '다음|아래|위의|위에|제시된|해당|보이는|첨부된|주어진';
-// 모식도·도해 같은 "그림" 표현을 빠뜨려 실제 사고가 났다(발문은 "…모식도이다"인데 이미지 없음).
-const IMAGE_NOUNS =
-  '그림|사진|이미지|영상|심전도|ECG|EKG|방사선|엑스레이|X-?ray|CT|MRI|초음파|병리|현미경|소견|' +
-  '모식도|도해|도식|개념도|삽화|도표';
-// 그림을 "선언"하는 발문에 쓰이는 명사(표·그래프처럼 본문에 글로 넣을 수 있는 것은 제외).
-const FIGURE_NOUNS =
-  '그림|사진|이미지|영상|모식도|도해|도식|개념도|삽화|심전도|ECG|EKG|X-?ray|엑스레이|방사선\\s*사진|CT|MRI|초음파|현미경\\s*사진|병리\\s*소견';
-// 그림 명사와 서술어 사이에 흔히 끼는 명사("초음파 소견이다", "CT 영상이다").
-// 실측 사고: "다음은 복부 초음파 소견이다" 가 이 틈 때문에 '그림 선언'으로 안 잡혀,
-// 이미지가 붙지 않은 채로 학생에게 나갔다.
-// 주의: 조사 목록에 '은/는' 을 넣지 않아 "심전도 소견은 정상이었다"(본문 서술)는 계속 제외된다.
-const FIGURE_TAIL_NOUN = '(?:\\s*(?:소견|사진|영상|결과|이미지))?';
+const stemDependsOnImage = (stem: string): boolean =>
+  stemDependsOnImageText(stem) || stemReferencesMarker(stem);
 
-const IMAGE_DEPENDENT_STEM_RE = new RegExp(
-  // 지시어와 명사 사이에 수식어가 끼어드는 형태까지 잡는다("아래 흉부 X-ray 를 보고").
-  `(?:${IMAGE_DEIXIS})\\s*(?:[가-힣A-Za-z0-9]{1,6}\\s*){0,2}(?:${IMAGE_NOUNS})|` +
-    `(?:${IMAGE_NOUNS})\\s*(?:에서|에는|을|를|의|상)\\s*(?:관찰|보이|나타|판독|해석)|` +
-    // "다음은 대동맥 박리의 발생 기전에 대한 모식도이다" 처럼 지시어와 그림 명사 사이에
-    // 설명이 길게 끼는 선언형. 명사 뒤 조사로 "그림을 가리키는 문장"임을 확인해
-    // "심전도 소견은 정상이었다"(본문에 소견을 서술한 경우)와 구분한다.
-    `(?:다음|아래|위)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}\\s*(?:이다|입니다|이며|이고|에서|에는|을|를)|` +
-    `판독(?:하|해)|사진\\s*판독`,
-  'i',
-);
-
-function stemDependsOnImage(stem: string): boolean {
-  const s = String(stem ?? '');
-  // 표식 문항("A로 표시된 …")에는 그림 명사가 하나도 없어 위 정규식이 못 잡는다.
-  return IMAGE_DEPENDENT_STEM_RE.test(s) || stemReferencesMarker(s);
-}
-
-/**
- * "제시된 그림을 가리키는" 발문인지 더 엄격하게 판정한다.
- *
- * 용도 차이:
- *  - stemDependsOnImage: 모델이 image_indices 를 채웠는데 이미지가 정제 실패로 빠진 경우에 쓴다.
- *    이미 그림을 의도한 문항이므로 느슨해도 된다.
- *  - stemDeclaresFigure: 이미지가 애초에 하나도 연결되지 않은 문항을 지울지 판단한다.
- *    오탐이면 멀쩡한 문항을 지우게 되므로, 그림 명사 뒤 조사까지 확인해
- *    "다음 환자의 심전도 소견은 정상이었다"(본문 서술)와 "…모식도이다"(그림 지칭)를 구분한다.
- */
-const FIGURE_DECLARATION_RE = new RegExp(
-  `(?:다음|아래|위|제시된|첨부된|주어진)(?:은|는)?\\s*[^.?!\\n]{0,40}?(?:${FIGURE_NOUNS})${FIGURE_TAIL_NOUN}` +
-    `\\s*(?:이다|입니다|이며|이고|에서|에는|으로|로|를\\s*보고|을\\s*보고|를\\s*판독|을\\s*판독)`,
-  'i',
-);
-
-/** 테스트 전용 재노출 — 런타임 동작에는 영향이 없다. */
-export const stemDeclaresFigureForTest = (stem: string): boolean => stemDeclaresFigure(stem);
-
-function stemDeclaresFigure(stem: string): boolean {
-  const s = String(stem ?? '');
-  // 표식을 가리키는 문항은 이미지가 없으면 풀 수 없다 — 그림 선언과 같이 취급한다.
-  return FIGURE_DECLARATION_RE.test(s) || stemReferencesMarker(s);
-}
+const stemDeclaresFigure = (stem: string): boolean =>
+  stemDeclaresFigureText(stem) || stemReferencesMarker(stem);
 
 /** 문항 선지 수 — 국시형 고정값. 저장 전에 반드시 이 값으로 맞춘다. */
 const REQUIRED_CHOICE_COUNT = 5;
