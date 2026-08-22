@@ -3457,7 +3457,7 @@ export async function generatePrivateQuestionsFromUpload(
             `방금 만든 문항 중 [이미지 N]을 실제로 판독해야 풀리는 문항이 ${before}개뿐입니다. ` +
             `이번 묶음은 **이미지 판독 문항이 ${imageQuota}개** 필요합니다. 같은 근거로 ${batchSize}문항을 ` +
             `다시 만들되, 최소 ${imageQuota}문항은 image_indices 에 제시된 이미지 번호를 넣고 ` +
-            `**그 그림에서만 읽을 수 있는 소견**(위치·모양·크기·분포·염색 양상·기호가 가리키는 대상)을 ` +
+            `**그 그림에서만 읽을 수 있는 소견**(위치·모양·크기·분포·염색 양상)을 ` +
             `정답의 근거로 삼으세요. 그림을 손으로 가려도 풀리면 그것은 이미지 문항이 아닙니다. ` +
             `제시되지 않은 그림을 가리키는 표현은 쓰지 마세요.`,
         });
@@ -3649,11 +3649,17 @@ export async function generatePrivateQuestionsFromUpload(
               `같은 근거와 같은 [이미지 N]으로 ${batchSize}문항을 다시 만들되, ` +
               `**최소 ${failed.length}문항**은 다음을 반드시 지키세요.\n` +
               `- 정답을 가르는 근거가 **그림에서만 읽히는 것**이어야 합니다(위치·모양·크기·분포·` +
-              `신호 강도·염색 양상·기호가 가리키는 대상). 교과서 지식으로 갈리면 실패입니다.\n` +
+              `신호 강도·염색 양상). 교과서 지식으로 갈리면 실패입니다.\n` +
               `- **그림에서 읽은 소견을 발문에 글로 옮겨 적지 마세요.** 예를 들어 "흉부 CT에서 ` +
               `내막 파열이 관찰되었고"처럼 소견을 지문에 써 버리면 그림을 볼 이유가 없어집니다. ` +
               `무엇이 보이는지는 학생이 그림에서 직접 읽게 두세요.\n` +
               `- 다섯 선지가 모두 그림과 무관한 일반 지식 서술이면 그 문항은 이미지형이 아닙니다.\n` +
+              // 재작성은 "그림을 봐야 풀리는" 문항을 요구하므로, 모델이 가장 쉬운 길인
+              // 표식 문항("A로 표시된 …")으로 도망친다. 실측에서 10문항 중 5문항이 표식
+              // 문항이 됐다(상한은 10문항당 1문항). 재작성 경로에서는 아예 금지한다 —
+              // 표식이 허용된 묶음은 본 배치 지시가 이미 최대 1문항을 허용하고 있다.
+              `- **표식(A·B·C…)을 가리키는 문항은 만들지 마세요.** "A로 표시된 …" 형태 대신, ` +
+              `그림에서 직접 보이는 소견으로 물으세요.\n` +
               `- image_indices 에 그 이미지 번호를 반드시 넣으세요.`,
           });
           const res = await callGenerate(genMaxTokens);
@@ -4516,6 +4522,43 @@ export async function generatePrivateQuestionsFromUpload(
     };
     await enforceImageReuseCap();
 
+    /**
+     * 표식(A·B·C) 문항 빈도 상한을 **코드로** 강제한다 — 10문항당 1문항 이하.
+     *
+     * 종전에는 배치 지시문으로만 부탁했다("최대 1문항까지"). 병렬 배치·보충·재작성이
+     * 각자 독립 판단하므로 아무도 전체를 세지 않았고, 실측(2026-08-22, 업로드 c2a5954b)
+     * 에서 10문항 중 **5문항**이 표식 문항으로 나왔다. 정량 지시만으로는 안 지켜진다는
+     * 것을 이미지 쿼터에서 배웠는데 여기만 그대로였다.
+     *
+     * 초과분은 삭제하고 빈 슬롯을 보충이 채운다(먼저 만들어진 것부터 남긴다 —
+     * generation_slot 순이라 반복 호출해도 결과가 같다).
+     */
+    const enforceMarkerQuestionCap = async (): Promise<void> => {
+      try {
+        const { data: rows } = await admin
+          .from('private_questions')
+          .select('id, stem, generation_slot')
+          .eq('upload_id', uploadRow.id)
+          .order('generation_slot', { ascending: true });
+        const marker = (rows ?? []).filter((r) => stemReferencesMarker(String(r.stem ?? '')));
+        diag.generation.markerQuestions = marker.length;
+        diag.generation.markerQuota = markerQuota;
+        if (marker.length <= markerQuota) return;
+        const excess = marker.slice(markerQuota).map((r) => r.id);
+        await admin.from('private_questions').delete().in('id', excess);
+        diag.generation.markerQuestionsRemoved =
+          ((diag.generation.markerQuestionsRemoved as number | undefined) ?? 0) + excess.length;
+        warnings.push(
+          `표식(A·B·C) 문항이 ${marker.length}개로 상한(${markerQuota})을 넘어 ${excess.length}개 삭제 — 보충 생성으로 대체.`,
+        );
+      } catch (e) {
+        warnings.push(
+          `표식 문항 상한 정리 실패 — ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    };
+    await enforceMarkerQuestionCap();
+
     // ── 부족분 보충: 요청 수를 반드시 채운다.
     // 실제 저장 결과를 DB 에서 다시 읽어(누적 산술이 아니라 사실 기준) 빈 슬롯을 확인하고,
     // 남은 슬롯을 "이미지 없는 텍스트 문항"으로 다시 생성한다. 이미지를 주지 않으므로
@@ -4729,6 +4772,8 @@ export async function generatePrivateQuestionsFromUpload(
       // 그대로 학생에게 나갔다. 두 정리 모두 멱등이라 항상 돌려도 안전하다.
       await enforceImageReuseCap();
       await removeBrokenFigureQuestions();
+      // 보충·재작성도 표식 문항을 만든다 — 라운드마다 상한을 다시 강제한다.
+      await enforceMarkerQuestionCap();
       const beforeCount = saved.length;
       saved = await readSaved();
       roundRec.ms = Date.now() - tRound;

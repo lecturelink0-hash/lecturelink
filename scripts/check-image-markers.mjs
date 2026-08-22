@@ -330,6 +330,27 @@ console.log('실제 렌더 — 마스킹 → 표식');
   check('후보가 없으면 원본을 그대로 돌려준다', noSources.png === masked.png && noSources.markers.length === 0);
 }
 
+console.log('표식 문항 빈도 상한 — 프롬프트가 아니라 코드가 강제하는가');
+{
+  // 2026-08-22 실측(c2a5954b): 10문항 중 5문항이 표식 문항으로 나왔다(상한 1).
+  // 배치 지시문으로만 부탁하면 병렬 배치·보충·재작성이 각자 판단해 아무도 전체를 안 센다.
+  const gen = readFileSync(new URL('../lib/ai/private-generation.ts', import.meta.url), 'utf8');
+  check('상한을 강제하는 정리 함수가 있다', /const enforceMarkerQuestionCap = async/.test(gen));
+  check(
+    '초과분을 삭제하고 보충이 채우게 한다',
+    /markerQuestionsRemoved/.test(gen) && /marker\.slice\(markerQuota\)/.test(gen),
+  );
+  check(
+    '보충 라운드마다 다시 강제한다(보충·재작성도 표식 문항을 만든다)',
+    (gen.match(/await enforceMarkerQuestionCap\(\)/g) ?? []).length >= 2,
+  );
+  check(
+    '재작성 프롬프트가 표식 문항을 권하지 않는다',
+    !/기호가 가리키는 대상/.test(gen) && /표식\(A·B·C…\)을 가리키는 문항은 만들지 마세요/.test(gen),
+  );
+  check('실제 표식 문항 수를 진단에 남긴다', /diag\.generation\.markerQuestions\b/.test(gen));
+}
+
 console.log('지시 대상 판정 — 가리킬 것이 없으면 표식을 찍지 않는다');
 {
   // 운영 지적(2026-08-16): 원본 그림의 라벨이 지시선 없이 위치만으로 구조를 가리키는
@@ -386,6 +407,31 @@ console.log('지시 대상 판정 — 가리킬 것이 없으면 표식을 찍�
       '사방이 비슷하게 가까우면(모호) 표식을 찍지 않는다',
       res.markers.length === 0,
       `실제 ${res.markers.length}개`,
+    );
+  }
+  {
+    // 2026-08-22 실측 신고: "A,B,C,E 가 서로 몰려있고 각 화살표가 다 비슷하거나 같은
+    // 지점에 연결되어 있다."
+    //
+    // 원본 라벨은 그림 한쪽에 세로로 쌓여 있는 일이 흔하고(대동맥벽 층 이름 등), 가리키는
+    // 층이 서로 붙어 있으면 **원은 떨어져 있어도 화살표가 한 점으로 모인다.** 종전 분리
+    // 기준(minGap)은 원끼리의 거리만 봐서 이걸 못 막았다. 지시 대상 기준으로 걸러야 한다.
+    // 대상은 탐색 범위(짧은 변의 30 % = 90px) 안에 둔다 — 범위 밖이면 종전 코드도
+    // 'none' 으로 떨어져 검사가 무력해진다.
+    const png = make((x) => {
+      x.fillStyle = '#2a7f4f';
+      x.fillRect(240, 140, 30, 25); // 작은 대상 하나
+    });
+    const stacked = [
+      { text: 'Intima', x0: 140, y0: 100, x1: 200, y1: 120 },
+      { text: 'Media', x0: 140, y0: 140, x1: 200, y1: 160 },
+      { text: 'Adventitia', x0: 140, y0: 180, x1: 200, y1: 200 },
+    ];
+    const res = await annotateMarkers(png, stacked);
+    check(
+      '같은 지점을 가리키는 표식은 하나만 남긴다',
+      res.markers.length <= 1,
+      `실제 ${res.markers.length}개 — 화살표가 한 점으로 몰린다`,
     );
   }
   {

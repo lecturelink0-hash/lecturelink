@@ -586,20 +586,57 @@ export async function annotateMarkers(
       const cy = Math.round(Math.min(H - r - 2, Math.max(r + 2, (src.y0 + src.y1) / 2)));
       // 원본 지시선이 붙어 있으면 기호는 **선택이 아니라 필수**다.
       const anchored = hasAttachedPointer(isContent, src, W, H);
-      const designation: Designation = anchored
-        ? { kind: 'anchored' }
-        : findDesignation(isContent, cx, cy, r, W, H);
-      return { src, r, cx, cy, designation, required: anchored };
+      // 지시 대상은 anchored 여부와 무관하게 **항상** 계산한다.
+      //
+      // 종전에는 anchored 면 여기서 끝내고 지시선을 그리지 않았다(원본 화살표가 보일
+      // 것이라 가정). 그런데 hasAttachedPointer 는 라벨 상자 옆의 "선처럼 보이는 것"을
+      // 찾을 뿐이라, 옆 표식의 원이나 괄호를 원본 지시선으로 오인한다. 그러면 그 표식은
+      // **아무 데도 가리키지 않은 채** 찍힌다(2026-08-22 실측 신고: "A는 어디에 연결되어
+      // 있는지 분명하지 않다"). 대상을 항상 구해 두면 (1) 가리킬 데가 없으면 버릴 수 있고
+      // (2) 대상이 겹치는 표식을 걸러낼 수 있다.
+      const found = findDesignation(isContent, cx, cy, r, W, H);
+      return { src, r, cx, cy, designation: found, required: anchored };
     });
 
     // 가리킬 것을 못 찾은 표식은 아예 찍지 않는다 — 애매한 표식은 없느니만 못하다.
-    const usable = placements.filter(
-      (p) => p.designation.kind !== 'none' && (!options.onlyRequired || p.required),
-    );
+    // 'none' = 가리킬 데가 없거나 방향이 모호하다 → 버린다.
+    // 'adjacent' = 이미 대상에 닿아 있다 → 선은 필요 없고, 지시 대상은 표식 자리 자체다.
+    // 'line' = 지시선을 긋는다 → 지시 대상은 선 끝이다.
+    const candidates = placements.flatMap((p) => {
+      if (p.designation.kind === 'none') return [];
+      if (options.onlyRequired && !p.required) return [];
+      const line = p.designation.kind === 'line' ? p.designation : null;
+      return [
+        {
+          ...p,
+          line,
+          tx: line ? p.cx + Math.cos(line.angle) * line.dist : p.cx,
+          ty: line ? p.cy + Math.sin(line.angle) * line.dist : p.cy,
+        },
+      ];
+    });
+
+    // ── 지시 **대상**이 겹치는 표식은 버린다.
+    //
+    // 종전 분리 기준(selectMarkerSources 의 minGap)은 **원끼리**의 거리만 봤다. 그런데
+    // 표식은 원본 라벨 자리에 앉고, 라벨은 보통 그림 한쪽에 세로로 쌓여 있다. 대동맥벽
+    // 처럼 가리키는 층이 서로 붙어 있는 그림에서는 원은 떨어져 있어도 **화살표가 거의
+    // 같은 지점으로 모인다** — 학생은 A와 B를 구분할 수 없다(2026-08-22 실측 신고:
+    // "A,B,C,E 가 서로 몰려있고 각 화살표가 다 비슷하거나 같은 지점에 연결").
+    // 원이 아니라 화살표 끝(지시 대상)으로 최소 간격을 강제한다.
+    const targetGap = minSide * 0.1;
+    const usable: typeof candidates = [];
+    for (const p of candidates) {
+      const collides = usable.some((a) => Math.hypot(a.tx - p.tx, a.ty - p.ty) < targetGap);
+      if (collides) continue;
+      usable.push(p);
+    }
+
     for (const p of usable) {
-      if (p.designation.kind === 'line') {
-        drawLeaderLine(ctx, p.cx, p.cy, p.r, p.designation.angle, p.designation.dist);
-      }
+      // 원본에 지시선이 있었더라도(required) 우리 선을 그린다. 실제로 남아 있으면 그 위에
+      // 짧은 선이 겹칠 뿐이지만(findDesignation 이 가장 가까운 그림 요소에서 멈춘다),
+      // 원본이 사실 없었던 경우에는 이 선이 유일한 연결 표시가 된다.
+      if (p.line) drawLeaderLine(ctx, p.cx, p.cy, p.r, p.line.angle, p.line.dist);
     }
 
     usable.forEach((p, i) => {
