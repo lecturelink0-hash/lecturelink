@@ -10,17 +10,23 @@
     cp .env.example .env  # GEMINI_API_KEY 기입
     venv/bin/uvicorn main:app --port 8787 --reload
 """
+import contextlib
 import datetime as dt
 import hmac
+import json
 import os
+import time
+import uuid
 from typing import Literal
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import db
+import metrics as metrics_mod
 import prompt as prompt_mod
 
 load_dotenv()
@@ -37,6 +43,17 @@ CPX_PROXY_SHARED_SECRET = os.environ.get('CPX_PROXY_SHARED_SECRET', '')
 # 운영에서는 사용자 임상 승인이 끝난 케이스만 노출한다. 로컬 작성·검수 환경은 기본값(false)으로
 # 전체 케이스를 보되, 실제 서비스 환경에서만 true로 설정한다.
 CPX_RELEASE_READY_ONLY = os.environ.get('CPX_RELEASE_READY_ONLY', 'false').lower() == 'true'
+# 계측 레코드의 '기능 버전' — 모델·프롬프트를 바꾼 배포에서 올리면 버전 간 회귀 비교가 된다
+# (가이드 §4.1 '기능 및 버전'). 배포 파이프라인에서 커밋 해시를 넣어도 된다.
+CPX_FEATURE_VERSION = os.environ.get('CPX_FEATURE_VERSION', 'cpx-v1')
+# 운영 지표 계측 자체를 끄는 스위치. 기본은 켜짐 — 끄면 1단계 실측이 통째로 사라지므로
+# 장애 대응 등 예외 상황에서만 쓴다.
+CPX_METRICS_ENABLED = os.environ.get('CPX_METRICS_ENABLED', 'true').lower() != 'false'
+# 계측 보존 기간(일). 요청마다 한 줄씩 쌓이므로 상한이 없으면 볼륨이 언젠가 찬다.
+try:
+    CPX_METRICS_RETENTION_DAYS = max(1, int(os.environ.get('CPX_METRICS_RETENTION_DAYS', '90')))
+except ValueError:
+    CPX_METRICS_RETENTION_DAYS = 90
 
 app = FastAPI(title='lecturelink-cpx')
 app.add_middleware(
@@ -45,6 +62,157 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+
+# ── 운영 성능 계측 (성능지표 가이드 1단계 §4.1) ───────────────────────────────
+# 모든 API 요청에 request_id 를 부여하고 기능·버전·단계별 시간·결과 상태·오류 코드를
+# 한 레코드로 남긴다. 성공률, p50/p95/p99, 오류 코드 분포가 전부 이 한 테이블에서 나온다.
+
+# 세션 하위 경로 → 기능 이름. 경로를 그대로 쓰면 세션 id 가 기능 축에 섞여 집계가 무너진다.
+_SESSION_FEATURES = {
+    'live-token': 'cpx_live_token',
+    'events': 'cpx_events',
+    'usage': 'cpx_usage',
+    'turns': 'cpx_turn_metrics',
+    'exam': 'cpx_exam',
+    'end': 'cpx_session_end',
+    'evaluate': 'cpx_evaluate',
+    'transcript': 'cpx_transcript',
+    'review-notes': 'cpx_review_notes_save',
+}
+_ROOT_FEATURES = {
+    'cases': 'cpx_cases',
+    'exam-buttons': 'cpx_exam_buttons',
+    'history': 'cpx_history',
+    'review-notes': 'cpx_review_notes',
+    'health': 'cpx_health',
+    'account-data': 'cpx_account_delete',
+    'usage': 'cpx_usage_summary',
+}
+
+
+def classify_request(method: str, path: str) -> tuple[str | None, str | None]:
+    """요청 경로 → (기능 이름, 세션 id). 계측 대상이 아니면 (None, None)."""
+    parts = [p for p in path.split('/') if p]
+    if len(parts) < 2 or parts[0] != 'api':
+        return None, None
+    parts = parts[1:]
+    root = parts[0]
+    # 대시보드 열람은 계측하지 않는다 — 지표를 보는 행위가 지표에 섞이면 성공률이 희석된다.
+    if root == 'metrics':
+        return None, None
+    if root == 'sessions':
+        if len(parts) == 1:
+            return ('cpx_session_create' if method == 'POST' else 'cpx_sessions'), None
+        sub = parts[2] if len(parts) > 2 else ''
+        return _SESSION_FEATURES.get(sub, f"cpx_session_{sub or 'detail'}"), parts[1]
+    return _ROOT_FEATURES.get(root, f"cpx_{root.replace('-', '_')}"), None
+
+
+def classify_status(status_code: int, error_code: str | None) -> str:
+    """가이드 §4.1 '결과 상태'. 타임아웃은 서버 오류와 분리한다 — 원인도 대응도 다르다."""
+    if status_code == 504 or error_code == 'evaluate_timeout':
+        return metrics_mod.STATUS_TIMEOUT
+    if status_code < 400:
+        return metrics_mod.STATUS_SUCCESS
+    if status_code < 500:
+        return metrics_mod.STATUS_CLIENT_ERROR
+    return metrics_mod.STATUS_SERVER_ERROR
+
+
+@contextlib.contextmanager
+def stage(request: Request | None, name: str):
+    """단계별 소요 시간(ms)을 request.state.stages 에 누적 — 병목 단계 식별용.
+
+    같은 이름이 여러 번 열리면 합산한다(재시도 포함 총 소요). 계측이 없는 호출 경로
+    (테스트·오프라인 앱)에서도 그냥 지나가도록 request 가 없으면 아무것도 하지 않는다.
+    """
+    started = time.perf_counter()
+    try:
+        yield
+    finally:
+        if request is not None:
+            stages = getattr(request.state, 'stages', None)
+            if isinstance(stages, dict):
+                stages[name] = stages.get(name, 0) + int((time.perf_counter() - started) * 1000)
+
+
+def _metric_row(request: Request, feature: str, session_id: str | None,
+                status_code: int, error_code: str | None, total_ms: int) -> dict:
+    state = request.state
+    stages = getattr(state, 'stages', None) or {}
+    return {
+        'request_id': getattr(state, 'request_id', '') or uuid.uuid4().hex,
+        'feature': feature,
+        'version': CPX_FEATURE_VERSION,
+        'user_id': request.headers.get('x-lecturelink-user-id'),
+        'session_id': getattr(state, 'session_id', None) or session_id,
+        'model': getattr(state, 'model', None),
+        'method': request.method,
+        'status': classify_status(status_code, error_code),
+        'status_code': status_code,
+        'error_code': error_code,
+        'total_ms': total_ms,
+        'stages': json.dumps(stages, ensure_ascii=False) if stages else None,
+        'schema_valid': getattr(state, 'schema_valid', None),
+        'created_at': time.time(),
+    }
+
+
+# 마지막 정리 시각. 요청마다 DELETE 를 돌리면 계측이 서비스보다 비싸지므로 1시간에 한 번만 돈다.
+_last_metrics_purge = 0.0
+_PURGE_INTERVAL_SECONDS = 3600
+
+
+def purge_metrics_if_due(now_ts: float | None = None) -> dict | None:
+    """보존 기간이 지난 계측을 주기적으로 정리. 정리했으면 삭제 건수를 돌려준다."""
+    global _last_metrics_purge
+    now_ts = time.time() if now_ts is None else now_ts
+    if now_ts - _last_metrics_purge < _PURGE_INTERVAL_SECONDS:
+        return None
+    _last_metrics_purge = now_ts
+    try:
+        return db.purge_old_metrics(now_ts - CPX_METRICS_RETENTION_DAYS * 86400)
+    except Exception as exc:  # noqa: BLE001 — 정리 실패가 요청을 실패시키면 안 된다
+        print(f'[metrics] 보존 기간 정리 실패: {exc}')
+        return None
+
+
+@app.middleware('http')
+async def record_request_metrics(request: Request, call_next):
+    feature, session_id = classify_request(request.method, request.url.path)
+    if not CPX_METRICS_ENABLED or feature is None:
+        return await call_next(request)
+    request.state.request_id = uuid.uuid4().hex
+    request.state.stages = {}
+    request.state.schema_valid = None
+    request.state.model = None
+    request.state.session_id = session_id
+    started = time.perf_counter()
+
+    async def save(status_code: int, error_code: str | None) -> None:
+        elapsed = int((time.perf_counter() - started) * 1000)
+        row = _metric_row(request, feature, session_id, status_code, error_code, elapsed)
+        try:
+            # SQLite 쓰기는 동기 호출이다. 이벤트 루프에서 직접 부르면 계측이 요청 처리를
+            # 붙잡는다 — 계측은 서비스보다 뒤에 있어야 하므로 스레드풀로 내린다.
+            await run_in_threadpool(db.add_request_metric, row)
+        except Exception as exc:  # noqa: BLE001 — 계측 실패가 요청을 실패시키면 안 된다
+            print(f'[metrics] 요청 계측 저장 실패 ({feature}): {exc}')
+
+    try:
+        response = await call_next(request)
+    except Exception:
+        # 처리되지 않은 예외도 실패율의 분자다. 여기서 세지 않으면 500 이 통계에서 사라진다.
+        await save(500, 'unhandled_exception')
+        raise
+    code = response.headers.get('x-cpx-error-code')
+    if not code and response.status_code >= 400:
+        code = f'http_{response.status_code}'
+    response.headers['x-cpx-request-id'] = request.state.request_id
+    await save(response.status_code, code)
+    await run_in_threadpool(purge_metrics_if_due)
+    return response
 
 
 def current_user_id(
@@ -193,10 +361,12 @@ def create_session(body: SessionCreate, user_id: str = Depends(current_user_id))
 
 
 @app.post('/api/sessions/{session_id}/live-token')
-def live_token(session_id: str, user_id: str = Depends(current_user_id)):
+def live_token(request: Request, session_id: str, user_id: str = Depends(current_user_id)):
     """세션용 ephemeral token 발급. 1회 연결, 시스템 프롬프트 서버 잠금."""
+    request.state.model = LIVE_MODEL
     if not GEMINI_API_KEY:
-        raise HTTPException(503, 'GEMINI_API_KEY가 설정되지 않았습니다 (server/.env).')
+        raise HTTPException(503, 'GEMINI_API_KEY가 설정되지 않았습니다 (server/.env).',
+                            headers={'x-cpx-error-code': 'missing_api_key'})
     session = db.get_session(session_id, user_id)
     if not session:
         raise HTTPException(404, '세션 없음')
@@ -231,9 +401,11 @@ def live_token(session_id: str, user_id: str = Depends(current_user_id)):
         token_config['live_connect_constraints'] = {'model': LIVE_MODEL, 'config': live_config}
 
     try:
-        token = client.auth_tokens.create(config=token_config)
+        with stage(request, 'token_create'):
+            token = client.auth_tokens.create(config=token_config)
     except Exception as e:  # noqa: BLE001 — SDK 예외 유형이 넓음
-        raise HTTPException(502, f'ephemeral token 발급 실패: {e}')
+        raise HTTPException(502, f'ephemeral token 발급 실패: {e}',
+                            headers={'x-cpx-error-code': 'token_create_failed'})
 
     resp = {'token': token.name, 'model': LIVE_MODEL, 'locked': LOCK_CONSTRAINTS, 'voice': voice}
     if not LOCK_CONSTRAINTS:
@@ -273,6 +445,41 @@ def add_usage(session_id: str, events: list[UsageEvent], user_id: str = Depends(
         raise HTTPException(404, '세션 없음')
     n = db.add_usage_events(session_id, user_id, [e.model_dump() for e in events], kind='live_turn', model=LIVE_MODEL)
     return {'saved': n}
+
+
+class TurnMetricEvent(BaseModel):
+    """클라이언트가 측정한 턴 응답시간 (가이드 §2.1 'CPX 응답 지연시간').
+
+    Live 오디오는 브라우저와 Gemini 사이에서 직접 오간다 — 서버는 발화 종료도 응답 시작도
+    보지 못하므로 클라이언트 측정치를 받는다. 대신 값의 범위는 서버가 강제한다:
+    음수나 몇 시간짜리 지연이 섞이면 p95 가 통째로 망가진다.
+    """
+    turnIndex: int = Field(ge=0, le=10_000)
+    inputMode: Literal['voice', 'text'] = 'voice'
+    speechEndOffsetMs: int = Field(ge=0, le=24 * 60 * 60 * 1000)
+    firstResponseMs: int | None = Field(default=None, ge=0, le=600_000)
+    firstAudioMs: int | None = Field(default=None, ge=0, le=600_000)
+    turnCompleteMs: int | None = Field(default=None, ge=0, le=600_000)
+    interrupted: bool = False
+    network: str | None = Field(default=None, max_length=32)
+
+
+@app.post('/api/sessions/{session_id}/turns')
+def add_turn_metrics(session_id: str, events: list[TurnMetricEvent],
+                     user_id: str = Depends(current_user_id)):
+    """턴별 '발화 종료 → 응답 시작' 실측치 기록 — 턴 응답시간 p50/p95의 원천."""
+    if not db.get_session(session_id, user_id):
+        raise HTTPException(404, '세션 없음')
+    saved = db.add_turn_metrics(session_id, user_id, [e.model_dump() for e in events], model=LIVE_MODEL)
+    return {'saved': saved}
+
+
+@app.get('/api/sessions/{session_id}/turns')
+def session_turns(session_id: str, user_id: str = Depends(current_user_id)):
+    if not db.get_session(session_id, user_id):
+        raise HTTPException(404, '세션 없음')
+    rows = db.get_turn_metrics(session_id, user_id)
+    return {'sessionId': session_id, 'turns': rows, 'summary': metrics_mod.summarize_turns(rows)}
 
 
 @app.get('/api/sessions/{session_id}/usage')
@@ -317,6 +524,37 @@ def usage_summary(limit: int = 20, user_id: str = Depends(current_user_id)):
         'meanLiveSessionKrw': round(mean_usd * rate, 1),
         'usdKrwRate': rate,
     }
+
+
+def require_metrics_admin(
+    x_cpx_admin: str | None = Header(default=None),
+    _user_id: str = Depends(current_user_id),
+) -> None:
+    """운영 지표는 관리자만 본다.
+
+    이중 잠금이다. ① current_user_id 가 프록시 공유 비밀을 검사하므로 LectureLink 서버를
+    거치지 않은 요청은 여기까지 오지 못한다. ② 그 프록시는 requireAdmin() 이 통과한
+    요청에만 이 헤더를 붙인다. 헤더가 없으면 거절 — 열린 쪽으로 실패하지 않는다.
+    """
+    if (x_cpx_admin or '') != '1':
+        raise HTTPException(403, '운영 지표는 관리자만 조회할 수 있습니다.')
+
+
+@app.get('/api/metrics/summary')
+def metrics_summary(days: int = 7, _admin: None = Depends(require_metrics_admin)):
+    """1단계 운영 지표 묶음 — 성공률·p95·오류 분포·완주율·턴 지연·세션당 원가."""
+    import usage as usage_mod
+
+    window = max(1, min(days, 90))
+    since = time.time() - window * 86400
+    return metrics_mod.build_summary(
+        window,
+        db.list_request_metrics(since),
+        db.list_turn_metrics(since),
+        db.list_sessions_since(since),
+        db.usage_events_since(since),
+        usage_mod,
+    )
 
 
 class ExamRequest(BaseModel):
@@ -364,11 +602,24 @@ def perform_exam(session_id: str, body: ExamRequest, user_id: str = Depends(curr
     return {**result, 'kind': kind, 'transcriptText': transcript_text}
 
 
+class SessionEnd(BaseModel):
+    """종료 사유 — 완주율에서 중단·타임아웃·재시작을 분리하기 위한 값(가이드 §2.1).
+
+    본문 없이 오는 예전 클라이언트도 그대로 받는다(사유 NULL → 집계에서 'unknown').
+    """
+    reason: str | None = Field(default=None, max_length=32)
+
+
 @app.post('/api/sessions/{session_id}/end')
-def end_session(session_id: str, user_id: str = Depends(current_user_id)):
+def end_session(session_id: str, body: SessionEnd | None = None,
+                user_id: str = Depends(current_user_id)):
     if not db.get_session(session_id, user_id):
         raise HTTPException(404, '세션 없음')
-    db.end_session(session_id, user_id)
+    reason = body.reason if body else None
+    # 임의 문자열이 들어오면 집계축이 무한히 늘어난다 — 아는 사유만 그대로 두고 나머지는 접는다.
+    if reason is not None and reason not in metrics_mod.END_REASONS:
+        reason = 'unknown'
+    db.end_session(session_id, user_id, reason)
     return {'ok': True}
 
 
@@ -408,12 +659,19 @@ def history(user_id: str = Depends(current_user_id)):
 
 
 @app.post('/api/sessions/{session_id}/evaluate')
-def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
-    """전사 → LLM 근거 추출(§4.9) → 규칙 엔진 채점(§4.8) → 결과 저장."""
+def evaluate_session(request: Request, session_id: str, user_id: str = Depends(current_user_id)):
+    """전사 → LLM 근거 추출(§4.9) → 규칙 엔진 채점(§4.8) → 결과 저장.
+
+    단계별 소요 시간(load/llm_extract/scoring/persist)을 계측에 남긴다 — 채점은 CPX에서
+    가장 느린 경로이고, 총 시간만으로는 LLM 지연인지 우리 코드인지 구분할 수 없다
+    (가이드 §4.1 '단계별 시간 → 병목 단계 식별').
+    """
     import json as _json
 
     import evaluate as ev
     import scoring
+
+    request.state.model = ev.EVAL_MODEL
 
     session = db.get_session(session_id, user_id)
     if not session:
@@ -428,22 +686,30 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
 
     # 이미 채점됨 → 캐시 반환 (재현성: 동일 세션 재채점 방지)
     if session.get('result'):
-        return with_item_texts(_json.loads(session['result']))
+        # 캐시 히트는 LLM을 부르지 않는다. 같은 기능으로 뭉뚱그리면 채점 지연 p95 가
+        # 실제보다 좋게 나오므로 단계 이름으로 구분해 남긴다.
+        with stage(request, 'cache_hit'):
+            cached = with_item_texts(_json.loads(session['result']))
+        request.state.schema_valid = 0 if metrics_mod.validate_result_schema(cached) else 1
+        return cached
     # 진행 중인 세션을 채점하면 그 시점까지의 부분 결과가 캐시로 굳어, 진짜 최종 결과를
     # 영영 만들 수 없다(위 캐시 분기 때문). 정상 경로는 항상 /end 다음에 /evaluate 를
     # 부르므로 영향이 없다 — 실수나 외부 호출로 세션이 잠기는 것만 막는다(2026-08-18 감사 P2).
     if not (session.get('ended_at') or session.get('status') == 'ended'):
-        raise HTTPException(409, '아직 진행 중인 세션입니다. 진료를 종료한 뒤 채점할 수 있습니다.')
+        raise HTTPException(409, '아직 진행 중인 세션입니다. 진료를 종료한 뒤 채점할 수 있습니다.',
+                            headers={'x-cpx-error-code': 'session_in_progress'})
     if not GEMINI_API_KEY:
-        raise HTTPException(503, 'GEMINI_API_KEY가 설정되지 않았습니다 (server/.env).')
+        raise HTTPException(503, 'GEMINI_API_KEY가 설정되지 않았습니다 (server/.env).',
+                            headers={'x-cpx-error-code': 'missing_api_key'})
 
-    events = db.get_transcript(session_id, user_id)
-    student_turns = [e for e in events if e['role'] == 'student']
+    with stage(request, 'load'):
+        events = db.get_transcript(session_id, user_id)
+        student_turns = [e for e in events if e['role'] == 'student']
 
-    case = prompt_mod.load_case(session['case_id'])
-    rubric = ev.load_rubric(case)
-    persona = _json.loads(session['persona']) if session.get('persona') else None
-    context = ev.build_context(case, persona)
+        case = prompt_mod.load_case(session['case_id'])
+        rubric = ev.load_rubric(case)
+        persona = _json.loads(session['persona']) if session.get('persona') else None
+        context = ev.build_context(case, persona)
 
     # 대화가 짧아도 채점은 한다 — 실제 시험처럼 '그 시점까지의 수행'이 곧 결과다.
     # 예전에는 문진 2턴 미만이면 422로 막았는데, 프론트가 그 실패를 받고 진료 화면으로
@@ -463,15 +729,19 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
         import concurrent.futures as _cf
         pool = _cf.ThreadPoolExecutor(max_workers=1)
         try:
-            future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context, case)
-            judgments = future.result(timeout=75)
+            with stage(request, 'llm_extract'):
+                future = pool.submit(ev.extract_judgments, GEMINI_API_KEY, rubric, events, context, case)
+                judgments = future.result(timeout=75)
         except _cf.TimeoutError:
-            raise HTTPException(504, '채점 시간이 초과되었습니다. 잠시 후 다시 시도해주세요. (API 응답 지연 또는 무료 티어 쿼터 소진 가능성)')
+            raise HTTPException(504, '채점 시간이 초과되었습니다. 잠시 후 다시 시도해주세요. (API 응답 지연 또는 무료 티어 쿼터 소진 가능성)',
+                                headers={'x-cpx-error-code': 'evaluate_timeout'})
         except Exception as e:  # noqa: BLE001
             msg = str(e)
             if '429' in msg or 'RESOURCE_EXHAUSTED' in msg:
-                raise HTTPException(429, '무료 티어 채점 쿼터를 모두 사용했습니다. 잠시 후(또는 다음 날) 다시 시도하거나 유료 플랜으로 전환해주세요.')
-            raise HTTPException(502, f'근거 추출 실패: {msg}')
+                raise HTTPException(429, '무료 티어 채점 쿼터를 모두 사용했습니다. 잠시 후(또는 다음 날) 다시 시도하거나 유료 플랜으로 전환해주세요.',
+                                    headers={'x-cpx-error-code': 'quota_exhausted'})
+            raise HTTPException(502, f'근거 추출 실패: {msg}',
+                                headers={'x-cpx-error-code': 'extract_failed'})
         finally:
             # wait=False 가 핵심 — 성공했으면 유휴 스레드가 바로 정리되고,
             # 타임아웃이면 매달린 호출을 기다리지 않고 응답이 나간다.
@@ -484,6 +754,7 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
         db.add_usage_events(session_id, user_id, [eval_usage], kind='evaluate', model=ev.EVAL_MODEL)
 
     reasoning = judgments.pop('clinicalReasoning', None)
+    scoring_started = time.perf_counter()
     result = scoring.score_session(rubric, judgments, context)
     # 임상추론 판정은 점수 계산에 직접 들어가지 않는다 — 항목 판정(내용 정확성)과 피드백으로만 쓴다.
     result['clinicalReasoning'] = reasoning or ev.normalize_clinical_reasoning(None)
@@ -509,7 +780,21 @@ def evaluate_session(session_id: str, user_id: str = Depends(current_user_id)):
     import usage as usage_mod
     result['usage'] = usage_mod.summarize(db.get_usage_events(session_id, user_id))
 
-    db.set_result(session_id, user_id, _json.dumps(result, ensure_ascii=False))
+    # 계측이 꺼진 배포에서는 stages 가 아예 없다 — getattr 로 받아 조용히 건너뛴다.
+    _stages = getattr(request.state, 'stages', None)
+    if isinstance(_stages, dict):
+        _stages['scoring'] = int((time.perf_counter() - scoring_started) * 1000)
+
+    # 스키마 준수율 (가이드 §2.1) — 결과 JSON은 결과 화면과 Supabase 미러가 함께 쓰는 계약이다.
+    # 위반해도 응답은 막지 않는다. 여기서 502 를 내면 이미 돈과 시간을 쓴 채점이 통째로
+    # 버려지고 학생은 결과를 못 본다 — 계측에 남기고 로그로 띄워 배포 후 회귀를 잡는다.
+    problems = metrics_mod.validate_result_schema(result)
+    request.state.schema_valid = 0 if problems else 1
+    if problems:
+        print(f'[metrics] 채점 결과 스키마 위반 session={session_id}: {problems[:8]}')
+
+    with stage(request, 'persist'):
+        db.set_result(session_id, user_id, _json.dumps(result, ensure_ascii=False))
     return result
 
 

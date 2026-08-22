@@ -8,6 +8,7 @@ import CpxPagedList from './CpxPagedList';
 import CpxStartExperience from './CpxStartExperience';
 import CpxTimeAnalysis from './CpxTimeAnalysis';
 import CpxTranscriptView from './CpxTranscriptView';
+import ScoreGauge from './ScoreGauge';
 import { GeminiLivePatient } from './live';
 import { startMic } from './mic';
 import { sanitizePatientText } from './sanitize';
@@ -152,6 +153,8 @@ export default function CpxPractice() {
   const voiceBusyRef = useRef(false);
   const bufferRef = useRef([]);
   const usageRef = useRef([]); // Live 턴별 usageMetadata 버퍼 (원가 실측)
+  const turnMetricsRef = useRef([]); // 턴 응답시간 버퍼 (발화 종료 → 응답 시작 실측)
+  const turnIndexRef = useRef(0);
   const startedAtRef = useRef(0);
   const autoEndedRef = useRef(false); // 시간 종료 자동 채점은 세션당 1회만
   const finishRef = useRef(null);
@@ -203,6 +206,18 @@ export default function CpxPractice() {
     }
   }, [sessionId]);
 
+  // 턴 응답시간을 서버에 기록 — 'CPX 응답 지연시간' p50/p95 의 원천(성능지표 가이드 §2.1).
+  // 서버는 Live 오디오 경로를 보지 못하므로 이 값이 없으면 턴 지연은 측정 불가다.
+  const flushTurnMetrics = useCallback(async () => {
+    if (!sessionId || !turnMetricsRef.current.length) return;
+    const events = turnMetricsRef.current.splice(0);
+    try {
+      await request(`/sessions/${sessionId}/turns`, { method: 'POST', body: JSON.stringify(events), keepalive: true });
+    } catch {
+      turnMetricsRef.current.unshift(...events);
+    }
+  }, [sessionId]);
+
   // 서버 하트비트 — 시간 차감 정산의 생존 신호(정책 7장).
   // 전사·usage flush 는 보낼 내용이 있을 때만 전송되므로, 학생이 자료를 읽거나 고민하느라
   // 침묵이 길어지면 신호가 끊긴다. 그대로 두면 스윕(마지막 하트비트 + 10분)이 진행 중인
@@ -222,12 +237,13 @@ export default function CpxPractice() {
     const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAtRef.current) / 1000)), 1000);
     const saver = window.setInterval(flush, 3000);
     const usageSaver = window.setInterval(flushUsage, 3000);
+    const turnSaver = window.setInterval(flushTurnMetrics, 3000);
     const beat = window.setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     return () => {
       window.clearInterval(timer); window.clearInterval(saver);
-      window.clearInterval(usageSaver); window.clearInterval(beat);
+      window.clearInterval(usageSaver); window.clearInterval(turnSaver); window.clearInterval(beat);
     };
-  }, [phase, flush, flushUsage, heartbeat]);
+  }, [phase, flush, flushUsage, flushTurnMetrics, heartbeat]);
 
   // 이탈 감지 — 탭 숨김·페이지 종료 시 마지막 전사와 생존 신호를 남긴다(정책 7장).
   // 이탈은 종료가 아니라 자동 일시정지이므로 여기서 /end 를 호출하지 않는다. 정산 시점은
@@ -235,7 +251,7 @@ export default function CpxPractice() {
   // keepalive 요청이라 문서가 사라진 뒤에도 브라우저가 전송을 마친다.
   useEffect(() => {
     if (phase !== 'live') return undefined;
-    const persist = () => { flush(); flushUsage(); heartbeat(); };
+    const persist = () => { flush(); flushUsage(); flushTurnMetrics(); heartbeat(); };
     const onVisibility = () => { if (document.visibilityState === 'hidden') persist(); };
     // 이어하기 복원이 아직 없어 지금은 이탈 = 연습 중단이므로, 브라우저 이탈은 한 번 되묻는다.
     const onBeforeUnload = (event) => {
@@ -252,7 +268,7 @@ export default function CpxPractice() {
       window.removeEventListener('pagehide', persist);
       window.removeEventListener('beforeunload', onBeforeUnload);
     };
-  }, [phase, flush, flushUsage, heartbeat]);
+  }, [phase, flush, flushUsage, flushTurnMetrics, heartbeat]);
 
   // 채점(finishing) 중 원형 게이지를 95%까지 점점 느려지게 채운다.
   // 실제 채점은 단일 API 호출(진행률 이벤트 없음)이라 예상 소요시간 기반으로 시뮬레이션하며,
@@ -371,6 +387,7 @@ export default function CpxPractice() {
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     usageRef.current = [];
+    turnMetricsRef.current = []; turnIndexRef.current = 0;
     let createdSessionId = '';
     try {
       const noticeResponse = await fetch('/api/me/legal-consents', {
@@ -400,6 +417,20 @@ export default function CpxPractice() {
         onInputText: (text, meta) => { if (meta?.final) push('student', text); },
         onAudioLevel: setAudioLevel,
         onUsage: (usage) => { usageRef.current.push({ ...usage, tOffsetMs: Math.max(0, Date.now() - startedAtRef.current) }); },
+        // 턴 응답시간 — live.js 가 잰 값을 세션 시작 기준 오프셋으로 바꿔 버퍼에 쌓는다.
+        // turnIndex 는 서버의 중복 방지 키다(재전송이 같은 턴을 두 번 세지 않게 한다).
+        onTurnMetric: (turn) => {
+          turnMetricsRef.current.push({
+            turnIndex: turnIndexRef.current++,
+            inputMode: turn.inputMode,
+            speechEndOffsetMs: Math.max(0, (turn.speechEndEpochMs ?? Date.now()) - startedAtRef.current),
+            firstResponseMs: turn.firstResponseMs,
+            firstAudioMs: turn.firstAudioMs,
+            turnCompleteMs: turn.turnCompleteMs,
+            interrupted: turn.interrupted,
+            network: turn.network,
+          });
+        },
       });
       liveRef.current = live;
       await live.connect(token);
@@ -422,7 +453,11 @@ export default function CpxPractice() {
       // 그대로 두면 '동시 진행 세션 1개' 게이트가 최대 10분간 모든 재시도를 409로 막아,
       // 한 번의 일시적 실패가 10분짜리 잠금으로 굳는다 — 여기서 곧바로 반납한다.
       if (createdSessionId) {
-        request(`/sessions/${createdSessionId}/end`, { method: 'POST' }).catch(() => {});
+        // 종료 사유를 함께 보낸다 — 진료를 해 볼 기회조차 없던 세션을 '중단'으로 세면
+        // 완주율이 연결 장애율과 뒤섞인다(성능지표 가이드 §2.1).
+        request(`/sessions/${createdSessionId}/end`, {
+          method: 'POST', body: JSON.stringify({ reason: 'start_failed' }),
+        }).catch(() => {});
         setSessionId('');
       }
       // 이미 진행 중인 연습에 막힌 경우에만 그 세션을 종료할 수 있는 복구 버튼을 띄운다.
@@ -482,7 +517,9 @@ export default function CpxPractice() {
     if (!blocked) return;
     setBlockedSessionId(''); setError(''); setStatus('이전 연습을 종료하고 있습니다.');
     try {
-      await request(`/sessions/${blocked}/end`, { method: 'POST' });
+      await request(`/sessions/${blocked}/end`, {
+        method: 'POST', body: JSON.stringify({ reason: 'superseded' }),
+      });
     } catch {
       setError('이전 연습을 종료하지 못했습니다. 잠시 후 다시 시도해 주세요.');
       setStartErrorSeq((seq) => seq + 1);
@@ -539,8 +576,13 @@ export default function CpxPractice() {
     setError(''); setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
     try {
       teardownRef.current = true;
-      micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush(); await flushUsage();
-      await request(`/sessions/${sessionId}/end`, { method: 'POST' });
+      micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush(); await flushUsage(); await flushTurnMetrics();
+      // 제한시간 소진은 실제 CPX 시험의 정상 종료 형태다 — 학생이 직접 누른 종료와
+      // 사유만 나누고 둘 다 완주로 센다(성능지표 가이드 §2.1 '중단·타임아웃 분리').
+      await request(`/sessions/${sessionId}/end`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: autoEndedRef.current ? 'time_limit' : 'completed' }),
+      });
       const evaluation = await request(`/sessions/${sessionId}/evaluate`, { method: 'POST' });
       setResult(evaluation); setPhase('ended'); setStatus('채점 완료');
     } catch (nextError) {
@@ -775,13 +817,20 @@ export default function CpxPractice() {
     {/* 순응도 낮은 환자 — 상시 무작위 배정(직접 선택 25% · 랜덤 실전 40%).
         어떤 저항 유형이었는지는 실제 SP 시험처럼 채점 후에만 공개한다. */}
     {result?.lowCompliance?.behaviors?.length > 0 && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-sage-50)] p-3 text-sm text-[var(--color-muted)]"><b className="text-[var(--color-text)]">순응도 낮은 환자</b> · 이번 환자는 무작위로 배정된 순응도 낮은 환자였어요. 저항 유형: {result.lowCompliance.behaviors.map((b) => b.name).join(' · ')}. 저항의 이유를 먼저 묻고 공감한 뒤 설득했는지 대화록에서 확인해 보세요.</div>}
-    {result && <Card title="CPX 결과" description="영역 카드를 누르면 항목별 상세 채점 근거가 펼쳐집니다." icon={<Sparkles className="h-5 w-5" />}><div className="grid gap-5 md:grid-cols-[auto_1fr]"><div className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-7 py-5 text-center text-white self-start"><div className="text-xs text-white/70">총점</div><div className="tnum mt-1 text-5xl font-bold">{result.totalScore}</div><div className="mt-1 text-sm">{result.overallGradeLabel}</div></div>
+    {result && <Card title="CPX 결과" description="영역 카드를 누르면 항목별 상세 채점 근거가 펼쳐집니다." icon={<Sparkles className="h-5 w-5" />}><div className="space-y-5">
+      {/* 총점 + 영역 게이지. 예전엔 grid-cols-[auto_1fr]이었는데, col-span이 없는 상세 블록이
+          1열(auto)로 자동 배치되면서 그 트랙이 카드 그리드의 max-content까지 부풀고
+          총점 카드가 거기 맞춰 늘어났다. 2열(1fr)은 통째로 비었다. 스택으로 바꿔 원인을 없애고,
+          총점 옆 폭은 만점 대비 게이지로 채운다(기록 화면과 같은 ScoreGauge). */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch"><div className="flex flex-col items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-5 text-center text-white sm:w-[168px] sm:shrink-0"><div className="text-xs text-white/70">총점</div><div className="tnum mt-1 text-5xl font-bold leading-none">{result.totalScore}</div><div className="mt-1 text-xs text-white/70">/ 100점</div><div className="mt-2 text-sm font-semibold">{result.overallGradeLabel}</div></div>
+        <div className="flex flex-1 flex-col justify-center gap-3">{(result.sections || []).map((s) => <ScoreGauge key={s.id} section={s} />)}</div>
+      </div>
       {/* 안전 항목 누락 — 총점이 상한까지 깎였으므로 이유를 반드시 함께 보여준다 */}
-      {(result.safetyGate?.triggered || []).length > 0 && <div className="md:col-span-2 rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4"><div className="flex items-center gap-2 text-sm font-bold text-[var(--color-danger)]"><ShieldAlert className="h-4 w-4" aria-hidden />안전 항목 누락 — 총점이 제한되었습니다</div>{typeof result.rawTotalScore === 'number' && <p className="mt-1 text-xs text-[var(--color-muted)]">체크리스트 기준 <b className="tnum">{result.rawTotalScore}점</b>이지만, 아래 항목을 놓쳐 <b className="tnum">{result.totalScore}점</b>으로 제한했습니다.</p>}<ul className="mt-2 space-y-2 text-sm text-[var(--color-text)]">{result.safetyGate.triggered.map((gate) => <li key={gate.id}><p>{gate.message}</p>{(gate.missingItemIds || []).length > 0 && <p className="mt-1 text-xs text-[var(--color-muted)]">놓친 항목 — {gate.missingItemIds.map((id) => result.itemTexts?.[id] || id).join(' · ')}</p>}</li>)}</ul></div>}
-      {(result.feedback?.reasoningNotes || []).length > 0 && <div className="md:col-span-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"><div className="text-sm font-bold text-[var(--color-text)]">임상 추론</div>{result.clinicalReasoning?.statedImpression && <p className="mt-1 text-xs text-[var(--color-muted)]">말한 추정 진단 — “{result.clinicalReasoning.statedImpression}”</p>}<ul className="mt-2 space-y-1 text-sm text-[var(--color-muted)]">{result.feedback.reasoningNotes.map((note, i) => <li key={i}>• {note}</li>)}</ul></div>}
+      {(result.safetyGate?.triggered || []).length > 0 && <div className="rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4"><div className="flex items-center gap-2 text-sm font-bold text-[var(--color-danger)]"><ShieldAlert className="h-4 w-4" aria-hidden />안전 항목 누락 — 총점이 제한되었습니다</div>{typeof result.rawTotalScore === 'number' && <p className="mt-1 text-xs text-[var(--color-muted)]">체크리스트 기준 <b className="tnum">{result.rawTotalScore}점</b>이지만, 아래 항목을 놓쳐 <b className="tnum">{result.totalScore}점</b>으로 제한했습니다.</p>}<ul className="mt-2 space-y-2 text-sm text-[var(--color-text)]">{result.safetyGate.triggered.map((gate) => <li key={gate.id}><p>{gate.message}</p>{(gate.missingItemIds || []).length > 0 && <p className="mt-1 text-xs text-[var(--color-muted)]">놓친 항목 — {gate.missingItemIds.map((id) => result.itemTexts?.[id] || id).join(' · ')}</p>}</li>)}</ul></div>}
+      {(result.feedback?.reasoningNotes || []).length > 0 && <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"><div className="text-sm font-bold text-[var(--color-text)]">임상 추론</div>{result.clinicalReasoning?.statedImpression && <p className="mt-1 text-xs text-[var(--color-muted)]">말한 추정 진단 — “{result.clinicalReasoning.statedImpression}”</p>}<ul className="mt-2 space-y-1 text-sm text-[var(--color-muted)]">{result.feedback.reasoningNotes.map((note, i) => <li key={i}>• {note}</li>)}</ul></div>}
       <div className="space-y-3">
         <CpxTimeAnalysis analysis={result.timeAnalysis} excludedSections={result.excludedSections} />
-        <div className="grid gap-3 sm:grid-cols-2">{(result.sections || []).map((section) => { const open = expandedSection === section.id; const isDeduction = Array.isArray(section.satisfiedIds) === false && section.violationCount !== undefined; return (
+        <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">{(result.sections || []).map((section) => { const open = expandedSection === section.id; const isDeduction = Array.isArray(section.satisfiedIds) === false && section.violationCount !== undefined; return (
           <button key={section.id} type="button" onClick={() => setExpandedSection(open ? null : section.id)} className={`text-left rounded-[var(--radius-md)] border p-3 transition ${open ? 'border-[var(--color-primary)] bg-[var(--color-sage-50)]' : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'}`}>
             <div className="flex items-center justify-between gap-3"><span className="font-bold text-[var(--color-text)]">{section.name}</span><span className="inline-flex items-center gap-1"><span className="tnum font-bold text-[var(--color-primary)]">{section.score}</span><ChevronDown className={`h-4 w-4 text-[var(--color-muted)] transition-transform ${open ? 'rotate-180' : ''}`} /></span></div>
             <p className="mt-1 text-xs text-[var(--color-muted)]">{isDeduction ? `감점 위반 ${section.violationCount ?? 0}건 · 등급 ${section.gradeLabel ?? ''}` : `충족 ${section.satisfiedCount}/${section.applicableCount}${section.partialCount ? ` · 부분 ${section.partialCount}` : ''} · 등급 ${section.gradeLabel ?? ''}`}</p>
