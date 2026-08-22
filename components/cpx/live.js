@@ -6,7 +6,7 @@ import { GoogleGenAI, Modality } from '@google/genai'
 import { sanitizePatientText } from './sanitize'
 
 export class GeminiLivePatient {
-  constructor({ onStatus, onPatientText, onInputText, onAudioLevel, onAudioStart, onUsage, onLog } = {}) {
+  constructor({ onStatus, onPatientText, onInputText, onAudioLevel, onAudioStart, onUsage, onTurnMetric, onLog } = {}) {
     this.session = null
     this.ready = false
     this.connecting = false
@@ -21,7 +21,17 @@ export class GeminiLivePatient {
     this.onAudioLevel = onAudioLevel || (() => {})
     this.onAudioStart = onAudioStart || (() => {})
     this.onUsage = onUsage || (() => {})
+    this.onTurnMetric = onTurnMetric || (() => {})
     this.log = onLog || ((tag, data) => console.debug('[live]', tag, data || ''))
+    // 턴 응답시간 계측 (성능지표 가이드 §2.1 'CPX 응답 지연시간').
+    // 오디오는 브라우저와 Gemini 사이에서 직접 오가므로 서버는 이 구간을 볼 수 없다 —
+    // 여기서 재지 않으면 잴 곳이 없다.
+    // speechLastAt: 마지막으로 학생 발화 전사가 도착한 시각 = '발화 종료' 추정치.
+    //   Live API 는 서버 VAD 로 턴을 끊고 발화 종료를 따로 통지하지 않으므로,
+    //   응답이 시작되기 직전의 마지막 입력 전사 시각을 발화 종료로 삼는다.
+    this.speechLastAt = null
+    this.speechLastMode = 'voice'
+    this.turn = null
     this.audioContext = null
     this.playTime = 0
     this.lastConfig = null
@@ -151,6 +161,10 @@ export class GeminiLivePatient {
     this.outputAudioParts = []
     this.inputText = ''
     this.lastUsageKey = ''
+    // 끊긴 턴은 버린다 — 재연결 뒤 turnComplete 가 오면 '몇 분짜리 응답'으로 기록돼
+    // p95 가 통째로 망가진다. 미완 턴은 지표에서 빠지고 completionRate 로만 드러난다.
+    this.turn = null
+    this.speechLastAt = null
     if (this.pending) {
       this.pending.reject(new Error('Live session disconnected.'))
       this.pending = null
@@ -182,6 +196,10 @@ export class GeminiLivePatient {
     if (!this.session || !this.ready) {
       return Promise.reject(new Error('Live API가 연결되어 있지 않습니다.'))
     }
+    // 텍스트 문진은 발화 종료 시각이 명확하다 — 보낸 순간이다.
+    this.speechLastAt = nowMs()
+    this.speechLastMode = 'text'
+    this.turn = null
     this.outputText = ''
     this.outputAudioParts = []
     this.inputText = ''
@@ -224,6 +242,9 @@ export class GeminiLivePatient {
     if (serverContent.interrupted) {
       this.outputText = ''
       this.outputAudioParts = []
+      // 끼어들기로 잘린 턴은 '끝까지 말한 시간'이 아니다. 지연 표본에는 남기되
+      // interrupted 로 표시해 집계에서 구분할 수 있게 한다.
+      if (this.turn) this.turn.interrupted = true
       this.log('turn.interrupted', {})
     }
 
@@ -233,17 +254,33 @@ export class GeminiLivePatient {
       this.inputText = mergeTranscriptText(this.inputText, inputTranscript)
       this.lastInputText = this.inputText.trim()
       this.onInputText(this.lastInputText, { final: false, source: 'live_input_transcription' })
+      // 응답이 아직 시작되지 않았다면 이 시각이 지금까지의 '발화 종료' 후보다.
+      // 응답이 이미 시작된 뒤의 입력(끼어들기)은 그 턴의 기준을 흔들지 않는다.
+      if (!this.turn) {
+        this.speechLastAt = nowMs()
+        this.speechLastMode = 'voice'
+      }
     }
     if (outputTranscript) {
+      this.markResponseStart()
       this.outputText += outputTranscript
     }
 
     const parts = serverContent.modelTurn?.parts || msg.modelTurn?.parts || []
     for (const part of parts) {
-      if (part.text && !part.thought) this.outputText += part.text
+      if (part.text && !part.thought) {
+        this.markResponseStart()
+        this.outputText += part.text
+      }
       const inline = part.inlineData || part.inline_data
       const mimeType = inline?.mimeType || inline?.mime_type || 'audio/pcm;rate=24000'
       if (inline?.data && String(mimeType).includes('audio')) {
+        this.markResponseStart()
+        // 학생이 실제로 '환자가 말을 시작했다'고 느끼는 시점은 첫 오디오 바이트다.
+        // 텍스트 전사가 먼저 오는 경우가 있어 응답 시작과 따로 잰다.
+        if (this.turn && this.turn.firstAudioMs === null) {
+          this.turn.firstAudioMs = Math.round(nowMs() - this.turn.speechEndAt)
+        }
         this.outputAudioParts.push({ data: inline.data, mimeType })
         this.playPcm24(inline.data, mimeType)
       }
@@ -263,8 +300,11 @@ export class GeminiLivePatient {
         this.outputText = ''
         this.outputAudioParts = []
         this.inputText = ''
+        // 이전 턴 interrupt 의 잔향이다 — 응답이 없으므로 지연 표본이 아니다.
+        this.turn = null
         return
       }
+      this.completeTurnMetric()
 
       this.outputText = ''
       this.outputAudioParts = []
@@ -279,6 +319,38 @@ export class GeminiLivePatient {
         setTimeout(() => pending.resolve(text), 320)
       }
     }
+  }
+
+  // 응답의 첫 신호(전사 또는 오디오)가 도착한 순간 턴을 연다.
+  // 발화 종료 시각을 모르는 턴(재연결 직후 등)은 열지 않는다 — 기준 없는 지연값은
+  // 있는 것보다 나쁘다.
+  markResponseStart() {
+    if (this.turn || this.speechLastAt === null) return
+    const speechEndAt = this.speechLastAt
+    this.turn = {
+      speechEndAt,
+      speechEndEpochMs: Date.now() - Math.round(nowMs() - speechEndAt),
+      inputMode: this.speechLastMode,
+      firstResponseMs: Math.round(nowMs() - speechEndAt),
+      firstAudioMs: null,
+      interrupted: false,
+    }
+  }
+
+  completeTurnMetric() {
+    const turn = this.turn
+    this.turn = null
+    this.speechLastAt = null
+    if (!turn) return
+    this.onTurnMetric({
+      inputMode: turn.inputMode,
+      speechEndEpochMs: turn.speechEndEpochMs,
+      firstResponseMs: turn.firstResponseMs,
+      firstAudioMs: turn.firstAudioMs,
+      turnCompleteMs: Math.round(nowMs() - turn.speechEndAt),
+      interrupted: turn.interrupted,
+      network: networkType(),
+    })
   }
 
   emitUsage(usage) {
@@ -352,6 +424,20 @@ export class GeminiLivePatient {
       this.log('audio.play.error', { message: error?.message || String(error) })
     }
   }
+}
+
+// 단조 증가 시계. Date.now() 는 시스템 시각 보정에 따라 뒤로 갈 수 있어 음수 지연이 나온다.
+function nowMs() {
+  return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()
+}
+
+// 네트워크 상태별 세부 결과 (가이드 §2.1 '네트워크 상태별 세부 결과 필요').
+// 지원하지 않는 브라우저에서는 unknown 으로 묶인다.
+function networkType() {
+  if (typeof navigator === 'undefined') return null
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
+  const value = connection?.effectiveType
+  return typeof value === 'string' && value ? value.slice(0, 32) : null
 }
 
 export function floatTo16kPcmBase64(input, inputSampleRate) {

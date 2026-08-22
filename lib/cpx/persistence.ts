@@ -93,9 +93,9 @@ export async function persistCpxExchange(exchange: Exchange): Promise<void> {
   const sessionId = await localSessionId(userId, externalSessionId);
   if (!sessionId) throw new Error('CPX 세션 동기화 레코드를 찾을 수 없습니다.');
 
-  // 연습 중 주기 POST(전사 3초 flush·usage flush·신체진찰)를 서버 하트비트로 기록한다 —
-  // 시간 차감 정산·스윕(하트비트+10분 자동 종료)의 근거. 실패해도 미러를 막지 않는다.
-  if (action === 'events' || action === 'exam' || action === 'usage') {
+  // 연습 중 주기 POST(전사 3초 flush·usage flush·턴 계측 flush·신체진찰)를 서버 하트비트로
+  // 기록한다 — 시간 차감 정산·스윕(하트비트+10분 자동 종료)의 근거. 실패해도 미러를 막지 않는다.
+  if (action === 'events' || action === 'exam' || action === 'usage' || action === 'turns') {
     const { error: hbError } = await supabase
       .from('cpx_sessions')
       .update({ heartbeat_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
