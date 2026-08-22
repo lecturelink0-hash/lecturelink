@@ -27,3 +27,6 @@ data/cpx/common/reference_index.json
 data/cpx/common/034_sleep_disorder.reference.json
 data/cpx/common/exception_rules_v_final.txt
 data/cpx/common/rubric_insomnia_v_final.txt
+# scenario_rules/ 3개도 같은 성격이다 — 증례 초안 자동생성기용 규칙 등록부이고
+# 런타임은 읽지 않는다 (2026-08-22 진단에서 남아 있는 것을 확인했다).
+data/cpx/scenario_rules/

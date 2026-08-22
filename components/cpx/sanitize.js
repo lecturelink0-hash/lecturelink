@@ -105,6 +105,8 @@ function isPersonaBreak(sentence) {
 // 순수 면책 턴은 빈 문자열이 되고, 호출부(onPatientText)가 빈 값을 스킵한다.
 export function sanitizePatientText(text) {
   let out = String(text || '')
+  // 공통 프롬프트는 더 이상 [SYS_EVENT] 포맷을 지시하지 않는다(2026-08-22 — 오디오 모달리티에서
+  // "이 태그는 발음되지 않는다"는 보장이 없었다). 남겨두는 것은 방어층으로서다.
   out = out.replace(/\[SYS_EVENT[^\]]*\]/gi, '')
   out = out.replace(/\[[^\]]{0,40}\]/g, '') // 남은 짧은 대괄호 지문 (예: [당황])
   out = out.replace(/\s{2,}/g, ' ').trim()

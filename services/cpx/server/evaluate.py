@@ -69,9 +69,21 @@ RUBRIC_BY_CATEGORY = {
 
 
 def load_rubric(case: dict | None = None) -> dict:
-    """케이스 category에 맞는 정본 루브릭 로드. 미등록 카테고리는 수면 정본 폴백."""
+    """케이스 category에 맞는 정본 루브릭 로드. 미등록 카테고리는 수면 정본 폴백.
+
+    폴백은 조용하면 안 된다 — 등록을 빠뜨린 주호소는 오류 없이 수면장애 루브릭으로 채점되고,
+    점수는 나오지만 항목이 전부 남의 것이다. 등록 누락은 test_all_cases.py 의 집합 대조가
+    커밋 전에 잡고, 그래도 새어 나온 경우를 위해 여기서 한 번 더 소리를 낸다.
+    """
     category = (case or {}).get('category', '수면장애')
-    fname = RUBRIC_BY_CATEGORY.get(category, 'canonical_rubric.sleep.json')
+    fname = RUBRIC_BY_CATEGORY.get(category)
+    if fname is None:
+        fname = 'canonical_rubric.sleep.json'
+        print(
+            f'[cpx] 경고: 미등록 주호소 «{category}» (증례 {(case or {}).get("id")}) — '
+            f'{fname} 으로 폴백해 채점한다. RUBRIC_BY_CATEGORY 에 등록하라.',
+            flush=True,
+        )
     return json.loads((COMMON_DIR / fname).read_text(encoding='utf-8'))
 
 
@@ -129,6 +141,24 @@ def rubric_sections_for_context(rubric: dict, context: dict) -> list[dict]:
         s for s in rubric['sections']
         if not (s['id'] == 'physical_exam' and context.get('physicalExamRequired', True) is False)
     ]
+
+
+def has_violation_types(rubric: dict, context: dict) -> bool:
+    """이 루브릭이 임상예의 위반(et01~et03)을 실제로 정의하고 있는가.
+
+    2026-08-13 배점 정합화로 루브릭 54개 전부에서 deduction 섹션이 사라졌다(실측 0건).
+    그런데 추출 프롬프트의 판정 규칙과 응답 스키마는 여전히 violations 를 요구하고 있어서,
+    모델은 **정의를 받지 못한 라벨**로 위반을 보고하라는 지시를 받는다. 그렇게 만들어진 값은
+    scoring.py 의 감점 분기(죽은 코드)를 지나 build_feedback() 의 violationNotes 로
+    학생 화면까지 나간다 — 근거 없는 지적이 피드백에 섞이는 경로다.
+
+    그래서 위반 계약 전체(판정 규칙 · 응답 스키마 · 결과 전달)를 이 한 곳에 물린다.
+    루브릭에 violationTypes 가 복원되면 세 겹이 동시에 되살아나고, 없으면 셋 다 꺼진다.
+    """
+    return any(
+        s['type'] == 'deduction' and s.get('violationTypes')
+        for s in rubric_sections_for_context(rubric, context)
+    )
 
 
 def empty_judgments(rubric: dict, context: dict) -> dict:
@@ -247,6 +277,32 @@ def build_extraction_prompt(rubric: dict, events: list[dict], context: dict, cas
 
     rules = rubric['evaluationRules']
     case_brief = build_case_brief(case)
+    judgment_rules = [
+        rules['contextOverKeyword'],
+        rules['declarationCountsAsPerformance'],
+        f"{rules['evidenceRequired']} — evidence에는 로그 라인 번호(L001 형식)와 발화 인용을 포함하라.",
+        rules['sttTolerance'],
+        '환자가 저항·거부하거나 정보를 숨기거나 모호하게 답했더라도, 의사가 해당 항목의 질문·설명·재질문·설득을 적절히 수행했다면 수행으로 인정하라. 환자의 협조 여부와 답변의 완성도는 의사 평가에 반영하지 않는다.',
+    ]
+    # 위반 탐지 지시는 루브릭이 위반 유형을 실제로 정의했을 때만 나간다 (has_violation_types 주석 참조)
+    if has_violation_types(rubric, context):
+        judgment_rules.append(
+            '임상예의 위반 탐지 시: 의료적 필수 인적사항 질문(성별·나이·생년월일·이름·경제수준·학력·직업·키·몸무게)은 절대 위반으로 보고하지 마라. 애매하면 exempt=true로 표시하라.'
+        )
+    judgment_rules += [
+        'status는 met(충분히 수행), partial(일부만 수행하거나 안전상 불완전), not_met(근거 없음) 중 하나다. partial은 관련 질문·설명은 했지만 핵심 요소가 빠진 경우에만 쓴다.',
+        '근거가 없으면 status=not_met, satisfied=false, evidence=[]로 하라. 추측으로 인정하지 마라.',
+        """진단·검사·치료 계획의 **내용**을 주장하는 항목(추정 진단 설명, 검사 계획 설명, 치료·다음 단계 설명,
+   교육 내용 등)은 말을 꺼냈다는 것만으로 충족이 아니다. 아래 [증례 정답지]와 견주어
+   그 내용이 이 환자에게 타당할 때만 met 으로 하라.
+   - 위험한 원인을 배제하지 않고 양성 질환으로 단정했거나, 필요한 검사를 "필요 없다"고 했거나,
+     이 증례에 해가 되는 계획을 말했으면 not_met 이다.
+   - 반대로 학생이 정답 병명을 정확히 말하지 못했더라도, 위험한 원인을 후보에 두고 그것을
+     확인·배제하는 방향으로 설명·계획했다면 met 으로 인정하라. CPX 는 병명 맞히기가 아니라
+     안전한 접근을 보는 시험이다.
+   - 정답지에 없는 내용을 학생이 말했다고 해서 감점하지 마라. 틀렸다고 볼 수 있을 때만 내린다.""",
+    ]
+    judgment_rules_text = '\n'.join(f'{n}. {r}' for n, r in enumerate(judgment_rules, 1))
     return f"""당신은 의과대학 CPX(진료수행시험) 채점을 위한 근거 추출기다.
 아래 [의사-환자 대화 로그]를 분석해, 각 채점 항목에 대해 의사(학생)가 해당 행위를 얼마나 수행했는지와 그 근거를 추출하라.
 
@@ -264,23 +320,7 @@ def build_extraction_prompt(rubric: dict, events: list[dict], context: dict, cas
   말했다고 보지 마라. 무엇을 수행했는지의 근거로만 쓴다.
 
 [판정 규칙]
-1. {rules['contextOverKeyword']}
-2. {rules['declarationCountsAsPerformance']}
-3. {rules['evidenceRequired']} — evidence에는 로그 라인 번호(L001 형식)와 발화 인용을 포함하라.
-4. {rules['sttTolerance']}
-5. 환자가 저항·거부하거나 정보를 숨기거나 모호하게 답했더라도, 의사가 해당 항목의 질문·설명·재질문·설득을 적절히 수행했다면 수행으로 인정하라. 환자의 협조 여부와 답변의 완성도는 의사 평가에 반영하지 않는다.
-6. 임상예의 위반 탐지 시: 의료적 필수 인적사항 질문(성별·나이·생년월일·이름·경제수준·학력·직업·키·몸무게)은 절대 위반으로 보고하지 마라. 애매하면 exempt=true로 표시하라.
-7. status는 met(충분히 수행), partial(일부만 수행하거나 안전상 불완전), not_met(근거 없음) 중 하나다. partial은 관련 질문·설명은 했지만 핵심 요소가 빠진 경우에만 쓴다.
-8. 근거가 없으면 status=not_met, satisfied=false, evidence=[]로 하라. 추측으로 인정하지 마라.
-9. 진단·검사·치료 계획의 **내용**을 주장하는 항목(추정 진단 설명, 검사 계획 설명, 치료·다음 단계 설명,
-   교육 내용 등)은 말을 꺼냈다는 것만으로 충족이 아니다. 아래 [증례 정답지]와 견주어
-   그 내용이 이 환자에게 타당할 때만 met 으로 하라.
-   - 위험한 원인을 배제하지 않고 양성 질환으로 단정했거나, 필요한 검사를 "필요 없다"고 했거나,
-     이 증례에 해가 되는 계획을 말했으면 not_met 이다.
-   - 반대로 학생이 정답 병명을 정확히 말하지 못했더라도, 위험한 원인을 후보에 두고 그것을
-     확인·배제하는 방향으로 설명·계획했다면 met 으로 인정하라. CPX 는 병명 맞히기가 아니라
-     안전한 접근을 보는 시험이다.
-   - 정답지에 없는 내용을 학생이 말했다고 해서 감점하지 마라. 틀렸다고 볼 수 있을 때만 내린다.
+{judgment_rules_text}
 
 [진료 단계 구분 — phases 필드]
 진료는 보통 병력청취 → 신체진찰 → 환자교육(설명·계획) 순서로 진행된다. 각 단계가 시작된 로그 라인 번호(L001 형식의 숫자 부분)를 phases 배열로 보고하라.
@@ -328,19 +368,6 @@ RESPONSE_SCHEMA = {
                 'required': ['id', 'satisfied', 'status', 'evidence'],
             },
         },
-        'violations': {
-            'type': 'ARRAY',
-            'items': {
-                'type': 'OBJECT',
-                'properties': {
-                    'type': {'type': 'STRING', 'enum': ['et01', 'et02', 'et03']},
-                    'evidence': {'type': 'STRING'},
-                    'exempt': {'type': 'BOOLEAN'},
-                    'reason': {'type': 'STRING'},
-                },
-                'required': ['type', 'evidence'],
-            },
-        },
         'phases': {
             'type': 'ARRAY',
             'items': {
@@ -371,8 +398,35 @@ RESPONSE_SCHEMA = {
                          'dangerousDiagnosisAddressed', 'planAppropriate'],
         },
     },
-    'required': ['items', 'violations', 'phases', 'clinicalReasoning'],
+    'required': ['items', 'phases', 'clinicalReasoning'],
 }
+
+# 감점 섹션이 있는 루브릭에서만 스키마에 얹는다 — 정의를 주지 않은 라벨을 required 로 요구하면
+# 모델이 빈칸을 채우려 근거 없는 위반을 만들어 낸다 (has_violation_types 주석 참조).
+VIOLATIONS_SCHEMA = {
+    'type': 'ARRAY',
+    'items': {
+        'type': 'OBJECT',
+        'properties': {
+            'type': {'type': 'STRING', 'enum': ['et01', 'et02', 'et03']},
+            'evidence': {'type': 'STRING'},
+            'exempt': {'type': 'BOOLEAN'},
+            'reason': {'type': 'STRING'},
+        },
+        'required': ['type', 'evidence'],
+    },
+}
+
+
+def response_schema(rubric: dict, context: dict) -> dict:
+    """추출 프롬프트가 실제로 지시한 것만 요구하는 응답 스키마."""
+    if not has_violation_types(rubric, context):
+        return RESPONSE_SCHEMA
+    return {
+        **RESPONSE_SCHEMA,
+        'properties': {**RESPONSE_SCHEMA['properties'], 'violations': VIOLATIONS_SCHEMA},
+        'required': [*RESPONSE_SCHEMA['required'], 'violations'],
+    }
 
 
 _CREDIT_ORDER = {'not_met': 0, 'partial': 1, 'met': 2}
@@ -388,7 +442,7 @@ def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: d
     prompt_text = build_extraction_prompt(rubric, events, context, case)
     config = {
         'response_mime_type': 'application/json',
-        'response_schema': RESPONSE_SCHEMA,
+        'response_schema': response_schema(rubric, context),
         'temperature': 0,  # 추출 재현성
     }
     # thinking 무제한이면 추출에 ~10분 소요(2026-07-10 실측, 527~752s) → 서비스 75s 타임아웃과 양립 불가.
@@ -419,7 +473,9 @@ def extract_judgments(api_key: str, rubric: dict, events: list[dict], context: d
     items = normalize_judgment_items(raw.get('items', []), valid_ids)
     return {
         'items': items,
-        'violations': raw.get('violations', []),
+        # 지시하지 않은 위반은 받지 않는다. 스키마에서 빼도 모델이 자발적으로 실어 보낼 수 있고,
+        # 정의 없는 라벨은 곧바로 학생 피드백(violationNotes)으로 나가므로 여기서 잘라낸다.
+        'violations': raw.get('violations', []) if has_violation_types(rubric, context) else [],
         'phases': raw.get('phases', []),
         'clinicalReasoning': normalize_clinical_reasoning(raw.get('clinicalReasoning')),
         'usage': usage,
@@ -430,7 +486,8 @@ def normalize_judgment_items(raw_items: list, valid_ids: set) -> dict:
     """LLM 판정을 채점 입력 형태로 정규화하며 신뢰 규칙을 서버가 강제한다.
 
     - 루브릭에 없는 항목은 버린다.
-    - 근거 인용이 없는 충족은 미충족으로 내린다(판정 규칙 8). 프롬프트에만 적어 두면
+    - 근거 인용이 없는 충족은 미충족으로 내린다(추출 프롬프트의 근거 규칙 — 위반 계약이
+      켜지고 꺼지면서 번호가 밀리므로 번호로 가리키지 않는다). 프롬프트에만 적어 두면
       근거 없이 올라온 충족이 그대로 점수가 된다.
     - 같은 항목이 여러 번 오면 낮은(보수적인) 판정을 남긴다. 마지막 값으로 덮으면
       순서에 따라 점수가 달라진다.

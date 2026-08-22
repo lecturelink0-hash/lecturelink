@@ -269,6 +269,12 @@ def build_system_instruction(
         # 이 네 필드는 작성자용 메타데이터이지 환자 연기에 필요한 사실이 아니다 —
         # 연기에 쓰이는 것은 scenarioRule·각종 History·liveApiContext 다.
         'title', 'variant', 'description', 'tags',
+        # id 는 대부분 진단명의 영문 표기다('thunderclap_sah_rule' = subarachnoid hemorrhage,
+        # 'acute_appendicitis_rule', 'ectopic_pregnancy_rule' …). 실측 161/243(66.3%) 증례에서
+        # id 토큰이 targetDiagnosis 의 영문 병명과 겹친다. 위 네 필드를 막은 이유가 그대로 적용된다 —
+        # 자기 병명을 아는 환자는 그 병에 맞게 연기한다. 모델은 id 로 하는 일이 없으므로(참조하는
+        # 지시가 하나도 없다) 빼도 연기에 영향이 없고 프롬프트도 짧아진다.
+        'id',
     }
     rule_context = {k: v for k, v in case.items() if k not in private_keys}
     # 일부 Fable 초안의 patientContextFocus에는 숨겨야 할 진단명이 문장으로 들어 있다.
@@ -336,7 +342,7 @@ def build_system_instruction(
         voice_block,
         '[ruleContext]\n' + json.dumps(rule_context, ensure_ascii=False),
         '우선순위: 공통 프롬프트의 순수 환자 대사 출력 규칙이 최우선이다. '
-        '행동 묘사, SYS_EVENT 외 지문, 괄호 지문, 마크다운은 출력하지 않는다. '
+        '행동 묘사, 지문, 괄호·대괄호 태그, 마크다운은 출력하지 않는다. '
         'ruleContext는 케이스 사실과 공개 범위의 근거이며, targetDiagnosis는 어떤 경우에도 직접 언급하지 않는다.\n\n'
         '[정보 공개 통제 — 단계적 공개]\n'
         '주소증(방문 이유)과 세부 단서를 구분하라. "어디가 불편해서 오셨어요?" 같은 개방형 첫 질문에는 '

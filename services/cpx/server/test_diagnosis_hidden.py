@@ -13,8 +13,10 @@ import re
 
 from prompt import build_system_instruction, list_cases, load_case, public_case, resolve_persona
 
-# 모델 컨텍스트에서 통째로 빠져야 하는 필드
-HIDDEN_FIELDS = ('title', 'variant', 'description', 'tags')
+# 모델 컨텍스트에서 통째로 빠져야 하는 필드.
+# id 도 여기 속한다 — 'thunderclap_sah_rule' 처럼 대부분 진단명의 영문 표기이고(161/243),
+# 필드가 남으면 title 을 막은 것이 무의미해진다.
+HIDDEN_FIELDS = ('title', 'variant', 'description', 'tags', 'id')
 
 
 def _values(case: dict, field: str) -> list[str]:
@@ -43,6 +45,9 @@ def test_metadata_never_reaches_the_patient_model() -> None:
         title = (case.get('title') or '').strip()
         if len(title) >= 6 and title in instruction:
             offenders.append(f"{case['id']}: 제목 «{title}» 이 프롬프트에 남아 있다")
+        # id 는 값 자체가 영문 진단명이므로 키뿐 아니라 문자열로도 남으면 안 된다
+        if case['id'] in instruction:
+            offenders.append(f"{case['id']}: 증례 id 문자열이 프롬프트에 남아 있다")
     assert not offenders, (
         '증례 메타데이터가 환자 모델 프롬프트에 들어갔다. 제목·태그에는 진단명이 들어 있어\n'
         '모델이 자기 병명을 알게 된다. prompt.py 의 private_keys 를 확인하라:\n'

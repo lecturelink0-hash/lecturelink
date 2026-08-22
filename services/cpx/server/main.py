@@ -43,6 +43,37 @@ CPX_PROXY_SHARED_SECRET = os.environ.get('CPX_PROXY_SHARED_SECRET', '')
 # 운영에서는 사용자 임상 승인이 끝난 케이스만 노출한다. 로컬 작성·검수 환경은 기본값(false)으로
 # 전체 케이스를 보되, 실제 서비스 환경에서만 true로 설정한다.
 CPX_RELEASE_READY_ONLY = os.environ.get('CPX_RELEASE_READY_ONLY', 'false').lower() == 'true'
+
+
+def _assert_release_gate_is_usable() -> None:
+    """이 스위치를 켰는데 통과하는 케이스가 하나도 없으면 즉시 죽는다.
+
+    2026-08-22 실측: 릴리스 허용 상태(user_approved·release_ready)인 증례가 0건이라
+    이 스위치는 켜는 순간 목록이 통째로 비고, 학생에게는 "증례가 없다"로만 보인다.
+    끄면 임상 검수 미완 34건이 그대로 나가고 켜면 0건이 나가는, 어느 쪽도 쓸 수 없는 상태다.
+
+    조용히 빈 목록을 내주는 대신 배포를 실패시킨다 — 빈 카탈로그로 뜬 서비스는 이미 고장이고,
+    그걸 기동 실패로 드러내야 배포자가 원인을 안다. 임상 승인이 끝나 증례에
+    contentStatus: user_approved 가 붙으면 이 검사는 저절로 통과한다.
+    """
+    if not CPX_RELEASE_READY_ONLY:
+        return
+    approved = prompt_mod.list_cases(release_ready_only=True)
+    if approved:
+        return
+    counts: dict[str, int] = {}
+    for c in prompt_mod.list_cases():
+        counts[c['contentStatus']] = counts.get(c['contentStatus'], 0) + 1
+    raise RuntimeError(
+        'CPX_RELEASE_READY_ONLY=true 인데 릴리스 허용 상태('
+        + ' · '.join(sorted(prompt_mod.RELEASE_STATUSES))
+        + ')인 증례가 0건이라 목록이 비어 버린다. '
+        f'현재 검수 상태 분포: {counts}. '
+        '증례에 contentStatus 를 부여하거나, 임상 검수 전이라면 이 스위치를 false 로 두어라.'
+    )
+
+
+_assert_release_gate_is_usable()
 # 계측 레코드의 '기능 버전' — 모델·프롬프트를 바꾼 배포에서 올리면 버전 간 회귀 비교가 된다
 # (가이드 §4.1 '기능 및 버전'). 배포 파이프라인에서 커밋 해시를 넣어도 된다.
 CPX_FEATURE_VERSION = os.environ.get('CPX_FEATURE_VERSION', 'cpx-v1')
@@ -306,10 +337,17 @@ def delete_account_data(user_id: str = Depends(current_user_id)):
 
 @app.get('/api/cases')
 def cases(_user_id: str = Depends(current_user_id)):
+    listed = prompt_mod.list_cases(release_ready_only=CPX_RELEASE_READY_ONLY)
+    # 검수 상태 분포를 함께 돌려준다 — 게이트를 꺼 둔 동안 임상 검수가 얼마나 밀려 있는지
+    # 운영이 케이스를 한 건씩 열어보지 않고 알 수 있어야 한다.
+    counts: dict[str, int] = {}
+    for c in listed:
+        counts[c['contentStatus']] = counts.get(c['contentStatus'], 0) + 1
     return {
         'category': '수면장애',
-        'cases': prompt_mod.list_cases(release_ready_only=CPX_RELEASE_READY_ONLY),
+        'cases': listed,
         'releaseReadyOnly': CPX_RELEASE_READY_ONLY,
+        'contentStatusCounts': counts,
     }
 
 
