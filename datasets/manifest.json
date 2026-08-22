@@ -1,0 +1,52 @@
+{
+  "$comment": [
+    "평가 데이터셋 레지스트리 — 성능지표 가이드 §10.2 '데이터 누수 방지' · 분담표 A7.",
+    "개발셋은 반복 사용, 검증셋은 제한적 사용, 최종 테스트셋은 개발 과정에서 비공개·고정.",
+    "테스트셋 항목은 lock 후 내용이 바뀌면 scripts/check-dataset-split.mjs 가 CI에서 막는다.",
+    "이 파일을 나중에 만들면 그 전에 낸 수치는 전부 신뢰를 잃는다 — 그래서 데이터가 생기기 전에 둔다.",
+    "잠그기: npm run check:datasets -- --lock <id>"
+  ],
+  "version": 1,
+  "datasets": [
+    {
+      "id": "cpx-repeatability-v1",
+      "purpose": "test",
+      "path": "services/cpx/server/fixtures/repeatability_transcript.json",
+      "description": "CPX 채점 반복 생성 안정성 고정 입력 (가이드 §4.2). 같은 전사를 N회 재채점해 판정 변동을 잰다.",
+      "owner": "cpx",
+      "locked": true,
+      "sha256": "0cb6c0bb983dbc4cac2334862e4bac8f7cc95f9e3c7ee28263ce3f025b6890af",
+      "note": "PR #253 머지 후 봉인 완료(2026-08-22). 내용을 바꾸면 이전 측정치와 비교할 수 없다 — 바꿔야 하면 새 id 로 등록한다."
+    },
+    {
+      "id": "ocr-goldenset-v1",
+      "purpose": "test",
+      "path": "datasets/ocr-goldenset",
+      "description": "OCR CER·WER 골든셋 100–150장 (분담표 A5). 슬라이드·표·그래프·손글씨 층화 구성.",
+      "owner": "naesin",
+      "locked": false,
+      "sha256": null,
+      "note": "스캐폴드·층화 목표·검사기 준비됨(datasets/ocr-goldenset/README.md). 전사 100-150장은 수작업 대기. 다 모으면 --lock ocr-goldenset-v1 로 봉인한다."
+    },
+    {
+      "id": "generation-fixed-inputs-v1",
+      "purpose": "test",
+      "path": "datasets/generation-fixed-inputs",
+      "description": "문항 생성 반복 안정성 고정 입력셋 20–30건 (분담표 A3). 과목·자료 형식·난이도 층화.",
+      "owner": "naesin",
+      "locked": false,
+      "sha256": null,
+      "note": "미구축. 실제 강의자료를 담으므로 저장소에는 해시와 메타데이터만 두고 원본은 별도 보관할 수 있다."
+    },
+    {
+      "id": "rag-eval-queries-v1",
+      "purpose": "validation",
+      "path": "datasets/rag-eval-queries",
+      "description": "RAG 평가 질문 100–200개와 골드 근거 (가이드 §5). 검색 계층(A9) 도입 후 성립.",
+      "owner": "naesin",
+      "locked": false,
+      "sha256": null,
+      "note": "미구축. 검색 계층이 없어 아직 잴 대상이 없다 — A8·A9 선행."
+    }
+  ]
+}

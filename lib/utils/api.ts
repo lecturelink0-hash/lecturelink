@@ -6,6 +6,11 @@
 
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import {
+  runWithRequestContext,
+  recordErrorCode,
+} from '@/lib/metrics/request-context';
+import { featureFromPath, versionForFeature, finalizeAndPersist, metricsEnabled } from '@/lib/metrics/record';
 
 // ───────────── 공통 응답 타입 ─────────────
 
@@ -142,27 +147,66 @@ export function withErrorHandling<T extends unknown[]>(
   handler: (...args: T) => Promise<Response>,
 ) {
   return async (...args: T): Promise<Response> => {
-    try {
-      return await handler(...args);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return handleZodError(error);
-      }
-      if (error instanceof ApiException) {
-        return err(error.code, error.message, error.status, error.details);
-      }
-      // request.json() 같은 native body 파싱이 실패한 경우: SyntaxError 가 일반 500 으로
-      // 새 나가지 않도록 400 으로 일반화. 내부 메시지는 노출하지 않음.
-      if (
-        error instanceof SyntaxError ||
-        (error instanceof Error && /JSON/i.test(error.message))
-      ) {
-        console.error('[api error] body parse:', error.message);
-        return err('invalid_body', '요청 본문이 올바른 JSON 이 아닙니다.', 400);
-      }
-      console.error('[api error]', error);
-      // 사용자 응답에는 일반 메시지만 노출. 내부 메시지는 서버 로그에만 남는다.
-      return ApiErrors.internal();
+    const request = args[0];
+    // 계측은 요청 객체가 있어야 기능 이름과 메서드를 안다. 없으면(직접 호출·테스트)
+    // 컨텍스트 없이 그냥 돈다 — 계측 코드 전체가 no-op 이 된다.
+    if (!metricsEnabled() || !(request instanceof Request)) {
+      return runHandler(handler, args);
     }
+    const feature = featureFromPath(new URL(request.url).pathname);
+    return runWithRequestContext(
+      {
+        feature,
+        version: versionForFeature(feature),
+        method: request.method,
+      },
+      async ({ requestId }) => {
+        const response = await runHandler(handler, args);
+        // 사용자 제보("이 요청이 실패했어요")와 계측 레코드를 잇는 유일한 끈이다.
+        try {
+          response.headers.set('x-request-id', requestId);
+        } catch {
+          /* 불변 헤더 응답(리다이렉트 등) — 계측 자체는 계속한다 */
+        }
+        await finalizeAndPersist(response.status);
+        return response;
+      },
+    );
   };
+}
+
+/**
+ * 예외 → 표준 응답 변환. 실패 원인을 계측에도 남긴다 —
+ * 상태 코드만으로는 같은 400 안에 입력 오류와 쿼터 초과가 뒤섞여 원인 분포가 보이지 않는다.
+ */
+async function runHandler<T extends unknown[]>(
+  handler: (...args: T) => Promise<Response>,
+  args: T,
+): Promise<Response> {
+  try {
+    return await handler(...args);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      recordErrorCode('invalid_input');
+      return handleZodError(error);
+    }
+    if (error instanceof ApiException) {
+      recordErrorCode(error.code);
+      return err(error.code, error.message, error.status, error.details);
+    }
+    // request.json() 같은 native body 파싱이 실패한 경우: SyntaxError 가 일반 500 으로
+    // 새 나가지 않도록 400 으로 일반화. 내부 메시지는 노출하지 않음.
+    if (
+      error instanceof SyntaxError ||
+      (error instanceof Error && /JSON/i.test(error.message))
+    ) {
+      console.error('[api error] body parse:', error.message);
+      recordErrorCode('invalid_body');
+      return err('invalid_body', '요청 본문이 올바른 JSON 이 아닙니다.', 400);
+    }
+    console.error('[api error]', error);
+    recordErrorCode('unhandled_exception');
+    // 사용자 응답에는 일반 메시지만 노출. 내부 메시지는 서버 로그에만 남는다.
+    return ApiErrors.internal();
+  }
 }

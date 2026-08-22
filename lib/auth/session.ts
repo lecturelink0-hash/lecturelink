@@ -289,6 +289,10 @@ export async function requireSession(): Promise<AuthSession> {
     const { UnauthorizedException } = await import('@/lib/utils/api');
     throw new UnauthorizedException();
   }
+  // 요청 계측에 사용자를 붙인다. 인증은 라우트 안쪽에서 끝나므로 래퍼가 알 수 없고,
+  // 여기가 모든 인증 경로가 반드시 지나는 한 지점이다(분담표 A1).
+  const { setUserId } = await import('@/lib/metrics/request-context');
+  setUserId(session.userId);
   return session;
 }
 

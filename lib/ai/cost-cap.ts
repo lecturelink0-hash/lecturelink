@@ -11,6 +11,7 @@
 
 import { createAdminClient } from '@/lib/db/admin';
 import { ApiException, CostCapExceededException } from '@/lib/utils/api';
+import { addAiUsage, currentRequestId } from '@/lib/metrics/request-context';
 
 const DEFAULT_CAP_USD = 100;
 
@@ -73,6 +74,14 @@ export async function recordAiCost(input: {
   // 남긴다 — 예전엔 통째로 스킵돼 "모델을 바꾸면 비용이 조용히 사라지는" 사각지대였다.
   // 토큰조차 없는 0원 기록만 스킵 (진단 저장 등은 직접 insert 경로 사용).
   if (input.costUsd <= 0 && input.inputTokens <= 0 && input.outputTokens <= 0) return;
+  // 요청 계측(request_metrics)의 원가 합계에 더한다 — 요청 한 줄만 보고도
+  // "이 실패한 생성이 얼마를 썼나"를 답할 수 있어야 한다(분담표 A1).
+  addAiUsage({
+    model: input.model,
+    costUsd: input.costUsd,
+    inputTokens: input.inputTokens,
+    outputTokens: input.outputTokens,
+  });
   const admin = createAdminClient();
   const { error } = await admin.from('ai_cost_log').insert({
     user_id: input.userId,
@@ -82,6 +91,8 @@ export async function recordAiCost(input: {
     input_tokens: input.inputTokens,
     output_tokens: input.outputTokens,
     metadata: input.metadata ?? null,
+    // 요청 단위 드릴다운 키. 컨텍스트 밖(배치·크론)에서 부르면 null 이다.
+    request_id: currentRequestId(),
   });
   if (error) {
     console.error('[cost-cap] insert error:', error);

@@ -1,0 +1,58 @@
+name: Ops metrics
+
+# 계측은 없어도 서비스가 돌기 때문에, 깨져도 아무도 모른 채 발표 직전에 빈 대시보드를 본다.
+# 산식(백분위·분모·재시도 판정)과 데이터셋 고정을 변경마다 검사한다.
+
+on:
+  pull_request:
+    paths:
+      - 'lib/metrics/**'
+      - 'lib/ai/versions.ts'
+      - 'lib/ai/quality-checks.ts'
+      - 'lib/ai/quality-gate.ts'
+      - 'lib/utils/api.ts'
+      - 'app/(app)/admin/metrics/**'
+      - 'datasets/**'
+      - 'scripts/check-metrics.mjs'
+      - 'scripts/check-dataset-split.mjs'
+      - 'scripts/check-ocr-goldenset.mjs'
+      - 'supabase/migrations/00042_request_metrics.sql'
+      - 'package.json'
+      - '.github/workflows/metrics-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'lib/metrics/**'
+      - 'lib/ai/versions.ts'
+      - 'lib/ai/quality-checks.ts'
+      - 'lib/ai/quality-gate.ts'
+      - 'lib/utils/api.ts'
+      - 'app/(app)/admin/metrics/**'
+      - 'datasets/**'
+      - 'scripts/check-metrics.mjs'
+      - 'scripts/check-dataset-split.mjs'
+      - 'scripts/check-ocr-goldenset.mjs'
+      - 'supabase/migrations/00042_request_metrics.sql'
+      - 'package.json'
+      - '.github/workflows/metrics-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # 산식 회귀 — 백분위·분모·재시도 판정·기능 이름·품질 게이트
+      - run: npm run check:metrics
+      # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)
+      - run: npm run check:datasets
+      # OCR 골든셋 구성·완결성 — 구축 중에는 경고만, --complete 로 완성 판정 (분담표 A5)
+      - run: npm run check:ocr-goldenset
+      - run: npm run typecheck
