@@ -1,6 +1,8 @@
 # LectureLink CPX patient engine
 
-LectureLink의 `/api/cpx/*` 프록시가 호출하는 FastAPI 서비스입니다. 197개 CPX 증례, 53개 canonical 루브릭, 신체진찰 온톨로지와 결정론적 채점 엔진을 이 저장소 안에 함께 보관합니다.
+LectureLink의 `/api/cpx/*` 프록시가 호출하는 FastAPI 서비스입니다. 243개 CPX 증례, 54개 canonical 루브릭, 신체진찰 온톨로지와 결정론적 채점 엔진을 이 저장소 안에 함께 보관합니다.
+
+`data/cpx` 아래 파일이 전부 런타임에 쓰이는 것은 아닙니다. 실제로 적재되는 것은 `ai_patient_common_prompt.md`, `low_compliance_behaviors.json`, `canonical_rubric.*.json` 54개, 증례 243개뿐이고 나머지는 콘텐츠 작성·검수용 원자료여서 `.dockerignore`로 운영 이미지에서 제외합니다. 그 구분은 `server/test_data_manifest.py`가 강제하므로, 새 데이터 파일은 코드가 읽게 하거나 제외 목록에 올리거나 둘 중 하나를 해야 합니다.
 
 ## Docker 실행
 
@@ -46,6 +48,8 @@ npm run cpx:bundle-check
 
 `CPX_RELEASE_READY_ONLY=false`는 임상 검수를 출품 이후로 유예한 MVP 결정입니다. 임상 승인 전 콘텐츠를 진료 지침이나 검증된 평가 도구로 취급하면 안 됩니다.
 
+현재 검수 상태 분포는 `codex_reviewed` 209건 · `needs_clinical_review` 34건이고, 릴리스 허용 상태(`user_approved`·`release_ready`)는 0건입니다. 따라서 **지금 이 스위치를 `true`로 켜면 목록이 통째로 빕니다.** 그렇게 뜬 서비스는 학생에게 "증례 없음"으로만 보이므로, 서버는 그 조합을 감지하면 조용히 빈 목록을 내주는 대신 기동에 실패합니다(`main._assert_release_gate_is_usable`). 켤 수 있으려면 먼저 증례에 `contentStatus: user_approved`를 부여해야 합니다. 게이트를 꺼 둔 동안의 검수 잔량은 `/api/cases` 응답의 `contentStatusCounts`로 확인합니다.
+
 ## 검증
 
 ```bash
@@ -59,6 +63,11 @@ venv/bin/python test_all_cases_api.py
 venv/bin/python test_lecturelink_auth.py
 venv/bin/python test_prompt_context.py
 venv/bin/python test_metrics.py
+venv/bin/python test_diagnosis_hidden.py     # 진단명·증례 메타데이터가 환자 프롬프트에 없는가
+venv/bin/python test_patient_rules.py        # 환자 프롬프트 규칙 전수 + 불가능한 출력 형식 지시 부재
+venv/bin/python test_violation_contract.py   # 임상예의 위반 계약이 세 겹 모두 같은 방향인가
+venv/bin/python test_release_gate.py         # 릴리스 스위치가 쓸 수 있는 상태인가
+venv/bin/python test_data_manifest.py        # 배포 이미지에 런타임이 안 읽는 데이터가 없는가
 venv/bin/python repeatability.py --selftest
 ```
 

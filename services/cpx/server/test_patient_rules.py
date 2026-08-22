@@ -92,13 +92,26 @@ COMMON_PROMPT_RULES = [
     '아직 검사는 안 받은 것 같아요',
     '이해 여부, 걱정, 추가 질문',
     '의사처럼 교육 내용을 대신 정리하지 않는다',
-    '큰따옴표(" ")로 감싼다',
-    '큰따옴표 안의 내용뿐',
-    '따옴표 기호 자체는 소리 내어 읽지 않는다',
-    '지문이나 태그로 절대 묘사하지 말고',
-    '[SYS_EVENT: 명사형_키워드]',
-    '오디오로 발음되지 않는다',
+    # 2026-08-22: 출력 형식을 오디오 모달리티에 맞게 뒤집었다. 이전 규칙은 대사를 큰따옴표로
+    # 감싸고 행동을 [SYS_EVENT: 키워드]로 쓰라고 했는데, 근거였던 "따옴표·태그는 발음되지
+    # 않는다"가 네이티브 오디오 모델에는 보장되지 않는다(Live 세션은 responseModalities=[AUDIO]
+    # 이고 자막은 그 오디오의 전사다). 게다가 같은 프롬프트의 [음성·말투 연기] 블록은 정반대로
+    # "괄호 지문·행동 묘사 금지, 실제로 내는 소리로만"이라고 지시하고 있었다.
+    '전부 그대로 소리로 나간다',
+    '실제로 입 밖에 내는 말만',
+    '기호나 태그로 감싸지 않는다',
+    '지문이나 태그로 묘사하지 말고',
+    '실제로 낼 수 있는 소리로만',
     '"-한다", "-하며"',                    # 행동 서술어 금지
+]
+
+# 오디오 모달리티에서 지킬 수 없는 출력 형식 지시 — 되살아나면 학생에게 태그가 들려온다.
+# (텍스트 자막은 sanitize.js 가 지우지만 오디오는 지울 수 없다.)
+FORBIDDEN_OUTPUT_FORMATS = [
+    'SYS_EVENT',
+    '큰따옴표',
+    '따옴표 기호 자체는 소리 내어 읽지 않는다',
+    '오디오로 발음되지 않는다',
 ]
 
 # 컨텍스트에 존재하지 않는 필드 — 2026-08-15 축약 때 제거했다(따를 수 없는 지시였다).
@@ -121,6 +134,10 @@ def run():
             assert phrase in instruction, f'{meta["id"]}: 공통 프롬프트 규칙 "{phrase}" 누락'
         for dead in DEAD_FIELD_REFERENCES:
             assert dead not in instruction, f'{meta["id"]}: 없는 필드 "{dead}" 참조가 되살아났다'
+        for banned in FORBIDDEN_OUTPUT_FORMATS:
+            assert banned not in instruction, (
+                f'{meta["id"]}: 오디오에서 지킬 수 없는 출력 형식 지시 "{banned}" 가 되살아났다'
+            )
         # 규칙 블록은 ruleContext 뒤에 온다 — 케이스 데이터가 규칙을 덮지 않도록 순서 고정.
         assert instruction.index('[언어 — 한국어만 아는 환자]') > instruction.index('[ruleContext]'), meta['id']
         checked += 1
@@ -148,7 +165,8 @@ def run():
 
     rules = sum(len(v) for v in REQUIRED_BLOCKS.values()) + len(COMMON_PROMPT_RULES)
     print(f'환자 프롬프트 규칙 {rules}종 · {checked}개 증례 전수 통과 '
-          f'(없는 필드 참조 {len(DEAD_FIELD_REFERENCES)}종 부재 확인)')
+          f'(없는 필드 참조 {len(DEAD_FIELD_REFERENCES)}종 · '
+          f'불가능한 출력 형식 지시 {len(FORBIDDEN_OUTPUT_FORMATS)}종 부재 확인)')
 
 
 if __name__ == '__main__':

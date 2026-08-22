@@ -16,7 +16,7 @@ from physical_exam import (
     BUTTON_SETS, POLARITY_ABNORMAL, POLARITY_NORMAL, POLARITY_VALUES,
     button_catalog, buttons_for, resolve_exam,
 )
-from evaluate import load_rubric
+from evaluate import COMMON_DIR, RUBRIC_BY_CATEGORY, load_rubric
 from prompt import list_cases, load_case
 
 # (버튼 id) -> 기본 소견으로 떨어져도 무방하다고 확인한 증례.
@@ -273,6 +273,33 @@ def check_no_new_default_fallbacks(fallbacks: dict[str, set[str]]) -> None:
     )
 
 
+def check_every_category_has_a_rubric(cases: list[dict]) -> None:
+    """주호소 ↔ 루브릭 등록이 정확히 맞는가 (2026-08-22 진단).
+
+    load_rubric() 은 미등록 카테고리를 canonical_rubric.sleep.json 으로 폴백한다. 지금은
+    54 카테고리 ↔ 54 루브릭이 맞아 실제 영향이 없지만, 새 주호소를 추가하면서 여기 등록을
+    빠뜨리면 **오류 없이** 수면장애 루브릭으로 채점된다. 점수는 나오는데 채점 항목이 전부
+    남의 것인, 가장 알아채기 어려운 실패다. 그 문을 여기서 닫는다.
+    """
+    used = {case.get("category", "") for case in cases}
+    registered = set(RUBRIC_BY_CATEGORY)
+    unregistered = sorted(used - registered)
+    assert not unregistered, (
+        "RUBRIC_BY_CATEGORY 에 없는 주호소가 있다 — 수면장애 루브릭으로 조용히 폴백된다.\n"
+        "evaluate.py 의 RUBRIC_BY_CATEGORY 에 등록하라: " + ", ".join(unregistered)
+    )
+    missing_files = sorted(
+        fname for fname in RUBRIC_BY_CATEGORY.values()
+        if not (COMMON_DIR / fname).exists()
+    )
+    assert not missing_files, "등록됐지만 파일이 없는 루브릭: " + ", ".join(missing_files)
+    unused = sorted(registered - used)
+    print(
+        f"  주호소 {len(used)}종 전부 루브릭 등록 확인 "
+        f"(등록 {len(registered)}종 · 미사용 등록 {len(unused)}종)"
+    )
+
+
 def main() -> None:
     public_cases = list_cases()
     assert public_cases, "증례 목록이 비어 있음"
@@ -321,6 +348,7 @@ def main() -> None:
     check_no_normal_badge_on_abnormal_finding(loaded)
     check_no_same_category_duplicate(loaded)
     check_fixed_facts_are_decided(loaded)
+    check_every_category_has_a_rubric(loaded)
     total_fallbacks = sum(len(v) for v in fallbacks.values())
     rules = [r for c in loaded for r in (c.get("physicalExamRule") or [])]
     abnormal = sum(1 for r in rules if r.get("polarity") == POLARITY_ABNORMAL)
