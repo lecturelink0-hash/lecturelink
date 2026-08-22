@@ -3615,6 +3615,111 @@ export async function generatePrivateQuestionsFromUpload(
         }
       }
 
+      /**
+       * 블라인드에 걸린 문항을 "그림을 봐야만 풀리는" 문항으로 **1회** 다시 만든다 (방안 2).
+       *
+       * 반환값 = 실제로 교체에 성공한 kept 인덱스 집합. 실패분은 호출자가 종전 정책
+       * (폐기·강등)으로 처리한다.
+       *
+       * 설계 메모
+       *  - 재작성은 배치당 1회다. 새 문항이 또 걸려도 다시 부르지 않는다 — 무한 반복과
+       *    비용 폭주를 막는 유일한 방어선이라 상한을 반드시 지킬 것.
+       *  - 새 문항도 **같은 블라인드 검사를 통과해야** 채택한다. 통과 못 하면 원본을 남긴다
+       *    (검사를 우회해 슬쩍 끼워 넣는 경로를 만들지 않는다).
+       *  - 이미지가 배정되지 않은 배치(featured 0)에서는 부르지 않는다 — 그림 의존 문항을
+       *    만들 재료가 없다.
+       *  - P1 의학 검증은 다시 돌리지 않는다. 운영 기본값이 warn(계측만)이라 판정이 문항을
+       *    바꾸지 않기 때문이다. VERIFY_MODE 를 discard 로 올린다면 여기서도 검증을 태워야
+       *    재작성본이 검증을 우회하지 않는다.
+       */
+      const repairBlindFailures = async (
+        failed: ReadonlyArray<{ i: number; basis: string }>,
+        blindVerdict: (item: KeptItem) => Promise<{ solvable: boolean; basis: string } | null>,
+      ): Promise<Set<number>> => {
+        const repaired = new Set<number>();
+        bumpGenDiag('blindRepairAttempted');
+        batchDiag.blindRepairRequested = failed.length;
+        const tRepair = Date.now();
+        try {
+          userContent.push({
+            type: 'text',
+            text:
+              `방금 만든 문항 중 ${failed.length}개는 **그림을 가려도 답이 정해지는** 문항이었습니다. ` +
+              `그림이 장식이 되어 이미지 판독 문항으로 쓸 수 없습니다.\n` +
+              `같은 근거와 같은 [이미지 N]으로 ${batchSize}문항을 다시 만들되, ` +
+              `**최소 ${failed.length}문항**은 다음을 반드시 지키세요.\n` +
+              `- 정답을 가르는 근거가 **그림에서만 읽히는 것**이어야 합니다(위치·모양·크기·분포·` +
+              `신호 강도·염색 양상·기호가 가리키는 대상). 교과서 지식으로 갈리면 실패입니다.\n` +
+              `- **그림에서 읽은 소견을 발문에 글로 옮겨 적지 마세요.** 예를 들어 "흉부 CT에서 ` +
+              `내막 파열이 관찰되었고"처럼 소견을 지문에 써 버리면 그림을 볼 이유가 없어집니다. ` +
+              `무엇이 보이는지는 학생이 그림에서 직접 읽게 두세요.\n` +
+              `- 다섯 선지가 모두 그림과 무관한 일반 지식 서술이면 그 문항은 이미지형이 아닙니다.\n` +
+              `- image_indices 에 그 이미지 번호를 반드시 넣으세요.`,
+          });
+          const res = await callGenerate(genMaxTokens);
+          const cost = calculateCost(
+            modelUsed,
+            res.usage.input_tokens,
+            res.usage.output_tokens,
+            res.usage.cache_read_input_tokens ?? 0,
+            res.usage.cache_creation_input_tokens ?? 0,
+          );
+          totalCost += cost;
+          aggInputTokens += res.usage.input_tokens;
+          aggOutputTokens += res.usage.output_tokens;
+          await recordAiCost({
+            userId: input.userId,
+            endpoint: 'private.generate',
+            model: modelUsed,
+            costUsd: cost,
+            inputTokens: res.usage.input_tokens,
+            outputTokens: res.usage.output_tokens,
+            metadata: { uploadId: uploadRow.id, batch: batchIndex + 1, blindRepair: true },
+          });
+          const block = res.content.find(
+            (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+          );
+          const parsedFix = block?.input as { questions?: GeneratedQuestion[] } | undefined;
+          if (!Array.isArray(parsedFix?.questions) || parsedFix.questions.length === 0) {
+            return repaired;
+          }
+          // 이미지를 실제로 붙인 후보만 쓴다. 기존 발문과 같은 것도 버린다(교체가 아니라 반복).
+          const existing = new Set(kept.map((k) => String(k.q.stem ?? '').trim()));
+          const candidates = buildKept(parsedFix.questions).filter(
+            (c) =>
+              (c.q.image_indices ?? []).some(validImageIndex) &&
+              !existing.has(String(c.q.stem ?? '').trim()),
+          );
+          if (candidates.length === 0) return repaired;
+          // 새 문항도 같은 검사를 통과해야 채택한다.
+          const passed: KeptItem[] = [];
+          await mapWithConcurrency(candidates, BLIND_CONCURRENCY, async (c) => {
+            const v = await blindVerdict(c);
+            if (!v?.solvable) passed.push(c); // 판정 불가(null)는 통과로 친다
+          });
+          batchDiag.blindRepairPassed = passed.length;
+          for (const { i } of failed) {
+            const next = passed.shift();
+            if (!next) break;
+            kept[i] = next;
+            repaired.add(i);
+            bumpGenDiag('blindRepaired');
+          }
+          if (repaired.size > 0) {
+            warnings.push(
+              `그림 없이 풀리던 이미지 문항 ${repaired.size}개를 그림 의존 문항으로 재작성(교체).`,
+            );
+          }
+        } catch (e) {
+          warnings.push(
+            `블라인드 재작성 실패 — 원본에 종전 정책 적용. ${e instanceof Error ? e.message.slice(0, 120) : String(e)}`,
+          );
+        } finally {
+          batchDiag.blindRepairMs = Date.now() - tRepair;
+        }
+        return repaired;
+      };
+
       // ── 이미지형 블라인드 풀이 검사 (P9)
       //
       // 프롬프트에는 "이 이미지를 빼도 풀 수 있는가를 자문하라"는 가림 검사가 있다.
@@ -3631,11 +3736,18 @@ export async function generatePrivateQuestionsFromUpload(
         if (targets.length > 0) {
           const tBlind = Date.now();
           const blindRejected = new Set<number>();
-          await mapWithConcurrency(targets, BLIND_CONCURRENCY, async ({ k, i }) => {
+
+          /**
+           * 한 문항을 그림 없이 풀려 본다.
+           * 반환 null = 판정 불가(호출 실패·시간 초과) → 통과로 친다(가용성 우선).
+           */
+          const blindVerdict = async (
+            item: KeptItem,
+          ): Promise<{ solvable: boolean; basis: string } | null> => {
             const attempts = await withDeadline(
               Promise.all(
                 Array.from({ length: BLIND_ATTEMPTS }, () =>
-                  blindSolveOnce({ stem: String(k.q.stem ?? ''), choices: k.choices }).catch(
+                  blindSolveOnce({ stem: String(item.q.stem ?? ''), choices: item.choices }).catch(
                     (e: unknown) => {
                       bumpGenDiag('blindUnavailable');
                       console.warn(
@@ -3651,8 +3763,7 @@ export async function generatePrivateQuestionsFromUpload(
               null,
               () => bumpGenDiag('blindTimeout'),
             );
-            if (!attempts) return;
-
+            if (!attempts) return null;
             for (const a of attempts) {
               if (!a) continue;
               void recordAiCost({
@@ -3667,12 +3778,45 @@ export async function generatePrivateQuestionsFromUpload(
               totalCost += a.usage.costUSD;
             }
             bumpGenDiag('blindChecked');
-
             const picks = attempts.map((a) => a?.answerIndex ?? null);
-            if (!isBlindSolvable(picks, k.answerIndex)) return;
+            return {
+              solvable: isBlindSolvable(picks, item.answerIndex),
+              // 왜 골랐는지는 사람이 재검토할 때만 쓴다 — 사용자에게는 안 나간다.
+              basis: attempts.find((a) => a?.basis)?.basis ?? '',
+            };
+          };
 
-            // 왜 골랐는지는 폐기를 사람이 재검토할 때만 쓴다 — 사용자에게는 안 나간다.
-            const basis = attempts.find((a) => a?.basis)?.basis ?? '';
+          // ── 1단계: 걸린 문항을 모으기만 한다(아직 버리지 않는다).
+          const failed: Array<{ i: number; basis: string }> = [];
+          await mapWithConcurrency(targets, BLIND_CONCURRENCY, async ({ k, i }) => {
+            const v = await blindVerdict(k);
+            if (v?.solvable) failed.push({ i, basis: v.basis });
+          });
+
+          // ── 2단계: 폐기 대신 **그림 의존 재작성 1회** (사용자 결정 2026-08-22 · 방안 2)
+          //
+          // 종전에는 걸린 문항을 바로 버렸다. 그런데 이 검사는 "그림이 장식인 문항"만
+          // 잡는 게 아니라 **그림이 보조 근거인 정상 문항까지** 잡는다 — 임상 증례 +
+          // 5지선다는 그림 없이도 지식으로 맞는 일이 흔하기 때문이다. 실측에서 검사
+          // 8~11건 중 4~7건이 걸렸고(탈락률 50~64 %), 그 결과 이미지형 단독 요청의
+          // 이미지 문항 비율이 #250 이전 60~80 %에서 20~40 %로 떨어졌다.
+          //
+          // 그래서 판정을 **삭제 신호가 아니라 수리 신호**로 쓴다. 걸린 수만큼 "그림에서만
+          // 읽히는 소견을 근거로" 다시 만들게 하고, 새 문항이 검사를 통과하면 갈아끼운다.
+          // 재작성은 배치당 1회뿐이고(무한 반복 방지), 실패분에는 종전 정책(폐기·강등)이
+          // 그대로 적용된다 — 품질 기준을 낮추지 않으면서 수량·비율을 지키는 방식이다.
+          const stillFailed: Array<{ i: number; basis: string }> = [];
+          if (BLIND_MODE === 'discard' && failed.length > 0 && featured.length > 0) {
+            const repaired = await repairBlindFailures(failed, blindVerdict);
+            for (const f of failed) if (!repaired.has(f.i)) stillFailed.push(f);
+          } else {
+            stillFailed.push(...failed);
+          }
+
+          // ── 3단계: 재작성으로도 못 살린 문항에만 종전 정책을 적용한다.
+          for (const { i, basis } of stillFailed) {
+            const k = kept[i];
+            if (!k) continue;
             if (BLIND_MODE === 'discard') {
               // 폐기는 **발문이 그림을 가리킬 때만** 한다.
               //
@@ -3703,7 +3847,9 @@ export async function generatePrivateQuestionsFromUpload(
               bumpGenDiag('blindFlagged');
               warnings.push(`블라인드 풀이 경고(그림 없이 ${BLIND_ATTEMPTS}회 정답): ${basis.slice(0, 120)}`);
             }
-          });
+          }
+          batchDiag.blindFailed = failed.length;
+          batchDiag.blindStillFailed = stillFailed.length;
           batchDiag.blindMs = Date.now() - tBlind;
           batchDiag.blindTargets = targets.length;
           batchDiag.blindMode = BLIND_MODE;

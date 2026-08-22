@@ -151,6 +151,34 @@ check(
     !/throw new Error\(\s*`이미지 문항이 모두 그림 없이 풀립니다/.test(gen),
 );
 
+// ⑥-3 폐기 대신 재작성 (2026-08-22 · 방안 2).
+//
+// 왜 이 검사가 필요한가: 이 검사는 "그림이 장식인 문항"만이 아니라 **그림이 보조 근거인
+// 정상 문항까지** 잡는다(실측 탈락률 50~64 %). 그래서 판정을 삭제가 아니라 수리 신호로
+// 쓰기로 했다. 아래 불변식이 깨지면 이미지형 비율이 다시 20~40 %로 주저앉는다.
+console.log('\n⑥-3 폐기 대신 그림 의존 재작성을 먼저 시도한다');
+check('재작성 함수가 있다', /const repairBlindFailures = async/.test(gen));
+check(
+  '재작성에 성공한 문항은 폐기·강등 대상에서 빠진다',
+  /const stillFailed[\s\S]{0,400}?repairBlindFailures\([\s\S]{0,200}?if \(!repaired\.has\(f\.i\)\) stillFailed\.push\(f\)/.test(
+    gen,
+  ),
+);
+check(
+  '재작성본도 같은 블라인드 검사를 통과해야 채택한다',
+  /await mapWithConcurrency\(candidates, BLIND_CONCURRENCY[\s\S]{0,200}?blindVerdict\(c\)/.test(gen),
+);
+check('재작성 성공 카운터 blindRepaired', /bumpGenDiag\('blindRepaired'\)/.test(gen));
+check(
+  '이미지를 못 받은 묶음에서는 재작성하지 않는다',
+  /failed\.length > 0 && featured\.length > 0/.test(gen),
+);
+check(
+  '재작성은 배치당 1회다(정의 1 + 호출 1, 재귀 호출 없음)',
+  // 이름이 3번 이상 나오면 어딘가에서 다시 부르고 있다는 뜻 — 무한 반복·비용 폭주로 이어진다.
+  (gen.match(/repairBlindFailures/g) ?? []).length === 2,
+);
+
 console.log('\n⑦ 사용자 알림(P8) 연결');
 const notice = stripComments(read('../lib/ai/upload-notice.ts'));
 check('blindDiscarded 를 부족분 사유에 포함', /blindDiscarded/.test(notice));
