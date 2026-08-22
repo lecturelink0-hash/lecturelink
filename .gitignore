@@ -100,3 +100,7 @@ keys/
 .vercel
 .env*
 .codex-preview-*/
+
+# CPX 서버 테스트를 돌리면 생기는 로컬 SQLite (운영 DB 는 컨테이너의 /data 볼륨)
+services/cpx/server/cpx.sqlite3
+services/cpx/server/cpx.sqlite3-*
