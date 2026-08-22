@@ -22,6 +22,8 @@
 import { createHash } from 'node:crypto';
 import { recordStage } from '@/lib/metrics/request-context';
 import { runQualityGate, describeGate } from './quality-gate';
+import { buildChunks } from '@/lib/extract/chunk';
+import { validateSourceRefs, toStoredRefs } from './source-refs';
 import type { PrivateQuestionKind } from '@/lib/types/database';
 import type Anthropic from '@anthropic-ai/sdk';
 import { createAdminClient } from '@/lib/db/admin';
@@ -219,6 +221,27 @@ const PRIOR_STEMS_TIMEOUT_MS = 2_500;
  * (배치마다 실패-재시도를 반복하지 않게 하는 프로세스 수명 캐시).
  */
 let questionMetricColumnsSupported = true;
+// 00043 미적용 환경에서 source_refs 때문에 저장 전체가 거절되지 않게 하는 폴백 플래그.
+// questionMetricColumnsSupported 와 같은 구조다(2026-08-18 에 같은 사고가 있었다).
+let sourceRefColumnSupported = true;
+// 청크 저장 실패가 생성을 막지 않게 한다 — 출처는 있으면 좋은 것이지 문항의 전제가 아니다.
+let materialChunksSupported = true;
+
+/**
+ * 이 배치가 실제로 받은 슬라이드 번호.
+ *
+ * 자료 전체 페이지 수로 출처를 검증하면, 구간 분할(segmentForBatch)로 그 배치가 보지도
+ * 못한 페이지를 인용해도 통과해 버린다 — 그러면 "출처 유효성"이 거짓말이 된다.
+ * 프롬프트에 실린 `## 슬라이드 N` 헤더가 곧 그 배치의 기준집합이다.
+ */
+function pagesInContext(contextText: string): number[] {
+  const pages = new Set<number>();
+  for (const match of contextText.matchAll(/^##\s*슬라이드\s*(\d+)/gm)) {
+    const page = Number(match[1]);
+    if (Number.isFinite(page) && page > 0) pages.add(page);
+  }
+  return [...pages].sort((a, b) => a - b);
+}
 
 /** 같은 이유의 프로세스 수명 캐시 — user_uploads.notice(P8) 컬럼 유무. */
 let uploadNoticeColumnSupported = true;
@@ -2370,6 +2393,56 @@ export async function generatePrivateQuestionsFromUpload(
       cropCount: s.croppedImages.length,
     }));
 
+    // ── 5.4) 출처 추적용 청크 저장 (분담표 A8 · 가이드 §4.3)
+    //
+    // 문항이 강의자료 어디에서 나왔는지 적어 두려면, 그 '어디'를 먼저 저장해 둬야 한다.
+    // 이게 없으면 전문가 검수 때 검수자가 "근거가 충분한가"를 판정할 때마다 강의자료
+    // 전체를 뒤져야 한다(분담표가 A8 을 2단계 선행 조건으로 둔 이유).
+    //
+    // 실패해도 생성을 막지 않는다 — 출처는 있으면 좋은 것이지 문항의 전제가 아니다.
+    let chunkLocators: Array<{ id: string; pageIndex: number }> = [];
+    if (materialChunksSupported) {
+      const tChunk = Date.now();
+      try {
+        const chunks = buildChunks(slideSummaries);
+        if (chunks.length > 0) {
+          // 재생성이면 같은 upload 의 이전 청크를 지우고 다시 넣는다. 청크 번호는
+          // 결정론이라 내용이 같으면 같은 번호가 나오지만, 추출 결과가 달라졌을 때
+          // 옛 청크가 남아 있으면 문항이 사라진 페이지를 가리키게 된다.
+          await admin.from('material_chunks').delete().eq('upload_id', uploadRow.id);
+          const { data: savedChunks, error: chunkErr } = await admin
+            .from('material_chunks')
+            .insert(chunks.map((c) => ({
+              upload_id: uploadRow.id,
+              user_id: input.userId,
+              chunk_index: c.chunkIndex,
+              page_index: c.pageIndex,
+              kind: c.kind,
+              text: c.text,
+              char_count: c.charCount,
+              content_sha: c.sha256,
+            })) as never)
+            .select('id, page_index');
+          if (chunkErr) {
+            if (isMissingColumnError(chunkErr) || chunkErr.code === '42P01') {
+              materialChunksSupported = false;
+              warnings.push('출처 추적 테이블이 없어 청크를 저장하지 못했다(마이그레이션 00043 미적용).');
+            } else {
+              warnings.push(`청크 저장 실패: ${sanitizeErrorMessage(chunkErr.message)}`);
+            }
+          } else {
+            chunkLocators = (savedChunks ?? []).map((r) => ({
+              id: String(r.id), pageIndex: Number(r.page_index),
+            }));
+            diag.timings.chunkPersistMs = Date.now() - tChunk;
+            diag.generation.chunkCount = chunks.length;
+          }
+        }
+      } catch (e) {
+        warnings.push(`청크 저장 예외: ${sanitizeErrorMessage(e)}`);
+      }
+    }
+
     // 5.5) 추출 결과가 전부 비어 있으면 Claude 호출은 의미 없음 → 명확한 실패 메시지.
     const totalSlideText = slideSummaries
       .map((ss) => ss.slideText)
@@ -3672,6 +3745,34 @@ export async function generatePrivateQuestionsFromUpload(
         }
       }
 
+      // ── 출처 추적 (분담표 A8 · 가이드 §2.1 '출처 위치 유효성', §12.2 source_refs)
+      //
+      // 구조적 출처(가리킨 페이지가 실제로 있는가)만 여기서 검사한다. 그 페이지의 내용이
+      // 정말 이 문항의 근거인지(의미상 출처)는 전문가 검증 영역이고, 코드가 판정하는
+      // 척해서는 안 된다 — 섞으면 "출처 유효성 98%" 가 "근거가 맞다"로 잘못 읽힌다.
+      {
+        const availablePages = pagesInContext(gen.contextText || '');
+        const sourceCheck = validateSourceRefs(
+          kept.map((k) => ({ sourcePages: (k.q as { source_pages?: unknown }).source_pages })),
+          {
+            // 위에서 파일 내용으로 직접 계산한 값을 쓴다. uploadRow 는 좁은 select 라
+            // content_sha256 을 갖고 있지 않고, DB 왕복을 한 번 더 할 이유도 없다.
+            fileSha256: contentSha256,
+            availablePages,
+            chunks: chunkLocators,
+          },
+        );
+        sourceCheck.refs.forEach((ref, i) => {
+          if (rows[i]) (rows[i] as Record<string, unknown>).source_refs = toStoredRefs(ref);
+        });
+        batchDiag.sourceReportRate = sourceCheck.stats.sourceReportRate;
+        batchDiag.sourceLocationValidRate = sourceCheck.stats.locationValidRate;
+        batchDiag.sourceInvalidQuestions = sourceCheck.stats.questionsWithInvalidRef;
+        for (const message of sourceCheck.warnings.slice(0, 5)) {
+          warnings.push(`배치 ${batchIndex + 1}: ${message}`);
+        }
+      }
+
       // ── 품질 게이트 (분담표 A4 · 가이드 §2.1 스키마 준수율·중복 문항률)
       //
       // 저장을 막지 않는다. 이미 생성 비용을 치른 문항을 버리면 사용자는 "10문항 요청했는데
@@ -3698,6 +3799,11 @@ export async function generatePrivateQuestionsFromUpload(
       }
 
       const upsertOptions = { onConflict: 'upload_id,generation_slot' } as const;
+      // 00043 미적용 환경에서는 source_refs 컬럼이 없다. 그것 때문에 저장 전체가
+      // 거절되면 문항이 통째로 사라지므로, 출처만 떼고 다시 넣는다.
+      if (!sourceRefColumnSupported) {
+        for (const row of rows) delete (row as Record<string, unknown>).source_refs;
+      }
       const saveWithoutMetrics = () =>
         admin
           .from('private_questions')
@@ -3707,6 +3813,16 @@ export async function generatePrivateQuestionsFromUpload(
       let { data: inserted, error: insertErr } = questionMetricColumnsSupported
         ? await admin.from('private_questions').upsert(rows, upsertOptions).select('id')
         : await saveWithoutMetrics();
+      // 00043 미적용 환경: source_refs 컬럼 때문에 거절되면 출처만 떼고 다시 넣는다.
+      // 계측 폴백보다 먼저 본다 — 둘 다 컬럼 누락이라 한쪽만 떼도 안 되면 아래에서 또 떨어진다.
+      if (insertErr && sourceRefColumnSupported && isMissingColumnError(insertErr)) {
+        sourceRefColumnSupported = false;
+        for (const row of rows) delete (row as Record<string, unknown>).source_refs;
+        warnings.push('출처 컬럼이 없어 출처 없이 저장(마이그레이션 00043 미적용).');
+        ({ data: inserted, error: insertErr } = questionMetricColumnsSupported
+          ? await admin.from('private_questions').upsert(rows, upsertOptions).select('id')
+          : await saveWithoutMetrics());
+      }
       // 00040 미적용 환경: 계측 컬럼 때문에 저장 전체가 거절되면 계측만 버리고 다시 넣는다.
       if (insertErr && questionMetricColumnsSupported && isMissingColumnError(insertErr)) {
         questionMetricColumnsSupported = false;
