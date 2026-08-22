@@ -465,13 +465,11 @@ export default function NotesPage() {
 
   async function pollUploadStatus(
     uploadId: string,
-    onPartial: (questions: GenQ[]) => void,
     /** 진행이 멈췄을 때 생성 요청을 다시 보내는 함수(큐 고착 자동 회복). */
     rekick?: () => Promise<unknown>,
   ): Promise<UploadDetailRes | null> {
     // 대용량 강의록은 OCR과 문항 생성에 5분 이상 걸릴 수 있다. 큐 작업은
     // 브라우저 요청과 독립적으로 진행되므로 충분히 기다리고 완료 상태를 복구한다.
-    let partialShown = false;
     // 큐 고착 자동 회복: 워커가 작업을 집어가지 못하면(전달 실패·함수 사망) 진행이 멈춘 채
     // 영원히 끝나지 않는다. 서버는 heartbeat 기준으로 재점유를 허용하므로, 진행 신호가
     // 일정 시간 없으면 사용자가 아무 것도 하지 않아도 생성 요청을 다시 보내 되살린다.
@@ -511,17 +509,12 @@ export default function NotesPage() {
           // 실패해도 폴링은 계속한다(서버가 아직 살아있다고 판단하면 409 를 준다).
           await rekick().catch(() => {});
         }
-        if (
-          !partialShown &&
-          // 생성이 병렬 소배치(3~4문항)로 완료되므로 첫 배치가 끝나는 즉시 부분 공개.
-          found.completed_question_count >= Math.min(3, count)
-        ) {
-          const partialQuestions = await fetchGeneratedQuestions(uploadId);
-          if (partialQuestions.length > 0) {
-            partialShown = true;
-            onPartial(partialQuestions);
-          }
-        }
+        // ⚠ 부분 공개는 하지 않는다(사용자 결정 2026-08-22).
+        //
+        // 종전에는 첫 배치가 끝나는 즉시 그때까지의 문항을 화면에 띄웠다. 그런데 생성은
+        // 그 뒤로도 계속 문항을 지우고(그림 참조 정리·재사용 상한) 다시 채우기 때문에,
+        // 먼저 공개된 목록은 최종본과 다르고 개수도 도중에 늘었다 줄었다 한다.
+        // 이제 완료 시점에 전량을 한 번에 공개한다 — 아래 completed 분기에서 조회한다.
         if (found.status === 'completed' || found.status === 'failed') {
           return {
             id: found.id,
@@ -575,14 +568,7 @@ export default function NotesPage() {
       const res = await sendProcess();
 
       if (res.status === 'queued') {
-        const final = await pollUploadStatus(
-          uploadId,
-          (partialQuestions) => {
-            setGenerated({ total: partialQuestions.length, questions: partialQuestions });
-            setShowResult(true);
-          },
-          sendProcess,
-        );
+        const final = await pollUploadStatus(uploadId, sendProcess);
         if (final?.status === 'completed') {
           return await fetchGeneratedQuestions(uploadId);
         }
@@ -659,16 +645,14 @@ export default function NotesPage() {
         const qs = await kickoffProcessing(m.id);
         collected.push(...qs);
         genFilesDoneRef.current += 1;
-        // 파일이 끝날 때마다 결과 뷰를 갱신 — 부분 공개 뒤에도 문항이 이어서 늘어난다.
-        if (collected.length > 0) {
-          setGenerated({ total: collected.length, questions: [...collected] });
-          setShowResult(true);
-        }
+        // 파일이 끝날 때마다 결과를 띄우지 않는다(사용자 결정 2026-08-22) — 자료가 여러
+        // 개면 문제 화면이 열린 뒤에도 목록이 계속 늘어나 몇 문항짜리인지 알 수 없었다.
+        // 전부 끝난 뒤 아래에서 한 번에 공개한다. 진행 상황은 대기 화면이 보여 준다.
       }
     } finally {
       setGenSession(false); // 생성 완료 → 즉시 게임 종료, 문제 화면으로 전환
     }
-    // 생성된 문항이 하나라도 있으면 결과 뷰로 전환.
+    // 전량 완료 후 1회 공개.
     if (collected.length > 0) {
       setGenerated({ total: collected.length, questions: collected });
       setShowResult(true);

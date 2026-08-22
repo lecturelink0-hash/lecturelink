@@ -298,7 +298,11 @@ const GEN_CONCURRENCY = 8;
 const GEN_HEDGE_AFTER_MS = 18_000;
 // 요청 수를 못 채웠을 때 빈 슬롯을 다시 채우는 최대 라운드 수.
 // (모델이 요청보다 적게 반환하거나, 이미지 문항이 정제 실패로 삭제되면 부족분이 생긴다.)
-const GEN_BACKFILL_ROUNDS = 2;
+//
+// 2 → 3: 라운드마다 깨진 그림 참조를 청소하도록 바꾸면서(항상 실행) 마지막 라운드의
+// 청소가 만든 빈 슬롯을 채울 라운드가 없어졌다. 한 라운드를 더 두어 "청소 → 재채움"이
+// 반드시 한 번은 성립하게 한다. 마지막 라운드는 이미지를 싣지 않아 실패 확률이 낮다.
+const GEN_BACKFILL_ROUNDS = 3;
 // 보충 배치에 싣는 출제 근거 텍스트 상한(자). 본 배치(최대 15만 자)와 달리 보충은
 // "빈 칸 몇 개만 빠르게" 채우는 호출이라 입력을 줄여 429·대기 시간을 피한다.
 // 실측에서 보충 1문항이 27.6초를 써 총 시간을 지배해 30k → 12k 로 더 조였다.
@@ -3302,46 +3306,131 @@ export async function generatePrivateQuestionsFromUpload(
       // 이후 이미지 연결·정리 로직은 모두 이 kept 배열 기준으로 인덱스를 맞춘다
       // (parsed.questions 를 그대로 쓰면 폐기분 때문에 inserted 와 어긋난다).
       // let — 검증(P1) 이 폐기 모드로 돌 때 걸러진 배열로 갈아끼운다.
-      let kept: Array<{
+      type KeptItem = {
         q: GeneratedQuestion;
         choices: string[];
         answerIndex: number;
         /** P1 검증 점수. 검증을 못 돌렸거나 시간 초과면 null. */
         verifyScore?: number | null;
-      }> = [];
-      for (const q of parsed.questions) {
-        if (kept.length >= batchSize) break;
-        const normalized = normalizeChoiceSet(q.choices, q.answer_index);
-        if (!normalized) {
-          warnings.push(
-            `선지 구성이 올바르지 않아 문항 1개 폐기(선지 ${(q.choices ?? []).length}개) — 보충 생성으로 대체.`,
-          );
-          continue;
+      };
+      /**
+       * 파싱 결과 → 저장 후보. 형식 오류·정답 길이 누출은 여기서 폐기한다.
+       * (이미지 쿼터 교정 재생성이 같은 정규화를 다시 써야 해서 함수로 뺐다.)
+       */
+      const buildKept = (questions: GeneratedQuestion[]): KeptItem[] => {
+        const kept: KeptItem[] = [];
+        for (const q of questions) {
+          if (kept.length >= batchSize) break;
+          const normalized = normalizeChoiceSet(q.choices, q.answer_index);
+          if (!normalized) {
+            warnings.push(
+              `선지 구성이 올바르지 않아 문항 1개 폐기(선지 ${(q.choices ?? []).length}개) — 보충 생성으로 대체.`,
+            );
+            continue;
+          }
+          if (normalized.choices.length !== (q.choices ?? []).length) {
+            warnings.push(
+              `선지 ${(q.choices ?? []).length}개 → ${REQUIRED_CHOICE_COUNT}개로 정규화(정답 유지).`,
+            );
+          }
+          // 정답 길이 누출(F17-L): 정답만 유독 길어 길이만으로 답이 드러나는 문항은 폐기하고
+          // 보충 단계가 채우게 한다. 공유풀(admission)에서 검증된 규칙을 그대로 쓴다 —
+          // 운영 987문항 실측에서 정답=최장 선지 32.6 %(임상형 36.7 %), 기대 20 %.
+          const leakage = lintChoiceLeakage({
+            stem: String(q.stem ?? ''),
+            choices: normalized.choices,
+            answer_index: normalized.answerIndex,
+          }).filter((issue) => issue.rule === 'F17-L');
+          if (leakage.length > 0) {
+            bumpGenDiag('leakageDiscarded');
+            warnings.push(`정답 길이 누출로 문항 1개 폐기 — 보충 생성으로 대체. ${leakage[0].message}`);
+            continue;
+          }
+          // 정답 위치 셔플(조합형 제외) — 3번 쏠림(30.7 %)을 코드에서 없앤다.
+          const shuffled = shuffleChoices(normalized.choices, normalized.answerIndex);
+          kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex });
         }
-        if (normalized.choices.length !== (q.choices ?? []).length) {
-          warnings.push(
-            `선지 ${(q.choices ?? []).length}개 → ${REQUIRED_CHOICE_COUNT}개로 정규화(정답 유지).`,
-          );
-        }
-        // 정답 길이 누출(F17-L): 정답만 유독 길어 길이만으로 답이 드러나는 문항은 폐기하고
-        // 보충 단계가 채우게 한다. 공유풀(admission)에서 검증된 규칙을 그대로 쓴다 —
-        // 운영 987문항 실측에서 정답=최장 선지 32.6 %(임상형 36.7 %), 기대 20 %.
-        const leakage = lintChoiceLeakage({
-          stem: String(q.stem ?? ''),
-          choices: normalized.choices,
-          answer_index: normalized.answerIndex,
-        }).filter((issue) => issue.rule === 'F17-L');
-        if (leakage.length > 0) {
-          bumpGenDiag('leakageDiscarded');
-          warnings.push(`정답 길이 누출로 문항 1개 폐기 — 보충 생성으로 대체. ${leakage[0].message}`);
-          continue;
-        }
-        // 정답 위치 셔플(조합형 제외) — 3번 쏠림(30.7 %)을 코드에서 없앤다.
-        const shuffled = shuffleChoices(normalized.choices, normalized.answerIndex);
-        kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex });
-      }
+        return kept;
+      };
+
+      let kept: KeptItem[] = buildKept(parsed.questions);
       if (kept.length === 0) {
         throw new Error(`생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`);
+      }
+
+      // ── 이미지 판독 문항 쿼터 미준수 → 1회 교정 재생성
+      //
+      // imageQuota 는 배치 지시문에 적기만 하고 **강제하지 않았다**. 2026-08-22 실측
+      // (이미지형 단독 10문항)에서 배치별 이미지 부착 수가 1·2·1·1·1 — 5배치 중 4배치가
+      // 쿼터(2)를 어겨 주 라운드에서 이미 10문항 중 6문항만 이미지를 받았다. 코드가 세지도
+      // 않아 이 이탈은 로그에 흔적조차 남지 않았다(임상형에는 measureClinicalYield 계측이
+      // 있는데 이미지형에는 그것도 없었다).
+      //
+      // 이제 세고, 모자라면 **모자란 수를 숫자로 지목해** 한 번만 다시 받는다. 좋아졌을
+      // 때만 채택하므로 교정이 역효과를 내지 않는다. 재생성은 배치당 최대 1회다.
+      const countAttached = (list: KeptItem[]) =>
+        list.filter((k) => (k.q.image_indices ?? []).some(validImageIndex)).length;
+      batchDiag.imageQuota = imageQuota;
+      batchDiag.imageAttached = countAttached(kept);
+      if (imageQuota > 0 && countAttached(kept) < imageQuota) {
+        const before = countAttached(kept);
+        bumpGenDiag('imageQuotaShortfall');
+        warnings.push(
+          `배치 ${batchIndex + 1}: 이미지 판독 문항이 ${before}/${imageQuota}문항에 그침 — 1회 교정 재생성.`,
+        );
+        userContent.push({
+          type: 'text',
+          text:
+            `방금 만든 문항 중 [이미지 N]을 실제로 판독해야 풀리는 문항이 ${before}개뿐입니다. ` +
+            `이번 묶음은 **이미지 판독 문항이 ${imageQuota}개** 필요합니다. 같은 근거로 ${batchSize}문항을 ` +
+            `다시 만들되, 최소 ${imageQuota}문항은 image_indices 에 제시된 이미지 번호를 넣고 ` +
+            `**그 그림에서만 읽을 수 있는 소견**(위치·모양·크기·분포·염색 양상·기호가 가리키는 대상)을 ` +
+            `정답의 근거로 삼으세요. 그림을 손으로 가려도 풀리면 그것은 이미지 문항이 아닙니다. ` +
+            `제시되지 않은 그림을 가리키는 표현은 쓰지 마세요.`,
+        });
+        try {
+          const tFix = Date.now();
+          const fixRes = await callGenerate(genMaxTokens);
+          batchDiag.imageQuotaFixMs = Date.now() - tFix;
+          const fixCost = calculateCost(
+            modelUsed,
+            fixRes.usage.input_tokens,
+            fixRes.usage.output_tokens,
+            fixRes.usage.cache_read_input_tokens ?? 0,
+            fixRes.usage.cache_creation_input_tokens ?? 0,
+          );
+          totalCost += fixCost;
+          aggInputTokens += fixRes.usage.input_tokens;
+          aggOutputTokens += fixRes.usage.output_tokens;
+          await recordAiCost({
+            userId: input.userId,
+            endpoint: 'private.generate',
+            model: modelUsed,
+            costUsd: fixCost,
+            inputTokens: fixRes.usage.input_tokens,
+            outputTokens: fixRes.usage.output_tokens,
+            metadata: { uploadId: uploadRow.id, batch: batchIndex + 1, imageQuotaFix: true },
+          });
+          const fixBlock = fixRes.content.find(
+            (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+          );
+          const fixParsed = fixBlock?.input as
+            | { questions?: GeneratedQuestion[] }
+            | undefined;
+          if (Array.isArray(fixParsed?.questions) && fixParsed.questions.length > 0) {
+            const fixKept = buildKept(fixParsed.questions);
+            // 좋아졌을 때만 갈아끼운다 — 교정본이 더 나쁘면 원본이 낫다.
+            if (fixKept.length > 0 && countAttached(fixKept) > before) {
+              kept = fixKept;
+              bumpGenDiag('imageQuotaFixed');
+            }
+          }
+        } catch (e) {
+          warnings.push(
+            `이미지 쿼터 교정 재생성 실패 — 원본 유지. ${e instanceof Error ? e.message.slice(0, 120) : String(e)}`,
+          );
+        }
+        batchDiag.imageAttachedAfterFix = countAttached(kept);
       }
 
       /**
@@ -3551,6 +3640,36 @@ export async function generatePrivateQuestionsFromUpload(
               return emptyBatchResult('이미지 문항이 모두 그림 없이 풀림');
             }
           }
+        }
+      }
+
+      // ── 깨진 그림 참조를 **저장 전에** 막는다.
+      //
+      // "발문은 그림을 가리키는데 붙일 이미지가 없는" 문항은 학생이 풀 수 없다. 종전에는
+      // 저장한 뒤 removeBrokenFigureQuestions 가 훑어 지웠는데, 그 청소는 보충 루프의
+      // 특정 조건에서만 돌아 마지막 라운드 산출물은 통과해 버렸다(2026-08-22 실측:
+      // 스크린샷 3번 문항이 그대로 학생 화면에 나갔다).
+      //
+      // 여기서 걸러 내면 (1) 어떤 경로로 만들어졌든 반드시 잡히고, (2) 그 슬롯이 곧바로
+      // 빈 칸이 되어 남은 보충 라운드가 다시 채울 기회를 얻는다. 저장 후 삭제보다 항상 낫다.
+      // 이미지를 배정받은 문항(image_indices 유효)은 여기서 거르지 않는다 — 정제 실패로
+      // 연결이 끊기는 경우는 아래 orphan 처리가 따로 판단한다.
+      {
+        const beforeGuard = kept.length;
+        kept = kept.filter((k) => {
+          const hasImage = (k.q.image_indices ?? []).some(validImageIndex);
+          if (hasImage) return true;
+          if (!stemDeclaresFigure(String(k.q.stem ?? ''))) return true;
+          bumpGenDiag('figureRefWithoutImage');
+          warnings.push(
+            `발문이 그림을 가리키는데 붙일 이미지가 없어 저장 전 폐기 — 보충 생성으로 대체. ` +
+              `${String(k.q.stem ?? '').slice(0, 60)}`,
+          );
+          return false;
+        });
+        batchDiag.figureRefDropped = beforeGuard - kept.length;
+        if (kept.length === 0) {
+          return emptyBatchResult('전 문항이 그림을 가리키는데 이미지가 없음');
         }
       }
 
@@ -4339,12 +4458,15 @@ export async function generatePrivateQuestionsFromUpload(
         }
         return null;
       });
-      // 이미지를 실은 보충이 만들 수 있는 초과 연결·깨진 그림 참조를 라운드 안에서
-      // 정리한다 — 정리로 생긴 빈 슬롯은 다음 라운드가 다시 채운다.
-      if (imagesOffered > 0) {
-        await enforceImageReuseCap();
-        await removeBrokenFigureQuestions();
-      }
+      // 보충이 만들 수 있는 초과 연결·깨진 그림 참조를 라운드 안에서 정리한다 —
+      // 정리로 생긴 빈 슬롯은 다음 라운드가 다시 채운다.
+      //
+      // 종전에는 `imagesOffered > 0` 일 때만 돌렸다. 그런데 이미지를 **안 실은** 보충
+      // 배치야말로 "그림이 없는데 그림을 가리키는" 발문을 쓰기 쉽다(배치 지시를 어긴
+      // 경우). 실측에서 마지막 라운드(imagesOffered 0)가 만든 문항이 청소를 통과해
+      // 그대로 학생에게 나갔다. 두 정리 모두 멱등이라 항상 돌려도 안전하다.
+      await enforceImageReuseCap();
+      await removeBrokenFigureQuestions();
       const beforeCount = saved.length;
       saved = await readSaved();
       roundRec.ms = Date.now() - tRound;
