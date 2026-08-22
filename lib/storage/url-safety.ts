@@ -1,7 +1,7 @@
 /**
  * 이미지 URL SSRF 방어
  *
- * /api/questions/generate 등에서 사용자 입력 image_url 을 Claude Vision 에 그대로
+ * /api/questions/generate 등에서 사용자 입력 image_url 을 Vision 모델(기본 gemini-2.5-flash)에 그대로
  * 넘기면 내부망 포트 스캔·메타데이터 서비스 노출 등 SSRF 가 가능하다.
  *
  * 허용 호스트:

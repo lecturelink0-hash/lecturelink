@@ -13,7 +13,7 @@
  *   4. 각 페이지/슬라이드에 대해:
  *      4a. 의료 이미지 영역 검출 (Vision)
  *      4b. crop → 전처리 → OCR
- *   5. 슬라이드 텍스트 + crop+OCR 결과를 Claude 에 한꺼번에 전달해 문항 생성
+ *   5. 슬라이드 텍스트 + crop+OCR 결과를 생성 모델(기본 gemini-2.5-flash)에 한꺼번에 전달해 문항 생성
  *   6. private_questions 일괄 저장 + 상태 업데이트
  *
  * 비용 추적: 모든 호출이 recordAiCost 로 ai_cost_log 에 기록됨.
@@ -1516,7 +1516,7 @@ async function extractFromBuffer(input: {
       try {
         const det = await detectMedicalRegions({ slidePng: s.png, userIdForLog });
       // fallback: 의료 이미지 검출 0건인 페이지는 페이지 전체를 region 으로 잡아
-      // OCR/Claude 가 슬라이드 텍스트·도표를 볼 수 있게 한다.
+      // OCR/Vision 모델(기본 gemini-2.5-flash)이 슬라이드 텍스트·도표를 볼 수 있게 한다.
       // 단, 이 "페이지 전체" 크롭은 ocrOnly 로 표시해 문항 이미지로는 노출하지 않는다
       // (주석 텍스트·다중 그림·정답 단서 혼입 방지).
       const isWholePageFallback = det.regions.length === 0;
@@ -2447,7 +2447,7 @@ export async function generatePrivateQuestionsFromUpload(
       }
     }
 
-    // 5.5) 추출 결과가 전부 비어 있으면 Claude 호출은 의미 없음 → 명확한 실패 메시지.
+    // 5.5) 추출 결과가 전부 비어 있으면 생성 호출은 의미 없음 → 명확한 실패 메시지.
     const totalSlideText = slideSummaries
       .map((ss) => ss.slideText)
       .join(' ')
@@ -2548,7 +2548,7 @@ export async function generatePrivateQuestionsFromUpload(
       );
     }
 
-    // 7) Claude 호출 — 문항 생성 (프롬프트·배치 계획은 4)에서 준비됨)
+    // 7) 생성 모델 호출(기본 gemini-2.5-flash) — 문항 생성 (프롬프트·배치 계획은 4)에서 준비됨)
     await updateProgress('generating', 0, desiredCount);
 
     // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
@@ -3344,7 +3344,7 @@ export async function generatePrivateQuestionsFromUpload(
         content_summary: string;
       };
       if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-        throw new Error(`Claude 생성 응답 파싱 실패 (batch=${batchIndex + 1})`);
+        throw new Error(`생성 응답 파싱 실패 (batch=${batchIndex + 1})`);
       }
 
       const genCost = calculateCost(
