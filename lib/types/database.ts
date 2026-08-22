@@ -407,6 +407,30 @@ export type AiCostLogRow = {
   input_tokens: number;
   output_tokens: number;
   metadata: Record<string, unknown> | null;
+  /** 요청 단위 드릴다운 키 (00042). 배치·크론 호출은 null. */
+  request_id: string | null;
+  created_at: string;
+}
+
+/** 요청 1건 = 1행. 성공률·지연·오류·원가의 원천 (00042 · 성능지표 가이드 1단계). */
+export type RequestMetricRow = {
+  id: string;
+  request_id: string;
+  feature: string;
+  version: string;
+  user_id: string | null;
+  method: string;
+  status: 'success' | 'client_error' | 'server_error' | 'timeout';
+  status_code: number;
+  error_code: string | null;
+  total_ms: number;
+  stages: Record<string, number> | null;
+  cost_usd: number;
+  input_tokens: number;
+  output_tokens: number;
+  models: string[] | null;
+  schema_valid: boolean | null;
+  quality: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -716,6 +740,12 @@ export interface Database {
         Update: Update<AiCostLogRow>;
         Relationships: [FK<'ai_cost_log', 'user_id', 'users'>];
       };
+      request_metrics: {
+        Row: RequestMetricRow;
+        Insert: Insert<RequestMetricRow>;
+        Update: Update<RequestMetricRow>;
+        Relationships: [FK<'request_metrics', 'user_id', 'users'>];
+      };
       ops_alerts: {
         Row: OpsAlertRow;
         Insert: Insert<OpsAlertRow>;
@@ -853,6 +883,11 @@ export interface Database {
       };
       sweep_stale_cpx_sessions: {
         Args: Record<string, never>;
+        Returns: number;
+      };
+      /** 보존 기간이 지난 요청 계측을 지운다 (00042). 삭제된 행 수를 돌려준다. */
+      purge_request_metrics: {
+        Args: { retain_days?: number };
         Returns: number;
       };
       reset_expired_bonuses: {

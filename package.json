@@ -28,6 +28,8 @@
     "check:knowledge": "node --experimental-strip-types --no-warnings scripts/check-knowledge-rules.mjs",
     "check:notice": "node --experimental-strip-types --no-warnings scripts/check-upload-notice.mjs",
     "check:material": "node --experimental-strip-types --no-warnings scripts/check-material-focus.mjs",
+    "check:metrics": "node --experimental-strip-types --no-warnings scripts/check-metrics.mjs",
+    "check:datasets": "node scripts/check-dataset-split.mjs",
     "check:reference": "node --experimental-strip-types --no-warnings scripts/check-reference-profile.mjs",
     "check:verify": "node --experimental-strip-types --no-warnings scripts/check-private-verify.mjs",
     "check:blind": "node --experimental-strip-types --no-warnings scripts/check-blind-solve.mjs",

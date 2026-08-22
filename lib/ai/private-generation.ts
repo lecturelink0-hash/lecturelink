@@ -20,6 +20,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { recordStage } from '@/lib/metrics/request-context';
+import { runQualityGate, describeGate } from './quality-gate';
 import type { PrivateQuestionKind } from '@/lib/types/database';
 import type Anthropic from '@anthropic-ai/sdk';
 import { createAdminClient } from '@/lib/db/admin';
@@ -1836,6 +1838,11 @@ export async function generatePrivateQuestionsFromUpload(
           metadata: payload as unknown as Record<string, unknown>,
         });
         if (diagErr) console.warn('[private-gen] 진단 기록 실패:', diagErr.message);
+        // 같은 단계별 시간을 요청 계측에도 흘린다 — 진단 JSON 은 업로드 한 건씩만 읽히지만
+        // request_metrics.stages 는 전체 p95 를 구할 수 있다(분담표 A1 '단계별 타이밍 재사용').
+        for (const [name, ms] of Object.entries(payload.timings)) {
+          if (typeof ms === 'number') recordStage(name.replace(/Ms$/, ''), ms);
+        }
       } catch (e) {
         console.warn(
           '[private-gen] 진단 기록 예외:',
@@ -3715,6 +3722,31 @@ export async function generatePrivateQuestionsFromUpload(
             `배치 ${batchIndex + 1}: 임상 증례형이 ${yieldStat.clinical}/${clinicalQuota}문항에 그침` +
               `(전체 ${yieldStat.total}문항) — 나머지는 지식형으로 생성됨.`,
           );
+        }
+      }
+
+      // ── 품질 게이트 (분담표 A4 · 가이드 §2.1 스키마 준수율·중복 문항률)
+      //
+      // 저장을 막지 않는다. 이미 생성 비용을 치른 문항을 버리면 사용자는 "10문항 요청했는데
+      // 7개만 나왔다"를 보게 되고, 그 판단(무엇을 버릴지)은 코드가 아니라 사람의 몫이다.
+      // 위반과 중복 의심을 세어 계측에 남기고 경고로 띄운다 — 임계를 넘은 표본만 사람이 본다.
+      //
+      // 중복은 배치 안에서만 본다. private_questions 에는 embedding 컬럼이 없어 기존 문항과의
+      // 비교는 벡터 없이 전건 대조가 되는데, 그 비용을 저장 경로에 얹을 수는 없다.
+      // 재생성 중복은 프롬프트 수준에서 이미 한 번 걸러진다(P11 초점 배정·이전 발문 회피).
+      {
+        const gate = runQualityGate({
+          questions: rows.map((r) => ({
+            stem: r.stem,
+            choices: r.choices,
+            answer_index: r.answer_index,
+            explanation: r.explanation,
+          })),
+        });
+        batchDiag.schemaViolations = gate.schemaViolations.length;
+        batchDiag.duplicateSuspects = gate.duplicates.length;
+        for (const message of describeGate(gate)) {
+          warnings.push(`배치 ${batchIndex + 1}: ${message}`);
         }
       }
 

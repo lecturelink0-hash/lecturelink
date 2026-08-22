@@ -6,6 +6,10 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    // 검사 스크립트(scripts/check-*.mjs)는 node --experimental-strip-types 로 도는데,
+    // 확장자 없는 상대 경로를 해석하지 못한다. noEmit 프로젝트라 이 옵션을 켜도
+    // 산출물에 영향이 없고, .ts 확장자를 **허용**할 뿐 강제하지 않는다.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
