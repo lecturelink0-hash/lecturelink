@@ -15,6 +15,7 @@ on:
       - 'datasets/**'
       - 'scripts/check-metrics.mjs'
       - 'scripts/check-dataset-split.mjs'
+      - 'scripts/check-ocr-goldenset.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -30,6 +31,7 @@ on:
       - 'datasets/**'
       - 'scripts/check-metrics.mjs'
       - 'scripts/check-dataset-split.mjs'
+      - 'scripts/check-ocr-goldenset.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -51,4 +53,6 @@ jobs:
       - run: npm run check:metrics
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)
       - run: npm run check:datasets
+      # OCR 골든셋 구성·완결성 — 구축 중에는 경고만, --complete 로 완성 판정 (분담표 A5)
+      - run: npm run check:ocr-goldenset
       - run: npm run typecheck

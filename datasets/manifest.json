@@ -26,7 +26,7 @@
       "owner": "naesin",
       "locked": false,
       "sha256": null,
-      "note": "미구축. 전사가 채워지고 층화 구성이 확정되면 locked: true 로 바꾸고 잠근다."
+      "note": "스캐폴드·층화 목표·검사기 준비됨(datasets/ocr-goldenset/README.md). 전사 100-150장은 수작업 대기. 다 모으면 --lock ocr-goldenset-v1 로 봉인한다."
     },
     {
       "id": "generation-fixed-inputs-v1",

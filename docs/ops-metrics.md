@@ -210,8 +210,10 @@ npm run check:datasets   # 데이터 누수 방지
 
 - **실측값 0.** 마이그레이션 적용 후 실제 트래픽이 돌아야 채워진다.
 - **A3 문항 생성 반복 안정성 하네스** — 고정 입력셋 20–30건 선정이 선행.
-- **A5 OCR 골든셋 100–150장** — 측정기(`scripts/eval-ocr.mjs`)와 레지스트리 슬롯은 있고
-  전사가 없다. 순수 수작업.
+- **A5 OCR 골든셋 100–150장 전사** — 측정기·층화 목표·검사기·작업 안내는 준비됐다
+  (`datasets/ocr-goldenset/README.md`). 남은 것은 전사뿐이고, 실제 강의자료가 있어야 한다.
+  진척은 `npm run check:ocr-goldenset` 으로 보고, 다 모으면 `--complete` 로 완성 판정한 뒤
+  `--lock ocr-goldenset-v1` 로 봉인한다.
 - **A8·A9 출처 추적·검색 계층** — 2단계 전체의 선행 조건. 이것 없이는 근거 충실도·
   Recall@K를 잴 대상 자체가 없다.
 
@@ -230,5 +232,6 @@ npm run check:datasets   # 데이터 누수 방지
 | 훅 지점 | `lib/utils/api.ts`, `lib/auth/session.ts`, `lib/ai/cost-cap.ts` |
 | 대시보드 | `app/(app)/admin/metrics/page.tsx` |
 | 데이터셋 레지스트리 | `datasets/manifest.json`, `scripts/check-dataset-split.mjs` |
+| OCR 골든셋 (A5) | `datasets/ocr-goldenset/`, `scripts/check-ocr-goldenset.mjs` |
 | 회귀 검사 | `scripts/check-metrics.mjs` |
 | 스키마 | `supabase/migrations/00042_request_metrics.sql` |
