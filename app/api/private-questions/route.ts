@@ -102,12 +102,25 @@ export const GET = withErrorHandling(async (request: Request) => {
       const storedImages = (
         await Promise.all(
           rawImages.map(async (im) => {
-            const { data: signed } = await supabase.storage
-              .from(STORAGE_BUCKET)
-              .createSignedUrl(im.storage_path, 3600);
-            if (!signed?.signedUrl) return null;
+            // 서명 실패는 조용히 이미지를 지운다 — 학생 화면에서는 "그림이 있다는데 없는"
+            // 문항이 된다. 2026-08-22 실측: 같은 목록을 연속 호출했더니 1회차만 이미지
+            // 2장이 빠지고 이후 6회는 정상이었다(일시적 실패). 한 번 더 시도한다.
+            let signedUrl: string | null = null;
+            for (let attempt = 0; attempt < 2 && !signedUrl; attempt += 1) {
+              const { data: signed } = await supabase.storage
+                .from(STORAGE_BUCKET)
+                .createSignedUrl(im.storage_path, 3600);
+              signedUrl = signed?.signedUrl ?? null;
+            }
+            if (!signedUrl) {
+              // 재시도까지 실패하면 원인을 남긴다(종전에는 흔적 없이 사라졌다).
+              console.warn(
+                `[private-questions] signed URL 생성 실패 — 이미지 제외: ${im.storage_path}`,
+              );
+              return null;
+            }
             return {
-              url: signed.signedUrl,
+              url: signedUrl,
               kind: im.kind,
               caption: im.caption,
             };
