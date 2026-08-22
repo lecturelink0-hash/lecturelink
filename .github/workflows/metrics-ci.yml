@@ -16,6 +16,7 @@ on:
       - 'scripts/check-metrics.mjs'
       - 'scripts/check-dataset-split.mjs'
       - 'scripts/check-ocr-goldenset.mjs'
+      - 'scripts/check-generation-repeatability.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -32,6 +33,7 @@ on:
       - 'scripts/check-metrics.mjs'
       - 'scripts/check-dataset-split.mjs'
       - 'scripts/check-ocr-goldenset.mjs'
+      - 'scripts/check-generation-repeatability.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -55,4 +57,6 @@ jobs:
       - run: npm run check:datasets
       # OCR 골든셋 구성·완결성 — 구축 중에는 경고만, --complete 로 완성 판정 (분담표 A5)
       - run: npm run check:ocr-goldenset
+      # 문항 생성 반복 안정성 산식 — 모델 호출 없이 돈다 (실측은 ANTHROPIC_API_KEY 필요, 분담표 A3)
+      - run: npm run check:gen-repeat -- --selftest
       - run: npm run typecheck
