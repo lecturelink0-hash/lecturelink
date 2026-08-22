@@ -152,6 +152,8 @@ export default function CpxPractice() {
   const voiceBusyRef = useRef(false);
   const bufferRef = useRef([]);
   const usageRef = useRef([]); // Live 턴별 usageMetadata 버퍼 (원가 실측)
+  const turnMetricsRef = useRef([]); // 턴 응답시간 버퍼 (발화 종료 → 응답 시작 실측)
+  const turnIndexRef = useRef(0);
   const startedAtRef = useRef(0);
   const autoEndedRef = useRef(false); // 시간 종료 자동 채점은 세션당 1회만
   const finishRef = useRef(null);
@@ -203,6 +205,18 @@ export default function CpxPractice() {
     }
   }, [sessionId]);
 
+  // 턴 응답시간을 서버에 기록 — 'CPX 응답 지연시간' p50/p95 의 원천(성능지표 가이드 §2.1).
+  // 서버는 Live 오디오 경로를 보지 못하므로 이 값이 없으면 턴 지연은 측정 불가다.
+  const flushTurnMetrics = useCallback(async () => {
+    if (!sessionId || !turnMetricsRef.current.length) return;
+    const events = turnMetricsRef.current.splice(0);
+    try {
+      await request(`/sessions/${sessionId}/turns`, { method: 'POST', body: JSON.stringify(events), keepalive: true });
+    } catch {
+      turnMetricsRef.current.unshift(...events);
+    }
+  }, [sessionId]);
+
   // 서버 하트비트 — 시간 차감 정산의 생존 신호(정책 7장).
   // 전사·usage flush 는 보낼 내용이 있을 때만 전송되므로, 학생이 자료를 읽거나 고민하느라
   // 침묵이 길어지면 신호가 끊긴다. 그대로 두면 스윕(마지막 하트비트 + 10분)이 진행 중인
@@ -222,12 +236,13 @@ export default function CpxPractice() {
     const timer = window.setInterval(() => setElapsed(Math.round((Date.now() - startedAtRef.current) / 1000)), 1000);
     const saver = window.setInterval(flush, 3000);
     const usageSaver = window.setInterval(flushUsage, 3000);
+    const turnSaver = window.setInterval(flushTurnMetrics, 3000);
     const beat = window.setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     return () => {
       window.clearInterval(timer); window.clearInterval(saver);
-      window.clearInterval(usageSaver); window.clearInterval(beat);
+      window.clearInterval(usageSaver); window.clearInterval(turnSaver); window.clearInterval(beat);
     };
-  }, [phase, flush, flushUsage, heartbeat]);
+  }, [phase, flush, flushUsage, flushTurnMetrics, heartbeat]);
 
   // 이탈 감지 — 탭 숨김·페이지 종료 시 마지막 전사와 생존 신호를 남긴다(정책 7장).
   // 이탈은 종료가 아니라 자동 일시정지이므로 여기서 /end 를 호출하지 않는다. 정산 시점은
@@ -235,7 +250,7 @@ export default function CpxPractice() {
   // keepalive 요청이라 문서가 사라진 뒤에도 브라우저가 전송을 마친다.
   useEffect(() => {
     if (phase !== 'live') return undefined;
-    const persist = () => { flush(); flushUsage(); heartbeat(); };
+    const persist = () => { flush(); flushUsage(); flushTurnMetrics(); heartbeat(); };
     const onVisibility = () => { if (document.visibilityState === 'hidden') persist(); };
     // 이어하기 복원이 아직 없어 지금은 이탈 = 연습 중단이므로, 브라우저 이탈은 한 번 되묻는다.
     const onBeforeUnload = (event) => {
@@ -252,7 +267,7 @@ export default function CpxPractice() {
       window.removeEventListener('pagehide', persist);
       window.removeEventListener('beforeunload', onBeforeUnload);
     };
-  }, [phase, flush, flushUsage, heartbeat]);
+  }, [phase, flush, flushUsage, flushTurnMetrics, heartbeat]);
 
   // 채점(finishing) 중 원형 게이지를 95%까지 점점 느려지게 채운다.
   // 실제 채점은 단일 API 호출(진행률 이벤트 없음)이라 예상 소요시간 기반으로 시뮬레이션하며,
@@ -371,6 +386,7 @@ export default function CpxPractice() {
     setError(''); setResult(null); setTranscript([]); setFindings([]); setAudioLevel(0); setShowTranscript(false); setRevealed({ name: false, age: false, gender: false }); setPhase('starting'); setStatus('세션을 준비하고 있습니다.');
     autoEndedRef.current = false;
     usageRef.current = [];
+    turnMetricsRef.current = []; turnIndexRef.current = 0;
     let createdSessionId = '';
     try {
       const noticeResponse = await fetch('/api/me/legal-consents', {
@@ -400,6 +416,20 @@ export default function CpxPractice() {
         onInputText: (text, meta) => { if (meta?.final) push('student', text); },
         onAudioLevel: setAudioLevel,
         onUsage: (usage) => { usageRef.current.push({ ...usage, tOffsetMs: Math.max(0, Date.now() - startedAtRef.current) }); },
+        // 턴 응답시간 — live.js 가 잰 값을 세션 시작 기준 오프셋으로 바꿔 버퍼에 쌓는다.
+        // turnIndex 는 서버의 중복 방지 키다(재전송이 같은 턴을 두 번 세지 않게 한다).
+        onTurnMetric: (turn) => {
+          turnMetricsRef.current.push({
+            turnIndex: turnIndexRef.current++,
+            inputMode: turn.inputMode,
+            speechEndOffsetMs: Math.max(0, (turn.speechEndEpochMs ?? Date.now()) - startedAtRef.current),
+            firstResponseMs: turn.firstResponseMs,
+            firstAudioMs: turn.firstAudioMs,
+            turnCompleteMs: turn.turnCompleteMs,
+            interrupted: turn.interrupted,
+            network: turn.network,
+          });
+        },
       });
       liveRef.current = live;
       await live.connect(token);
@@ -422,7 +452,11 @@ export default function CpxPractice() {
       // 그대로 두면 '동시 진행 세션 1개' 게이트가 최대 10분간 모든 재시도를 409로 막아,
       // 한 번의 일시적 실패가 10분짜리 잠금으로 굳는다 — 여기서 곧바로 반납한다.
       if (createdSessionId) {
-        request(`/sessions/${createdSessionId}/end`, { method: 'POST' }).catch(() => {});
+        // 종료 사유를 함께 보낸다 — 진료를 해 볼 기회조차 없던 세션을 '중단'으로 세면
+        // 완주율이 연결 장애율과 뒤섞인다(성능지표 가이드 §2.1).
+        request(`/sessions/${createdSessionId}/end`, {
+          method: 'POST', body: JSON.stringify({ reason: 'start_failed' }),
+        }).catch(() => {});
         setSessionId('');
       }
       // 이미 진행 중인 연습에 막힌 경우에만 그 세션을 종료할 수 있는 복구 버튼을 띄운다.
@@ -482,7 +516,9 @@ export default function CpxPractice() {
     if (!blocked) return;
     setBlockedSessionId(''); setError(''); setStatus('이전 연습을 종료하고 있습니다.');
     try {
-      await request(`/sessions/${blocked}/end`, { method: 'POST' });
+      await request(`/sessions/${blocked}/end`, {
+        method: 'POST', body: JSON.stringify({ reason: 'superseded' }),
+      });
     } catch {
       setError('이전 연습을 종료하지 못했습니다. 잠시 후 다시 시도해 주세요.');
       setStartErrorSeq((seq) => seq + 1);
@@ -539,8 +575,13 @@ export default function CpxPractice() {
     setError(''); setPhase('finishing'); setStatus('채점 근거를 정리하고 있습니다.');
     try {
       teardownRef.current = true;
-      micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush(); await flushUsage();
-      await request(`/sessions/${sessionId}/end`, { method: 'POST' });
+      micRef.current?.stop?.(); micRef.current = null; liveRef.current?.disconnect?.({ silent: true }); liveRef.current = null; await flush(); await flushUsage(); await flushTurnMetrics();
+      // 제한시간 소진은 실제 CPX 시험의 정상 종료 형태다 — 학생이 직접 누른 종료와
+      // 사유만 나누고 둘 다 완주로 센다(성능지표 가이드 §2.1 '중단·타임아웃 분리').
+      await request(`/sessions/${sessionId}/end`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: autoEndedRef.current ? 'time_limit' : 'completed' }),
+      });
       const evaluation = await request(`/sessions/${sessionId}/evaluate`, { method: 'POST' });
       setResult(evaluation); setPhase('ended'); setStatus('채점 완료');
     } catch (nextError) {
