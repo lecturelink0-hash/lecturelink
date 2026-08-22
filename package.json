@@ -34,6 +34,7 @@
     "check:reference": "node --experimental-strip-types --no-warnings scripts/check-reference-profile.mjs",
     "check:verify": "node --experimental-strip-types --no-warnings scripts/check-private-verify.mjs",
     "check:blind": "node --experimental-strip-types --no-warnings scripts/check-blind-solve.mjs",
+    "check:figure": "node --experimental-strip-types --no-warnings scripts/check-figure-stem.mjs",
     "check:explanation": "node --experimental-strip-types --no-warnings scripts/check-explanation-format.mjs",
     "check:duplicate": "node --experimental-strip-types --no-warnings scripts/check-duplicate-guard.mjs",
     "check:naesin-quality": "node --experimental-strip-types --no-warnings scripts/check-naesin-quality.mjs",

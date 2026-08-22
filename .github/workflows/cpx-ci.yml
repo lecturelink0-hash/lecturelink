@@ -57,7 +57,7 @@ jobs:
           cache: pip
           cache-dependency-path: services/cpx/server/requirements.txt
       - run: pip install -r requirements.txt
-      - run: python -m py_compile main.py evaluate.py scoring.py prompt.py physical_exam.py db.py
+      - run: python -m py_compile main.py evaluate.py scoring.py prompt.py physical_exam.py db.py metrics.py repeatability.py
       - run: python test_scoring.py
       - run: python test_time_analysis.py
       - run: python test_all_cases.py
@@ -81,5 +81,9 @@ jobs:
       - run: python test_evaluate_timeout.py
       - run: python test_low_compliance.py
       - run: python test_usage.py
+      # 운영 성능 계측 — 요청 로그·턴 지연·완주율·원가·권한 (성능지표 가이드 1단계)
+      - run: python test_metrics.py
+      # 반복 생성 안정성 산식 — 모델 호출 없이 돈다(실측은 GEMINI_API_KEY 필요)
+      - run: python repeatability.py --selftest
       # 적대적 QA 하니스의 판정 로직 회귀 — 모델 호출 없이 돈다(API 키·쿼터 불필요)
       - run: python qa_leak_test.py selftest

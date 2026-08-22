@@ -58,4 +58,30 @@ venv/bin/python test_all_cases.py
 venv/bin/python test_all_cases_api.py
 venv/bin/python test_lecturelink_auth.py
 venv/bin/python test_prompt_context.py
+venv/bin/python test_metrics.py
+venv/bin/python repeatability.py --selftest
 ```
+
+## 운영 성능 계측 (성능지표 가이드 1단계)
+
+모든 `/api/*` 요청은 `request_metrics` 에 1행씩 남습니다 — request_id, 기능, 버전, 단계별 시간,
+결과 상태, 오류 코드, 스키마 준수 여부. 턴 응답시간은 클라이언트가 재서 `turn_metrics` 로 보냅니다.
+집계는 관리자만 볼 수 있습니다.
+
+```bash
+# 대시보드: LectureLink 관리자 계정으로 /admin/cpx-metrics
+# API 직접 조회 (프록시 공유 시크릿 + 관리자 헤더 둘 다 필요)
+curl -H "x-lecturelink-user-id: <admin-user-id>" \
+     -H "x-cpx-proxy-secret: <공유-시크릿>" \
+     -H "x-cpx-admin: 1" \
+     "http://127.0.0.1:8787/api/metrics/summary?days=7"
+```
+
+채점 반복 안정성(가이드 §4.2, 최소 10회)은 실제 모델 호출이 필요합니다.
+
+```bash
+GEMINI_API_KEY=... venv/bin/python repeatability.py --runs 10 \
+  --out ../../../outputs/cpx-repeatability.json
+```
+
+측정 정의와 해석 기준은 `docs/cpx-phase1-metrics.md` 를 봅니다.
