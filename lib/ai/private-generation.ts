@@ -2181,7 +2181,11 @@ export async function generatePrivateQuestionsFromUpload(
     //   예약을 늘려도 벽시계 시간은 거의 늘지 않는다 — 이미지 배치들은 어차피 추출·정제
     //   완료 후에야 출발하고 서로 병렬(GEN_CONCURRENCY)이라, 전체 소요를 지배하는
     //   "추출→정제→이미지 배치 1개" 경로의 길이는 예약 수와 무관하다.
-    //   최소 1배치는 텍스트 선발사로 남겨 전처리를 생성 뒤로 숨기는 조기 출발을 유지한다.
+    //   유형을 섞어 고른 요청에서는 최소 1배치를 텍스트 선발사로 남겨 전처리를 생성 뒤로
+    //   숨기는 조기 출발을 유지한다. 이미지형 **단독** 요청에서는 남기지 않는다 —
+    //   그 배치의 문항이 통째로 요청과 다른 텍스트 문항이 되기 때문이다. 바로 위 근거대로
+    //   임계 경로는 "추출→정제→이미지 배치 1개"라, 선발사를 빼도 총 소요는 사실상 그대로다
+    //   (남은 배치들은 GEN_CONCURRENCY 안에서 서로 병렬로 돈다).
     const imageQuestionTarget = wantsImages
       ? Math.min(
           selectedTypes.length <= 1
@@ -2190,16 +2194,24 @@ export async function generatePrivateQuestionsFromUpload(
           featuredCap * MAX_QUESTIONS_PER_IMAGE,
         )
       : 0;
+    // 이미지형 **단독** 요청이면 텍스트 전용 묶음을 하나도 남기지 않는다.
+    //
+    // 종전에는 상한이 `batchSizes.length - 1` 이고 선발사도 `Math.max(1, …)` 로 최소 1묶음을
+    // 강제해서, 이미지형만 골라도 한 묶음은 이미지를 **받을 수 없었다**(선발사 묶음은 추출
+    // 이전에 출발하므로 배정 대상에서 빠진다). 10문항이면 그 2문항이 요청과 무관하게
+    // 텍스트 문항으로 확정됐다 — 이미지형 비율을 구조적으로 깎던 두 번째 원인이다.
+    // 유형을 섞어 고른 요청에서는 종전대로 1묶음을 선발사로 남겨 조기 출발 이득을 지킨다.
+    const imageOnly = wantsImages && selectedTypes.length <= 1;
     const imageBatchesNeeded = wantsImages
       ? Math.min(
-          batchSizes.length - 1,
+          imageOnly ? batchSizes.length : batchSizes.length - 1,
           Math.max(1, Math.ceil(imageQuestionTarget / GEN_BATCH_MAX_QUESTIONS)),
         )
       : 0;
     const prefireCount = !canPrefire
       ? 0
       : wantsImages
-        ? Math.max(1, batchSizes.length - imageBatchesNeeded)
+        ? Math.max(imageOnly ? 0 : 1, batchSizes.length - imageBatchesNeeded)
         : batchSizes.length;
 
     // 조기 텍스트는 슬라이드 라벨 없이 한 덩어리로 오므로, 구간 분할은 문자 기준으로 한다.
@@ -3378,6 +3390,30 @@ export async function generatePrivateQuestionsFromUpload(
         throw new Error(`생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`);
       }
 
+      /**
+       * 사후 검사(의학 검증·블라인드 풀이)로 이 묶음의 문항이 **전부** 걸러졌을 때의 반환.
+       *
+       * 종전에는 여기서 throw 했다. 그러면 (1) 그 묶음이 batchFailureReasons 에 쌓여
+       * 실패로 집계되고, (2) 모든 묶음이 이 길로 빠지면 `batchResults.length === 0` 이
+       * 되어 생성 전체가 'failed' 로 끝난다. 검사에 걸린 것은 **모델 출력의 품질 문제**이지
+       * 파이프라인 장애가 아니므로, 빈 결과를 정상 반환해 보충 단계가 그 슬롯을 채우게 한다.
+       */
+      const emptyBatchResult = (reason: string): BatchResult => {
+        warnings.push(`배치 ${batchIndex + 1}: ${reason} — 보충 생성으로 대체합니다.`);
+        batchDiag.kept = 0;
+        batchDiag.emptiedBy = reason;
+        batchDiag.totalMs = Date.now() - tBatch;
+        diag.batches.push(batchDiag);
+        return {
+          generatedCount: 0,
+          contentSummary: parsed.content_summary,
+          ids: [],
+          unmatched: 0,
+          cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+          cacheCreationTokens: response.usage.cache_creation_input_tokens ?? 0,
+        };
+      };
+
       // ── 검증 1패스 (P1)
       //
       // 내신 경로에는 의학적 정확성 검사가 **하나도** 없었다. 감사에서 실물 해설
@@ -3458,7 +3494,7 @@ export async function generatePrivateQuestionsFromUpload(
         if (rejected.size > 0) {
           kept = kept.filter((_, i) => !rejected.has(i));
           if (kept.length === 0) {
-            throw new Error(`생성된 문항이 모두 검증 미통과입니다 (batch=${batchIndex + 1})`);
+            return emptyBatchResult('생성된 문항이 모두 의학 검증에 걸림');
           }
         }
       }
@@ -3522,11 +3558,31 @@ export async function generatePrivateQuestionsFromUpload(
             // 왜 골랐는지는 폐기를 사람이 재검토할 때만 쓴다 — 사용자에게는 안 나간다.
             const basis = attempts.find((a) => a?.basis)?.basis ?? '';
             if (BLIND_MODE === 'discard') {
-              blindRejected.add(i);
-              bumpGenDiag('blindDiscarded');
-              warnings.push(
-                `그림 없이도 답이 정해져 이미지 문항 1개 폐기 — 보충 생성으로 대체. ${basis.slice(0, 120)}`,
-              );
+              // 폐기는 **발문이 그림을 가리킬 때만** 한다.
+              //
+              // 종전에는 그림 없이 풀린 문항을 무조건 버렸다. 그런데 그런 문항은 "틀린
+              // 문항"이 아니라 **이미지형이 아니었을 뿐**인 멀쩡한 지식·임상 문항이다.
+              // 버리면 슬롯이 비고, 보충 단계가 같은 이미지를 다시 실어 또 이미지 문항을
+              // 만들고 → 또 블라인드로 풀려 → 또 폐기되는 순환에 빠진다. 이미지형만 고른
+              // 요청은 전 문항이 이 검사의 대상이라 그 순환이 그대로 최종 수량이 됐다
+              // (실측 신고: 10문항 요청 → 5문항. 묶음 2문항 중 1문항씩 사라진 형태).
+              // 이제 이미지 연결만 끊어 텍스트 문항으로 강등한다 — 요청 수는 채워지고,
+              // kind 는 아래 저장부에서 knowledge/clinical 로 정직하게 기록된다.
+              // 다만 "다음 그림에서" 처럼 발문이 그림을 선언한 문항은 이미지를 떼면
+              // 학생이 풀 수 없으므로 종전대로 폐기한다(보충이 채운다).
+              if (stemDeclaresFigure(String(k.q.stem ?? ''))) {
+                blindRejected.add(i);
+                bumpGenDiag('blindDiscarded');
+                warnings.push(
+                  `그림 없이도 답이 정해져 이미지 문항 1개 폐기 — 보충 생성으로 대체. ${basis.slice(0, 120)}`,
+                );
+              } else {
+                k.q.image_indices = [];
+                bumpGenDiag('blindDemoted');
+                warnings.push(
+                  `그림 없이도 답이 정해져 이미지 연결만 해제(문항은 유지). ${basis.slice(0, 120)}`,
+                );
+              }
             } else {
               bumpGenDiag('blindFlagged');
               warnings.push(`블라인드 풀이 경고(그림 없이 ${BLIND_ATTEMPTS}회 정답): ${basis.slice(0, 120)}`);
@@ -3538,9 +3594,7 @@ export async function generatePrivateQuestionsFromUpload(
           if (blindRejected.size > 0) {
             kept = kept.filter((_, i) => !blindRejected.has(i));
             if (kept.length === 0) {
-              throw new Error(
-                `이미지 문항이 모두 그림 없이 풀립니다 (batch=${batchIndex + 1})`,
-              );
+              return emptyBatchResult('이미지 문항이 모두 그림 없이 풀림');
             }
           }
         }
@@ -4223,13 +4277,25 @@ export async function generatePrivateQuestionsFromUpload(
       // MAX_QUESTIONS_PER_IMAGE)에 여유가 남은 이미지를 보충 배치에 겹치지 않게 1장씩
       // 나눠 실어 이미지 문항으로 되채운다. 정제(마스킹)는 이미 생성 전에 끝나 캐시에
       // 있으므로 추가 지연이 없다.
-      // 배치 슬롯 수 이상 여유가 남은 이미지만 준다 — 모델이 배치의 전 문항에 같은
-      // 이미지를 붙여도 상한을 넘지 않아, 사후 정리로 문항을 또 잃는 순환이 안 생긴다.
+      // 여유가 **1문항이라도** 남은 이미지를 모아 배치의 슬롯 수만큼 용량을 채운다.
+      //
+      // 종전 조건은 `remaining >= slots.length` — 2슬롯 배치에는 "한 번도 안 쓴" 이미지만
+      // 줬다. 본 배치가 끝난 뒤에는 대부분의 이미지가 이미 1문항씩 물고 있어 이 조건이
+      // 거의 항상 실패했고, 보충이 통째로 텍스트 전용으로 떨어졌다(이미지 문항이 폐기될
+      // 때마다 텍스트 문항으로 치환되는 종전 동작이 사실상 그대로 남아 있었다).
+      // 이제 남은 용량을 합산해 배정하고, 그 합만큼만 이미지 문항을 요구한다(fillImageQuota).
+      // 요구 수가 실제 잔여 용량을 넘지 않으므로 "동일 이미지 최대 2문제" 정리에서 문항을
+      // 다시 잃는 순환도 생기지 않는다.
       let fillFeatured: Array<GenContext['featured']> = fillBatches.map(() => []);
+      let fillImageQuota: number[] = fillBatches.map(() => 0);
       // 보충에는 "이미 정제에 성공한" 이미지만 쓴다(캐시 히트라 추가 지연이 없고,
       // 정제 실패분을 다시 실어 문항이 또 삭제되는 순환을 막는다).
       const refinedPool = featuredImages.filter((fi) => refinedUsableGis.has(fi.gi));
-      if (useImages && refinedPool.length > 0) {
+      // 마지막 라운드는 이미지를 싣지 않는다 — 여기서도 이미지 문항이 검사에 걸리면
+      // 채울 기회가 더 없어 요청 수를 못 맞춘다. 앞 라운드에서 못 채운 슬롯은
+      // "확실히 채워지는" 텍스트 문항으로 마감한다(수량 보장이 비율보다 우선).
+      const isLastBackfillRound = round === GEN_BACKFILL_ROUNDS - 1;
+      if (useImages && refinedPool.length > 0 && !isLastBackfillRound) {
         try {
           const linkCounts = await readImageLinkCounts();
           const pool = refinedPool
@@ -4239,16 +4305,25 @@ export async function generatePrivateQuestionsFromUpload(
             }))
             .filter((x) => x.remaining > 0)
             .sort((a, b) => b.remaining - a.remaining);
-          fillFeatured = fillBatches.map((slots) => {
-            const pickIdx = pool.findIndex((x) => x.remaining >= slots.length);
-            if (pickIdx < 0) return [];
-            return [pool.splice(pickIdx, 1)[0].fi];
+          const assigned = fillBatches.map((slots) => {
+            const picked: BatchImage[] = [];
+            let capacity = 0;
+            // 잔여 용량이 큰 이미지부터(정렬됨) 슬롯 수를 덮을 때까지 가져간다.
+            while (capacity < slots.length && pool.length > 0 && pool[0].remaining > 0) {
+              const taken = pool.shift()!;
+              picked.push(taken.fi);
+              capacity += taken.remaining;
+            }
+            return { picked, capacity: Math.min(capacity, slots.length) };
           });
+          fillFeatured = assigned.map((a) => a.picked);
+          fillImageQuota = assigned.map((a) => a.capacity);
         } catch (e) {
           warnings.push(
             `보충 이미지 배정 실패 — 텍스트 전용으로 진행. ${e instanceof Error ? e.message : String(e)}`,
           );
           fillFeatured = fillBatches.map(() => []);
+          fillImageQuota = fillBatches.map(() => 0);
         }
       }
       const imagesOffered = fillFeatured.reduce((n, f) => n + f.length, 0);
@@ -4263,7 +4338,10 @@ export async function generatePrivateQuestionsFromUpload(
             contextText: backfillContext(slots[0]),
             featured: [],
             resolveFeatured: () => resolveRefined(fillFeatured[i]),
-            imageQuotaFor,
+            // 본 배치와 달리 "남은 재사용 용량"으로 상한이 정해진다. 정제에서 한 장이
+            // 더 빠질 수 있으므로 실제 확정 장수로도 한 번 더 조인다.
+            imageQuotaFor: (featuredLen: number, batchSize: number) =>
+              Math.min(fillImageQuota[i], featuredLen * MAX_QUESTIONS_PER_IMAGE, batchSize),
             getDisplayPng, // 정제 캐시가 이미 채워져 있어 재호출 비용 없음
             // 보충은 "빈 칸 한두 개"라 오래 기다릴 이유가 없다. 실측에서 1문항 보충이
             // 27.6초를 써 총 시간을 지배했으므로 대기 상한을 더 조인다.
