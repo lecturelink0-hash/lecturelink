@@ -17,7 +17,8 @@
  *     selected_index: 0~4,
  *     time_spent_seconds?: integer,
  *     track: 'smart_practice' | 'lecture_note',
- *     cohort_id?: uuid | null   // 코호트가 없는 경로(약점 집중 코스 등)는 null 로 온다
+ *     cohort_id?: uuid | null,  // 코호트가 없는 경로(약점 집중 코스 등)는 null 로 온다
+ *     confidence?: 1 | 2 | 3    // 확신도 (분담표 A14 · 가이드 §8.1). 강제하지 않는다
  *   }
  */
 
@@ -36,6 +37,10 @@ const bodySchema = z.object({
   // 코호트가 없는 풀이 경로(약점 집중 코스, 코호트 미매칭 맞춤 풀이)는 null 을 보낸다.
   // .optional() 만 두면 null 이 스키마에서 튕겨 "입력값이 올바르지 않습니다." 400 이 된다.
   cohort_id: z.string().uuid().nullable().optional(),
+  // 확신도 1(낮음)~3(높음). 학습효과 분석의 보정(과신·과소신) 축이며, 소급이 불가능해
+  // 학생이 들어오기 전에 받아 둔다(분담표 A14). **강제하지 않는다** — 매 문항 응답을
+  // 요구하면 학생이 회피하거나 대충 찍어 신호가 오히려 나빠진다.
+  confidence: z.union([z.literal(1), z.literal(2), z.literal(3)]).nullable().optional(),
 });
 
 export const POST = withErrorHandling(async (request: Request) => {
@@ -91,22 +96,35 @@ export const POST = withErrorHandling(async (request: Request) => {
   const isCorrect = body.selected_index === answerIndex;
 
   // 2) user_attempts 기록 — track 에 따라 정확히 한 컬럼만 채운다 (XOR 제약).
-  const { data: attempt, error: attemptError } = await supabase
+  const baseAttempt = {
+    user_id: session.userId,
+    question_id: isPrivate ? null : body.question_id,
+    private_question_id: isPrivate ? body.question_id : null,
+    cohort_id: body.cohort_id ?? null,
+    track: body.track,
+    selected_index: body.selected_index,
+    is_correct: isCorrect,
+    time_spent_seconds: body.time_spent_seconds ?? null,
+  };
+  let { data: attempt, error: attemptError } = await supabase
     .from('user_attempts')
-    .insert({
-      user_id: session.userId,
-      question_id: isPrivate ? null : body.question_id,
-      private_question_id: isPrivate ? body.question_id : null,
-      cohort_id: body.cohort_id ?? null,
-      track: body.track,
-      selected_index: body.selected_index,
-      is_correct: isCorrect,
-      time_spent_seconds: body.time_spent_seconds ?? null,
-    })
+    .insert({ ...baseAttempt, confidence: body.confidence ?? null })
     .select('id')
     .single();
 
+  // 00044 미적용 환경에서 confidence 컬럼 때문에 풀이 기록 자체가 실패하면 안 된다 —
+  // 학습 신호는 있으면 좋은 것이지 풀이의 전제가 아니다(A8 의 출처 폴백과 같은 판단).
+  // 확신도만 떼고 다시 넣는다. 아래 통계·약점·쿼터 갱신은 그대로 이어진다.
+  if (attemptError && /confidence/i.test(attemptError.message ?? '')) {
+    console.warn('[attempts] confidence 컬럼 없음 — 확신도 없이 저장(마이그레이션 00044 미적용).');
+    ({ data: attempt, error: attemptError } = await supabase
+      .from('user_attempts')
+      .insert(baseAttempt)
+      .select('id')
+      .single());
+  }
   if (attemptError) throw attemptError;
+  if (!attempt) throw new Error('풀이 기록을 저장하지 못했습니다.');
 
   // 3) public questions 통계 비동기 업데이트 (private 은 통계 테이블 없음 — 스킵).
   if (!isPrivate) {
