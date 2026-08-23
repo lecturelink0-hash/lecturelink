@@ -18,6 +18,8 @@ export interface AttemptRecord {
   selectedIndex: number;
   isCorrect: boolean;
   timeSpentSeconds?: number | null;
+  /** 풀이 시점 확신도 1(낮음)~3(높음). null/undefined = 미응답 (분담표 A14). */
+  confidence?: number | null;
 }
 
 /** 가이드가 권장하는 문항당 최소 표본. 이 밑에서는 변별도가 표본 잡음에 지배된다. */
@@ -273,6 +275,53 @@ export function computeKr20(
     note: unstable
       ? `완전 응답자 ${complete.length}명 — 권장 ${minCases}명 미만이라 불안정하다.`
       : '',
+  };
+}
+
+/**
+ * 확신도 보정 — 과신·과소신 (분담표 A14 · 가이드 §8.1 '확신도')
+ *
+ * 확률 눈금을 쓰지 않는다. 3점 척도를 억지로 확률(33%/66%/90%)에 대응시키면 그 숫자는
+ * 우리가 지어낸 것이고, Brier score 처럼 보이는 값이 나와 실제보다 정밀한 척하게 된다.
+ * 대신 **확신도 수준별 정답률**을 그대로 낸다 — 해석은 사람이 한다.
+ *
+ *   과신(overconfidence)  : '확실함'인데 정답률이 낮다 → 무엇을 모르는지 모른다
+ *   과소신(underconfidence): '잘 모르겠음'인데 정답률이 높다 → 아는데 자신이 없다
+ *
+ * 미응답은 분모에서 뺀다. 강제하지 않는 필드라 미응답이 많고, 0 으로 세면 전부 '낮음'이 된다.
+ */
+export function summarizeConfidence(attempts: AttemptRecord[]): {
+  answered: number;
+  total: number;
+  responseRate: number | null;
+  byLevel: Array<{ level: 1 | 2 | 3; n: number; correct: number; correctRate: number }>;
+  /** '확실함'(3) 정답률 − '잘 모르겠음'(1) 정답률. 클수록 자기 평가가 잘 맞는다. */
+  discriminationGap: number | null;
+  /** 확실하다고 한 것 중 틀린 비율. 학습 개입이 가장 급한 지점이다. */
+  overconfidentRate: number | null;
+  /** 모르겠다고 한 것 중 맞힌 비율. */
+  underconfidentRate: number | null;
+} {
+  const answered = attempts.filter(
+    (a) => typeof a.confidence === 'number' && a.confidence >= 1 && a.confidence <= 3,
+  );
+  const byLevel: Array<{ level: 1 | 2 | 3; n: number; correct: number; correctRate: number }> = [];
+  for (const level of [1, 2, 3] as const) {
+    const subset = answered.filter((a) => a.confidence === level);
+    if (subset.length === 0) continue;
+    const correct = subset.filter((a) => a.isCorrect).length;
+    byLevel.push({ level, n: subset.length, correct, correctRate: round(correct / subset.length) });
+  }
+  const high = byLevel.find((b) => b.level === 3);
+  const low = byLevel.find((b) => b.level === 1);
+  return {
+    answered: answered.length,
+    total: attempts.length,
+    responseRate: attempts.length > 0 ? round(answered.length / attempts.length) : null,
+    byLevel,
+    discriminationGap: high && low ? round(high.correctRate - low.correctRate) : null,
+    overconfidentRate: high ? round(1 - high.correctRate) : null,
+    underconfidentRate: low ? round(low.correctRate) : null,
   };
 }
 

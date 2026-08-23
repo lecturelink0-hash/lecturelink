@@ -6,6 +6,12 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { STUDY_SUBJECT_STORAGE_KEY } from '@/lib/study-settings';
 import { Card } from '@/components/ui/Card';
+import {
+  ConfidenceSelector,
+  QuestionReportButton,
+  useExplanationDwell,
+  type Confidence,
+} from '@/components/study/LearningSignals';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ImageAttribution } from '@/components/ui/ImageAttribution';
@@ -87,9 +93,11 @@ interface AnswerState {
   selected: number | null;
   result: AttemptResponse | null;
   outOfScope: boolean;
+  /** 확신도 1~3. 제출 **전에** 받는다 — 정답을 본 뒤에 물으면 사후과잉확신이 섞인다 (A14). */
+  confidence: Confidence | null;
 }
 
-const EMPTY_ANSWER: AnswerState = { selected: null, result: null, outOfScope: false };
+const EMPTY_ANSWER: AnswerState = { selected: null, result: null, outOfScope: false, confidence: null };
 
 interface StudySettingsRes {
   school_id: string | null;
@@ -134,8 +142,12 @@ export default function PracticePage() {
   const toppedUpRef = useRef<string | null>(null);
 
   const current = questions[currentIdx];
-  const { selected, result, outOfScope: outOfScopeMarked } =
+  const { selected, result, outOfScope: outOfScopeMarked, confidence } =
     (current ? answers[current.id] : undefined) ?? EMPTY_ANSWER;
+
+  // 해설 노출 시간 측정 (A14). 해설이 항상 펼쳐져 있어 "열었다"가 신호가 되지 않으므로,
+  // 화면에 실제로 보인 시간을 잰다. attemptId 가 없으면 훅은 아무것도 하지 않는다.
+  const { ref: explanationRef } = useExplanationDwell(result?.attempt_id);
 
   /** 현재 문항의 풀이 상태만 갈아끼운다. 다른 문항 상태는 건드리지 않는다. */
   function patchAnswer(questionId: string, patch: Partial<AnswerState>) {
@@ -338,6 +350,8 @@ export default function PracticePage() {
         selected_index: selected,
         time_spent_seconds: elapsedSeconds,
         track: 'smart_practice',
+        // 확신도는 선택 응답이라 고르지 않았으면 아예 빼서 보낸다(A14).
+        ...(confidence ? { confidence } : {}),
         // 약점 집중 코스는 코호트 없이 도는 경로다. 키를 null 로 실어 보내면 안 되고
         // 아예 빼야 한다(서버 스키마의 optional 은 undefined 만 허용).
         ...(cohortId ? { cohort_id: cohortId } : {}),
@@ -587,13 +601,30 @@ export default function PracticePage() {
           })}
         </div>
 
+        {/* 확신도 — 제출 전에만 묻는다 (A14 · 가이드 §8.1).
+            채점 뒤에 물으면 정답을 본 기억이 섞여 보정 지표가 무의미해진다. */}
+        {!result && current && (
+          <ConfidenceSelector
+            value={confidence}
+            onChange={(next) => patchAnswer(current.id, { confidence: next })}
+            disabled={submitting}
+          />
+        )}
+
         {/* Explanation (after submission) */}
         {result && result.explanation && (
-          <div className="mt-4 p-4 bg-[var(--color-sage-100)] rounded-lg">
+          <div ref={explanationRef} className="mt-4 p-4 bg-[var(--color-sage-100)] rounded-lg">
             <div className="text-xs font-bold text-sage-700 mb-2">해설</div>
             <div className="text-sm text-sage-800 leading-relaxed whitespace-pre-wrap">
               {result.explanation}
             </div>
+            {current && (
+              <QuestionReportButton
+                questionId={current.id}
+                isPrivate={false}
+                attemptId={result.attempt_id}
+              />
+            )}
           </div>
         )}
       </Card>
