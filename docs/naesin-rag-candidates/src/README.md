@@ -3,8 +3,9 @@
 계획서 본문은 `../plan-2026-08-23.md` 가 정본이고, PDF와 PNG는 아래 스크립트로 다시 만든다.
 외부 패키지 없이 macOS의 Google Chrome(헤드리스)과 Node만 쓴다.
 
-**PDF는 리포에 없다.** 루트 `.gitignore` 의 `*.pdf` 규칙 때문에 `plan-2026-08-23.pdf` 는 커밋되지 않으므로,
-전달용 PDF는 아래 2) 절차로 생성한다(18쪽, 인포그래픽 3장 포함, ≈4.4 MB).
+**전달용 PDF** `../plan-2026-08-23.pdf` (18쪽, 인포그래픽 3장 포함, ≈4.4 MB)는 리포에 함께 둔다.
+루트 `.gitignore` 의 `*.pdf` 규칙에 이 폴더만 예외(`!docs/naesin-rag-candidates/*.pdf`)를 두었으므로,
+본문을 고치면 아래 2) 절차로 PDF도 다시 만들어 같이 커밋한다.
 
 ```bash
 cd docs/naesin-rag-candidates/src
