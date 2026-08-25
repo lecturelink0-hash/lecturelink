@@ -18,35 +18,37 @@
 
 ## 출처·라이선스 (전부 CC0 1.0 — 표기 의무 없음, 상업적 사용·개조 자유)
 
-| 파일 | 원본 | 개조 (2026-08-25 신체 비율 개혁) |
+| 파일 | 원본 | 개조 |
 |---|---|---|
-| patient_male.glb | Quaternius Ultimate Animated Character Pack — Casual_Male | glTF→GLB 패킹 → `reproportion_glb.py --spec adult_male` |
-| patient_female.glb | 〃 Casual_Female | 패킹 → `--spec adult_female` |
-| patient_male_old.glb | 〃 OldClassy_Male | 패킹 + 실크햇 프리미티브 제거 → `--spec adult_male` |
-| patient_female_old.glb | 〃 OldClassy_Female | 패킹 + 실크햇 프리미티브 제거 → `--spec adult_female` |
-| patient_male_child.glb | Casual_Male 원본 파생 | `--spec child` (학령기 ≈6등신) |
-| patient_female_child.glb | Casual_Female 원본 파생 | `--spec child` |
-| patient_male_infant.glb | Casual_Male 원본 파생 | `--spec infant` (걸음마기 ≈4등신) |
-| patient_female_infant.glb | Casual_Female 원본 파생 | `--spec infant` |
+| patient_male.glb | Quaternius Ultimate Animated Character Pack — Casual_Male | glTF→GLB 패킹 |
+| patient_female.glb | 〃 Casual_Female | glTF→GLB 패킹 |
+| patient_male_old.glb | 〃 OldClassy_Male | 패킹 + 실크햇 프리미티브 제거 |
+| patient_female_old.glb | 〃 OldClassy_Female | 패킹 + 실크햇 프리미티브 제거 |
+| patient_male_child.glb | patient_male.glb 파생 | 소아 비율 본 스케일 수술: Head ×1.18, Shoulder.L/R ×0.85 (전 애니메이션 scale 트랙 포함) |
+| patient_female_child.glb | patient_female.glb 파생 | 소아 비율 본 스케일 수술: Head ×1.26, Shoulder.L/R ×0.85 (〃) |
+| patient_male_infant.glb | patient_male.glb 파생 | 유아(18~24개월) 비율 수술: Head ×1.00, Neck ×0.72, Shoulder ×0.75, Abdomen ×1.15(Torso 역보정), UpperLeg y×0.68·xz×0.86 + Body 본 하강 0.272 (전 애니 scale·translation 트랙 포함) |
+| patient_female_infant.glb | patient_female.glb 파생 | 〃 (Head ×1.03) |
 
 원본 팩: https://quaternius.com/packs/ultimatedanimatedcharacter.html (팩 동봉 License.txt로 CC0 확인, 2026-07-08)
-
-### 2026-08-25 신체 비율 개혁
-
-원본 Quaternius 캐릭터는 2.7~2.9등신(머리가 신장의 35~37%, 가랑이 높이 30%, 몸통 33%)이라 누운 자세의
-흉부·복부 시진/촉진/타진/청진 프레이밍이 부자연스러웠다. poly.pizza 의 CC0·CC-BY 인체 모델 66종을 계측해
-실제 성인 비율에 가까운 레퍼런스(Character Base qbDLeTtb8K, Adventurer ZwF0K7WBmu, Woman wearing headset
-Qy6esq7e1z, Animated Woman 9kF7eTDbhO, Character_Man IE7rk47BHn)의 관절 높이·폭·둘레 비율을 추출하고, 표준
-인체측정(Drillis–Contini)과 대조해 목표 비율표(`scripts/avatar/reproportion_glb.py` SPECS)를 만들었다.
-레퍼런스 모델의 **기하는 가져오지 않고 비율(수치)만** 이식했으므로 재질·리그·애니메이션·얼굴 데칼 앵커는
-기존 Quaternius 자산 그대로다(라이선스 변동 없음).
-
-- 이식 방식: 바인드 포즈 관절 재배치 + 본별 대각 스케일을 스킨 가중치로 블렌딩한 정점 워프, 법선·역바인드행렬·
-  노드 translation·애니메이션 translation 트랙 갱신. 회전 트랙은 그대로라 Idle 등 17종 애니메이션이 그대로 재생된다.
-- 재생성: `scripts/avatar/build_patients.sh` (개혁 전 원본은 커밋 37e7ee5 의 GLB를 `git show` 로 꺼내 사용).
-- 계측: `scripts/avatar/measure_glb.py <glb>` — 등신비·가랑이 높이·흉부/복부/엉덩이 폭 등을 출력.
-- 실측(머리카락 포함 신장 기준): 성인 남 6.1등신·여 6.5, 소아 4.9, 유아 3.5 (개혁 전 성인 2.7~2.9).
-- 진찰 부위 비율표: 성인표(EXAM_REGION_FRAC)는 이미 실제 인체 비율값이라 유지, 소아·유아표만 새 관절 실측으로 재산정.
-- 종전 소아/유아 본 스케일 수술(`tools/avatar/child_glb.py`, `toddler_glb.py`, 2026-08-02/08-11)은 이 개혁으로 대체됨.
-
+소아 파생: 2026-08-02, 수술 스크립트는 데스크톱 저장소 `tools/avatar/child_glb.py` (다리·발 IK 본은 분리 위험이 있어 머리·어깨 체인만 조정).
+유아 파생: 2026-08-11, 수술 스크립트는 데스크톱 저장소 `tools/avatar/toddler_glb.py` — 다리는 본 단축+Body 하강으로 처리(발 IK 본은 그대로, 지면 접점 유지). 실측 등신비: 남 2.31·여 2.42(머리카락 포함 메트릭, 소아 2.28·성인 2.52 대비). 초기안은 실제 18~24개월 4.5등신의 스타일 환산값(등신비 ~1.9, Head ×1.50)이었으나 사용자 피드백으로 머리를 2/3로 축소 확정 — 체형 구분은 짧은 다리·올챙이배·좁은 어깨·렌더 키(0.82m)가 담당.
 상세 대장: 데스크톱 저장소 `~/Desktop/lecturelink-cpx/docs/asset-license-ledger.md`
+
+## 신규 환자 모델 후보 (`candidates/`, 2026-08-25)
+
+현행 모델이 2.7~2.9등신(머리가 신장의 35~37%)이라 누운 자세의 흉부·복부 진찰 프레이밍이 부자연스러워,
+poly.pizza 의 상업 이용 가능 인체 모델 112종을 계측·검토해 실제 비율(6~8등신)의 후보 4종을 **원형 그대로** 넣었다.
+`?avatarModel=<파일명>` 쿼리로 랜딩/CPX 화면에서 바로 미리 볼 수 있다 (예: `/?avatarModel=cand1_quaternius_woman`).
+채택 시 `patient_{male|female}[_old|_child|_infant].glb` 규약으로 복사하면 된다.
+
+| 파일 | 원본 (poly.pizza) | 제작자 · 라이선스 | 리그/애니 | 비고 |
+|---|---|---|---|---|
+| `cand1_quaternius_woman.glb` | Animated Woman `qJ2gsTUBHL` | Quaternius · CC0 1.0 | 62본 · 24클립(`CharacterArmature\|Idle` 등) · `Head` 본 · `Skin` 재질 | 6.1등신. 같은 리그의 남성: Beach Character(=cand2), Business Man `JFrLIKqvCH`, Farmer `7pn3R6hPvE`, Worker `Yg2bQZO6Hj`, Adventurer `ZwF0K7WBmu` |
+| `cand2_quaternius_man.glb` | Beach Character `DojKLcO34E` | Quaternius · CC0 1.0 | 〃 | 6.1등신, 민소매·반바지라 흉부·복부 노출 진찰에 유리 |
+| `cand3_ipoly3d_fitness_man.glb` | Fitness Character `KX8wzUxep8` | iPoly3D · CC0 1.0 | 리그 없음(정지 A포즈) | 8.0등신, 233KB. 같은 계열: 노인 남 `0UAcRHVAxA`, `eMOTyGEAxj`, `wnlFVKynES`. 원점이 x −1.49 치우쳐 `scripts/avatar/recenter_glb.py` 로 보정 |
+| `cand4_rafael_mannequin.glb` | Rigged Character `yiQDOLP4Ry` | Rafael · CC0 1.0 | Mixamo 리그 52본 · 클립 1(`mixamo.com`) | 8.0등신 회색 마네킹(표준화 환자 더미 느낌). T포즈 기본, Idle 없음 |
+
+- 렌더러 대응(2026-08-25): `candidates/` 경로는 스키닝 실측 바운드로 정규화(아머처 노드 스케일 대응), Idle 클립은 `Idle` 또는 `…|Idle` 이름 매칭.
+- 얼굴 데칼(눈 깜빡임·입)은 `Face` 재질 + `Head` 본을 요구 — 후보는 자체 눈·입 지오메트리를 가져 데칼 없이 표시된다.
+- `Skin` 재질은 런타임 색 보정(#e8b89a)이 적용된다(cand1·2). 원래 피부톤을 쓰려면 `GLB_COLOR_FIX` 예외 처리 필요.
+- 대안(미포함): 상의 탈의 남 `GorWw41SFf`·여 `NfMffTkeBa`(mastjie, CC0, 리그 없음), 속옷 차림 남 `07wMEaAf6x`(pessiuff, CC-BY 3.0), 텍스처 여성 `9kF7eTDbhO`(Quaternius, CC0, Mixamo 리그·`Armature|Idle`), 노인 `mED3MPaQ6i`(scaranto, CC0, 5.4등신).

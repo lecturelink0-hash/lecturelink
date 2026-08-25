@@ -1,4 +1,4 @@
-# CPX 환자 3D 모델 신체 비율 개혁 (2026-08-25)
+# CPX 환자 3D 모델 교체 후보 선정 (2026-08-25)
 
 ## 배경
 
@@ -7,54 +7,45 @@
 (`EXAM_REGION_FRAC`: 목 .84·가슴 .70·복부 .55)는 실제 인체 기준이라, 눕힌 모델에서 '가슴' 카메라가
 얼굴에 떨어지는 등 복부·흉부 시진/촉진/타진/청진 프레이밍이 부자연스러웠다.
 
-## 접근
+## 경과
 
-레퍼런스의 **기하가 아니라 비율(수치)만** 가져오고, 기존 Quaternius 리그·재질·애니메이션·얼굴 데칼을
-그대로 유지한 채 본 단위로 비율을 이식했다(라이선스·런타임 코드 변동 최소화).
+1. 1차 시도(폐기): poly.pizza 계측 비율을 기존 Quaternius 리그에 본 단위로 이식(정점 워프). 비율은 맞았으나
+   원본의 큰 머리·저폴리 몸을 늘린 결과물이 기괴하다는 피드백으로 폐기. 도구·결과물 모두 제거.
+2. 2차(현재): poly.pizza 모델을 **원형 그대로** 후보로 도입. 렌더러는 후보를 그대로 띄우도록 최소 대응만 했다.
 
-1. **레퍼런스 수집** — poly.pizza 검색 페이지(서버 렌더)에서 human/person/man/woman/character base 등
-   103 ID → People & Characters 66종 GLB 내려받아 계측(`scripts/avatar/measure_glb.py`, 순수 Python,
-   삼각형-평면 슬라이스 단면 기반). 결과: [polypizza-human-catalog.csv](polypizza-human-catalog.csv)
-   (CC0 48·CC-BY 3.0 26; 41종 유효 계측, 나머지는 z-up/오프셋 모델로 계측 실패 표기).
-2. **목표 비율표** — 실제 성인 비율에 가장 가까운 후보의 계측값을 표준 인체측정(Drillis–Contini)과 대조해
-   `scripts/avatar/reproportion_glb.py` `SPECS`(adult_male / adult_female / child / infant)로 정리.
+## 후보 수집·계측
 
-   | 레퍼런스 | 제작자 · 라이선스 | 등신비 | 가랑이 | 목 | 흉부폭 | 엉덩이폭 |
-   |---|---|---|---|---|---|---|
-   | Character Base `qbDLeTtb8K` | madtrollstudio · CC-BY 3.0 | 7.41 | .47 | .865 | .17 | .197 |
-   | Adventurer `ZwF0K7WBmu` | Quaternius · CC0 | 7.41 | .50 | .865 | .16 | .184 |
-   | Woman wearing headset `Qy6esq7e1z` | overscore_media · CC0 | 7.41 | .49 | .865 | .139 | .19 |
-   | Animated Woman `9kF7eTDbhO` | Quaternius · CC0 | 6.06 | .48 | .835 | — | .195 |
-   | Character_Man `IE7rk47BHn` (Mixamo 리그) | prathm · CC0 | 7.41 | .56 | .865 | 관절: 머리 .87·목 .84·어깨 .81·골반 .55~.58·무릎 .29·팔꿈치 .67·손목 .51 | |
+- poly.pizza 검색 페이지(서버 렌더, API 키 불필요)에서 human/person/man/woman/character base/elderly/casual/
+  rigged character 등 40여 검색어로 ID 수집 → People & Characters 112종 GLB 다운로드(CDN은 UA·Referer 필요).
+- `scripts/avatar/measure_glb.py` (순수 Python, 삼각형-평면 슬라이스 단면)로 등신비·가랑이 높이·목 높이·
+  흉부/엉덩이 폭·리그/애니메이션 유무를 계측 → [polypizza-human-catalog.csv](polypizza-human-catalog.csv)
+  (실제 비율 근접순 정렬, `note` 열이 비어 있으면 유효 계측).
+- 선정 기준: 실제 성인 비율(6~8등신, 가랑이 ≈ .47~.50) · 환자에 어울리는 중립 복장 · 상업 이용 가능(CC0 우선) ·
+  렌더러 호환(리그·Idle 클립·`Head` 본이 있으면 눕기 포즈·호흡 애니메이션이 자연스러움).
 
-3. **이식** — 바인드 포즈 관절 재배치 + 본별 대각 스케일(길이축은 자식 관절 목표에서 유도, 둘레축은
-   목표 둘레/실측 둘레)을 스킨 가중치로 블렌딩한 정점 워프 `v' = Σ w_i (J_i' + A_i ⊙ (v − J_i))`.
-   법선(야코비안 역전치)·역바인드행렬·노드 translation·애니메이션 translation 트랙을 갱신하고 회전 트랙은
-   유지 → Idle 등 17종 애니메이션 그대로 재생. 머리 본은 균일 배율(성인 0.85·소아 0.95·유아 1.0).
-4. **검증** — three.js 미리보기(정면/측면/눕기/소아)와 Next 랜딩 페이지 실제 로더로 육안 확인, 계측기로 수치 확인.
+## 후보 4종 (`public/cpx/models/candidates/`)
 
-## 결과 (머리카락 포함 신장 기준 계측)
+| # | 파일 | 원본 | 제작자 · 라이선스 | 등신비 | 리그/애니 | 특징 |
+|---|---|---|---|---|---|---|
+| 1 | `cand1_quaternius_woman.glb` | Animated Woman `qJ2gsTUBHL` | Quaternius · CC0 | 6.1 | 62본 · 24클립 · Idle | 캐주얼 여성. 같은 리그 남성/직업군 5종 이상 보유 → 성별·연령 변형 확장 용이 |
+| 2 | `cand2_quaternius_man.glb` | Beach Character `DojKLcO34E` | Quaternius · CC0 | 6.1 | 〃 | 민소매·반바지 남성. 흉부·복부 노출 진찰에 유리 |
+| 3 | `cand3_ipoly3d_fitness_man.glb` | Fitness Character `KX8wzUxep8` | iPoly3D · CC0 | 8.0 | 없음(A포즈) | 가장 사실적 비율, 233KB. 노인 남 `0UAcRHVAxA` 등 계열 4종. 원점 보정 적용 |
+| 4 | `cand4_rafael_mannequin.glb` | Rigged Character `yiQDOLP4Ry` | Rafael · CC0 | 8.0 | Mixamo 52본 · 클립 1 | 회색 마네킹 — 표준화 환자 더미 콘셉트. T포즈, Idle 없음 |
 
-| 모델 | 등신비 전→후 | 가랑이 높이 | 목 높이 | 흉부폭 / 엉덩이폭 |
-|---|---|---|---|---|
-| 성인 남 | 2.67 → 6.06 | .29 → .50 | .63 → .84 | .19 / .19 |
-| 성인 여 | 2.82 → 6.45 | .30 → .51 | .65 → .85 | .19 / .20 |
-| 노인 남/여 | 2.9/2.8 → 6.1/6.5 | 성인과 동일 비율 | | |
-| 소아(≈7세) | (본 수술판) → 4.9 | .49 | .80 | .18 / .19 |
-| 유아(18~24개월) | (본 수술판) → 3.5 | .45 | .72 | .22 / .23 |
+미리보기: 랜딩 또는 CPX 화면에 `?avatarModel=cand1_quaternius_woman` 처럼 붙이면 해당 후보로 렌더된다.
 
-## 코드 변경
+## 렌더러 변경 (`components/cpx/Avatar3D.jsx`, 최소)
 
-- `public/cpx/models/*.glb` 8종 재생성 (`scripts/avatar/build_patients.sh`, 원본은 커밋 37e7ee5).
-- `components/cpx/Avatar3D.jsx` — `CHILD_EXAM_REGION_FRAC`, `INFANT_EXAM_REGION_FRAC` 값만 새 관절 실측으로 갱신.
-  성인표·카메라·조명·얼굴 데칼·정규화 로직은 무변경.
-- `scripts/avatar/` — `measure_glb.py`, `reproportion_glb.py`, `build_patients.sh` (의존성 없음, Python 3).
+- `candidates/` 경로 모델은 `measurePosedBounds`(CPU 스키닝 실측)로 키 정규화 — 아머처 노드 스케일이 바인드 박스에
+  안 잡히는 poly.pizza 모델(Quaternius 신형 팩·Mixamo)이 점처럼 작게 나오던 문제 대응.
+- Idle 클립 매칭을 `Idle` 외에 `…|Idle`(Blender 내보내기 접두어)까지 허용.
+- `?avatarModel=` 쿼리 오버라이드(영숫자·`-_` 만 허용).
 
-## 남은 항목 / 결정 대기
+## 채택 시 남는 작업
 
-- 병원복(가운) 스타일링은 범위 밖 — 현행 캐주얼 의상 유지. 필요 시 `Shirt/Pants` 재질만 색 교체 가능.
-- 유아 모델은 2026-08-11 사용자 피드백(머리 2/3 축소)이 있던 영역 — 이번엔 실제 18~24개월 비율(≈4등신)로
-  재생성했으므로 육안 확인 후 `SPECS['infant']['head_scale']` 로 조정 가능.
-- 손이 서 있을 때 가랑이 높이까지 내려와 실제(허벅지 중간)보다 약간 긺 — `x.Fist` 값(.445)을 .42로 줄이면 됨.
-- 성인 진찰표는 유지했으나 실측 관절은 복부 관절 .61·골반 .52 — 복부 .55→.57, 골반 .45→.48 미세조정 여지.
-- 다른 애니메이션(Walk/Run 등)은 IK 발 위치가 옛 비율 기준이라 재생 시 발 미끄러짐 가능(현재 Idle만 사용).
+- 채택 후보를 `patient_{male|female}[_old|_child|_infant].glb` 규약으로 복사(성별·연령 변형은 같은 계열에서 확보).
+- 얼굴 데칼(깜빡임·입 개폐)은 `Face` 재질 + `Head` 본 전제 — 후보는 자체 눈·입 지오메트리라 데칼 없음. 필요하면
+  Quaternius 계열의 `Eye`/`Eyebrows` 재질을 앵커로 쓰도록 `computeFaceAnchors` 확장.
+- `GLB_COLOR_FIX` 가 `Skin` 재질을 #e8b89a 로 덮어씀(cand1·2) — 원래 피부톤 유지하려면 예외 처리.
+- 리그 없는 후보(3)는 눕혀도 A포즈 그대로(팔이 벌어짐) — 채택 시 리깅 또는 리그 있는 계열 선택 권장.
+- 소아·유아 비율표(`CHILD_/INFANT_EXAM_REGION_FRAC`)는 현행 모델 기준 — 후보 채택 시 재산정.

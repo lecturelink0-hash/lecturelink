@@ -50,30 +50,30 @@ const EXAM_REGION_FRAC = {
   foot: 0.06,
 }
 
-// 소아(_child, ≈6등신) 체형은 머리 비중이 커서 성인 비율표를 쓰면 '가슴'이 턱 쪽으로 올라간다.
-// 2026-08-25 비율 개혁 모델 관절 실측(목 .80·흉부 관절 .69·복부 관절 .60·골반 .51·무릎 .27) 기반 보정표.
+// 소아(_child) 체형은 머리가 신장의 ~30%라 성인 비율표를 쓰면 '가슴'이 턱에 떨어진다.
+// 소아 모델 실측(머리 정수리~턱 ≈ 상위 30%) 기반 보정표.
 const CHILD_EXAM_REGION_FRAC = {
-  head: 0.9,
-  neck: 0.8,
-  chest: 0.68,
-  abdomen: 0.55,
-  pelvis: 0.44,
-  legs: 0.24,
-  knee: 0.27,
+  head: 0.85,
+  neck: 0.66,
+  chest: 0.54,
+  abdomen: 0.4,
+  pelvis: 0.3,
+  legs: 0.18,
+  knee: 0.16,
   foot: 0.05,
 }
 
-// 유아(_infant, 18~24개월, ≈4등신) 체형 — 2026-08-25 비율 개혁 모델 관절 실측
-// (목 .71·흉부 관절 .63·복부 관절 .55·골반 .47·무릎 .25) 기반 보정표.
+// 유아(_infant, 18~24개월) 체형은 머리가 신장의 ~42%(턱이 지면 기준 57% 높이),
+// 무릎 관절이 10% 높이 — CPU 스키닝 실측 기반 보정표.
 const INFANT_EXAM_REGION_FRAC = {
-  head: 0.87,
-  neck: 0.72,
-  chest: 0.62,
-  abdomen: 0.5,
-  pelvis: 0.4,
-  legs: 0.22,
-  knee: 0.25,
-  foot: 0.04,
+  head: 0.79,
+  neck: 0.56,
+  chest: 0.47,
+  abdomen: 0.33,
+  pelvis: 0.2,
+  legs: 0.13,
+  knee: 0.09,
+  foot: 0.03,
 }
 
 // bodyH로 성인/소아/유아 비율표 선택 (소아 렌더 키 <1.5, 유아 <1.0)
@@ -483,7 +483,9 @@ function GlbPatient({ url, targetH = 1.55, ...motion }) {
   // Hair는 제외: 뒷머리 뭉치를 접촉 기준으로 삼으면 몸통이 침대에서 떠 보인다(머리카락은 눌린다고 가정).
   // _child 모델은 본 스케일이 바인드 박스에 안 잡히므로 포즈 실측 바운드를 우선 사용.
   const { scale, offsetY, minZ } = useMemo(() => {
-    const posed = url.includes('_child') || url.includes('_infant') ? measurePosedBounds(clone) : null
+    // candidates/ (poly.pizza 원형 후보)는 아머처 노드 스케일이 바인드 박스에 안 잡혀 실측이 필요하다.
+    const posed =
+      url.includes('_child') || url.includes('_infant') || url.includes('/candidates/') ? measurePosedBounds(clone) : null
     const box = posed ? posed.box : new THREE.Box3().setFromObject(clone)
     const h = box.max.y - box.min.y || 1
     const s = targetH / h
@@ -505,14 +507,16 @@ function GlbPatient({ url, targetH = 1.55, ...motion }) {
   const anchors = useMemo(() => computeFaceAnchors(clone), [clone])
   const ref = useRef()
   const { mixer } = useAnimations(animations, ref)
-  const hasIdleClip = useMemo(() => animations.some((a) => a.name === 'Idle'), [animations])
+  // 'Idle' 외에 'CharacterArmature|Idle'(Quaternius 신형 팩·Blender 내보내기 접두어)도 허용
+  const isIdleClip = (a) => a.name === 'Idle' || /(^|\|)Idle$/.test(a.name)
+  const hasIdleClip = useMemo(() => animations.some(isIdleClip), [animations])
   // Idle 시작은 mixer에서 직접 한다. drei useAnimations의 actions는 첫 렌더 시점에 비어 있고,
   // 마운트 후 재렌더가 없으면(예: pose='lying'으로 직행 마운트) actions.Idle이 계속 undefined로 남아
   // Idle이 시작되지 않는 race가 있다 → 파일 저장 포즈(다리 굽힘)가 그대로 노출되던 버그(2026-07-10).
   useEffect(() => {
     if (!hasIdleClip || !ref.current) return
     if (new URLSearchParams(window.location.search).has('noanim')) return
-    const clip = animations.find((a) => a.name === 'Idle')
+    const clip = animations.find(isIdleClip)
     const action = mixer.clipAction(clip, ref.current)
     action.reset().fadeIn(0.3).play()
     return () => action.fadeOut(0.2)
@@ -638,7 +642,10 @@ function useResolvedModel(gender, age) {
     let alive = true
     const g = GENDER_KEY[gender] || 'male'
     const a = Number(age)
+    // 후보 모델 미리보기: ?avatarModel=cand1_quaternius_woman → /cpx/models/candidates/<이름>.glb
+    const override = new URLSearchParams(window.location.search).get('avatarModel')
     const candidates = [
+      ...(override && /^[\w-]+$/.test(override) ? [`/cpx/models/candidates/${override}.glb`] : []),
       ...(a >= 60 ? [`/cpx/models/patient_${g}_old.glb`] : []),
       ...(a <= 2 ? [`/cpx/models/patient_${g}_infant.glb`] : []),
       ...(a <= 12 ? [`/cpx/models/patient_${g}_child.glb`] : []),
