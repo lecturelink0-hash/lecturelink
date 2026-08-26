@@ -306,7 +306,6 @@ window.__chest = () => {
   const seg = (a, b) => { const A = new T.Vector3(), B = new T.Vector3(); bones[a].getWorldPosition(A); bones[b].getWorldPosition(B); const t = (0 - A.x) / (B.x - A.x); return { elbow: A.toArray().map(x => +x.toFixed(3)), wrist: B.toArray().map(x => +x.toFixed(3)), zAtCenter: +(A.z + (B.z - A.z) * Math.min(1, Math.max(0, t))).toFixed(3) } }
   return { chestFrontZ: +chest.toFixed(3), shoulderY: +sY.toFixed(3), R: seg('LowerArmR', 'WristR'), L: seg('LowerArmL', 'WristL') }
 }
-window.__mouth = (v) => { let n = 0; window.__scene.traverse(m => { if (m.morphTargetDictionary && 'MouthOpen' in m.morphTargetDictionary) { m.morphTargetInfluences[m.morphTargetDictionary.MouthOpen] = v; n++ } }); renderer.render(scene, camera); return n }
 window.addEventListener('error', (e) => { window.__err = e.message + ' @' + e.lineno })
 function tick() {
   try { tick2() } catch (e) { window.__err = String(e.stack || e); renderer.render(scene, camera); requestAnimationFrame(tick) }
