@@ -101,6 +101,105 @@ function aim(bn, cn, dirModel) {
   b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
 }
 let lateralK = 1
+// 2본 IK: 어깨 S→목표 T 에 손목이 오도록 상완·팔뚝 방향을 해석적으로 결정 (팔꿈치는 pole 방향 쪽)
+function ik2(upperN, lowerN, endN, targetW, poleW) {
+  const U = bone(upperN), L = bone(lowerN), E = bone(endN)
+  U.updateWorldMatrix(true, false); L.updateWorldMatrix(true, false); E.updateWorldMatrix(true, false)
+  const S = new THREE.Vector3(), Lp = new THREE.Vector3(), Ep = new THREE.Vector3()
+  U.getWorldPosition(S); L.getWorldPosition(Lp); E.getWorldPosition(Ep)
+  const a = S.distanceTo(Lp), b = Lp.distanceTo(Ep)
+  const d = Math.min(S.distanceTo(targetW), (a + b) * 0.995)
+  const dir = targetW.clone().sub(S).normalize()
+  // 팔꿈치: S 에서 dir 로 x 만큼, 수직으로 h 만큼(pole 평면)
+  const x = (a * a - b * b + d * d) / (2 * d), h = Math.sqrt(Math.max(0, a * a - x * x))
+  let perp = poleW.clone().sub(S); perp.sub(dir.clone().multiplyScalar(perp.dot(dir))).normalize()
+  const elbow = S.clone().add(dir.clone().multiplyScalar(x)).add(perp.multiplyScalar(h))
+  const target = S.clone().add(dir.clone().multiplyScalar(d))
+  aimWorld(upperN, lowerN, elbow.clone().sub(S))
+  aimWorld(lowerN, endN, target.clone().sub(elbow))
+}
+function aimWorld(bn, cn, desiredW) {
+  const b = bone(bn), c = bone(cn)
+  b.updateWorldMatrix(true, false); c.updateWorldMatrix(true, false)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp); c.getWorldPosition(cp)
+  const cur = cp.sub(bp).normalize(), desired = desiredW.clone().normalize()
+  const qw = new THREE.Quaternion().setFromUnitVectors(cur, desired)
+  const bw = new THREE.Quaternion(); b.getWorldQuaternion(bw)
+  const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw)
+  b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
+}
+// 본 축(bn→cn) 둘레로 굴려 refBone 의 로컬축 palmAxis(월드) 가 targetW 쪽을 보게 (손바닥 방향 제어)
+function rollToward(bn, cn, refBone, palmAxisLocal, targetW) {
+  const b = bone(bn), c = bone(cn), r = bone(refBone)
+  b.updateWorldMatrix(true, false); c.updateWorldMatrix(true, false); r.updateWorldMatrix(true, false)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp); c.getWorldPosition(cp)
+  const axis = cp.sub(bp).normalize()
+  const rq = new THREE.Quaternion(); r.getWorldQuaternion(rq)
+  const cur = palmAxisLocal.clone().applyQuaternion(rq); cur.sub(axis.clone().multiplyScalar(cur.dot(axis))).normalize()
+  const tgt = targetW.clone(); tgt.sub(axis.clone().multiplyScalar(tgt.dot(axis))).normalize()
+  if (cur.lengthSq() < 1e-6 || tgt.lengthSq() < 1e-6) return
+  let ang = Math.acos(Math.max(-1, Math.min(1, cur.dot(tgt)))); if (axis.dot(cur.clone().cross(tgt)) < 0) ang = -ang
+  const qw = new THREE.Quaternion().setFromAxisAngle(axis, ang)
+  const bw = new THREE.Quaternion(); b.getWorldQuaternion(bw)
+  const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw)
+  b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
+}
+let palmAxis = { L: new THREE.Vector3(0, 0, -1), R: new THREE.Vector3(0, 0, -1) }
+function detectPalmAxis() {
+  // 손 정점(Wrist·손가락 본 지배)을 손목 본 로컬로 옮겨 가장 얇은 축 = 손바닥 법선. 부호는 바인드 T포즈에서 아래(-up)를 향하도록
+  const sk = skinned[0].skeleton
+  const hi = sk.bones.findIndex((b) => /^Head$/.test(b.name)), pi = sk.bones.findIndex((b) => /^Hips$/.test(b.name))
+  const Bh = sk.boneInverses[hi].clone().invert(), Bp = sk.boneInverses[pi].clone().invert()
+  const upBind = new THREE.Vector3().setFromMatrixPosition(Bh).sub(new THREE.Vector3().setFromMatrixPosition(Bp)).normalize()
+  for (const side of ['L', 'R']) {
+    const wi = sk.bones.findIndex((b) => b.name === 'Wrist' + side)
+    const handRe = new RegExp('^(Wrist|Index\\d|Middle\\d|Ring\\d|Pinky\\d|Thumb\\d)' + side + '$')
+    const handIdx = new Set(sk.bones.map((b, i) => handRe.test(b.name) ? i : -1).filter((i) => i >= 0))
+    const inv = sk.boneInverses[wi]
+    const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9]; const v = new THREE.Vector3()
+    for (const o of skinned) {
+      const pos = o.geometry.attributes.position, si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight
+      for (let i = 0; i < pos.count; i++) {
+        let best = 0, bw = -1; for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k) } }
+        if (!handIdx.has(best)) continue
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.bindMatrix).applyMatrix4(inv)
+        for (let k = 0; k < 3; k++) { const c = v.getComponent(k); if (c < mn[k]) mn[k] = c; if (c > mx[k]) mx[k] = c }
+      }
+    }
+    const ext = [0, 1, 2].map((k) => mx[k] - mn[k])
+    const thin = ext.indexOf(Math.min(...ext))
+    const axis = new THREE.Vector3(); axis.setComponent(thin, 1)
+    const rot = new THREE.Matrix3().setFromMatrix4(inv.clone().invert())
+    const worldAxis = axis.clone().applyMatrix3(rot).normalize()
+    if (worldAxis.dot(upBind) > 0) axis.negate()
+    palmAxis[side] = axis
+    window.__palm = window.__palm || {}; window.__palm[side] = { axis: axis.toArray(), ext: ext.map((e) => +e.toFixed(4)) }
+  }
+}
+function modelToWorld(v) {
+  const inner = grp.children[0].isGroup && grp.children[0].children[0] && grp.children[0].children[0].isGroup ? grp.children[0].children[0] : grp.children[0]
+  const iq = new THREE.Quaternion(); inner.getWorldQuaternion(iq); return new THREE.Vector3(...v).applyQuaternion(iq)
+}
+function armsCross() {
+  scene.updateMatrixWorld(true)
+  const sL = new THREE.Vector3(), sR = new THREE.Vector3(); bone('UpperArm.L').getWorldPosition(sL); bone('UpperArm.R').getWorldPosition(sR)
+  // 오른손 → 왼쪽 어깨 바로 위(약간 앞), 왼손 → 오른쪽 어깨 위(그보다 앞·위: 왼팔이 앞을 지남)
+  const tR = sL.clone().add(modelToWorld([0.0, 0.05, 0.03])), tL = sR.clone().add(modelToWorld([0.0, 0.07, 0.17]))
+  const pR = sR.clone().add(modelToWorld([0.15, -0.3, 0.12])), pL = sL.clone().add(modelToWorld([-0.15, -0.25, 0.5]))
+  ik2('UpperArm.R', 'LowerArm.R', 'Wrist.R', tR, pR)
+  ik2('UpperArm.L', 'LowerArm.L', 'Wrist.L', tL, pL)
+  // 손: 손가락이 어깨 뒤쪽·아래로 감기게, 손바닥은 아래(어깨 위에 얹힘)
+  aim('Wrist.R', 'Middle1.R', [0.35, 0.15, -0.9]); aim('Wrist.L', 'Middle1.L', [-0.35, 0.15, -0.9])
+  rollToward('Wrist.R', 'Middle1.R', 'Wrist.R', palmAxis.R, new THREE.Vector3(0, -1, 0))
+  rollToward('Wrist.L', 'Middle1.L', 'Wrist.L', palmAxis.L, new THREE.Vector3(0, -1, 0))
+}
+function palmsDown(top, bottom) {
+  // 팔뚝 회내(pronation)로 손바닥 법선을 월드 -y(침대)로: 위쪽 팔·아래쪽 팔 모두
+  for (const side of [top, bottom]) {
+    rollToward('LowerArm.' + side, 'Wrist.' + side, 'Wrist.' + side, palmAxis[side], new THREE.Vector3(0, -1, 0))
+    rollToward('Wrist.' + side, 'Middle1.' + side, 'Wrist.' + side, palmAxis[side], new THREE.Vector3(0, -1, 0))
+  }
+}
 function applyOffsets(list, scaleLateral) {
   // 좁은 어깨(lateralK<1)일수록 팔짱 가로 성분을 줄이고 팔뚝을 더 세워(y↑) 반대편 상완 관통을 피한다
   for (const [bn, cn, d] of list) aim(bn, cn, scaleLateral ? [d[0] * lateralK, d[1] + (bn.startsWith('LowerArm') ? (1 - lateralK) * 0.6 : 0), d[2]] : d)
@@ -157,6 +256,7 @@ loader.load(dir + file + '.glb', (g) => {
   const clip = g.animations.find((a) => /(^|\|)Idle_Neutral$/.test(a.name)) || g.animations.find((a) => /(^|\|)Idle$/.test(a.name))
   if (clip) { mixer = new THREE.AnimationMixer(root); mixer.clipAction(clip).play() }
   boneState = { resolved: new Map() }
+  detectPalmAxis()
   // 어깨 반폭(UpperArm.L x, 정규화 후) 기준 팔짱 가로 성분 보정 — 좁은 어깨(여)에서 손이 반대편 상완을 관통하지 않도록
   { scene.updateMatrixWorld(true); const v = new THREE.Vector3(); bone('UpperArm.L').getWorldPosition(v); const inner = grp.children[0]; const half = Math.abs(v.x - grp.position.x) * (inner.scale ? 1 : 1); lateralK = Math.min(1, Math.max(0.6, half / 0.147)) }
   camera.position.set(...P.cam); camera.lookAt(...P.look)
@@ -199,7 +299,8 @@ function tick2() {
     if (mixer) mixer.update(d)
     root.updateMatrixWorld(true)
     applyOffsets(LEG_SETS[P.legs])
-    applyOffsets(ARM_SETS[P.arms], P.arms === 'cross')
+    if (P.arms === 'cross') armsCross(); else applyOffsets(ARM_SETS[P.arms])
+    if (P.arms === 'side_left') palmsDown('R', 'L'); if (P.arms === 'side_right') palmsDown('L', 'R')
     root.updateMatrixWorld(true)
     attachFeet()
     if (!placed) {
