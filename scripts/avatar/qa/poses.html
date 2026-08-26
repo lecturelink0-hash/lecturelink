@@ -55,8 +55,8 @@ const POSES = {
   supine: { legs: 'straight', arms: 'rest', place: 'bed', roll: 0, cam: [0.3, 2.0, 2.4], look: [0, 0.55, 0] },
   supine_bent: { legs: 'bent', arms: 'side', place: 'bed', roll: 0, cam: [0.3, 2.0, 2.4], look: [0, 0.55, 0] },
   // 좌측와위 = 왼쪽(모델 +x → 앙와위 월드 -z)이 아래 → roll -90, 환자 앞면은 -z 를 향하므로 카메라를 -z 에
-  left: { legs: 'bent', arms: 'side', place: 'bed', roll: -90, cam: [0.3, 1.9, -2.5], look: [0, 0.6, 0] },
-  right: { legs: 'bent', arms: 'side', place: 'bed', roll: 90, cam: [0.3, 1.9, 2.5], look: [0, 0.6, 0] },
+  left: { legs: 'bent', arms: 'side_left', place: 'bed', roll: -90, cam: [0.3, 1.9, -2.5], look: [0, 0.6, 0] },
+  right: { legs: 'bent', arms: 'side_right', place: 'bed', roll: 90, cam: [0.3, 1.9, 2.5], look: [0, 0.6, 0] },
 }
 // [본, 자식(방향 기준), 목표 방향]
 const LEG_SETS = {
@@ -67,11 +67,20 @@ const LEG_SETS = {
 const ARM_SETS = {
   rest: [],
   // 팔 X자 교차: 상완은 앞·안쪽·아래로, 하완은 가슴 앞을 가로질러 반대편 상완 쪽으로 (왼팔이 위)
-  cross: [['UpperArm.L', 'LowerArm.L', [-0.25, -0.85, 0.45]], ['UpperArm.R', 'LowerArm.R', [0.25, -0.85, 0.45]],
-    ['LowerArm.L', 'Wrist.L', [-0.92, 0.08, 0.38]], ['LowerArm.R', 'Wrist.R', [0.92, -0.04, 0.3]],
-    ['Wrist.L', 'Middle1.L', [-0.55, -0.35, -0.75]], ['Wrist.R', 'Middle1.R', [0.55, -0.35, -0.75]]],
+  // 오른팔은 가슴에 붙여(z≈0.2) 아래, 왼팔은 그 앞(z≈0.33)을 지나 위로 → 팔뚝 중심 간격 ≈0.12m (관통 방지)
+  // 손은 반대편 어깨 위(y≈1.04), 오른팔은 가슴 쪽(z≈0.13), 왼팔은 그 앞(z≈0.3) → 팔뚝·상완 간격 ≥8cm 로 관통 방지
+  cross: [['UpperArm.R', 'LowerArm.R', [0.45, -0.35, 0.42]], ['UpperArm.L', 'LowerArm.L', [-0.25, -0.35, 1.0]],
+    ['LowerArm.R', 'Wrist.R', [0.75, 0.66, -0.12]], ['LowerArm.L', 'Wrist.L', [-0.85, 0.5, 0.25]],
+    ['Wrist.R', 'Middle1.R', [0.4, 0.55, -0.75]], ['Wrist.L', 'Middle1.L', [-0.4, 0.55, -0.75]]],
   // 측와위: 팔을 앞으로 모아 얹음
-  side: [['UpperArm.L', 'LowerArm.L', [-0.15, -0.45, 0.88]], ['UpperArm.R', 'LowerArm.R', [0.15, -0.45, 0.88]], ['LowerArm.L', 'Wrist.L', [-0.6, 0.1, 0.8]], ['LowerArm.R', 'Wrist.R', [0.6, 0.0, 0.8]]],
+  // 좌측와위(모델 +x = 침대 쪽): 아래쪽 왼팔은 침대 위로 앞으로 뻗고, 위쪽 오른팔은 거의 수직으로 내려 손바닥이 침대에 닿음
+  // 좌측와위(모델 +x = 침대 쪽): 아래쪽 왼팔은 침대 위로 앞으로 뻗고(어깨 높이 유지), 위쪽 오른팔은 팔꿈치를 침대에 대고 팔뚝을 앞으로 눕혀 손바닥이 침대에
+  side_left: [['UpperArm.L', 'LowerArm.L', [0.1, 0.05, 0.99]], ['LowerArm.L', 'Wrist.L', [0.0, 0.05, 1.0]], ['Wrist.L', 'Middle1.L', [0.0, 0.03, 1.0]],
+    ['Shoulder.R', 'UpperArm.R', [0.3, -0.05, 0.95]],
+    ['UpperArm.R', 'LowerArm.R', [0.85, -0.1, 0.5]], ['LowerArm.R', 'Wrist.R', [0.05, -0.02, 1.0]], ['Wrist.R', 'Middle1.R', [0.05, -0.05, 1.0]]],
+  side_right: [['UpperArm.R', 'LowerArm.R', [-0.1, 0.05, 0.99]], ['LowerArm.R', 'Wrist.R', [0.0, 0.05, 1.0]], ['Wrist.R', 'Middle1.R', [0.0, 0.03, 1.0]],
+    ['Shoulder.L', 'UpperArm.L', [-0.3, -0.05, 0.95]],
+    ['UpperArm.L', 'LowerArm.L', [-0.85, -0.1, 0.5]], ['LowerArm.L', 'Wrist.L', [-0.05, -0.02, 1.0]], ['Wrist.L', 'Middle1.L', [-0.05, -0.05, 1.0]]],
 }
 const P = POSES[pose]
 
@@ -91,7 +100,11 @@ function aim(bn, cn, dirModel) {
   const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw)
   b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
 }
-function applyOffsets(list) { for (const [bn, cn, d] of list) aim(bn, cn, d) }
+let lateralK = 1
+function applyOffsets(list, scaleLateral) {
+  // 좁은 어깨(lateralK<1)일수록 팔짱 가로 성분을 줄이고 팔뚝을 더 세워(y↑) 반대편 상완 관통을 피한다
+  for (const [bn, cn, d] of list) aim(bn, cn, scaleLateral ? [d[0] * lateralK, d[1] + (bn.startsWith('LowerArm') ? (1 - lateralK) * 0.6 : 0), d[2]] : d)
+}
 
 function ensureRel() {
   if (boneState.rel) return
@@ -120,10 +133,17 @@ function attachFeet() {
   }
 }
 
-function posedBox() {
+function posedBox(excludeRe) {
   scene.updateMatrixWorld(true); root.updateMatrixWorld(true)
   const box = new THREE.Box3(); const v = new THREE.Vector3()
-  for (const o of skinned) { o.skeleton.update(); const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); box.expandByPoint(v) } }
+  for (const o of skinned) {
+    o.skeleton.update(); const pos = o.geometry.attributes.position; const si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight
+    for (let i = 0; i < pos.count; i++) {
+      if (excludeRe && si && sw) { let best = 0, bw = -1; for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k) } }
+        const bn = o.skeleton.bones[best]; if (bn && excludeRe.test(bn.name)) continue }
+      v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); box.expandByPoint(v)
+    }
+  }
   return box
 }
 
@@ -137,6 +157,8 @@ loader.load(dir + file + '.glb', (g) => {
   const clip = g.animations.find((a) => /(^|\|)Idle_Neutral$/.test(a.name)) || g.animations.find((a) => /(^|\|)Idle$/.test(a.name))
   if (clip) { mixer = new THREE.AnimationMixer(root); mixer.clipAction(clip).play() }
   boneState = { resolved: new Map() }
+  // 어깨 반폭(UpperArm.L x, 정규화 후) 기준 팔짱 가로 성분 보정 — 좁은 어깨(여)에서 손이 반대편 상완을 관통하지 않도록
+  { scene.updateMatrixWorld(true); const v = new THREE.Vector3(); bone('UpperArm.L').getWorldPosition(v); const inner = grp.children[0]; const half = Math.abs(v.x - grp.position.x) * (inner.scale ? 1 : 1); lateralK = Math.min(1, Math.max(0.6, half / 0.147)) }
   camera.position.set(...P.cam); camera.lookAt(...P.look)
   document.getElementById('ui').textContent = `${file}\npose=${pose} clip=${clip ? clip.name : 'none'}`
   for (let i = 0; i < 8; i++) tick2()  // 백그라운드 탭에서도 배치·포즈가 완성되도록 동기 스텝
@@ -146,6 +168,16 @@ loader.load(dir + file + '.glb', (g) => {
 let placed = false
 window.__err = null
 window.__frames = 0
+window.__arms = () => {
+  scene.updateMatrixWorld(true)
+  const P_ = (n) => { const v = new THREE.Vector3(); bone(n).getWorldPosition(v); return v }
+  const segDist = (a0, a1, b0, b1) => { // 선분 간 최소 거리(근사: 샘플링)
+    let m = 1e9; for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++) { const pa = a0.clone().lerp(a1, i / 10), pb = b0.clone().lerp(b1, j / 10); m = Math.min(m, pa.distanceTo(pb)) } return m }
+  const eL = P_('LowerArm.L'), wL = P_('Wrist.L'), eR = P_('LowerArm.R'), wR = P_('Wrist.R'), sL = P_('UpperArm.L'), sR = P_('UpperArm.R'), mL = P_('Middle1.L'), mR = P_('Middle1.R')
+  return { wristL: wL.toArray().map(v => +v.toFixed(3)), wristR: wR.toArray().map(v => +v.toFixed(3)), handL: mL.toArray().map(v => +v.toFixed(3)), handR: mR.toArray().map(v => +v.toFixed(3)),
+    shoulderL: sL.toArray().map(v => +v.toFixed(3)), shoulderR: sR.toArray().map(v => +v.toFixed(3)),
+    forearmGap: +segDist(eL, wL, eR, wR).toFixed(3), foreVsUpper: +Math.min(segDist(eL, wL, sR, eR), segDist(eR, wR, sL, eL)).toFixed(3), bedTop: BED.top }
+}
 window.__dirs = () => {
   const b = bone('UpperLeg.L'), c = bone('LowerLeg.L'); scene.updateMatrixWorld(true)
   const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp); c.getWorldPosition(cp)
@@ -167,7 +199,7 @@ function tick2() {
     if (mixer) mixer.update(d)
     root.updateMatrixWorld(true)
     applyOffsets(LEG_SETS[P.legs])
-    applyOffsets(ARM_SETS[P.arms])
+    applyOffsets(ARM_SETS[P.arms], P.arms === 'cross')
     root.updateMatrixWorld(true)
     attachFeet()
     if (!placed) {
@@ -189,7 +221,7 @@ function tick2() {
         }
         addBed()
         root.updateMatrixWorld(true)
-        const b = posedBox()
+        const b = posedBox(/Arm|Wrist|Index|Middle|Ring|Pinky|Thumb|Shoulder/)  // 팔·손은 침대 접촉 기준에서 제외
         grp.position.y += BED.top - b.min.y
         grp.position.x += -0.95 + 0.1 - b.min.x
         placed = true
