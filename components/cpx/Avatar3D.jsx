@@ -507,16 +507,18 @@ function GlbPatient({ url, targetH = 1.55, ...motion }) {
   const anchors = useMemo(() => computeFaceAnchors(clone), [clone])
   const ref = useRef()
   const { mixer } = useAnimations(animations, ref)
-  // 'Idle' 외에 'CharacterArmature|Idle'(Quaternius 신형 팩·Blender 내보내기 접두어)도 허용
-  const isIdleClip = (a) => a.name === 'Idle' || /(^|\|)Idle$/.test(a.name)
-  const hasIdleClip = useMemo(() => animations.some(isIdleClip), [animations])
+  // 'Idle' 외에 'CharacterArmature|Idle'(Quaternius 신형 팩·Blender 내보내기 접두어)도 허용.
+  // 'Idle_Neutral'(양발 나란한 중립 대기)이 있으면 우선 — 'Idle'은 한 발을 내민 액션 대기라 환자답지 않다(2026-08-26 피드백).
+  const pickIdleClip = (clips) =>
+    clips.find((a) => /(^|\|)Idle_Neutral$/.test(a.name)) || clips.find((a) => a.name === 'Idle' || /(^|\|)Idle$/.test(a.name))
+  const hasIdleClip = useMemo(() => Boolean(pickIdleClip(animations)), [animations])
   // Idle 시작은 mixer에서 직접 한다. drei useAnimations의 actions는 첫 렌더 시점에 비어 있고,
   // 마운트 후 재렌더가 없으면(예: pose='lying'으로 직행 마운트) actions.Idle이 계속 undefined로 남아
   // Idle이 시작되지 않는 race가 있다 → 파일 저장 포즈(다리 굽힘)가 그대로 노출되던 버그(2026-07-10).
   useEffect(() => {
     if (!hasIdleClip || !ref.current) return
     if (new URLSearchParams(window.location.search).has('noanim')) return
-    const clip = animations.find(isIdleClip)
+    const clip = pickIdleClip(animations)
     const action = mixer.clipAction(clip, ref.current)
     action.reset().fadeIn(0.3).play()
     return () => action.fadeOut(0.2)

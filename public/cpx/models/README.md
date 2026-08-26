@@ -59,6 +59,8 @@ poly.pizza 의 상업 이용 가능 인체 모델 112종을 계측·검토해 �
   `pants_tube` 로 다리 정점을 방사 확장해 바지 통을 만들며, `hair_swap` 으로 같은 리그 계열의 헤어 프리미티브를 이식한다.
   이 계열 GLB 의 바인드 공간은 z-up(cm) 이라 도구가 Head−Foot 방향으로 위 축을 자동 판정한다.
 - 렌더러 대응(2026-08-25): `candidates/` 경로는 스키닝 실측 바운드로 정규화(아머처 노드 스케일 대응), Idle 클립은 `Idle` 또는 `…|Idle` 이름 매칭.
+- 2026-08-26 대기 클립: Quaternius 계열의 `Idle`은 한 발을 앞으로 내민 액션 대기라 "튀어나갈 모험자" 같다는 피드백 →
+  렌더러가 `Idle_Neutral`(양발 나란한 중립 대기)을 우선 선택하고 없을 때만 `Idle`을 쓴다. GLB 는 무수정.
 - 얼굴 데칼(눈 깜빡임·입)은 `Face` 재질 + `Head` 본을 요구 — 후보는 자체 눈·입 지오메트리를 가져 데칼 없이 표시된다.
 - `Skin` 재질은 런타임 색 보정(#e8b89a)이 적용된다(cand1·2). 원래 피부톤을 쓰려면 `GLB_COLOR_FIX` 예외 처리 필요.
 - 대안(미포함): 상의 탈의 남 `GorWw41SFf`·여 `NfMffTkeBa`(mastjie, CC0, 리그 없음), 속옷 차림 남 `07wMEaAf6x`(pessiuff, CC-BY 3.0), 텍스처 여성 `9kF7eTDbhO`(Quaternius, CC0, Mixamo 리그·`Armature|Idle`), 노인 `mED3MPaQ6i`(scaranto, CC0, 5.4등신).
