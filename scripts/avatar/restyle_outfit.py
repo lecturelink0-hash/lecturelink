@@ -5,6 +5,7 @@
   ('material', mesh, prim, (재질명, 색))            프리미티브 전체 재질 교체
   ('split', mesh, prim, (재질명, 색), 술어)         술어가 참인 삼각형만 새 프리미티브로 분리·재질 교체
   ('recolor', 재질명, '#hex')                        기존 재질 색 변경
+  ('mouth', {...})                                   구강진찰용 입: 피부 구멍+입술·구강·치열·혀·목젖, 모프 MouthOpen(턱 하강)
   ('elbow_subdiv', {...})                            팔꿈치 띠 삼각형 1:4 분할(균열 방지)·가중치 스무딩으로 굽힘 뭉개짐 완화
   ('pants_tube', {...})                              다리 피부 정점을 축 기준 방사 확장해 바지 통으로 만든다
   ('hair_swap', {...})                               다른 GLB(같은 리그 계열)의 헤어 프리미티브를 이식
@@ -237,6 +238,12 @@ class Glb:
                 self.hair_swap(donor, **rule[1])
             elif kind == 'hair_perm':
                 self.hair_perm(**rule[1])
+            elif kind == 'mouth':
+                import mouth_build
+                kw = dict(rule[1])
+                if not kw.get('head_mesh'):
+                    kw['head_mesh'] = next(self.js['meshes'][nd['mesh']]['name'] for nd in self.nodes if 'mesh' in nd and self.js['meshes'][nd['mesh']].get('name', '').endswith('Head'))
+                mouth_build.add_mouth(self, **kw)
             elif kind == 'elbow_subdiv':
                 kw = dict(rule[1])
                 if kw.get('meshes') == '__body__':
@@ -817,6 +824,8 @@ def cand1_rules(opts):
 # 공통 후처리: 팔꿈치·겨드랑이 살짝 두껍게(--opts '{"arm": true}') / 신장 설정(--opts '{"height": 1.83}')
 def touch_rules(opts):
     rules = []
+    if opts.get('mouth'):  # 구강진찰용 입(입술·구강·치열·혀·목젖 + 모프 MouthOpen, 턱 하강) — mouth_build.py
+        rules.append(('mouth', dict(opts['mouth']) if isinstance(opts['mouth'], dict) else {}))
     if opts.get('elbow_subdiv'):  # 팔꿈치 띠 정점 분할(굽힘 뭉개짐 완화) — 팔 보정보다 먼저
         rules.append(('elbow_subdiv', dict(meshes='__body__', iters=int(opts['elbow_subdiv']), smooth=opts.get('elbow_smooth', 0.0),
                                            t0=opts.get('elbow_t0', 0.72), t1=opts.get('elbow_t1', 1.38))))

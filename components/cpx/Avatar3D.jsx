@@ -470,6 +470,34 @@ function measurePosedBounds(root) {
 }
 
 // ── GLB 로더 ─────────────────────────────────────────────────
+// 구강진찰용 입 — 모프 타깃 'MouthOpen'(candidates/ 후보 GLB, scripts/avatar/mouth_build.py 가 생성: 입술·구강 내벽·치열·혀·목젖 + 턱 하강).
+// mouthOpen(진찰 "아~")이면 1 로, 아니면 발화 진폭으로 립싱크. 모프가 없는 기존 모델은 대상 메시가 없어 그대로 무시(FaceOverlay 데칼 경로 유지).
+function useMouthMorph(clone, { mouthOpen = false, speaking = false, audioLevel = 0 }) {
+  const meshes = useMemo(() => {
+    const out = []
+    clone.traverse((o) => {
+      if (o.morphTargetDictionary && 'MouthOpen' in o.morphTargetDictionary && o.morphTargetInfluences) out.push(o)
+    })
+    return out
+  }, [clone])
+  const cur = useRef(0)
+  useFrame((state, delta) => {
+    if (!meshes.length) return
+    const target = mouthOpen
+      ? 1
+      : speaking
+        ? Math.min(1, (0.15 + 0.6 * audioLevel) * Math.abs(Math.sin(state.clock.elapsedTime * 11)))
+        : 0
+    cur.current += (target - cur.current) * (1 - Math.exp(-delta * (mouthOpen ? 6 : 14)))
+    for (const m of meshes) m.morphTargetInfluences[m.morphTargetDictionary.MouthOpen] = cur.current
+  })
+}
+
+function avatarMouthOverride() {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('mouthOpen') === '1'
+}
+
 function GlbPatient({ url, targetH = 1.55, ...motion }) {
   const { scene, animations } = useGLTF(url)
   // 스킨드 메시(리깅 모델)는 plain clone이 본 바인딩을 깨므로 SkeletonUtils로 복제
@@ -505,6 +533,7 @@ function GlbPatient({ url, targetH = 1.55, ...motion }) {
   }, [clone, url, targetH])
   // A안 오버레이 앵커 (Face 지오메트리 기반 자동 산출; 실패 시 오버레이 생략)
   const anchors = useMemo(() => computeFaceAnchors(clone), [clone])
+  useMouthMorph(clone, { mouthOpen: motion.mouthOpen, speaking: motion.speaking, audioLevel: motion.audioLevel })
   const ref = useRef()
   const { mixer } = useAnimations(animations, ref)
   // 'Idle' 외에 'CharacterArmature|Idle'(Quaternius 신형 팩·Blender 내보내기 접두어)도 허용.
@@ -686,7 +715,7 @@ function avatarModelOverride() {
   return { name, heightM: m ? Number(m[1]) / 100 : null }
 }
 
-function PatientAvatar({ gender, age, targetH = 1.55, speaking, audioLevel, pose, motionProfile }) {
+function PatientAvatar({ gender, age, targetH = 1.55, speaking, audioLevel, pose, motionProfile, mouthOpen = false }) {
   const url = useResolvedModel(gender, age)
   // 절차적 폴백은 성인 치수 기반 — 소아는 서있을 때만 축소(눕기는 침대 좌표가 절대값이라 유지)
   const procedural = (
@@ -701,7 +730,7 @@ function PatientAvatar({ gender, age, targetH = 1.55, speaking, audioLevel, pose
   return (
     <AvatarErrorBoundary url={url} fallback={procedural}>
       <Suspense fallback={procedural}>
-        <GlbPatient url={url} targetH={targetH} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} />
+        <GlbPatient url={url} targetH={targetH} speaking={speaking} audioLevel={audioLevel} pose={pose} motionProfile={motionProfile} mouthOpen={mouthOpen} />
       </Suspense>
     </AvatarErrorBoundary>
   )
@@ -763,8 +792,10 @@ function useContextLossRecovery() {
 // examTarget: 누운 상태가 필수인 신체진찰 시 카메라·조명이 향할 부위 키 (EXAM_REGION_FRAC 참조)
 // child: persona.child (보호자 동반 케이스). 있으면 중앙 인물=환아(진찰 대상),
 //        gender/age(화자=보호자)는 측면 인물로 서고 발화 연기도 보호자가 한다.
-export default function Avatar3D({ gender = '남성', age, child = null, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null, category = '' }) {
+// mouthOpen: 구강 진찰("아~ 해보세요") — 모프 'MouthOpen' 이 있는 모델(candidates/)만 반응. 미리보기: ?mouthOpen=1
+export default function Avatar3D({ gender = '남성', age, child = null, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null, category = '', mouthOpen = false }) {
   const motionProfile = MOTION_PROFILE_BY_CATEGORY[category] || null
+  const mouthOpenEff = mouthOpen || avatarMouthOverride()
   const patient = child ? { gender: child.gender || '남성', age: child.age } : { gender, age }
   // 신장 변형 후보(_NNN) 미리보기 시 그 신장을, 아니면 나이대별 기본 키
   const patientH = avatarModelOverride()?.heightM || targetHeightForAge(patient.age)
@@ -797,6 +828,7 @@ export default function Avatar3D({ gender = '남성', age, child = null, speakin
           audioLevel={child ? 0 : audioLevel}
           pose={pose}
           motionProfile={motionProfile}
+          mouthOpen={child ? false : mouthOpenEff}
         />
       </group>
       {child && <GuardianFigure gender={gender} age={age} speaking={speaking} audioLevel={audioLevel} pose={pose} />}
