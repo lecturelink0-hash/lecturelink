@@ -103,6 +103,16 @@
 - 대응: `Avatar3D.jsx` `pickIdleClip` — `…Idle_Neutral` 우선, 없으면 `Idle`. GLB 무수정, 기존 환자 모델(`Idle`만 보유)은 영향 없음.
 - 확인: 서기(정면·측면)·눕기 렌더에서 양발이 같은 선에 놓이고 팔이 몸 옆으로 내려옴.
 
+## 9차: 신장 변형 6종에 8차 특징 일괄 적용·검증 (2026-08-26)
+
+요청: "8차 모델의 특징을 5차의 신장 변형 6종에 그대로 적용."
+
+- 신장 6종을 현재 기본 파일(`cand1_quaternius_woman.glb`, `cand2_quaternius_man.glb`)에서 재생성하고 파일별로 검증:
+  `asset.extras.heightM`(1.83/1.75/1.67, 1.75/1.65/1.56) · roughness 0.45/metallic 0.15 · Hoodie 갈색 헤어(`Hair_swapped`) ·
+  바지 재질 · `Idle_Neutral` 클립 보유 · 팔꿈치 반경(남 0.439, 여 0.359 — 보정 반영). 8차의 중립 대기는 렌더러 로직이라
+  같은 클립 구조인 6종에 자동 적용.
+- 확인: 6종 나란히 서기(중립 자세, 양발 같은 선)·183/156 눕기 렌더 정상.
+
 ## 렌더러 변경 (`components/cpx/Avatar3D.jsx`, 최소)
 
 - `candidates/` 경로 모델은 `measurePosedBounds`(CPU 스키닝 실측)로 키 정규화 — 아머처 노드 스케일이 바인드 박스에
