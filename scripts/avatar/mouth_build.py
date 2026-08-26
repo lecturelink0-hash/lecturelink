@@ -30,13 +30,13 @@ class LipsBuilder:
         self.o = dict(
             mouth_frac=0.42,   # 턱→코밑 사이 입 중심 위치
             width_frac=0.50,   # 입 반폭 = 얼굴 반폭 × 이 값
-            h_up=0.55,         # 윗입술 높이(입선→상단 경계, 중앙 기준) cm
-            h_low=0.74,        # 아랫입술 높이 cm
-            d_up=0.36,         # 윗입술 최대 두께(표면에서 앞으로) cm
-            d_low=0.48,        # 아랫입술 최대 두께 cm
-            line_d=0.10,       # 입선에서 두 입술이 만나는 높이 cm
+            h_up=0.50,         # 윗입술 높이(입선→상단 경계, 중앙 기준) cm
+            h_low=0.62,        # 아랫입술 높이 cm
+            d_up=0.17,         # 윗입술 최대 두께(표면에서 앞으로) cm — 얇게(2026-08-26 피드백)
+            d_low=0.22,        # 아랫입술 최대 두께 cm
+            line_d=0.06,       # 입선에서 두 입술이 만나는 높이 cm
             corner_dip=0.12,   # 입꼬리가 입선 중앙보다 내려가는 양 cm
-            cols=18, rows=5,
+            cols=6, rows=2,    # 로우폴리: 입술당 6×2 쿼드, 쿼드마다 플랫 법선(큰 네모 면)
         )
         self.o.update(opts or {})
         self.head_mesh = head_mesh; self.skin_mat = skin_mat
@@ -159,53 +159,29 @@ class LipsBuilder:
         P, N, UV, J, W = [], [], [], [], []
         prims = {}
 
-        def add_grid(grid, flip):
+        def add_quad(mat, a, b, c, d):
+            """네 점(a,b,c,d 순환)을 플랫 쿼드로: 정점 4개를 복제하고 쿼드 평균 법선(앞=−y 쪽) 하나를 준다. 면적 0 이면 생략."""
+            n1 = _tri_normal(a, b, c); n2 = _tri_normal(a, c, d)
+            n = [n1[k] + n2[k] for k in range(3)]
+            if math.sqrt(sum(x * x for x in n)) < 1e-9:
+                return
+            n = _norm(n)
+            flip = n[1] > 0  # 법선이 뒤를 보면 와인딩·법선 반전
+            if flip:
+                n = [-x for x in n]
             base = len(P)
-            for row in grid:
-                for p in row:
-                    P.append(list(p)); N.append([0.0, 0.0, 0.0]); UV.append([0.5, 0.5]); J.append([head_j, 0, 0, 0]); W.append([1.0, 0.0, 0.0, 0.0])
-            tris = []
+            for p in (a, b, c, d):
+                P.append(list(p)); N.append(list(n)); UV.append([0.5, 0.5]); J.append([head_j, 0, 0, 0]); W.append([1.0, 0.0, 0.0, 0.0])
+            q = [[base, base + 2, base + 1], [base, base + 3, base + 2]] if flip else [[base, base + 1, base + 2], [base, base + 2, base + 3]]
+            prims.setdefault(mat, []).extend(q)
+
+        for grid in (self.up, self.low):
             for r in range(rows):
                 for c in range(cols):
-                    i0 = base + r * (cols + 1) + c; i1 = i0 + 1; i2 = i0 + (cols + 1); i3 = i2 + 1
-                    q = [[i0, i2, i3], [i0, i3, i1]] if flip else [[i0, i3, i2], [i0, i1, i3]]
-                    tris += q
-            return tris
-
-        # 와인딩: 법선이 앞(−y)을 보도록 — 중앙 삼각형(입꼬리는 면적 0 이라 판정 불가)으로 판정해 뒤집는다
-        def oriented(grid, flip):
-            tris = add_grid(grid, flip)
-            t = tris[2 * ((rows // 2) * cols + cols // 2)]; n = _tri_normal(P[t[0]], P[t[1]], P[t[2]])
-            if n[1] > 0:
-                nv = len(grid) * (cols + 1)
-                del P[-nv:]; del N[-nv:]; del UV[-nv:]; del J[-nv:]; del W[-nv:]
-                tris = add_grid(grid, not flip)
-            return tris
-
-        prims['Lips'] = oriented(self.up, False) + oriented(self.low, True)
-        # 입선 띠
-        base = len(P)
-        for top, bot in self.line:
-            for p in (top, bot):
-                P.append(list(p)); N.append([0.0, -1.0, 0.0]); UV.append([0.5, 0.5]); J.append([head_j, 0, 0, 0]); W.append([1.0, 0.0, 0.0, 0.0])
-        lt = []
+                    add_quad('Lips', grid[r][c], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c])
         for c in range(cols):
-            i0 = base + 2 * c; i1 = i0 + 2; i2 = i0 + 1; i3 = i0 + 3  # top_c, top_c+1, bot_c, bot_c+1
-            lt += [[i0, i2, i3], [i0, i3, i1]]
-        t = lt[2 * (cols // 2)]; n = _tri_normal(P[t[0]], P[t[1]], P[t[2]])
-        if n[1] > 0:
-            lt = [[x[0], x[2], x[1]] for x in lt]
-        prims['MouthLine'] = lt
-        # 스무스 법선(입술 그리드): 인접 삼각형 법선 합
-        acc = [[0.0, 0.0, 0.0] for _ in P]
-        for t in prims['Lips']:
-            n = _tri_normal(P[t[0]], P[t[1]], P[t[2]])
-            for i in t:
-                for k in range(3):
-                    acc[i][k] += n[k]
-        for i in range(len(P)):
-            if any(acc[i]):
-                N[i] = _norm(acc[i])
+            (t0, b0), (t1, b1) = self.line[c], self.line[c + 1]
+            add_quad('MouthLine', t0, t1, b1, b0)
         # 접근자·프리미티브
         A = {
             'POSITION': g.add_accessor([tuple(x) for x in P], 5126, 'VEC3', target=34962),
