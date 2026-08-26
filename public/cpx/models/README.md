@@ -43,13 +43,15 @@ poly.pizza 의 상업 이용 가능 인체 모델 112종을 계측·검토해 �
 
 | 파일 | 원본 (poly.pizza) | 제작자 · 라이선스 | 리그/애니 | 비고 |
 |---|---|---|---|---|
-| `cand1_quaternius_woman.glb` | Animated Woman `qJ2gsTUBHL` | Quaternius · CC0 1.0 | 62본 · 24클립(`CharacterArmature\|Idle` 등) · `Head` 본 · `Skin` 재질 | 6.1등신. 같은 리그의 남성: Beach Character(=cand2), Business Man `JFrLIKqvCH`, Farmer `7pn3R6hPvE`, Worker `Yg2bQZO6Hj`, Adventurer `ZwF0K7WBmu` |
-| `cand2_quaternius_man.glb` | Beach Character `DojKLcO34E` | Quaternius · CC0 1.0 | 〃 | 6.1등신. 원본은 민소매·반바지·샌들 → `scripts/avatar/restyle_outfit.py --rules cand2_casual` 로 반팔 티·긴바지(#3a4557)·신발(#2e2a28)로 재배정(기하 무수정, 재질만 추가·재할당) |
+| `cand1_quaternius_woman.glb` | Animated Woman `qJ2gsTUBHL` | Quaternius · CC0 1.0 | 62본 · 24클립(`CharacterArmature\|Idle` 등) · `Head` 본 · `Skin` 재질 | 6.1등신. 머리색 갈색(#5a3a24)으로 변경(`--rules cand1_casual`). 같은 리그의 남성: Beach Character(=cand2), Business Man `JFrLIKqvCH`, Farmer `7pn3R6hPvE`, Worker `Yg2bQZO6Hj`, Adventurer `ZwF0K7WBmu` |
+| `cand2_quaternius_man.glb` | Beach Character `DojKLcO34E` + 헤어: Hoodie Character `gKLBoRsyKe` | Quaternius · CC0 1.0 (둘 다) | 〃 | 6.1등신. 원본 민소매·반바지·샌들 → `--rules cand2_casual --donor gKLBoRsyKe.glb`: 반팔 티·긴바지(#3a4557, 다리 정점을 반바지 밑단 반경→발목 0.55배로 방사 확장한 스트레이트핏 통)·신발(#2e2a28), 헤어를 Hoodie Character 의 웨이브 볼륨 헤어로 이식(애즈펌 느낌)·갈색 |
 | `cand3_ipoly3d_fitness_man.glb` | Fitness Character `KX8wzUxep8` | iPoly3D · CC0 1.0 | 리그 없음(정지 A포즈) | 8.0등신, 233KB. 같은 계열: 노인 남 `0UAcRHVAxA`, `eMOTyGEAxj`, `wnlFVKynES`. 원점이 x −1.49 치우쳐 `scripts/avatar/recenter_glb.py` 로 보정 |
 | `cand4_rafael_mannequin.glb` | Rigged Character `yiQDOLP4Ry` | Rafael · CC0 1.0 | Mixamo 리그 52본 · 클립 1(`mixamo.com`) | 8.0등신 회색 마네킹(표준화 환자 더미 느낌). T포즈 기본, Idle 없음 |
 
-- 2026-08-25 피드백으로 후보 1·2(Quaternius 계열) 중심으로 디벨롭 중. 의복 재배정 규칙은 `restyle_outfit.py` `RULES`
-  에 모델별로 두며, 본 지배(스킨 가중치) 기준으로 피부 삼각형을 바지/소매/신발 재질로 옮긴다(상완은 축 위치 62% 까지 소매).
+- 2026-08-25 피드백으로 후보 1·2(Quaternius 계열) 중심으로 디벨롭 중. 의복·헤어 규칙은 `restyle_outfit.py` `RULES`
+  에 모델별로 두며, 본 지배(스킨 가중치) 기준으로 피부 삼각형을 바지/소매/신발 재질로 옮기고(상완은 축 위치 62% 까지 소매),
+  `pants_tube` 로 다리 정점을 방사 확장해 바지 통을 만들며, `hair_swap` 으로 같은 리그 계열의 헤어 프리미티브를 이식한다.
+  이 계열 GLB 의 바인드 공간은 z-up(cm) 이라 도구가 Head−Foot 방향으로 위 축을 자동 판정한다.
 - 렌더러 대응(2026-08-25): `candidates/` 경로는 스키닝 실측 바운드로 정규화(아머처 노드 스케일 대응), Idle 클립은 `Idle` 또는 `…|Idle` 이름 매칭.
 - 얼굴 데칼(눈 깜빡임·입)은 `Face` 재질 + `Head` 본을 요구 — 후보는 자체 눈·입 지오메트리를 가져 데칼 없이 표시된다.
 - `Skin` 재질은 런타임 색 보정(#e8b89a)이 적용된다(cand1·2). 원래 피부톤을 쓰려면 `GLB_COLOR_FIX` 예외 처리 필요.
