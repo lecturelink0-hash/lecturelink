@@ -612,7 +612,7 @@ def touch_rules(opts):
     if opts.get('arm', True):
         rules.append(('arm_thicken', dict(meshes='__body__', elbow_gain=opts.get('elbow_gain', 0.06), pit_gain=opts.get('pit_gain', 0.05))))
     if opts.get('matte'):  # 광택 제거: 후보 원본은 metallic 0.4·roughness 0.3~0.4 라 빛 반사가 심함
-        rules.append(('matte', dict(roughness=opts.get('roughness', 0.85), metallic=0.0)))
+        rules.append(('matte', dict(roughness=opts.get('roughness', 0.85), metallic=opts.get('metallic', 0.0))))
     if opts.get('hair_old'):  # 기존 환자 모델(patient_male.glb, y-up·얼굴 +z) 헤어를 후보 두상에 이식 (--donor 필요)
         rules.append(('hair_transplant', dict(donor_mat='Hair', donor_up=1, donor_fwd=2, donor_fwd_sign=1, target_mesh=opts.get('target_mesh', 'Beach_Head'),
                                               target_fwd_sign=-1, color=HAIR_BROWN, inflate=opts.get('inflate', 1.03))))
