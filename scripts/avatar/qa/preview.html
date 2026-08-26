@@ -30,7 +30,7 @@ const loader = new GLTFLoader(); const mixers = []; const groups = []
 const spacing = Number(q.get('spacing') || 0.9)
 let i = 0
 for (const f of files) {
-  const url = dir + f + '.glb'
+  const url = dir + f + '.glb?cb=' + Date.now()
   loader.load(url, (g) => {
     const root = SkeletonUtils.clone(g.scene)
     root.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (COLOR_FIX[m.name]) m.color.set(COLOR_FIX[m.name]); m.flatShading = true; m.needsUpdate = true }) })

@@ -5,6 +5,7 @@
   ('material', mesh, prim, (재질명, 색))            프리미티브 전체 재질 교체
   ('split', mesh, prim, (재질명, 색), 술어)         술어가 참인 삼각형만 새 프리미티브로 분리·재질 교체
   ('recolor', 재질명, '#hex')                        기존 재질 색 변경
+  ('elbow_subdiv', {...})                            팔꿈치 띠 삼각형 1:4 분할(균열 방지)·가중치 스무딩으로 굽힘 뭉개짐 완화
   ('pants_tube', {...})                              다리 피부 정점을 축 기준 방사 확장해 바지 통으로 만든다
   ('hair_swap', {...})                               다른 GLB(같은 리그 계열)의 헤어 프리미티브를 이식
   ('hair_perm', {...})                               헤어 정점을 둥근 캡+웨이브로 변형(애즈펌 느낌)
@@ -187,17 +188,37 @@ class Glb:
                     print(f'  [{mesh_name}#{pi}] 술어 일치 삼각형 없음'); continue
                 shell = rule[6] if len(rule) > 6 else None  # 미터 단위 두께: 피부 위에 띄운 천 쉘(진짜 소매단) — 원 삼각형은 피부로 유지
                 if shell:
+                    # 쉘과 같은 면을 이뤄야 하는 기존 옷 프리미티브(예: 원본 탱크톱 = 몸통 표면)도 같은 두께로 함께 띄운다(8번째 인자)
+                    extra = [self.mesh_prim(mn, epi)[1] for mn, epi in (rule[7] if len(rule) > 7 else [])]
                     newp = json.loads(json.dumps(p))
                     self.privatize(newp)
+                    for ep in extra:
+                        self.privatize(ep)
                     hb = self.jpos['Head']; fb = self.jpos.get('Foot.L', self.jpos.get('Foot.R'))
                     units_per_m = math.dist(hb, fb) / (0.87 * 1.75)  # 머리 관절≈0.87H, H≈1.75m 가정
                     d = shell * units_per_m
-                    pos = accessor(self.js, self.bin, newp['attributes']['POSITION']); nrm = accessor(self.js, self.bin, newp['attributes']['NORMAL'])
-                    self.write_rows(newp['attributes']['POSITION'], [tuple(pp[k] + nn[k] * d for k in range(3)) for pp, nn in zip(pos, nrm)])
+                    # 저폴리 메시는 정점이 삼각형마다 복제돼 있어(플랫 법선) 정점별 법선으로 띄우면 모서리마다 쉘이 벌어진다 →
+                    # 같은 좌표의 정점 법선을 (쉘·추가 프리미티브 통틀어) 합쳐(welded normal) 한 방향으로 띄워 면을 닫는다
+                    targets = [newp] + extra
+                    data = [(accessor(self.js, self.bin, t['attributes']['POSITION']), accessor(self.js, self.bin, t['attributes']['NORMAL'])) for t in targets]
+                    scale = max(1e-12, max(abs(c) for pos, _ in data for v in pos for c in v))
+                    welded = {}
+                    for pos, nrm in data:
+                        for pp, nn in zip(pos, nrm):
+                            w = welded.setdefault(tuple(round(c / scale, 6) for c in pp), [0.0, 0.0, 0.0])
+                            for j in range(3):
+                                w[j] += nn[j]
+
+                    def wn(pp, nn):
+                        w = welded[tuple(round(c / scale, 6) for c in pp)]
+                        L = math.sqrt(sum(c * c for c in w))
+                        return [c / L for c in w] if L > 1e-9 else list(nn)
+                    for t, (pos, nrm) in zip(targets, data):
+                        self.write_rows(t['attributes']['POSITION'], [tuple(pp[k] + wn(pp, nn)[k] * d for k in range(3)) for pp, nn in zip(pos, nrm)])
                     newp['material'] = mi
                     newp['indices'] = self.add_indices([v for tr in move for v in tr], ctype)
                     mesh['primitives'].append(newp)
-                    print(f'  [{mesh_name}#{pi}] {len(move)} tris → {mat[0]} 쉘(+{shell*1000:.0f}mm), 피부 {len(tris)} 유지')
+                    print(f'  [{mesh_name}#{pi}] {len(move)} tris → {mat[0]} 쉘(+{shell*1000:.0f}mm, 함께 띄운 프리미티브 {len(extra)}), 피부 {len(tris)} 유지')
                     continue
                 if keep:
                     p['indices'] = self.add_indices([v for tr in keep for v in tr], ctype)
@@ -216,6 +237,11 @@ class Glb:
                 self.hair_swap(donor, **rule[1])
             elif kind == 'hair_perm':
                 self.hair_perm(**rule[1])
+            elif kind == 'elbow_subdiv':
+                kw = dict(rule[1])
+                if kw.get('meshes') == '__body__':
+                    kw['meshes'] = self.body_meshes()
+                self.elbow_subdiv(**kw)
             elif kind == 'arm_thicken':
                 kw = dict(rule[1])
                 if kw.get('meshes') == '__body__':
@@ -393,6 +419,174 @@ class Glb:
                     if changed:
                         self.write_rows(ai, new)
         print(f'  arm_thicken: elbow +{elbow_gain*100:.0f}% pit +{pit_gain*100:.0f}% ({nmod} 정점)')
+
+
+    # ── 팔꿈치 정점 분할 ──
+    def elbow_subdiv(self, meshes, iters=1, t0=0.72, t1=1.38, smooth=0.0, r_max_ratio=2.0):
+        """팔꿈치 띠(상완 축 t∈[t0,t1], 팔꿈치=1.0, 하완은 1+t') 안의 삼각형을 1:4 로 분할해 굽힘 스키닝의 뭉개짐을 줄인다.
+        띠 경계에 접한 삼각형은 균열(T-junction)이 생기지 않게 1:2·1:3 으로 함께 분할한다. 저폴리 메시는 정점이 삼각형마다
+        복제돼 있으므로(플랫 셰이딩) 변은 인덱스가 아니라 **좌표**로 식별하고, 중점의 위치·관절 가중치는 같은 변끼리 공유하며
+        법선·UV 는 삼각형별로 보간한다. smooth>0 이면 띠 안 정점의 UpperArm↔LowerArm 가중치를 팔꿈치 중심 ±smooth(t 단위)
+        smoothstep 으로 재배정해 전환을 매끄럽게 한다(다른 본 가중치는 유지, 띠 가장자리는 원 가중치로 혼합)."""
+        sides = {}
+        for side in ('L', 'R'):
+            sides[side] = (self.jpos['UpperArm.' + side], self.jpos['LowerArm.' + side], self.jpos['Wrist.' + side])
+
+        def proj(v, p0, p1):
+            ax = [p1[i] - p0[i] for i in range(3)]; L2 = sum(c * c for c in ax) or 1e-12
+            t = sum((v[i] - p0[i]) * ax[i] for i in range(3)) / L2
+            q = [p0[i] + ax[i] * t for i in range(3)]
+            return t, math.dist(v, q)
+
+        def arm_t(v, r_ref):
+            """(side, t_ax, r) — 팔 축에 충분히 가까운 정점만, 아니면 None"""
+            best = None
+            for side, (a, e, w) in sides.items():
+                tu, ru = proj(v, a, e); tl, rl = proj(v, e, w)
+                t_ax, r = (tu, ru) if tu < 1.0 else (1.0 + tl, rl)
+                if r_ref[side] > 0 and r <= r_ref[side] * r_max_ratio and (best is None or r < best[2]):
+                    best = (side, t_ax, r)
+            return best
+
+        def top4(wmap):
+            top = sorted(wmap.items(), key=lambda kv: -kv[1])[:4]
+            S = sum(w for _, w in top) or 1.0
+            top += [(0, 0.0)] * (4 - len(top))
+            return [int(j) for j, _ in top], [w / S for _, w in top]
+
+        total_added = 0
+        for mesh_name in meshes:
+            mesh = self.mesh_by_name(mesh_name)
+            for p in mesh['primitives']:
+                attrs = dict(p['attributes'])
+                acc_meta = {a: self.js['accessors'][ai] for a, ai in attrs.items()}
+                rows = {a: [list(r) if isinstance(r, (tuple, list)) else [r] for r in accessor(self.js, self.bin, ai)] for a, ai in attrs.items()}
+                idx = list(accessor(self.js, self.bin, p['indices']))
+                tris = [idx[3 * t:3 * t + 3] for t in range(len(idx) // 3)]
+                used = set(idx)  # 쉘 프리미티브는 전체 정점 버퍼를 복제해 두었으므로 실제 사용 정점만 대상으로
+                pos = rows['POSITION']
+                dom = self.dom_bones(p)
+                r_ref = {}
+                for side in ('L', 'R'):
+                    a, e, _ = sides[side]
+                    rs = []
+                    for i in used:
+                        if dom[i] == 'UpperArm.' + side:
+                            t, r = proj(pos[i], a, e)
+                            if 0.3 < t < 0.8:
+                                rs.append(r)
+                    r_ref[side] = (sum(rs) / len(rs)) if rs else 0
+                if not any(r_ref.values()):
+                    continue
+                scale = max(1e-12, max(abs(c) for v in pos for c in v))
+
+                def pkey(i):
+                    return tuple(round(c / scale, 6) for c in pos[i])
+
+                def in_band(i):
+                    at = arm_t(pos[i], r_ref)
+                    return at is not None and t0 <= at[1] <= t1
+
+                added = 0
+                for _ in range(max(1, int(iters))):
+                    band = {i for i in used if in_band(i)}
+                    sel = [k for k, tr in enumerate(tris) if all(v in band for v in tr)]
+                    if not sel:
+                        break
+                    shared = {}  # 좌표 변 키 → {'pos','J','W', 'by': {(u,v): 새 정점}}
+
+                    def ekey(u, v):
+                        ku, kv = pkey(u), pkey(v)
+                        return (ku, kv) if ku <= kv else (kv, ku)
+
+                    def mid(u, v):
+                        ik = (u, v) if u < v else (v, u)
+                        sh = shared.setdefault(ekey(u, v), {'by': {}})
+                        if ik in sh['by']:
+                            return sh['by'][ik]
+                        if 'pos' not in sh:
+                            sh['pos'] = [(pos[u][k] + pos[v][k]) / 2 for k in range(3)]
+                            wm = {}
+                            for jj, ww in list(zip(rows['JOINTS_0'][u], rows['WEIGHTS_0'][u])) + list(zip(rows['JOINTS_0'][v], rows['WEIGHTS_0'][v])):
+                                wm[int(jj)] = wm.get(int(jj), 0.0) + ww / 2
+                            sh['J'], sh['W'] = top4(wm)
+                        for a in acc_meta:
+                            ru, rv = rows[a][u], rows[a][v]
+                            if a == 'POSITION':
+                                rows[a].append(list(sh['pos']))
+                            elif a == 'NORMAL':
+                                n = [(ru[k] + rv[k]) / 2 for k in range(3)]; L = math.sqrt(sum(c * c for c in n)) or 1.0
+                                rows[a].append([c / L for c in n])
+                            elif a == 'JOINTS_0':
+                                rows[a].append(list(sh['J']))
+                            elif a == 'WEIGHTS_0':
+                                rows[a].append(list(sh['W']))
+                            else:
+                                rows[a].append([(ru[k] + rv[k]) / 2 for k in range(len(ru))])
+                        m = len(pos) - 1
+                        sh['by'][ik] = m; used.add(m)
+                        return m
+
+                    for k in sel:
+                        a_, b_, c_ = tris[k]
+                        mid(a_, b_); mid(b_, c_); mid(c_, a_)
+
+                    def gm(u, v):
+                        # 같은 좌표 변이 어딘가에서 분할됐으면 이 삼각형에도 (자기 속성으로) 중점을 만든다 → 균열 방지
+                        return mid(u, v) if ekey(u, v) in shared else None
+
+                    new_tris = []
+                    for a_, b_, c_ in tris:
+                        m0, m1, m2 = gm(a_, b_), gm(b_, c_), gm(c_, a_)
+                        n = sum(m is not None for m in (m0, m1, m2))
+                        if n == 0:
+                            new_tris.append([a_, b_, c_])
+                        elif n == 3:
+                            new_tris += [[a_, m0, m2], [m0, b_, m1], [m2, m1, c_], [m0, m1, m2]]
+                        else:
+                            V = [a_, b_, c_]; M = [m0, m1, m2]
+                            while M[0] is None:  # 회전해 첫 변(a,b)에 중점이 있게
+                                V = V[1:] + V[:1]; M = M[1:] + M[:1]
+                            a_, b_, c_ = V; m0, m1, m2 = M
+                            if n == 1:
+                                new_tris += [[a_, m0, c_], [m0, b_, c_]]
+                            elif m1 is not None:
+                                new_tris += [[m0, b_, m1], [a_, m0, m1], [a_, m1, c_]]
+                            else:
+                                new_tris += [[a_, m0, m2], [m0, b_, m2], [m2, b_, c_]]
+                    tris = new_tris
+                    added += len(shared)
+                if not added:
+                    continue
+                nsm = 0
+                if smooth > 0:
+                    JR, WR = rows['JOINTS_0'], rows['WEIGHTS_0']
+                    for i in used:
+                        at = arm_t(pos[i], r_ref)
+                        if at is None or not (t0 <= at[1] <= t1):
+                            continue
+                        side, t_ax, _ = at
+                        ju, jl = self.jname.index('UpperArm.' + side), self.jname.index('LowerArm.' + side)
+                        wmap = {int(j): w for j, w in zip(JR[i], WR[i]) if w > 0}
+                        S = wmap.get(ju, 0.0) + wmap.get(jl, 0.0)
+                        if S <= 0:
+                            continue
+                        x = min(1.0, max(0.0, (t_ax - (1.0 - smooth)) / (2 * smooth)))
+                        fl = x * x * (3 - 2 * x)
+                        edge = min(t_ax - t0, t1 - t_ax) / max(1e-6, (t1 - t0) * 0.25)  # 띠 가장자리는 원 가중치로 복귀
+                        k = min(1.0, max(0.0, edge))
+                        new_l = (1 - k) * wmap.get(jl, 0.0) + k * S * fl
+                        wmap[ju] = S - new_l; wmap[jl] = new_l
+                        JR[i], WR[i] = top4(wmap); nsm += 1
+                for a, meta in acc_meta.items():  # 새 정점은 끝에 추가되므로 기존 인덱스는 유지
+                    r = rows[a]
+                    r = [x[0] for x in r] if meta['type'] == 'SCALAR' else [tuple(x) for x in r]
+                    p['attributes'][a] = self.add_accessor(r, meta['componentType'], meta['type'], target=34962, normalized=meta.get('normalized', False))
+                ctype = 5125 if len(pos) > 65535 else self.js['accessors'][p['indices']]['componentType']
+                p['indices'] = self.add_indices([v for tr in tris for v in tr], ctype)
+                total_added += added
+                print(f'  elbow_subdiv [{mesh_name}] mat={self.js["materials"][p.get("material", 0)].get("name")}: 변 {added} 분할, tris {len(idx)//3}→{len(tris)}, 스무딩 {nsm} 정점')
+        print(f'  elbow_subdiv: iters={iters} band=[{t0},{t1}] smooth={smooth} (변 {total_added} 분할)')
 
     # ── 신장 설정 ──
     def set_height(self, height_m, include_hair=True):
@@ -603,7 +797,7 @@ def cand2_rules(opts):
         ('material', 'Beach_Feet', 1, SHOES),
         ('split', 'Beach_Feet', 0, SHOES, shoe),
         ('material', 'Beach_Feet', 0, PANTS),
-        ('split', 'Beach_Body', 0, SHIRT, sleeve, SLEEVE_AXIS, 0.004),  # 어깨·상완·몸통 피부 위 4mm 천 쉘 → 반팔 티(진짜 소매단, 피부 유지)
+        ('split', 'Beach_Body', 0, SHIRT, sleeve, SLEEVE_AXIS, 0.004, [('Beach_Body', 1)]),  # 어깨·상완·몸통 피부 위 4mm 천 쉘 → 반팔 티(진짜 소매단, 피부 유지); 원본 탱크톱(#1, 몸통 표면)도 같은 면으로 띄움
         # 바지 통: 다리 피부(Beach_Legs#0) + 발목 피부(Beach_Feet#0, 발 제외) 를 반바지 밑단 굵기에서 밑단까지 확장
         ('pants_tube', dict(leg_prims=[('Beach_Legs', 0), ('Beach_Feet', 0)], hem_prim=('Beach_Legs', 1), shoe_prim=('Beach_Feet', 1),
                             cuff_ratio=opts.get('cuff_ratio', 0.72), floor=shoe_top)),
@@ -623,6 +817,9 @@ def cand1_rules(opts):
 # 공통 후처리: 팔꿈치·겨드랑이 살짝 두껍게(--opts '{"arm": true}') / 신장 설정(--opts '{"height": 1.83}')
 def touch_rules(opts):
     rules = []
+    if opts.get('elbow_subdiv'):  # 팔꿈치 띠 정점 분할(굽힘 뭉개짐 완화) — 팔 보정보다 먼저
+        rules.append(('elbow_subdiv', dict(meshes='__body__', iters=int(opts['elbow_subdiv']), smooth=opts.get('elbow_smooth', 0.0),
+                                           t0=opts.get('elbow_t0', 0.72), t1=opts.get('elbow_t1', 1.38))))
     if opts.get('arm', True):
         rules.append(('arm_thicken', dict(meshes='__body__', elbow_gain=opts.get('elbow_gain', 0.06), pit_gain=opts.get('pit_gain', 0.05))))
     if opts.get('matte'):  # 광택 제거: 후보 원본은 metallic 0.4·roughness 0.3~0.4 라 빛 반사가 심함

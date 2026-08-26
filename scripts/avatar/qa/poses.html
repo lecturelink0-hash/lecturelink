@@ -184,8 +184,13 @@ function armsCross() {
   scene.updateMatrixWorld(true)
   const sL = new THREE.Vector3(), sR = new THREE.Vector3(); bone('UpperArm.L').getWorldPosition(sL); bone('UpperArm.R').getWorldPosition(sR)
   // 오른손 → 왼쪽 어깨 바로 위(약간 앞), 왼손 → 오른쪽 어깨 위(그보다 앞·위: 왼팔이 앞을 지남)
-  const tR = sL.clone().add(modelToWorld([-0.04, 0.05, 0.02])), tL = sR.clone().add(modelToWorld([0.04, 0.08, 0.2]))
-  const pR = sR.clone().add(modelToWorld([0.15, -0.3, 0.08])), pL = sL.clone().add(modelToWorld([-0.15, -0.2, 0.6]))
+  // 깊이(z): 몸통 앞면이 어깨 관절보다 ~11cm 앞(남 175 기준 0.175 vs 0.061)이라 안쪽 팔뚝이 가슴 앞에 놓이려면 손목이 관절 기준 +0.15 이상 앞으로 나와야 한다
+  // 15차: 리그 팔 길이(상완 0.17+전완 0.22m)로는 손을 반대편 어깨 관절까지 보내면서 가슴 앞(몸통면+팔뚝 반경)을 확보할 수 없다 →
+  //       손을 어깨에서 9cm 안쪽(쇄골·삼각근 앞)에 두고 안쪽 팔뚝 z=+0.16, 바깥 팔뚝 z=+0.31, 팔꿈치 폴은 바깥·아래·앞. 검증 지표 __chest()
+  const inset = 0.6 * sL.distanceTo(sR) / 2  // 손 안쪽 이동량 = 어깨 반폭의 60% (남 175: 8.8cm, 여 165: 6.5cm)
+  const C = Object.assign({ tR: [-inset, 0.03, 0.16], tL: [inset, 0.03, 0.31], pR: [-0.3, -0.4, 0.5], pL: [0.3, -0.4, 0.6] }, window.__cross || {})
+  const tR = sL.clone().add(modelToWorld(C.tR)), tL = sR.clone().add(modelToWorld(C.tL))
+  const pR = sR.clone().add(modelToWorld(C.pR)), pL = sL.clone().add(modelToWorld(C.pL))
   ik2('UpperArm.R', 'LowerArm.R', 'Wrist.R', tR, pR)
   ik2('UpperArm.L', 'LowerArm.L', 'Wrist.L', tL, pL)
   // 손: 손가락이 어깨 뒤쪽·아래로 감기게, 손바닥은 아래(어깨 위에 얹힘)
@@ -246,7 +251,7 @@ function posedBox(excludeRe) {
   return box
 }
 
-loader.load(dir + file + '.glb', (g) => {
+loader.load(dir + file + '.glb?cb=' + Date.now(), (g) => {
   root = SkeletonUtils.clone(g.scene)
   root.traverse((o) => { if (o.isSkinnedMesh) skinned.push(o); if (o.material) [].concat(o.material).forEach((m) => { if (COLOR_FIX[m.name]) m.color.set(COLOR_FIX[m.name]); o.castShadow = true }) })
   // 키 정규화 (기본 포즈 실측)
@@ -288,6 +293,19 @@ window.__dirs = () => {
 }
 window.__step = () => { try { tick2(); return 'ok' } catch (e) { return String(e.stack || e) } }
 window.__dbg = () => { const b = root ? posedBox() : null; return { cam: camera.position.toArray(), children: scene.children.length, grp: grp && grp.position.toArray(), grpScale: grp && grp.children[0].scale.x, box: b && [b.min.toArray(), b.max.toArray()], placed, calls: renderer.info.render.calls } }
+window.__cam = (p, t) => { camera.position.set(p[0], p[1], p[2]); camera.lookAt(t[0], t[1], t[2]); renderer.render(scene, camera); return camera.position.toArray() }
+window.__scene = scene; window.__THREE = THREE
+window.__chest = () => {
+  // 몸통 앞면 z: 팔·손 본이 지배하지 않는 정점 중 어깨 높이 아래 가슴 영역(|x|<0.12, y∈[sY-0.13, sY+0.04])의 최대 z
+  const T = window.__THREE; const v = new T.Vector3(); const bones = {}; window.__scene.traverse(o => { if (o.isBone) bones[o.name] = o })
+  const sY = (() => { const p = new T.Vector3(); bones['UpperArmL'].getWorldPosition(p); return p.y })()
+  let chest = -1e9
+  window.__scene.traverse(m => { if (!m.isSkinnedMesh) return; const P = m.geometry.attributes.position, J = m.geometry.attributes.skinIndex, W = m.geometry.attributes.skinWeight; const names = m.skeleton.bones.map(b => b.name)
+    for (let i = 0; i < P.count; i++) { let bi = 0, bw = -1; for (let k = 0; k < 4; k++) { const w = W.getComponent(i, k); if (w > bw) { bw = w; bi = J.getComponent(i, k) } } if (/Arm|Wrist|Index|Middle|Ring|Pinky|Thumb|Shoulder/.test(names[bi] || '')) continue
+      v.fromBufferAttribute(P, i); m.applyBoneTransform(i, v); v.applyMatrix4(m.matrixWorld); if (Math.abs(v.x) < 0.12 && v.y > sY - 0.13 && v.y < sY + 0.04 && v.z > chest) chest = v.z } })
+  const seg = (a, b) => { const A = new T.Vector3(), B = new T.Vector3(); bones[a].getWorldPosition(A); bones[b].getWorldPosition(B); const t = (0 - A.x) / (B.x - A.x); return { elbow: A.toArray().map(x => +x.toFixed(3)), wrist: B.toArray().map(x => +x.toFixed(3)), zAtCenter: +(A.z + (B.z - A.z) * Math.min(1, Math.max(0, t))).toFixed(3) } }
+  return { chestFrontZ: +chest.toFixed(3), shoulderY: +sY.toFixed(3), R: seg('LowerArmR', 'WristR'), L: seg('LowerArmL', 'WristL') }
+}
 window.addEventListener('error', (e) => { window.__err = e.message + ' @' + e.lineno })
 function tick() {
   try { tick2() } catch (e) { window.__err = String(e.stack || e); renderer.render(scene, camera); requestAnimationFrame(tick) }
