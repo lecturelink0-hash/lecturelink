@@ -185,6 +185,20 @@ class Glb:
                     (move if pred(tr) else keep).append(tr['idx'])
                 if not move:
                     print(f'  [{mesh_name}#{pi}] 술어 일치 삼각형 없음'); continue
+                shell = rule[6] if len(rule) > 6 else None  # 미터 단위 두께: 피부 위에 띄운 천 쉘(진짜 소매단) — 원 삼각형은 피부로 유지
+                if shell:
+                    newp = json.loads(json.dumps(p))
+                    self.privatize(newp)
+                    hb = self.jpos['Head']; fb = self.jpos.get('Foot.L', self.jpos.get('Foot.R'))
+                    units_per_m = math.dist(hb, fb) / (0.87 * 1.75)  # 머리 관절≈0.87H, H≈1.75m 가정
+                    d = shell * units_per_m
+                    pos = accessor(self.js, self.bin, newp['attributes']['POSITION']); nrm = accessor(self.js, self.bin, newp['attributes']['NORMAL'])
+                    self.write_rows(newp['attributes']['POSITION'], [tuple(pp[k] + nn[k] * d for k in range(3)) for pp, nn in zip(pos, nrm)])
+                    newp['material'] = mi
+                    newp['indices'] = self.add_indices([v for tr in move for v in tr], ctype)
+                    mesh['primitives'].append(newp)
+                    print(f'  [{mesh_name}#{pi}] {len(move)} tris → {mat[0]} 쉘(+{shell*1000:.0f}mm), 피부 {len(tris)} 유지')
+                    continue
                 if keep:
                     p['indices'] = self.add_indices([v for tr in keep for v in tr], ctype)
                 newp = json.loads(json.dumps(p))
@@ -576,7 +590,7 @@ def cand2_rules(opts):
         if b & {'Chest', 'Torso', 'Abdomen', 'Hips', 'Body', 'Shoulder.L', 'Shoulder.R'}:
             return True
         if b & {'UpperArm.L', 'UpperArm.R'}:
-            return tri['t'] is not None and tri['t'] < 0.62
+            return tri['t'] is not None and tri['t'] < 0.5  # 소매단은 상완 중간 — 팔꿈치 접힘에서 떨어뜨림
         return False
 
     shoe_top = opts.get('_shoe_top')  # 실행 시 주입
@@ -589,7 +603,7 @@ def cand2_rules(opts):
         ('material', 'Beach_Feet', 1, SHOES),
         ('split', 'Beach_Feet', 0, SHOES, shoe),
         ('material', 'Beach_Feet', 0, PANTS),
-        ('split', 'Beach_Body', 0, SHIRT, sleeve, SLEEVE_AXIS),
+        ('split', 'Beach_Body', 0, SHIRT, sleeve, SLEEVE_AXIS, 0.004),  # 어깨·상완·몸통 피부 위 4mm 천 쉘 → 반팔 티(진짜 소매단, 피부 유지)
         # 바지 통: 다리 피부(Beach_Legs#0) + 발목 피부(Beach_Feet#0, 발 제외) 를 반바지 밑단 굵기에서 밑단까지 확장
         ('pants_tube', dict(leg_prims=[('Beach_Legs', 0), ('Beach_Feet', 0)], hem_prim=('Beach_Legs', 1), shoe_prim=('Beach_Feet', 1),
                             cuff_ratio=opts.get('cuff_ratio', 0.72), floor=shoe_top)),
