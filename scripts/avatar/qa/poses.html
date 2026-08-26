@@ -1,0 +1,202 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>patient poses</title>
+<style>body{margin:0;background:#e3e9ec;font-family:sans-serif}#ui{position:fixed;top:8px;left:8px;background:#fff9;padding:6px;font-size:12px;white-space:pre}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><div id="ui"></div>
+<script type="module">
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js'
+const q = new URLSearchParams(location.search)
+const file = q.get('file') || 'cand2_quaternius_man_175'
+const dir = q.get('dir') || '/v9/'
+const pose = q.get('pose') || 'sit_front'
+const hm = file.match(/_(\d{3})$/); const H = hm ? Number(hm[1]) / 100 : 1.55
+const W = innerWidth, Hh = innerHeight
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
+renderer.setSize(W, Hh); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true
+document.body.appendChild(renderer.domElement)
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#e3e9ec')
+scene.add(new THREE.AmbientLight(0xffffff, 0.55))
+const dl = new THREE.DirectionalLight(0xffe8bf, 1.5); dl.position.set(3, 4, 3); dl.castShadow = true; scene.add(dl)
+const dl2 = new THREE.DirectionalLight(0xbcd6ff, 0.6); dl2.position.set(-3, 2, -2); scene.add(dl2)
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshStandardMaterial({ color: '#cfd8dc' })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor)
+const camera = new THREE.PerspectiveCamera(40, W / Hh, 0.05, 100)
+const mat = (c) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.85 })
+const BED = { top: 0.5, length: 1.9, width: 0.75 }
+function addBed() {
+  const g = new THREE.Group()
+  const m1 = new THREE.Mesh(new THREE.BoxGeometry(BED.length, 0.12, BED.width), mat('#dcebe0')); m1.position.y = BED.top - 0.06; m1.receiveShadow = true; g.add(m1)
+  const m2 = new THREE.Mesh(new THREE.BoxGeometry(BED.length + 0.08, 0.1, BED.width + 0.06), mat('#8a9b90')); m2.position.y = BED.top - 0.17; g.add(m2)
+  for (const [x, z] of [[-0.83, 0.27], [0.83, 0.27], [-0.83, -0.27], [0.83, -0.27]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.28, 0.08), mat('#7d8d84')); l.position.set(x, 0.14, z); g.add(l) }
+  const p = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.09, BED.width * 0.7), mat('#f4f8f4')); p.position.set(-0.7, BED.top + 0.04, 0); g.add(p)
+  scene.add(g)
+}
+function addChair(seatY) {
+  const g = new THREE.Group()
+  const s = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.05, 0.46), mat('#8fa3ad')); s.position.set(0, seatY - 0.025, -0.05); s.receiveShadow = true; g.add(s)
+  const b = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.45, 0.05), mat('#8fa3ad')); b.position.set(0, seatY + 0.22, -0.30); g.add(b)
+  for (const [x, z] of [[-0.2, 0.15], [0.2, 0.15], [-0.2, -0.25], [0.2, -0.25]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.04, seatY - 0.05, 0.04), mat('#5d6f78')); l.position.set(x, (seatY - 0.05) / 2, z); g.add(l) }
+  scene.add(g)
+}
+const COLOR_FIX = { Skin: '#e8b89a' }
+const loader = new GLTFLoader(); let mixer = null; let root = null; let grp = null; let skinned = []
+let boneState = null
+const clock = new THREE.Clock()
+const deg = (d) => d * Math.PI / 180
+// GLTFLoader 가 노드명의 '.' 을 제거하므로(UpperLeg.L → UpperLegL) 두 이름 모두 시도
+const bone = (n) => root.getObjectByName(n) || root.getObjectByName(n.replace(/\./g, ''))
+
+// ── 절차적 포즈: 본이 향할 방향(모델 프레임: x=환자 왼쪽, y=위, z=앞)을 직접 지정(aim) ──
+const POSES = {
+  sit_front: { legs: 'sit', arms: 'rest', place: 'chair', cam: [0, 1.45, 3.4], look: [0, 0.6, 0] },
+  sit_back: { legs: 'sit', arms: 'rest', place: 'chair', cam: [0, 1.45, -3.4], look: [0, 0.6, 0] },
+  sit_cross: { legs: 'sit', arms: 'cross', place: 'chair', cam: [0.2, 1.45, 3.4], look: [0, 0.6, 0] },
+  supine: { legs: 'straight', arms: 'rest', place: 'bed', roll: 0, cam: [0.3, 2.0, 2.4], look: [0, 0.55, 0] },
+  supine_bent: { legs: 'bent', arms: 'side', place: 'bed', roll: 0, cam: [0.3, 2.0, 2.4], look: [0, 0.55, 0] },
+  // 좌측와위 = 왼쪽(모델 +x → 앙와위 월드 -z)이 아래 → roll -90, 환자 앞면은 -z 를 향하므로 카메라를 -z 에
+  left: { legs: 'bent', arms: 'side', place: 'bed', roll: -90, cam: [0.3, 1.9, -2.5], look: [0, 0.6, 0] },
+  right: { legs: 'bent', arms: 'side', place: 'bed', roll: 90, cam: [0.3, 1.9, 2.5], look: [0, 0.6, 0] },
+}
+// [본, 자식(방향 기준), 목표 방향]
+const LEG_SETS = {
+  straight: [],
+  sit: [['UpperLeg.L', 'LowerLeg.L', [0.06, -0.05, 1]], ['UpperLeg.R', 'LowerLeg.R', [-0.06, -0.05, 1]], ['LowerLeg.L', 'Foot.L', [0.03, -1, 0.08]], ['LowerLeg.R', 'Foot.R', [-0.03, -1, 0.08]]],
+  bent: [['UpperLeg.L', 'LowerLeg.L', [-0.12, -0.75, 0.66]], ['UpperLeg.R', 'LowerLeg.R', [0.12, -0.72, 0.69]], ['LowerLeg.L', 'Foot.L', [-0.05, -0.75, -0.66]], ['LowerLeg.R', 'Foot.R', [0.05, -0.78, -0.62]]],
+}
+const ARM_SETS = {
+  rest: [],
+  // 팔 X자 교차: 상완은 앞·안쪽·아래로, 하완은 가슴 앞을 가로질러 반대편 상완 쪽으로 (왼팔이 위)
+  cross: [['UpperArm.L', 'LowerArm.L', [-0.25, -0.85, 0.45]], ['UpperArm.R', 'LowerArm.R', [0.25, -0.85, 0.45]],
+    ['LowerArm.L', 'Wrist.L', [-0.92, 0.08, 0.38]], ['LowerArm.R', 'Wrist.R', [0.92, -0.04, 0.3]],
+    ['Wrist.L', 'Middle1.L', [-0.55, -0.35, -0.75]], ['Wrist.R', 'Middle1.R', [0.55, -0.35, -0.75]]],
+  // 측와위: 팔을 앞으로 모아 얹음
+  side: [['UpperArm.L', 'LowerArm.L', [-0.15, -0.45, 0.88]], ['UpperArm.R', 'LowerArm.R', [0.15, -0.45, 0.88]], ['LowerArm.L', 'Wrist.L', [-0.6, 0.1, 0.8]], ['LowerArm.R', 'Wrist.R', [0.6, 0.0, 0.8]]],
+}
+const P = POSES[pose]
+
+function aim(bn, cn, dirModel) {
+  const b = bone(bn), c = bone(cn)
+  const inner = grp.children[0].isGroup && grp.children[0].children[0] && grp.children[0].children[0].isGroup ? grp.children[0].children[0] : grp.children[0]
+  const iq = new THREE.Quaternion(); inner.getWorldQuaternion(iq)
+  const desired = new THREE.Vector3(...dirModel).normalize().applyQuaternion(iq)
+  b.updateWorldMatrix(true, false); c.updateWorldMatrix(true, false)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp)
+  if (cn.startsWith('Foot')) {  // Foot 은 IK 루트 본이라 자식이 아님 → 정강이 끝(바인드 상대행렬)으로 방향 계산
+    ensureRel(); cp.setFromMatrixPosition(b.matrixWorld.clone().multiply(boneState.rel[cn.slice(-1)]))
+  } else c.getWorldPosition(cp)
+  const cur = cp.sub(bp).normalize()
+  const qw = new THREE.Quaternion().setFromUnitVectors(cur, desired)
+  const bw = new THREE.Quaternion(); b.getWorldQuaternion(bw)
+  const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw)
+  b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
+}
+function applyOffsets(list) { for (const [bn, cn, d] of list) aim(bn, cn, d) }
+
+function ensureRel() {
+  if (boneState.rel) return
+  boneState.rel = {}
+  const sk = skinned[0].skeleton
+  for (const side of ['L', 'R']) {
+    const ll = bone('LowerLeg.' + side), ft = bone('Foot.' + side)
+    const li = sk.bones.indexOf(ll), fi = sk.bones.indexOf(ft)
+    boneState.rel[side] = sk.boneInverses[li].clone().multiply(sk.boneInverses[fi].clone().invert())
+  }
+}
+// Foot(IK 루트 본)을 정강이 끝에 부착
+function attachFeet() {
+  ensureRel()
+  for (const side of ['L', 'R']) {
+    const ll = bone('LowerLeg.' + side), ft = bone('Foot.' + side)
+    if (!ll || !ft) continue
+    const sk = skinned[0].skeleton
+    const li = sk.bones.indexOf(ll), fi = sk.bones.indexOf(ft)
+    if (li < 0 || fi < 0) continue
+    ll.updateWorldMatrix(true, false)
+    const desired = ll.matrixWorld.clone().multiply(boneState.rel[side])
+    ft.parent.updateWorldMatrix(true, false)
+    const local = ft.parent.matrixWorld.clone().invert().multiply(desired)
+    local.decompose(ft.position, ft.quaternion, ft.scale)
+  }
+}
+
+function posedBox() {
+  scene.updateMatrixWorld(true); root.updateMatrixWorld(true)
+  const box = new THREE.Box3(); const v = new THREE.Vector3()
+  for (const o of skinned) { o.skeleton.update(); const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); box.expandByPoint(v) } }
+  return box
+}
+
+loader.load(dir + file + '.glb', (g) => {
+  root = SkeletonUtils.clone(g.scene)
+  root.traverse((o) => { if (o.isSkinnedMesh) skinned.push(o); if (o.material) [].concat(o.material).forEach((m) => { if (COLOR_FIX[m.name]) m.color.set(COLOR_FIX[m.name]); o.castShadow = true }) })
+  // 키 정규화 (기본 포즈 실측)
+  const box0 = posedBox(); const s = H / (box0.max.y - box0.min.y)
+  const inner = new THREE.Group(); inner.add(root); inner.scale.setScalar(s); inner.position.y = -box0.min.y * s
+  grp = new THREE.Group(); grp.add(inner); scene.add(grp)
+  const clip = g.animations.find((a) => /(^|\|)Idle_Neutral$/.test(a.name)) || g.animations.find((a) => /(^|\|)Idle$/.test(a.name))
+  if (clip) { mixer = new THREE.AnimationMixer(root); mixer.clipAction(clip).play() }
+  boneState = { resolved: new Map() }
+  camera.position.set(...P.cam); camera.lookAt(...P.look)
+  document.getElementById('ui').textContent = `${file}\npose=${pose} clip=${clip ? clip.name : 'none'}`
+  for (let i = 0; i < 8; i++) tick2()  // 백그라운드 탭에서도 배치·포즈가 완성되도록 동기 스텝
+  window.__ready = true
+}, undefined, (e) => { document.getElementById('ui').textContent = 'ERR ' + e.message })
+
+let placed = false
+window.__err = null
+window.__frames = 0
+window.__dirs = () => {
+  const b = bone('UpperLeg.L'), c = bone('LowerLeg.L'); scene.updateMatrixWorld(true)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp); c.getWorldPosition(cp)
+  const inner = grp.children[0].isGroup && grp.children[0].children[0] && grp.children[0].children[0].isGroup ? grp.children[0].children[0] : grp.children[0]
+  const iq = new THREE.Quaternion(); inner.getWorldQuaternion(iq)
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(iq), up = new THREE.Vector3(0, 1, 0).applyQuaternion(iq)
+  return { leg: cp.sub(bp).normalize().toArray().map(v => +v.toFixed(2)), innerName: inner === root ? 'root' : 'group', fwd: fwd.toArray().map(v => +v.toFixed(2)), up: up.toArray().map(v => +v.toFixed(2)), grpRot: grp.rotation.toArray().slice(0,3).map(v => +v.toFixed(2)), depth: (() => { let d = 0, o = inner; while (o && o !== scene) { d++; o = o.parent } return d })() }
+}
+window.__step = () => { try { tick2(); return 'ok' } catch (e) { return String(e.stack || e) } }
+window.__dbg = () => { const b = root ? posedBox() : null; return { cam: camera.position.toArray(), children: scene.children.length, grp: grp && grp.position.toArray(), grpScale: grp && grp.children[0].scale.x, box: b && [b.min.toArray(), b.max.toArray()], placed, calls: renderer.info.render.calls } }
+window.addEventListener('error', (e) => { window.__err = e.message + ' @' + e.lineno })
+function tick() {
+  try { tick2() } catch (e) { window.__err = String(e.stack || e); renderer.render(scene, camera); requestAnimationFrame(tick) }
+}
+function tick2() {
+  window.__frames++
+  const d = Math.min(clock.getDelta(), 0.05) || 0.033
+  if (root) {
+    if (mixer) mixer.update(d)
+    root.updateMatrixWorld(true)
+    applyOffsets(LEG_SETS[P.legs])
+    applyOffsets(ARM_SETS[P.arms])
+    root.updateMatrixWorld(true)
+    attachFeet()
+    if (!placed) {
+      // 배치: 의자 — 발이 바닥, 골반 높이에 좌석 / 침대 — 눕기 변환 후 최저점이 침대 상판
+      const inner = grp.children[0]
+      if (P.place === 'chair') {
+        const b = posedBox(); inner.position.y += -b.min.y
+        root.updateMatrixWorld(true)
+        const hip = new THREE.Vector3(); bone('Hips').getWorldPosition(hip)
+        addChair(hip.y - 0.06)
+        placed = true
+      } else {
+        // 앙와위: 모델 (x,y,z)→(-y,z,-x) : 머리 -x, 얼굴 +y
+        grp.rotation.set(-Math.PI / 2, 0, Math.PI / 2)
+        if (P.roll) {
+          const outer = new THREE.Group(); scene.remove(grp); outer.add(grp); scene.add(outer)
+          outer.rotation.x = deg(P.roll) // 몸 장축(월드 x) 기준 굴림
+          grp = outer
+        }
+        addBed()
+        root.updateMatrixWorld(true)
+        const b = posedBox()
+        grp.position.y += BED.top - b.min.y
+        grp.position.x += -0.95 + 0.1 - b.min.x
+        placed = true
+      }
+    }
+  }
+  renderer.render(scene, camera); requestAnimationFrame(tick)
+}
+tick()
+</script></body></html>
