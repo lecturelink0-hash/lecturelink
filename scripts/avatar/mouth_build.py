@@ -29,14 +29,14 @@ class LipsBuilder:
         self.g = g
         self.o = dict(
             mouth_frac=0.42,   # 턱→코밑 사이 입 중심 위치
-            width_frac=0.50,   # 입 반폭 = 얼굴 반폭 × 이 값
+            width_frac=0.58,   # 입 반폭 = 얼굴 반폭 × 이 값 (0.50 → 0.58: "양 옆으로 조금 더 길게")
             h_up=0.50,         # 윗입술 높이(입선→상단 경계, 중앙 기준) cm
             h_low=0.62,        # 아랫입술 높이 cm
             d_up=0.17,         # 윗입술 최대 두께(표면에서 앞으로) cm — 얇게(2026-08-26 피드백)
             d_low=0.22,        # 아랫입술 최대 두께 cm
             line_d=0.06,       # 입선에서 두 입술이 만나는 높이 cm
             corner_dip=0.12,   # 입꼬리가 입선 중앙보다 내려가는 양 cm
-            cols=6, rows=2,    # 로우폴리: 입술당 6×2 쿼드, 쿼드마다 플랫 법선(큰 네모 면)
+            cols=4, rows=1,    # 로우폴리: 입술당 4×1 쿼드, 쿼드마다 플랫 법선(큰 네모 면). rows=1 이면 접합선 행이 가장 도톰한 능선
         )
         self.o.update(opts or {})
         self.head_mesh = head_mesh; self.skin_mat = skin_mat
@@ -134,8 +134,12 @@ class LipsBuilder:
                     z = line_z(x) + ((top_z(x) if upper else bot_z(x)) - line_z(x)) * t
                     dmax = (o['d_up'] if upper else o['d_low']) * taper(x) ** 0.8
                     # 두께: 입선(t=0)에서 line_d, 중간에서 최대, 바깥 경계(t=1)에서 0.02(피부와 z-fighting 방지)
-                    bulge = math.sin(math.pi * min(1.0, t * (1.15 if upper else 1.05))) ** 0.85
-                    d = max(0.02, o['line_d'] * (1 - t) ** 2 + dmax * bulge)
+                    # rows=1(한 줄 쿼드)이면 중간 행이 없으므로 입선 행을 최대 두께로 — 두 입술이 접합선 능선에서 만난다
+                    if rows == 1:
+                        d = max(0.02, dmax * (1 - t) + 0.02 * t)
+                    else:
+                        bulge = math.sin(math.pi * min(1.0, t * (1.15 if upper else 1.05))) ** 0.85
+                        d = max(0.02, o['line_d'] * (1 - t) ** 2 + dmax * bulge)
                     p, n = self.surface(x, z)
                     row.append([p[k] + n[k] * d * cm for k in range(3)])
                 pts.append(row)
