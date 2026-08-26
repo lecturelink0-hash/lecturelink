@@ -642,10 +642,9 @@ function useResolvedModel(gender, age) {
     let alive = true
     const g = GENDER_KEY[gender] || 'male'
     const a = Number(age)
-    // 후보 모델 미리보기: ?avatarModel=cand1_quaternius_woman → /cpx/models/candidates/<이름>.glb
-    const override = new URLSearchParams(window.location.search).get('avatarModel')
+    const override = avatarModelOverride()
     const candidates = [
-      ...(override && /^[\w-]+$/.test(override) ? [`/cpx/models/candidates/${override}.glb`] : []),
+      ...(override ? [`/cpx/models/candidates/${override.name}.glb`] : []),
       ...(a >= 60 ? [`/cpx/models/patient_${g}_old.glb`] : []),
       ...(a <= 2 ? [`/cpx/models/patient_${g}_infant.glb`] : []),
       ...(a <= 12 ? [`/cpx/models/patient_${g}_child.glb`] : []),
@@ -673,6 +672,16 @@ function useResolvedModel(gender, age) {
     }
   }, [gender, age])
   return url
+}
+
+// 후보 모델 미리보기 오버라이드: ?avatarModel=cand1_quaternius_woman → /cpx/models/candidates/<이름>.glb
+// 파일명 끝의 _NNN 은 신장(cm) 변형(예: cand2_quaternius_man_183) — 성인 렌더 키·눕기 좌표·진찰 카메라에 그대로 쓴다.
+function avatarModelOverride() {
+  if (typeof window === 'undefined') return null
+  const name = new URLSearchParams(window.location.search).get('avatarModel')
+  if (!name || !/^[\w-]+$/.test(name)) return null
+  const m = name.match(/_(\d{3})$/)
+  return { name, heightM: m ? Number(m[1]) / 100 : null }
 }
 
 function PatientAvatar({ gender, age, targetH = 1.55, speaking, audioLevel, pose, motionProfile }) {
@@ -755,7 +764,8 @@ function useContextLossRecovery() {
 export default function Avatar3D({ gender = '남성', age, child = null, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null, category = '' }) {
   const motionProfile = MOTION_PROFILE_BY_CATEGORY[category] || null
   const patient = child ? { gender: child.gender || '남성', age: child.age } : { gender, age }
-  const patientH = targetHeightForAge(patient.age)
+  // 신장 변형 후보(_NNN) 미리보기 시 그 신장을, 아니면 나이대별 기본 키
+  const patientH = avatarModelOverride()?.heightM || targetHeightForAge(patient.age)
   const [glEpoch, bindContextRecovery] = useContextLossRecovery()
   return (
     <Canvas

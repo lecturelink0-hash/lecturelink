@@ -48,6 +48,10 @@ poly.pizza 의 상업 이용 가능 인체 모델 112종을 계측·검토해 �
 | `cand3_ipoly3d_fitness_man.glb` | Fitness Character `KX8wzUxep8` | iPoly3D · CC0 1.0 | 리그 없음(정지 A포즈) | 8.0등신, 233KB. 같은 계열: 노인 남 `0UAcRHVAxA`, `eMOTyGEAxj`, `wnlFVKynES`. 원점이 x −1.49 치우쳐 `scripts/avatar/recenter_glb.py` 로 보정 |
 | `cand4_rafael_mannequin.glb` | Rigged Character `yiQDOLP4Ry` | Rafael · CC0 1.0 | Mixamo 리그 52본 · 클립 1(`mixamo.com`) | 8.0등신 회색 마네킹(표준화 환자 더미 느낌). T포즈 기본, Idle 없음 |
 
+- 2026-08-26 신장 변형: `cand1_quaternius_woman_{175,165,156}.glb`, `cand2_quaternius_man_{183,175,167}.glb` — 같은 비율로
+  균일 스케일(`--rules touch --opts '{"height":1.83}'`), `asset.extras.heightM` 기록. 렌더러는 파일명 끝 `_NNN`(cm)을
+  성인 렌더 키로 써서 눕기 좌표·진찰 카메라도 그 신장 기준으로 잡는다(`?avatarModel=cand2_quaternius_man_183`).
+  접미사 없는 기본 파일은 종전대로 1.55m 정규화. 팔꿈치 +6%·겨드랑이 아래 상완 +5% 방사 보정(`arm_thicken`)도 함께 적용.
 - 2026-08-25 피드백으로 후보 1·2(Quaternius 계열) 중심으로 디벨롭 중. 의복·헤어 규칙은 `restyle_outfit.py` `RULES`
   에 모델별로 두며, 본 지배(스킨 가중치) 기준으로 피부 삼각형을 바지/소매/신발 재질로 옮기고(상완은 축 위치 62% 까지 소매),
   `pants_tube` 로 다리 정점을 방사 확장해 바지 통을 만들며, `hair_swap` 으로 같은 리그 계열의 헤어 프리미티브를 이식한다.

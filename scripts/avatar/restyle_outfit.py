@@ -202,8 +202,18 @@ class Glb:
                 self.hair_swap(donor, **rule[1])
             elif kind == 'hair_perm':
                 self.hair_perm(**rule[1])
+            elif kind == 'arm_thicken':
+                kw = dict(rule[1])
+                if kw.get('meshes') == '__body__':
+                    kw['meshes'] = self.body_meshes()
+                self.arm_thicken(**kw)
+            elif kind == 'height':
+                self.set_height(rule[1])
             else:
                 raise ValueError(kind)
+
+    def body_meshes(self):
+        return [self.js['meshes'][nd['mesh']]['name'] for nd in self.nodes if 'mesh' in nd and self.js['meshes'][nd['mesh']].get('name', '').endswith('Body')]
 
     # ── 바지 통 ──
     def _leg_side(self, v, dom):
@@ -309,6 +319,82 @@ class Glb:
             report[side] = dict(r_hem=round(r_hem, 5), r_cuff=round(r_cuff, 5), y_top=round(y_top, 4), y_bot=round(y_bot, 4),
                                 k_min=round(min(factors), 3) if factors else None, k_max=round(max(factors), 3) if factors else None, n=len(factors))
         print('  pants_tube', json.dumps(report))
+
+    # ── 팔꿈치·겨드랑이 살짝 두껍게 ──
+    def arm_thicken(self, meshes, elbow_gain=0.06, elbow_width=0.22, pit_gain=0.05, pit_center=0.28, pit_width=0.22, r_max_ratio=2.0):
+        """팔 축(UpperArm→LowerArm→Wrist) 기준 방사 확장을 종 모양으로 가산한다.
+        elbow: 상완 축 t=1(팔꿈치) 중심, pit: 상완 축 t=pit_center(겨드랑이 아래 상완) 중심. gain 은 최대 배율-1.
+        r_max_ratio: 축에서 상완 평균 반경의 이 배수보다 먼 정점(몸통 중심 등)은 제외."""
+        done = set(); nmod = 0
+        for side in ('L', 'R'):
+            a, e, w = self.jpos['UpperArm.' + side], self.jpos['LowerArm.' + side], self.jpos['Wrist.' + side]
+
+            def proj(v, p0, p1):
+                ax = [p1[i] - p0[i] for i in range(3)]; L2 = sum(c * c for c in ax) or 1e-12
+                t = sum((v[i] - p0[i]) * ax[i] for i in range(3)) / L2
+                q = [p0[i] + ax[i] * t for i in range(3)]
+                return t, q, math.dist(v, q)
+
+            # 상완 평균 반경(제외 반경 기준)
+            rs = []
+            for mesh_name in meshes:
+                mesh = self.mesh_by_name(mesh_name)
+                for p in mesh['primitives']:
+                    pos = accessor(self.js, self.bin, p['attributes']['POSITION']); dom = self.dom_bones(p)
+                    for v, d in zip(pos, dom):
+                        if d == 'UpperArm.' + side:
+                            t, q, r = proj(v, a, e)
+                            if 0.3 < t < 0.8:
+                                rs.append(r)
+            r_ref = (sum(rs) / len(rs)) if rs else 0
+            for mesh_name in meshes:
+                mesh = self.mesh_by_name(mesh_name)
+                for p in mesh['primitives']:
+                    ai = p['attributes']['POSITION']
+                    if (ai, side) in done:
+                        continue
+                    done.add((ai, side))
+                    pos = accessor(self.js, self.bin, ai)
+                    new = list(pos); changed = False
+                    for i, v in enumerate(pos):
+                        # 어느 팔인지: 상완 축 투영 반경이 기준 반경의 r_max_ratio 배 이내
+                        tu, qu, ru = proj(v, a, e)
+                        tl, ql, rl = proj(v, e, w)
+                        if -0.35 < tu < 1.0 or (tl >= 0 and tu >= 1.0):
+                            if tu < 1.0:
+                                t_ax, q, r = tu, qu, ru
+                            else:
+                                t_ax, q, r = 1.0 + tl, ql, rl  # 팔꿈치 이후는 하완 축 기준
+                            if r_ref <= 0 or r > r_ref * r_max_ratio:
+                                continue
+                            k = 1.0
+                            k += elbow_gain * math.exp(-((t_ax - 1.0) / elbow_width) ** 2)
+                            k += pit_gain * math.exp(-((t_ax - pit_center) / pit_width) ** 2)
+                            if k > 1.0005:
+                                new[i] = tuple(q[j] + (v[j] - q[j]) * k for j in range(3)); changed = True; nmod += 1
+                    if changed:
+                        self.write_rows(ai, new)
+        print(f'  arm_thicken: elbow +{elbow_gain*100:.0f}% pit +{pit_gain*100:.0f}% ({nmod} 정점)')
+
+    # ── 신장 설정 ──
+    def set_height(self, height_m, include_hair=True):
+        """씬 루트 노드에 균일 스케일을 곱해 기본 포즈 전체 높이(머리카락 포함)를 height_m 로 맞추고 asset.extras.heightM 에 기록."""
+        import measure_glb as mg
+        saved = mg.BIND_POSE; mg.BIND_POSE = False
+        tris, _, _ = mg.collect(self.js, self.bin)
+        mg.BIND_POSE = saved
+        pts = [q for t in tris for q in t]
+        h = max(q[1] for q in pts) - min(q[1] for q in pts)  # 노드 변환 적용 후 y-up 월드
+        s = height_m / h
+        for r in self.js['scenes'][0]['nodes']:
+            nd = self.js['nodes'][r]
+            if 'matrix' in nd:
+                nd['matrix'] = [v * s if i < 12 else v for i, v in enumerate(nd['matrix'])]
+            else:
+                sc = nd.get('scale', [1, 1, 1]); nd['scale'] = [c * s for c in sc]
+                tr = nd.get('translation', [0, 0, 0]); nd['translation'] = [c * s for c in tr]
+        self.js.setdefault('asset', {}).setdefault('extras', {})['heightM'] = round(height_m, 3)
+        print(f'  set_height: {h:.3f} → {height_m} m (×{s:.4f})')
 
     # ── 헤어 이식 ──
     def hair_swap(self, donor, donor_mesh, donor_mat, target_mesh, target_mat='Hair', color=None):
@@ -428,7 +514,17 @@ def cand1_rules(opts):
     return [('recolor', 'Hair_Blond', HAIR_BROWN), ('recolor', 'Hair_Brown', '#3b2416')]
 
 
-RULES = {'cand2_casual': cand2_rules, 'cand1_casual': cand1_rules}
+# 공통 후처리: 팔꿈치·겨드랑이 살짝 두껍게(--opts '{"arm": true}') / 신장 설정(--opts '{"height": 1.83}')
+def touch_rules(opts):
+    rules = []
+    if opts.get('arm', True):
+        rules.append(('arm_thicken', dict(meshes='__body__', elbow_gain=opts.get('elbow_gain', 0.06), pit_gain=opts.get('pit_gain', 0.05))))
+    if opts.get('height'):
+        rules.append(('height', float(opts['height'])))
+    return rules
+
+
+RULES = {'cand2_casual': cand2_rules, 'cand1_casual': cand1_rules, 'touch': touch_rules}
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
