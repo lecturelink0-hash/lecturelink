@@ -209,6 +209,10 @@ class Glb:
                 self.arm_thicken(**kw)
             elif kind == 'height':
                 self.set_height(rule[1])
+            elif kind == 'matte':
+                self.matte(**rule[1])
+            elif kind == 'hair_transplant':
+                self.hair_transplant(donor, **rule[1])
             else:
                 raise ValueError(kind)
 
@@ -396,6 +400,94 @@ class Glb:
         self.js.setdefault('asset', {}).setdefault('extras', {})['heightM'] = round(height_m, 3)
         print(f'  set_height: {h:.3f} → {height_m} m (×{s:.4f})')
 
+    # ── 광택 제거 ──
+    def matte(self, roughness=0.85, metallic=0.0):
+        for m in self.js['materials']:
+            p = m.setdefault('pbrMetallicRoughness', {})
+            p['roughnessFactor'] = roughness; p['metallicFactor'] = metallic
+            m.get('extensions', {}).pop('KHR_materials_specular', None)
+        print(f'  matte: roughness {roughness} metallic {metallic} ({len(self.js["materials"])} 재질)')
+
+    # ── 이종 리그 헤어 이식 (기존 환자 모델 → 후보) ──
+    def head_bbox(self, mesh_name=None, mat='Skin'):
+        """Head 본 지배 피부 정점 bbox (바인드 공간)"""
+        pts = []
+        for nd in self.nodes:
+            if 'mesh' not in nd: continue
+            mesh = self.js['meshes'][nd['mesh']]
+            if mesh_name and mesh.get('name') != mesh_name: continue
+            for p in mesh['primitives']:
+                if self.js['materials'][p['material']].get('name') != mat: continue
+                pos = accessor(self.js, self.bin, p['attributes']['POSITION']); dom = self.dom_bones(p)
+                pts += [v for v, d in zip(pos, dom) if d == 'Head']
+        return [min(v[i] for v in pts) for i in range(3)], [max(v[i] for v in pts) for i in range(3)]
+
+    def hair_transplant(self, donor, donor_mat='Hair', donor_head_mat='Skin', donor_up=1, donor_fwd=2, donor_fwd_sign=1,
+                        target_mesh='Beach_Head', target_fwd_sign=-1, color='#5a3a24', inflate=1.03, remove_prefix='Hair'):
+        """리그가 다른 도너의 헤어 프리미티브를 대상 두상에 맞춰 회전·축별 스케일·정렬 후 Head 본에 100% 스키닝."""
+        # 축 매핑: 도너 (lat, up, fwd) → 대상 (LAT, UP, DEP*sign)
+        d_lat = 3 - donor_up - donor_fwd
+        axes = {self.LAT: (d_lat, 1.0), self.UP: (donor_up, 1.0), self.DEP: (donor_fwd, target_fwd_sign * donor_fwd_sign)}
+        def rot(v):
+            out = [0.0, 0.0, 0.0]
+            for ti, (di, sg) in axes.items():
+                out[ti] = v[di] * sg
+            return out
+        # 회전 행렬 손잡이 검사: 좌우 반전이 필요하면 lat 부호 뒤집기
+        e = [[1 if i == j else 0 for j in range(3)] for i in range(3)]
+        cols = [rot(c) for c in e]
+        det = (cols[0][0] * (cols[1][1] * cols[2][2] - cols[1][2] * cols[2][1]) - cols[1][0] * (cols[0][1] * cols[2][2] - cols[0][2] * cols[2][1]) + cols[2][0] * (cols[0][1] * cols[1][2] - cols[0][2] * cols[1][1]))
+        lat_sign = -1.0 if det < 0 else 1.0
+        axes[self.LAT] = (d_lat, lat_sign)
+        # 두상 bbox: 도너(회전 후) ↔ 대상
+        dmin, dmax = donor.head_bbox(mat=donor_head_mat)
+        dmin_r, dmax_r = rot(dmin), rot(dmax)
+        dlo = [min(a, b) for a, b in zip(dmin_r, dmax_r)]; dhi = [max(a, b) for a, b in zip(dmin_r, dmax_r)]
+        tlo, thi = self.head_bbox(target_mesh)
+        s = [(thi[i] - tlo[i]) / (dhi[i] - dlo[i]) for i in range(3)]
+        # 정렬: lat/dep 중심 일치, up 은 정수리 일치
+        c_d = [(dlo[i] + dhi[i]) / 2 for i in range(3)]; c_t = [(tlo[i] + thi[i]) / 2 for i in range(3)]
+        c_d[self.UP] = dhi[self.UP]; c_t[self.UP] = thi[self.UP]
+        # 대상 머리 중심(팽창 기준)
+        hc = [(tlo[i] + thi[i]) / 2 for i in range(3)]
+        def xform(v):
+            r = rot(v)
+            q = [c_t[i] + (r[i] - c_d[i]) * s[i] for i in range(3)]
+            return tuple(hc[i] + (q[i] - hc[i]) * inflate for i in range(3))
+        def nxform(n):
+            r = rot(n); q = [r[i] / s[i] for i in range(3)]; L = math.sqrt(sum(x * x for x in q)) or 1.0
+            return tuple(x / L for x in q)
+        # 도너 헤어 프리미티브
+        dp = None
+        for nd in donor.nodes:
+            if 'mesh' not in nd: continue
+            for p in donor.js['meshes'][nd['mesh']]['primitives']:
+                if donor.js['materials'][p['material']].get('name') == donor_mat:
+                    dp = p; break
+            if dp: break
+        assert dp, 'donor hair primitive 없음'
+        tmesh = self.mesh_by_name(target_mesh)
+        tmesh['primitives'] = [p for p in tmesh['primitives'] if not self.js['materials'][p['material']].get('name', '').startswith(remove_prefix)]
+        pos = [xform(v) for v in accessor(donor.js, donor.bin, dp['attributes']['POSITION'])]
+        newp = {'attributes': {}, 'mode': dp.get('mode', 4)}
+        newp['attributes']['POSITION'] = self.add_accessor(pos, 5126, 'VEC3', target=34962)
+        if 'NORMAL' in dp['attributes']:
+            nrm = [nxform(n) for n in accessor(donor.js, donor.bin, dp['attributes']['NORMAL'])]
+            newp['attributes']['NORMAL'] = self.add_accessor(nrm, 5126, 'VEC3', target=34962)
+        if 'TEXCOORD_0' in dp['attributes']:
+            acc = donor.js['accessors'][dp['attributes']['TEXCOORD_0']]
+            newp['attributes']['TEXCOORD_0'] = self.add_accessor(accessor(donor.js, donor.bin, dp['attributes']['TEXCOORD_0']), acc['componentType'], 'VEC2', target=34962, normalized=acc.get('normalized', False))
+        hi = self.jname.index('Head')
+        newp['attributes']['JOINTS_0'] = self.add_accessor([(hi, 0, 0, 0)] * len(pos), 5123, 'VEC4', target=34962)
+        newp['attributes']['WEIGHTS_0'] = self.add_accessor([(1.0, 0.0, 0.0, 0.0)] * len(pos), 5126, 'VEC4', target=34962)
+        idx = accessor(donor.js, donor.bin, dp['indices'])
+        if lat_sign < 0:  # 반사 변환이면 삼각형 감김 뒤집기
+            idx = [v for t in range(len(idx) // 3) for v in (idx[3 * t], idx[3 * t + 2], idx[3 * t + 1])]
+        newp['indices'] = self.add_indices(idx, donor.js['accessors'][dp['indices']]['componentType'])
+        newp['material'] = self.material(('Hair_old', color))
+        tmesh['primitives'].append(newp)
+        print(f'  hair_transplant: {len(idx)//3} tris, scale={[round(x,5) for x in s]}, lat_sign={lat_sign}, inflate={inflate}')
+
     # ── 헤어 이식 ──
     def hair_swap(self, donor, donor_mesh, donor_mat, target_mesh, target_mat='Hair', color=None):
         assert donor is not None, 'donor GLB 필요'
@@ -519,6 +611,11 @@ def touch_rules(opts):
     rules = []
     if opts.get('arm', True):
         rules.append(('arm_thicken', dict(meshes='__body__', elbow_gain=opts.get('elbow_gain', 0.06), pit_gain=opts.get('pit_gain', 0.05))))
+    if opts.get('matte'):  # 광택 제거: 후보 원본은 metallic 0.4·roughness 0.3~0.4 라 빛 반사가 심함
+        rules.append(('matte', dict(roughness=opts.get('roughness', 0.85), metallic=0.0)))
+    if opts.get('hair_old'):  # 기존 환자 모델(patient_male.glb, y-up·얼굴 +z) 헤어를 후보 두상에 이식 (--donor 필요)
+        rules.append(('hair_transplant', dict(donor_mat='Hair', donor_up=1, donor_fwd=2, donor_fwd_sign=1, target_mesh=opts.get('target_mesh', 'Beach_Head'),
+                                              target_fwd_sign=-1, color=HAIR_BROWN, inflate=opts.get('inflate', 1.03))))
     if opts.get('height'):
         rules.append(('height', float(opts['height'])))
     return rules
