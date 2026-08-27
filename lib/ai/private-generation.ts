@@ -54,7 +54,9 @@ import {
   countDistinctConditions,
   effectiveDifficulty,
   meetsRequestedLevel,
+  structuralConditionCount,
 } from './difficulty-conditions';
+import { judgeConditionsOnce } from './condition-judge';
 import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
 import { buildUploadNotices } from './upload-notice';
 import {
@@ -227,6 +229,8 @@ const BLIND_TIMEOUT_MS = 12_000;
  * 실제 동시 호출은 이 값 × BLIND_ATTEMPTS 다 — VERIFY_CONCURRENCY 보다 낮게 잡는다.
  */
 const BLIND_CONCURRENCY = 3;
+// 조건 판정기(난이도 심사) 시간 상한 — 블라인드와 같은 이유로 늦으면 판정하지 않는다.
+const JUDGE_TIMEOUT_MS = 12_000;
 
 /**
  * 이전 발문 조회(P11 세션 간)를 배치가 기다리는 상한.
@@ -3199,7 +3203,11 @@ export async function generatePrivateQuestionsFromUpload(
             // 난이도 지시와 정면으로 충돌해 첫 묶음이 재인 문항(1·2)으로 나왔다(2026-08-27 실측
             // effbfdf0 묶음 1: difficulty 1, 2). 프롬프트 충돌은 모델이 조용히 쉬운 쪽으로 물러선다.
             (requestedDifficultyLevel === 3
-              ? ' 요청 난이도가 상이므로 기본 정의·재인 문항은 만들지 말고, 모든 문항이 조건 3개 이상을 결합하게 하세요.'
+              ? ' 요청 난이도가 상이므로 기본 정의·재인 문항은 만들지 말고, 모든 문항이 조건 3개 이상을 결합하게 하세요.' +
+                // 2차 실측(01ae08ab 슬롯 0): "…중, …를 모두 고려했을 때, …원인으로 옳은 것은?" 처럼
+                // 조건을 나열해 이어 붙인 어색한 발문이 나왔다. 조건은 상황 문장에 녹인다.
+                ' 조건을 "…중, …를 모두 고려했을 때" 식으로 나열해 이어 붙이지 말고, 증례나 상황을 서술하는 ' +
+                '문장 안에 자연스럽게 넣은 뒤 짧은 명사구로 물으세요.'
               : batchIndex === 0
                 ? ' 핵심·기본 개념 문항을 포함하세요.'
                 : ' 전형적인 기본 정의 문항보다 응용·감별 문항을 우선하세요.');
@@ -3289,6 +3297,14 @@ export async function generatePrivateQuestionsFromUpload(
         allowNegative: gen.allowNegativeAsk ?? false,
       });
       // 조합형 빈도 제한(요청에 별도 조건이 없을 때).
+      // 발문 규칙은 **모든 묶음에** 건다. 종전에는 지식형·임상형 쿼터 지시 안에만 있어서,
+      // 쿼터가 0인 묶음(이미지 전용·보충 묶음)에는 금지가 통째로 빠졌다 — 2차 실측(01ae08ab)에서
+      // 보충 묶음 문항이 "혈압 조절 약물로 가장 적절한 것은?"으로 나온 원인이다.
+      const askRuleDirective =
+        '\n\n**발문 규칙(모든 문항)**: 문두는 짧은 명사구로 끝냅니다("진단은?", "치료는?", "기준은?"). ' +
+        '**"가장 적절한", "가장 가능성 높은", "다음 중"은 쓰지 않습니다**("가장 흔한 원인은?", ' +
+        '"가장 먼저 시행할 검사는?"처럼 사실이 최빈값·순서인 경우만 예외). "~로 가장 적절한 것은?"은 ' +
+        '"~는?"으로 바꿔 쓰세요. "무엇인가요?", "인가요?" 같은 구어체 종결도 쓰지 않습니다.';
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
         : '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형("옳은 것을 모두 고른 것은?")을 **만들지 마세요.** 모든 문항을 단일 정답 5지선다로 만드세요.';
@@ -3297,7 +3313,7 @@ export async function generatePrivateQuestionsFromUpload(
         text:
           `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
           (gen.contextText || '(추출된 텍스트·이미지 없음)') +
-          `\n\n${userMessage}${batchDirective}${focusDirective}${priorDirective}${noImageDirective}${clinicalDirective}${knowledgeDirective}${comboDirective}`,
+          `\n\n${userMessage}${batchDirective}${focusDirective}${priorDirective}${noImageDirective}${clinicalDirective}${knowledgeDirective}${askRuleDirective}${comboDirective}`,
       });
 
       // 해설 길이 상한(350자) 적용 후 문항당 실출력은 ~1,000토큰대. 다만 지시 이탈로
@@ -3438,6 +3454,10 @@ export async function generatePrivateQuestionsFromUpload(
         answerIndex: number;
         /** P1 검증 점수. 검증을 못 돌렸거나 시간 초과면 null. */
         verifyScore?: number | null;
+        /** 독립 조건 판정기가 센 조건 수. 못 돌렸으면 null, 아직 안 돌렸으면 undefined. */
+        judgeCount?: number | null;
+        /** 판정기의 한 줄 근거(사람 재검토용). */
+        judgeBasis?: string;
       };
       /**
        * 파싱 결과 → 저장 후보. 형식 오류·정답 길이 누출은 여기서 폐기한다.
@@ -3568,13 +3588,79 @@ export async function generatePrivateQuestionsFromUpload(
       // 요구하는 개수(중 2·상 3)에 못 미치는 문항이 있으면 **모자란 문항 수와 필요한 조건 수를
       // 숫자로 지목해** 한 번만 다시 받는다. 이미지 쿼터 교정과 같은 원칙 — 좋아졌을 때만
       // 채택하고(이미지 부착 수도 잃지 않을 때만), 재생성은 배치당 최대 1회다.
+      //
+      // 2차 실측(01ae08ab, #269 배포 후): 목록만으로는 저장 3 이 9/10 인데 사람이 읽으면 진짜
+      // 3조건은 4/10 — **목록도 부풀려진다**("금기 약물은?"에 조건 3개). 두 겹을 더한다.
+      //  · 어휘 대조: 발문·선지·해설에 흔적이 없는 항목은 세지 않는다(difficulty-conditions.ts).
+      //  · 독립 판정기: 생성 모델의 목록을 보지 않는 별도 호출이 문항만 보고 조건을 센다
+      //    (condition-judge.ts, 블라인드 풀이와 같은 구조). 구조 수 = min(대조 통과 자기신고, 판정기).
+      //  판정기는 못 돌리면(시간 초과·오류) null 로 통과시킨다 — 못 돌린 검사가 문항을 깎지 않는다.
+      const conditionTextsOf = (k: KeptItem): string[] => [
+        String(k.q.stem ?? ''),
+        ...k.choices,
+        String(k.q.explanation ?? ''),
+      ];
+      const judgeAll = async (list: KeptItem[]): Promise<void> => {
+        await mapWithConcurrency(
+          list.filter((k) => k.judgeCount === undefined),
+          BLIND_CONCURRENCY,
+          async (k) => {
+            const r = await withDeadline(
+              judgeConditionsOnce({
+                stem: String(k.q.stem ?? ''),
+                choices: k.choices,
+                answerIndex: k.answerIndex,
+              }).catch((e: unknown) => {
+                bumpGenDiag('judgeUnavailable');
+                console.warn(
+                  '[private-gen] 조건 판정 실패(통과 처리):',
+                  e instanceof Error ? e.message.slice(0, 140) : String(e),
+                );
+                return null;
+              }),
+              JUDGE_TIMEOUT_MS,
+              null,
+              () => bumpGenDiag('judgeTimeout'),
+            );
+            if (!r) {
+              k.judgeCount = null;
+              return;
+            }
+            void recordAiCost({
+              userId: input.userId,
+              endpoint: 'private.judge',
+              model: r.usage.model,
+              costUsd: r.usage.costUSD,
+              inputTokens: r.usage.inputTokens,
+              outputTokens: r.usage.outputTokens,
+              metadata: { uploadId: uploadRow.id, batch: batchIndex + 1 },
+            });
+            totalCost += r.usage.costUSD;
+            bumpGenDiag('judgeChecked');
+            k.judgeCount = r.count;
+            k.judgeBasis = r.basis;
+          },
+        );
+      };
       if (requestedDifficultyLevel !== null && requestedDifficultyLevel >= 2) {
         const need = CONDITIONS_REQUIRED[requestedDifficultyLevel];
+        const tJudge = Date.now();
+        await judgeAll(kept);
+        batchDiag.judgeMs = Date.now() - tJudge;
         const countMeeting = (list: KeptItem[]) =>
-          list.filter((k) => meetsRequestedLevel(k.q.solution_conditions, requestedDifficultyLevel)).length;
+          list.filter((k) =>
+            meetsRequestedLevel(
+              k.q.solution_conditions,
+              requestedDifficultyLevel,
+              conditionTextsOf(k),
+              k.judgeCount,
+            ),
+          ).length;
         const meetingBefore = countMeeting(kept);
         batchDiag.difficultyNeed = need;
         batchDiag.difficultyMeeting = meetingBefore;
+        batchDiag.judgeCounts = kept.map((k) => k.judgeCount ?? null);
+        batchDiag.judgeBasis = kept.map((k) => (k.judgeBasis ?? '').slice(0, 80));
         if (meetingBefore < kept.length) {
           const short = kept.length - meetingBefore;
           bumpGenDiag('difficultyShortfall');
@@ -3592,7 +3678,10 @@ export async function generatePrivateQuestionsFromUpload(
               `가능해져야 진짜 조건입니다. 사실 하나·기전 하나·기준 하나를 묻는 문항은 안 됩니다. ` +
               `조건을 늘리려고 자료에 없는 수치·소견을 지어내지 말고, 자료의 다른 슬라이드에 있는 ` +
               `분류·예외·수치 기준·동반 소견을 발문의 조건으로 명시해 결합하세요. ` +
+              `조건은 "…중, …를 모두 고려했을 때" 식으로 나열해 이어 붙이지 말고 상황 문장으로 자연스럽게 ` +
+              `넣으세요(예: "Stanford A형 박리에 급성 대동맥판 역류가 동반되고 직경이 5.5 cm 를 넘는다. 치료는?"). ` +
               `각 문항의 solution_conditions 에 그 조건들을 각각 적으세요(${need}개 이상). ` +
+              `목록을 부풀려도 소용없습니다 — 별도 심사가 문항만 보고 조건을 다시 셉니다. ` +
               `이미지 판독 문항 수·유형 배분·발문 규칙은 그대로 지키세요.`,
           });
           try {
@@ -3624,6 +3713,8 @@ export async function generatePrivateQuestionsFromUpload(
             const fixParsed = fixBlock?.input as { questions?: GeneratedQuestion[] } | undefined;
             if (Array.isArray(fixParsed?.questions) && fixParsed.questions.length > 0) {
               const fixKept = buildKept(fixParsed.questions);
+              // 재작성본도 같은 판정기를 거친다 — 검사를 우회해 끼워 넣는 길을 만들지 않는다.
+              await judgeAll(fixKept);
               // 난이도가 좋아졌고 이미지 부착 수를 잃지 않을 때만 갈아끼운다.
               if (
                 fixKept.length > 0 &&
@@ -4096,7 +4187,12 @@ export async function generatePrivateQuestionsFromUpload(
           concepts: k.q.concepts ?? [],
           // 신고값과 조건 수 기반 수준 중 낮은 쪽(difficulty-conditions.ts). "3 이라고 적었지만
           // 조건은 하나"인 문항이 상으로 저장되던 것을 막는다.
-          difficulty: effectiveDifficulty(k.q.difficulty, k.q.solution_conditions),
+          difficulty: effectiveDifficulty(
+            k.q.difficulty,
+            k.q.solution_conditions,
+            [String(k.q.stem ?? ''), ...k.choices, String(k.q.explanation ?? '')],
+            k.judgeCount,
+          ),
           generation_slot: slots[questionIndex],
           kind,
           // P3 — 모델이 신고한 발문 유형. 카탈로그 밖 값은 버린다(오탈자·창작 방지).
@@ -4136,6 +4232,13 @@ export async function generatePrivateQuestionsFromUpload(
           batchDiag.difficultyReported = kept.map((k) => k.q.difficulty);
           batchDiag.difficultyStored = rows.map((r) => r.difficulty);
           batchDiag.conditionCounts = kept.map((k) => countDistinctConditions(k.q.solution_conditions));
+          batchDiag.structuralConditions = kept.map((k) =>
+            structuralConditionCount(
+              k.q.solution_conditions,
+              [String(k.q.stem ?? ''), ...k.choices, String(k.q.explanation ?? '')],
+              k.judgeCount,
+            ),
+          );
         }
       }
 
@@ -4846,7 +4949,13 @@ export async function generatePrivateQuestionsFromUpload(
       useImages ? refinedUsableGis.size * MAX_QUESTIONS_PER_IMAGE : 0,
     );
     diag.generation.typeTargetsFinal = typeTargetsFinal;
-    if (selectedTypes.length >= 2 && questionMetricColumnsSupported) {
+    // 교정은 함수다 — 보충이 만든 문항이 또 다른 유형으로 나오면(2차 실측 5:4:1: 보충 문항이
+    // image_indices 없이 증례로 나옴) 보충 라운드가 남아 있을 때 한 번 더 돈다.
+    const typeRepairs: unknown[] = [];
+    diag.generation.typeRepairs = typeRepairs;
+    const runTypeRepair = async (): Promise<number> => {
+      if (selectedTypes.length < 2 || !questionMetricColumnsSupported) return 0;
+      let deletedCount = 0;
       try {
         const { counts, rows } = await readTypeCounts();
         const deficits = typeDeficits(typeTargetsFinal, counts);
@@ -4881,25 +4990,30 @@ export async function generatePrivateQuestionsFromUpload(
               `실제(지식 ${counts.knowledge}·임상 ${counts.clinical}·이미지 ${counts.image}) — 초과 유형 ${deleteIds.length}문항을 지우고 부족 유형으로 보충.`,
           );
         }
-        diag.generation.typeRepair = {
+        deletedCount = deleteIds.length;
+        typeRepairs.push({
           before: counts,
           deficits,
           imageCapacity,
           deleteFrom: repair.deleteFrom,
           regenerate: repair.regenerate,
           deleted: deleteIds.length,
-        };
+        });
       } catch (e) {
         warnings.push(`유형 배분 교정 실패 — ${e instanceof Error ? e.message : String(e)}`);
       }
-    }
+      return deletedCount;
+    };
+    await runTypeRepair();
 
     const tBackfill = Date.now();
     diag.generation.backfillRounds = [];
     let saved = await readSaved();
     // 진행률 기준도 DB 사실값으로 맞춘다(삭제된 문항까지 세어 100%를 넘기지 않게).
     completedQuestions = saved.length;
-    for (let round = 0; round < GEN_BACKFILL_ROUNDS && saved.length < desiredCount; round++) {
+    let round = 0;
+    const runBackfill = async (): Promise<void> => {
+    for (; round < GEN_BACKFILL_ROUNDS && saved.length < desiredCount; round++) {
       const usedSlots = new Set(saved.map((r) => r.generation_slot));
       const missingSlots = Array.from({ length: desiredCount }, (_, s) => s).filter(
         (s) => !usedSlots.has(s),
@@ -5032,6 +5146,14 @@ export async function generatePrivateQuestionsFromUpload(
       roundRec.ms = Date.now() - tRound;
       roundRec.filled = saved.length - beforeCount;
       (diag.generation.backfillRounds as unknown[] | undefined)?.push(roundRec);
+    }
+    };
+    await runBackfill();
+    // 2차 교정: 보충 문항이 또 다른 유형으로 나왔으면(실측 5:4:1) 라운드가 남아 있을 때 한 번 더.
+    if (round < GEN_BACKFILL_ROUNDS && (await runTypeRepair()) > 0) {
+      saved = await readSaved();
+      completedQuestions = saved.length;
+      await runBackfill();
     }
     if (saved.length < desiredCount) {
       warnings.push(`최종 ${saved.length}/${desiredCount}문항 — 요청 수를 채우지 못했습니다.`);
