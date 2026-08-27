@@ -157,6 +157,7 @@ class Glb:
             vs = idx[3 * t:3 * t + 3]
             bones = {dom[v] for v in vs}
             tval = None
+            axis_name = None
             for ua, la in sleeve_axis.items():
                 if ua in bones:
                     a, b_ = self.jpos[ua], self.jpos[la]
@@ -164,9 +165,10 @@ class Glb:
                     L2 = sum(c * c for c in ax) or 1e-12
                     c = [sum(pos[v][i] for v in vs) / 3 for i in range(3)]
                     tval = sum((c[i] - a[i]) * ax[i] for i in range(3)) / L2
+                    axis_name = ua
                     break
             cen = [sum(pos[v][i] for v in vs) / 3 for i in range(3)]
-            tris.append({'bones': bones, 't': tval, 'idx': vs, 'up': cen[self.UP]})
+            tris.append({'bones': bones, 't': tval, 'axis': axis_name, 'idx': vs, 'up': cen[self.UP]})
         return tris, self.js['accessors'][p['indices']]['componentType']
 
     # ── 규칙 실행 ──
@@ -282,7 +284,7 @@ class Glb:
         pos = accessor(self.js, self.bin, p['attributes']['POSITION'])
         return max(v[self.UP] for v in pos)
 
-    def pants_tube(self, leg_prims, hem_prim, shoe_prim=None, cuff_ratio=0.72, min_factor=1.0, max_factor=2.2, nb=14, floor=None):
+    def pants_tube(self, leg_prims, hem_prim, shoe_prim=None, cuff_ratio=0.72, min_factor=1.0, max_factor=2.2, nb=14, floor=None, thigh_factor=1.3, loose=1.0, waist_taper=0.0):
         """leg_prims: [(mesh, prim_index)] 바지가 될 다리 피부 프리미티브(정점 좌표를 수정).
         hem_prim: (mesh, prim_index) 반바지 — 최하단 밴드 반경이 바지 통 최상단 목표.
         shoe_prim: (mesh, prim_index) 신발 — 상단 반경보다 살짝 크게 밑단을 만든다.
@@ -297,8 +299,11 @@ class Glb:
             cx = sum(p[LAT] for p in b) / len(b); cz = sum(p[DEP] for p in b) / len(b)
             return cx, cz, sum(math.hypot(p[LAT] - cx, p[DEP] - cz) for p in b) / len(b)
 
-        _, hp = self.mesh_prim(*hem_prim)
-        hpos = accessor(self.js, self.bin, hp['attributes']['POSITION']); hdom = self.dom_bones(hp)
+        if hem_prim is not None:
+            _, hp = self.mesh_prim(*hem_prim)
+            hpos = accessor(self.js, self.bin, hp['attributes']['POSITION']); hdom = self.dom_bones(hp)
+        else:
+            hpos, hdom = [], []  # 반바지 없음: 허벅지(상위 밴드) 반경 × thigh_factor 를 통 상단 목표로
         # 2) 다리 프리미티브 정점 수집(측별)
         legs = {'L': [], 'R': []}
         prim_data = []
@@ -319,10 +324,14 @@ class Glb:
                 continue
             y_top = max(p[UP] for p in pts); y_bot = min(p[UP] for p in pts)
             # 반바지 밑단: 같은 측 반바지 정점 중 높이 하위 8~18% 밴드 (최하단 림의 안쪽 정점은 제외)
-            hs = [v for v, d in zip(hpos, hdom) if self._leg_side(v, d) == side]
-            hy0 = min(p[UP] for p in hs); hy1 = max(p[UP] for p in hs)
-            hem = band_stats(hs, hy0 + (hy1 - hy0) * 0.08, hy0 + (hy1 - hy0) * 0.18)
-            r_hem = hem[2]
+            if hem_prim is not None:
+                hs = [v for v, d in zip(hpos, hdom) if self._leg_side(v, d) == side]
+                hy0 = min(p[UP] for p in hs); hy1 = max(p[UP] for p in hs)
+                hem = band_stats(hs, hy0 + (hy1 - hy0) * 0.08, hy0 + (hy1 - hy0) * 0.18)
+                r_hem = hem[2] * loose
+            else:
+                thigh = band_stats(pts, y_bot + (y_top - y_bot) * 0.70, y_bot + (y_top - y_bot) * 0.85)
+                r_hem = thigh[2] * thigh_factor * loose
             r_cuff = r_hem * cuff_ratio
             if shoe_prim:
                 _, sp = self.mesh_prim(*shoe_prim)
@@ -363,6 +372,10 @@ class Glb:
                         continue
                     cx, cz, r_band = band_of(v[UP])
                     k = max(min_factor, min(max_factor, target_r(v[UP]) / r_band)) if r_band > 1e-9 else 1.0
+                    if waist_taper > 0 and y_top > y_bot:  # 허리(상단)에서는 몸에 붙고 아래로 갈수록 통이 넓어지게
+                        s_top = (y_top - v[UP]) / (y_top - y_bot)
+                        if s_top < waist_taper:
+                            k = 1.0 + (k - 1.0) * (s_top / waist_taper)
                     dx, dz = v[LAT] - cx, v[DEP] - cz
                     nv = list(v); nv[LAT] = cx + dx * k; nv[DEP] = cz + dz * k
                     new[i] = tuple(nv)
@@ -926,7 +939,46 @@ def touch_rules(opts):
     return rules
 
 
-RULES = {'cand2_casual': cand2_rules, 'cand1_casual': cand1_rules, 'touch': touch_rules}
+LONG_SLEEVE_AXIS = {'UpperArm.L': 'LowerArm.L', 'UpperArm.R': 'LowerArm.R', 'LowerArm.L': 'Wrist.L', 'LowerArm.R': 'Wrist.R'}
+
+
+def long_sleeve_pred(t_start, t_end=0.9):
+    """상완 축 t ≥ t_start 부터 하완 축 t < t_end(손목 위)까지의 팔 피부 삼각형 — 긴팔 소매 쉘용"""
+    def pred(tri):
+        if tri['t'] is None or tri['axis'] is None:
+            return False
+        if tri['axis'].startswith('UpperArm'):
+            return tri['t'] >= t_start
+        return tri['t'] < t_end
+    return pred
+
+
+# 할아버지: 베이지 긴팔 셔츠 + 다크브라운 조끼(몸통 표면) + 통 넓은 회색 슬랙스 (확정 성인 cand2 기본 GLB 위에 적용)
+def cand2_elder_rules(opts):
+    SHIRT = '#cbb58f'; VEST = '#5a4a3c'; PANTS = '#6e6a66'
+    shoe_top = opts.get('_shoe_top')
+    return [
+        ('recolor', 'Shirt', SHIRT), ('recolor', 'LightBrown', VEST), ('recolor', 'Pants', PANTS),
+        ('split', 'Beach_Body', 0, ('ShirtSleeve', SHIRT), long_sleeve_pred(0.45), LONG_SLEEVE_AXIS, 0.005),
+        ('pants_tube', dict(leg_prims=[('Beach_Legs', 0), ('Beach_Feet', 0)], hem_prim=('Beach_Legs', 1), shoe_prim=('Beach_Feet', 1),
+                            cuff_ratio=0.85, loose=1.18, floor=shoe_top)),
+    ]
+
+
+# 할머니: 자주색 긴팔 블라우스 + 통 넓은 진회색 몸뻬형 바지(스판 아님) (확정 성인 cand1 기본 GLB 위에 적용)
+def cand1_elder_rules(opts):
+    BLOUSE = '#8b4a6b'; PANTS = '#4a4f5c'
+    shoe_top = opts.get('_shoe_top')
+    return [
+        ('recolor', 'White', BLOUSE), ('recolor', 'Orange', PANTS),
+        ('material', 'Casual_Feet', 0, ('Pants', PANTS)),  # 발목 피부 → 바지 밑단
+        ('split', 'Casual_Body', 1, ('BlouseSleeve', BLOUSE), long_sleeve_pred(0.40), LONG_SLEEVE_AXIS, 0.005),
+        ('pants_tube', dict(leg_prims=[('Casual_Legs', 0), ('Casual_Feet', 0)], hem_prim=None, shoe_prim=('Casual_Feet', 1),
+                            cuff_ratio=0.88, thigh_factor=1.15, waist_taper=0.2, floor=shoe_top)),  # 1.35 는 "힙합바지" 피드백 → 적당히
+    ]
+
+
+RULES = {'cand2_casual': cand2_rules, 'cand1_casual': cand1_rules, 'touch': touch_rules, 'cand2_elder': cand2_elder_rules, 'cand1_elder': cand1_elder_rules}
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -936,8 +988,10 @@ if __name__ == '__main__':
     opts = json.loads(a.opts)
     g = Glb(a.src)
     donor = Glb(a.donor) if a.donor else None
-    if a.rules == 'cand2_casual':
-        opts['_shoe_top'] = g.prim_top('Beach_Feet', 1) * 0.98  # 샌들 상단 높이 → 그 아래는 신발
+    if a.rules in ('cand2_casual', 'cand2_elder'):
+        opts['_shoe_top'] = g.prim_top('Beach_Feet', 1) * 0.98  # 샌들/신발 상단 높이 → 그 아래는 신발
+    if a.rules == 'cand1_elder':
+        opts['_shoe_top'] = g.prim_top('Casual_Feet', 1) * 0.98
     g.apply(RULES[a.rules](opts), donor=donor)
     g.save(a.dst)
     print('saved', a.dst)
