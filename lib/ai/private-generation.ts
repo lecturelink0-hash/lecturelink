@@ -122,6 +122,7 @@ import {
   measureClinicalYield,
   hasForbiddenAsk,
   hasPatientIntro,
+  rewriteForbiddenAsk,
 } from '@/lib/ai/clinical-shape';
 import { verifyQuestion } from './verify';
 import { isPrivateVerifyFailure, PRIVATE_VERIFY_REJECT_SCORE } from './verify-policy';
@@ -619,6 +620,10 @@ export function sanitizeStemArtifacts(stem: string): string {
   s = s.replace(/[([{]\s*(?:이미지|사진|그림|영상)\s*(?:없음|미제공|없습니다)\s*[)\]}]/g, '');
   // "(이미지 2)", "[이미지 0]" — 괄호로 감싼 내부 번호는 괄호째 제거.
   s = s.replace(/[([{]\s*(?:이미지|그림|사진|영상)\s*\d+\s*[)\]}]/g, '');
+  // "(이미지 좌측)", "(이미지 우측)" — 두 그림을 나란히 가리키는 위치 메모. 학생 화면에는
+  // 이미지가 세로로 하나씩 나오고 연결된 그림이 하나뿐일 수도 있어 위치 표기가 어긋난다
+  // (3차 실측 009b69fb 슬롯 9: "단순 흉부 방사선 사진(이미지 좌측)… MRI (이미지 우측)").
+  s = s.replace(/\s*[([{]\s*(?:이미지|그림|사진|영상)\s*(?:좌측|우측|왼쪽|오른쪽|위|아래|상단|하단)\s*[)\]}]/g, '');
   // 괄호 없이 쓰인 "이미지 1" — 번호만 떼어 "이미지"라는 지시어는 살린다
   // ("이미지 1에서 보이는" → "이미지에서 보이는").
   s = s.replace(/(이미지|그림|사진|영상)\s*\d+/g, '$1');
@@ -4134,7 +4139,11 @@ export async function generatePrivateQuestionsFromUpload(
       const rows = kept.map((k, questionIndex) => {
         const subTopicId = k.q.sub_topic_code ? codeToId.get(k.q.sub_topic_code) ?? null : null;
         if (!subTopicId) unmatched += 1;
-        const stem = normalizeStemEnding(sanitizeStemArtifacts(k.q.stem));
+        // 금지 발문("…로 가장 적절한 것은?")은 프롬프트가 말한 변환 규칙 그대로 코드가 고쳐 쓴다 —
+        // 세 겹의 프롬프트 금지로도 2·3차 실측에서 10문항 중 1~2문항이 남았다(clinical-shape.ts 참조).
+        const rawStem = normalizeStemEnding(sanitizeStemArtifacts(k.q.stem));
+        const stem = rewriteForbiddenAsk(rawStem);
+        if (stem !== rawStem) bumpGenDiag('forbiddenAskFixed');
         // 실제로 만들어진 유형을 저장한다(P2). 요청 유형(user_uploads.requested_types)과
         // 대조해 '수확률'을 낸다 — 임상형을 요청했는데 지식형이 나오는 실패는 로그에
         // 흔적을 안 남겨서(저장 정상·문항 수 정상) 세지 않으면 아무도 모른다.

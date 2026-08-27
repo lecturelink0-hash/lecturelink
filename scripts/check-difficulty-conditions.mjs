@@ -96,6 +96,10 @@ check('"빼도 정답이 유일하면 조건이 아니다" 규칙', CONDITION_JU
 check('장식 정보(나이·성별)는 세지 않는다', CONDITION_JUDGE_SYSTEM_PROMPT.includes('장식'));
 check('사실 하나면 1개라고 명시', CONDITION_JUDGE_SYSTEM_PROMPT.includes('**1개**'));
 check('기권 없음(목록 최소 1개)', CONDITION_JUDGE_SYSTEM_PROMPT.includes('최소 1개'));
+// 3차 실측(009b69fb): "선지 소거 지식도 센다" 규칙 때문에 단일 사실 문항이 4~6개로 판정됐다.
+check('오답 소거 지식은 세지 않는다', CONDITION_JUDGE_SYSTEM_PROMPT.includes('세지 않습니다 — 5지선다는'));
+check('종전 "소거에 쓰인 지식도 조건으로 셉니다" 규칙이 사라졌다', !CONDITION_JUDGE_SYSTEM_PROMPT.includes('소거에 쓰인 지식도 조건으로 셉니다'));
+check('"설명으로 옳은 것은?" 형태는 1개', CONDITION_JUDGE_SYSTEM_PROMPT.includes('설명으로 옳은 것은?'));
 check(
   '생성 모델의 목록을 판정기에 보여 주지 않는다(넘겨도 무시)',
   !buildConditionJudgeUserMessage({ stem: 's', choices: ['a', 'b'], answerIndex: 0, conditions: ['x-secret-list'] }).includes('x-secret-list'),
@@ -124,6 +128,8 @@ check('판정기 비용을 private\\.judge 로 기록한다', gen.includes("endp
 check('발문 규칙(금지 발문)을 모든 묶음에 건다', /const askRuleDirective =/.test(gen) && /\$\{askRuleDirective\}\$\{comboDirective\}/.test(gen));
 check('요청 상이면 조건 나열식 발문을 금지한다', gen.includes('모두 고려했을 때" 식으로 나열해 이어 붙이지 말고'));
 check('유형 교정이 함수라 2차 패스를 돈다', /const runTypeRepair = async/.test(gen) && /\(await runTypeRepair\(\)\) > 0/.test(gen));
+check('생성기가 금지 발문을 코드로 고쳐 쓴다', /rewriteForbiddenAsk\(rawStem\)/.test(gen) && /bumpGenDiag\('forbiddenAskFixed'\)/.test(gen));
+check('"(이미지 좌측)" 위치 메모를 지운다', /좌측\|우측/.test(gen));
 
 console.log('');
 if (failures === 0) {

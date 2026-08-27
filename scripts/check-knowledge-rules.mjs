@@ -32,7 +32,7 @@ import {
   PRIVATE_GENERATION_SYSTEM_PROMPT,
   PRIVATE_GENERATION_TOOL_SCHEMA,
 } from '../lib/ai/prompts/private-generation.ts';
-import { hasForbiddenAsk } from '../lib/ai/clinical-shape.ts';
+import { hasForbiddenAsk, rewriteForbiddenAsk } from '../lib/ai/clinical-shape.ts';
 import { buildClinicalQuotaDirective } from '../lib/ai/prompts/clinical-vignette.ts';
 
 const srcRaw = await import('node:fs').then((fs) =>
@@ -179,6 +179,30 @@ const allowed = [
   '65세 남자가 등 통증으로 병원에 왔다. 진단은?',
 ];
 for (const stem of allowed) check(`허용형을 통과시킨다: ${stem.slice(-20)}`, !hasForbiddenAsk(stem));
+
+console.log('\n금지 발문 재작성(rewriteForbiddenAsk) — 프롬프트의 변환 규칙을 코드가 그대로 적용');
+const rewrites = [
+  ['65세 남자가 등 통증으로 병원에 왔다. 치료로 가장 적절한 것은?', '65세 남자가 등 통증으로 병원에 왔다. 치료는?'],
+  ['대동맥류의 치료로 가장 적절한 것은?', '대동맥류의 치료는?'],
+  // 3차 실측(009b69fb) 실물 두 건.
+  ['DeBakey Type I로 진단된 환자로, 심장 눌림증의 가능성이 높을 때, 가장 적절한 초기 치료 및 관리 방안은?', 'DeBakey Type I로 진단된 환자로, 심장 눌림증의 가능성이 높을 때, 초기 치료 및 관리 방안은?'],
+  ['하행 흉부 대동맥에 6.2 cm 크기의 동맥류가 확인되었다. 이 환자의 가장 적절한 치료 방침은?', '하행 흉부 대동맥에 6.2 cm 크기의 동맥류가 확인되었다. 이 환자의 치료 방침은?'],
+  ['진단으로 가장 가능성이 높은 것은?', '진단은?'],
+  ['가장 가능성 높은 진단은?', '진단은?'],
+  ['다음 중 대동맥 박리의 위험인자로 옳은 것은?', '대동맥 박리의 위험인자로 옳은 것은?'],
+  ['이 환자의 진단은 무엇인가?', '이 환자의 진단은?'],
+  ['검사로 가장 적절한 것은?', '검사는?'],
+];
+for (const [before, after] of rewrites) {
+  const got = rewriteForbiddenAsk(before);
+  check(`${before.slice(-22)} → ${after.slice(-16)}`, got === after, got);
+  check(`재작성 후 금지형이 아니다`, !hasForbiddenAsk(got));
+}
+for (const stem of allowed) check(`허용형은 그대로: ${stem.slice(-20)}`, rewriteForbiddenAsk(stem) === stem);
+check(
+  '지문 본문의 "가장 적절한"은 건드리지 않는다(발문만)',
+  rewriteForbiddenAsk('가장 적절한 처치를 시행하였다. 진단은?') === '가장 적절한 처치를 시행하였다. 진단은?',
+);
 
 console.log('\n난이도 정의(P4)');
 check('하/중/상 지시가 각각 인지 수준을 말한다', /난이도 하\(재인\)/.test(src) && /난이도 중\(적용\)/.test(src) && /난이도 상\(분석\)/.test(src));
