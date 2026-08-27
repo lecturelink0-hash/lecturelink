@@ -36,7 +36,9 @@ export type UploadNoticeCode =
   /** 참고 자료 중 형식을 읽지 못해 반영하지 못한 것이 있다. */
   | 'reference_ignored'
   /** 일시적 오류(요청 한도·API 오류)로 일부 묶음을 만들지 못했다. */
-  | 'transient_error';
+  | 'transient_error'
+  /** 고른 유형들의 문항 수가 목표 배분(5:5 등)과 다르게 나왔다. */
+  | 'type_mix';
 
 export interface UploadNotice {
   code: UploadNoticeCode;
@@ -65,7 +67,24 @@ export interface BuildNoticeInput {
   verifyRejected: number;
   /** 그림 없이도 풀려 폐기된 이미지 문항 수(P9). */
   blindDiscarded?: number;
+  /**
+   * 유형 배분 목표와 실제(유형별 문항 수). 두 유형 이상을 골랐을 때만 의미가 있다.
+   * 목표는 공급(정제 성공 이미지 수)을 반영한 뒤의 값이다 — 이미지가 모자라 텍스트로
+   * 옮긴 몫은 no_image 가 따로 알린다.
+   */
+  typeMix?: {
+    targets: { knowledge: number; clinical: number; image: number };
+    actual: { knowledge: number; clinical: number; image: number };
+    /** 사용자가 고른 유형 수. 1 이하면 알리지 않는다. */
+    selectedCount: number;
+  };
 }
+
+const TYPE_LABEL: Record<'knowledge' | 'clinical' | 'image', string> = {
+  knowledge: '지식형',
+  clinical: '임상형',
+  image: '이미지형',
+};
 
 /** 사용자에게 노출해도 되는 수준으로 실패 사유를 뭉뚱그린다. */
 function classifyFailure(reasons: string[]): 'rate_limit' | 'api_error' | null {
@@ -123,6 +142,26 @@ export function buildUploadNotices(input: BuildNoticeInput): UploadNotice[] {
       // (빈 슬라이드, 변환 실패, 지원하지 않는 형식) — 그때 무엇이 문제인지 알려 준다.
       detail: '글자를 읽을 수 있는 PDF·PPTX·DOCX 나 이미지 형식만 형식 참고에 반영돼요.',
     });
+  }
+
+  // 유형 배분이 목표와 다르면 알린다(2026-08-27 사용자 지적: 지식형·이미지형 요청이 8:2 로
+  // 나왔는데 화면에는 아무 표시가 없었다). 목표대로면 아무 말도 하지 않는다.
+  if (input.typeMix && input.typeMix.selectedCount >= 2) {
+    const { targets, actual } = input.typeMix;
+    const keys = ['knowledge', 'clinical', 'image'] as const;
+    const off = keys.filter((k) => targets[k] !== actual[k]);
+    if (off.length > 0) {
+      const fmt = (c: { knowledge: number; clinical: number; image: number }) =>
+        keys
+          .filter((k) => targets[k] > 0 || actual[k] > 0)
+          .map((k) => `${TYPE_LABEL[k]} ${c[k]}`)
+          .join(' · ');
+      notices.push({
+        code: 'type_mix',
+        count: off.reduce((sum, k) => sum + Math.abs(targets[k] - actual[k]), 0),
+        detail: `목표 ${fmt(targets)} → 실제 ${fmt(actual)}.`,
+      });
+    }
   }
 
   // 부족분이 없어도 배치가 실패했다면(보충이 메꾼 경우) 알려 준다 — 다음 생성이 느릴 수 있다.

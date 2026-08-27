@@ -37,6 +37,24 @@ import {
 } from './client';
 import { recordAiCost } from './cost-cap';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
+import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
+import {
+  planBatchQuotas,
+  planFillQuotas,
+  planTypeRepair,
+  planTypeTargets,
+  spillImageShortfall,
+  typeDeficits,
+  type BatchQuota,
+  type TypeCounts,
+  type TypeTargets,
+} from './type-plan';
+import {
+  CONDITIONS_REQUIRED,
+  countDistinctConditions,
+  effectiveDifficulty,
+  meetsRequestedLevel,
+} from './difficulty-conditions';
 import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
 import { buildUploadNotices } from './upload-notice';
 import {
@@ -578,10 +596,9 @@ function normalizeStemEnding(stem: string): string {
   return s;
 }
 
-/** 판독 대상이 되는 실제 임상 검사 유형. 발문-이미지 정합성 판단의 기준. */
-const CLINICAL_IMAGE_KINDS = new Set([
-  'xray', 'ct', 'mri', 'ecg', 'pathology', 'microscope', 'ultrasound',
-]);
+// CLINICAL_IMAGE_KINDS·stemModalityConflict 는 ./stem-modality 로 옮겼다(잎 모듈 — 회귀 검사
+// check:modality 가 부른다). 여기서는 재수출만 유지한다.
+export { stemModalityConflict };
 
 /**
  * 발문에서 내부 인덱스·메타 문구를 결정론적으로 제거한다.
@@ -611,32 +628,6 @@ export function sanitizeStemArtifacts(stem: string): string {
     '$1$2',
   );
   return s.trim();
-}
-
-/** 발문이 명시한 검사 유형들. 여러 개를 언급할 수 있으므로 전부 모은다. */
-const STEM_MODALITY_PATTERNS: Array<[string, RegExp]> = [
-  ['xray', /X-?ray|엑스레이|단순\s*방사선|흉부\s*방사선|흉부\s*단순촬영/i],
-  ['ct', /\bCT\b|전산화\s*단층/i],
-  ['mri', /\bMRI\b|자기공명/i],
-  ['ultrasound', /초음파|심초음파|\becho(?:cardiograph)?/i],
-  ['ecg', /심전도|\bECG\b|\bEKG\b/i],
-  ['pathology', /병리\s*소견|병리\s*사진|생검\s*소견/i],
-  ['microscope', /현미경\s*(?:소견|사진)/i],
-];
-
-/**
- * 발문이 말하는 검사와 실제로 붙은 이미지가 어긋나는지.
- *
- * 실측 사고: 발문은 "흉부 X-ray 에서 종격동 확장이 관찰된다"인데 붙은 이미지는
- * 심초음파였다 — 학생이 볼 때 발문과 그림이 따로 놀아 풀 수 없다.
- * 발문이 검사를 특정하지 않았거나(예: "다음 사진에서"), 이미지가 도해·기타 유형이면
- * 판단 근거가 없으므로 통과시킨다(과도한 연결 해제 방지).
- */
-export function stemModalityConflict(stem: string, kind: string): boolean {
-  if (!CLINICAL_IMAGE_KINDS.has(kind)) return false;
-  const mentioned = STEM_MODALITY_PATTERNS.filter(([, re]) => re.test(stem)).map(([k]) => k);
-  if (mentioned.length === 0) return false;
-  return !mentioned.includes(kind);
 }
 
 /**
@@ -1998,20 +1989,34 @@ export async function generatePrivateQuestionsFromUpload(
     // 값은 요청에 맞춰 올리라고 하지 않는다(A안 — 정직 신고). 모델이 만든 문항의 실제 수준을
     // 적게 하고, 서버가 요청값과 대조해 mismatch 를 센다. 강제 일치시키면 신고값이 요청값의
     // 사본이 되어 "요청대로 나왔는가"를 재는 신호가 사라진다.
+    //
+    // 2026-08-27 재정의(사용자 정의 채택). 종전 '상'은 "비전형·수치 해석·2단계 추론·예외 중
+    // **하나**를 포함"이었다 — 하나만 있어도 상이 되는 정의라, 실측(effbfdf0)에서 사실 하나를
+    // 묻는 재인 문항 7개가 3 으로 신고됐다. 정의를 **"서로 다른 조건·지식 N개를 결합해야만
+    // 풀린다"** 로 바꾸고(하 1·중 2·상 3+), 모델이 그 조건들을 `solution_conditions` 에 목록으로
+    // 신고하게 해 서버가 센다(difficulty-conditions.ts). 숫자 자기신고는 세지 않는다.
     const DIFFICULTY_DIRECTIVES: Record<'하' | '중' | '상', string> = {
       '하':
-        '**난이도 하(재인)**: 자료가 가르친 개념 하나를 그대로 묻는다 — 정의·대표 소견·1차 약물·' +
-        '대표 위험인자. 증례를 쓴다면 전형적인 양상으로만 쓰고, 소견 하나로 답이 정해지게 한다. ' +
-        '오답은 범주가 달라도 된다(명백히 다른 질환군).',
+        '**난이도 하(재인) — 조건·지식 1개로 풀리는 문항**: 자료가 가르친 개념 하나를 그대로 묻는다 — ' +
+        '정의·대표 소견·1차 약물·대표 위험인자. 증례를 쓴다면 전형적인 양상으로만 쓰고, 소견 하나로 답이 ' +
+        '정해지게 한다. 오답은 범주가 달라도 된다(명백히 다른 질환군). `solution_conditions` 는 1개다.',
       '중':
-        '**난이도 중(적용)**: 두 개 이상의 소견·조건을 통합해야 답이 나오게 한다 — 진단 후 표준 치료, ' +
+        '**난이도 중(적용) — 서로 다른 조건·지식 2개를 결합해야 풀리는 문항**: 진단 후 표준 치료, ' +
         '금기 하나를 반영한 약물 선택, 검사 결과와 증상의 결합. 감별 후보 2~3개가 실제로 경합해야 하고, ' +
-        '오답은 정답과 같은 범주(같은 장기·같은 약물군·같은 분류 축)에서 고른다.',
+        '오답은 정답과 같은 범주(같은 장기·같은 약물군·같은 분류 축)에서 고른다. ' +
+        '`solution_conditions` 에 그 2개를 각각 적는다.',
       '상':
-        '**난이도 상(분석)**: 비전형 양상, 검사 수치 해석(참고치 대비 방향), 2단계 추론(진단 → 다음 검사·처치), ' +
-        '예외·금기·용량 조절 중 하나를 반드시 포함한다. 오답은 정답과 소견 한두 개 차이로 갈리게 만든다. ' +
-        '다만 자료가 뒷받침하지 않는 수치·소견을 지어내면서까지 어렵게 만들지는 않는다 — ' +
-        '그럴 땐 감별을 좁히는 조건을 지문에 더 넣어 난이도를 올린다.',
+        '**난이도 상(분석) — 서로 다른 조건·지식 3개 이상을 결합해야만 정답 하나로 좁혀지는 문항**. ' +
+        '조건은 서로 독립이어야 한다: 어느 하나를 빼면 다른 선지도 가능해져야 진짜 조건이다. ' +
+        '결합의 예 — 증례형: 증상 + 검사 수치(참고치 대비 방향) + 병력·금기 → 처치 / ' +
+        '지식형: 원칙 + 그 원칙이 뒤집히는 예외 조건 + 수치·경계 기준 / ' +
+        '이미지형: 그림에서 읽은 소견 + 지문 조건 2개 이상 → 진단을 넘어 다음 검사·처치. ' +
+        '**사실 하나·기전 하나·기준 하나를 묻는 문항은 상이 아니다** — 그것은 재인(하)이다. ' +
+        '오답은 정답과 조건 한 개 차이로 갈리게 만든다(조건 하나를 무시하면 고르게 되는 선지). ' +
+        '자료의 여러 슬라이드에 흩어진 사실·기준·예외를 **결합하는 것은 "자료에 없는 내용 추가"가 아니다** — ' +
+        '오히려 상 문항의 기본 재료다. 다만 자료에 없는 수치·소견을 지어내지는 않는다. ' +
+        '`solution_conditions` 에 3개 이상을 적을 수 없다면 그 문항은 아직 상이 아니니, 조건을 더 넣어 ' +
+        '다시 쓴다. 서버가 목록의 고유 항목 수를 세어 3개 미만이면 다시 만들게 한다.',
     };
     // 지식형에 적용할 난이도 지침 — 위 정의는 증례 언어로 쓰여 있어 지식형에는 '상'이 없다.
     //
@@ -2027,14 +2032,32 @@ export async function generatePrivateQuestionsFromUpload(
         '지식형에서는 두 개념의 관계를 묻는다 — 기전이 증상으로 이어지는 경로, 분류에 따라 달라지는 처치 원칙, ' +
         '검사 소견이 가리키는 병태.',
       '상':
-        '지식형에서 난이도 3은 증례 없이도 만들 수 있다. 다음 중 하나를 쓴다: ' +
-        '**(a) 예외·금기** — 원칙이 뒤집히는 조건(“이 약을 단독으로 쓰면 안 되는 이유는?”), ' +
-        '**(b) 경계 수치** — 판단이 갈리는 값과 그 근거(“수술을 고려하는 직경 기준은?”), ' +
-        '**(c) 기전의 하위 단계** — 한 단계 더 들어간 물음(“이 손상이 일어나는 벽의 층은?”), ' +
-        '**(d) 유사 개념 감별** — 헷갈리는 두 개념을 가르는 결정적 차이 하나, ' +
+        '지식형에서 난이도 3은 증례 없이도 만들 수 있다 — **자료의 서로 다른 사실 3개 이상을 결합해야 답이 ' +
+        '갈리게** 한다. 결합 재료는 다음에서 고른다: ' +
+        '**(a) 예외·금기** — 원칙이 뒤집히는 조건, ' +
+        '**(b) 경계 수치** — 판단이 갈리는 값과 그 근거, ' +
+        '**(c) 기전의 하위 단계** — 한 단계 더 들어간 물음, ' +
+        '**(d) 유사 개념 감별** — 헷갈리는 두 개념을 가르는 결정적 차이, ' +
         '**(e) 흔한 오개념 정면 겨냥** — 학생이 반대로 알기 쉬운 방향을 정답이 가르게 한다. ' +
+        '재료 하나만 쓴 문항(“수술을 고려하는 직경 기준은?”, “…의 기전은?”)은 상이 아니라 하다. ' +
+        '상은 재료를 **발문의 조건으로 명시해 결합을 요구**한다 — 예: “Stanford A형이면서 급성 대동맥판 ' +
+        '역류를 동반하고 직경이 5.5 cm 를 넘는 경우 치료 원칙은?” 처럼 분류 + 동반 소견 + 수치 기준 ' +
+        '세 조건을 모두 써야 한 선지로 좁혀진다. ' +
         '오답 4개는 모두 “그럴듯한데 한 조건에서 틀린” 진술이어야 한다. ' +
         '증례를 붙여 어렵게 만들려 하지 않는다 — 그건 임상형의 몫이다.',
+    };
+    // 이미지형 난이도 지침 — 위 정의만으로는 "그림에서 읽은 소견 하나 = 정답"인 판독 문항이
+    // 상으로 신고된다. 그림 소견은 조건 **하나**이고, 상이 되려면 지문 조건 2개가 더 필요하다.
+    const IMAGE_DIFFICULTY_DIRECTIVES: Record<'하' | '중' | '상', string> = {
+      '하': '이미지형에서는 그림에서 읽은 소견 하나로 답이 정해지게 한다(소견 지목·구조 지목).',
+      '중':
+        '이미지형에서는 그림에서 읽은 소견 + 지문 조건 1개(증상·수치·병력)를 결합해 진단이 갈리게 한다.',
+      '상':
+        '이미지형에서 난이도 3은 **그림에서 읽은 소견 1개 + 지문 조건 2개 이상**(증상·검사 수치·병력·금기)을 ' +
+        '결합해야 풀리는 문항이다 — 그림으로 진단을 좁힌 뒤 지문 조건으로 다음 검사·처치·수술 시점까지 ' +
+        '묻는 2단계 구조가 전형이다. 그림을 가려도 못 풀어야 하고(그림 소견이 필수 조건), 동시에 그림 ' +
+        '하나만으로 답이 정해져도 안 된다(지문 조건도 필수). 그림에서 읽은 소견을 지문에 글로 옮겨 ' +
+        '적지 않는다.',
     };
     // 요청 난이도의 정수 대응(1/2/3) — 모델 신고값과 대조해 mismatch 를 센다(P4).
     const requestedDifficultyLevel: 1 | 2 | 3 | null =
@@ -2044,8 +2067,11 @@ export async function generatePrivateQuestionsFromUpload(
         // 지식형을 고른 요청에만 붙인다. 임상형만 고른 요청에 붙이면 "증례 없이" 지침이
         // 증례 문항까지 눌러 임상형이 약해진다(규격 첨부와 같은 원칙).
         (wantsKnowledge ? `\n${KNOWLEDGE_DIFFICULTY_DIRECTIVES[input.difficulty]}` : '') +
-        '\n각 문항의 `difficulty` 에는 **요청 난이도가 아니라 그 문항이 실제로 요구하는 수준**' +
-        '(1=재인, 2=적용, 3=분석)을 정직하게 적는다. 요청에 맞추려고 값을 올리거나 내리지 않는다.'
+        (wantsImages ? `\n${IMAGE_DIFFICULTY_DIRECTIVES[input.difficulty]}` : '') +
+        '\n각 문항의 `solution_conditions` 에 **정답을 확정하는 데 결합해야 하는 서로 다른 조건·지식**을 ' +
+        '각각 한 구절로 적고, `difficulty` 에는 **요청 난이도가 아니라 그 목록의 고유 항목 수가 말하는 수준**' +
+        '(1개=1 재인, 2개=2 적용, 3개 이상=3 분석)을 정직하게 적는다. 요청에 맞추려고 값을 올리거나 내리지 않는다. ' +
+        '목록을 부풀리지도 않는다 — 서버는 숫자가 아니라 목록을 센다.'
       : '';
     const typeDirectives: Record<string, string> = {
       // 종전에는 이 한 줄이 지식형 규격 전부였다(임상형에는 C0~C11, 이미지형에는 가림 검사가
@@ -2167,14 +2193,22 @@ export async function generatePrivateQuestionsFromUpload(
     //   그 배치의 문항이 통째로 요청과 다른 텍스트 문항이 되기 때문이다. 바로 위 근거대로
     //   임계 경로는 "추출→정제→이미지 배치 1개"라, 선발사를 빼도 총 소요는 사실상 그대로다
     //   (남은 배치들은 GEN_CONCURRENCY 안에서 서로 병렬로 돈다).
-    const imageQuestionTarget = wantsImages
-      ? Math.min(
-          selectedTypes.length <= 1
-            ? desiredCount
-            : Math.ceil(desiredCount / selectedTypes.length),
-          featuredCap * MAX_QUESTIONS_PER_IMAGE,
-        )
-      : 0;
+    //
+    // ── 전역 유형 계획 (2026-08-27 · type-plan.ts)
+    //
+    // 종전에는 이미지 목표만 여기서 계산하고(그마저 묶음 예약에만 썼다) 묶음 안 쿼터는
+    // "유형 수로 나눈 몫(최소 1)"을 따로 또 계산했다. 유형 수로 두 번 나눈 셈이라 지식형·
+    // 이미지형 10문항이 설계상 이미지 최대 3, 실측 8:2 로 나왔다. 이제 전역 목표(5:5, 3:4:3 …)를
+    // 먼저 정하고 묶음 쿼터는 그 합이 정확히 맞도록 나눈다.
+    // 이미지 공급 상한은 "확보 가능 장수 × 장당 문항 수"다. 정제 탈락으로 실제 공급이 더 적으면
+    // 묶음 시작 시 spillImageShortfall 이 그 몫을 텍스트 유형으로 옮기고, 저장 뒤 유형 비율
+    // 교정이 최종 공급 기준으로 목표를 다시 잰다.
+    const typeTargets: TypeTargets = planTypeTargets(
+      desiredCount,
+      selectedTypes,
+      wantsImages ? featuredCap * MAX_QUESTIONS_PER_IMAGE : 0,
+    );
+    const imageQuestionTarget = typeTargets.image;
     // 이미지형 **단독** 요청이면 텍스트 전용 묶음을 하나도 남기지 않는다.
     //
     // 종전에는 상한이 `batchSizes.length - 1` 이고 선발사도 `Math.max(1, …)` 로 최소 1묶음을
@@ -2194,6 +2228,12 @@ export async function generatePrivateQuestionsFromUpload(
       : wantsImages
         ? Math.max(imageOnly ? 0 : 1, batchSizes.length - imageBatchesNeeded)
         : batchSizes.length;
+    // 이미지를 받을 수 있는 묶음 = 선발사가 아닌 묶음(선발사는 추출 전에 출발한다).
+    const imageEligible = batchSizes.map((_, i) => wantsImages && i >= prefireCount);
+    // 묶음별 유형 쿼터 — 합이 묶음 크기와 같고, 전 묶음의 합이 전역 목표와 같다.
+    const batchQuotas: BatchQuota[] = planBatchQuotas(batchSizes, typeTargets, imageEligible);
+    const EMPTY_QUOTA: BatchQuota = { image: 0, knowledge: 0, clinical: 0, free: 0 };
+    const quotaFor = (batchIndex: number): BatchQuota => batchQuotas[batchIndex] ?? EMPTY_QUOTA;
 
     // 조기 텍스트는 슬라이드 라벨 없이 한 덩어리로 오므로, 구간 분할은 문자 기준으로 한다.
     const prefireSegments =
@@ -2242,28 +2282,23 @@ export async function generatePrivateQuestionsFromUpload(
     // 임상형 단독 선택이면 배치 전 문항이 임상형이어야 하고, 다른 유형과 섞이면 유형 수로
     // 나눈 몫(최소 1)을 요구한다. 이미지 문항도 증례형일 수 있으므로 imageQuota 와
     // 서로 자리를 다투지 않는다(증례 + 사진 판독은 국시의 기본형이다).
-    const clinicalQuotaFor = (batchSize: number): number => {
-      if (!wantsClinical) return 0;
-      if (selectedTypes.length <= 1) return batchSize;
-      return Math.max(1, Math.min(batchSize, Math.ceil(batchSize / selectedTypes.length)));
-    };
+    //
+    // 2026-08-27: 수치는 이제 전역 계획(batchQuotas)에서 온다 — 종전의 "유형 수로 나눈 몫(최소 1)"은
+    // 묶음마다 독립이라 합이 목표와 맞지 않았다(위 전역 유형 계획 주석 참조).
+    // (임상형 쿼터는 quotaFor(i).clinical 로 직접 읽는다 — 배치 함수가 spill 반영값을 쓴다.)
 
-    // 배치의 "지식형 최소 수" — clinicalQuotaFor 와 같은 이유(병렬 배치의 독립 판단).
-    const knowledgeQuotaFor = (batchSize: number): number => {
-      if (!wantsKnowledge) return 0;
-      if (selectedTypes.length <= 1) return batchSize;
-      return Math.max(1, Math.min(batchSize, Math.ceil(batchSize / selectedTypes.length)));
-    };
+    // 배치의 "지식형 최소 수" — 임상형과 같은 이유(병렬 배치의 독립 판단). 발문 유형 배정에 쓴다.
+    const knowledgeQuotaFor = (batchIndex: number): number => quotaFor(batchIndex).knowledge;
 
     // 발문 유형(ask_kind) 배분.
     //
     // "한 묶음 안에서 유형을 겹치지 말라"는 지시만으로는 배치 간 중복을 못 막는다 — 배치는
     // 서로를 못 보므로 전부 '치료'와 '총론'으로 몰린다(실측: 치료 28 %·총론 23 % vs 기전 2 %).
     // 조합형·표식과 같은 방식으로 **코드가 배치마다 다른 유형을 배정**한다.
-    const knowledgeAskPlan = (batchIndex: number, batchSize: number): string[] => {
+    const knowledgeAskPlan = (batchIndex: number, quota: number): string[] => {
       if (!wantsKnowledge) return [];
       const pool = KNOWLEDGE_ASK_KINDS;
-      const need = Math.max(1, knowledgeQuotaFor(batchSize));
+      const need = Math.max(1, quota);
       // 배치의 시작점을 **누적 슬롯 수**로 잡는다.
       //
       // 종전 `batchIndex * need` 는 배치 크기가 쿼터와 다르면(혼합 유형 요청) 시작점이
@@ -2272,7 +2307,7 @@ export async function generatePrivateQuestionsFromUpload(
       // 첫 7칸이 7종을 모두 덮은 뒤에 순환한다.
       const consumed = batchSizes
         .slice(0, batchIndex)
-        .reduce((sum, size) => sum + Math.max(1, knowledgeQuotaFor(size)), 0);
+        .reduce((sum, _size, i) => sum + Math.max(1, knowledgeQuotaFor(i)), 0);
       const start = consumed % pool.length;
       return Array.from({ length: Math.min(need, pool.length) }, (_, k) => pool[(start + k) % pool.length]);
     };
@@ -2304,9 +2339,8 @@ export async function generatePrivateQuestionsFromUpload(
             featured: [],
             getDisplayPng: async () => null,
             segmented: prefireSegmented,
-            clinicalQuota: clinicalQuotaFor(batchSizes[batchIndex]),
-            knowledgeQuota: knowledgeQuotaFor(batchSizes[batchIndex]),
-            knowledgeAskKinds: knowledgeAskPlan(batchIndex, batchSizes[batchIndex]),
+            plannedQuota: quotaFor(batchIndex),
+            knowledgeAskKinds: knowledgeAskPlan(batchIndex, knowledgeQuotaFor(batchIndex)),
             allowNegativeAsk: negativeBatches.has(batchIndex),
           }).then(
             (v): SettledBatch => ({ ok: true, v }),
@@ -2318,7 +2352,9 @@ export async function generatePrivateQuestionsFromUpload(
     // P3·P4 계획값 — 결과(배치별 forbiddenAsk·askKinds·difficultyMismatch)와 대조해 읽는다.
     diag.generation.requestedDifficultyLevel = requestedDifficultyLevel;
     diag.generation.negativeBatches = [...negativeBatches];
-    diag.generation.knowledgeQuotaPerBatch = batchSizes.map((n) => knowledgeQuotaFor(n));
+    diag.generation.knowledgeQuotaPerBatch = batchSizes.map((_, i) => knowledgeQuotaFor(i));
+    diag.generation.typeTargets = typeTargets;
+    diag.generation.batchQuotas = batchQuotas;
     diag.generation.prefireCount = prefireCount;
     diag.generation.prefireSegments = prefireSegments;
     diag.generation.imageQuestionTarget = imageQuestionTarget;
@@ -2956,6 +2992,8 @@ export async function generatePrivateQuestionsFromUpload(
       difficulty: 1 | 2 | 3;
       /** P3 — 발문 유형(definition·mechanism·diagnosis…). 모델이 신고하고 저장·측정에 쓴다. */
       ask_kind?: string | null;
+      /** 정답을 확정하는 데 결합해야 하는 조건·지식 목록 — 난이도의 구조적 근거(difficulty-conditions.ts). */
+      solution_conditions?: unknown;
       image_indices: number[];
       sub_topic_code: string | null;
     };
@@ -2991,20 +3029,21 @@ export async function generatePrivateQuestionsFromUpload(
        * 붙잡지 않게 한다. 반환값에는 정제에 성공한 이미지만 담긴다.
        */
       resolveFeatured?: () => Promise<BatchImage[]>;
-      /** 정제 후 확정된 장수로 이미지 문항 최소 수를 다시 계산한다(정제 탈락 반영). */
+      /**
+       * 정제 후 확정된 장수로 이미지 문항 수를 다시 계산한다(정제 탈락 반영).
+       * 없으면 `min(plannedQuota.image, 확정 장수 × MAX_QUESTIONS_PER_IMAGE)` 를 쓴다.
+       */
       imageQuotaFor?: (featuredLen: number, batchSize: number) => number;
       getDisplayPng: (gi: number) => Promise<DisplayImage | null>;
       /**
-       * 이 배치에서 "환자 증례로 시작하는" 임상형 문항의 최소 수.
-       * imageQuota 와 같은 이유로 정량 지시가 필요하다 — 정성 지시만으로는 배치가
-       * 독립 판단해 임상형이 0개인 배치가 나온다(실측: 임상형 10문항 전부 지식형).
+       * 이 묶음의 유형 쿼터(전역 계획 type-plan.ts 에서 배분). 합 = 묶음 크기.
+       *
+       * 정량 지시가 필요한 이유: 정성 지시("고르게 배분")만으로는 배치가 병렬로 독립
+       * 판단해 임상형이 0개인 배치가 나온다(실측: 임상형 10문항 전부 지식형). 그리고
+       * 묶음별 "최소 1"만으로는 합이 목표와 안 맞는다(실측: 지식형·이미지형 요청이 8:2).
+       * 이미지 공급이 계획보다 적으면 묶음 시작 시 그 몫을 텍스트 유형으로 옮긴다.
        */
-      clinicalQuota?: number;
-      /**
-       * 이 배치에서 K0~K7 규격의 지식형으로 만들 최소 문항 수(P3).
-       * clinicalQuota 와 같은 이유로 정량 지시가 필요하다.
-       */
-      knowledgeQuota?: number;
+      plannedQuota: BatchQuota;
       /** 이 배치에 배정된 지식형 발문 유형(ask_kind) — 배치 간 유형 편중을 코드가 막는다. */
       knowledgeAskKinds?: readonly string[];
       /** 이 배치에서 부정형("옳지 않은 것은?") 발문을 허용하는지. */
@@ -3020,13 +3059,6 @@ export async function generatePrivateQuestionsFromUpload(
        * "구간을 스스로 골라 출제하라"는 문구를 쓰지 않는다(이미 구간만 받았으므로).
        */
       segmented?: boolean;
-      /**
-       * 이 배치에서 "이미지를 직접 판독해야 풀 수 있는" 문항의 최소 수.
-       * 시스템 프롬프트의 '확신이 없으면 image_indices 를 빈 배열로' 지시가 이미지형
-       * 요청에서도 모델을 보수적으로 만들어, 이미지를 받은 배치조차 텍스트 문항만
-       * 만드는 일이 잦았다 — 정량 지시로 강제한다. 0 이면 지시하지 않는다.
-       */
-      imageQuota?: number;
     };
 
     // 진단 카운터. generateAndPersistBatch 가 선발사 경로에서 일찍 호출되므로
@@ -3050,14 +3082,21 @@ export async function generatePrivateQuestionsFromUpload(
       const tWait = Date.now();
       const featured = gen.resolveFeatured ? await gen.resolveFeatured() : gen.featured;
       const imageWaitMs = Date.now() - tWait;
-      const imageQuota = gen.imageQuotaFor
-        ? gen.imageQuotaFor(featured.length, batchSize)
-        : (gen.imageQuota ?? 0);
+      // 이미지 문항 수는 계획값을 실제 공급(정제 성공 장수 × 장당 문항 수)으로 조인다.
+      // 모자란 몫은 텍스트 유형으로 옮겨 묶음 크기를 그대로 채운다(비율은 저장 뒤 교정이 다시 잰다).
+      const imageQuota = Math.min(
+        batchSize,
+        gen.imageQuotaFor
+          ? gen.imageQuotaFor(featured.length, batchSize)
+          : Math.min(gen.plannedQuota.image, featured.length * MAX_QUESTIONS_PER_IMAGE),
+      );
+      const quota = spillImageShortfall(gen.plannedQuota, imageQuota, selectedTypes);
       const batchDiag: Record<string, unknown> = {
         i: batchIndex,
         size: batchSize,
         images: featured.length,
         imageWaitMs,
+        quota,
       };
       const validImageIndex = (i: number) => i >= 0 && i < featured.length;
       const { data: existingBatch, error: existingBatchError } = await admin
@@ -3117,7 +3156,16 @@ export async function generatePrivateQuestionsFromUpload(
       // 표식이 찍힌 이미지가 몇 장인지 — 배치 지시문의 표식 문항 요구에 쓴다.
       let markedImageCount = 0;
       for (let i = 0; i < featured.length; i++) {
-        userContent.push({ type: 'text', text: `[이미지 ${i}] (필수 자료에서 커팅)` });
+        // 종류를 라벨에 적어 준다. 모델이 그림 종류를 스스로 판단하면 MRI 를 두고 "X-ray와 MR",
+        // 초음파를 두고 "CT 영상에서"라고 쓴다(2026-08-27 실측). 발문이 다른 검사명을 쓰면
+        // 저장 단계의 모달리티 정합 검사가 이미지를 떼어 내고, 그 문항은 폐기·보충으로 간다 —
+        // 예방이 훨씬 싸다.
+        userContent.push({
+          type: 'text',
+          text:
+            `[이미지 ${i}] (필수 자료에서 커팅 · 종류: ${imageKindLabel(featured[i].c.region.kind)}) — ` +
+            '발문에서 검사 종류를 말할 때는 이 종류만 씁니다. 다른 검사명(예: 이 그림이 MRI 인데 "X-ray")을 붙이지 않습니다.',
+        });
         userContent.push({
           type: 'image',
           source: {
@@ -3147,9 +3195,14 @@ export async function generatePrivateQuestionsFromUpload(
                 `다른 묶음이 나머지 구간을 담당하므로, 제시된 근거 안에서만 출제하고 정확히 지정된 수만큼 만드세요.`
               : `\n\n이번 묶음은 전체 출제 계획 ${batchCount}묶음 중 ${batchIndex + 1}번째 묶음입니다. ` +
                 `자료를 ${batchCount}개 구간으로 나눴을 때 ${batchIndex + 1}번째 구간의 내용을 우선 출제해 다른 묶음과의 중복을 피하고, 정확히 지정된 수만큼 만드세요.`) +
-            (batchIndex === 0
-              ? ' 핵심·기본 개념 문항을 포함하세요.'
-              : ' 전형적인 기본 정의 문항보다 응용·감별 문항을 우선하세요.');
+            // 요청 난이도가 상이면 첫 묶음에도 "기본 개념 문항"을 시키지 않는다 — 그 한 줄이
+            // 난이도 지시와 정면으로 충돌해 첫 묶음이 재인 문항(1·2)으로 나왔다(2026-08-27 실측
+            // effbfdf0 묶음 1: difficulty 1, 2). 프롬프트 충돌은 모델이 조용히 쉬운 쪽으로 물러선다.
+            (requestedDifficultyLevel === 3
+              ? ' 요청 난이도가 상이므로 기본 정의·재인 문항은 만들지 말고, 모든 문항이 조건 3개 이상을 결합하게 하세요.'
+              : batchIndex === 0
+                ? ' 핵심·기본 개념 문항을 포함하세요.'
+                : ' 전형적인 기본 정의 문항보다 응용·감별 문항을 우선하세요.');
       // 초점 배정(P11) — "N번째 구간을 우선하라"는 말만으로는 배치들이 같은 증례를 만든다.
       // 같은 텍스트를 받은 모델들이 각자 고른 "N번째 구간"은 서로 다르지 않기 때문이다.
       // 자료의 소제목을 코드가 겹치지 않게 나눠 주고, 다른 묶음 몫도 함께 알려 준다.
@@ -3227,11 +3280,11 @@ export async function generatePrivateQuestionsFromUpload(
                 : '');
       // 임상형 정량 지시. 이미지 유무와 무관하므로 noImageDirective 바깥에 둔다
       // (안에 두면 이미지를 못 받은 텍스트 배치가 이 지시를 통째로 놓친다).
-      const clinicalDirective = buildClinicalQuotaDirective(batchSize, gen.clinicalQuota ?? 0);
+      const clinicalDirective = buildClinicalQuotaDirective(batchSize, quota.clinical);
       // 지식형 정량 지시(P3) — 배정된 발문 유형·부정형 허용 여부까지 숫자로 못박는다.
       const knowledgeDirective = buildKnowledgeQuotaDirective({
         batchSize,
-        quota: gen.knowledgeQuota ?? 0,
+        quota: quota.knowledge,
         assignedAskKinds: gen.knowledgeAskKinds ?? [],
         allowNegative: gen.allowNegativeAsk ?? false,
       });
@@ -3506,6 +3559,90 @@ export async function generatePrivateQuestionsFromUpload(
         batchDiag.imageAttachedAfterFix = countAttached(kept);
       }
 
+      // ── 난이도 구조 검사(조건 수) → 1회 교정 재생성 (2026-08-27)
+      //
+      // 종전에는 난이도를 숫자 자기신고로만 받고 서버는 요청값과의 불일치를 세기만 했다.
+      // 실측(effbfdf0, 요청 '상'): 10문항 중 7문항이 3 을 신고했지만 전부 사실 하나를 묻는
+      // 재인 문항이었다 — 자기 답을 자기가 채점하는 검사는 통과율 100 %로 수렴한다.
+      // 이제 `solution_conditions` 의 고유 항목 수를 세고(difficulty-conditions.ts), 요청 수준이
+      // 요구하는 개수(중 2·상 3)에 못 미치는 문항이 있으면 **모자란 문항 수와 필요한 조건 수를
+      // 숫자로 지목해** 한 번만 다시 받는다. 이미지 쿼터 교정과 같은 원칙 — 좋아졌을 때만
+      // 채택하고(이미지 부착 수도 잃지 않을 때만), 재생성은 배치당 최대 1회다.
+      if (requestedDifficultyLevel !== null && requestedDifficultyLevel >= 2) {
+        const need = CONDITIONS_REQUIRED[requestedDifficultyLevel];
+        const countMeeting = (list: KeptItem[]) =>
+          list.filter((k) => meetsRequestedLevel(k.q.solution_conditions, requestedDifficultyLevel)).length;
+        const meetingBefore = countMeeting(kept);
+        batchDiag.difficultyNeed = need;
+        batchDiag.difficultyMeeting = meetingBefore;
+        if (meetingBefore < kept.length) {
+          const short = kept.length - meetingBefore;
+          bumpGenDiag('difficultyShortfall');
+          warnings.push(
+            `배치 ${batchIndex + 1}: 요청 난이도 ${input.difficulty}(조건 ${need}개 이상)를 만족하는 문항이 ` +
+              `${meetingBefore}/${kept.length} — 1회 교정 재생성.`,
+          );
+          userContent.push({
+            type: 'text',
+            text:
+              `방금 만든 ${kept.length}문항 중 ${short}문항은 정답을 확정하는 데 결합해야 하는 서로 다른 ` +
+              `조건·지식이 ${need}개 미만이었습니다(요청 난이도 ${input.difficulty}). ` +
+              `같은 근거로 ${batchSize}문항을 다시 만들되, **모든 문항이 서로 다른 조건·지식 ${need}개 ` +
+              `이상을 결합해야만 정답 하나로 좁혀지게** 만드세요. 어느 조건 하나를 빼면 다른 선지도 ` +
+              `가능해져야 진짜 조건입니다. 사실 하나·기전 하나·기준 하나를 묻는 문항은 안 됩니다. ` +
+              `조건을 늘리려고 자료에 없는 수치·소견을 지어내지 말고, 자료의 다른 슬라이드에 있는 ` +
+              `분류·예외·수치 기준·동반 소견을 발문의 조건으로 명시해 결합하세요. ` +
+              `각 문항의 solution_conditions 에 그 조건들을 각각 적으세요(${need}개 이상). ` +
+              `이미지 판독 문항 수·유형 배분·발문 규칙은 그대로 지키세요.`,
+          });
+          try {
+            const tFix = Date.now();
+            const fixRes = await callGenerate(genMaxTokens);
+            batchDiag.difficultyFixMs = Date.now() - tFix;
+            const fixCost = calculateCost(
+              modelUsed,
+              fixRes.usage.input_tokens,
+              fixRes.usage.output_tokens,
+              fixRes.usage.cache_read_input_tokens ?? 0,
+              fixRes.usage.cache_creation_input_tokens ?? 0,
+            );
+            totalCost += fixCost;
+            aggInputTokens += fixRes.usage.input_tokens;
+            aggOutputTokens += fixRes.usage.output_tokens;
+            await recordAiCost({
+              userId: input.userId,
+              endpoint: 'private.generate',
+              model: modelUsed,
+              costUsd: fixCost,
+              inputTokens: fixRes.usage.input_tokens,
+              outputTokens: fixRes.usage.output_tokens,
+              metadata: { uploadId: uploadRow.id, batch: batchIndex + 1, difficultyFix: true },
+            });
+            const fixBlock = fixRes.content.find(
+              (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+            );
+            const fixParsed = fixBlock?.input as { questions?: GeneratedQuestion[] } | undefined;
+            if (Array.isArray(fixParsed?.questions) && fixParsed.questions.length > 0) {
+              const fixKept = buildKept(fixParsed.questions);
+              // 난이도가 좋아졌고 이미지 부착 수를 잃지 않을 때만 갈아끼운다.
+              if (
+                fixKept.length > 0 &&
+                countMeeting(fixKept) > meetingBefore &&
+                countAttached(fixKept) >= countAttached(kept)
+              ) {
+                kept = fixKept;
+                bumpGenDiag('difficultyFixed');
+              }
+            }
+          } catch (e) {
+            warnings.push(
+              `난이도 교정 재생성 실패 — 원본 유지. ${e instanceof Error ? e.message.slice(0, 120) : String(e)}`,
+            );
+          }
+          batchDiag.difficultyMeetingAfterFix = countMeeting(kept);
+        }
+      }
+
       /**
        * 사후 검사(의학 검증·블라인드 풀이)로 이 묶음의 문항이 **전부** 걸러졌을 때의 반환.
        *
@@ -3660,6 +3797,10 @@ export async function generatePrivateQuestionsFromUpload(
               // 표식이 허용된 묶음은 본 배치 지시가 이미 최대 1문항을 허용하고 있다.
               `- **표식(A·B·C…)을 가리키는 문항은 만들지 마세요.** "A로 표시된 …" 형태 대신, ` +
               `그림에서 직접 보이는 소견으로 물으세요.\n` +
+              // 재작성본이 그림 종류와 다른 검사명을 쓰면 저장 단계에서 이미지가 떨어져 나간다
+              // (2026-08-27 실측: MRI 크롭에 "흉부 X-ray와 MR 영상에서" — 그림 없는 문항으로 노출).
+              `- 발문에서 검사 종류를 말할 때는 [이미지 N] 라벨에 적힌 **그 종류만** 쓰세요. ` +
+              `그림이 MRI 면 "X-ray"·"CT" 같은 다른 검사명을 함께 쓰지 않습니다.\n` +
               `- image_indices 에 그 이미지 번호를 반드시 넣으세요.`,
           });
           const res = await callGenerate(genMaxTokens);
@@ -3953,7 +4094,9 @@ export async function generatePrivateQuestionsFromUpload(
           answer_index: k.answerIndex,
           explanation,
           concepts: k.q.concepts ?? [],
-          difficulty: k.q.difficulty,
+          // 신고값과 조건 수 기반 수준 중 낮은 쪽(difficulty-conditions.ts). "3 이라고 적었지만
+          // 조건은 하나"인 문항이 상으로 저장되던 것을 막는다.
+          difficulty: effectiveDifficulty(k.q.difficulty, k.q.solution_conditions),
           generation_slot: slots[questionIndex],
           kind,
           // P3 — 모델이 신고한 발문 유형. 카탈로그 밖 값은 버린다(오탈자·창작 방지).
@@ -3990,7 +4133,9 @@ export async function generatePrivateQuestionsFromUpload(
         if (requestedDifficultyLevel !== null) {
           const mismatched = rows.filter((r) => r.difficulty !== requestedDifficultyLevel).length;
           batchDiag.difficultyMismatch = mismatched;
-          batchDiag.difficultyReported = rows.map((r) => r.difficulty);
+          batchDiag.difficultyReported = kept.map((k) => k.q.difficulty);
+          batchDiag.difficultyStored = rows.map((r) => r.difficulty);
+          batchDiag.conditionCounts = kept.map((k) => countDistinctConditions(k.q.solution_conditions));
         }
       }
 
@@ -4000,7 +4145,7 @@ export async function generatePrivateQuestionsFromUpload(
       // 보기 전에는 아무도 모른다(그래서 2026-08-16 에 사용자가 먼저 발견했다).
       // 고치지는 않는다: 지문을 자동으로 증례로 바꾸는 것은 의학 내용을 발명하는 일이라
       // 코드가 할 수 없다. 대신 세어서 경고·진단으로 남겨 회귀를 즉시 드러낸다.
-      const clinicalQuota = gen.clinicalQuota ?? 0;
+      const clinicalQuota = quota.clinical;
       if (clinicalQuota > 0) {
         const yieldStat = measureClinicalYield(
           rows.map((r) => r.stem),
@@ -4213,19 +4358,25 @@ export async function generatePrivateQuestionsFromUpload(
         if (imageError) warnings.push(`이미지 연결 저장 실패 — ${imageError.message}`);
       }
 
-      // 텍스트 제거 실패로 이미지가 제외된 문항 처리.
+      // 이미지가 결국 하나도 연결되지 않은 문항 처리(정제 실패·업로드 실패·모달리티 불일치).
       // 발문이 그림을 가리키는(그림 없이는 못 푸는) 문항만 삭제하고, 텍스트만으로 완결된
       // 문항은 이미지 연결만 빠진 채로 살린다 — 불필요한 삭제는 요청 수 미달과
       // 보충 생성(수십 초 추가)을 유발한다.
+      //
+      // 판정 기준은 **실제로 저장한 연결(imageRows)** 이다. 종전에는 "Storage 업로드가
+      // 됐는가"(indexToPath)로 봤는데, 모달리티 불일치 해제는 업로드 **뒤** 연결 단계에서
+      // 일어나므로 그 문항이 이 검사를 통과했다 — 2026-08-27 실측(effbfdf0 슬롯 7): 그림을
+      // 가리키는 발문이 이미지 없이 저장돼 학생 화면에 나갔다.
+      const linkedQuestionIds = new Set(imageRows.map((r) => r.private_question_id));
       const orphanIds: string[] = [];
       kept.forEach(({ q }, qi) => {
         const idx = (q.image_indices ?? []).filter(validImageIndex);
         if (idx.length === 0) return;
-        // 살아남은 이미지가 하나라도 있으면 유지 (그 문항이 실제로 쓰는 판 기준).
-        if (idx.some((i) => indexToPath.has(`${i}:${wantsMarked(q.stem)}`))) return;
         const qid = inserted[qi]?.id;
         if (!qid) return;
+        if (linkedQuestionIds.has(qid)) return;
         if (stemDependsOnImage(q.stem)) {
+          bumpGenDiag('imageLostOrphanDeleted');
           orphanIds.push(qid);
         } else {
           warnings.push('이미지가 제외됐지만 발문이 텍스트만으로 완결돼 문항은 유지.');
@@ -4364,14 +4515,13 @@ export async function generatePrivateQuestionsFromUpload(
     // 배치의 "이미지 판독 문항 최소 수". 단독 선택이면 배치 전 문항이 목표, 유형 혼합이면
     // 유형 비중만큼(최소 1). 배정된 이미지의 재사용 상한(장당 MAX_QUESTIONS_PER_IMAGE)을
     // 넘는 강제는 하지 않는다 — 초과분은 저장 후 정리에서 삭제돼 오히려 문항을 잃는다.
-    const imageQuotaFor = (featuredLen: number, batchSize: number): number => {
+    //
+    // 2026-08-27: 계획값(quotaFor(i).image)을 실제 공급으로 조이기만 한다. 종전의
+    // "유형 수로 나눈 몫(최소 1)"이 이미지형 몫을 두 번째로 깎던 자리다.
+    const imageQuotaFor = (batchIndex: number) => (featuredLen: number, batchSize: number): number => {
       if (!wantsImages || featuredLen === 0) return 0;
       const supplyCap = featuredLen * MAX_QUESTIONS_PER_IMAGE;
-      if (selectedTypes.length <= 1) return Math.min(batchSize, supplyCap);
-      return Math.max(
-        1,
-        Math.min(batchSize, supplyCap, Math.round(batchSize / selectedTypes.length)),
-      );
+      return Math.min(batchSize, supplyCap, quotaFor(batchIndex).image);
     };
 
     const genFor = (batchIndex: number, batchCount: number): GenContext => {
@@ -4381,12 +4531,11 @@ export async function generatePrivateQuestionsFromUpload(
         // 배정만 지금 확정하고, 정제 완료는 배치가 시작할 때 자기 몫만 기다린다.
         featured: [],
         resolveFeatured: () => resolveRefined(assigned),
-        imageQuotaFor,
+        imageQuotaFor: imageQuotaFor(batchIndex),
         getDisplayPng,
         segmented: segmentCount > 1,
-        clinicalQuota: clinicalQuotaFor(batchSizes[batchIndex] ?? 1),
-        knowledgeQuota: knowledgeQuotaFor(batchSizes[batchIndex] ?? 1),
-        knowledgeAskKinds: knowledgeAskPlan(batchIndex, batchSizes[batchIndex] ?? 1),
+        plannedQuota: quotaFor(batchIndex),
+        knowledgeAskKinds: knowledgeAskPlan(batchIndex, knowledgeQuotaFor(batchIndex)),
         allowNegativeAsk: negativeBatches.has(batchIndex),
       };
     };
@@ -4649,6 +4798,102 @@ export async function generatePrivateQuestionsFromUpload(
     };
     await removeBrokenFigureQuestions();
 
+    // 보충·비율 교정에는 "이미 정제에 성공한" 이미지만 쓴다(캐시 히트라 추가 지연이 없고,
+    // 정제 실패분을 다시 실어 문항이 또 삭제되는 순환을 막는다).
+    const refinedPool = featuredImages.filter((fi) => refinedUsableGis.has(fi.gi));
+
+    /** 저장된 문항의 유형별 수(+ 교정용 행). kind 컬럼이 없는 환경이면 전부 0. */
+    const readTypeCounts = async (): Promise<{
+      counts: TypeCounts;
+      rows: Array<{ id: string; kind: string; generation_slot: number; verify_score: number | null }>;
+    }> => {
+      const empty: TypeCounts = { knowledge: 0, clinical: 0, image: 0 };
+      if (!questionMetricColumnsSupported) return { counts: empty, rows: [] };
+      const { data, error } = await admin
+        .from('private_questions')
+        .select('id, kind, generation_slot, verify_score')
+        .eq('upload_id', uploadRow.id);
+      if (error) {
+        if (isMissingColumnError(error)) questionMetricColumnsSupported = false;
+        return { counts: empty, rows: [] };
+      }
+      const rows = (data ?? []).map((r) => ({
+        id: String(r.id),
+        kind: String(r.kind ?? 'knowledge'),
+        generation_slot: Number(r.generation_slot ?? 0),
+        verify_score: typeof r.verify_score === 'number' ? r.verify_score : null,
+      }));
+      const counts = { ...empty };
+      for (const r of rows) {
+        if (r.kind === 'image') counts.image += 1;
+        else if (r.kind === 'clinical') counts.clinical += 1;
+        else counts.knowledge += 1;
+      }
+      return { counts, rows };
+    };
+
+    // ── 유형 비율 교정 (2026-08-27)
+    //
+    // 전역 계획이 있어도 사후 검사(블라인드 강등·모달리티 불일치·정제 탈락)는 이미지 문항을
+    // 텍스트 문항으로 바꾼다. 종전 보충은 **빈 슬롯**만 채워서, 슬롯이 다 찬 채로 비율만
+    // 밀린 경우(실측 8:2, 보충 0회)는 아무도 손대지 않았다. 이제 저장된 유형을 세어 목표와
+    // 대조하고, 모자란 유형을 다시 만들 수 있을 때(이미지형은 남은 이미지 용량 안에서)
+    // 초과 유형 문항을 그만큼 지워 보충이 부족 유형으로 다시 채우게 한다.
+    // 목표는 정제 결과를 반영해 다시 잰다 — 이미지가 계획보다 적으면 목표도 내려간다.
+    const typeTargetsFinal: TypeTargets = planTypeTargets(
+      desiredCount,
+      selectedTypes,
+      useImages ? refinedUsableGis.size * MAX_QUESTIONS_PER_IMAGE : 0,
+    );
+    diag.generation.typeTargetsFinal = typeTargetsFinal;
+    if (selectedTypes.length >= 2 && questionMetricColumnsSupported) {
+      try {
+        const { counts, rows } = await readTypeCounts();
+        const deficits = typeDeficits(typeTargetsFinal, counts);
+        const linkCounts = await readImageLinkCounts();
+        const imageCapacity = useImages
+          ? refinedPool.reduce(
+              (n, fi) => n + Math.max(0, MAX_QUESTIONS_PER_IMAGE - (linkCounts.get(fi.gi) ?? 0)),
+              0,
+            )
+          : 0;
+        const repair = planTypeRepair(deficits, imageCapacity, selectedTypes);
+        const deleteIds: string[] = [];
+        for (const kind of ['knowledge', 'clinical', 'image'] as const) {
+          const n = repair.deleteFrom[kind];
+          if (n <= 0) continue;
+          // 검증 점수가 낮은 것부터, 같으면 늦게 만들어진 것부터 지운다.
+          const candidates = rows
+            .filter((r) => r.kind === kind)
+            .sort((a, b) => {
+              const sa = a.verify_score ?? Number.POSITIVE_INFINITY;
+              const sb = b.verify_score ?? Number.POSITIVE_INFINITY;
+              if (sa !== sb) return sa - sb;
+              return b.generation_slot - a.generation_slot;
+            })
+            .slice(0, n);
+          deleteIds.push(...candidates.map((r) => r.id));
+        }
+        if (deleteIds.length > 0) {
+          await admin.from('private_questions').delete().in('id', deleteIds);
+          warnings.push(
+            `유형 배분 교정: 목표(지식 ${typeTargetsFinal.knowledge}·임상 ${typeTargetsFinal.clinical}·이미지 ${typeTargetsFinal.image}) 대비 ` +
+              `실제(지식 ${counts.knowledge}·임상 ${counts.clinical}·이미지 ${counts.image}) — 초과 유형 ${deleteIds.length}문항을 지우고 부족 유형으로 보충.`,
+          );
+        }
+        diag.generation.typeRepair = {
+          before: counts,
+          deficits,
+          imageCapacity,
+          deleteFrom: repair.deleteFrom,
+          regenerate: repair.regenerate,
+          deleted: deleteIds.length,
+        };
+      } catch (e) {
+        warnings.push(`유형 배분 교정 실패 — ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+
     const tBackfill = Date.now();
     diag.generation.backfillRounds = [];
     let saved = await readSaved();
@@ -4691,9 +4936,6 @@ export async function generatePrivateQuestionsFromUpload(
       // 다시 잃는 순환도 생기지 않는다.
       let fillFeatured: Array<GenContext['featured']> = fillBatches.map(() => []);
       let fillImageQuota: number[] = fillBatches.map(() => 0);
-      // 보충에는 "이미 정제에 성공한" 이미지만 쓴다(캐시 히트라 추가 지연이 없고,
-      // 정제 실패분을 다시 실어 문항이 또 삭제되는 순환을 막는다).
-      const refinedPool = featuredImages.filter((fi) => refinedUsableGis.has(fi.gi));
       // 마지막 라운드는 이미지를 싣지 않는다 — 여기서도 이미지 문항이 검사에 걸리면
       // 채울 기회가 더 없어 요청 수를 못 맞춘다. 앞 라운드에서 못 채운 슬롯은
       // "확실히 채워지는" 텍스트 문항으로 마감한다(수량 보장이 비율보다 우선).
@@ -4731,6 +4973,18 @@ export async function generatePrivateQuestionsFromUpload(
       }
       const imagesOffered = fillFeatured.reduce((n, f) => n + f.length, 0);
       roundRec.imagesOffered = imagesOffered;
+      // 보충 묶음의 유형 쿼터 = **모자란 유형**부터(type-plan.ts planFillQuotas). 종전에는 묶음마다
+      // "유형 수로 나눈 최소 1"을 또 적용해 이미지 문항이 폐기될 때마다 텍스트로 치환됐다.
+      const roundCounts = (await readTypeCounts()).counts;
+      const roundDeficits = typeDeficits(typeTargetsFinal, roundCounts);
+      const fillQuotas: BatchQuota[] = planFillQuotas(
+        fillBatches.map((s) => s.length),
+        roundDeficits,
+        fillImageQuota,
+        selectedTypes,
+      );
+      roundRec.deficits = roundDeficits;
+      roundRec.quotas = fillQuotas;
       await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
         try {
           await generateAndPersistBatch(i, slots, fillBatches.length, {
@@ -4744,16 +4998,15 @@ export async function generatePrivateQuestionsFromUpload(
             // 본 배치와 달리 "남은 재사용 용량"으로 상한이 정해진다. 정제에서 한 장이
             // 더 빠질 수 있으므로 실제 확정 장수로도 한 번 더 조인다.
             imageQuotaFor: (featuredLen: number, batchSize: number) =>
-              Math.min(fillImageQuota[i], featuredLen * MAX_QUESTIONS_PER_IMAGE, batchSize),
+              Math.min(fillQuotas[i].image, featuredLen * MAX_QUESTIONS_PER_IMAGE, batchSize),
             getDisplayPng, // 정제 캐시가 이미 채워져 있어 재호출 비용 없음
             // 보충은 "빈 칸 한두 개"라 오래 기다릴 이유가 없다. 실측에서 1문항 보충이
             // 27.6초를 써 총 시간을 지배했으므로 대기 상한을 더 조인다.
             retryMaxDelayMs: 3_000,
             // 보충 문항도 사용자가 고른 유형을 지켜야 한다. 빼먹으면 폐기가 일어날 때마다
             // 임상형이 지식형으로 조용히 치환된다(이미지 재투입을 넣은 것과 같은 이유).
-            clinicalQuota: clinicalQuotaFor(slots.length),
-            knowledgeQuota: knowledgeQuotaFor(slots.length),
-            knowledgeAskKinds: knowledgeAskPlan(batchSizes.length + round, slots.length),
+            plannedQuota: fillQuotas[i],
+            knowledgeAskKinds: knowledgeAskPlan(batchSizes.length + round, fillQuotas[i].knowledge),
             allowNegativeAsk: false,
           });
         } catch (e) {
@@ -4797,6 +5050,9 @@ export async function generatePrivateQuestionsFromUpload(
     // ── 사용자 알림(P8). 완료 시점의 사실에서 조립한다 — warnings 문자열은 리팩터마다
     // 바뀌므로 태그를 달면 조용히 사라진다. 의학 검증 플래그는 넣지 않는다(warn 모드의
     // 오탐이 멀쩡한 문항까지 의심하게 만든다 — 사람 검토로 오탐률을 낮춘 뒤 재검토).
+    // 최종 유형 배분 — 계측(typeActual)과 알림(type_mix)에 함께 쓴다.
+    const finalTypeCounts = questionMetricColumnsSupported ? (await readTypeCounts()).counts : null;
+    if (finalTypeCounts) diag.generation.typeActual = finalTypeCounts;
     const notices = buildUploadNotices({
       desiredCount,
       savedCount: generatedCount,
@@ -4808,6 +5064,17 @@ export async function generatePrivateQuestionsFromUpload(
       leakageDiscarded: Number(diag.generation.leakageDiscarded ?? 0),
       verifyRejected: Number(diag.generation.verifyRejected ?? 0),
       blindDiscarded: Number(diag.generation.blindDiscarded ?? 0),
+      typeMix: finalTypeCounts
+        ? {
+            targets: {
+              knowledge: typeTargetsFinal.knowledge,
+              clinical: typeTargetsFinal.clinical,
+              image: typeTargetsFinal.image,
+            },
+            actual: finalTypeCounts,
+            selectedCount: selectedTypes.length,
+          }
+        : undefined,
     });
     diag.generation.notices = notices;
 

@@ -86,6 +86,34 @@ check(
   codes({ referenceSkipped: 2 }).includes('reference_ignored'),
 );
 
+console.log('\n유형 배분(type_mix) — 2026-08-27 지식형·이미지형 8:2 사고');
+{
+  const mix = (targets, actual, selectedCount = 2) =>
+    buildUploadNotices({ ...base, typeMix: { targets, actual, selectedCount } });
+  const t = { knowledge: 5, clinical: 0, image: 5 };
+  check(
+    '목표와 다르면 type_mix 를 낸다',
+    mix(t, { knowledge: 8, clinical: 0, image: 2 }).some((n) => n.code === 'type_mix'),
+  );
+  check(
+    '어긋난 문항 수를 count 에 담는다(8:2 → 6)',
+    mix(t, { knowledge: 8, clinical: 0, image: 2 }).find((n) => n.code === 'type_mix')?.count === 6,
+  );
+  check(
+    '목표·실제를 유형 이름으로 적는다',
+    /지식형 5 · 이미지형 5 → 실제 지식형 8 · 이미지형 2/.test(
+      mix(t, { knowledge: 8, clinical: 0, image: 2 }).find((n) => n.code === 'type_mix')?.detail ?? '',
+    ),
+  );
+  check('목표대로면 내지 않는다', !mix(t, { knowledge: 5, clinical: 0, image: 5 }).some((n) => n.code === 'type_mix'));
+  check(
+    '유형을 하나만 골랐으면 내지 않는다',
+    !mix({ knowledge: 0, clinical: 0, image: 10 }, { knowledge: 4, clinical: 0, image: 6 }, 1).some(
+      (n) => n.code === 'type_mix',
+    ),
+  );
+}
+
 console.log('\n수는 채웠지만 실패가 있었던 경우');
 check(
   'transient_error 로 알린다',
