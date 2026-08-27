@@ -170,6 +170,69 @@ export function hasForbiddenAsk(stem: string): boolean {
   return FORBIDDEN_ASK_ANY.some((re) => re.test(ask));
 }
 
+const GRADE_ADJ = '(?:적절|적합|올바른|바람직|타당|합당)한';
+
+/** 받침 유무로 은/는을 고른다(라틴·숫자는 모음으로 끝나면 '는'). */
+function topicJosa(word: string): '은' | '는' {
+  const last = word.trim().slice(-1);
+  const code = last.charCodeAt(0);
+  if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 === 0 ? '는' : '은';
+  return /[aeiouAEIOU0-9]/.test(last) ? '는' : '은';
+}
+
+/**
+ * 금지 발문을 프롬프트가 요구하는 형태로 **결정론적으로** 고쳐 쓴다.
+ *
+ * 왜 코드로 고치는가 (2026-08-27 2차·3차 실측)
+ * ──────────────────────────────────────
+ * 금지를 시스템 프롬프트·유형 규격·묶음 지시(askRuleDirective)에 세 번 적어도 10문항 중
+ * 1~2문항은 "가장 적절한 치료 방침은?"으로 나왔다. 그런데 프롬프트 자체가 이미 변환 규칙을
+ * 말하고 있다 — "'~로 가장 적절한 것은?'은 '~는?'으로 바꿔 쓰세요". 그 규칙을 그대로
+ * 코드가 적용하는 것이라 의미가 바뀌지 않는다(K2·C9 가 요구하는 표준 발문이 바로 그 형태다).
+ *
+ * 마지막 물음 문장에만 손댄다 — 지문 본문의 "가장 적절한 처치를 시행하였다" 같은 서술은
+ * 발문이 아니다. 허용 예외("가장 흔한", "가장 먼저")는 패턴에 없어 건드리지 않는다.
+ *
+ *  - "치료로 가장 적절한 것은?"            → "치료는?"
+ *  - "가장 적절한 초기 치료 및 관리 방안은?" → "초기 치료 및 관리 방안은?"
+ *  - "진단으로 가장 가능성이 높은 것은?"     → "진단은?"
+ *  - "다음 중 옳은 것은?"                   → "옳은 것은?"
+ *  - "진단은 무엇인가?"                     → "진단은?"
+ */
+export function rewriteForbiddenAsk(stem: string): string {
+  const s = String(stem ?? '');
+  // 마지막 물음 문장의 시작 = 그 앞의 마지막 문장 경계(. ? ! 줄바꿈) 다음.
+  const qEnd = s.lastIndexOf('?');
+  if (qEnd < 0) return s;
+  const head = s.slice(0, qEnd + 1);
+  const tail = s.slice(qEnd + 1);
+  const boundary = Math.max(
+    head.lastIndexOf('. ', qEnd - 1),
+    head.lastIndexOf('\n', qEnd - 1),
+    head.lastIndexOf('? ', qEnd - 1),
+    head.lastIndexOf('! ', qEnd - 1),
+  );
+  const start = boundary < 0 ? 0 : boundary + (head[boundary] === '\n' ? 1 : 2);
+  let ask = head.slice(start);
+  const before = ask;
+
+  // "X(으)로 가장 적절한 것은?" / "X(으)로 가장 가능성이 높은 것은?" → "X은?"
+  ask = ask.replace(
+    new RegExp(`(\\S+?)(?:으로|로)\\s*가장\\s*(?:${GRADE_ADJ}|가능성\\s*(?:이\\s*)?높은)\\s*것은\\s*\\?`, 'u'),
+    (_m, noun: string) => `${noun}${topicJosa(noun)}?`,
+  );
+  // "가장 적절한 초기 치료는?" → "초기 치료는?" (수식어만 제거)
+  ask = ask.replace(new RegExp(`가장\\s*${GRADE_ADJ}\\s+`, 'gu'), '');
+  ask = ask.replace(/가장\s*가능성\s*(?:이\s*)?높은\s+/gu, '');
+  // "다음 중 " 제거
+  ask = ask.replace(/다음\s*중\s*/gu, '');
+  // "진단은 무엇인가?" → "진단은?"
+  ask = ask.replace(/([은는])\s*무엇인가\s*\?/u, '$1?');
+  ask = ask.replace(/\s{2,}/g, ' ');
+  if (ask === before) return s;
+  return head.slice(0, start) + ask + tail;
+}
+
 /** C4 — 증례 지문 최소 길이(자). 도입 한 줄(40자 남짓)로 끝나는 것을 막는다. */
 const MIN_VIGNETTE_CHARS = 80;
 
