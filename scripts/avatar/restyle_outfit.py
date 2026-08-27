@@ -5,6 +5,7 @@
   ('material', mesh, prim, (재질명, 색))            프리미티브 전체 재질 교체
   ('split', mesh, prim, (재질명, 색), 술어)         술어가 참인 삼각형만 새 프리미티브로 분리·재질 교체
   ('recolor', 재질명, '#hex')                        기존 재질 색 변경
+  ('elder', {...})                                   노인: 척추 본 rest·키프레임에 앞굽힘 델타(목·머리 보정), 회색 머리
   ('mouth', {...})                                   구강진찰용 입: 피부 구멍+입술·구강·치열·혀·목젖, 모프 MouthOpen(턱 하강)
   ('elbow_subdiv', {...})                            팔꿈치 띠 삼각형 1:4 분할(균열 방지)·가중치 스무딩으로 굽힘 뭉개짐 완화
   ('pants_tube', {...})                              다리 피부 정점을 축 기준 방사 확장해 바지 통으로 만든다
@@ -244,6 +245,8 @@ class Glb:
                 if not kw.get('head_mesh'):
                     kw['head_mesh'] = next(self.js['meshes'][nd['mesh']]['name'] for nd in self.nodes if 'mesh' in nd and self.js['meshes'][nd['mesh']].get('name', '').endswith('Head'))
                 mouth_build.add_mouth(self, **kw)
+            elif kind == 'elder':
+                self.elder(**rule[1])
             elif kind == 'elbow_subdiv':
                 kw = dict(rule[1])
                 if kw.get('meshes') == '__body__':
@@ -595,6 +598,85 @@ class Glb:
                 print(f'  elbow_subdiv [{mesh_name}] mat={self.js["materials"][p.get("material", 0)].get("name")}: 변 {added} 분할, tris {len(idx)//3}→{len(tris)}, 스무딩 {nsm} 정점')
         print(f'  elbow_subdiv: iters={iters} band=[{t0},{t1}] smooth={smooth} (변 {total_added} 분할)')
 
+
+    # ── 노인 변형: 허리 앞굽힘(키프레임에 굽기) + 회색 머리 ──
+    def elder(self, stoop_deg=11.0, bends=None, hair=None, brows=None):
+        """척추 본들의 rest 회전과 모든 애니메이션 회전 키프레임에 앞굽힘 델타를 곱해 굽은 허리를 리그에 굽는다(렌더러 무수정).
+        델타는 바인드 공간의 옆축(+x, 앞=−y 이므로 +각이 앞굽힘)을 각 본의 부모 프레임으로 옮긴 고정 회전 — 어느 클립·포즈에서도 유지.
+        bends: 본 → stoop_deg 의 비율. 목·머리는 음수로 보정해 시선이 정면을 향하게 한다."""
+        bends = bends or {'Abdomen': 0.36, 'Torso': 0.36, 'Chest': 0.28, 'Neck': -0.55, 'Head': -0.27}
+
+        def qmul(a, b):  # (x,y,z,w)
+            ax, ay, az, aw = a; bx, by, bz, bw = b
+            return (aw * bx + ax * bw + ay * bz - az * by, aw * by - ax * bz + ay * bw + az * bx,
+                    aw * bz + ax * by - ay * bx + az * bw, aw * bw - ax * bx - ay * by - az * bz)
+
+        def qconj(q):
+            return (-q[0], -q[1], -q[2], q[3])
+
+        def qnorm(q):
+            L = math.sqrt(sum(c * c for c in q)) or 1.0
+            return tuple(c / L for c in q)
+
+        def q_from_mat(B):  # 4x4 행우선(B[r][c]) 회전부(열 정규화)에서 쿼터니언
+            cols = [[B[r][c] for r in range(3)] for c in range(3)]
+            cols = [[v / (math.sqrt(sum(x * x for x in col)) or 1.0) for v in col] for col in cols]
+            m = [[cols[c][r] for c in range(3)] for r in range(3)]  # m[r][c]
+            t = m[0][0] + m[1][1] + m[2][2]
+            if t > 0:
+                S = math.sqrt(t + 1.0) * 2
+                return qnorm(((m[2][1] - m[1][2]) / S, (m[0][2] - m[2][0]) / S, (m[1][0] - m[0][1]) / S, 0.25 * S))
+            if m[0][0] > m[1][1] and m[0][0] > m[2][2]:
+                S = math.sqrt(1.0 + m[0][0] - m[1][1] - m[2][2]) * 2
+                return qnorm((0.25 * S, (m[0][1] + m[1][0]) / S, (m[0][2] + m[2][0]) / S, (m[2][1] - m[1][2]) / S))
+            if m[1][1] > m[2][2]:
+                S = math.sqrt(1.0 + m[1][1] - m[0][0] - m[2][2]) * 2
+                return qnorm(((m[0][1] + m[1][0]) / S, 0.25 * S, (m[1][2] + m[2][1]) / S, (m[0][2] - m[2][0]) / S))
+            S = math.sqrt(1.0 + m[2][2] - m[0][0] - m[1][1]) * 2
+            return qnorm(((m[0][2] + m[2][0]) / S, (m[1][2] + m[2][1]) / S, 0.25 * S, (m[1][0] - m[0][1]) / S))
+
+        sk = self.js['skins'][0]
+        ib = ibm_mats(self.js, self.bin, sk)
+        joints = list(sk['joints'])
+        parent = {}
+        for i, nd in enumerate(self.nodes):
+            for c in nd.get('children', []):
+                parent[c] = i
+        axis = [1.0, 0.0, 0.0]
+        nkeys = 0
+        for name, frac in bends.items():
+            ang = math.radians(stoop_deg * frac)
+            if abs(ang) < 1e-9 or name not in self.jname:
+                continue
+            k = self.jname.index(name); ni = joints[k]
+            pi_ = parent.get(ni)
+            if pi_ is None or pi_ not in joints:
+                print(f'  elder: {name} 부모가 조인트가 아님 — 건너뜀'); continue
+            Bp = minv(ib[joints.index(pi_)])
+            qp = q_from_mat(Bp)
+            s_, c_ = math.sin(ang / 2), math.cos(ang / 2)
+            d_world = (axis[0] * s_, axis[1] * s_, axis[2] * s_, c_)
+            d_local = qnorm(qmul(qmul(qconj(qp), d_world), qp))
+            nd = self.nodes[ni]
+            nd['rotation'] = list(qnorm(qmul(d_local, tuple(nd.get('rotation', [0, 0, 0, 1])))))
+            for a in self.js.get('animations', []):
+                for ch in a['channels']:
+                    if ch['target'].get('node') != ni or ch['target'].get('path') != 'rotation':
+                        continue
+                    smp = a['samplers'][ch['sampler']]
+                    rows = accessor(self.js, self.bin, smp['output'])
+                    new = [qnorm(qmul(d_local, tuple(q))) for q in rows]
+                    self.write_rows(smp['output'], new); nkeys += len(new)
+        if hair:
+            for m in self.js['materials']:
+                if m.get('name', '').startswith('Hair'):
+                    self.recolor(m['name'], hair)
+        if brows:
+            for m in self.js['materials']:
+                if m.get('name') in ('Eyebrows', 'Hair_Brown'):
+                    self.recolor(m['name'], brows)
+        print(f'  elder: 앞굽힘 {stoop_deg}° ({", ".join(f"{k} {v*stoop_deg:+.1f}°" for k, v in bends.items())}), 키프레임 {nkeys}개, 머리 {hair}, 눈썹 {brows}')
+
     # ── 신장 설정 ──
     def set_height(self, height_m, include_hair=True):
         """씬 루트 노드에 균일 스케일을 곱해 기본 포즈 전체 높이(머리카락 포함)를 height_m 로 맞추고 asset.extras.heightM 에 기록."""
@@ -824,6 +906,9 @@ def cand1_rules(opts):
 # 공통 후처리: 팔꿈치·겨드랑이 살짝 두껍게(--opts '{"arm": true}') / 신장 설정(--opts '{"height": 1.83}')
 def touch_rules(opts):
     rules = []
+    if opts.get('elder'):  # 노인: 허리 앞굽힘(키프레임에 굽기)·회색 머리 — --opts '{"elder": {"stoop_deg": 11, "hair": "#a9a39c"}}'
+        e = opts['elder'] if isinstance(opts['elder'], dict) else {}
+        rules.append(('elder', dict(stoop_deg=e.get('stoop_deg', 11.0), bends=e.get('bends'), hair=e.get('hair', '#a9a39c'), brows=e.get('brows', '#8c8680'))))
     if opts.get('mouth'):  # 구강진찰용 입(입술·구강·치열·혀·목젖 + 모프 MouthOpen, 턱 하강) — mouth_build.py
         rules.append(('mouth', dict(opts['mouth']) if isinstance(opts['mouth'], dict) else {}))
     if opts.get('elbow_subdiv'):  # 팔꿈치 띠 정점 분할(굽힘 뭉개짐 완화) — 팔 보정보다 먼저

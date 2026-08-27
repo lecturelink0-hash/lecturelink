@@ -64,3 +64,5 @@ poly.pizza 의 상업 이용 가능 인체 모델 112종을 계측·검토해 �
 - 얼굴 데칼(눈 깜빡임)은 `Face` 재질 + `Head` 본을 요구 — 후보는 자체 눈·눈썹 지오메트리라 데칼 없이 표시된다. 입은 후보 GLB 안의 입술 메시(`<Head>_Mouth`: 볼륨 있는 윗·아랫입술 + 입선, `scripts/avatar/mouth_build.py`)로 정적으로 표현된다(벌림 없음).
 - `Skin` 재질은 런타임 색 보정(#e8b89a)이 적용된다(cand1·2). 원래 피부톤을 쓰려면 `GLB_COLOR_FIX` 예외 처리 필요.
 - 대안(미포함): 상의 탈의 남 `GorWw41SFf`·여 `NfMffTkeBa`(mastjie, CC0, 리그 없음), 속옷 차림 남 `07wMEaAf6x`(pessiuff, CC-BY 3.0), 텍스처 여성 `9kF7eTDbhO`(Quaternius, CC0, Mixamo 리그·`Armature|Idle`), 노인 `mED3MPaQ6i`(scaranto, CC0, 5.4등신).
+
+- 노인 변형(17차): `cand2_quaternius_man_old(.glb|_168|_160)`, `cand1_quaternius_woman_old(.glb|_155|_148)` — 척추 본 키프레임에 앞굽힘 11° 를 굽고 머리 회색. `?avatarModel=cand2_quaternius_man_old_168`.
