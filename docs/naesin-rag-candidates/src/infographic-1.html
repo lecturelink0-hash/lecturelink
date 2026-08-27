@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="infographic.css"></head>
+<body>
+<div class="page c1">
+  <header>
+    <div class="kicker">내신대비 문항 생성 · RAG 구조 후보 1 / 3</div>
+    <h1>어드밴스드 RAG <em>— 출제 계획 기반 검색 + 인용 강제 생성</em></h1>
+    <div class="tagline">자료 전체를 프롬프트에 밀어 넣는 현행 full-context 방식을, 계층·멀티모달 인덱스 위에서 "출제 단위 → 질의 → 하이브리드 검색 → 리랭킹 → 근거 팩 → 인용 강제 생성"의 선형 파이프라인으로 바꾼다. 가장 낮은 복잡도로 근거 추적을 <b>측정 가능</b>하게 만드는 기반안.</div>
+    <div class="stats">
+      <div class="stat"><div class="v">+1 콜</div><div class="l">신규 LLM 콜 (출제 계획) · 나머지는 임베딩·리랭커 API</div></div>
+      <div class="stat"><div class="v">≈ $0.08</div><div class="l">업로드당 LLM 비용 개산 (현행 ≈ $0.10, 50쪽·10문항)</div></div>
+      <div class="stat"><div class="v">−10~20%</div><div class="l">배치 지연 (입력 6.5k → 3k 토큰) · 인덱싱 +3~5초</div></div>
+      <div class="stat"><div class="v">3~4주</div><div class="l">구현 기간 (1인) · 공통 인덱싱 2주 포함 시 5~6주</div></div>
+      <div class="stat"><div class="v">L1~L5 · R3 · A9</div><div class="l">해소되는 현행 한계 (R1·R2 검증 방어선은 후보 2 영역)</div></div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="num">1</span>파이프라인 (8단계)
+      <span class="legend"><span class="chip keep">기존 유지</span><span class="chip new">신규</span><span class="chip mod">변경</span></span></h2>
+    <div class="flow">
+      <div class="stage"><div class="t">추출 · 이미지 검출 · OCR</div><div class="s">기존</div>
+        <ul><li>pdf-parse / PPTX / DOCX</li><li>Vision 검출 출력에 <b>캡션·모달리티·소견</b> 필드 추가</li><li>OCR 크롭당 1콜 유지</li></ul>
+        <div class="llm">LLM: 기존 콜 재사용</div></div>
+      <div class="stage new"><div class="t">계층 · 멀티모달 인덱싱</div><div class="s">신규 · Phase 0</div>
+        <ul><li>level 0 슬라이드 블록 / level 1 1,200자 문단</li><li>이미지 캡션 · 표 청크</li><li>Voyage voyage-3 1024차 → pgvector HNSW + pg_trgm</li></ul>
+        <div class="llm">LLM 0 · 임베딩 ≈ $0.002</div></div>
+      <div class="stage new"><div class="t">출제 계획</div><div class="s">신규 · 규칙 기반 초점 대체</div>
+        <ul><li>입력: 헤딩 경로 + 블록 첫 2문장 + 캡션 목록 (≤8k)</li><li>출력: 출제 단위 N=1.5×요청 수 {주제·목표·유형·난이도·이미지 필요}</li><li>쿼터(조합·표식·부정·임상/지식) 배정</li></ul>
+        <div class="llm">LLM 1콜</div></div>
+      <div class="stage new"><div class="t">질의 생성</div><div class="s">신규 · pre-retrieval</div>
+        <ul><li>단위당 질의 3개 (핵심 개념·임상 맥락·감별)</li><li>HyDE 가상 발문 1개 (검색에만 사용)</li><li>자체 약어·한영 사전 확장</li></ul>
+        <div class="llm">LLM 0 (계획 콜에 포함)</div></div>
+      <div class="stage new"><div class="t">하이브리드 검색 · 리랭킹</div><div class="s">신규 · post-retrieval</div>
+        <ul><li>dense top-20 + sparse top-20 → RRF(k=60)</li><li>리랭커 top-6 → MMR(λ=0.7)</li><li>부모 구간 확장 → 근거 팩 [E1..E6] ≤3k 토큰</li></ul>
+        <div class="llm">LLM 0~1 · 리랭커 API</div></div>
+      <div class="stage mod"><div class="t">인용 강제 생성</div><div class="s">변경 · 프롬프트 6계층 유지</div>
+        <ul><li>입력 = 근거 팩 + 출제 단위 + 이미지</li><li>툴 스키마 <code>source_pages</code> → <code>evidence_refs[{id, quote}]</code> required</li><li>배치 2문항 · 동시 8 유지</li></ul>
+        <div class="llm">LLM 배치당 1콜</div></div>
+      <div class="stage mod"><div class="t">인용 검증 · P1 · 블라인드</div><div class="s">신규 + 변경</div>
+        <ul><li><b>코드</b>: quote ⊂ 청크 원문 (NFKC, ≥0.9) — 실패 시 재생성 1회 → 폐기</li><li>P1 검증 입력을 구간 전체 → 근거 팩으로 (7.5k → 3k)</li><li>블라인드 2회 유지</li></ul>
+        <div class="llm">LLM 문항당 1콜 + 블라인드</div></div>
+      <div class="stage mod"><div class="t">세트 중복 검사 · 저장</div><div class="s">신규 + 변경</div>
+        <ul><li>문항 임베딩 → <code>match_private_questions</code> (같은 사용자·sha 전체, ≥0.92 폐기)</li><li><code>evidence</code>·<code>embedding</code>·<code>retrieval</code> 스냅샷 저장</li><li>폴백: <code>PRIVATE_RAG_MODE=off|shadow|on</code></li></ul>
+        <div class="llm">LLM 0</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>핵심 메커니즘</h2>
+    <div class="cards">
+      <div class="card"><h3>Small-to-Big 계층 청킹</h3><p>검색은 1,200자 문단(level 1)으로 정밀하게, 생성 컨텍스트는 필요할 때만 부모 슬라이드 블록(level 0)으로 확장. 현행 <code>material_chunks</code>의 결정론적 청킹을 그대로 쓰고 <code>parent_id · level · modality · heading_path</code>만 더한다.</p></div>
+      <div class="card"><h3>출제 단위가 곧 질의</h3><p>"자료 분석 → 출제 계획"을 LLM 1콜로 수행해 <b>같은 증례 반복</b>(5문항 중 4문항 동일 증례 실측)을 구조적으로 차단. 단위마다 3질의 + HyDE 가상 발문으로 검색하되, 가상 발문은 생성에 투입하지 않는다(자료 밖 지식 유입 방지).</p></div>
+      <div class="card"><h3>RRF 융합 · 리랭킹 · MMR</h3><p>의학 약어·고유명사는 sparse, 서술은 dense가 강하므로 두 순위를 RRF로 합치고 리랭커로 top-6을 고른 뒤 MMR로 같은 문단 중복을 제거. 한국어 형태소 분석기가 없는 Supabase 제약상 sparse는 pg_trgm → 필요 시 bigram BM25.</p></div>
+      <div class="card"><h3>인용 강제 + 코드 검증</h3><p>정답·해설의 핵심 주장마다 <code>{id, quote}</code>를 required로 요구(선택이면 신고율 0 수렴 — 현행 <code>source_pages</code> 교훈). 코드가 quote를 원문과 대조해 <b>출처 위치 유효성(구조적)</b>을 문장 단위로 측정하고, 의미상 유효성(전문가)과 분리 보고.</p></div>
+    </div>
+  </section>
+
+  <div class="row three">
+    <section>
+      <h2><span class="num">3</span>데이터 모델 변경</h2>
+      <table>
+        <tr><th>대상</th><th>추가</th></tr>
+        <tr><td><code>material_chunks</code></td><td><code>embedding vector(1024)</code>, <code>parent_id</code>, <code>level</code>, <code>modality</code>, <code>heading_path[]</code>, <code>image_id</code> + HNSW · GIN(trgm)</td></tr>
+        <tr><td><code>private_questions</code></td><td><code>embedding vector(1024)</code>, <code>evidence jsonb</code> [{chunk_id, page, quote, score, rank, role}]</td></tr>
+        <tr><td>RPC</td><td><code>match_material_chunks(upload, q, k, modality[])</code>, <code>match_private_questions(user, q, τ, k)</code></td></tr>
+        <tr><td><code>versions.ts</code></td><td><code>retrieval = {embed, k, fusion, reranker, topN, mmr}</code> 계측 슬롯 채움</td></tr>
+      </table>
+      <div class="sub">마이그레이션 1건 · 신규 모듈 <code>lib/rag/{index,plan,query,retrieve,rerank,evidence}.ts</code> · <code>private-generation.ts</code> G·I·K 단계 수정</div>
+    </section>
+    <section>
+      <h2><span class="num">4</span>장점</h2>
+      <ul class="pros">
+        <li>현행 자산(청크·source_refs·pgvector·Voyage)의 연장선 — 구현 위험 최소</li>
+        <li>선형 구조라 디버깅·반복 안정성 측정이 쉬움</li>
+        <li>근거 충실도·출처 위치 유효성·중복률이 처음으로 <b>측정 가능</b></li>
+        <li>장문 자료(100쪽+)에서 품질·비용 동시 개선 (lost-in-the-middle 회피)</li>
+        <li>P1 검증 입력 축소로 "근거 없음" 오탐 감소 기대</li>
+      </ul>
+    </section>
+    <section>
+      <h2><span class="num">5</span>단점 · 위험</h2>
+      <ul class="cons">
+        <li>검색 오류(근거 누락)가 그대로 문항 오류로 전파 — 피드백 루프 없음</li>
+        <li>품질이 임베딩 모델의 한국어 의학 성능에 종속</li>
+        <li>이미지 문항은 캡션 품질에 종속</li>
+        <li>인용 강제가 생성 거부·형식 붕괴 유발 가능 → "좋아졌을 때만 채택"</li>
+        <li>R1(warn 모드)·R2(동일 모델)는 그대로 남음</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="row wide-left">
+    <section>
+      <h2><span class="num">6</span>평가 지표 · 기준값 (제안)</h2>
+      <table>
+        <tr><th>지표</th><th>정의</th><th>기준</th><th>방법</th></tr>
+        <tr><td>Evidence Recall@6</td><td>전문가 근거 문장이 top-6에 포함</td><td>≥ 0.90</td><td>골든셋 100문항</td></tr>
+        <tr><td>Citation Precision</td><td>quote가 청크 원문과 정규화 일치</td><td>≥ 0.95</td><td>코드 자동</td></tr>
+        <tr><td>Faithfulness</td><td>주장 중 근거로 지지되는 비율</td><td>≥ 0.90</td><td>LLM-judge + 전문가 보정</td></tr>
+        <tr><td>중복 문항률</td><td>같은 사용자·sha 내 cos ≥ 0.92 쌍</td><td>≤ 2%</td><td>코드 자동</td></tr>
+        <tr><td>주제 커버리지</td><td>출제 단위 중 문항 배정 비율</td><td>≥ 0.85</td><td>코드 자동</td></tr>
+        <tr><td>비용 · 지연</td><td>업로드당 USD, p50/p95</td><td>현행 이하</td><td>ai_cost_log · 진단 JSON</td></tr>
+      </table>
+      <div class="timeline">
+        <div class="phase hot"><b>Phase 0 · 2주</b>공통 인덱싱 · shadow 모드 Recall 측정</div>
+        <div class="phase hot"><b>Phase 1 · 3주</b>계획 → 검색 → 인용 생성 → 중복 검사 → on 전환</div>
+        <div class="phase warm"><b>Phase 2</b>후보 2 검증 레이어</div>
+        <div class="phase"><b>Phase 3</b>후보 3-lite</div>
+      </div>
+    </section>
+    <section>
+      <h2><span class="num">7</span>교수님께 여쭙는 점</h2>
+      <ol class="q">
+        <li>슬라이드형 자료에서 level 0/1 이중 청킹이 적절한지, 문장군(level 2)까지 필요한지</li>
+        <li>한국어 의학 텍스트 임베딩 — voyage-3 vs bge-m3 vs multilingual-e5 — 자체 벤치마크(질의 200·정답 청크 라벨)로 충분한지</li>
+        <li>인용 quote 매칭을 "출처 위치 유효성(구조적)"으로 공표 가능한지, 의미상 유효성과 보고를 어떻게 분리할지</li>
+        <li>한/영 약어 정규화 — 자체 사전(자체 문항·CPX 룰·오픈 온톨로지 xref)으로 충분한지</li>
+      </ol>
+      <div class="rating" style="margin-top:10px">
+        <div>구현 복잡도</div><div class="dots">●●<span>●●●</span></div>
+        <div>근거 추적 측정 가능성</div><div class="dots">●●●●<span>●</span></div>
+        <div>의학 정확성 방어선</div><div class="dots">●<span>●●●●</span></div>
+        <div>오답 품질 개선</div><div class="dots">●<span>●●●●</span></div>
+        <div>비용 효율</div><div class="dots">●●●●●</div>
+      </div>
+    </section>
+  </div>
+
+  <footer><span>LectureLink · 내신대비 RAG 전환 계획서 부록 · 2026-08-23 · 기준 코드 main f7fcfa5</span><span>검토: 의료정보학교실 이승보 교수님 · 후보 1 / 3</span></footer>
+</div>
+</body></html>
