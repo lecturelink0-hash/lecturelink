@@ -972,7 +972,8 @@ def cand1_elder_rules(opts):
     return [
         ('recolor', 'White', BLOUSE), ('recolor', 'Orange', PANTS),
         ('material', 'Casual_Feet', 0, ('Pants', PANTS)),  # 발목 피부 → 바지 밑단
-        ('split', 'Casual_Body', 1, ('BlouseSleeve', BLOUSE), long_sleeve_pred(0.40), LONG_SLEEVE_AXIS, 0.005),
+        ('split', 'Casual_Body', 0, ('Blouse', BLOUSE), lambda tri: True, {}, 0.006),  # 몸통 셔츠 전체를 6mm 띄운 쉘 → 살짝 펑퍼짐한 블라우스(원 셔츠는 안쪽에 유지)
+        ('split', 'Casual_Body', 1, ('BlouseSleeve', BLOUSE), long_sleeve_pred(0.40), LONG_SLEEVE_AXIS, 0.007),
         ('pants_tube', dict(leg_prims=[('Casual_Legs', 0), ('Casual_Feet', 0)], hem_prim=None, shoe_prim=('Casual_Feet', 1),
                             cuff_ratio=0.88, thigh_factor=1.15, waist_taper=0.2, floor=shoe_top)),  # 1.35 는 "힙합바지" 피드백 → 적당히
     ]
