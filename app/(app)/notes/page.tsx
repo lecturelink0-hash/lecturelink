@@ -1218,6 +1218,7 @@ const NOTICE_TEXT: Record<string, (n: UploadNoticeItem) => string> = {
   text_truncated: () => '자료가 길어 앞부분을 중심으로 출제했어요.',
   reference_ignored: (n) => `참고 자료 ${n.count ?? 0}건은 형식을 읽지 못해 반영하지 못했어요.`,
   transient_error: () => '생성 중 일시적인 오류가 있었어요.',
+  type_mix: () => '고른 문항 유형의 배분이 목표와 조금 다르게 나왔어요.',
 };
 
 function GenerationNotices({ notices }: { notices: UploadNoticeItem[] }) {

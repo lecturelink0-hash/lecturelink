@@ -57,6 +57,17 @@ for (const stem of [
   check(`declares: ${stem.slice(0, 34)}…`, stemDeclaresFigureText(stem));
 }
 
+console.log("\n①-3 3차 실측(effbfdf0 슬롯 7, 2026-08-27) — 지시어 없이 검사명으로 그림을 가리키는 형태");
+for (const stem of [
+  // 스크린샷으로 신고된 바로 그 문항. 모달리티 불일치로 이미지가 떨어졌는데 (a)(b) 모두 못 잡아
+  // 그림 없이 저장·노출됐다.
+  '흉부 X-ray와 MR 영상에서 보이는 대동맥 병변의 진단으로 옳은 것은?',
+  'CT에서 관찰되는 소견은?',
+  '심초음파상 보이는 이상 구조의 이름은?',
+]) {
+  check(`declares: ${stem.slice(0, 34)}…`, stemDeclaresFigureText(stem));
+}
+
 console.log('\n② 종전에 잡히던 선언형 — 회귀하지 않아야 한다');
 for (const stem of [
   '다음은 대동맥 박리의 발생 기전에 대한 모식도이다. 이 기전으로 옳은 것은?',
@@ -73,6 +84,9 @@ for (const stem of [
   '초음파 검사의 원리로 옳은 것은?',
   '신경세포에서 신경전달물질을 방출하는 데 관여하는 기전으로 옳은 것은?',
   '도파민(Dopamine) 과잉 또는 부족 시 발생할 수 있는 질환의 연결이 옳은 것은?',
+  // (c) 형태의 오탐 경계 — 구체적 소견을 본문에 적은 것은 그림 지칭이 아니다(그림 없이 풀린다).
+  '흉부 X-ray에서 보이는 종격동 확장은 어느 질환의 소견인가?',
+  'CT에서 관찰되는 소견은 정상이었다. 다음 검사는?',
 ]) {
   check(`declares 아님: ${stem.slice(0, 30)}…`, !stemDeclaresFigureText(stem));
 }
@@ -115,6 +129,17 @@ check(
 check(
   '이미지 쿼터가 모자라면 1회 교정 재생성한다',
   /bumpGenDiag\('imageQuotaFixed'\)/.test(gen),
+);
+// 2026-08-27 실측(effbfdf0 슬롯 7): 고아 판정이 "Storage 업로드 여부"(indexToPath)를 봐서,
+// 업로드 **뒤** 연결 단계의 모달리티 불일치 해제를 통과시켰다. 실제 연결(imageRows)로 봐야 한다.
+check(
+  '이미지를 잃은 문항 판정이 실제 연결(imageRows)을 본다',
+  /const linkedQuestionIds = new Set\(imageRows\.map\(\(r\) => r\.private_question_id\)\)/.test(gen) &&
+    /bumpGenDiag\('imageLostOrphanDeleted'\)/.test(gen),
+);
+check(
+  '[이미지 N] 라벨에 종류를 적어 준다(발문이 다른 검사명을 쓰지 않게)',
+  /imageKindLabel\(featured\[i\]\.c\.region\.kind\)/.test(gen),
 );
 
 console.log('');
