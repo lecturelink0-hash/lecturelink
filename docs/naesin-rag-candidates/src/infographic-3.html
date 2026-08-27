@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="infographic.css"></head>
+<body>
+<div class="page c3">
+  <header>
+    <div class="kicker">내신대비 문항 생성 · RAG 구조 후보 3 / 3</div>
+    <h1>그래프 RAG <em>— 지식 그래프 추출 + 서브그래프 템플릿 출제 + 구조적 오답 생성</em></h1>
+    <div class="tagline">자료를 청크 집합이 아니라 지식 그래프(질환–증상–검사–소견–치료–기전–해부–이미지)로 바꾸고, 문항 유형별 서브그래프 템플릿으로 근거를 모은다. <b>오답을 형제 노드(감별 진단·같은 계열 약물)에서 구조적으로 생성</b>하고 그래프 커버리지로 출제 분포를 관리한다. 출제 품질의 상한은 가장 높지만, 추출·정규화 비용과 평가 난이도도 가장 크다.</div>
+    <div class="stats">
+      <div class="stat"><div class="v">+≈40 콜</div><div class="l">트리플 추출 청크당 1콜(50쪽 ≈ 35) · 해소·커뮤니티 요약 ≈ 5 · 독립 durable stage</div></div>
+      <div class="stat"><div class="v">≈ $0.22</div><div class="l">업로드당 개산 · 후보 2 결합 시 ≈ $0.33 · 같은 자료 재업로드는 그래프 재사용(≈ 0)</div></div>
+      <div class="stat"><div class="v">+30~60초</div><div class="l">인덱싱 지연 (동시성 8) · 첫 문항 공개 전</div></div>
+      <div class="stat"><div class="v">+4~6주</div><div class="l">후보 1 완료 후 · "그래프-lite"(추출·오답·커버리지만) 2~3주</div></div>
+      <div class="stat"><div class="v">유형 편중 · 커버리지</div><div class="l">치료 28% vs 기전 2%, 정답=최장 선지 32.6% 같은 통계 결함의 근본 교정</div></div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="num">1</span>파이프라인 (8단계)
+      <span class="legend"><span class="chip keep">후보 1 공통</span><span class="chip new">신규</span><span class="chip mod">변경</span></span></h2>
+    <div class="flow">
+      <div class="stage"><div class="t">인덱싱</div><div class="s">후보 1 공통</div>
+        <ul><li>계층·멀티모달 청크 + 임베딩</li><li>이미지 캡션 청크</li></ul>
+        <div class="llm">LLM 0</div></div>
+      <div class="stage new"><div class="t">트리플 추출</div><div class="s">신규 · 독립 stage</div>
+        <ul><li>청크당 1콜, 툴 강제, 스키마 고정(노드 8종·관계 10종)</li><li><code>(head, rel, tail, quote, confidence)</code></li><li>confidence &lt; 0.6은 검토 큐만</li></ul>
+        <div class="llm">LLM 청크당 1콜 (≈35)</div></div>
+      <div class="stage new"><div class="t">엔티티 해소 · 온톨로지</div><div class="s">신규</div>
+        <ul><li>NFKC·약어 전개 → 임베딩 cos ≥ 0.9 병합, 0.75~0.9는 소형 모델</li><li>기준 어휘 = <b>자체 교육 온톨로지</b>, SNOMED·KCD-9·MeSH·MONDO는 xref</li></ul>
+        <div class="llm">LLM 모호 쌍만</div></div>
+      <div class="stage new"><div class="t">그래프 저장 · 커뮤니티</div><div class="s">신규 · Postgres</div>
+        <ul><li><code>kg_nodes</code> / <code>kg_edges</code> (증거 청크·신뢰도·origin)</li><li>노드 임베딩 HNSW</li><li>Leiden 또는 헤딩 군집 → 주제 요약(선택)</li></ul>
+        <div class="llm">LLM 커뮤니티당 1콜(선택)</div></div>
+      <div class="stage mod"><div class="t">출제 계획 (커버리지)</div><div class="s">변경</div>
+        <ul><li>커뮤니티·중심성·<b>미출제 노드</b> 기준 배정</li><li>유형 쿼터(진단·치료·기전·합병증)를 그래프 분포로</li></ul>
+        <div class="llm">LLM 1콜</div></div>
+      <div class="stage new"><div class="t">서브그래프 검색 · 오답 후보</div><div class="s">신규</div>
+        <ul><li>블루프린트 템플릿: 진단형 = 질환 + presents_with* + diagnosed_by</li><li>2-hop recursive CTE + 증거 청크</li><li>오답 = differential_of·형제 노드 4~8개</li></ul>
+        <div class="llm">LLM 0</div></div>
+      <div class="stage mod"><div class="t">경로 해설 생성</div><div class="s">변경</div>
+        <ul><li>입력 = 트리플 + 증거 청크 + 오답 후보</li><li>해설 = 경로 설명 "A → B → C 이므로 D"</li><li>인용 강제 유지</li></ul>
+        <div class="llm">LLM 배치당 1콜</div></div>
+      <div class="stage new"><div class="t">그래프 일관성 검증 · 저장</div><div class="s">신규 + 공통</div>
+        <ul><li>정답 관계가 그래프에 존재 / 오답 관계는 부재 (코드)</li><li>P1·블라인드·중복 검사 공통</li><li><code>kg_coverage</code> 갱신</li></ul>
+        <div class="llm">LLM 0 (+공통 검증)</div></div>
+    </div>
+  </section>
+
+  <div class="row wide-left">
+    <section>
+      <h2><span class="num">2</span>핵심 메커니즘</h2>
+      <div class="cards" style="grid-template-columns:repeat(2,1fr)">
+        <div class="card"><h3>스키마 (초안)</h3><div class="kv">
+          <b>노드 8종</b><span>Disease · SymptomSign · Test · Finding · Treatment/Drug · Mechanism · Anatomy · Image</span>
+          <b>관계 10종</b><span>presents_with · diagnosed_by · finding_of · treated_with · contraindicated · mechanism · differential_of · complication_of · risk_factor · depicted_in</span>
+          <b>모든 edge</b><span><code>evidence_chunk_ids[]</code> · <code>confidence</code> · <code>origin</code>(material | external)</span></div></div>
+        <div class="card"><h3>서브그래프 템플릿 → 문항 블루프린트</h3><ul>
+          <li><b>진단형</b> 질환 + presents_with 3~4 + diagnosed_by 1 / 오답 = differential_of</li>
+          <li><b>치료형</b> 질환 + treated_with + contraindicated / 오답 = 같은 계열 다른 약물</li>
+          <li><b>기전형</b> 질환 + mechanism + anatomy / 오답 = 인접 기전</li>
+          <li><b>이미지형</b> Image –depicted_in→ Finding –finding_of→ Test</li></ul></div>
+        <div class="card"><h3>구조적 오답 생성</h3><p>정답과 증상을 2개 이상 공유하되 결정적 소견이 다른 노드를 우선 → <b>방어 가능하면서 그럴듯한 오답</b>. 정답과의 거리(hop·임베딩)로 난이도를 조절하고, 오답 관계가 그래프에 실제로 없는지 코드가 검사한다.</p></div>
+        <div class="card"><h3>커버리지 · 개인화 기반</h3><p>출제된 노드·edge를 <code>kg_coverage</code>에 기록해 다음 요청에서 미출제 영역을 우선. 학생의 오답을 노드에 귀속시키면 "약한 개념"이 그래프 위에 정의되어 개인화(현재는 누적 오답률 집계뿐)로 확장된다. 기존 유휴 자산 <code>physical_exam_ontology.json</code>(156개념·931 alias)을 시드로 재활용.</p></div>
+      </div>
+    </section>
+    <section>
+      <h2><span class="num">3</span>예시 서브그래프 — 진단형 문항</h2>
+      <svg width="520" height="330" viewBox="0 0 520 330" aria-label="대동맥 박리 서브그래프 예시">
+        <defs><marker id="ga" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6f6d68"/></marker></defs>
+        <!-- edges -->
+        <line x1="275" y1="150" x2="95" y2="60" stroke="#6f6d68" stroke-width="2" marker-end="url(#ga)"/>
+        <line x1="275" y1="150" x2="110" y2="150" stroke="#6f6d68" stroke-width="2" marker-end="url(#ga)"/>
+        <line x1="275" y1="150" x2="120" y2="250" stroke="#6f6d68" stroke-width="2" marker-end="url(#ga)"/>
+        <line x1="275" y1="150" x2="420" y2="60" stroke="#4a3aa7" stroke-width="3" marker-end="url(#ga)"/>
+        <line x1="275" y1="150" x2="430" y2="250" stroke="#b9471d" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ga)"/>
+        <line x1="430" y1="250" x2="120" y2="250" stroke="#d9d8d3" stroke-width="2" stroke-dasharray="3 4"/>
+        <line x1="275" y1="150" x2="280" y2="285" stroke="#6f6d68" stroke-width="2" marker-end="url(#ga)"/>
+        <!-- edge labels -->
+        <text x="160" y="92" font-size="11" fill="#52514e">presents_with</text>
+        <text x="133" y="143" font-size="11" fill="#52514e">presents_with</text>
+        <text x="160" y="213" font-size="11" fill="#52514e">presents_with</text>
+        <text x="335" y="92" font-size="11" font-weight="700" fill="#372a85">diagnosed_by</text>
+        <text x="362" y="200" font-size="11" font-weight="700" fill="#b9471d">differential_of</text>
+        <text x="250" y="263" font-size="10" fill="#9a9890">공유 증상</text>
+        <text x="290" y="228" font-size="11" fill="#52514e">depicted_in</text>
+        <!-- nodes -->
+        <g><rect x="210" y="128" width="130" height="44" rx="10" fill="#4a3aa7"/><text x="275" y="155" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">대동맥 박리</text></g>
+        <g><rect x="20" y="38" width="150" height="40" rx="8" fill="#fff" stroke="#6f6d68" stroke-width="1.5"/><text x="95" y="63" text-anchor="middle" font-size="12.5" fill="#0b0b0b">찢어지는 흉통 → 등</text></g>
+        <g><rect x="20" y="130" width="110" height="40" rx="8" fill="#fff" stroke="#6f6d68" stroke-width="1.5"/><text x="75" y="155" text-anchor="middle" font-size="12.5" fill="#0b0b0b">양팔 혈압 차이</text></g>
+        <g><rect x="20" y="230" width="125" height="40" rx="8" fill="#fff" stroke="#6f6d68" stroke-width="1.5"/><text x="82" y="255" text-anchor="middle" font-size="12.5" fill="#0b0b0b">급성 흉통·고혈압</text></g>
+        <g><rect x="350" y="38" width="150" height="40" rx="8" fill="#e9e6f7" stroke="#4a3aa7" stroke-width="2"/><text x="425" y="56" text-anchor="middle" font-size="12.5" font-weight="800" fill="#372a85">조영증강 CT</text><text x="425" y="71" text-anchor="middle" font-size="10.5" fill="#372a85">정답 근거 · p.13 quote</text></g>
+        <g><rect x="360" y="230" width="150" height="40" rx="8" fill="#fff" stroke="#b9471d" stroke-width="2" stroke-dasharray="5 4"/><text x="435" y="248" text-anchor="middle" font-size="12.5" font-weight="800" fill="#b9471d">급성 심근경색</text><text x="435" y="263" text-anchor="middle" font-size="10.5" fill="#b9471d">오답 후보 (형제 노드)</text></g>
+        <g><rect x="205" y="278" width="150" height="40" rx="8" fill="#fff" stroke="#6f6d68" stroke-width="1.5"/><text x="280" y="296" text-anchor="middle" font-size="12.5" fill="#0b0b0b">CT #3 · intimal flap</text><text x="280" y="311" text-anchor="middle" font-size="10.5" fill="#52514e">Image 노드 → 이미지 문항</text></g>
+      </svg>
+      <div class="sub">진단형 템플릿: 중심 질환 + presents_with 3개 + diagnosed_by 1개가 발문·정답 근거, differential_of 노드가 오답 후보, depicted_in 이미지가 붙으면 이미지 문항으로 성립. 해설은 경로 설명.</div>
+    </section>
+  </div>
+
+  <div class="row three">
+    <section>
+      <h2><span class="num">4</span>데이터 모델 변경</h2>
+      <table>
+        <tr><th>테이블</th><th>핵심 컬럼</th></tr>
+        <tr><td><code>kg_nodes</code></td><td><code>upload_id</code>, <code>type</code>(8종), <code>name</code>, <code>aliases[]</code>, <code>canonical_id</code>(온톨로지 개념 ID·xref), <code>embedding</code>, <code>community_id</code>, <code>degree</code></td></tr>
+        <tr><td><code>kg_edges</code></td><td><code>src</code>, <code>dst</code>, <code>rel</code>(10종), <code>confidence</code>, <code>origin</code>, <code>evidence_chunk_ids[]</code>, <code>evidence_quote</code></td></tr>
+        <tr><td><code>kg_coverage</code></td><td><code>node_id</code>, <code>question_id</code>, <code>asked_at</code></td></tr>
+        <tr><td>저장소</td><td>Supabase Postgres(2-hop recursive CTE + HNSW). Apache AGE·Neo4j는 보류 — 온톨로지 검토서 결론과 동일</td></tr>
+      </table>
+    </section>
+    <section>
+      <h2><span class="num">5</span>장점</h2>
+      <ul class="pros">
+        <li>오답이 구조적으로 생성 — 정답 길이 누출·위치 편중 같은 통계 결함을 근본에서 완화</li>
+        <li>해설이 경로 설명이 되어 교육적 가치 상승</li>
+        <li>출처가 edge 단위로 보존 — 근거 추적의 최고 해상도</li>
+        <li>유형 편중(치료 28% · 기전 2%)과 커버리지를 그래프 분포로 제어</li>
+        <li>여러 자료·CPX 증례를 한 그래프로 통합 → 개인화·과목 단위 학습 기반</li>
+      </ul>
+    </section>
+    <section>
+      <h2><span class="num">6</span>단점 · 위험</h2>
+      <ul class="cons">
+        <li>추출·정규화 비용과 지연이 가장 큼 (청크당 1콜)</li>
+        <li>추출 오류(관계 방향·과잉 일반화, 문헌상 정밀도 70~85%)가 누적되면 문항 전체 오염</li>
+        <li>그래프 품질 평가에 전문가 시간이 가장 많이 듦 · 스키마 설계가 온톨로지 전문성 요구</li>
+        <li>슬라이드형 자료는 문장이 짧아 관계 추출이 빈약할 수 있음</li>
+        <li>저작권 제약(교과서·용어집 추출원 제외) · 자료 자체의 오류를 구조화할 위험</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="row wide-left">
+    <section>
+      <h2><span class="num">7</span>평가 지표 · 로드맵</h2>
+      <table>
+        <tr><th>지표</th><th>정의</th><th>기준</th><th>방법</th></tr>
+        <tr><td>트리플 추출 정밀도/재현율</td><td>자료 5건 × 청크 20개 표본 전문가 라벨</td><td>P ≥ 0.85 · R ≥ 0.75</td><td>2인 독립, κ</td></tr>
+        <tr><td>엔티티 해소 정확도</td><td>병합 쌍 표본의 정답률</td><td>≥ 0.95</td><td>표본 200쌍</td></tr>
+        <tr><td>오답 품질</td><td>그럴듯함·방어 가능성 5점 척도 (후보 1 오답과 블라인드 비교)</td><td>평균 ≥ 4.0</td><td>전문가</td></tr>
+        <tr><td>유형 분포 · 커버리지</td><td>ask_kind 분포, 미출제 노드 비율</td><td>기전·합병증 ≥ 10%</td><td>코드 자동</td></tr>
+      </table>
+      <div class="timeline">
+        <div class="phase"><b>Phase 0·1</b>후보 1</div>
+        <div class="phase"><b>Phase 2</b>후보 2</div>
+        <div class="phase hot"><b>Phase 3a · 2~3주</b>그래프-lite: 추출 → 오답 후보 → 커버리지</div>
+        <div class="phase warm"><b>Phase 3b · 2~3주</b>온톨로지 xref · 커뮤니티 요약 · 개인화 연결</div>
+      </div>
+    </section>
+    <section>
+      <h2><span class="num">8</span>교수님께 여쭙는 점</h2>
+      <ol class="q">
+        <li>노드 8종·관계 10종이 의학교육 문항 생성에 충분한지, 빠진 유형(역학·예후·검사 수치 범위)과 자체 교육 온톨로지(관계 7종)와의 정렬</li>
+        <li>SNOMED CT·KCD-9·MeSH·MONDO를 xref로만 연결하는 방침의 타당성과 한국어 매핑 자원·라이선스</li>
+        <li>추출 정밀도 평가 표본 설계(청크 수·라벨러 수)와 허용 하한</li>
+        <li>학생 자료의 오류가 그래프로 구조화될 위험을 어떻게 다룰지(origin 표기 + 후보 2 비평기로 충분한지)</li>
+      </ol>
+      <div class="rating" style="margin-top:10px">
+        <div>구현 복잡도</div><div class="dots">●●●●●</div>
+        <div>근거 추적 측정 가능성</div><div class="dots">●●●●●</div>
+        <div>의학 정확성 방어선</div><div class="dots">●●<span>●●●</span></div>
+        <div>오답 품질 개선</div><div class="dots">●●●●●</div>
+        <div>비용 효율</div><div class="dots">●●<span>●●●</span></div>
+      </div>
+    </section>
+  </div>
+
+  <footer><span>LectureLink · 내신대비 RAG 전환 계획서 부록 · 2026-08-23 · 기준 코드 main f7fcfa5</span><span>검토: 의료정보학교실 이승보 교수님 · 후보 3 / 3</span></footer>
+</div>
+</body></html>
