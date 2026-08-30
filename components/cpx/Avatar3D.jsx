@@ -483,7 +483,9 @@ function GlbPatient({ url, targetH = 1.55, ...motion }) {
   // Hair는 제외: 뒷머리 뭉치를 접촉 기준으로 삼으면 몸통이 침대에서 떠 보인다(머리카락은 눌린다고 가정).
   // _child 모델은 본 스케일이 바인드 박스에 안 잡히므로 포즈 실측 바운드를 우선 사용.
   const { scale, offsetY, minZ } = useMemo(() => {
-    const posed = url.includes('_child') || url.includes('_infant') ? measurePosedBounds(clone) : null
+    // candidates/ (poly.pizza 원형 후보)는 아머처 노드 스케일이 바인드 박스에 안 잡혀 실측이 필요하다.
+    const posed =
+      url.includes('_child') || url.includes('_infant') || url.includes('/candidates/') ? measurePosedBounds(clone) : null
     const box = posed ? posed.box : new THREE.Box3().setFromObject(clone)
     const h = box.max.y - box.min.y || 1
     const s = targetH / h
@@ -505,14 +507,18 @@ function GlbPatient({ url, targetH = 1.55, ...motion }) {
   const anchors = useMemo(() => computeFaceAnchors(clone), [clone])
   const ref = useRef()
   const { mixer } = useAnimations(animations, ref)
-  const hasIdleClip = useMemo(() => animations.some((a) => a.name === 'Idle'), [animations])
+  // 'Idle' 외에 'CharacterArmature|Idle'(Quaternius 신형 팩·Blender 내보내기 접두어)도 허용.
+  // 'Idle_Neutral'(양발 나란한 중립 대기)이 있으면 우선 — 'Idle'은 한 발을 내민 액션 대기라 환자답지 않다(2026-08-26 피드백).
+  const pickIdleClip = (clips) =>
+    clips.find((a) => /(^|\|)Idle_Neutral$/.test(a.name)) || clips.find((a) => a.name === 'Idle' || /(^|\|)Idle$/.test(a.name))
+  const hasIdleClip = useMemo(() => Boolean(pickIdleClip(animations)), [animations])
   // Idle 시작은 mixer에서 직접 한다. drei useAnimations의 actions는 첫 렌더 시점에 비어 있고,
   // 마운트 후 재렌더가 없으면(예: pose='lying'으로 직행 마운트) actions.Idle이 계속 undefined로 남아
   // Idle이 시작되지 않는 race가 있다 → 파일 저장 포즈(다리 굽힘)가 그대로 노출되던 버그(2026-07-10).
   useEffect(() => {
     if (!hasIdleClip || !ref.current) return
     if (new URLSearchParams(window.location.search).has('noanim')) return
-    const clip = animations.find((a) => a.name === 'Idle')
+    const clip = pickIdleClip(animations)
     const action = mixer.clipAction(clip, ref.current)
     action.reset().fadeIn(0.3).play()
     return () => action.fadeOut(0.2)
@@ -638,7 +644,9 @@ function useResolvedModel(gender, age) {
     let alive = true
     const g = GENDER_KEY[gender] || 'male'
     const a = Number(age)
+    const override = avatarModelOverride()
     const candidates = [
+      ...(override ? [`/cpx/models/candidates/${override.name}.glb`] : []),
       ...(a >= 60 ? [`/cpx/models/patient_${g}_old.glb`] : []),
       ...(a <= 2 ? [`/cpx/models/patient_${g}_infant.glb`] : []),
       ...(a <= 12 ? [`/cpx/models/patient_${g}_child.glb`] : []),
@@ -666,6 +674,16 @@ function useResolvedModel(gender, age) {
     }
   }, [gender, age])
   return url
+}
+
+// 후보 모델 미리보기 오버라이드: ?avatarModel=cand1_quaternius_woman → /cpx/models/candidates/<이름>.glb
+// 파일명 끝의 _NNN 은 신장(cm) 변형(예: cand2_quaternius_man_183) — 성인 렌더 키·눕기 좌표·진찰 카메라에 그대로 쓴다.
+function avatarModelOverride() {
+  if (typeof window === 'undefined') return null
+  const name = new URLSearchParams(window.location.search).get('avatarModel')
+  if (!name || !/^[\w-]+$/.test(name)) return null
+  const m = name.match(/_(\d{3})$/)
+  return { name, heightM: m ? Number(m[1]) / 100 : null }
 }
 
 function PatientAvatar({ gender, age, targetH = 1.55, speaking, audioLevel, pose, motionProfile }) {
@@ -748,7 +766,8 @@ function useContextLossRecovery() {
 export default function Avatar3D({ gender = '남성', age, child = null, speaking = false, audioLevel = 0, pose = 'sitting', examTarget = null, category = '' }) {
   const motionProfile = MOTION_PROFILE_BY_CATEGORY[category] || null
   const patient = child ? { gender: child.gender || '남성', age: child.age } : { gender, age }
-  const patientH = targetHeightForAge(patient.age)
+  // 신장 변형 후보(_NNN) 미리보기 시 그 신장을, 아니면 나이대별 기본 키
+  const patientH = avatarModelOverride()?.heightM || targetHeightForAge(patient.age)
   const [glEpoch, bindContextRecovery] = useContextLossRecovery()
   return (
     <Canvas
