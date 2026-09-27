@@ -21,6 +21,11 @@
 
 import { createHash } from 'node:crypto';
 import { recordStage } from '@/lib/metrics/request-context';
+import {
+  attributedCostSnapshot,
+  runWithCostAttribution,
+  type AttributedCostSnapshot,
+} from '@/lib/metrics/cost-attribution';
 import { runQualityGate, describeGate } from './quality-gate';
 import { buildChunks } from '@/lib/extract/chunk';
 import { validateSourceRefs, toStoredRefs } from './source-refs';
@@ -36,6 +41,7 @@ import {
   type UsageRecord,
 } from './client';
 import { recordAiCost } from './cost-cap';
+import { configSnapshot } from './versions';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -788,6 +794,18 @@ export interface GenerationDiagnostics {
   inpaint: unknown[];
   /** 배치별 계측 — 생성 호출/이미지 처리 소요를 나눠 기록. */
   batches: unknown[];
+  /**
+   * 원가 (RAG 실행계획 v1.1 0-a) — 업로드당·문항당 원가를 교차 검증하는 두 합계.
+   *  - pipelineUsd: 파이프라인이 직접 센 totalCost. 반환 usage.costUSD 와 같고,
+   *    헤지에서 진 호출은 빠져 있다.
+   *  - attributed: 비용 귀속 컨텍스트에 쌓인 ai_cost_log 기록 합계(진단 기록 시점까지).
+   *    OCR·Vision·이미지 선별처럼 totalCost 경로 밖의 호출도 들어간다. 진단보다 늦게
+   *    도착하는 기록(헤지 등)은 빠질 수 있으므로 최종 합계는 ai_cost_log 로 센다
+   *    (scripts/report-upload-cost.mjs).
+   */
+  cost?: { pipelineUsd: number; attributed: AttributedCostSnapshot | null };
+  /** 설정 스냅샷(versions.ts configSnapshot) — 이 실행이 어떤 프롬프트·모델 조합이었는지. */
+  config?: Record<string, unknown>;
   warnings: string[];
   finishedAt: string;
 }
@@ -936,20 +954,21 @@ async function summarizeReferenceFormat(input: {
         }),
       { maxAttempts: 2, backoffMs: 500, maxDelayMs: 4_000 },
     );
-    input.onCost(
-      calculateCost(
-        model,
-        response.usage.input_tokens,
-        response.usage.output_tokens,
-        response.usage.cache_read_input_tokens ?? 0,
-        response.usage.cache_creation_input_tokens ?? 0,
-      ),
+    const profileCost = calculateCost(
+      model,
+      response.usage.input_tokens,
+      response.usage.output_tokens,
+      response.usage.cache_read_input_tokens ?? 0,
+      response.usage.cache_creation_input_tokens ?? 0,
     );
+    input.onCost(profileCost);
+    // 종전에는 0 으로 기록해 ai_cost_log 합계(일일 상한·업로드당 원가)에서 이 호출만
+    // 빠졌다. totalCost 에는 onCost 로 이미 들어가므로 실비용을 적어야 두 합계가 맞는다.
     await recordAiCost({
       userId: input.userId,
       endpoint: 'private.reference-profile',
       model,
-      costUsd: 0,
+      costUsd: profileCost,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
       metadata: { references: input.texts.length },
@@ -1594,6 +1613,16 @@ async function extractFromBuffer(input: {
 export async function generatePrivateQuestionsFromUpload(
   input: PrivateGenerationInput,
 ): Promise<PrivateGenerationResult> {
+  // 이 업로드를 처리하는 동안 기록되는 모든 AI 비용에 uploadId 를 단다(v1.1 0-a).
+  // 추출·OCR·Vision 경로는 uploadId 를 모르므로, 컨텍스트 없이는 업로드당 원가를 셀 수 없다.
+  return runWithCostAttribution({ uploadId: input.uploadId, userId: input.userId }, () =>
+    runPrivateGeneration(input),
+  );
+}
+
+async function runPrivateGeneration(
+  input: PrivateGenerationInput,
+): Promise<PrivateGenerationResult> {
   const admin = createAdminClient();
   const desiredCount = input.desiredCount ?? 12;
   const style = input.style ?? 'kmle';
@@ -1793,6 +1822,11 @@ export async function generatePrivateQuestionsFromUpload(
           generation: diag.generation,
           inpaint: diag.inpaint,
           batches: diag.batches,
+          cost: {
+            pipelineUsd: Math.round(totalCost * 1e6) / 1e6,
+            attributed: attributedCostSnapshot(),
+          },
+          config: configSnapshot(),
           // 경고는 개수·페이지 번호 위주라 강의 내용이 들어가지 않는다. 방어적으로 길이 제한.
           warnings: warnings.slice(0, 60).map((w) => String(w).slice(0, 300)),
           finishedAt: new Date().toISOString(),
