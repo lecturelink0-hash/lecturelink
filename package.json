@@ -47,6 +47,7 @@
     "check:duplicate": "node --experimental-strip-types --no-warnings scripts/check-duplicate-guard.mjs",
     "check:naesin-quality": "node --experimental-strip-types --no-warnings scripts/check-naesin-quality.mjs",
     "check:upload-cost": "node --experimental-strip-types --no-warnings scripts/check-upload-cost.mjs",
+    "check:rag-eval": "node --experimental-strip-types --no-warnings scripts/check-rag-eval.mjs",
     "report:upload-cost": "node --experimental-strip-types --no-warnings scripts/report-upload-cost.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
