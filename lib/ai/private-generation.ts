@@ -52,6 +52,8 @@ import {
 } from './client';
 import { recordAiCost } from './cost-cap';
 import { configSnapshot } from './versions';
+import { parseRagMode, ragConfigSnapshot, ragEmbedModel, ragIndexingEnabled } from '@/lib/rag/mode';
+import { indexMaterialChunks, settleRagIndex, type RagIndexResult } from '@/lib/rag/indexing';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -816,9 +818,17 @@ export interface GenerationDiagnostics {
   cost?: { pipelineUsd: number; attributed: AttributedCostSnapshot | null };
   /** 설정 스냅샷(versions.ts configSnapshot) — 이 실행이 어떤 프롬프트·모델 조합이었는지. */
   config?: Record<string, unknown>;
+  /** RAG 인덱싱 결과(v1.1 0-h) — 모드·청크 수·임베딩 수·시간·비용. off 면 { mode: 'off' }. */
+  rag?: RagIndexResult | { mode: string };
   warnings: string[];
   finishedAt: string;
 }
+
+/**
+ * RAG 인덱싱(shadow·on)을 진단 기록 전에 기다리는 상한. 청크 수십~수백 개 임베딩은 보통 수 초다.
+ * 넘기면 진단에 timedOut 을 남기고 작업은 뒤에서 계속된다(생성 완료를 늦추지 않기 위해).
+ */
+const RAG_INDEX_WAIT_MS = 30_000;
 
 const MAX_REFERENCE_IMAGES = 6;
 /** 참고 자료 1건에서 형식 분석에 쓸 텍스트 상한(자). 형식만 보므로 앞부분이면 충분하다. */
@@ -1830,6 +1840,13 @@ async function runPrivateGeneration(
   let aggInputTokens = 0;
   let aggOutputTokens = 0;
   let modelUsed = MODELS.generation();
+  // RAG 모드(v1.1 0-h). off 면 아래 인덱싱 경로를 아예 타지 않는다 — 현행과 같은 동작.
+  const ragModeParsed = parseRagMode(process.env.PRIVATE_RAG_MODE);
+  const RAG_MODE = ragModeParsed.mode;
+  // 청크 인덱싱(shadow·on). 생성은 기다리지 않고 진단 직전에 합류한다. 실패 경로의 진단에서도
+  // 읽을 수 있게 try 밖에 둔다.
+  let ragIndexPromise: Promise<RagIndexResult> | null = null;
+  let ragDiag: RagIndexResult | null = null;
 
   try {
     // 2) 다운로드
@@ -1933,7 +1950,8 @@ async function runPrivateGeneration(
             pipelineUsd: Math.round(totalCost * 1e6) / 1e6,
             attributed: attributedCostSnapshot(),
           },
-          config: configSnapshot(),
+          config: { ...configSnapshot(), retrieval: ragConfigSnapshot() },
+          rag: ragDiag ?? { mode: RAG_MODE },
           // 경고는 개수·페이지 번호 위주라 강의 내용이 들어가지 않는다. 방어적으로 길이 제한.
           warnings: warnings.slice(0, 60).map((w) => String(w).slice(0, 300)),
           finishedAt: new Date().toISOString(),
@@ -2690,6 +2708,10 @@ async function runPrivateGeneration(
         return finalLocators.length > 0 ? finalLocators : earlyLocators;
       });
       await chunkLocatorsPromise;
+      // RAG 인덱싱(v1.1 0-g·0-h): shadow·on 에서만 청크 임베딩을 만든다. 생성은 기다리지 않는다.
+      if (ragIndexingEnabled(RAG_MODE) && materialChunksSupported) {
+        ragIndexPromise = indexMaterialChunks({ admin, uploadId: uploadRow.id, mode: RAG_MODE });
+      }
     }
 
     // 5.5) 추출 결과가 전부 비어 있으면 생성 호출은 의미 없음 → 명확한 실패 메시지.
@@ -5460,6 +5482,15 @@ async function runPrivateGeneration(
         }
         return res;
       });
+
+    if (ragIndexPromise) {
+      ragDiag = await settleRagIndex(ragIndexPromise, RAG_INDEX_WAIT_MS, { mode: RAG_MODE, model: ragEmbedModel() });
+      // 임베딩 비용도 이 업로드의 원가다 — 진단 totalCost 와 ai_cost_log 합계가 어긋나지 않게 더한다.
+      totalCost += ragDiag.costUsd;
+      if (ragDiag.error) warnings.push(`RAG 인덱싱 실패(생성에는 영향 없음): ${ragDiag.error}`);
+      if (ragDiag.timedOut) warnings.push(`RAG 인덱싱이 ${RAG_INDEX_WAIT_MS / 1000}초 안에 끝나지 않음(뒤에서 계속).`);
+    }
+    if (ragModeParsed.invalid) warnings.push('PRIVATE_RAG_MODE 값을 알 수 없어 off 로 처리함.');
 
     await writeDiagnostics();
 
