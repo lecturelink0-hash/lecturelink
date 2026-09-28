@@ -1,0 +1,37 @@
+name: PDF render
+
+# PDF 페이지 렌더(스캔 PDF OCR·이미지 후보 선별의 입력)는 텍스트만 있는 자료로는 깨져도 드러나지
+# 않는다. 그림이 있는 합성 PDF 로 실제 렌더를 돌려 본다(lib/extract/render-slides.ts).
+
+on:
+  pull_request:
+    paths:
+      - 'lib/extract/render-slides.ts'
+      - 'scripts/check-pdf-render.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/pdf-render-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'lib/extract/render-slides.ts'
+      - 'scripts/check-pdf-render.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/pdf-render-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # 그림 있는 페이지 렌더·버퍼 분리 방지 — pdfjs 임시 캔버스를 node-canvas 로 (render-slides.ts)
+      - run: npm run check:pdf-render
