@@ -27,7 +27,17 @@ import {
   type AttributedCostSnapshot,
 } from '@/lib/metrics/cost-attribution';
 import { runQualityGate, describeGate } from './quality-gate';
-import { buildChunks } from '@/lib/extract/chunk';
+import { buildTextChunks, buildTextFirstChunks, type MaterialChunk } from '@/lib/extract/chunk';
+import { materialChunkId } from '@/lib/extract/chunk-id';
+import {
+  assemblePageSlides,
+  capPageTexts,
+  mergeByPage,
+  renderPageText,
+  type PageText,
+  type TextContentItemLike,
+} from '@/lib/extract/page-text';
+import { buildEarlyBlocks, segmentContext } from './context-segments';
 import { validateSourceRefs, toStoredRefs } from './source-refs';
 import type { PrivateQuestionKind } from '@/lib/types/database';
 import type Anthropic from '@anthropic-ai/sdk';
@@ -1082,8 +1092,12 @@ async function extractFromBuffer(input: {
   maxFeatured: number;
   /** 경고 수집 배열(호출자와 공유) — 텍스트 조기 반환 이후에도 계속 쌓을 수 있게 주입받는다. */
   warnings: string[];
-  /** 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다. */
-  onEarlyText?: (text: string) => void;
+  /**
+   * 본문 텍스트가 확보된 즉시 1회 호출. 호출자는 이 시점에 텍스트 배치를 먼저 출발시킨다.
+   * pages 는 같은 텍스트의 페이지 단위 분할(상한 적용 후) — 선발 배치의 슬라이드 헤더와
+   * 먼저 저장하는 본문 청크의 원천이다(v1.1 0-b·0-d). 페이지를 알 수 없으면 빈 배열.
+   */
+  onEarlyText?: (text: string, pages: PageText[]) => void;
   /**
    * 크롭이 만들어진 즉시 그 크롭의 OCR 을 시작시키는 훅(스트리밍).
    * 종전에는 "전체 추출(모든 페이지 Vision) 완료 → 전체 크롭 OCR" 직렬이라 Vision 파도와
@@ -1104,16 +1118,20 @@ async function extractFromBuffer(input: {
   };
   };
   onVisionProgress?: (completed: number, total: number) => Promise<void> | void;
-}): Promise<{ slides: ExtractedSlide[] }> {
+}): Promise<{ slides: ExtractedSlide[]; embeddedCrops?: Set<CroppedImage> }> {
   const { buffer, fileType, userIdForLog, wantsImages, warnings, maxFeatured } = input;
   // 이미지 분석(렌더+Vision+크롭) 생략 여부 — 텍스트 확보 후 확정한다.
   let skipImageAnalysis = false;
   let earlyTextSent = false;
-  const sendEarlyText = (text: string) => {
+  const sendEarlyText = (text: string, pages: PageText[]) => {
     if (earlyTextSent) return;
     earlyTextSent = true;
-    input.onEarlyText?.(text);
+    input.onEarlyText?.(text, pages);
   };
+  // PDF 페이지별 본문(상한 적용 후). pdf-parse 가 페이지마다 부르는 렌더러에서 모은다.
+  let pdfPageTexts: PageText[] = [];
+  // 임베드 크롭의 출처 페이지(1-based). 종전에는 전부 첫 슬라이드에 붙였다(v1.1 0-b).
+  const embeddedCropPage = new Map<CroppedImage, number>();
 
   // PDF 임베드 이미지(object dedup) — 있으면 Vision 검출/crop 대신 이걸 우선 사용.
   let pdfEmbeddedCrops: CroppedImage[] | null = null;
@@ -1155,11 +1173,33 @@ async function extractFromBuffer(input: {
         const t0 = Date.now();
         try {
           const { default: pdfParse } = await import('pdf-parse');
-          const result = await pdfParse(Buffer.from(pdfBuffer));
+          // 페이지별 본문을 같은 파싱에서 함께 모은다(v1.1 0-b). 렌더 규칙이 pdf-parse 기본값과
+          // 같아 전체 텍스트(result.text)는 종전과 한 글자도 다르지 않다.
+          const rawPages: PageText[] = [];
+          const result = await pdfParse(Buffer.from(pdfBuffer), {
+            pagerender: async (pageData: {
+              pageNumber?: number;
+              getTextContent: (opts: Record<string, boolean>) => Promise<{ items: TextContentItemLike[] }>;
+            }) => {
+              const content = await pageData.getTextContent({
+                normalizeWhitespace: false,
+                disableCombineTextItems: false,
+              });
+              const text = renderPageText(content.items);
+              rawPages.push({ pageIndex: pageData.pageNumber ?? rawPages.length + 1, text });
+              return text;
+            },
+          });
+          const capped = capPageTexts(
+            [...rawPages].sort((x, y) => x.pageIndex - y.pageIndex),
+            MAX_GEN_TEXT_CHARS,
+          );
+          pdfPageTexts = capped.pages;
           if (input.diag) {
             input.diag.timings.pdfParseMs = Date.now() - t0;
             input.diag.extract.pdfPages = result.numpages ?? null;
             input.diag.extract.textChars = (result.text ?? '').trim().length;
+            input.diag.extract.pagesWithText = pdfPageTexts.filter((pg) => pg.text.length > 0).length;
           }
           const parsed = (result.text ?? '').trim();
           // ★ 본문 텍스트가 나온 "즉시" 호출자에게 넘긴다.
@@ -1168,7 +1208,7 @@ async function extractFromBuffer(input: {
           //   그래서 "텍스트 배치를 먼저 출발시켜 전처리를 숨긴다"는 최적화가 사실상
           //   작동하지 않았다(실측: 텍스트준비 = 첫배치시작 = 11.3~14.0초, 매번 임베드
           //   분기 소요와 일치). 여기서 넘기면 텍스트 배치가 6~8초 일찍 출발한다.
-          sendEarlyText(parsed.slice(0, MAX_GEN_TEXT_CHARS));
+          sendEarlyText(parsed.slice(0, MAX_GEN_TEXT_CHARS), pdfPageTexts);
           return parsed;
         } catch (e) {
           warnings.push(
@@ -1254,12 +1294,16 @@ async function extractFromBuffer(input: {
           for (const { image } of chosen) {
             if (typeof image.pageIndex === 'number') embeddedPagesUsed.add(image.pageIndex);
           }
-          return chosen.map(({ image, kind }) => ({
-            region: { kind, x: 0, y: 0, width: 1, height: 1, confidence: 1 },
-            png: image.png,
-            widthPx: image.widthPx,
-            heightPx: image.heightPx,
-          }));
+          return chosen.map(({ image, kind }) => {
+            const crop: CroppedImage = {
+              region: { kind, x: 0, y: 0, width: 1, height: 1, confidence: 1 },
+              png: image.png,
+              widthPx: image.widthPx,
+              heightPx: image.heightPx,
+            };
+            if (typeof image.pageIndex === 'number') embeddedCropPage.set(crop, image.pageIndex);
+            return crop;
+          });
         } catch (e) {
           warnings.push(
             `임베드 이미지 추출/선별 실패 — Vision 경로로 폴백. ${e instanceof Error ? e.message : String(e)}`,
@@ -1297,13 +1341,18 @@ async function extractFromBuffer(input: {
     //   context 는 이 크롭들이 붙는 slides[0] 의 텍스트(본문 슬라이스)와 동일하게 준다.
     if (pdfEmbeddedCrops) {
       for (const crop of pdfEmbeddedCrops) {
-        input.startOcr?.(fullText.slice(0, MAX_GEN_TEXT_CHARS), 1, crop);
+        // 출처 페이지를 알면 그 페이지 본문을 OCR 문맥으로 준다(모르면 종전처럼 본문 앞부분).
+        const page = embeddedCropPage.get(crop);
+        const pageText =
+          page !== undefined ? pdfPageTexts.find((pg) => pg.pageIndex === page)?.text : undefined;
+        input.startOcr?.(pageText || fullText.slice(0, MAX_GEN_TEXT_CHARS), page ?? 1, crop);
       }
     }
 
     // ★ 텍스트 조기 전달 — 호출자가 이 시점에 텍스트 배치를 먼저 출발시켜
     //   아래 렌더·Vision·OCR 시간을 생성 시간 뒤로 숨긴다.
-    sendEarlyText(fullText);
+    //   (본문 파싱이 성공했다면 위에서 이미 보냈으므로 여기서는 no-op 이다.)
+    sendEarlyText(fullText, pdfPageTexts);
 
     // ★ 이미지 분석 생략 판정: 이미지 문항을 원하지 않고 본문 텍스트가 충분하면
     //   페이지 렌더 + Vision 검출 + 크롭을 건너뛴다(크롭이 없으므로 OCR 도 자동 생략).
@@ -1385,10 +1434,20 @@ async function extractFromBuffer(input: {
         );
     }
 
+    // 페이지 단위 본문(v1.1 0-b). 종전에는 본문 전체를 첫 페이지 하나에 붙여, 텍스트
+    // PDF·DOCX 에서 `## 슬라이드 N`·청크 page_index·source_pages 가 전부 무의미했다.
+    // 렌더된(이미지 후보) 페이지에는 PNG 를 붙이고, 나머지는 텍스트만 둔다.
+    const pageSlides =
+      pdfPageTexts.length > 0
+        ? assemblePageSlides(pdfPageTexts, pages, () => new Uint8Array())
+        : [];
     if (slidesData.length > 0) {
       // 텍스트 위주 경로에서 이미 slidesData 를 채웠으면 그대로 사용.
+    } else if (pageSlides.length > 0) {
+      slidesData = pageSlides;
+      if (input.diag) input.diag.extract.pageSlides = pageSlides.length;
     } else if (pages.length > 0) {
-      // 본문 텍스트는 페이지 단위 분리가 어려워 첫 페이지에 부여, 이미지는 페이지별.
+      // 본문 파싱이 실패해 페이지 텍스트가 없을 때만 종전 방식(첫 페이지에 전체 텍스트).
       slidesData = pages.map((p, i) => ({
         pageIndex: p.pageIndex,
         text: i === 0 ? fullText.slice(0, MAX_GEN_TEXT_CHARS) : '',
@@ -1590,24 +1649,71 @@ async function extractFromBuffer(input: {
     );
   }
 
+  // ── 같은 페이지는 한 행으로 합친다(v1.1 0-b).
+  //    PPTX 미디어 폴백은 그림 1장마다 행을 만들어, 같은 슬라이드 본문이 그림 수만큼
+  //    컨텍스트·청크에 반복됐다. 크롭은 순서를 유지한 채 한 페이지로 모은다.
+  const mergedSlides = mergeByPage(
+    slides.filter((sl): sl is ExtractedSlide => Boolean(sl)),
+    (into, from) => {
+      into.croppedImages = [...into.croppedImages, ...from.croppedImages];
+    },
+  );
+  slides.length = 0;
+  slides.push(...mergedSlides);
+  // ── 본문 전체 상한을 모든 형식에 같게 적용한다(v1.1 0-b). PDF 는 파싱 단계에서 이미
+  //    적용돼 여기서 줄지 않는다. PPTX 는 종전에 상한이 없었다.
+  {
+    const capped = capPageTexts(
+      slides.map((sl) => ({ pageIndex: sl.pageIndex, text: sl.text })),
+      MAX_GEN_TEXT_CHARS,
+    );
+    const cappedByPage = new Map(capped.pages.map((pg) => [pg.pageIndex, pg.text]));
+    for (const sl of slides) sl.text = cappedByPage.get(sl.pageIndex) ?? '';
+    if (capped.truncatedChars > 0) {
+      warnings.push(
+        `본문 텍스트 ${capped.totalChars.toLocaleString()}자 중 앞 ${MAX_GEN_TEXT_CHARS.toLocaleString()}자만 출제 근거로 사용(뒷부분 절삭).`,
+      );
+      if (input.diag) input.diag.extract.textTruncated = capped.truncatedChars;
+    }
+  }
+
   // PDF 임베드 추출이 있으면 그것을 featured 이미지로 우선 사용.
   //  - 보충 모드: 임베드(원본 화질·주석 없음)를 앞에 두고 Vision 크롭을 뒤에 유지한다.
   //    featured 선정이 슬라이드 순회 순서를 따르므로 임베드가 우선 사용되고, 임베드가
   //    나온 페이지는 후보에서 이미 제외돼 같은 그림이 중복 등재되지 않는다.
   //  - 단독 모드(종전): Vision crop 결과를 통째로 대체(중복 방지).
+  //  - 임베드 크롭은 **원래 페이지**에 붙인다(v1.1 0-b). 종전에는 슬라이드가 한 장뿐이라
+  //    첫 슬라이드에 전부 붙였지만, 페이지 단위가 된 지금 그렇게 두면 모든 그림의 OCR 이
+  //    1쪽 청크·1쪽 컨텍스트로 몰린다. 페이지를 모르는 크롭(mutool 폴백)만 첫 슬라이드로.
+  //    임베드 우선순위는 featured 선정에서 명시적으로 정렬해 유지한다.
   if (pdfEmbeddedCrops && pdfEmbeddedCrops.length > 0 && slides.length > 0) {
-    if (supplementVision) {
-      slides[0].croppedImages = [...pdfEmbeddedCrops, ...slides[0].croppedImages];
-    } else {
-      slides[0].croppedImages = pdfEmbeddedCrops;
-      for (let i = 1; i < slides.length; i++) {
-        if (slides[i]) slides[i].croppedImages = [];
-      }
+    if (!supplementVision) {
+      for (const sl of slides) sl.croppedImages = [];
     }
+    const byPage = new Map(slides.map((sl) => [sl.pageIndex, sl]));
+    const front = new Map<ExtractedSlide, CroppedImage[]>();
+    for (const crop of pdfEmbeddedCrops) {
+      const page = embeddedCropPage.get(crop);
+      let target = page !== undefined ? byPage.get(page) : undefined;
+      if (!target && page !== undefined) {
+        target = { pageIndex: page, text: '', croppedImages: [] };
+        slides.push(target);
+        byPage.set(page, target);
+      }
+      target ??= slides[0];
+      const list = front.get(target) ?? [];
+      list.push(crop);
+      front.set(target, list);
+    }
+    for (const [sl, crops] of front) sl.croppedImages = [...crops, ...sl.croppedImages];
+    slides.sort((a, b) => a.pageIndex - b.pageIndex);
   }
 
-  sendEarlyText(slides.map((s) => s.text).join('\n\n'));
-  return { slides };
+  sendEarlyText(
+    slides.map((s) => s.text).join('\n\n'),
+    slides.map((s) => ({ pageIndex: s.pageIndex, text: s.text })),
+  );
+  return { slides, embeddedCrops: new Set(pdfEmbeddedCrops ?? []) };
 }
 
 export async function generatePrivateQuestionsFromUpload(
@@ -1917,8 +2023,8 @@ async function runPrivateGeneration(
       ocrTasks.set(crop, task);
     };
 
-    let resolveEarlyText: (text: string) => void = () => {};
-    const earlyText = new Promise<string>((resolve) => {
+    let resolveEarlyText: (early: { text: string; pages: PageText[] }) => void = () => {};
+    const earlyText = new Promise<{ text: string; pages: PageText[] }>((resolve) => {
       resolveEarlyText = resolve;
     });
 
@@ -1932,9 +2038,9 @@ async function runPrivateGeneration(
       warnings,
       diag,
       startOcr: startCropOcr,
-      onEarlyText: (text) => {
+      onEarlyText: (text, pages) => {
         diag.timings.textReadyMs = Date.now() - startTime;
-        resolveEarlyText(text);
+        resolveEarlyText({ text, pages });
       },
       onVisionProgress: async (completed, total) =>
         updateProgress('vision', completed, total),
@@ -1947,7 +2053,7 @@ async function runPrivateGeneration(
       userId: input.userId,
     });
     // 추출이 실패해도 earlyText 가 영원히 대기하지 않게 방어한다.
-    extractPromise.catch(() => resolveEarlyText(''));
+    extractPromise.catch(() => resolveEarlyText({ text: '', pages: [] }));
 
     const subTopicsRes = await admin
       .from('sub_topics')
@@ -2209,8 +2315,80 @@ async function runPrivateGeneration(
     //   · 이미지형 선택: 앞쪽 절반만 텍스트로 먼저 출발하고, 나머지는 OCR·이미지 배정을
     //     받아 이미지 판독 문항을 담당한다.
     //   실패는 즉시 던지지 않고 감싸 두었다가 본배치 단계에서 전체 컨텍스트로 재시도한다.
-    const earlyFullText = await earlyText;
+    // 출처 추적용 청크 id 목록. 선발 배치는 본문 청크만, 본 배치는 OCR 까지 포함한 최종본을
+    // 받는다(v1.1 0-d). 배치 함수가 호이스팅돼 있으므로 첫 배치 호출보다 먼저 선언해 둔다 —
+    // 종전 `let chunkLocators` 는 선발 배치보다 늦게 선언돼 TDZ 위험이 있었다(F8).
+    type ChunkLocator = { id: string; pageIndex: number };
+    let chunkLocatorsPromise: Promise<ChunkLocator[]> = Promise.resolve([]);
+
+    const early = await earlyText;
+    const earlyFullText = early.text;
+    const earlyPages = early.pages;
     const canPrefire = batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
+
+    /**
+     * 청크를 결정론적 id(업로드·번호, v1.1 0-c)로 저장한다. 종전처럼 지우고 다시 넣지 않으므로
+     * 같은 업로드를 재처리해도 id 가 바뀌지 않는다. (upload_id, chunk_index) 충돌 시 id 까지
+     * 덮어써서 0-c 이전 행(무작위 id)도 흡수한다. 최종 저장에서만 번호가 넘치는 잔여 행을 지운다.
+     * 실패해도 생성을 막지 않는다 — 출처는 있으면 좋은 것이지 문항의 전제가 아니다.
+     */
+    const persistMaterialChunks = async (
+      chunks: MaterialChunk[],
+      phase: 'early' | 'final',
+    ): Promise<ChunkLocator[]> => {
+      if (!materialChunksSupported || chunks.length === 0) return [];
+      const t0 = Date.now();
+      const rows = chunks.map((c) => ({
+        id: materialChunkId(uploadRow.id, c.chunkIndex, c.sha256),
+        upload_id: uploadRow.id,
+        user_id: input.userId,
+        chunk_index: c.chunkIndex,
+        page_index: c.pageIndex,
+        kind: c.kind,
+        text: c.text,
+        char_count: c.charCount,
+        content_sha: c.sha256,
+      }));
+      try {
+        const { error: chunkErr } = await admin
+          .from('material_chunks')
+          .upsert(rows as never, { onConflict: 'upload_id,chunk_index' });
+        if (chunkErr) {
+          if (isMissingColumnError(chunkErr) || chunkErr.code === '42P01') {
+            materialChunksSupported = false;
+            warnings.push('출처 추적 테이블이 없어 청크를 저장하지 못했다(마이그레이션 00043 미적용).');
+          } else {
+            warnings.push(`청크 저장 실패(${phase}): ${sanitizeErrorMessage(chunkErr.message)}`);
+          }
+          return [];
+        }
+        if (phase === 'final') {
+          // 이번 결과보다 번호가 큰 행은 이전 시도의 잔재다(추출 결과가 짧아진 재처리).
+          const { error: delErr } = await admin
+            .from('material_chunks')
+            .delete()
+            .eq('upload_id', uploadRow.id)
+            .gte('chunk_index', chunks.length);
+          if (delErr) warnings.push(`잔여 청크 정리 실패: ${sanitizeErrorMessage(delErr.message)}`);
+        }
+        diag.timings[phase === 'early' ? 'chunkPersistEarlyMs' : 'chunkPersistMs'] = Date.now() - t0;
+        return rows.map((r) => ({ id: r.id, pageIndex: r.page_index }));
+      } catch (e) {
+        warnings.push(`청크 저장 예외(${phase}): ${sanitizeErrorMessage(e)}`);
+        return [];
+      }
+    };
+
+    // 본문 청크는 텍스트가 확보된 지금 먼저 저장한다 — 곧 출발할 선발 배치가 출처로 인용한다.
+    // OCR 청크는 본문 뒤에 번호가 이어지므로(buildTextFirstChunks) 나중에 붙어도 본문 청크의
+    // 번호·id 는 바뀌지 않는다.
+    const earlyTextChunks: MaterialChunk[] =
+      earlyPages.length > 0
+        ? buildTextChunks(earlyPages.map((pg) => ({ pageIndex: pg.pageIndex, slideText: pg.text })))
+        : [];
+    if (earlyTextChunks.length > 0) {
+      chunkLocatorsPromise = persistMaterialChunks(earlyTextChunks, 'early');
+    }
 
     // ── 배치별 출제 초점 (P11 · 세션 내 중복 방지)
     //
@@ -2278,37 +2456,36 @@ async function runPrivateGeneration(
     const EMPTY_QUOTA: BatchQuota = { image: 0, knowledge: 0, clinical: 0, free: 0 };
     const quotaFor = (batchIndex: number): BatchQuota => batchQuotas[batchIndex] ?? EMPTY_QUOTA;
 
-    // 조기 텍스트는 슬라이드 라벨 없이 한 덩어리로 오므로, 구간 분할은 문자 기준으로 한다.
+    // 선발 배치도 `## 슬라이드 N` 헤더가 붙은 페이지 블록을 받는다(v1.1 0-d). 출처 검증의
+    // 기준집합이 그 배치가 본 헤더라서, 헤더 없는 원문을 주면 선발 배치의 출처가 전부
+    // 무효가 됐다(F2). 페이지를 모르면(본문 파싱 실패 등) 종전처럼 원문 한 덩어리를 준다.
+    // 구간 분할은 본 배치와 같은 규칙(블록 경계, 모자라면 문자 단위 + 헤더 이어 붙이기)이다.
+    const earlyBlocks = buildEarlyBlocks(earlyPages);
+    const earlyContextText = earlyBlocks.length > 0 ? earlyBlocks.join('\n\n') : earlyFullText;
     const prefireSegments =
-      earlyFullText.length < GEN_SEGMENT_ENABLE_MIN_CHARS
+      earlyContextText.length < GEN_SEGMENT_ENABLE_MIN_CHARS
         ? 1
         : Math.max(
             1,
             Math.min(
               prefireCount || 1,
-              Math.floor(earlyFullText.length / GEN_SEGMENT_MIN_CHARS),
+              Math.floor(earlyContextText.length / GEN_SEGMENT_MIN_CHARS),
             ),
           );
     const prefireSegmented = prefireSegments > 1;
     const prefireContext = (batchIndex: number): string => {
-      if (!prefireSegmented) return earlyFullText;
+      if (!prefireSegmented) return earlyContextText;
       const segIndex = Math.min(
         prefireSegments - 1,
         Math.floor((batchIndex * prefireSegments) / Math.max(1, prefireCount)),
       );
-      const segLen = Math.ceil(earlyFullText.length / prefireSegments);
-      const pad = Math.round(segLen * GEN_SEGMENT_OVERLAP_RATIO);
-      let from = Math.max(0, segIndex * segLen - pad);
-      let to = Math.min(earlyFullText.length, segIndex * segLen + segLen + pad);
-      if (from > 0) {
-        const nl = earlyFullText.indexOf('\n', from);
-        if (nl >= 0 && nl - from < 500) from = nl + 1;
-      }
-      if (to < earlyFullText.length) {
-        const nl = earlyFullText.lastIndexOf('\n', to);
-        if (nl > from) to = nl;
-      }
-      return earlyFullText.slice(from, to);
+      return segmentContext({
+        blocks: earlyBlocks.length > 0 ? earlyBlocks : [earlyContextText],
+        text: earlyContextText,
+        segIndex,
+        segCount: prefireSegments,
+        overlapRatio: GEN_SEGMENT_OVERLAP_RATIO,
+      });
     };
 
     const slotsFor = (batchIndex: number) =>
@@ -2413,12 +2590,18 @@ async function runPrivateGeneration(
     // 4-b) 추출 완료 대기 — 위 선발사 배치들은 이 시간 동안 이미 생성 중이다.
     //      상한을 넘기면 이미지 없이(본문 텍스트만으로) 생성을 마무리한다. 실행이 끝나지
     //      않는 것보다 이미지 문항이 빠진 채로라도 끝나는 편이 언제나 낫다.
-    const { slides } = await withDeadline(extractPromise, EXTRACT_WAIT_TIMEOUT_MS, { slides: [] }, () => {
+    const extracted = await withDeadline(extractPromise, EXTRACT_WAIT_TIMEOUT_MS, { slides: [] }, () => {
       diag.extract.extractTimedOut = true;
       warnings.push(
         `전처리가 ${Math.round(EXTRACT_WAIT_TIMEOUT_MS / 1000)}초를 넘겨 본문 텍스트만으로 생성을 마쳤습니다.`,
       );
     });
+    // 시간 초과로 슬라이드가 비어도 페이지 본문은 이미 받아 두었다 — 그걸로 슬라이드를 세운다
+    // (v1.1 0-d). 종전에는 slides 가 비어 "추출된 텍스트·이미지가 없습니다"로 실패했다.
+    const slides: ExtractedSlide[] =
+      extracted.slides.length > 0 || earlyPages.length === 0
+        ? extracted.slides
+        : earlyPages.map((pg) => ({ pageIndex: pg.pageIndex, text: pg.text, croppedImages: [] }));
     diag.timings.extractAwaitedMs = Date.now() - startTime;
     const allCrops = slides.flatMap((s) =>
       s.croppedImages.map((c) => ({ slide: s, crop: c })),
@@ -2476,54 +2659,36 @@ async function runPrivateGeneration(
       cropCount: s.croppedImages.length,
     }));
 
-    // ── 5.4) 출처 추적용 청크 저장 (분담표 A8 · 가이드 §4.3)
+    // ── 5.4) 출처 추적용 청크 최종 저장 (분담표 A8 · 가이드 §4.3 · v1.1 0-c·0-d)
     //
     // 문항이 강의자료 어디에서 나왔는지 적어 두려면, 그 '어디'를 먼저 저장해 둬야 한다.
     // 이게 없으면 전문가 검수 때 검수자가 "근거가 충분한가"를 판정할 때마다 강의자료
     // 전체를 뒤져야 한다(분담표가 A8 을 2단계 선행 조건으로 둔 이유).
     //
-    // 실패해도 생성을 막지 않는다 — 출처는 있으면 좋은 것이지 문항의 전제가 아니다.
-    let chunkLocators: Array<{ id: string; pageIndex: number }> = [];
-    if (materialChunksSupported) {
-      const tChunk = Date.now();
-      try {
-        const chunks = buildChunks(slideSummaries);
-        if (chunks.length > 0) {
-          // 재생성이면 같은 upload 의 이전 청크를 지우고 다시 넣는다. 청크 번호는
-          // 결정론이라 내용이 같으면 같은 번호가 나오지만, 추출 결과가 달라졌을 때
-          // 옛 청크가 남아 있으면 문항이 사라진 페이지를 가리키게 된다.
-          await admin.from('material_chunks').delete().eq('upload_id', uploadRow.id);
-          const { data: savedChunks, error: chunkErr } = await admin
-            .from('material_chunks')
-            .insert(chunks.map((c) => ({
-              upload_id: uploadRow.id,
-              user_id: input.userId,
-              chunk_index: c.chunkIndex,
-              page_index: c.pageIndex,
-              kind: c.kind,
-              text: c.text,
-              char_count: c.charCount,
-              content_sha: c.sha256,
-            })) as never)
-            .select('id, page_index');
-          if (chunkErr) {
-            if (isMissingColumnError(chunkErr) || chunkErr.code === '42P01') {
-              materialChunksSupported = false;
-              warnings.push('출처 추적 테이블이 없어 청크를 저장하지 못했다(마이그레이션 00043 미적용).');
-            } else {
-              warnings.push(`청크 저장 실패: ${sanitizeErrorMessage(chunkErr.message)}`);
-            }
-          } else {
-            chunkLocators = (savedChunks ?? []).map((r) => ({
-              id: String(r.id), pageIndex: Number(r.page_index),
-            }));
-            diag.timings.chunkPersistMs = Date.now() - tChunk;
-            diag.generation.chunkCount = chunks.length;
-          }
-        }
-      } catch (e) {
-        warnings.push(`청크 저장 예외: ${sanitizeErrorMessage(e)}`);
+    // 본문 청크는 텍스트 확보 직후 이미 저장했다. 여기서는 OCR 청크를 뒤에 붙이고 전체를
+    // 한 번 더 upsert 한다(같은 번호 = 같은 id 라 본문 청크는 그대로 남는다).
+    const finalChunks = buildTextFirstChunks(slideSummaries);
+    {
+      // 먼저 저장한 본문 청크와 최종 본문 청크가 다르면, 선발 배치가 인용한 청크의 내용이
+      // 바뀐다. 정상 경로에서는 같은 페이지 텍스트에서 만들어 0 이어야 한다.
+      const mismatched = earlyTextChunks.filter(
+        (c, i) => finalChunks[i]?.sha256 !== c.sha256 || finalChunks[i]?.kind !== 'slide_text',
+      ).length;
+      if (mismatched > 0) {
+        diag.generation.chunkPrefixMismatch = mismatched;
+        warnings.push(`먼저 저장한 본문 청크 ${mismatched}개가 최종 추출과 달라 갱신됨.`);
       }
+    }
+    if (finalChunks.length > 0) {
+      // 먼저 시작한 본문 저장이 끝난 뒤에 최종 저장을 한다(두 upsert 가 같은 행을 두고 경합하지
+      // 않게). 최종 저장이 실패하면 먼저 저장해 둔 본문 청크 id 라도 계속 쓴다.
+      const earlyPersist = chunkLocatorsPromise;
+      chunkLocatorsPromise = earlyPersist.then(async (earlyLocators) => {
+        const finalLocators = await persistMaterialChunks(finalChunks, 'final');
+        if (finalLocators.length > 0) diag.generation.chunkCount = finalChunks.length;
+        return finalLocators.length > 0 ? finalLocators : earlyLocators;
+      });
+      await chunkLocatorsPromise;
     }
 
     // 5.5) 추출 결과가 전부 비어 있으면 생성 호출은 의미 없음 → 명확한 실패 메시지.
@@ -2611,15 +2776,16 @@ async function runPrivateGeneration(
         segmentCount - 1,
         Math.floor((batchIndex * segmentCount) / Math.max(1, batchCount)),
       );
-      // 슬라이드 블록이 구간 수보다 많으면 블록 경계로 나눈다(문장이 잘리지 않는다).
-      if (contextBlocks.length >= segmentCount) {
-        const per = Math.ceil(contextBlocks.length / segmentCount);
-        const from = Math.max(0, segIndex * per - 1); // 앞 블록 1개 겹침
-        const to = Math.min(contextBlocks.length, segIndex * per + per + 1);
-        return contextBlocks.slice(from, to).join('\n\n');
-      }
-      // 텍스트 위주 PDF 는 본문이 한 블록에 몰리므로 문자 단위로 나눈다.
-      return sliceByChars(compositeText, segIndex, segmentCount);
+      // 슬라이드 블록이 구간 수보다 많으면 블록 경계로(앞뒤 1블록 겹침), 모자라면 문자 단위로
+      // 나누되 구간 앞에 그 페이지의 헤더를 다시 붙인다(v1.1 0-d — 헤더가 잘려 나간 구간은
+      // 출처 검증 기준집합이 비어 신고 페이지가 전부 무효 처리됐다). 선발 배치와 같은 규칙이다.
+      return segmentContext({
+        blocks: contextBlocks,
+        text: compositeText,
+        segIndex,
+        segCount: segmentCount,
+        overlapRatio: GEN_SEGMENT_OVERLAP_RATIO,
+      });
     };
     if (segmentCount > 1) {
       warnings.push(
@@ -2667,6 +2833,7 @@ async function runPrivateGeneration(
 
     // gi = 전역 이미지 인덱스. 배치마다 서로 다른 이미지 묶음을 주더라도 인페인팅 캐시와
     // Storage 경로는 전역 인덱스로 통일해야 배치 간 중복 작업·경로 충돌이 없다.
+    const embeddedFirst = extracted.embeddedCrops ?? new Set<CroppedImage>();
     const featuredImages = slides
       .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
       // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
@@ -2688,6 +2855,10 @@ async function runPrivateGeneration(
       // (예전에는 "인페인팅으로 못 지울 이미지"를 여기서 미리 걸렀다. 마스킹은 좌표를
       //  배경색으로 덮는 방식이라 글자가 많아도 실패하지 않으므로 사전 제외가 필요 없다.
       //  덕분에 문항에 쓸 수 있는 이미지가 늘어난다 — 실측에서 8장 중 3장만 살아남던 문제.)
+      // PDF 임베드 크롭(원본 화질·주석 없음)을 앞에 둔다. 종전에는 임베드가 전부 첫 슬라이드에
+      // 붙어 슬라이드 순서만으로 우선됐다. 이제는 원래 페이지에 붙으므로 명시적으로 정렬한다
+      // (안정 정렬 — 같은 부류 안의 순서는 그대로).
+      .sort((a, b) => Number(embeddedFirst.has(b.c)) - Number(embeddedFirst.has(a.c)))
       .slice(0, featuredCap)
       .map((x, gi) => ({ ...x, gi }));
 
@@ -4321,7 +4492,7 @@ async function runPrivateGeneration(
             // content_sha256 을 갖고 있지 않고, DB 왕복을 한 번 더 할 이유도 없다.
             fileSha256: contentSha256,
             availablePages,
-            chunks: chunkLocators,
+            chunks: await chunkLocatorsPromise,
           },
         );
         sourceCheck.refs.forEach((ref, i) => {

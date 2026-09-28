@@ -161,6 +161,62 @@ export function buildChunks(slides: SlideSummaryInput[], options: { maxChars?: n
   return chunks;
 }
 
+/**
+ * 본문 청크만 (페이지 순). `buildTextFirstChunks` 의 앞부분과 번호·내용이 정확히 같다.
+ *
+ * 생성은 본문 텍스트가 확보되는 즉시(OCR 보다 먼저) 선발 배치를 출발시킨다. 그 배치들이
+ * 출처로 인용할 청크가 그 시점에 이미 저장돼 있어야 하므로, 본문 청크를 먼저 저장해 둔다
+ * (RAG 실행계획 v1.1 0-d).
+ */
+export function buildTextChunks(
+  slides: SlideSummaryInput[],
+  options: { maxChars?: number } = {},
+): MaterialChunk[] {
+  return buildTextFirstChunks(
+    slides.map((s) => ({ pageIndex: s.pageIndex, slideText: s.slideText, ocrTexts: [] })),
+    options,
+  );
+}
+
+/**
+ * 슬라이드 요약 → 저장할 청크 목록. **본문 청크 전부(페이지 순) → OCR 청크 전부(페이지 순)**.
+ *
+ * `buildChunks` 는 페이지마다 본문·OCR 을 번갈아 두기 때문에, 본문만 먼저 저장해 두고 나중에
+ * OCR 을 더하면 뒤쪽 본문 청크의 번호가 밀린다. 청크 id 가 (업로드, 번호)로 정해지는 지금은
+ * 번호가 밀리면 먼저 저장한 청크를 가리키던 출처가 다른 내용을 가리키게 된다. 본문을 앞에
+ * 모으면 OCR 이 얼마나 붙든 본문 청크의 번호는 그대로다.
+ */
+export function buildTextFirstChunks(
+  slides: SlideSummaryInput[],
+  options: { maxChars?: number } = {},
+): MaterialChunk[] {
+  const maxChars = options.maxChars ?? MAX_CHUNK_CHARS;
+  const chunks: MaterialChunk[] = [];
+  let index = 0;
+  const ordered = [...slides].sort((a, b) => a.pageIndex - b.pageIndex);
+  for (const slide of ordered) {
+    for (const text of splitText(slide.slideText ?? '', maxChars)) {
+      chunks.push({
+        chunkIndex: index, pageIndex: slide.pageIndex, kind: 'slide_text',
+        text, charCount: text.length, sha256: chunkHash(text),
+      });
+      index += 1;
+    }
+  }
+  for (const slide of ordered) {
+    for (const ocr of slide.ocrTexts ?? []) {
+      for (const text of splitText(ocr, maxChars)) {
+        chunks.push({
+          chunkIndex: index, pageIndex: slide.pageIndex, kind: 'ocr',
+          text, charCount: text.length, sha256: chunkHash(text),
+        });
+        index += 1;
+      }
+    }
+  }
+  return chunks;
+}
+
 /** 자료 전체의 페이지 목록 — 출처 유효성 검사의 기준집합. */
 export function pagesOf(chunks: MaterialChunk[]): number[] {
   return [...new Set(chunks.map((c) => c.pageIndex))].sort((a, b) => a - b);

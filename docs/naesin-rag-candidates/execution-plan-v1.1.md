@@ -123,7 +123,7 @@ v1.0 2.2의 "10분 무응답 시 실패 처리"는 코드에 없음. 실제로�
 |---|---|---|---|
 | 0-a 원가 계측 보강 | 모든 AI 비용 행에 `uploadId` 전달(OCR·Vision·이미지 선별 경로에 컨텍스트 인자 추가). 참고자료 프로파일은 실비용으로 기록. 업로드 완료 시 `totalCost`·단계별 비용·`configSnapshot()`을 진단에 저장. `EMBEDDING_MODEL` 오기 수정. 기준선 산출 스크립트 `scripts/report-upload-cost.mjs` 추가 | F6, F10 | 아니오 |
 | 0-b PDF 페이지 단위 텍스트 | `pdfjs-dist`(이미 의존성에 있음)의 페이지별 `getTextContent`로 추출해 `slidesData`를 실제 페이지 단위로 만듦. 전체 상한 `MAX_GEN_TEXT_CHARS`는 유지. PPTX 미디어 폴백의 슬라이드 텍스트 중복 제거. PPTX 텍스트에도 같은 전체 상한 적용(현재 무제한, PG:1590) | F1 | 아니오 |
-| 0-c 청크 ID 안정화 | `id`를 `upload_id + chunk_index`의 결정론적 UUID(v5)로 만들고, 삭제·재삽입 대신 `id` 기준 upsert로 바꿈. 새 결과보다 `chunk_index`가 큰 잔여 행은 삭제함. 같은 `upload_id`를 재시도하면 같은 ID가 나옴. 재시도 사이 내용이 바뀐 경우는 `content_sha`로 감지하며, 문항 `evidence`에도 인용 당시 `content_sha`를 저장해 어긋남을 판별함 | F3 | 아니오 |
+| 0-c 청크 ID 안정화 | `id`를 `upload_id + chunk_index + content_sha`의 결정론적 UUID(v5)로 만들고, 삭제·재삽입 대신 `(upload_id, chunk_index)` 기준 upsert로 바꿈. 새 결과보다 `chunk_index`가 큰 잔여 행은 삭제함. 같은 `upload_id`를 재시도하면 내용이 같은 청크는 같은 ID가 나옴. 내용이 바뀐 청크(OCR·이미지 선정은 실행마다 달라질 수 있음)는 새 ID를 받아, 예전 출처가 조용히 다른 내용을 가리키지 않게 함(2026-09-28 PR #274 리뷰 반영) | F3 | 아니오 |
 | 0-d 인덱싱 순서 | 초기 텍스트가 확보되는 즉시 청킹·저장을 먼저 하고, 선발 배치도 `## 슬라이드 N` 헤더가 있는 컨텍스트를 받게 함. OCR·캡션 청크는 도착하는 대로 추가함. `chunkLocators` 선언 순서 문제 제거 | F2, F8 | 아니오 |
 | 0-e 스키마 확장 | 마이그레이션 `00045`(5.3 스케치). `material_chunks`에 `embedding vector(1024)`·`parent_id`·`level`·`modality`·`heading_path`·`image_id`, HNSW·trgm 인덱스, `match_material_chunks` RPC 추가. `private_questions`에 `embedding vector(1024)`·`evidence jsonb`, `match_private_questions` RPC 추가 | — | 아니오 |
 | 0-f 이미지 캡션 청크 | 이미지형 요청에서만 만듦. 페이지 렌더 경로는 의료 이미지 검출 콜(`detectMedicalRegions`) 출력에 `caption`·`modality`·`findings[]`를 추가하면 추가 콜이 없음. 하지만 pdfjs 임베디드 이미지 경로는 검출 콜을 거치지 않고, 선별 콜은 320px 썸네일이라 캡션 품질이 부족함. 그래서 이 경로는 PR F 착수 시 비교해 원가가 낮은 쪽을 고름: 기존 콜 확장 vs 후보 이미지(최대 20장)당 1콜 추가. 텍스트 전용 요청에는 캡션 청크가 없음 | — | 예 |
@@ -228,7 +228,7 @@ create index idx_private_questions_embedding on private_questions using hnsw (em
 create function match_private_questions(p_user_id uuid, p_content_sha text, query_embedding vector(1024), threshold real, k int) ...;
 ```
 
-0-c의 결정론적 ID는 애플리케이션 쪽에서 계산하고, 마이그레이션은 기존 행을 건드리지 않음. 기존 행은 다음 재처리 때 upsert로 교체됨.
+0-c의 결정론적 ID는 애플리케이션 쪽에서 계산하고, 마이그레이션은 기존 행을 건드리지 않음. 기존 행은 다음 재처리 때 upsert로 교체됨. 청크 ID는 내용이 바뀌면 upsert로 바뀔 수 있으므로 `parent_id` 외래키는 `ON UPDATE CASCADE`로 두거나 `(upload_id, chunk_index)`를 참조하도록 설계함.
 
 ### 5.4 원가·지연 기대 (검증 전 가설)
 
@@ -311,7 +311,7 @@ E1~E3은 Phase 0의 오프라인 재생 하네스(0-i)로 돌리고, E4·E5·E5-
 | 원가 귀속 | 골든셋 `off` 실행에서 `ai_cost_log` 업로드별 합계(헤지 패자 행 `metadata.hedgeLoser` 제외)가 진단의 `totalCost`와 ±1% 이내로 일치. 헤지 패자 비용은 별도 항목으로 보고 |
 | 기준선 | 골든셋 10건 × `off` 3회에서 문항당 원가 중앙값(헤지 패자 포함)과 업로드 처리 시간 p95를 산출해 이 문서에 기록 |
 | PDF 페이지 | 텍스트 PDF 표본 20페이지를 수작업 대조해 `page_index` 100% 일치 |
-| 청크 ID | 같은 `upload_id`를 2회 처리했을 때 ID 100% 일치 |
+| 청크 ID | 같은 `upload_id`를 2회 처리했을 때 본문 청크 ID 100% 일치(OCR 청크는 OCR 결과가 같을 때만) |
 | `off` 회귀 | 기존 `check:*` 전부 통과. 골든셋 `off` 모드 전후 비교에서 형식 위반율·제공 문항 수가 악화되지 않음 |
 | 검색 품질(오프라인) | E1~E3에서 확정한 구성으로 Recall@6 ≥ 0.80 |
 
