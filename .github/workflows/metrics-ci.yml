@@ -13,6 +13,8 @@ on:
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
       - 'lib/ai/quality-gate.ts'
+      - 'lib/ai/cost-cap.ts'
+      - 'lib/ai/private-generation.ts'
       - 'lib/utils/api.ts'
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
@@ -22,6 +24,7 @@ on:
       - 'scripts/check-dataset-split.mjs'
       - 'scripts/check-ocr-goldenset.mjs'
       - 'scripts/check-generation-repeatability.mjs'
+      - 'scripts/check-upload-cost.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -35,6 +38,8 @@ on:
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
       - 'lib/ai/quality-gate.ts'
+      - 'lib/ai/cost-cap.ts'
+      - 'lib/ai/private-generation.ts'
       - 'lib/utils/api.ts'
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
@@ -44,6 +49,7 @@ on:
       - 'scripts/check-dataset-split.mjs'
       - 'scripts/check-ocr-goldenset.mjs'
       - 'scripts/check-generation-repeatability.mjs'
+      - 'scripts/check-upload-cost.mjs'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -65,6 +71,8 @@ jobs:
       - run: npm run check:metrics
       # 출처 추적 — 청킹 결정론·구조적 출처 유효성 (분담표 A8)
       - run: npm run check:source-tracking
+      # 업로드당 원가 — 비용 귀속 컨텍스트 유지·집계 산식 (RAG 실행계획 v1.1 0-a)
+      - run: npm run check:upload-cost
       # 문항 통계·층화 추출 산식 — KR-20·변별도·point-biserial 손계산 대조 (분담표 A12·A13)
       - run: npm run check:item-stats
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)

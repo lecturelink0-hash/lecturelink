@@ -12,6 +12,11 @@
 import { createAdminClient } from '@/lib/db/admin';
 import { ApiException, CostCapExceededException } from '@/lib/utils/api';
 import { addAiUsage, currentRequestId } from '@/lib/metrics/request-context';
+import {
+  attachUploadId,
+  currentCostAttribution,
+  tallyAttributedCost,
+} from '@/lib/metrics/cost-attribution';
 
 const DEFAULT_CAP_USD = 100;
 
@@ -82,15 +87,27 @@ export async function recordAiCost(input: {
     inputTokens: input.inputTokens,
     outputTokens: input.outputTokens,
   });
+  // 업로드 처리 흐름 안이면 uploadId 를 자동으로 단다(RAG 실행계획 v1.1 0-a).
+  // 추출 단계(OCR·Vision·이미지 선별)는 자기가 어느 업로드를 처리하는지 모르기 때문에,
+  // 이게 없으면 업로드당 원가에서 그 몫이 통째로 빠진다.
+  const attribution = currentCostAttribution();
+  const metadata = attachUploadId(input.metadata, attribution);
+  tallyAttributedCost({
+    endpoint: input.endpoint,
+    costUsd: input.costUsd,
+    inputTokens: input.inputTokens,
+    outputTokens: input.outputTokens,
+    metadata,
+  });
   const admin = createAdminClient();
   const { error } = await admin.from('ai_cost_log').insert({
-    user_id: input.userId,
+    user_id: input.userId ?? attribution?.userId ?? null,
     endpoint: input.endpoint,
     model: input.model,
     cost_usd: input.costUsd,
     input_tokens: input.inputTokens,
     output_tokens: input.outputTokens,
-    metadata: input.metadata ?? null,
+    metadata,
     // 요청 단위 드릴다운 키. 컨텍스트 밖(배치·크론)에서 부르면 null 이다.
     request_id: currentRequestId(),
   });

@@ -95,6 +95,23 @@ CPX 축은 별도 문서(`docs/cpx-phase1-metrics.md`)에 있다. 두 축은 서
 
 분모가 요청이 아니라 **산출물**이다. 문항을 하나도 못 만든 요청(실패·조회)은 양쪽에서 뺀다.
 
+**내신대비 업로드 기준 (RAG 실행계획 v1.1 0-a).** 위 산식은 요청(`request_metrics`) 단위라
+QStash 경로에서는 행이 생기지 않는다. 내신대비 원가 기준선은 업로드 단위로 따로 센다.
+
+```
+문항당 원가(업로드) = 그 업로드의 ai_cost_log 합계(OCR·Vision·이미지 선별·헤지 패자 포함)
+                   / 그 업로드에 저장된 문항 수
+```
+
+- 생성 진입점(`generatePrivateQuestionsFromUpload`)이 비용 귀속 컨텍스트
+  (`lib/metrics/cost-attribution.ts`)를 열어, 그 안의 모든 `recordAiCost` 행에
+  `metadata.uploadId`가 자동으로 붙는다.
+- 진단 행(`private.diagnostics`)의 `cost.pipelineUsd`(파이프라인 totalCost, 헤지 패자 제외)와
+  교차 검증한다. 차이가 ±1%를 넘으면 한쪽이 호출을 빠뜨리고 있다.
+- 산식: `lib/metrics/upload-cost.ts` · 보고: `npm run report:upload-cost` · 회귀 검사:
+  `npm run check:upload-cost`
+- 0-a 이전 업로드는 추출 단계 비용에 uploadId가 없어 과소 추정된다(보고서에 표시됨).
+
 ### 3.5 스키마 준수율 · 중복 문항률 (A4)
 
 ```

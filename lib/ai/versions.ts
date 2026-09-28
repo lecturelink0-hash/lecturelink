@@ -39,7 +39,12 @@ export const PROMPT_VERSIONS = {
 export type PromptFeature = keyof typeof PROMPT_VERSIONS;
 
 /** 문항 임베딩 모델 — 중복 판정(A4)과 약점 매칭의 기준이라 바뀌면 임계값도 다시 잡아야 한다. */
-export const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
+//
+// 실제 임베딩 호출(lib/ai/embed.ts)은 VOYAGE_EMBED_MODEL(기본 voyage-3)을 쓴다. 종전 기본값
+// 'text-embedding-3-small' 은 OpenAI 시절(00004 이전) 값이 남은 것이라 스냅샷이 실제와 달랐다.
+// embed.ts 와 같은 순서로 읽되, 명시적으로 EMBEDDING_MODEL 을 준 경우는 그 값을 따른다.
+export const EMBEDDING_MODEL =
+  process.env.EMBEDDING_MODEL ?? process.env.VOYAGE_EMBED_MODEL ?? 'voyage-3';
 
 /**
  * 중복 문항 판정 임계 (코사인 유사도). 이 값을 넘으면 사람이 다시 본다.

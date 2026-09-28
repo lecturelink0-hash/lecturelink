@@ -452,7 +452,9 @@ export const POST = withErrorHandling(async (request: Request) => {
       costUsd: genCost,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
-      metadata: { uploads: ordered.length },
+      // 사전 분석은 생성 파이프라인 밖의 선택 단계라 uploadId(단수)로 귀속하지 않는다 —
+      // 업로드당 원가 기준선(v1.1 0-a)에 섞이지 않게 하되, 추적은 되도록 목록만 남긴다.
+      metadata: { uploads: ordered.length, uploadIds: ordered.map((u) => u.id) },
     });
 
     if (!toolUse) {

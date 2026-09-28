@@ -44,6 +44,8 @@
     "check:explanation": "node --experimental-strip-types --no-warnings scripts/check-explanation-format.mjs",
     "check:duplicate": "node --experimental-strip-types --no-warnings scripts/check-duplicate-guard.mjs",
     "check:naesin-quality": "node --experimental-strip-types --no-warnings scripts/check-naesin-quality.mjs",
+    "check:upload-cost": "node --experimental-strip-types --no-warnings scripts/check-upload-cost.mjs",
+    "report:upload-cost": "node --experimental-strip-types --no-warnings scripts/report-upload-cost.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",
@@ -66,13 +68,13 @@
     "form-data": "4.0.6",
     "lucide-react": "^0.460.0",
     "nanoid": "5.1.16",
-    "next": "15.5.23",
+    "next": "15.5.26",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "4.10.38",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sharp": "0.35.3",
+    "sharp": "0.35.4",
     "tesseract.js": "^6.0.1",
     "three": "^0.185.1",
     "zod": "^3.23.8"
@@ -98,7 +100,7 @@
     "canvas": "3.2.3",
     "next": {
       "postcss": "8.5.26",
-      "sharp": "0.35.3"
+      "sharp": "0.35.4"
     },
     "postcss": {
       "nanoid": "3.3.18"
