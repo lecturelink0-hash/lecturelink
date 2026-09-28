@@ -48,6 +48,21 @@
 **청킹이 결정론이어야 하는 이유:** 같은 자료를 다시 처리했을 때 청크 번호가 달라지면
 이전에 저장된 문항의 출처가 통째로 끊깁니다.
 
+**id·순서·페이지 (RAG 실행계획 v1.1 0-b·0-c·0-d):**
+- `id`는 `(upload_id, chunk_index, content_sha)`에서 계산한 UUID v5입니다(`lib/extract/chunk-id.ts`).
+  재처리 때 지우고 다시 넣지 않고 `(upload_id, chunk_index)` 기준 upsert를 하므로, 같은
+  업로드를 다시 처리해도 **내용이 같은** 청크는 같은 id를 갖습니다. 재처리 사이에 내용이
+  바뀐 청크(OCR·이미지 선정은 실행마다 달라질 수 있음)는 새 id를 받아, 예전 문항의 출처가
+  조용히 다른 내용을 가리키지 않고 찾을 수 없는 id로 드러납니다. 번호가 넘치는 잔여 행만 지웁니다.
+- `material_chunks.id`를 참조하는 외래키를 새로 만들 때는 id가 upsert로 바뀔 수 있음을
+  고려해 `ON UPDATE CASCADE`로 두거나 `(upload_id, chunk_index)`를 참조합니다.
+- 번호는 **본문 청크 전부(페이지 순) → OCR 청크 전부(페이지 순)**입니다
+  (`buildTextFirstChunks`). 본문 청크는 텍스트가 확보되는 즉시 먼저 저장되고(선발 배치가
+  출처로 인용), OCR 청크는 나중에 뒤에 붙습니다. 본문을 앞에 모아 두어야 OCR이 붙어도 본문
+  청크의 번호·id가 바뀌지 않습니다.
+- 텍스트 PDF·DOCX도 이제 **실제 페이지 번호**로 나뉩니다(`lib/extract/page-text.ts`).
+  종전에는 본문 전체가 첫 페이지 하나에 붙어 `page_index`가 사실상 1뿐이었습니다.
+
 ### `private_questions.source_refs` — 문항별 출처
 
 가이드 §12.2가 예상문제 벤치마크 레코드의 필수 필드로 지정한 `source_refs`입니다.
