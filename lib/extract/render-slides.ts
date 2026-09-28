@@ -2,7 +2,7 @@
  * 슬라이드/페이지 → 이미지(PNG) 렌더링.
  *
  * 입력 두 가지:
- *   - PDF 파일 (이미 ArrayBuffer 로 로드됨) → pdfjs-dist + @napi-rs/canvas 로 페이지별 PNG
+ *   - PDF 파일 (이미 ArrayBuffer 로 로드됨) → pdfjs-dist + node-canvas 로 페이지별 PNG
  *   - PPTX 는 ppt/media 임베드 이미지를 우선 사용. 슬라이드 자체 렌더링은
  *     LibreOffice 변환이 필요해 별도 워커에서 수행 (이 함수에선 직접 호출하지 않음).
  *
@@ -54,7 +54,8 @@ export async function extractPdfTextPages(
   maxPages = 200,
 ): Promise<ExtractedPdfTextPage[]> {
   const loadingTask = pdfjsLib.getDocument({
-    data: new Uint8Array(pdfBuffer),
+    // 사본을 넘긴다 — pdfjs 는 받은 버퍼를 워커로 넘기며 원본 ArrayBuffer 를 분리(detach)한다.
+    data: new Uint8Array(pdfBuffer.slice(0)),
     cMapUrl: resolve(process.cwd(), 'node_modules/pdfjs-dist/cmaps') + '/',
     cMapPacked: true,
     standardFontDataUrl:
@@ -88,6 +89,57 @@ export async function extractPdfTextPages(
 const DEFAULT_MAX_EDGE = 1600;
 const DEFAULT_MAX_PAGES = 50;
 
+type CreateCanvas = (width: number, height: number) => {
+  width: number;
+  height: number;
+  getContext: (kind: '2d') => unknown;
+};
+
+/**
+ * pdfjs 가 렌더 도중 만드는 **임시 캔버스**(이미지 XObject·인라인 이미지·마스크·패턴 그리기용)도
+ * 우리가 그리는 캔버스와 같은 라이브러리(node-canvas)로 만들게 하는 팩토리.
+ *
+ * 왜 필요한가: pdfjs-dist 4.10 의 Node 기본 팩토리(NodeCanvasFactory)는 `@napi-rs/canvas` 로
+ * 임시 캔버스를 만든다. 그 캔버스를 node-canvas 컨텍스트의 drawImage 에 넘기면
+ * "TypeError: Image or Canvas expected" 로 렌더가 통째로 실패한다. 그림이 한 장이라도 있는
+ * 페이지는 전부 해당된다 — 스캔 PDF(페이지 전체가 이미지)는 한 페이지도 렌더되지 않는다.
+ * (isOffscreenCanvasSupported:false 는 ImageBitmap 경로만 막을 뿐 이 경로는 막지 못한다.)
+ *
+ * 인터페이스는 pdfjs BaseCanvasFactory 와 같다(create/reset/destroy). 생성자 인자
+ * ({ ownerDocument, enableHWA })는 Node 에서 쓸 일이 없어 받지 않는다.
+ */
+export function nodeCanvasFactoryClass(createCanvas: CreateCanvas) {
+  return class NodeCanvasCanvasFactory {
+    create(width: number, height: number) {
+      if (width <= 0 || height <= 0) throw new Error('Invalid canvas size');
+      const canvas = createCanvas(width, height);
+      return { canvas, context: canvas.getContext('2d') };
+    }
+
+    reset(
+      canvasAndContext: { canvas: { width: number; height: number } | null },
+      width: number,
+      height: number,
+    ) {
+      if (!canvasAndContext.canvas) throw new Error('Canvas is not specified');
+      if (width <= 0 || height <= 0) throw new Error('Invalid canvas size');
+      canvasAndContext.canvas.width = width;
+      canvasAndContext.canvas.height = height;
+    }
+
+    destroy(canvasAndContext: {
+      canvas: { width: number; height: number } | null;
+      context: unknown;
+    }) {
+      if (!canvasAndContext.canvas) throw new Error('Canvas is not specified');
+      canvasAndContext.canvas.width = 0;
+      canvasAndContext.canvas.height = 0;
+      canvasAndContext.canvas = null;
+      canvasAndContext.context = null;
+    }
+  };
+}
+
 /**
  * PDF ArrayBuffer 를 받아 페이지별 PNG 산출.
  *
@@ -113,7 +165,11 @@ export async function renderPdfPages(
     resolve(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts') + '/';
 
   const loadingTask = pdfjsLib.getDocument({
-    data: new Uint8Array(pdfBuffer),
+    // 사본을 넘긴다. pdfjs 는 받은 버퍼를 워커로 넘기며 원본 ArrayBuffer 를 분리(detach)한다.
+    // 사본이 아니면 호출자의 버퍼가 0바이트가 되어, 같은 PDF 를 두 번 렌더하는 호출부
+    // (저해상도 전체 훑기 → 후보 페이지 고해상도)의 두 번째 호출이
+    // "Cannot perform Construct on a detached ArrayBuffer" 로 실패한다.
+    data: new Uint8Array(pdfBuffer.slice(0)),
     cMapUrl: CMAP_URL,
     cMapPacked: true,
     standardFontDataUrl: STANDARD_FONTS_URL,
@@ -124,7 +180,10 @@ export async function renderPdfPages(
     // node-canvas 의 drawImage 와 충돌("TypeError: Image or Canvas expected")한다.
     // OffscreenCanvas 를 비활성화해 일반 canvas 경로만 쓰게 강제.
     isOffscreenCanvasSupported: false,
-  });
+    // 임시 캔버스도 node-canvas 로 — 기본값(@napi-rs/canvas)과 섞이면 그림 있는 페이지가
+    // 전부 같은 오류로 실패한다(nodeCanvasFactoryClass 주석).
+    CanvasFactory: nodeCanvasFactoryClass(createCanvas as unknown as CreateCanvas),
+  } as Parameters<typeof pdfjsLib.getDocument>[0]);
 
   const doc = await loadingTask.promise;
   const numPages = doc.numPages;
