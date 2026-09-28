@@ -1077,7 +1077,8 @@ async function convertOfficeToPdfBuffer(
   }
 }
 
-async function extractFromBuffer(input: {
+// 오프라인 평가 하네스(scripts/rag-eval/build-corpus.ts)가 운영과 같은 추출 경로를 쓰도록 export 한다.
+export async function extractFromBuffer(input: {
   buffer: ArrayBuffer;
   fileType: string;
   userIdForLog: string;
