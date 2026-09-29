@@ -1,0 +1,353 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>patient poses</title>
+<style>body{margin:0;background:#e3e9ec;font-family:sans-serif}#ui{position:fixed;top:8px;left:8px;background:#fff9;padding:6px;font-size:12px;white-space:pre}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><div id="ui"></div>
+<script type="module">
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js'
+const q = new URLSearchParams(location.search)
+const file = q.get('file') || 'cand2_quaternius_man_175'
+const dir = q.get('dir') || '/v9/'
+const pose = q.get('pose') || 'sit_front'
+const hm = file.match(/_(\d{3})$/); const H = hm ? Number(hm[1]) / 100 : 1.55
+const W = innerWidth, Hh = innerHeight
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
+renderer.setSize(W, Hh); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true
+document.body.appendChild(renderer.domElement)
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#e3e9ec')
+scene.add(new THREE.AmbientLight(0xffffff, 0.55))
+const dl = new THREE.DirectionalLight(0xffe8bf, 1.5); dl.position.set(3, 4, 3); dl.castShadow = true; scene.add(dl)
+const dl2 = new THREE.DirectionalLight(0xbcd6ff, 0.6); dl2.position.set(-3, 2, -2); scene.add(dl2)
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshStandardMaterial({ color: '#cfd8dc' })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor)
+const camera = new THREE.PerspectiveCamera(40, W / Hh, 0.05, 100)
+const mat = (c) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.85 })
+const BED = { top: 0.5, length: 1.9, width: 0.75 }
+function addBed() {
+  const g = new THREE.Group()
+  const m1 = new THREE.Mesh(new THREE.BoxGeometry(BED.length, 0.12, BED.width), mat('#dcebe0')); m1.position.y = BED.top - 0.06; m1.receiveShadow = true; g.add(m1)
+  const m2 = new THREE.Mesh(new THREE.BoxGeometry(BED.length + 0.08, 0.1, BED.width + 0.06), mat('#8a9b90')); m2.position.y = BED.top - 0.17; g.add(m2)
+  for (const [x, z] of [[-0.83, 0.27], [0.83, 0.27], [-0.83, -0.27], [0.83, -0.27]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.28, 0.08), mat('#7d8d84')); l.position.set(x, 0.14, z); g.add(l) }
+  const p = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.09, BED.width * 0.7), mat('#f4f8f4')); p.position.set(-0.7, BED.top + 0.04, 0); g.add(p)
+  scene.add(g)
+}
+function addChair(seatY) {
+  const g = new THREE.Group()
+  const s = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.05, 0.46), mat('#8fa3ad')); s.position.set(0, seatY - 0.025, -0.05); s.receiveShadow = true; g.add(s)
+  const b = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.45, 0.05), mat('#8fa3ad')); b.position.set(0, seatY + 0.22, -0.30); g.add(b)
+  for (const [x, z] of [[-0.2, 0.15], [0.2, 0.15], [-0.2, -0.25], [0.2, -0.25]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.04, seatY - 0.05, 0.04), mat('#5d6f78')); l.position.set(x, (seatY - 0.05) / 2, z); g.add(l) }
+  scene.add(g)
+}
+const COLOR_FIX = { Skin: '#e8b89a' }
+const loader = new GLTFLoader(); let mixer = null; let root = null; let grp = null; let skinned = []
+let boneState = null
+const clock = new THREE.Clock()
+const deg = (d) => d * Math.PI / 180
+// GLTFLoader 가 노드명의 '.' 을 제거하므로(UpperLeg.L → UpperLegL) 두 이름 모두 시도
+const bone = (n) => root.getObjectByName(n) || root.getObjectByName(n.replace(/\./g, ''))
+
+// ── 절차적 포즈: 본이 향할 방향(모델 프레임: x=환자 왼쪽, y=위, z=앞)을 직접 지정(aim) ──
+const POSES = {
+  sit_front: { legs: 'sit', arms: 'rest', place: 'chair', cam: [0, 1.45, 3.4], look: [0, 0.6, 0] },
+  sit_back: { legs: 'sit', arms: 'rest', place: 'chair', cam: [0, 1.45, -3.4], look: [0, 0.6, 0] },
+  sit_cross: { legs: 'sit', arms: 'cross', place: 'chair', cam: [0.2, 1.45, 3.4], look: [0, 0.6, 0] },
+  supine: { legs: 'straight', arms: 'rest', place: 'bed', roll: 0, cam: [0.3, 2.0, 2.4], look: [0, 0.55, 0] },
+  supine_bent: { legs: 'bent', arms: 'side', place: 'bed', roll: 0, cam: [0.3, 2.0, 2.4], look: [0, 0.55, 0] },
+  // 좌측와위 = 왼쪽(모델 +x → 앙와위 월드 -z)이 아래 → roll -90, 환자 앞면은 -z 를 향하므로 카메라를 -z 에
+  left: { legs: 'bent', arms: 'side_left', place: 'bed', roll: -90, cam: [0.3, 1.9, -2.5], look: [0, 0.6, 0] },
+  right: { legs: 'bent', arms: 'side_right', place: 'bed', roll: 90, cam: [0.3, 1.9, 2.5], look: [0, 0.6, 0] },
+}
+// [본, 자식(방향 기준), 목표 방향]
+const LEG_SETS = {
+  straight: [],
+  sit: [['UpperLeg.L', 'LowerLeg.L', [0.06, -0.05, 1]], ['UpperLeg.R', 'LowerLeg.R', [-0.06, -0.05, 1]], ['LowerLeg.L', 'Foot.L', [0.03, -1, 0.08]], ['LowerLeg.R', 'Foot.R', [-0.03, -1, 0.08]]],
+  bent: [['UpperLeg.L', 'LowerLeg.L', [-0.12, -0.75, 0.66]], ['UpperLeg.R', 'LowerLeg.R', [0.12, -0.72, 0.69]], ['LowerLeg.L', 'Foot.L', [-0.05, -0.75, -0.66]], ['LowerLeg.R', 'Foot.R', [0.05, -0.78, -0.62]]],
+}
+const ARM_SETS = {
+  rest: [],
+  // 팔 X자 교차: 상완은 앞·안쪽·아래로, 하완은 가슴 앞을 가로질러 반대편 상완 쪽으로 (왼팔이 위)
+  // 오른팔은 가슴에 붙여(z≈0.2) 아래, 왼팔은 그 앞(z≈0.33)을 지나 위로 → 팔뚝 중심 간격 ≈0.12m (관통 방지)
+  // 손은 반대편 어깨 위(y≈1.04), 오른팔은 가슴 쪽(z≈0.13), 왼팔은 그 앞(z≈0.3) → 팔뚝·상완 간격 ≥8cm 로 관통 방지
+  cross: [['UpperArm.R', 'LowerArm.R', [0.45, -0.35, 0.42]], ['UpperArm.L', 'LowerArm.L', [-0.25, -0.35, 1.0]],
+    ['LowerArm.R', 'Wrist.R', [0.75, 0.66, -0.12]], ['LowerArm.L', 'Wrist.L', [-0.85, 0.5, 0.25]],
+    ['Wrist.R', 'Middle1.R', [0.4, 0.55, -0.75]], ['Wrist.L', 'Middle1.L', [-0.4, 0.55, -0.75]]],
+  // 측와위: 팔을 앞으로 모아 얹음
+  // 좌측와위(모델 +x = 침대 쪽): 아래쪽 왼팔은 침대 위로 앞으로 뻗고, 위쪽 오른팔은 거의 수직으로 내려 손바닥이 침대에 닿음
+  // 좌측와위(모델 +x = 침대 쪽): 아래쪽 왼팔은 침대 위로 앞으로 뻗고(어깨 높이 유지), 위쪽 오른팔은 팔꿈치를 침대에 대고 팔뚝을 앞으로 눕혀 손바닥이 침대에
+  side_left: [['UpperArm.L', 'LowerArm.L', [0.1, 0.05, 0.99]], ['LowerArm.L', 'Wrist.L', [0.0, 0.05, 1.0]], ['Wrist.L', 'Middle1.L', [0.0, 0.03, 1.0]],
+    ['Shoulder.R', 'UpperArm.R', [0.3, -0.05, 0.95]],
+    ['UpperArm.R', 'LowerArm.R', [0.85, -0.1, 0.5]], ['LowerArm.R', 'Wrist.R', [0.05, -0.02, 1.0]], ['Wrist.R', 'Middle1.R', [0.05, -0.05, 1.0]]],
+  side_right: [['UpperArm.R', 'LowerArm.R', [-0.1, 0.05, 0.99]], ['LowerArm.R', 'Wrist.R', [0.0, 0.05, 1.0]], ['Wrist.R', 'Middle1.R', [0.0, 0.03, 1.0]],
+    ['Shoulder.L', 'UpperArm.L', [-0.3, -0.05, 0.95]],
+    ['UpperArm.L', 'LowerArm.L', [-0.85, -0.1, 0.5]], ['LowerArm.L', 'Wrist.L', [-0.05, -0.02, 1.0]], ['Wrist.L', 'Middle1.L', [-0.05, -0.05, 1.0]]],
+}
+const P = POSES[pose]
+
+function aim(bn, cn, dirModel) {
+  const b = bone(bn), c = bone(cn)
+  const inner = grp.children[0].isGroup && grp.children[0].children[0] && grp.children[0].children[0].isGroup ? grp.children[0].children[0] : grp.children[0]
+  const iq = new THREE.Quaternion(); inner.getWorldQuaternion(iq)
+  const desired = new THREE.Vector3(...dirModel).normalize().applyQuaternion(iq)
+  b.updateWorldMatrix(true, false); c.updateWorldMatrix(true, false)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp)
+  if (cn.startsWith('Foot')) {  // Foot 은 IK 루트 본이라 자식이 아님 → 정강이 끝(바인드 상대행렬)으로 방향 계산
+    ensureRel(); cp.setFromMatrixPosition(b.matrixWorld.clone().multiply(boneState.rel[cn.slice(-1)]))
+  } else c.getWorldPosition(cp)
+  const cur = cp.sub(bp).normalize()
+  const qw = new THREE.Quaternion().setFromUnitVectors(cur, desired)
+  const bw = new THREE.Quaternion(); b.getWorldQuaternion(bw)
+  const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw)
+  b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
+}
+let lateralK = 1
+// 2본 IK: 어깨 S→목표 T 에 손목이 오도록 상완·팔뚝 방향을 해석적으로 결정 (팔꿈치는 pole 방향 쪽)
+function ik2(upperN, lowerN, endN, targetW, poleW) {
+  const U = bone(upperN), L = bone(lowerN), E = bone(endN)
+  U.updateWorldMatrix(true, false); L.updateWorldMatrix(true, false); E.updateWorldMatrix(true, false)
+  const S = new THREE.Vector3(), Lp = new THREE.Vector3(), Ep = new THREE.Vector3()
+  U.getWorldPosition(S); L.getWorldPosition(Lp); E.getWorldPosition(Ep)
+  const a = S.distanceTo(Lp), b = Lp.distanceTo(Ep)
+  const d = Math.min(S.distanceTo(targetW), (a + b) * 0.995)
+  const dir = targetW.clone().sub(S).normalize()
+  // 팔꿈치: S 에서 dir 로 x 만큼, 수직으로 h 만큼(pole 평면)
+  const x = (a * a - b * b + d * d) / (2 * d), h = Math.sqrt(Math.max(0, a * a - x * x))
+  let perp = poleW.clone().sub(S); perp.sub(dir.clone().multiplyScalar(perp.dot(dir))).normalize()
+  const elbow = S.clone().add(dir.clone().multiplyScalar(x)).add(perp.multiplyScalar(h))
+  const target = S.clone().add(dir.clone().multiplyScalar(d))
+  aimWorld(upperN, lowerN, elbow.clone().sub(S))
+  aimWorld(lowerN, endN, target.clone().sub(elbow))
+}
+function aimWorld(bn, cn, desiredW) {
+  const b = bone(bn), c = bone(cn)
+  b.updateWorldMatrix(true, false); c.updateWorldMatrix(true, false)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp); c.getWorldPosition(cp)
+  const cur = cp.sub(bp).normalize(), desired = desiredW.clone().normalize()
+  const qw = new THREE.Quaternion().setFromUnitVectors(cur, desired)
+  const bw = new THREE.Quaternion(); b.getWorldQuaternion(bw)
+  const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw)
+  b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
+}
+// 본 축(bn→cn) 둘레로 굴려 refBone 의 로컬축 palmAxis(월드) 가 targetW 쪽을 보게 (손바닥 방향 제어)
+function rollToward(bn, cn, refBone, palmAxisLocal, targetW) {
+  const b = bone(bn), c = bone(cn), r = bone(refBone)
+  b.updateWorldMatrix(true, false); c.updateWorldMatrix(true, false); r.updateWorldMatrix(true, false)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp); c.getWorldPosition(cp)
+  const axis = cp.sub(bp).normalize()
+  const rq = new THREE.Quaternion(); r.getWorldQuaternion(rq)
+  const cur = palmAxisLocal.clone().applyQuaternion(rq); cur.sub(axis.clone().multiplyScalar(cur.dot(axis))).normalize()
+  const tgt = targetW.clone(); tgt.sub(axis.clone().multiplyScalar(tgt.dot(axis))).normalize()
+  if (cur.lengthSq() < 1e-6 || tgt.lengthSq() < 1e-6) return
+  let ang = Math.acos(Math.max(-1, Math.min(1, cur.dot(tgt)))); if (axis.dot(cur.clone().cross(tgt)) < 0) ang = -ang
+  const qw = new THREE.Quaternion().setFromAxisAngle(axis, ang)
+  const bw = new THREE.Quaternion(); b.getWorldQuaternion(bw)
+  const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw)
+  b.quaternion.copy(pw.invert().multiply(qw.multiply(bw)))
+}
+let palmAxis = { L: new THREE.Vector3(0, 0, -1), R: new THREE.Vector3(0, 0, -1) }
+function detectPalmAxis() {
+  // 손 정점(Wrist·손가락 본 지배)을 손목 본 로컬로 옮겨 가장 얇은 축 = 손바닥 법선. 부호는 바인드 T포즈에서 아래(-up)를 향하도록
+  const sk = skinned[0].skeleton
+  const hi = sk.bones.findIndex((b) => /^Head$/.test(b.name)), pi = sk.bones.findIndex((b) => /^Hips$/.test(b.name))
+  const Bh = sk.boneInverses[hi].clone().invert(), Bp = sk.boneInverses[pi].clone().invert()
+  const upBind = new THREE.Vector3().setFromMatrixPosition(Bh).sub(new THREE.Vector3().setFromMatrixPosition(Bp)).normalize()
+  for (const side of ['L', 'R']) {
+    const wi = sk.bones.findIndex((b) => b.name === 'Wrist' + side)
+    const handRe = new RegExp('^(Wrist|Index\\d|Middle\\d|Ring\\d|Pinky\\d|Thumb\\d)' + side + '$')
+    const handIdx = new Set(sk.bones.map((b, i) => handRe.test(b.name) ? i : -1).filter((i) => i >= 0))
+    const inv = sk.boneInverses[wi]
+    const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9]; const v = new THREE.Vector3()
+    for (const o of skinned) {
+      const pos = o.geometry.attributes.position, si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight
+      for (let i = 0; i < pos.count; i++) {
+        let best = 0, bw = -1; for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k) } }
+        if (!handIdx.has(best)) continue
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.bindMatrix).applyMatrix4(inv)
+        for (let k = 0; k < 3; k++) { const c = v.getComponent(k); if (c < mn[k]) mn[k] = c; if (c > mx[k]) mx[k] = c }
+      }
+    }
+    const ext = [0, 1, 2].map((k) => mx[k] - mn[k])
+    const thin = ext.indexOf(Math.min(...ext))
+    const axis = new THREE.Vector3(); axis.setComponent(thin, 1)
+    const rot = new THREE.Matrix3().setFromMatrix4(inv.clone().invert())
+    const worldAxis = axis.clone().applyMatrix3(rot).normalize()
+    if (worldAxis.dot(upBind) > 0) axis.negate()
+    palmAxis[side] = axis
+    window.__palm = window.__palm || {}; window.__palm[side] = { axis: axis.toArray(), ext: ext.map((e) => +e.toFixed(4)) }
+  }
+}
+function modelToWorld(v) {
+  const inner = grp.children[0].isGroup && grp.children[0].children[0] && grp.children[0].children[0].isGroup ? grp.children[0].children[0] : grp.children[0]
+  const iq = new THREE.Quaternion(); inner.getWorldQuaternion(iq); return new THREE.Vector3(...v).applyQuaternion(iq)
+}
+function armsCross() {
+  scene.updateMatrixWorld(true)
+  const sL = new THREE.Vector3(), sR = new THREE.Vector3(); bone('UpperArm.L').getWorldPosition(sL); bone('UpperArm.R').getWorldPosition(sR)
+  // 오른손 → 왼쪽 어깨 바로 위(약간 앞), 왼손 → 오른쪽 어깨 위(그보다 앞·위: 왼팔이 앞을 지남)
+  // 깊이(z): 몸통 앞면이 어깨 관절보다 ~11cm 앞(남 175 기준 0.175 vs 0.061)이라 안쪽 팔뚝이 가슴 앞에 놓이려면 손목이 관절 기준 +0.15 이상 앞으로 나와야 한다
+  // 15차: 리그 팔 길이(상완 0.17+전완 0.22m)로는 손을 반대편 어깨 관절까지 보내면서 가슴 앞(몸통면+팔뚝 반경)을 확보할 수 없다 →
+  //       손을 어깨에서 9cm 안쪽(쇄골·삼각근 앞)에 두고 안쪽 팔뚝 z=+0.16, 바깥 팔뚝 z=+0.31, 팔꿈치 폴은 바깥·아래·앞. 검증 지표 __chest()
+  const inset = 0.6 * sL.distanceTo(sR) / 2  // 손 안쪽 이동량 = 어깨 반폭의 60% (남 175: 8.8cm, 여 165: 6.5cm)
+  const C = Object.assign({ tR: [-inset, 0.03, 0.16], tL: [inset, 0.03, 0.31], pR: [-0.3, -0.4, 0.5], pL: [0.3, -0.4, 0.6] }, window.__cross || {})
+  const tR = sL.clone().add(modelToWorld(C.tR)), tL = sR.clone().add(modelToWorld(C.tL))
+  const pR = sR.clone().add(modelToWorld(C.pR)), pL = sL.clone().add(modelToWorld(C.pL))
+  ik2('UpperArm.R', 'LowerArm.R', 'Wrist.R', tR, pR)
+  ik2('UpperArm.L', 'LowerArm.L', 'Wrist.L', tL, pL)
+  // 손: 손가락이 어깨 뒤쪽·아래로 감기게, 손바닥은 아래(어깨 위에 얹힘)
+  aim('Wrist.R', 'Middle1.R', [0.35, 0.15, -0.9]); aim('Wrist.L', 'Middle1.L', [-0.35, 0.15, -0.9])
+  rollToward('Wrist.R', 'Middle1.R', 'Wrist.R', palmAxis.R, new THREE.Vector3(0, -1, 0))
+  rollToward('Wrist.L', 'Middle1.L', 'Wrist.L', palmAxis.L, new THREE.Vector3(0, -1, 0))
+}
+function palmsDown(top, bottom) {
+  // 팔뚝 회내(pronation)로 손바닥 법선을 월드 -y(침대)로: 위쪽 팔·아래쪽 팔 모두
+  for (const side of [top, bottom]) {
+    rollToward('LowerArm.' + side, 'Wrist.' + side, 'Wrist.' + side, palmAxis[side], new THREE.Vector3(0, -1, 0))
+    rollToward('Wrist.' + side, 'Middle1.' + side, 'Wrist.' + side, palmAxis[side], new THREE.Vector3(0, -1, 0))
+  }
+}
+function applyOffsets(list, scaleLateral) {
+  // 좁은 어깨(lateralK<1)일수록 팔짱 가로 성분을 줄이고 팔뚝을 더 세워(y↑) 반대편 상완 관통을 피한다
+  for (const [bn, cn, d] of list) aim(bn, cn, scaleLateral ? [d[0] * lateralK, d[1] + (bn.startsWith('LowerArm') ? (1 - lateralK) * 0.6 : 0), d[2]] : d)
+}
+
+function ensureRel() {
+  if (boneState.rel) return
+  boneState.rel = {}
+  const sk = skinned[0].skeleton
+  for (const side of ['L', 'R']) {
+    const ll = bone('LowerLeg.' + side), ft = bone('Foot.' + side)
+    const li = sk.bones.indexOf(ll), fi = sk.bones.indexOf(ft)
+    boneState.rel[side] = sk.boneInverses[li].clone().multiply(sk.boneInverses[fi].clone().invert())
+  }
+}
+// Foot(IK 루트 본)을 정강이 끝에 부착
+function attachFeet() {
+  ensureRel()
+  for (const side of ['L', 'R']) {
+    const ll = bone('LowerLeg.' + side), ft = bone('Foot.' + side)
+    if (!ll || !ft) continue
+    const sk = skinned[0].skeleton
+    const li = sk.bones.indexOf(ll), fi = sk.bones.indexOf(ft)
+    if (li < 0 || fi < 0) continue
+    ll.updateWorldMatrix(true, false)
+    const desired = ll.matrixWorld.clone().multiply(boneState.rel[side])
+    ft.parent.updateWorldMatrix(true, false)
+    const local = ft.parent.matrixWorld.clone().invert().multiply(desired)
+    local.decompose(ft.position, ft.quaternion, ft.scale)
+  }
+}
+
+function posedBox(excludeRe) {
+  scene.updateMatrixWorld(true); root.updateMatrixWorld(true)
+  const box = new THREE.Box3(); const v = new THREE.Vector3()
+  for (const o of skinned) {
+    o.skeleton.update(); const pos = o.geometry.attributes.position; const si = o.geometry.attributes.skinIndex, sw = o.geometry.attributes.skinWeight
+    for (let i = 0; i < pos.count; i++) {
+      if (excludeRe && si && sw) { let best = 0, bw = -1; for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k) } }
+        const bn = o.skeleton.bones[best]; if (bn && excludeRe.test(bn.name)) continue }
+      v.fromBufferAttribute(pos, i); o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); box.expandByPoint(v)
+    }
+  }
+  return box
+}
+
+loader.load(dir + file + '.glb?cb=' + Date.now(), (g) => {
+  root = SkeletonUtils.clone(g.scene)
+  root.traverse((o) => { if (o.isSkinnedMesh) skinned.push(o); if (o.material) [].concat(o.material).forEach((m) => { if (COLOR_FIX[m.name]) m.color.set(COLOR_FIX[m.name]); o.castShadow = true }) })
+  // 키 정규화 (기본 포즈 실측)
+  const box0 = posedBox(); const s = H / (box0.max.y - box0.min.y)
+  const inner = new THREE.Group(); inner.add(root); inner.scale.setScalar(s); inner.position.y = -box0.min.y * s
+  grp = new THREE.Group(); grp.add(inner); scene.add(grp)
+  const clip = g.animations.find((a) => /(^|\|)Idle_Neutral$/.test(a.name)) || g.animations.find((a) => /(^|\|)Idle$/.test(a.name))
+  if (clip) { mixer = new THREE.AnimationMixer(root); mixer.clipAction(clip).play() }
+  boneState = { resolved: new Map() }
+  detectPalmAxis()
+  // 어깨 반폭(UpperArm.L x, 정규화 후) 기준 팔짱 가로 성분 보정 — 좁은 어깨(여)에서 손이 반대편 상완을 관통하지 않도록
+  { scene.updateMatrixWorld(true); const v = new THREE.Vector3(); bone('UpperArm.L').getWorldPosition(v); const inner = grp.children[0]; const half = Math.abs(v.x - grp.position.x) * (inner.scale ? 1 : 1); lateralK = Math.min(1, Math.max(0.6, half / 0.147)) }
+  camera.position.set(...P.cam); camera.lookAt(...P.look)
+  document.getElementById('ui').textContent = `${file}\npose=${pose} clip=${clip ? clip.name : 'none'}`
+  for (let i = 0; i < 8; i++) tick2()  // 백그라운드 탭에서도 배치·포즈가 완성되도록 동기 스텝
+  window.__ready = true
+}, undefined, (e) => { document.getElementById('ui').textContent = 'ERR ' + e.message })
+
+let placed = false
+window.__err = null
+window.__frames = 0
+window.__arms = () => {
+  scene.updateMatrixWorld(true)
+  const P_ = (n) => { const v = new THREE.Vector3(); bone(n).getWorldPosition(v); return v }
+  const segDist = (a0, a1, b0, b1) => { // 선분 간 최소 거리(근사: 샘플링)
+    let m = 1e9; for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++) { const pa = a0.clone().lerp(a1, i / 10), pb = b0.clone().lerp(b1, j / 10); m = Math.min(m, pa.distanceTo(pb)) } return m }
+  const eL = P_('LowerArm.L'), wL = P_('Wrist.L'), eR = P_('LowerArm.R'), wR = P_('Wrist.R'), sL = P_('UpperArm.L'), sR = P_('UpperArm.R'), mL = P_('Middle1.L'), mR = P_('Middle1.R')
+  return { wristL: wL.toArray().map(v => +v.toFixed(3)), wristR: wR.toArray().map(v => +v.toFixed(3)), handL: mL.toArray().map(v => +v.toFixed(3)), handR: mR.toArray().map(v => +v.toFixed(3)),
+    shoulderL: sL.toArray().map(v => +v.toFixed(3)), shoulderR: sR.toArray().map(v => +v.toFixed(3)),
+    forearmGap: +segDist(eL, wL, eR, wR).toFixed(3), foreVsUpper: +Math.min(segDist(eL, wL, sR, eR), segDist(eR, wR, sL, eL)).toFixed(3), bedTop: BED.top }
+}
+window.__dirs = () => {
+  const b = bone('UpperLeg.L'), c = bone('LowerLeg.L'); scene.updateMatrixWorld(true)
+  const bp = new THREE.Vector3(), cp = new THREE.Vector3(); b.getWorldPosition(bp); c.getWorldPosition(cp)
+  const inner = grp.children[0].isGroup && grp.children[0].children[0] && grp.children[0].children[0].isGroup ? grp.children[0].children[0] : grp.children[0]
+  const iq = new THREE.Quaternion(); inner.getWorldQuaternion(iq)
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(iq), up = new THREE.Vector3(0, 1, 0).applyQuaternion(iq)
+  return { leg: cp.sub(bp).normalize().toArray().map(v => +v.toFixed(2)), innerName: inner === root ? 'root' : 'group', fwd: fwd.toArray().map(v => +v.toFixed(2)), up: up.toArray().map(v => +v.toFixed(2)), grpRot: grp.rotation.toArray().slice(0,3).map(v => +v.toFixed(2)), depth: (() => { let d = 0, o = inner; while (o && o !== scene) { d++; o = o.parent } return d })() }
+}
+window.__step = () => { try { tick2(); return 'ok' } catch (e) { return String(e.stack || e) } }
+window.__dbg = () => { const b = root ? posedBox() : null; return { cam: camera.position.toArray(), children: scene.children.length, grp: grp && grp.position.toArray(), grpScale: grp && grp.children[0].scale.x, box: b && [b.min.toArray(), b.max.toArray()], placed, calls: renderer.info.render.calls } }
+window.__cam = (p, t) => { camera.position.set(p[0], p[1], p[2]); camera.lookAt(t[0], t[1], t[2]); renderer.render(scene, camera); return camera.position.toArray() }
+window.__scene = scene; window.__THREE = THREE
+window.__chest = () => {
+  // 몸통 앞면 z: 팔·손 본이 지배하지 않는 정점 중 어깨 높이 아래 가슴 영역(|x|<0.12, y∈[sY-0.13, sY+0.04])의 최대 z
+  const T = window.__THREE; const v = new T.Vector3(); const bones = {}; window.__scene.traverse(o => { if (o.isBone) bones[o.name] = o })
+  const sY = (() => { const p = new T.Vector3(); bones['UpperArmL'].getWorldPosition(p); return p.y })()
+  let chest = -1e9
+  window.__scene.traverse(m => { if (!m.isSkinnedMesh) return; const P = m.geometry.attributes.position, J = m.geometry.attributes.skinIndex, W = m.geometry.attributes.skinWeight; const names = m.skeleton.bones.map(b => b.name)
+    for (let i = 0; i < P.count; i++) { let bi = 0, bw = -1; for (let k = 0; k < 4; k++) { const w = W.getComponent(i, k); if (w > bw) { bw = w; bi = J.getComponent(i, k) } } if (/Arm|Wrist|Index|Middle|Ring|Pinky|Thumb|Shoulder/.test(names[bi] || '')) continue
+      v.fromBufferAttribute(P, i); m.applyBoneTransform(i, v); v.applyMatrix4(m.matrixWorld); if (Math.abs(v.x) < 0.12 && v.y > sY - 0.13 && v.y < sY + 0.04 && v.z > chest) chest = v.z } })
+  const seg = (a, b) => { const A = new T.Vector3(), B = new T.Vector3(); bones[a].getWorldPosition(A); bones[b].getWorldPosition(B); const t = (0 - A.x) / (B.x - A.x); return { elbow: A.toArray().map(x => +x.toFixed(3)), wrist: B.toArray().map(x => +x.toFixed(3)), zAtCenter: +(A.z + (B.z - A.z) * Math.min(1, Math.max(0, t))).toFixed(3) } }
+  return { chestFrontZ: +chest.toFixed(3), shoulderY: +sY.toFixed(3), R: seg('LowerArmR', 'WristR'), L: seg('LowerArmL', 'WristL') }
+}
+window.addEventListener('error', (e) => { window.__err = e.message + ' @' + e.lineno })
+function tick() {
+  try { tick2() } catch (e) { window.__err = String(e.stack || e); renderer.render(scene, camera); requestAnimationFrame(tick) }
+}
+function tick2() {
+  window.__frames++
+  const d = Math.min(clock.getDelta(), 0.05) || 0.033
+  if (root) {
+    if (mixer) mixer.update(d)
+    root.updateMatrixWorld(true)
+    applyOffsets(LEG_SETS[P.legs])
+    if (P.arms === 'cross') armsCross(); else applyOffsets(ARM_SETS[P.arms])
+    if (P.arms === 'side_left') palmsDown('R', 'L'); if (P.arms === 'side_right') palmsDown('L', 'R')
+    root.updateMatrixWorld(true)
+    attachFeet()
+    if (!placed) {
+      // 배치: 의자 — 발이 바닥, 골반 높이에 좌석 / 침대 — 눕기 변환 후 최저점이 침대 상판
+      const inner = grp.children[0]
+      if (P.place === 'chair') {
+        const b = posedBox(); inner.position.y += -b.min.y
+        root.updateMatrixWorld(true)
+        const hip = new THREE.Vector3(); bone('Hips').getWorldPosition(hip)
+        addChair(hip.y - 0.06)
+        placed = true
+      } else {
+        // 앙와위: 모델 (x,y,z)→(-y,z,-x) : 머리 -x, 얼굴 +y
+        grp.rotation.set(-Math.PI / 2, 0, Math.PI / 2)
+        if (P.roll) {
+          const outer = new THREE.Group(); scene.remove(grp); outer.add(grp); scene.add(outer)
+          outer.rotation.x = deg(P.roll) // 몸 장축(월드 x) 기준 굴림
+          grp = outer
+        }
+        addBed()
+        root.updateMatrixWorld(true)
+        const b = posedBox(/Arm|Wrist|Index|Middle|Ring|Pinky|Thumb|Shoulder/)  // 팔·손은 침대 접촉 기준에서 제외
+        grp.position.y += BED.top - b.min.y
+        grp.position.x += -0.95 + 0.1 - b.min.x
+        placed = true
+      }
+    }
+  }
+  renderer.render(scene, camera); requestAnimationFrame(tick)
+}
+tick()
+</script></body></html>
