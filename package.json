@@ -50,6 +50,7 @@
     "check:rag-eval": "node --experimental-strip-types --no-warnings scripts/check-rag-eval.mjs",
     "check:rag-mode": "node --experimental-strip-types --no-warnings scripts/check-rag-mode.mjs",
     "check:rag-caption": "node --experimental-strip-types --no-warnings scripts/check-rag-caption.mjs",
+    "check:rag-plan": "node --experimental-strip-types --no-warnings scripts/check-rag-plan.mjs",
     "report:upload-cost": "node --experimental-strip-types --no-warnings scripts/report-upload-cost.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",

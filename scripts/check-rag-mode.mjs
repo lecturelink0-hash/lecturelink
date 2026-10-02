@@ -95,7 +95,7 @@ check(
 );
 check('PG: indexMaterialChunks 호출은 한 곳뿐', (pg.match(/indexMaterialChunks\(/g) ?? []).length === 1);
 check('PG: 임베딩 비용을 totalCost 에 더함', /totalCost \+= ragDiag\.costUsd;/.test(pg));
-check('PG: 진단에 rag·retrieval 스냅샷', /rag: ragDiag \?\? \{ mode: RAG_MODE \}/.test(pg) && /retrieval: ragConfigSnapshot\(\)/.test(pg));
+check('PG: 진단에 rag·retrieval 스냅샷', /rag: \{ \.\.\.\(ragDiag \?\? \{ mode: RAG_MODE \}\)/.test(pg) && /retrieval: ragConfigSnapshot\(\)/.test(pg));
 check('PG: 진단 기록 전에 인덱싱 합류(상한 있음)', /ragDiag = await settleRagIndex\(ragIndexPromise, RAG_INDEX_WAIT_MS/.test(pg));
 
 const embed = readFileSync(new URL('../lib/ai/embed.ts', import.meta.url), 'utf8');
