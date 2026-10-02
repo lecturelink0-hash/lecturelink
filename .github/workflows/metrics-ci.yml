@@ -13,6 +13,7 @@ on:
       - 'lib/extract/page-text.ts'
       - 'lib/ai/context-segments.ts'
       - 'lib/rag/**'
+      - 'lib/ai/embed.ts'
       - 'lib/ai/source-refs.ts'
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
@@ -31,6 +32,8 @@ on:
       - 'scripts/check-generation-repeatability.mjs'
       - 'scripts/check-upload-cost.mjs'
       - 'scripts/check-rag-eval.mjs'
+      - 'scripts/check-rag-mode.mjs'
+      - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -44,6 +47,7 @@ on:
       - 'lib/extract/page-text.ts'
       - 'lib/ai/context-segments.ts'
       - 'lib/rag/**'
+      - 'lib/ai/embed.ts'
       - 'lib/ai/source-refs.ts'
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
@@ -62,6 +66,8 @@ on:
       - 'scripts/check-generation-repeatability.mjs'
       - 'scripts/check-upload-cost.mjs'
       - 'scripts/check-rag-eval.mjs'
+      - 'scripts/check-rag-mode.mjs'
+      - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
       - '.github/workflows/metrics-ci.yml'
@@ -89,6 +95,8 @@ jobs:
       - run: npm run check:upload-cost
       # 검색 산식·평가 지표 — RRF·근거 팩 조립·인용구 회수·τ (RAG 실행계획 v1.1 E1~E3)
       - run: npm run check:rag-eval
+      # RAG 모드·임베딩 배치·00045 스키마 — off 에서 인덱싱 경로를 타지 않는지 (RAG 실행계획 v1.1 0-e·0-g·0-h)
+      - run: npm run check:rag-mode
       # 문항 통계·층화 추출 산식 — KR-20·변별도·point-biserial 손계산 대조 (분담표 A12·A13)
       - run: npm run check:item-stats
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)

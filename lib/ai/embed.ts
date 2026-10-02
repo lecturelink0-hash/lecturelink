@@ -10,6 +10,16 @@
  */
 
 import { calculateCost, withRetry, type UsageRecord } from './client';
+import { recordAiCost } from './cost-cap';
+import { RAG_DEFAULTS, embedProvider, ragEmbedModel } from '../rag/mode.ts';
+import {
+  EMBED_BATCH_LIMITS,
+  approxTokens,
+  batchTexts,
+  embedCostUsd,
+  embedPricePerM,
+  l2normalize,
+} from '../rag/embed-batch.ts';
 
 export interface EmbedInput {
   text: string;
@@ -96,6 +106,136 @@ export async function embedText(input: EmbedInput): Promise<EmbedResult> {
       durationMs: Date.now() - startTime,
     },
   };
+}
+
+// ── 배치 임베딩 (RAG 실행계획 v1.1 · 0-g) ──────────────────────────────────────
+//
+// embedText 는 호출당 1건이라 청크 수십 개를 인덱싱하면 호출이 청크 수만큼 생긴다. embedTexts 는
+// 제공자 한도 안에서 묶어 부르고, 비용 기록(recordAiCost)도 함수 안에서 한다. 업로드 처리 중이면
+// 비용 귀속 컨텍스트(lib/metrics/cost-attribution)가 uploadId 를 붙인다.
+//
+// 기존 embedText(문항 은행 중복 검사용, voyage-3)와 모델을 섞지 않는다. 같은 벡터 컬럼에 다른 모델의
+// 벡터가 섞이면 유사도가 무의미해지므로, 청크·문항 RAG 임베딩은 ragEmbedModel() 로 따로 정하고
+// 행마다 embedding_model 을 남긴다.
+
+export interface EmbedTextsInput {
+  texts: string[];
+  inputType: 'query' | 'document';
+  /** 기본값 ragEmbedModel()(PRIVATE_RAG 구성, voyage-4). */
+  model?: string;
+  /** ai_cost_log.endpoint. 기본 'rag.embed'. */
+  endpoint?: string;
+  /** 비용 기록의 user_id. 비우면 비용 귀속 컨텍스트의 userId 를 쓴다. */
+  userId?: string | null;
+}
+
+export interface EmbedTextsResult {
+  /** 입력 순서대로, L2 정규화된 1024차원 벡터. */
+  embeddings: number[][];
+  model: string;
+  tokens: number;
+  /** Gemini 는 응답에 토큰 수가 없어 글자 수로 근사한다. */
+  tokensEstimated: boolean;
+  costUsd: number;
+  calls: number;
+  durationMs: number;
+}
+
+const EMBED_TIMEOUT_MS = 30_000;
+
+async function postEmbedJson(url: string, body: unknown, headers: Record<string, string>, label: string): Promise<any> {
+  return withRetry(async () => {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(EMBED_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      const error = new Error(`[${label}] ${res.status} ${res.statusText}: ${text.slice(0, 300)}`);
+      (error as Error & { status?: number }).status = res.status;
+      throw error;
+    }
+    return res.json();
+  });
+}
+
+export async function embedTexts(input: EmbedTextsInput): Promise<EmbedTextsResult> {
+  const model = input.model ?? ragEmbedModel();
+  const provider = embedProvider(model);
+  if (!provider) throw new Error(`[embed] 지원하지 않는 임베딩 모델: ${model}`);
+  if (embedPricePerM(model) === null) throw new Error(`[embed] 단가표에 없는 임베딩 모델: ${model}`);
+  const dim = RAG_DEFAULTS.dim;
+  const t0 = Date.now();
+  const out: number[][] = new Array(input.texts.length);
+  let tokens = 0;
+  let calls = 0;
+
+  if (input.texts.length > 0) {
+    if (provider === 'voyage') {
+      const apiKey = process.env.VOYAGE_API_KEY;
+      if (!apiKey) throw new Error('VOYAGE_API_KEY 환경변수가 설정되지 않았습니다.');
+      for (const b of batchTexts(input.texts, EMBED_BATCH_LIMITS.voyage)) {
+        const r = (await postEmbedJson(
+          'https://api.voyageai.com/v1/embeddings',
+          { input: b.texts, model, input_type: input.inputType, output_dimension: dim },
+          { Authorization: `Bearer ${apiKey}` },
+          `voyage ${model}`,
+        )) as { data: Array<{ embedding: number[]; index: number }>; usage?: { total_tokens?: number } };
+        calls += 1;
+        tokens += r.usage?.total_tokens ?? 0;
+        for (const d of r.data) out[b.start + d.index] = d.embedding;
+      }
+    } else {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error('GEMINI_API_KEY 환경변수가 설정되지 않았습니다.');
+      const taskType = input.inputType === 'query' ? 'RETRIEVAL_QUERY' : 'RETRIEVAL_DOCUMENT';
+      for (const b of batchTexts(input.texts, EMBED_BATCH_LIMITS.gemini)) {
+        const r = (await postEmbedJson(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:batchEmbedContents`,
+          {
+            requests: b.texts.map((t) => ({
+              model: `models/${model}`,
+              content: { parts: [{ text: t }] },
+              taskType,
+              outputDimensionality: dim,
+            })),
+          },
+          { 'x-goog-api-key': apiKey },
+          `gemini ${model}`,
+        )) as { embeddings: Array<{ values: number[] }> };
+        calls += 1;
+        tokens += b.texts.reduce((a, t) => a + approxTokens(t), 0);
+        r.embeddings.forEach((e, j) => {
+          out[b.start + j] = e.values;
+        });
+      }
+    }
+  }
+
+  for (let i = 0; i < out.length; i += 1) {
+    const v = out[i];
+    if (!v || v.length !== dim) {
+      throw new Error(`[embed] ${model} 임베딩 ${i}번 차원 불일치: 기대 ${dim}, 실제 ${v?.length ?? 0}`);
+    }
+    out[i] = l2normalize(v);
+  }
+
+  const costUsd = embedCostUsd(model, tokens);
+  const tokensEstimated = provider === 'gemini';
+  if (calls > 0) {
+    await recordAiCost({
+      userId: input.userId ?? null,
+      endpoint: input.endpoint ?? 'rag.embed',
+      model,
+      costUsd,
+      inputTokens: tokens,
+      outputTokens: 0,
+      metadata: { texts: input.texts.length, calls, inputType: input.inputType, ...(tokensEstimated ? { tokensEstimated: true } : {}) },
+    });
+  }
+  return { embeddings: out, model, tokens, tokensEstimated, costUsd, calls, durationMs: Date.now() - t0 };
 }
 
 /**

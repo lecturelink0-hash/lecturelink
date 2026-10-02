@@ -165,12 +165,12 @@ v1.0 2.2의 "10분 무응답 시 실패 처리"는 코드에 없음. 실제로�
   - 자체 문항 `concepts`
   - `services/cpx/data/cpx/common/physical_exam_ontology.json`의 alias
 
-**E. 하이브리드 검색**
+**E. 하이브리드 검색** — *E3 결과 dense 단독으로 확정(sparse 불채택, [e1-e3-results.md](e1-e3-results.md)). 아래는 원래 설계임.*
 - dense top-20(HNSW, 코사인)과 sparse top-20(pg_trgm, `00001`에서 이미 활성)을 RRF(k=60)로 융합함.
 - 필터는 `upload_id`, 이미지 단위라면 `modality`임.
 - `match_material_chunks`는 service role 전용으로 둠. RLS가 있는 테이블이라 사용자 세션에서 호출할 이유가 없음.
 
-**F. 리랭킹·압축**
+**F. 리랭킹·압축** — *E3 결과 리랭커 불채택, E2 결과 부모 확장 없음(1,200자 청크 6개). MMR·팩 상한은 PR H에서 적용함.*
 - 리랭커는 E3 결과로 결정함. 후보는 `rerank-2.5`, `rerank-3`, 없음.
 - MMR(λ=0.7)로 다양화하고, top-2는 부모(level 0) 구간으로 확장함.
 - 근거 팩은 `[E1]…[E6]` 형식으로 3k 토큰 이하.
@@ -229,6 +229,8 @@ alter table private_questions
 create index idx_private_questions_embedding on private_questions using hnsw (embedding vector_cosine_ops);
 create function match_private_questions(p_user_id uuid, p_content_sha text, query_embedding vector(1024), threshold real, k int) ...;
 ```
+
+**00045 실제 구현에서 바꾼 것(PR D):** HNSW·pg_trgm 인덱스 없음(업로드 내 정확 검색, sparse 불채택). `embedding_model`·`embedding_sha` 컬럼 추가. 저장용 RPC `rag_set_chunk_embeddings` 추가. 자세한 이유는 마이그레이션 머리말에 있음.
 
 0-c의 결정론적 ID는 애플리케이션 쪽에서 계산하고, 마이그레이션은 기존 행을 건드리지 않음. 기존 행은 다음 재처리 때 upsert로 교체됨. 청크 ID는 내용이 바뀌면 upsert로 바뀔 수 있으므로 `parent_id` 외래키는 `ON UPDATE CASCADE`로 두거나 `(upload_id, chunk_index)`를 참조하도록 설계함.
 
@@ -316,6 +318,8 @@ E1~E3은 Phase 0의 오프라인 재생 하네스(0-i)로 돌리고, E4·E5·E5-
 | 청크 ID | 같은 `upload_id`를 2회 처리했을 때 본문 청크 ID 100% 일치(OCR 청크는 OCR 결과가 같을 때만) |
 | `off` 회귀 | 기존 `check:*` 전부 통과. 골든셋 `off` 모드 전후 비교에서 형식 위반율·제공 문항 수가 악화되지 않음 |
 | 검색 품질(오프라인) | E1~E3에서 확정한 구성으로 Recall@6 ≥ 0.80 |
+
+**G0 판정(2026-09-28): 6개 항목 모두 충족.** 결과는 [g0-baseline.md](g0-baseline.md)와 [e1-e3-results.md](e1-e3-results.md)에 있음. 확정 구성은 voyage-4 dense 단독(sparse·리랭커 없음), 1,200자 청크, τ 0.61임.
 
 ### G1 — Phase 1 종료 → `on` 전환과 Phase 2 판단
 

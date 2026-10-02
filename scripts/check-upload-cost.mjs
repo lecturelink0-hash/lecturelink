@@ -199,7 +199,7 @@ console.log('\n[소스 대조] 계측 지점');
   check('recordAiCost 가 컨텍스트 합계에 더한다', /tallyAttributedCost\(/.test(costCap));
   check('생성 진입점이 귀속 컨텍스트를 연다', /runWithCostAttribution\(\s*\{\s*uploadId: input\.uploadId/.test(pg));
   check('참고자료 프로파일이 0 원으로 기록되지 않는다', !/endpoint: 'private\.reference-profile',\s*model,\s*costUsd: 0,/.test(pg));
-  check('진단에 원가·설정 스냅샷이 실린다', /attributed: attributedCostSnapshot\(\)/.test(pg) && /config: configSnapshot\(\)/.test(pg));
+  check('진단에 원가·설정 스냅샷이 실린다', /attributed: attributedCostSnapshot\(\)/.test(pg) && /config: (\{ \.\.\.)?configSnapshot\(\)/.test(pg));
   check('임베딩 모델 기본값이 실제 호출과 같다', /VOYAGE_EMBED_MODEL \?\? 'voyage-3'/.test(versions) && !/'text-embedding-3-small';/.test(versions));
 }
 

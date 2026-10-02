@@ -8,7 +8,9 @@
  *   cd <체크아웃> && npx tsx scripts/rag-eval/run-retrieval.ts --corpus <작업>/corpus.json \
  *     --labels <작업>/labels-draft.json --out <작업>/results --pg "host=… port=… user=… dbname=…" \
  *     [--models voyage-3,voyage-4,gemini-embedding-2] [--rerankers rerank-2.5,rerank-3] \
- *     [--e2-model voyage-4 --e2-config rrf] [--live-latency] [--tag <출력 파일 꼬리표>]
+ *     [--e2-model voyage-4 --e2-config rrf] [--live-latency] [--reviewed-only] [--tag <출력 파일 꼬리표>]
+ *
+ * --reviewed-only: 검토본에서 사람이 '채택'한 단위만 평가한다(미검토 초안 제외).
  *
  * 한 출제 단위 = 질의 4개(개념·임상·감별·HyDE 발문, 5.2 D). 각 질의로 dense top-20·sparse top-20 을
  * 뽑아 RRF(k=60)로 합친다(dense 만 쓰는 구성은 dense 목록끼리 RRF). 리랭커는 합친 상위 20개를
@@ -41,6 +43,7 @@ const rerankers = (opt('--rerankers', 'rerank-2.5,rerank-3') ?? '').split(',').f
 const e2Model = opt('--e2-model');
 const e2Config = opt('--e2-config', 'rrf');
 const liveLatency = argv.includes('--live-latency');
+const reviewedOnly = argv.includes('--reviewed-only');
 const tag = opt('--tag');
 if (!corpusPath || !labelsPath || !opt('--out')) {
   console.error('필수: --corpus --labels --out (파일 머리말 참고)');
@@ -76,11 +79,12 @@ type SetName = 'L1_1200' | 'L1_600';
   const labels = JSON.parse(readFileSync(labelsPath!, 'utf8')) as { materials: Record<string, { units: any[] }> };
   const mats = new Map(corpus.materials.map((m) => [m.key, m]));
 
-  // 평가 대상 단위: 사실이 하나 이상, 검토에서 삭제되지 않은 것.
+  // 평가 대상 단위: 사실이 하나 이상, 검토에서 삭제되지 않은 것. --reviewed-only 면 사람이 채택한 것만.
   const units: Unit[] = [];
   for (const [key, ml] of Object.entries(labels.materials)) {
     for (const u of ml.units) {
       if (u.review?.status === 'deleted') continue;
+      if (reviewedOnly && u.review?.status !== 'accepted') continue;
       if (!u.facts?.length) continue;
       units.push({ id: u.id, material: key, topic: u.topic, objective: u.objective, queries: u.queries, hydeStem: u.hydeStem, facts: u.facts });
     }
