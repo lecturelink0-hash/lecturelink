@@ -21,12 +21,18 @@
  * import 를 두지 않는다 — 검사 스크립트가 이 파일만 불러 산식을 확인할 수 있어야 한다.
  */
 
-export type ChunkKind = 'slide_text' | 'ocr';
+/**
+ * image_caption = 문항 이미지 후보가 무엇을 보여 주는지 모델이 쓴 설명(RAG 실행계획 v1.1 0-f).
+ * 저자의 글도, 그림 속 글자도 아니어서 따로 둔다. 이미지형 요청(RAG shadow·on)에서만 생긴다.
+ */
+export type ChunkKind = 'slide_text' | 'ocr' | 'image_caption';
 
 export interface SlideSummaryInput {
   pageIndex: number;
   slideText?: string | null;
   ocrTexts?: string[];
+  /** 이 페이지의 이미지 캡션 청크 본문(captionChunkText). imageKey 는 그 그림의 지문이다. */
+  captions?: Array<{ text: string; imageKey?: string }>;
 }
 
 export interface MaterialChunk {
@@ -37,6 +43,8 @@ export interface MaterialChunk {
   charCount: number;
   /** 청크 내용 해시 — 자료가 조용히 바뀌었는지 판정한다(가이드 §4.3). */
   sha256: string;
+  /** image_caption 청크가 가리키는 그림의 지문(호출자가 image_id 로 바꾼다). */
+  imageKey?: string;
 }
 
 /**
@@ -179,7 +187,8 @@ export function buildTextChunks(
 }
 
 /**
- * 슬라이드 요약 → 저장할 청크 목록. **본문 청크 전부(페이지 순) → OCR 청크 전부(페이지 순)**.
+ * 슬라이드 요약 → 저장할 청크 목록.
+ * **본문 청크 전부(페이지 순) → OCR 청크 전부(페이지 순) → 캡션 청크 전부(페이지 순)**.
  *
  * `buildChunks` 는 페이지마다 본문·OCR 을 번갈아 두기 때문에, 본문만 먼저 저장해 두고 나중에
  * OCR 을 더하면 뒤쪽 본문 청크의 번호가 밀린다. 청크 id 가 (업로드, 번호)로 정해지는 지금은
@@ -209,6 +218,20 @@ export function buildTextFirstChunks(
         chunks.push({
           chunkIndex: index, pageIndex: slide.pageIndex, kind: 'ocr',
           text, charCount: text.length, sha256: chunkHash(text),
+        });
+        index += 1;
+      }
+    }
+  }
+  // 캡션은 맨 뒤에 둔다. 캡션이 실패하거나(형식 오류) 저장을 다시 시도하며 빼도 본문·OCR 청크의
+  // 번호·id 는 그대로다(본문을 앞에 모은 것과 같은 이유).
+  for (const slide of ordered) {
+    for (const cap of slide.captions ?? []) {
+      for (const text of splitText(cap.text, maxChars)) {
+        chunks.push({
+          chunkIndex: index, pageIndex: slide.pageIndex, kind: 'image_caption',
+          text, charCount: text.length, sha256: chunkHash(text),
+          ...(cap.imageKey ? { imageKey: cap.imageKey } : {}),
         });
         index += 1;
       }

@@ -55,3 +55,14 @@ export function uuidV5(name: string, namespace: string): string {
 export function materialChunkId(uploadId: string, chunkIndex: number, contentSha: string): string {
   return uuidV5(`${uploadId}:${chunkIndex}:${contentSha}`, MATERIAL_CHUNK_ID_NAMESPACE);
 }
+
+/**
+ * 캡션 청크가 가리키는 그림의 id(material_chunks.image_id, RAG 실행계획 v1.1 0-f).
+ *
+ * 그림만 따로 저장하는 표가 없어(문항에 쓰인 그림만 private_question_images 에 연결 행으로 남는다)
+ * 외래키 대신 (업로드, 크롭 PNG 지문)에서 계산한다. 같은 업로드에서 같은 그림이면 재처리해도 같은 id 다.
+ * 청크 id 와 섞이지 않게 이름에 'image' 를 넣는다.
+ */
+export function materialImageId(uploadId: string, imageKey: string): string {
+  return uuidV5(`${uploadId}:image:${imageKey}`, MATERIAL_CHUNK_ID_NAMESPACE);
+}

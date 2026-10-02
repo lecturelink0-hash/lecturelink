@@ -14,6 +14,8 @@ on:
       - 'lib/ai/context-segments.ts'
       - 'lib/rag/**'
       - 'lib/ai/embed.ts'
+      - 'lib/extract/caption-image.ts'
+      - 'lib/ocr/engine.ts'
       - 'lib/ai/source-refs.ts'
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
@@ -33,6 +35,7 @@ on:
       - 'scripts/check-upload-cost.mjs'
       - 'scripts/check-rag-eval.mjs'
       - 'scripts/check-rag-mode.mjs'
+      - 'scripts/check-rag-caption.mjs'
       - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
@@ -48,6 +51,8 @@ on:
       - 'lib/ai/context-segments.ts'
       - 'lib/rag/**'
       - 'lib/ai/embed.ts'
+      - 'lib/extract/caption-image.ts'
+      - 'lib/ocr/engine.ts'
       - 'lib/ai/source-refs.ts'
       - 'lib/ai/versions.ts'
       - 'lib/ai/quality-checks.ts'
@@ -67,6 +72,7 @@ on:
       - 'scripts/check-upload-cost.mjs'
       - 'scripts/check-rag-eval.mjs'
       - 'scripts/check-rag-mode.mjs'
+      - 'scripts/check-rag-caption.mjs'
       - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
@@ -97,6 +103,8 @@ jobs:
       - run: npm run check:rag-eval
       # RAG 모드·임베딩 배치·00045 스키마 — off 에서 인덱싱 경로를 타지 않는지 (RAG 실행계획 v1.1 0-e·0-g·0-h)
       - run: npm run check:rag-mode
+      # 이미지 캡션 청크 — 이미지형 + shadow·on 에서만, 후보 이미지에만, 크롭 OCR 콜 불변 (RAG 실행계획 v1.1 0-f)
+      - run: npm run check:rag-caption
       # 문항 통계·층화 추출 산식 — KR-20·변별도·point-biserial 손계산 대조 (분담표 A12·A13)
       - run: npm run check:item-stats
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)

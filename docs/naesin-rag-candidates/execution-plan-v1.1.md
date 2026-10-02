@@ -128,7 +128,7 @@ v1.0 2.2의 "10분 무응답 시 실패 처리"는 코드에 없음. 실제로�
 | 0-c 청크 ID 안정화 | `id`를 `upload_id + chunk_index + content_sha`의 결정론적 UUID(v5)로 만들고, 삭제·재삽입 대신 `(upload_id, chunk_index)` 기준 upsert로 바꿈. 새 결과보다 `chunk_index`가 큰 잔여 행은 삭제함. 같은 `upload_id`를 재시도하면 내용이 같은 청크는 같은 ID가 나옴. 내용이 바뀐 청크(OCR·이미지 선정은 실행마다 달라질 수 있음)는 새 ID를 받아, 예전 출처가 조용히 다른 내용을 가리키지 않게 함(2026-09-28 PR #274 리뷰 반영) | F3 | 아니오 |
 | 0-d 인덱싱 순서 | 초기 텍스트가 확보되는 즉시 청킹·저장을 먼저 하고, 선발 배치도 `## 슬라이드 N` 헤더가 있는 컨텍스트를 받게 함. OCR·캡션 청크는 도착하는 대로 추가함. `chunkLocators` 선언 순서 문제 제거 | F2, F8 | 아니오 |
 | 0-e 스키마 확장 | 마이그레이션 `00045`(5.3 스케치). `material_chunks`에 `embedding vector(1024)`·`parent_id`·`level`·`modality`·`heading_path`·`image_id`, HNSW·trgm 인덱스, `match_material_chunks` RPC 추가. `private_questions`에 `embedding vector(1024)`·`evidence jsonb`, `match_private_questions` RPC 추가 | — | 아니오 |
-| 0-f 이미지 캡션 청크 | 이미지형 요청에서만 만듦. 페이지 렌더 경로는 의료 이미지 검출 콜(`detectMedicalRegions`) 출력에 `caption`·`modality`·`findings[]`를 추가하면 추가 콜이 없음. 하지만 pdfjs 임베디드 이미지 경로는 검출 콜을 거치지 않고, 선별 콜은 320px 썸네일이라 캡션 품질이 부족함. 그래서 이 경로는 PR F 착수 시 비교해 원가가 낮은 쪽을 고름: 기존 콜 확장 vs 후보 이미지(최대 20장)당 1콜 추가. 텍스트 전용 요청에는 캡션 청크가 없음 | — | 예 |
+| 0-f 이미지 캡션 청크 | 이미지형 요청에서만 만듦. 페이지 렌더 경로는 의료 이미지 검출 콜(`detectMedicalRegions`) 출력에 `caption`·`modality`·`findings[]`를 추가하면 추가 콜이 없음. 하지만 pdfjs 임베디드 이미지 경로는 검출 콜을 거치지 않고, 선별 콜은 320px 썸네일이라 캡션 품질이 부족함. 그래서 이 경로는 PR F 착수 시 비교해 원가가 낮은 쪽을 고름: 기존 콜 확장 vs 후보 이미지(최대 20장)당 1콜 추가. 텍스트 전용 요청에는 캡션 청크가 없음. *2026-10-02 확정: 크롭당 캡션 1콜. 두 경로를 다 덮는 크롭 OCR 콜 확장을 비교했으나 OCR 글자·박스가 망가져 불채택. shadow·on 에서만 동작([f-caption-results.md](f-caption-results.md))* | — | 예 |
 | 0-g 임베딩 배치 호출 | `lib/ai/embed.ts`에 배열 입력 `embedTexts()` 추가(현재는 호출당 1건). 비용 기록(`recordAiCost`, `uploadId` 포함)도 함수 안에서 처리 | — | 예 |
 | 0-h 플래그·진단 | `lib/rag/mode.ts` + `check-rag-mode`. 진단에 `rag.mode`·인덱싱 시간·청크 수·임베딩 비용 기록 | — | 아니오 |
 | 0-i 오프라인 재생 하네스 | 운영 트래픽이 없는 동안의 `shadow`는 **오프라인 재생**으로 대신함. 골든셋 자료로 추출→청킹→임베딩→검색만 돌려 Recall을 잼(`scripts/rag-eval/*`). 운영 사용자가 생기면 운영 `shadow`를 병행함 | v1.0 3.8 | 예 |
@@ -386,7 +386,7 @@ Phase 0은 약 11~14일, Phase 1은 약 15일로 추정함.
 - **운영에 영향을 주는 PR.** D·E와 Phase 1 PR은 `PRIVATE_RAG_MODE=off`가 기본값이라 병합해도 운영 동작이 바뀌지 않음. 아래 셋은 `off`에서도 영향이 있음.
   - **B:** 주로 계측임. 다만 참고자료 프로파일을 실비용으로 기록하면 일일 비용 상한 합계가 소폭 늘어남.
   - **C:** PDF·DOCX 생성 컨텍스트가 바뀜(페이지 헤더, 블록 기반 분할). 병합 전에 골든셋 `off` 모드 전후 비교로 회귀를 확인함.
-  - **F:** Vision 콜 출력 스키마에 필드가 추가됨(기존 필드는 그대로). 이미지형 요청의 형식 위반율로 회귀를 확인함.
+  - **F:** Vision 콜 출력 스키마에 필드가 추가됨(기존 필드는 그대로). 이미지형 요청의 형식 위반율로 회귀를 확인함. *→ 실제로는 기존 콜을 건드리지 않고 캡션 콜을 따로 두어 `off` 영향이 없음. shadow·on 이미지형 요청에만 크롭당 1콜이 추가됨([f-caption-results.md](f-caption-results.md)).*
 - **운영 반영 담당.** 마이그레이션 `00045` 적용과 `on` 전환은 전재현이 실행함.
 
 ---

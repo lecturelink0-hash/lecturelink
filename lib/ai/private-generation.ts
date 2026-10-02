@@ -28,7 +28,7 @@ import {
 } from '@/lib/metrics/cost-attribution';
 import { runQualityGate, describeGate } from './quality-gate';
 import { buildTextChunks, buildTextFirstChunks, type MaterialChunk } from '@/lib/extract/chunk';
-import { materialChunkId } from '@/lib/extract/chunk-id';
+import { materialChunkId, materialImageId } from '@/lib/extract/chunk-id';
 import {
   assemblePageSlides,
   capPageTexts,
@@ -54,6 +54,8 @@ import { recordAiCost } from './cost-cap';
 import { configSnapshot } from './versions';
 import { parseRagMode, ragConfigSnapshot, ragEmbedModel, ragIndexingEnabled } from '@/lib/rag/mode';
 import { indexMaterialChunks, settleRagIndex, type RagIndexResult } from '@/lib/rag/indexing';
+import { captionChunkText, captionEligible } from '@/lib/rag/caption';
+import { captionImage } from '@/lib/extract/caption-image';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -347,6 +349,10 @@ const PDF_SCAN_EDGE_PX = 320;      // 전체 페이지 로컬 후보 선별용 �
 // 그만큼 줄어든다(실측: 이미지가 많은 20문항 실행에서 OCR 구간 12.4초). 재시도·백오프는
 // 그대로라 레이트리밋에 걸려도 안전하게 물러난다.
 const OCR_CONCURRENCY = 14;
+// 캡션 콜(v1.1 0-f) 동시 처리 수. OCR 과 따로 세는 이유: 같은 슬롯을 나눠 쓰면 캡션이 OCR 을 밀어내
+// OCR 완료(= 이미지 정제·이미지 배치 출발의 선행 조건)가 늦어진다. 캡션 콜이 OCR 보다 짧아(중앙값
+// 1.4초 vs 2.8초) 이 정도면 OCR 대기 안에 끝난다.
+const CAPTION_CONCURRENCY = 6;
 // 생성 배치당 최대 문항 수. 생성 시간은 배치당 "출력 토큰 수"가 지배하므로 배치를 잘게
 // 쪼개 병렬로 돌리면 체감 시간이 배치 1개 수준으로 줄어든다. 문항당 출력이 1천 토큰대라
 // 4문항 배치는 디코딩만 1분+ 걸림 → 2문항으로 줄여 배치 1개를 ~30초대로.
@@ -2005,7 +2011,48 @@ async function runPrivateGeneration(
     let ocrActive = 0;
     const ocrWaiters: Array<() => void> = [];
     const ocrTasks = new Map<CroppedImage, Promise<void>>();
+
+    // ── 크롭 캡션(RAG 실행계획 v1.1 0-f) — 이미지형 + RAG shadow·on 에서 문항 이미지 후보마다 1콜.
+    // OCR 과 같은 시점에 출발해 나란히 돈다(OCR 콜은 건드리지 않는다 — f-caption-results.md).
+    // 결과는 크롭에 붙여 두고, 청크 저장 때 문항 이미지 후보(featured)의 캡션만 청크가 된다.
+    const captionsEnabled = wantsImages && ragIndexingEnabled(RAG_MODE);
+    const captionStats = { requested: 0, captioned: 0, failed: 0, costUsd: 0 };
+    let captionActive = 0;
+    const captionWaiters: Array<() => void> = [];
+    const captionTasks = new Map<CroppedImage, Promise<void>>();
+    const startCropCaption = (slideText: string, pageIndex: number, crop: CroppedImage): void => {
+      if (!captionsEnabled || captionTasks.has(crop) || !captionEligible(crop)) return;
+      captionStats.requested += 1;
+      const task = (async () => {
+        if (captionActive < CAPTION_CONCURRENCY) {
+          captionActive += 1;
+        } else {
+          await new Promise<void>((resolve) => captionWaiters.push(resolve));
+        }
+        try {
+          const r = await captionImage({ png: crop.png, context: slideText, userIdForLog: input.userId });
+          totalCost += r.costUsd;
+          captionStats.costUsd += r.costUsd;
+          if (r.caption) {
+            crop.caption = r.caption;
+            captionStats.captioned += 1;
+          } else {
+            captionStats.failed += 1;
+          }
+        } catch (e) {
+          captionStats.failed += 1;
+          warnings.push(`slide ${pageIndex}: 캡션 실패 — ${e instanceof Error ? e.message : String(e)}`);
+        } finally {
+          const next = captionWaiters.shift();
+          if (next) next(); // 슬롯 이양 — captionActive 유지
+          else captionActive -= 1;
+        }
+      })();
+      captionTasks.set(crop, task);
+    };
+
     const startCropOcr = (slideText: string, pageIndex: number, crop: CroppedImage): void => {
+      startCropCaption(slideText, pageIndex, crop);
       if (ocrTasks.has(crop)) return;
       const task = (async () => {
         if (ocrActive < OCR_CONCURRENCY) {
@@ -2357,21 +2404,49 @@ async function runPrivateGeneration(
     ): Promise<ChunkLocator[]> => {
       if (!materialChunksSupported || chunks.length === 0) return [];
       const t0 = Date.now();
-      const rows = chunks.map((c) => ({
-        id: materialChunkId(uploadRow.id, c.chunkIndex, c.sha256),
-        upload_id: uploadRow.id,
-        user_id: input.userId,
-        chunk_index: c.chunkIndex,
-        page_index: c.pageIndex,
-        kind: c.kind,
-        text: c.text,
-        char_count: c.charCount,
-        content_sha: c.sha256,
-      }));
+      // RAG shadow·on(또는 캡션 청크가 있을 때)에는 00045 컬럼(modality·image_id)까지 쓴다. 매번 쓰는
+      // 이유: 재처리로 같은 번호의 청크 종류가 바뀌면(캡션 → OCR 등) 예전 modality·image_id 가 남는다.
+      // 00045 가 없는 DB 에서 저장이 실패하면 캡션 청크와 00045 컬럼을 빼고 다시 저장해 본문·OCR
+      // 청크(출처 추적)는 지킨다. 캡션은 맨 뒤 번호라(buildTextFirstChunks) 빼도 다른 청크의 번호·id 는
+      // 그대로다.
+      const toRows = (list: MaterialChunk[], withRagColumns: boolean) =>
+        list.map((c) => ({
+          id: materialChunkId(uploadRow.id, c.chunkIndex, c.sha256),
+          upload_id: uploadRow.id,
+          user_id: input.userId,
+          chunk_index: c.chunkIndex,
+          page_index: c.pageIndex,
+          kind: c.kind,
+          text: c.text,
+          char_count: c.charCount,
+          content_sha: c.sha256,
+          ...(withRagColumns
+            ? {
+                modality: c.kind === 'slide_text' ? 'text' : c.kind,
+                image_id: c.imageKey ? materialImageId(uploadRow.id, c.imageKey) : null,
+              }
+            : {}),
+        }));
+      const hasCaptions = chunks.some((c) => c.kind === 'image_caption');
+      const ragColumns = hasCaptions || ragIndexingEnabled(RAG_MODE);
+      let saved = chunks;
+      let rows = toRows(chunks, ragColumns);
       try {
-        const { error: chunkErr } = await admin
+        let { error: chunkErr } = await admin
           .from('material_chunks')
           .upsert(rows as never, { onConflict: 'upload_id,chunk_index' });
+        if (chunkErr && ragColumns) {
+          warnings.push(
+            `청크 저장 실패(00045 컬럼 포함) — 캡션 청크·00045 컬럼 없이 다시 저장: ${sanitizeErrorMessage(chunkErr.message)}`,
+          );
+          saved = chunks.filter((c) => c.kind !== 'image_caption');
+          rows = toRows(saved, false);
+          if (rows.length === 0) return [];
+          ({ error: chunkErr } = await admin
+            .from('material_chunks')
+            .upsert(rows as never, { onConflict: 'upload_id,chunk_index' }));
+          if (!chunkErr) diag.extract.captionChunksDropped = chunks.length - saved.length;
+        }
         if (chunkErr) {
           if (isMissingColumnError(chunkErr) || chunkErr.code === '42P01') {
             materialChunksSupported = false;
@@ -2387,7 +2462,7 @@ async function runPrivateGeneration(
             .from('material_chunks')
             .delete()
             .eq('upload_id', uploadRow.id)
-            .gte('chunk_index', chunks.length);
+            .gte('chunk_index', saved.length);
           if (delErr) warnings.push(`잔여 청크 정리 실패: ${sanitizeErrorMessage(delErr.message)}`);
         }
         diag.timings[phase === 'early' ? 'chunkPersistEarlyMs' : 'chunkPersistMs'] = Date.now() - t0;
@@ -2651,8 +2726,9 @@ async function runPrivateGeneration(
     // 상한 초과 시 아직 안 끝난 OCR 은 포기하고 진행한다(해당 크롭은 주석 텍스트 없이 쓰인다).
     await withDeadline(
       Promise.all(
+        // 캡션(있으면)도 같이 기다린다 — 청크 저장 전에 크롭에 붙어 있어야 한다.
         allCrops.map(({ crop }) =>
-          (ocrTasks.get(crop) ?? Promise.resolve()).then(async () => {
+          Promise.all([ocrTasks.get(crop), captionTasks.get(crop)]).then(async () => {
             ocrDone += 1;
             if (reportOcrProgress) await updateProgress('ocr', ocrDone, allCrops.length);
           }),
@@ -2676,7 +2752,77 @@ async function runPrivateGeneration(
         .filter((c) => (c.ocrText ?? '').length > 0)
         .map((c) => `[${c.region.kind}] ${c.ocrText}`),
       cropCount: s.croppedImages.length,
+      // 문항 이미지 후보의 캡션 청크(v1.1 0-f). 아래 5.3 에서 featured 가 정해진 뒤 채운다.
+      captions: [] as Array<{ text: string; imageKey?: string }>,
     }));
+
+    // ── 5.3) 문항 이미지 후보(featured) 확정 — 캡션 청크(v1.1 0-f)가 이 목록을 따르므로 청크 저장보다
+    //      먼저 정한다. 크롭·OCR 결과만으로 정해지는 계산이라 위치를 옮겨도 결과는 같다.
+    // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
+    // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
+    // 텍스트 캡처 검열 — 강의록 본문 캡처를 문항 이미지에서 배제한다.
+    //
+    // 판정 기준을 "글자 수"에서 "텍스트가 차지하는 면적 비율"로 바꿨다.
+    //  · 글자 수는 이미지 크기·주석 밀도와 무관한 절대값이라, 라벨이 조금 많은 진짜
+    //    임상영상(설명이 붙은 조영술·초음파)과 글자로 가득 찬 슬라이드를 못 가른다.
+    //  · 이제 정답 단서 유출은 마스킹 후 재검증이 막는다(readResidualText). 그래서 이
+    //    사전 필터의 역할은 "덮고 나면 그림이 남지 않는 이미지"를 걸러내는 것 하나다.
+    //    그 판단에는 글자가 화면을 얼마나 덮고 있는지가 정확한 척도다.
+    //  실측(대동맥 강의록): 그림 크롭 0.0~7.4% vs 텍스트 페이지 28.0~44.1% —
+    //  임계 15%는 양쪽에 2배 이상 여유가 있다.
+    const TEXT_AREA_RATIO_MAX = 0.15;
+    const meaningfulOcrLen = (t?: string) =>
+      (t ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
+    const textAreaRatio = (c: (typeof slides)[number]['croppedImages'][number]) => {
+      const boxes = c.ocrBoxes ?? [];
+      if (boxes.length === 0) return null;
+      const total = Math.max(1, c.widthPx * c.heightPx);
+      const area = boxes.reduce(
+        (sum, b) => sum + Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0),
+        0,
+      );
+      return area / total;
+    };
+    const isTextCapture = (c: (typeof slides)[number]['croppedImages'][number]) => {
+      if (c.region.kind === 'text_slide') return true; // vision 이 텍스트 캡처로 분류
+      const ratio = textAreaRatio(c);
+      if (ratio !== null) return ratio >= TEXT_AREA_RATIO_MAX;
+      // 좌표를 못 받은 경우에만 종전 글자 수 기준으로 폴백한다.
+      const len = meaningfulOcrLen(c.ocrText);
+      if (CLINICAL_IMAGE_KINDS.has(c.region.kind) && len >= 80) return true;
+      return len >= 250;
+    };
+
+    // gi = 전역 이미지 인덱스. 배치마다 서로 다른 이미지 묶음을 주더라도 인페인팅 캐시와
+    // Storage 경로는 전역 인덱스로 통일해야 배치 간 중복 작업·경로 충돌이 없다.
+    const embeddedFirst = extracted.embeddedCrops ?? new Set<CroppedImage>();
+    const featuredImages = slides
+      .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
+      // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
+      .filter((x) => !x.c.ocrOnly)
+      // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
+      .filter((x) => {
+        const excluded = isTextCapture(x.c);
+        if (excluded) {
+          const ratio = textAreaRatio(x.c);
+          warnings.push(
+            `이미지(슬라이드 ${x.slide}, ${x.c.region.kind}) 텍스트 캡처로 제외 — ` +
+              (ratio !== null
+                ? `텍스트 면적비 ${(ratio * 100).toFixed(1)}%`
+                : `글자 ${meaningfulOcrLen(x.c.ocrText)}자(좌표 없음)`),
+          );
+        }
+        return !excluded;
+      })
+      // (예전에는 "인페인팅으로 못 지울 이미지"를 여기서 미리 걸렀다. 마스킹은 좌표를
+      //  배경색으로 덮는 방식이라 글자가 많아도 실패하지 않으므로 사전 제외가 필요 없다.
+      //  덕분에 문항에 쓸 수 있는 이미지가 늘어난다 — 실측에서 8장 중 3장만 살아남던 문제.)
+      // PDF 임베드 크롭(원본 화질·주석 없음)을 앞에 둔다. 종전에는 임베드가 전부 첫 슬라이드에
+      // 붙어 슬라이드 순서만으로 우선됐다. 이제는 원래 페이지에 붙으므로 명시적으로 정렬한다
+      // (안정 정렬 — 같은 부류 안의 순서는 그대로).
+      .sort((a, b) => Number(embeddedFirst.has(b.c)) - Number(embeddedFirst.has(a.c)))
+      .slice(0, featuredCap)
+      .map((x, gi) => ({ ...x, gi }));
 
     // ── 5.4) 출처 추적용 청크 최종 저장 (분담표 A8 · 가이드 §4.3 · v1.1 0-c·0-d)
     //
@@ -2686,6 +2832,27 @@ async function runPrivateGeneration(
     //
     // 본문 청크는 텍스트 확보 직후 이미 저장했다. 여기서는 OCR 청크를 뒤에 붙이고 전체를
     // 한 번 더 upsert 한다(같은 번호 = 같은 id 라 본문 청크는 그대로 남는다).
+    // 캡션 청크(v1.1 0-f) — 문항 이미지 후보(featured) 중 캡션을 받은 그림만. 후보 밖 크롭은 문항에
+    // 쓰일 수 없으므로 검색에 걸려도 소용이 없다. 그림 지문은 크롭 PNG 내용 해시(재처리해도 같다).
+    if (captionsEnabled) {
+      const byPage = new Map(slideSummaries.map((ss) => [ss.pageIndex, ss]));
+      let captionChunks = 0;
+      for (const fi of featuredImages) {
+        const ss = byPage.get(fi.slide);
+        if (!fi.c.caption || !ss) continue;
+        ss.captions.push({
+          text: captionChunkText(fi.c.caption),
+          imageKey: createHash('sha256').update(fi.c.png).digest('hex').slice(0, 32),
+        });
+        captionChunks += 1;
+      }
+      diag.extract.captions = {
+        ...captionStats,
+        costUsd: Math.round(captionStats.costUsd * 1e6) / 1e6,
+        featured: featuredImages.length,
+        chunks: captionChunks,
+      };
+    }
     const finalChunks = buildTextFirstChunks(slideSummaries);
     {
       // 먼저 저장한 본문 청크와 최종 본문 청크가 다르면, 선발 배치가 인용한 청크의 내용이
@@ -2704,7 +2871,7 @@ async function runPrivateGeneration(
       const earlyPersist = chunkLocatorsPromise;
       chunkLocatorsPromise = earlyPersist.then(async (earlyLocators) => {
         const finalLocators = await persistMaterialChunks(finalChunks, 'final');
-        if (finalLocators.length > 0) diag.generation.chunkCount = finalChunks.length;
+        if (finalLocators.length > 0) diag.generation.chunkCount = finalLocators.length;
         return finalLocators.length > 0 ? finalLocators : earlyLocators;
       });
       await chunkLocatorsPromise;
@@ -2818,72 +2985,6 @@ async function runPrivateGeneration(
 
     // 7) 생성 모델 호출(기본 gemini-2.5-flash) — 문항 생성 (프롬프트·배치 계획은 4)에서 준비됨)
     await updateProgress('generating', 0, desiredCount);
-
-    // crop 된 의료 이미지 — 인덱스 라벨과 함께 제시.
-    // Storage 업로드는 생성 응답에서 실제 사용된 이미지만 골라 나중에 수행한다 (고아·비용 방지).
-    // 텍스트 캡처 검열 — 강의록 본문 캡처를 문항 이미지에서 배제한다.
-    //
-    // 판정 기준을 "글자 수"에서 "텍스트가 차지하는 면적 비율"로 바꿨다.
-    //  · 글자 수는 이미지 크기·주석 밀도와 무관한 절대값이라, 라벨이 조금 많은 진짜
-    //    임상영상(설명이 붙은 조영술·초음파)과 글자로 가득 찬 슬라이드를 못 가른다.
-    //  · 이제 정답 단서 유출은 마스킹 후 재검증이 막는다(readResidualText). 그래서 이
-    //    사전 필터의 역할은 "덮고 나면 그림이 남지 않는 이미지"를 걸러내는 것 하나다.
-    //    그 판단에는 글자가 화면을 얼마나 덮고 있는지가 정확한 척도다.
-    //  실측(대동맥 강의록): 그림 크롭 0.0~7.4% vs 텍스트 페이지 28.0~44.1% —
-    //  임계 15%는 양쪽에 2배 이상 여유가 있다.
-    const TEXT_AREA_RATIO_MAX = 0.15;
-    const meaningfulOcrLen = (t?: string) =>
-      (t ?? '').replace(/[^\p{L}\p{N}]/gu, '').length;
-    const textAreaRatio = (c: (typeof slides)[number]['croppedImages'][number]) => {
-      const boxes = c.ocrBoxes ?? [];
-      if (boxes.length === 0) return null;
-      const total = Math.max(1, c.widthPx * c.heightPx);
-      const area = boxes.reduce(
-        (sum, b) => sum + Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0),
-        0,
-      );
-      return area / total;
-    };
-    const isTextCapture = (c: (typeof slides)[number]['croppedImages'][number]) => {
-      if (c.region.kind === 'text_slide') return true; // vision 이 텍스트 캡처로 분류
-      const ratio = textAreaRatio(c);
-      if (ratio !== null) return ratio >= TEXT_AREA_RATIO_MAX;
-      // 좌표를 못 받은 경우에만 종전 글자 수 기준으로 폴백한다.
-      const len = meaningfulOcrLen(c.ocrText);
-      if (CLINICAL_IMAGE_KINDS.has(c.region.kind) && len >= 80) return true;
-      return len >= 250;
-    };
-
-    // gi = 전역 이미지 인덱스. 배치마다 서로 다른 이미지 묶음을 주더라도 인페인팅 캐시와
-    // Storage 경로는 전역 인덱스로 통일해야 배치 간 중복 작업·경로 충돌이 없다.
-    const embeddedFirst = extracted.embeddedCrops ?? new Set<CroppedImage>();
-    const featuredImages = slides
-      .flatMap((s) => s.croppedImages.map((c) => ({ slide: s.pageIndex, c })))
-      // 페이지 전체 OCR 폴백 크롭은 문항 이미지에서 제외(주석·다중 그림·정답 단서 혼입 방지).
-      .filter((x) => !x.c.ocrOnly)
-      // 강의록 텍스트 캡처는 문항 이미지 후보에서 원천 배제.
-      .filter((x) => {
-        const excluded = isTextCapture(x.c);
-        if (excluded) {
-          const ratio = textAreaRatio(x.c);
-          warnings.push(
-            `이미지(슬라이드 ${x.slide}, ${x.c.region.kind}) 텍스트 캡처로 제외 — ` +
-              (ratio !== null
-                ? `텍스트 면적비 ${(ratio * 100).toFixed(1)}%`
-                : `글자 ${meaningfulOcrLen(x.c.ocrText)}자(좌표 없음)`),
-          );
-        }
-        return !excluded;
-      })
-      // (예전에는 "인페인팅으로 못 지울 이미지"를 여기서 미리 걸렀다. 마스킹은 좌표를
-      //  배경색으로 덮는 방식이라 글자가 많아도 실패하지 않으므로 사전 제외가 필요 없다.
-      //  덕분에 문항에 쓸 수 있는 이미지가 늘어난다 — 실측에서 8장 중 3장만 살아남던 문제.)
-      // PDF 임베드 크롭(원본 화질·주석 없음)을 앞에 둔다. 종전에는 임베드가 전부 첫 슬라이드에
-      // 붙어 슬라이드 순서만으로 우선됐다. 이제는 원래 페이지에 붙으므로 명시적으로 정렬한다
-      // (안정 정렬 — 같은 부류 안의 순서는 그대로).
-      .sort((a, b) => Number(embeddedFirst.has(b.c)) - Number(embeddedFirst.has(a.c)))
-      .slice(0, featuredCap)
-      .map((x, gi) => ({ ...x, gi }));
 
     // 사용자가 '이미지형'을 선택하지 않았으면 이미지를 생성 배치에 아예 넣지 않는다.
     // 넣으면 시스템 프롬프트의 "이미지 판독 문항 우선" 지시 때문에 이미지 문항이 만들어지고,

@@ -18,6 +18,7 @@ import {
   createMessage,
 } from '@/lib/ai/client';
 import { recordAiCost } from '@/lib/ai/cost-cap';
+import type { ImageCaption } from '@/lib/rag/caption';
 
 export type MedicalImageKind =
   | 'xray'
@@ -224,6 +225,11 @@ export interface CroppedImage {
    * 정답 단서 텍스트를 배경색으로 덮어 지우는 데 사용한다(생성형 인페인팅 대체).
    */
   ocrBoxes?: { text: string; x0: number; y0: number; x1: number; y1: number }[];
+  /**
+   * 그림 캡션(RAG 실행계획 v1.1 0-f). 이미지형 + RAG shadow·on 에서 문항 이미지 후보에만 채워진다.
+   * 검색·출제 계획 전용이며 학생에게 보이지 않는다.
+   */
+  caption?: ImageCaption;
 }
 
 /**
