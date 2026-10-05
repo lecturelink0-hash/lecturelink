@@ -73,12 +73,69 @@ export function normalizeKmleQuestion<T extends KmleQuestionShape>(question: T):
   // 이론상 -1 이 나올 수 없지만, 나오면 정답이 유실되므로 원본을 유지한다.
   if (nextAnswerIndex < 0) return question;
 
+  // 정렬로 순서가 바뀌면 해설 속 원문자 번호(②는 …)도 새 순서로 바꾼다(remapChoiceMarks 참조).
+  const oldToNew: number[] = [];
+  indexed.forEach((x, next) => {
+    oldToNew[x.originalIndex] = next;
+  });
+  const explanation = (question as { explanation?: unknown }).explanation;
   return {
     ...question,
     stem: String(question.stem).trim(),
     choices: indexed.map((x) => x.text),
     answer_index: nextAnswerIndex,
+    ...(typeof explanation === 'string' ? { explanation: remapChoiceMarks(explanation, oldToNew) } : {}),
   };
+}
+
+const CHOICE_MARKS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+
+/**
+ * 선지 순서가 바뀐 뒤, 글(해설) 속 원문자 선지 번호(①~⑤)를 새 순서로 바꾼다.
+ *
+ * 해설은 "②는 … 아니다"처럼 오답을 번호로 지목한다(내신대비 해설 규격). 그런데 정답 위치 셔플·
+ * 길이순 정렬은 선지 순서만 바꾸고 해설은 그대로 둬서, 학생 화면의 해설 번호가 엉뚱한 선지를
+ * 가리켰다(2026-10-05 G0 기준선 300문항 점검: 번호로 오답을 짚은 해설 182개 중 163개가 어긋남).
+ *
+ * oldToNew[i] = 원래 i번째 선지의 새 위치. 없어진 선지(-1·undefined)를 가리키는 표기는 그대로 둔다.
+ * 한 번에 바꾼다(①→③, ③→① 이 서로 덮어쓰지 않게).
+ */
+export function remapChoiceMarks(text: string, oldToNew: readonly number[]): string {
+  if (!text) return text;
+  // 번호 뒤 조사도 새 번호의 받침에 맞춘다(①은 → ②는). 조사 뒤에 한글이 바로 이어지면(②가장 …) 조사가
+  // 아니라 단어의 일부로 보고 글자는 둔다(번호만 바꾼다).
+  return text.replace(
+    /([\u2460-\u2469])(은|는|이|가|을|를|과|와)?/g,
+    (whole: string, mark: string, particle: string | undefined, offset: number, all: string) => {
+      const next = oldToNew[CHOICE_MARKS.indexOf(mark)];
+      if (next === undefined || next < 0 || next >= CHOICE_MARKS.length) return whole;
+      if (!particle) return CHOICE_MARKS[next];
+      const isParticle = !/[가-힣]/.test(all.charAt(offset + whole.length));
+      return CHOICE_MARKS[next] + (isParticle ? fitParticle(particle, MARK_HAS_FINAL[next]) : particle);
+    },
+  );
+}
+
+/** 원문자 번호 읽기의 받침 유무 — 일·삼·육·칠·팔·십은 받침이 있다. */
+const MARK_HAS_FINAL = [true, false, true, false, false, true, true, true, false, true];
+
+function fitParticle(particle: string, hasFinal: boolean): string {
+  switch (particle) {
+    case '은':
+    case '는':
+      return hasFinal ? '은' : '는';
+    case '이':
+    case '가':
+      return hasFinal ? '이' : '가';
+    case '을':
+    case '를':
+      return hasFinal ? '을' : '를';
+    case '과':
+    case '와':
+      return hasFinal ? '과' : '와';
+    default:
+      return particle;
+  }
 }
 
 /** F01 — 지문에 쓰면 안 되는 표현. 뒤에 한글이 붙는 복합어(남성호르몬 등)는 제외. */
@@ -314,19 +371,21 @@ export function shuffleChoices(
   choices: string[],
   answerIndex: number,
   random: () => number = Math.random,
-): { choices: string[]; answerIndex: number } {
-  if (isOrderedLabelChoiceSet(choices)) return { choices, answerIndex };
+): { choices: string[]; answerIndex: number; oldToNew: number[] } {
+  const identity = choices.map((_, i) => i);
+  if (isOrderedLabelChoiceSet(choices)) return { choices, answerIndex, oldToNew: identity };
   if (!Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex >= choices.length) {
-    return { choices, answerIndex };
+    return { choices, answerIndex, oldToNew: identity };
   }
-  const answerText = choices[answerIndex];
-  const shuffled = [...choices];
-  for (let i = shuffled.length - 1; i > 0; i--) {
+  // 위치(인덱스)를 섞는다 — 해설 번호를 옮길 수 있게 원래 위치 → 새 위치 대응표를 함께 돌려준다.
+  const order = [...identity];
+  for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [order[i], order[j]] = [order[j], order[i]];
   }
-  const nextIndex = shuffled.indexOf(answerText);
-  // 같은 배열을 섞었으므로 못 찾을 일은 없지만, 방어적으로 원본을 돌려준다.
-  if (nextIndex < 0) return { choices, answerIndex };
-  return { choices: shuffled, answerIndex: nextIndex };
+  const oldToNew: number[] = [];
+  order.forEach((old, next) => {
+    oldToNew[old] = next;
+  });
+  return { choices: order.map((i) => choices[i]), answerIndex: oldToNew[answerIndex], oldToNew };
 }

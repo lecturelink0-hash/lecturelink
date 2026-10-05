@@ -79,7 +79,7 @@ import {
   structuralConditionCount,
 } from './difficulty-conditions';
 import { judgeConditionsOnce } from './condition-judge';
-import { lintChoiceLeakage, shuffleChoices } from './kmle-format';
+import { lintChoiceLeakage, remapChoiceMarks, shuffleChoices } from './kmle-format';
 import { buildUploadNotices } from './upload-notice';
 import {
   REFERENCE_PROFILE_SYSTEM_PROMPT,
@@ -3887,6 +3887,14 @@ async function runPrivateGeneration(
           }
           // 정답 위치 셔플(조합형 제외) — 3번 쏠림(30.7 %)을 코드에서 없앤다.
           const shuffled = shuffleChoices(normalized.choices, normalized.answerIndex);
+          // 해설의 원문자 번호(②는 …)를 최종 선지 순서로 옮긴다. 모델이 쓴 순서 → 정규화(5개)·셔플 뒤 순서를
+          // 선지 글로 대응시킨다 — 안 옮기면 해설이 엉뚱한 선지를 가리킨다(G0 점검: 번호 해설 182개 중 163개).
+          const oldToNew = (q.choices ?? []).map((c) => shuffled.choices.indexOf(String(c ?? '').trim()));
+          const remapped = remapChoiceMarks(String(q.explanation ?? ''), oldToNew);
+          if (remapped !== String(q.explanation ?? '')) {
+            q.explanation = remapped;
+            bumpGenDiag('explanationMarksRemapped');
+          }
           kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex });
         }
         return kept;

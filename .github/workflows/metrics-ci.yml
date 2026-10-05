@@ -25,6 +25,7 @@ on:
       - 'lib/ai/quality-gate.ts'
       - 'lib/ai/cost-cap.ts'
       - 'lib/ai/private-generation.ts'
+      - 'lib/ai/kmle-format.ts'
       - 'lib/utils/api.ts'
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
@@ -41,6 +42,7 @@ on:
       - 'scripts/check-rag-caption.mjs'
       - 'scripts/check-rag-plan.mjs'
       - 'scripts/check-rag-pack.mjs'
+      - 'scripts/check-choice-shuffle.mjs'
       - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
@@ -67,6 +69,7 @@ on:
       - 'lib/ai/quality-gate.ts'
       - 'lib/ai/cost-cap.ts'
       - 'lib/ai/private-generation.ts'
+      - 'lib/ai/kmle-format.ts'
       - 'lib/utils/api.ts'
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
@@ -83,6 +86,7 @@ on:
       - 'scripts/check-rag-caption.mjs'
       - 'scripts/check-rag-plan.mjs'
       - 'scripts/check-rag-pack.mjs'
+      - 'scripts/check-choice-shuffle.mjs'
       - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
@@ -119,6 +123,7 @@ jobs:
       - run: npm run check:rag-plan
       # 단위 검색·근거 팩 — MMR·글자 상한·충분성(τ)·근거 부족 교체, 검색은 shadow·on 에서 계획·인덱싱 뒤에만 (RAG 실행계획 v1.1 5.2 E·F)
       - run: npm run check:rag-pack
+      - run: npm run check:shuffle
       # 문항 통계·층화 추출 산식 — KR-20·변별도·point-biserial 손계산 대조 (분담표 A12·A13)
       - run: npm run check:item-stats
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)
