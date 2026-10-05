@@ -53,13 +53,14 @@ check('생성 사용: on 만', !ragGenerationEnabled('shadow') && ragGenerationE
 // E1~E3 확정값 — 바꾸면 e1-e3-results.md 와 함께 바꿔야 한다.
 check('구성: 임베딩 voyage-4 · 1024차원', RAG_DEFAULTS.embedModel === 'voyage-4' && RAG_DEFAULTS.dim === 1024);
 check('구성: sparse·리랭커 불채택, 부모 확장 없음', RAG_DEFAULTS.sparse === false && RAG_DEFAULTS.reranker === null && RAG_DEFAULTS.parentExpandTop === 0);
-check('구성: 근거 팩 6 · 후보 20 · τ 0.61', RAG_DEFAULTS.packSize === 6 && RAG_DEFAULTS.candidateK === 20 && RAG_DEFAULTS.tau === 0.61);
+check('구성: 근거 팩 6 · 후보 20 · τ 0.47(PR H 계획 질의 재보정)', RAG_DEFAULTS.packSize === 6 && RAG_DEFAULTS.candidateK === 20 && RAG_DEFAULTS.tau === 0.47);
+check('구성: MMR λ 0.7 · 팩 4,500자 · 상 8개·6,000자(PR H)', RAG_DEFAULTS.mmrLambda === 0.7 && RAG_DEFAULTS.packChars === 4500 && RAG_DEFAULTS.packSizeHard === 8 && RAG_DEFAULTS.packCharsHard === 6000);
 check('임베딩 모델: 기본값·환경변수', ragEmbedModel({}) === 'voyage-4' && ragEmbedModel({ RAG_EMBED_MODEL: 'gemini-embedding-2' }) === 'gemini-embedding-2');
 check('임베딩 모델: 빈 문자열이면 기본값', ragEmbedModel({ RAG_EMBED_MODEL: '  ' }) === 'voyage-4');
 check('제공자 판정', embedProvider('voyage-4') === 'voyage' && embedProvider('gemini-embedding-2') === 'gemini' && embedProvider('text-embedding-3-small') === null);
 const snap = ragConfigSnapshot({ PRIVATE_RAG_MODE: 'weird' });
 check('스냅샷: 모르는 모드값을 남김', snap.mode === 'off' && snap.invalidModeValue === 'weird', JSON.stringify(snap));
-check('스냅샷: 구성 필드', ['embedModel', 'dim', 'candidateK', 'packSize', 'tau', 'sparse', 'reranker', 'chunkChars'].every((k) => k in snap));
+check('스냅샷: 구성 필드', ['embedModel', 'dim', 'candidateK', 'packSize', 'tau', 'sparse', 'reranker', 'chunkChars', 'mmrLambda', 'packChars', 'packSizeHard'].every((k) => k in snap));
 
 // ── 2) 배치
 const b1 = batchTexts(['a', 'b', 'c', 'd', 'e'], { maxItems: 2, maxChars: 100 });
@@ -95,7 +96,7 @@ check(
 );
 check('PG: indexMaterialChunks 호출은 한 곳뿐', (pg.match(/indexMaterialChunks\(/g) ?? []).length === 1);
 check('PG: 임베딩 비용을 totalCost 에 더함', /totalCost \+= ragDiag\.costUsd;/.test(pg));
-check('PG: 진단에 rag·retrieval 스냅샷', /rag: \{ \.\.\.\(ragDiag \?\? \{ mode: RAG_MODE \}\)/.test(pg) && /retrieval: ragConfigSnapshot\(\)/.test(pg));
+check('PG: 진단에 rag·retrieval 스냅샷', /rag: \{\s*\.\.\.\(ragDiag \?\? \{ mode: RAG_MODE \}\)/.test(pg) && /retrieval: ragConfigSnapshot\(\)/.test(pg));
 check('PG: 진단 기록 전에 인덱싱 합류(상한 있음)', /ragDiag = await settleRagIndex\(ragIndexPromise, RAG_INDEX_WAIT_MS/.test(pg));
 
 const embed = readFileSync(new URL('../lib/ai/embed.ts', import.meta.url), 'utf8');
