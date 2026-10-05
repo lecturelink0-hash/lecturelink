@@ -171,7 +171,7 @@ check('PG: on 판정은 RAG_MODE === \'on\' 한 곳', /const ragOn = RAG_MODE ==
 check('PG: on 에서 선발사 끔', /const canPrefire = !ragOn && batchSizes\.length > 1/.test(pg));
 check('PG: 근거 함수는 on 블록 안에서만 만든다', count(/ragEvidenceFor = \(slots\) =>/g) === 1 && /if \(ragOn\) \{[\s\S]{0,4000}ragEvidenceFor = \(slots\) =>/.test(pg) && /let ragEvidenceFor: [^\n]+ = null;/.test(pg));
 check('PG: 근거 대기는 상한(RAG_ON_WAIT_MS 45초)·폴백 사유 기록', /const RAG_ON_WAIT_MS = 45_000;/.test(pg) && /onDiag\.fallback = fallback \?\? 'error';/.test(pg) && /'timeout'/.test(pg) && /'no_index'/.test(pg));
-check('PG: 생성 묶음·보충 묶음만 근거를 받는다', count(/evidence: \{ ev: [a-zA-Z]+, figureGi: ragFigureGi \}/g) === 2 && /const fillEvidence = ragEvidenceFor \? ragEvidenceFor\(slots\) : null;/.test(pg));
+check('PG: 생성 묶음·보충 묶음만 근거를 받는다', count(/evidence: \{ ev: [a-zA-Z]+, figureGi: ragFigureGi \}/g) === 2 && /const fillEvidence = ragFillEvidenceFor \? ragFillEvidenceFor\(slots, fillQuotas\[i\]\) : null;/.test(pg));
 check('PG: 도구 스키마는 근거가 있을 때만 on 변형', /tools: \[gen\.evidence \? PRIVATE_GENERATION_TOOL_SCHEMA_RAG : PRIVATE_GENERATION_TOOL_SCHEMA\]/.test(pg) && count(/PRIVATE_GENERATION_TOOL_SCHEMA_RAG/g) === 2);
 check('PG: 사용자 메시지 citeMode 는 근거가 있을 때만', /\.\.\.\(gen\.evidence \? \{ citeMode: 'evidence' as const \} : \{\}\)/.test(pg));
 check('PG: 인용 검사는 buildKept 안, 근거가 있을 때만', /if \(gen\.evidence\) \{\s*cite = verifyCitations\(q\.evidence_refs, gen\.evidence\.ev\.chunks\);/.test(pg));
@@ -180,7 +180,7 @@ const repairBody = pg.slice(pg.indexOf('const repairCitations = async'), pg.inde
 check('PG: 인용 교정은 생성 호출 1번·비용 기록(citeFix)·새 문항도 인용 검사', (repairBody.match(/callGenerate\(/g) ?? []).length === 1 && /citeFix: true/.test(repairBody) && /buildKept\(fixParsed\.questions, fixLog\)/.test(repairBody) && /totalCost \+= fixCost;/.test(repairBody));
 check('PG: 인용 교정은 빈자리만 채움', /added = uncoveredFirst\.slice\(0, need\);/.test(repairBody) && /const need = batchSize - current\.length;/.test(repairBody));
 check('PG: 검증기 입력은 근거가 있을 때만 문항 근거 팩', /sourceText: gen\.evidence\s*\? questionEvidenceText\(gen\.evidence\.ev, \(k\.cite\?\.citations \?\? \[\]\)\.map\(\(c\) => c\.ref\), i\)\s*: gen\.contextText,/.test(pg) && /\.\.\.\(gen\.evidence \? \{ sourceKind: 'evidence' as const \} : \{\}\)/.test(pg));
-check('PG: 출처는 근거가 있으면 인용에서, 없으면 현행 검사', /if \(gen\.evidence\) \{[\s\S]{0,600}row\.source_refs = toStoredRefs\(sourceRefsFromCitations\(cites, contentSha256\)\);/.test(pg) && /\} else \{\s*const availablePages = pagesInContext\(gen\.contextText \|\| ''\);/.test(pg));
+check('PG: 출처는 근거가 있으면 인용에서, 없으면 현행 검사', /if \(gen\.evidence\) \{[\s\S]{0,900}const refs = toStoredRefs\(sourceRefsFromCitations\(cites, contentSha256\)\);\s*row\.source_refs = refs \? \{ \.\.\.refs, retrieval: retrievalRefSnapshot\(packSizeFor\(input\.difficulty \?\? null\)\.size\) \} : null;/.test(pg) && /\} else \{\s*const availablePages = pagesInContext\(gen\.contextText \|\| ''\);/.test(pg));
 check('PG: evidence 컬럼 폴백(00045 미적용)', /let evidenceColumnSupported = true;/.test(pg) && /if \(evidenceColumnSupported\) row\.evidence = storedEvidence\(cites\);/.test(pg) && /evidenceColumnSupported = false;/.test(pg));
 check('PG: on 묶음 이미지는 이미지 칸 단위 그림만', /const featuredForEvidence = \(ev: BatchEvidence\): BatchImage\[\] =>/.test(pg) && /batchFigureIds\(ev\)/.test(pg));
 check('PG: 보충 묶음 이미지도 근거가 있으면 단위 그림만(마지막 라운드 없음)', /fillEvidence\s*\? isLastBackfillRound\s*\? \[\]\s*: featuredForEvidence\(fillEvidence\)\.filter\(\(fi\) => refinedUsableGis\.has\(fi\.gi\)\)\s*: fillFeatured\[i\]/.test(pg));

@@ -1219,6 +1219,7 @@ const NOTICE_TEXT: Record<string, (n: UploadNoticeItem) => string> = {
   reference_ignored: (n) => `참고 자료 ${n.count ?? 0}건은 형식을 읽지 못해 반영하지 못했어요.`,
   transient_error: () => '생성 중 일시적인 오류가 있었어요.',
   type_mix: () => '고른 문항 유형의 배분이 목표와 조금 다르게 나왔어요.',
+  insufficient_evidence: (n) => `자료에서 근거를 찾지 못해 ${n.count ?? 0}문항은 만들지 않았어요.`,
 };
 
 function GenerationNotices({ notices }: { notices: UploadNoticeItem[] }) {

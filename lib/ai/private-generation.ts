@@ -41,6 +41,7 @@ import { buildEarlyBlocks, segmentContext } from './context-segments';
 import { validateSourceRefs, toStoredRefs } from './source-refs';
 import type { PrivateQuestionKind } from '@/lib/types/database';
 import type Anthropic from '@anthropic-ai/sdk';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/db/admin';
 import {
   getAnthropic,
@@ -52,7 +53,16 @@ import {
 } from './client';
 import { recordAiCost } from './cost-cap';
 import { configSnapshot } from './versions';
-import { parseRagMode, ragConfigSnapshot, ragEmbedModel, ragIndexingEnabled } from '@/lib/rag/mode';
+import { parseRagMode, ragConfigSnapshot, ragEmbedModel, ragIndexingEnabled, retrievalRefSnapshot } from '@/lib/rag/mode';
+import { embedTexts } from './embed';
+import {
+  DEDUP_DEFAULTS,
+  duplicateRate,
+  findWithinSetDuplicates,
+  questionEmbeddingText,
+  type DuplicateHit,
+} from '@/lib/rag/dedup';
+import { packSizeFor } from '@/lib/rag/pack';
 import { indexMaterialChunks, settleRagIndex, type RagIndexResult } from '@/lib/rag/indexing';
 import { captionChunkText, captionEligible } from '@/lib/rag/caption';
 import { captionImage } from '@/lib/extract/caption-image';
@@ -66,12 +76,16 @@ import {
   type CitationVerdict,
 } from '@/lib/rag/cite';
 import {
+  backfillSlotInputs,
   batchFigureIds,
   buildBatchEvidence,
+  expandQuota,
   questionEvidenceText,
+  reduceQuota,
   slotEvidenceInputs,
   type BatchEvidence,
 } from '@/lib/rag/evidence';
+import type { SlotType } from '@/lib/rag/plan';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -286,6 +300,8 @@ let questionMetricColumnsSupported = true;
 let sourceRefColumnSupported = true;
 // 00045 미적용 환경에서 evidence(RAG on 인용) 때문에 저장이 거절되지 않게 하는 폴백 플래그(같은 구조).
 let evidenceColumnSupported = true;
+// 문항 임베딩 컬럼(00045)이 없으면 세트 중복 검사를 건너뛴다(같은 구조).
+let questionEmbeddingColumnsSupported = true;
 // 청크 저장 실패가 생성을 막지 않게 한다 — 출처는 있으면 좋은 것이지 문항의 전제가 아니다.
 let materialChunksSupported = true;
 
@@ -4877,7 +4893,9 @@ async function runPrivateGeneration(
           if (!row) return;
           const cites = k.cite?.citations ?? [];
           if (cites.length > 0) withCite += 1;
-          row.source_refs = toStoredRefs(sourceRefsFromCitations(cites, contentSha256));
+          // 검색 구성 스냅샷(5.2 K source_refs.retrieval, PR J) — 어떤 검색 설정으로 고른 근거인지 문항에 남긴다.
+          const refs = toStoredRefs(sourceRefsFromCitations(cites, contentSha256));
+          row.source_refs = refs ? { ...refs, retrieval: retrievalRefSnapshot(packSizeFor(input.difficulty ?? null).size) } : null;
           if (evidenceColumnSupported) row.evidence = storedEvidence(cites);
         });
         batchDiag.sourceReportRate = kept.length > 0 ? Math.round((withCite / kept.length) * 10000) / 10000 : null;
@@ -5270,6 +5288,11 @@ async function runPrivateGeneration(
     // 이미지는 이미지 칸 단위가 가리키는 그림만 준다(R5 — 캡션 일치가 없는 이미지 단위는 D3 가 텍스트 칸으로 넘겼다).
     let ragEvidenceFor: ((slots: readonly number[]) => BatchEvidence | null) | null = null;
     let ragFigureGi: ReadonlyMap<string, number> = new Map();
+    // 근거 부족(D3, PR J): 예비로도 못 채운 칸 — 만들지 않고 보충도 하지 않는다(적게 제공 + insufficient_evidence 알림).
+    let ragSkipSlots: ReadonlySet<number> = new Set();
+    let ragSlotType: ReadonlyMap<number, SlotType> = new Map();
+    // 보충 묶음이 부족 유형에 맞는 예비 단위를 고르는 함수(5.2 D3 유형 재계산). on 근거 경로에서만 있다.
+    let ragFillEvidenceFor: ((slots: readonly number[], quota: BatchQuota) => BatchEvidence | null) | null = null;
     if (ragOn) {
       const tWaitEvidence = Date.now();
       const onDiag: Record<string, unknown> = { engaged: false };
@@ -5316,14 +5339,51 @@ async function runPrivateGeneration(
           if (gi !== undefined) figureGi.set(f.id, gi);
         }
         ragFigureGi = figureGi;
-        ragEvidenceFor = (slots) => buildBatchEvidence(slotEvidenceInputs({ slots, after, before, units, retrievals }));
-        onDiag.engaged = true;
-        onDiag.units = plan.units.length;
-        onDiag.slots = run.slots.length;
-        onDiag.slotsWithoutUnit = run.slots.filter((sl) => !sl.unitId).length;
-        onDiag.figures = figureGi.size;
+        const skip = new Set(run.slots.flatMap((sl, i) => (sl.unitId ? [] : [i])));
+        onDiag.slotsWithoutUnit = skip.size;
+        if (skip.size >= desiredCount) {
+          // 칸이 전부 근거 부족이면 계획이 자료와 어긋난 것이다 — 아무것도 안 만드는 대신 현행 경로로(원칙 4).
+          onDiag.fallback = 'no_sufficient_units';
+          warnings.push('RAG on: 근거가 충분한 출제 단위가 없어 현행 방식으로 생성(no_sufficient_units).');
+        } else {
+          ragSkipSlots = skip;
+          ragSlotType = new Map(run.slots.map((sl, i) => [i, sl.type]));
+          ragEvidenceFor = (slots) =>
+            buildBatchEvidence(slotEvidenceInputs({ slots: slots.filter((sl) => !skip.has(sl)), after, before, units, retrievals }));
+          const slotUnit = new Map(run.slots.map((sl, i) => [i, sl.unitId]));
+          const assigned = new Set(run.slots.map((sl) => sl.unitId).filter((x): x is string => Boolean(x)));
+          const reserve = plan.units.map((u) => u.id).filter((id) => !assigned.has(id));
+          const usedReserve = new Set<string>();
+          ragFillEvidenceFor = (slots, quota) => {
+            const live = slots.filter((sl) => !skip.has(sl));
+            const picked = backfillSlotInputs({
+              slots: live,
+              wanted: expandQuota(quota),
+              slotUnit,
+              reserve,
+              used: usedReserve,
+              units,
+              retrievals,
+            });
+            const fromReserve = picked.filter((x) => x.fromReserve).length;
+            if (fromReserve > 0) {
+              diag.generation.ragFillReserveUnits = ((diag.generation.ragFillReserveUnits as number | undefined) ?? 0) + fromReserve;
+            }
+            return buildBatchEvidence(picked);
+          };
+          onDiag.engaged = true;
+          onDiag.units = plan.units.length;
+          onDiag.slots = run.slots.length;
+          onDiag.reserve = reserve.length;
+          onDiag.figures = figureGi.size;
+          if (skip.size > 0) {
+            warnings.push(`RAG on: 근거가 부족한 칸 ${skip.size}개는 만들지 않음(D3, 예비 단위 소진).`);
+          }
+        }
       }
     }
+    // 실제로 만들 문항 수 — 근거 부족(D3) 칸을 뺀 값. off·shadow·폴백이면 요청 수 그대로다.
+    const deliverableCount = desiredCount - ragSkipSlots.size;
     /** RAG on 묶음의 이미지 — 이미지 칸 단위의 그림(정제 이전 목록 기준). 없으면 이미지를 주지 않는다. */
     const featuredForEvidence = (ev: BatchEvidence): BatchImage[] => {
       if (!useImages) return [];
@@ -5341,6 +5401,10 @@ async function runPrivateGeneration(
       if (evidence) {
         bumpGenDiag('ragEvidenceBatches');
         const assignedImages = featuredForEvidence(evidence);
+        // 근거 부족(D3) 칸을 뺀 만큼 쿼터를 줄인다 — 합 = 남은 칸 수.
+        const skippedTypes = slotsFor(batchIndex)
+          .filter((sl) => ragSkipSlots.has(sl))
+          .map((sl) => ragSlotType.get(sl) ?? 'free');
         return {
           contextText: evidence.text,
           evidence: { ev: evidence, figureGi: ragFigureGi },
@@ -5349,7 +5413,7 @@ async function runPrivateGeneration(
           imageQuotaFor: imageQuotaFor(batchIndex),
           getDisplayPng,
           segmented: false,
-          plannedQuota: quotaFor(batchIndex),
+          plannedQuota: reduceQuota(quotaFor(batchIndex), skippedTypes),
           knowledgeAskKinds: knowledgeAskPlan(batchIndex, knowledgeQuotaFor(batchIndex)),
           allowNegativeAsk: negativeBatches.has(batchIndex),
         };
@@ -5380,7 +5444,10 @@ async function runPrivateGeneration(
         const slots = Array.from(
           { length: batchSize },
           (_, k) => batchSizes.slice(0, batchIndex).reduce((sum, size) => sum + size, 0) + k,
-        );
+        ).filter((sl) => !ragSkipSlots.has(sl)); // 근거 부족(D3) 칸은 만들지 않는다(on)
+        if (slots.length === 0) {
+          return { generatedCount: 0, contentSummary: '', ids: [], unmatched: 0, cacheReadTokens: 0, cacheCreationTokens: 0 };
+        }
         try {
           const early = prefired[batchIndex];
           if (early) {
@@ -5628,6 +5695,115 @@ async function runPrivateGeneration(
     };
     await removeBrokenFigureQuestions();
 
+    // ── 세트 전체 중복 (v1.1 5.2 J · K, PR J)
+    //
+    // 문항을 임베딩해(private_questions.embedding) 같은 세트 안 앞 문항, 그리고 같은 사용자·같은 자료(content_sha256)의
+    // 이전 업로드 문항과 비교한다. 임계·입력은 J1 보정값(lib/rag/dedup.ts). on 이면 중복을 지우고 보충이 채우며,
+    // shadow 는 임베딩·판정만 하고 진단에 남긴다(off 는 아무것도 안 한다 — 비용 0).
+    // 세트 안은 매번 다시 보고(보충이 새 문항을 만든다), 세트 간은 문항마다 한 번만 묻는다.
+    const dedupModel = ragEmbedModel();
+    const dedupVec = new Map<string, number[]>();
+    const dedupCrossChecked = new Set<string>();
+    const dedupDiag: Record<string, unknown> = {
+      threshold: DEDUP_DEFAULTS.threshold,
+      input: DEDUP_DEFAULTS.input,
+      embedded: 0,
+      embedCostUsd: 0,
+      deleted: 0,
+      withinFound: 0,
+      crossFound: 0,
+    };
+    // 00045 의 문항 임베딩 컬럼·match_private_questions 는 생성된 DB 타입에 아직 없다 — 이 검사에서만 타입 없는 클라이언트로 부른다.
+    const dedupDb = admin as unknown as SupabaseClient;
+    const enforceSetDuplicates = async (): Promise<void> => {
+      if (!ragIndexingEnabled(RAG_MODE) || !questionEmbeddingColumnsSupported) return;
+      diag.generation.dedup = dedupDiag;
+      try {
+        const { data: qRows, error: qErr } = await admin
+          .from('private_questions')
+          .select('id, stem, choices, answer_index, generation_slot')
+          .eq('upload_id', uploadRow.id);
+        if (qErr) throw qErr;
+        const rows = (qRows ?? []).map((r) => ({
+          id: String(r.id),
+          slot: Number(r.generation_slot ?? 0),
+          stem: String(r.stem ?? ''),
+          choices: Array.isArray(r.choices) ? r.choices.map(String) : [],
+          answer_index: Number(r.answer_index ?? 0),
+        }));
+        const fresh = rows.filter((r) => !dedupVec.has(r.id));
+        if (fresh.length > 0) {
+          const emb = await embedTexts({
+            texts: fresh.map((r) => questionEmbeddingText(r)),
+            inputType: 'document',
+            model: dedupModel,
+            endpoint: 'rag.question',
+            userId: input.userId,
+          });
+          totalCost += emb.costUsd;
+          dedupDiag.embedCostUsd = Math.round((Number(dedupDiag.embedCostUsd) + emb.costUsd) * 1e6) / 1e6;
+          dedupDiag.embedded = Number(dedupDiag.embedded) + fresh.length;
+          fresh.forEach((r, i) => dedupVec.set(r.id, emb.embeddings[i]));
+          // 문항 임베딩 저장(5.2 K) — 다음 업로드의 세트 간 비교가 읽는다. 실패해도 이번 판정은 계속한다.
+          await mapWithConcurrency(fresh, 6, async (r, i) => {
+            const { error: upErr } = await dedupDb
+              .from('private_questions')
+              .update({ embedding: emb.embeddings[i], embedding_model: dedupModel })
+              .eq('id', r.id);
+            if (upErr && isMissingColumnError(upErr)) questionEmbeddingColumnsSupported = false;
+          });
+        }
+        const items = rows
+          .map((r) => ({ id: r.id, slot: r.slot, vec: dedupVec.get(r.id) }))
+          .filter((x): x is { id: string; slot: number; vec: number[] } => Array.isArray(x.vec));
+        const within = findWithinSetDuplicates(items, DEDUP_DEFAULTS.threshold);
+        const withinIds = new Set(within.map((h) => h.id));
+        const cross: DuplicateHit[] = [];
+        await mapWithConcurrency(
+          items.filter((x) => !withinIds.has(x.id) && !dedupCrossChecked.has(x.id)),
+          6,
+          async (x) => {
+            dedupCrossChecked.add(x.id);
+            const { data: m, error: mErr } = await dedupDb.rpc('match_private_questions', {
+              p_user_id: input.userId,
+              p_content_sha: contentSha256,
+              p_query: x.vec,
+              p_threshold: DEDUP_DEFAULTS.threshold,
+              p_k: DEDUP_DEFAULTS.crossK,
+              p_model: dedupModel,
+              p_exclude_upload: uploadRow.id,
+            });
+            const top = (m as Array<{ id: string; similarity: number }> | null)?.[0];
+            if (!mErr && top) {
+              cross.push({ id: x.id, slot: x.slot, of: String(top.id), cos: Math.round(Number(top.similarity) * 1e4) / 1e4, scope: 'cross' });
+            }
+          },
+        );
+        dedupDiag.withinFound = Number(dedupDiag.withinFound) + within.length;
+        dedupDiag.crossFound = Number(dedupDiag.crossFound) + cross.length;
+        const hits = [...within, ...cross];
+        let remaining = items;
+        if (ragOn && hits.length > 0) {
+          const ids = hits.map((h) => h.id);
+          await admin.from('private_questions').delete().in('id', ids);
+          for (const id of ids) dedupVec.delete(id);
+          const gone = new Set(ids);
+          remaining = items.filter((x) => !gone.has(x.id));
+          dedupDiag.deleted = Number(dedupDiag.deleted) + ids.length;
+          diag.generation.dedupDeleted = Number(dedupDiag.deleted);
+          warnings.push(
+            `세트 중복 ${ids.length}문항 삭제(세트 안 ${within.length} · 이전 세트 ${cross.length}) — 보충 생성으로 대체.`,
+          );
+        }
+        // G1 '중복 문항률'(코사인 ≥ 0.92, 세트 안) — 지금 남아 있는 세트 기준. 마지막 호출 값이 최종이다.
+        dedupDiag.g1 = duplicateRate(remaining, DEDUP_DEFAULTS.g1Threshold);
+        dedupDiag.cosMax = hits.length > 0 ? Math.max(...hits.map((h) => h.cos)) : null;
+      } catch (e) {
+        warnings.push(`세트 중복 검사 실패(생성은 계속) — ${e instanceof Error ? e.message.slice(0, 140) : String(e)}`);
+      }
+    };
+    await enforceSetDuplicates();
+
     // 보충·비율 교정에는 "이미 정제에 성공한" 이미지만 쓴다(캐시 히트라 추가 지연이 없고,
     // 정제 실패분을 다시 실어 문항이 또 삭제되는 순환을 막는다).
     const refinedPool = featuredImages.filter((fi) => refinedUsableGis.has(fi.gi));
@@ -5671,7 +5847,8 @@ async function runPrivateGeneration(
     // 초과 유형 문항을 그만큼 지워 보충이 부족 유형으로 다시 채우게 한다.
     // 목표는 정제 결과를 반영해 다시 잰다 — 이미지가 계획보다 적으면 목표도 내려간다.
     const typeTargetsFinal: TypeTargets = planTypeTargets(
-      desiredCount,
+      // 근거 부족(D3) 칸을 뺀 수를 목표로 다시 나눈다(PR J — 만들지 않는 칸의 유형 몫을 다른 유형에 떠넘기지 않게).
+      deliverableCount,
       selectedTypes,
       useImages ? refinedUsableGis.size * MAX_QUESTIONS_PER_IMAGE : 0,
     );
@@ -5740,14 +5917,15 @@ async function runPrivateGeneration(
     completedQuestions = saved.length;
     let round = 0;
     const runBackfill = async (): Promise<void> => {
-    for (; round < GEN_BACKFILL_ROUNDS && saved.length < desiredCount; round++) {
+    for (; round < GEN_BACKFILL_ROUNDS && saved.length < deliverableCount; round++) {
       const usedSlots = new Set(saved.map((r) => r.generation_slot));
+      // 근거 부족(D3) 칸은 채우지 않는다(on, PR J).
       const missingSlots = Array.from({ length: desiredCount }, (_, s) => s).filter(
-        (s) => !usedSlots.has(s),
+        (s) => !usedSlots.has(s) && !ragSkipSlots.has(s),
       );
       if (missingSlots.length === 0) break;
       warnings.push(
-        `보충 생성 ${round + 1}회차: ${saved.length}/${desiredCount} → 부족 ${missingSlots.length}문항 재생성.`,
+        `보충 생성 ${round + 1}회차: ${saved.length}/${deliverableCount} → 부족 ${missingSlots.length}문항 재생성.`,
       );
       const fillBatches: number[][] = [];
       for (let i = 0; i < missingSlots.length; i += GEN_BATCH_MAX_QUESTIONS) {
@@ -5829,7 +6007,8 @@ async function runPrivateGeneration(
       await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
         try {
           // RAG on: 빈 칸의 단위 근거 팩으로 다시 만든다(같은 단위 재시도). 팩이 없으면 현행 구간.
-          const fillEvidence = ragEvidenceFor ? ragEvidenceFor(slots) : null;
+          // 부족 유형에 맞는 예비 단위를 먼저 고른다(5.2 D3 유형 재계산, PR J). 없으면 칸의 원래 단위.
+          const fillEvidence = ragFillEvidenceFor ? ragFillEvidenceFor(slots, fillQuotas[i]) : null;
           await generateAndPersistBatch(i, slots, fillBatches.length, {
             // 보충은 "빠르게 빈 칸만 채우는" 호출이다. 본 배치들이 방금 끝난 직후라
             // 같은 대용량 컨텍스트를 다시 실으면 입력 처리량이 커져 429 를 맞고,
@@ -5879,6 +6058,8 @@ async function runPrivateGeneration(
       await removeBrokenFigureQuestions();
       // 보충·재작성도 표식 문항을 만든다 — 라운드마다 상한을 다시 강제한다.
       await enforceMarkerQuestionCap();
+      // 보충 문항도 세트 중복을 거친다(PR J) — 지운 칸은 다음 라운드가 채운다.
+      await enforceSetDuplicates();
       const beforeCount = saved.length;
       saved = await readSaved();
       roundRec.ms = Date.now() - tRound;
@@ -5894,7 +6075,10 @@ async function runPrivateGeneration(
       await runBackfill();
     }
     if (saved.length < desiredCount) {
-      warnings.push(`최종 ${saved.length}/${desiredCount}문항 — 요청 수를 채우지 못했습니다.`);
+      warnings.push(
+        `최종 ${saved.length}/${desiredCount}문항 — 요청 수를 채우지 못했습니다` +
+          (ragSkipSlots.size > 0 ? `(근거 부족 ${ragSkipSlots.size}칸 포함).` : '.'),
+      );
     }
     diag.timings.backfillMs = Date.now() - tBackfill;
     const generatedCount = saved.length;
@@ -5916,6 +6100,7 @@ async function runPrivateGeneration(
     const notices = buildUploadNotices({
       desiredCount,
       savedCount: generatedCount,
+      insufficientEvidence: ragSkipSlots.size,
       wantsImages,
       featuredImageCount: refinedUsableGis.size,
       truncatedChars: Number(diag.extract.textTruncated ?? 0),

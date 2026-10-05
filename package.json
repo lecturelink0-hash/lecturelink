@@ -53,6 +53,7 @@
     "check:rag-plan": "node --experimental-strip-types --no-warnings scripts/check-rag-plan.mjs",
     "check:rag-pack": "node --experimental-strip-types --no-warnings scripts/check-rag-pack.mjs",
     "check:rag-cite": "node --experimental-strip-types --no-warnings scripts/check-rag-cite.mjs",
+    "check:rag-dedup": "node --experimental-strip-types --no-warnings scripts/check-rag-dedup.mjs",
     "report:upload-cost": "node --experimental-strip-types --no-warnings scripts/report-upload-cost.mjs",
     "deploy:check": "node scripts/assert-production-deploy.mjs",
     "deploy:prod": "npm run deploy:check && vercel --prod",

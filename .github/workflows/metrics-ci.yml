@@ -21,6 +21,7 @@ on:
       - 'lib/ai/prompts/private-generation.ts'
       - 'lib/ai/prompts/verification.ts'
       - 'lib/ai/verify.ts'
+      - 'lib/ai/upload-notice.ts'
       - 'lib/ocr/engine.ts'
       - 'lib/ai/source-refs.ts'
       - 'lib/ai/versions.ts'
@@ -47,6 +48,7 @@ on:
       - 'scripts/check-rag-pack.mjs'
       - 'scripts/check-choice-shuffle.mjs'
       - 'scripts/check-rag-cite.mjs'
+      - 'scripts/check-rag-dedup.mjs'
       - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
@@ -69,6 +71,7 @@ on:
       - 'lib/ai/prompts/private-generation.ts'
       - 'lib/ai/prompts/verification.ts'
       - 'lib/ai/verify.ts'
+      - 'lib/ai/upload-notice.ts'
       - 'lib/ocr/engine.ts'
       - 'lib/ai/source-refs.ts'
       - 'lib/ai/versions.ts'
@@ -95,6 +98,7 @@ on:
       - 'scripts/check-rag-pack.mjs'
       - 'scripts/check-choice-shuffle.mjs'
       - 'scripts/check-rag-cite.mjs'
+      - 'scripts/check-rag-dedup.mjs'
       - 'supabase/migrations/00045_rag_index.sql'
       - 'supabase/migrations/00042_request_metrics.sql'
       - 'package.json'
@@ -135,6 +139,8 @@ jobs:
       - run: npm run check:shuffle
       # 인용 강제 생성·인용 검증·검증기 근거 팩 — on 에서만, 인용 교정 1회, 출처 파생 (RAG 실행계획 v1.1 5.2 G·H·I)
       - run: npm run check:rag-cite
+      # 세트 중복·근거 부족(D3)·검색 스냅샷 — 중복 검사는 shadow·on, 삭제는 on, D3 칸은 만들지 않고 알림 (RAG 실행계획 v1.1 5.2 J·K)
+      - run: npm run check:rag-dedup
       # 문항 통계·층화 추출 산식 — KR-20·변별도·point-biserial 손계산 대조 (분담표 A12·A13)
       - run: npm run check:item-stats
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)

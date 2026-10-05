@@ -38,7 +38,9 @@ export type UploadNoticeCode =
   /** 일시적 오류(요청 한도·API 오류)로 일부 묶음을 만들지 못했다. */
   | 'transient_error'
   /** 고른 유형들의 문항 수가 목표 배분(5:5 등)과 다르게 나왔다. */
-  | 'type_mix';
+  | 'type_mix'
+  /** 자료에서 근거를 충분히 찾지 못한 출제 단위는 만들지 않았다(RAG on, D3). */
+  | 'insufficient_evidence';
 
 export interface UploadNotice {
   code: UploadNoticeCode;
@@ -63,6 +65,11 @@ export interface BuildNoticeInput {
   batchFailureReasons: string[];
   /** 정답 길이 누출로 폐기된 문항 수. */
   leakageDiscarded: number;
+  /**
+   * 근거 부족(D3)으로 만들지 않은 칸 수(RAG on). 이만큼은 shortfall 이 아니라 insufficient_evidence 로 알린다 —
+   * 자료 밖 지식으로 메우지 않는다는 결정(D3)의 결과라 "다시 생성하면 채워진다"가 아니다.
+   */
+  insufficientEvidence?: number;
   /** 검증 폐기 수(discard 모드에서만 0 이 아니다). */
   verifyRejected: number;
   /** 그림 없이도 풀려 폐기된 이미지 문항 수(P9). */
@@ -103,8 +110,17 @@ function classifyFailure(reasons: string[]): 'rate_limit' | 'api_error' | null {
 export function buildUploadNotices(input: BuildNoticeInput): UploadNotice[] {
   const notices: UploadNotice[] = [];
 
-  if (input.savedCount < input.desiredCount) {
-    const missing = input.desiredCount - input.savedCount;
+  const insufficient = Math.max(0, Math.min(input.insufficientEvidence ?? 0, input.desiredCount - input.savedCount));
+  if (insufficient > 0) {
+    notices.push({
+      code: 'insufficient_evidence',
+      count: insufficient,
+      detail: '자료에서 근거를 충분히 찾지 못한 내용은 지어내지 않고 빼 두었어요.',
+    });
+  }
+
+  if (input.savedCount + insufficient < input.desiredCount) {
+    const missing = input.desiredCount - input.savedCount - insufficient;
     const failure = classifyFailure(input.batchFailureReasons);
     const detail =
       failure === 'rate_limit'
