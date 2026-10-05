@@ -54,6 +54,8 @@ export interface VerificationInput {
   mode?: 'shared' | 'private';
   /** private 모드에서 "정답 근거가 자료에 있는가"를 대조할 원문. 앞부분만 실린다. */
   sourceText?: string;
+  /** sourceText 가 배치 앞부분('prefix', 기본)인지 그 문항의 근거 팩('evidence', RAG on)인지. */
+  sourceKind?: 'prefix' | 'evidence';
 }
 
 export async function verifyQuestion(
@@ -68,6 +70,7 @@ export async function verifyQuestion(
     ? buildPrivateVerificationUserMessage({
         question: input.question,
         sourceText: input.sourceText,
+        sourceKind: input.sourceKind,
       })
     : buildVerificationUserMessage({
         subjectName: input.subjectName,

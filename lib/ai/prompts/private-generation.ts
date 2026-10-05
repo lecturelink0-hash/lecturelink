@@ -106,6 +106,11 @@ export function buildPrivateGenerationUserMessage(input: {
   topic?: string;
   /** 사용자가 지정한 핵심 키워드(P5). */
   keywords?: string[];
+  /**
+   * 출처 신고 방식. 'pages'(기본·현행) = `## 슬라이드 N` 헤더 번호를 source_pages 에.
+   * 'evidence'(RAG on, 5.2 G) = 근거 자료 번호와 원문 구절을 evidence_refs 에 — 쪽은 서버가 인용에서 파생한다.
+   */
+  citeMode?: 'pages' | 'evidence';
 }): string {
   const catalogText = input.subTopicCatalog
     .map(
@@ -135,6 +140,23 @@ export function buildPrivateGenerationUserMessage(input: {
         '- **자료가 다루지 않는 주제·키워드는 무시합니다.** 초점을 맞추려고 자료에 없는 내용을 지어내지 않습니다.'
       : '';
 
+  const requirements =
+    input.citeMode === 'evidence'
+      ? [
+          '- 자료에서 다루는 핵심 개념 위주로 평가',
+          '- 출제 단위 목록의 단위마다 1문항씩, 목록 순서대로 만들기 (단위의 주제·목표를 벗어나지 않기)',
+          '- 각 문항을 카탈로그의 sub_topic_code 로 분류',
+          '- 자료에 명시되지 않은 정보를 추측해서 추가 금지 — 정답과 핵심 조건은 근거 자료에 있는 내용으로만 정하기',
+          '- 각 문항마다 정답을 뒷받침하는 근거를 evidence_refs 에 적기 (근거 자료의 [E번호]와, 그 근거에서 글자 그대로 옮긴 구절)',
+        ]
+      : [
+          '- 자료에서 다루는 핵심 개념 위주로 평가',
+          '- 자료 전체에서 다양한 챕터·섹션 커버 (한 영역에 집중 X)',
+          '- 각 문항을 카탈로그의 sub_topic_code 로 분류',
+          '- 자료에 명시되지 않은 정보를 추측해서 추가 금지',
+          '- 각 문항마다 근거가 있는 슬라이드 번호를 source_pages 에 적기 (출제 근거의 "## 슬라이드 N" 헤더 기준, 없으면 빈 배열)',
+        ];
+
   return `
 업로드된 자료를 기반으로 ${input.desiredCount}개의 의학 문항을 생성하세요.
 
@@ -145,11 +167,7 @@ ${styleDesc}${focusBlock}
 ${catalogText}
 
 ## 요구사항
-- 자료에서 다루는 핵심 개념 위주로 평가
-- 자료 전체에서 다양한 챕터·섹션 커버 (한 영역에 집중 X)
-- 각 문항을 카탈로그의 sub_topic_code 로 분류
-- 자료에 명시되지 않은 정보를 추측해서 추가 금지
-- 각 문항마다 근거가 있는 슬라이드 번호를 source_pages 에 적기 (출제 근거의 "## 슬라이드 N" 헤더 기준, 없으면 빈 배열)
+${requirements.join('\n')}
 
 generate_private_questions 도구로 응답하세요.
 `.trim();
@@ -251,3 +269,59 @@ export const PRIVATE_GENERATION_TOOL_SCHEMA = {
     required: ['questions', 'content_summary'],
   },
 } as const;
+
+/**
+ * RAG on 생성 도구 스키마(실행계획 v1.1 5.2 G · PR I) — 현행 스키마에서 `source_pages` 를 빼고
+ * `evidence_refs: [{id, quote}]` 를 **필수**로 더한다. 선택 필드로 두면 신고율이 0 에 수렴한다(source_pages 를
+ * 필수로 둔 것과 같은 이유). 쪽은 서버가 검증된 인용 청크의 쪽으로 파생한다(source-refs 호환).
+ * 나머지 필드·설명은 현행과 같다 — 현행 스키마를 고치면 여기도 따라 바뀐다.
+ */
+const BASE_QUESTION_ITEM = PRIVATE_GENERATION_TOOL_SCHEMA.input_schema.properties.questions.items;
+const { source_pages: _sourcePagesOmitted, ...RAG_QUESTION_PROPERTIES } = BASE_QUESTION_ITEM.properties;
+void _sourcePagesOmitted;
+export const PRIVATE_GENERATION_TOOL_SCHEMA_RAG = {
+  ...PRIVATE_GENERATION_TOOL_SCHEMA,
+  input_schema: {
+    ...PRIVATE_GENERATION_TOOL_SCHEMA.input_schema,
+    properties: {
+      ...PRIVATE_GENERATION_TOOL_SCHEMA.input_schema.properties,
+      questions: {
+        ...PRIVATE_GENERATION_TOOL_SCHEMA.input_schema.properties.questions,
+        items: {
+          ...BASE_QUESTION_ITEM,
+          properties: {
+            ...RAG_QUESTION_PROPERTIES,
+            evidence_refs: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 3,
+              description:
+                '이 문항의 정답과 핵심 조건을 뒷받침하는 근거 1~3개. 근거 자료에 없는 내용은 정답의 근거로 삼지 않는다. ' +
+                '서버가 quote 를 그 근거의 원문과 대조해, 다르면 문항을 다시 만들게 한다.',
+              items: {
+                type: 'object',
+                properties: {
+                  id: {
+                    type: 'string',
+                    description: '근거 자료의 번호 그대로(예: "E3"). 주지 않은 번호를 지어내지 않는다.',
+                  },
+                  quote: {
+                    type: 'string',
+                    description:
+                      '그 근거에서 **글자 그대로 복사한** 연속된 한 구절(15~120자). 바꿔 쓰기·요약·번역·여러 곳 이어 붙이기 금지. ' +
+                      '정답을 가르는 사실이 담긴 부분을 고른다.',
+                  },
+                },
+                required: ['id', 'quote'],
+              },
+            },
+          },
+          required: [
+            ...BASE_QUESTION_ITEM.required.filter((field) => field !== 'source_pages'),
+            'evidence_refs',
+          ],
+        },
+      },
+    },
+  },
+};

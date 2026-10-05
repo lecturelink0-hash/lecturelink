@@ -180,11 +180,19 @@ export function buildPrivateVerificationUserMessage(input: {
     explanation: string;
   };
   sourceText?: string;
+  /**
+   * 'prefix'(기본·현행) — 배치 컨텍스트 앞부분. 잘렸을 수 있어 '근거 없음'을 단정하지 않게 한다.
+   * 'evidence'(RAG on, 5.2 I · F4) — 그 문항을 만들 때 준 근거 팩. 문항은 이것만으로 만들어야 하므로
+   *   여기 정답 근거가 없으면 3번 항목에 해당한다.
+   */
+  sourceKind?: 'prefix' | 'evidence';
 }): string {
   const source = (input.sourceText ?? '').slice(0, PRIVATE_VERIFICATION_SOURCE_CHARS).trim();
-  const sourceBlock = source
-    ? `## 자료 원문 (앞부분만 — 여기 없다고 근거가 없다고 단정하지 말 것)\n${source}\n\n`
-    : '## 자료 원문\n제공되지 않음 — 3번 항목(자료 근거)은 판정하지 마십시오.\n\n';
+  const sourceBlock = !source
+    ? '## 자료 원문\n제공되지 않음 — 3번 항목(자료 근거)은 판정하지 마십시오.\n\n'
+    : input.sourceKind === 'evidence'
+      ? `## 자료 원문 (이 문항을 만들 때 준 근거 전부 — 문항은 이 근거만으로 만들어야 합니다. 정답의 근거가 여기 없으면 3번 항목에 해당합니다)\n${source}\n\n`
+      : `## 자료 원문 (앞부분만 — 여기 없다고 근거가 없다고 단정하지 말 것)\n${source}\n\n`;
 
   return `
 다음 문항을 검수하세요.

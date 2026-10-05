@@ -152,7 +152,13 @@ check('통계: 유형 가능 수·쪽 비율', st.units === 3 && st.needsImage =
 const pg = readFileSync(new URL('../lib/ai/private-generation.ts', import.meta.url), 'utf8');
 check('PG: 계획 콜은 shadow·on 에서만', /if \(ragIndexingEnabled\(RAG_MODE\)\) \{\s*ragPlanPromise = runPlan\(/.test(pg));
 check('PG: 계획 콜 시작은 한 곳', (pg.match(/runPlan\(/g) ?? []).length === 1);
-check('PG: 생성 경로에서 계획을 기다리지 않음(진단 직전 합류만)', (pg.match(/await settlePlan\(ragPlanPromise/g) ?? []).length === 1 && !/await ragPlanPromise/.test(pg));
+// shadow 는 진단 직전에만 합류한다. on(PR I)만 묶음 생성 전에 근거 팩 합류 블록(if (ragOn))에서 계획 결과를 읽는다.
+check(
+  'PG: 계획을 기다리는 곳은 진단 직전(settlePlan)과 on 근거 합류 한 곳뿐',
+  (pg.match(/await settlePlan\(ragPlanPromise/g) ?? []).length === 1 &&
+    (pg.match(/await ragPlanPromise/g) ?? []).length === 1 &&
+    /if \(ragOn\) \{[\s\S]{0,1200}await ragPlanPromise/.test(pg),
+);
 check('PG: 상한을 두고 합류', /ragPlanDiag = await settlePlan\(ragPlanPromise, RAG_PLAN_WAIT_MS/.test(pg));
 check('PG: 계획 비용을 totalCost 에 더함', /ragPlanDiag = await settlePlan\([^;]*;\s*(\/\/[^\n]*\n\s*)*totalCost \+= ragPlanDiag\.costUsd;/.test(pg));
 check('PG: 진단에 rag.plan', /\.\.\.\(ragPlanDiag \? \{ plan: ragPlanDiag \} : \{\}\)/.test(pg));
