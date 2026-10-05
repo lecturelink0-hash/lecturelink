@@ -18,7 +18,7 @@ import {
   duplicateRate,
   cosineUnit,
 } from '../lib/rag/dedup.ts';
-import { reduceQuota, expandQuota, backfillSlotInputs } from '../lib/rag/evidence.ts';
+import { reduceQuota, expandQuota, backfillSlotInputs, assignImageSlots } from '../lib/rag/evidence.ts';
 import { buildUploadNotices } from '../lib/ai/upload-notice.ts';
 import { retrievalRefSnapshot, RAG_DEFAULTS } from '../lib/rag/mode.ts';
 
@@ -95,6 +95,26 @@ const again = backfillSlotInputs({ slots: [7], wanted: ['clinical'], slotUnit: n
 check('보충: 한 번 쓴 예비는 다시 쓰지 않음', again[0].unit.id === 'K1' && used.has('C2'));
 check('보충: free 칸은 원래 단위', backfillSlotInputs({ slots: [1], wanted: [], slotUnit: new Map([[1, 'K1']]), reserve: ['C1'], used: new Set(), units, retrievals: retr })[0].unit.id === 'K1');
 
+// 이미지 칸 다시 고르기
+const IU = (id, figs) => ({ ...U(id, ['image_finding'], true), figures: figs });
+const iunits = new Map([['A', IU('A', ['F1'])], ['B', IU('B', ['F1'])], ['C', IU('C', ['F2'])], ['D', IU('D', ['F3'])], ['K', U('K', ['definition'])]]);
+const iretr = new Map([['A', R('A', true, true)], ['B', R('B', true, true)], ['C', R('C', true, true)], ['D', R('D', true, true)], ['K', R('K')]]);
+const iused = new Set();
+const img = assignImageSlots({
+  slots: [{ type: 'image', unitId: 'A' }, { type: 'image', unitId: 'B' }, { type: 'knowledge', unitId: 'K' }, { type: 'image', unitId: 'B' }],
+  units: iunits,
+  retrievals: iretr,
+  reserve: ['D', 'C'],
+  used: iused,
+  figureGi: new Map([['F1', 1], ['F2', 2], ['F3', 3]]),
+  usableGis: new Set([1, 2]), // F3(gi 3)은 정제 탈락
+});
+check('이미지 칸: 쓸 수 있는 새 그림이면 그대로(A→F1)', img.slots[0].unitId === 'A' && img.slots[0].type === 'image');
+check('이미지 칸: 같은 그림이면 쓸 수 있는 그림의 예비로(B→C, D 는 그림 탈락이라 건너뜀)', img.slots[1].unitId === 'C' && iused.has('C') && !iused.has('D'), JSON.stringify(img.slots));
+check('이미지 칸: 고를 게 없으면 텍스트 몫(free)으로, 단위는 그대로', img.slots[3].type === 'free' && img.slots[3].unitId === 'B');
+check('이미지 칸: 이미지 아닌 칸은 그대로', img.slots[2].unitId === 'K' && img.slots[2].type === 'knowledge');
+check('이미지 칸: 집계', img.kept === 1 && img.replaced === 1 && img.spilled === 1, JSON.stringify(img));
+
 // ── 3) 알림
 const base = { desiredCount: 10, wantsImages: false, featuredImageCount: 0, truncatedChars: 0, referenceSkipped: 0, batchFailureReasons: [], leakageDiscarded: 0, verifyRejected: 0 };
 const n1 = buildUploadNotices({ ...base, savedCount: 8, insufficientEvidence: 2 });
@@ -128,6 +148,9 @@ check('PG: 보충은 근거 부족 칸을 채우지 않고 만들 수 기준으�
 check('PG: 유형 목표는 남은 칸 기준', /planTypeTargets\(\s*\/\/[^\n]*\n\s*deliverableCount,/.test(pg));
 check('PG: 알림에 근거 부족 수', /insufficientEvidence: ragSkipSlots\.size,/.test(pg));
 check('PG: 보충은 부족 유형에 맞는 예비 단위(on)', /ragFillEvidenceFor = \(slots, quota\) => \{[\s\S]{0,400}backfillSlotInputs\(/.test(pg));
+
+check('PG: on 에서 이미지 정제를 근거 대기와 겹쳐 미리 돌림', /const usableGisPromise: Promise<Set<number>> = useImages\s*\? Promise\.all\(featuredImages\.map\(\(fi\) => withRefineTimeout\(getDisplayPng\(fi\.gi\)\)/.test(pg) && /if \(ragOn\) \{[\s\S]{0,900}const usableGisPromise/.test(pg));
+check('PG: 이미지 칸 다시 고르기는 보충과 같은 예비 사용 기록을 씀', /assignImageSlots\(\{ slots: run\.slots, units, retrievals, reserve, used: usedReserve, figureGi, usableGis \}\)/.test(pg) && /used: usedReserve,/.test(pg));
 
 console.log(`${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

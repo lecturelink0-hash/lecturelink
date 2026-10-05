@@ -13,10 +13,13 @@
  */
 
 export const DEDUP_DEFAULTS = {
-  /** 문항 임베딩 입력(J1): 'stem' | 'stem_answer' | 'stem_choices'. */
+  /** 문항 임베딩 입력(J1): 'stem' | 'stem_answer' | 'stem_choices'. 라벨 AUC 0.673 / 0.862 / 0.764 → 발문 + 정답 선지. */
   input: 'stem_answer' as 'stem' | 'stem_answer' | 'stem_choices',
-  /** 폐기 임계(코사인, J1). */
-  threshold: 0.92,
+  /**
+   * 폐기 임계(코사인, J1 — 골든셋 519문항·라벨 669쌍). 정밀도 0.90 이상인 가장 낮은 값 = 0.93(정밀도 0.917, 라벨 중복의 44% 회수).
+   * 0.92 는 정밀도 0.839 라 멀쩡한 문항을 6개 중 1개꼴로 지운다.
+   */
+  threshold: 0.93,
   /** G1 '중복 문항률'의 정의 임계(계획서 7장) — 폐기 임계와 별개로 계측에 쓴다. */
   g1Threshold: 0.92,
   /** 세트 간 조회 수(문항당). 하나만 있어도 중복이라 1 이면 충분하다. */

@@ -76,6 +76,7 @@ import {
   type CitationVerdict,
 } from '@/lib/rag/cite';
 import {
+  assignImageSlots,
   backfillSlotInputs,
   batchFigureIds,
   buildBatchEvidence,
@@ -123,6 +124,7 @@ import {
   PRIVATE_GENERATION_TOOL_SCHEMA_RAG,
   buildPrivateGenerationUserMessage,
 } from './prompts/private-generation';
+import { buildRagCiteDirective } from './prompts/rag-cite-directive';
 import {
   STORAGE_BUCKET,
   questionImagePath,
@@ -3767,12 +3769,9 @@ async function runPrivateGeneration(
             .filter((i) => i >= 0);
           if (idx.length > 0) figureLines.push(`- 출제 단위 ${n + 1}: ${idx.map((i) => `[이미지 ${i}]`).join(', ')}`);
         });
+        // 인용 지시 본문은 prompts/rag-cite-directive.ts 한 곳에 둔다(PR J — 칸 유형별 지시 V1 실험이 같은 글을 바꿔 끼운다).
         ragDirective =
-          '\n\n**근거 인용(필수)**: 모든 문항의 evidence_refs 에 정답과 핵심 조건을 뒷받침하는 근거를 1~3개 적습니다. ' +
-          'id 는 근거 자료의 번호(E1, E2 …) 그대로, quote 는 그 근거 본문에서 **연속된 구절을 글자 그대로 복사**한 15~120자입니다. ' +
-          '바꿔 쓰기·요약·번역·여러 곳 이어 붙이기는 안 됩니다 — 서버가 원문과 대조해 다르면 문항을 다시 만들게 합니다. ' +
-          '근거 자료로 뒷받침할 수 없는 내용을 정답이나 정답을 가르는 조건으로 쓰지 마세요. ' +
-          '해설에는 여전히 "자료에 따르면" 같은 출처 언급을 쓰지 않습니다.' +
+          buildRagCiteDirective() +
           (figureLines.length > 0 ? `\n\n**단위별 그림** — 그림 판독 문항은 그 단위의 그림으로 만드세요.\n${figureLines.join('\n')}` : '');
       }
       const comboDirective = comboBatches.has(batchIndex)
@@ -5297,6 +5296,13 @@ async function runPrivateGeneration(
       const tWaitEvidence = Date.now();
       const onDiag: Record<string, unknown> = { engaged: false };
       diag.generation.ragOn = onDiag;
+      // 이미지 정제를 근거 대기와 겹쳐 미리 돌린다(PR J) — 이미지 칸에 실제로 쓸 수 있는 그림을 알아야 칸을 다시 고를 수 있다.
+      // 정제는 이미지별 캐시라 나중에 묶음이 기다릴 때 다시 하지 않는다.
+      const usableGisPromise: Promise<Set<number>> = useImages
+        ? Promise.all(featuredImages.map((fi) => withRefineTimeout(getDisplayPng(fi.gi)).then((d) => (d ? fi.gi : null)))).then(
+            (xs) => new Set(xs.filter((x): x is number => x !== null)),
+          )
+        : Promise.resolve(new Set<number>());
       let evidenceTimedOut = false;
       const run = ragRetrievalPromise
         ? await withDeadline<RetrievalRun | null>(ragRetrievalPromise, RAG_ON_WAIT_MS, null, () => {
@@ -5339,7 +5345,17 @@ async function runPrivateGeneration(
           if (gi !== undefined) figureGi.set(f.id, gi);
         }
         ragFigureGi = figureGi;
-        const skip = new Set(run.slots.flatMap((sl, i) => (sl.unitId ? [] : [i])));
+        const assigned = new Set(run.slots.map((sl) => sl.unitId).filter((x): x is string => Boolean(x)));
+        const reserve = plan.units.map((u) => u.id).filter((id) => !assigned.has(id));
+        const usedReserve = new Set<string>();
+        // 이미지 칸 다시 고르기(PR J): 쓸 수 있는 그림·칸마다 다른 그림. 못 고르면 텍스트 몫으로.
+        if (useImages && run.slots.some((sl) => sl.type === 'image')) {
+          const usableGis = await usableGisPromise;
+          const img = assignImageSlots({ slots: run.slots, units, retrievals, reserve, used: usedReserve, figureGi, usableGis });
+          img.slots.forEach((sl, i) => after.set(i, { type: sl.type, unitId: sl.unitId }));
+          onDiag.imageSlots = { kept: img.kept, replaced: img.replaced, spilled: img.spilled, usableFigures: usableGis.size };
+        }
+        const skip = new Set([...after.entries()].flatMap(([i, sl]) => (sl.unitId ? [] : [i])));
         onDiag.slotsWithoutUnit = skip.size;
         if (skip.size >= desiredCount) {
           // 칸이 전부 근거 부족이면 계획이 자료와 어긋난 것이다 — 아무것도 안 만드는 대신 현행 경로로(원칙 4).
@@ -5347,13 +5363,10 @@ async function runPrivateGeneration(
           warnings.push('RAG on: 근거가 충분한 출제 단위가 없어 현행 방식으로 생성(no_sufficient_units).');
         } else {
           ragSkipSlots = skip;
-          ragSlotType = new Map(run.slots.map((sl, i) => [i, sl.type]));
+          ragSlotType = new Map([...after.entries()].map(([i, sl]) => [i, sl.type]));
           ragEvidenceFor = (slots) =>
             buildBatchEvidence(slotEvidenceInputs({ slots: slots.filter((sl) => !skip.has(sl)), after, before, units, retrievals }));
-          const slotUnit = new Map(run.slots.map((sl, i) => [i, sl.unitId]));
-          const assigned = new Set(run.slots.map((sl) => sl.unitId).filter((x): x is string => Boolean(x)));
-          const reserve = plan.units.map((u) => u.id).filter((id) => !assigned.has(id));
-          const usedReserve = new Set<string>();
+          const slotUnit = new Map([...after.entries()].map(([i, sl]) => [i, sl.unitId]));
           ragFillEvidenceFor = (slots, quota) => {
             const live = slots.filter((sl) => !skip.has(sl));
             const picked = backfillSlotInputs({
