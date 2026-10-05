@@ -439,7 +439,8 @@ async function main() {
       };
       // 결제·크레딧 오류(402 · RESOURCE_EXHAUSTED)로 일부 배치가 빠진 실행은 기준선에 넣으면 안 된다.
       // 문항 수가 줄고 원가가 낮게 잡혀 기준선을 끌어내린다. 기록은 따로 남기고 멈춘다.
-      const billingError = /\b402\b|RESOURCE_EXHAUSTED|prepayment credits/i.test(
+      // 402 는 상태 코드 자리에서만 본다 — 종전 `\b402\b` 는 "해설이 402자로 …" 경고에 걸려 정상 실행을 무효로 쳤다(2026-10-05).
+      const billingError = /(?:API|HTTP|status|code)\D{0,4}402\b|RESOURCE_EXHAUSTED|prepayment credits/i.test(
         `${error ?? ''} ${JSON.stringify(diagnostics?.warnings ?? [])} ${JSON.stringify((diagnostics as any)?.batches ?? [])}`,
       );
       if (billingError) {

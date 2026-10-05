@@ -58,6 +58,20 @@ import { captionChunkText, captionEligible } from '@/lib/rag/caption';
 import { captionImage } from '@/lib/extract/caption-image';
 import { runPlan, settlePlan, type PlanDiag, type PlanRun } from './rag-plan';
 import { runRetrieval, settleRetrieval, type RetrievalDiag, type RetrievalRun } from '@/lib/rag/retrieve';
+import {
+  citationStats,
+  sourceRefsFromCitations,
+  storedEvidence,
+  verifyCitations,
+  type CitationVerdict,
+} from '@/lib/rag/cite';
+import {
+  batchFigureIds,
+  buildBatchEvidence,
+  questionEvidenceText,
+  slotEvidenceInputs,
+  type BatchEvidence,
+} from '@/lib/rag/evidence';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -92,6 +106,7 @@ import {
 import {
   PRIVATE_GENERATION_SYSTEM_PROMPT,
   PRIVATE_GENERATION_TOOL_SCHEMA,
+  PRIVATE_GENERATION_TOOL_SCHEMA_RAG,
   buildPrivateGenerationUserMessage,
 } from './prompts/private-generation';
 import {
@@ -269,6 +284,8 @@ let questionMetricColumnsSupported = true;
 // 00043 미적용 환경에서 source_refs 때문에 저장 전체가 거절되지 않게 하는 폴백 플래그.
 // questionMetricColumnsSupported 와 같은 구조다(2026-08-18 에 같은 사고가 있었다).
 let sourceRefColumnSupported = true;
+// 00045 미적용 환경에서 evidence(RAG on 인용) 때문에 저장이 거절되지 않게 하는 폴백 플래그(같은 구조).
+let evidenceColumnSupported = true;
 // 청크 저장 실패가 생성을 막지 않게 한다 — 출처는 있으면 좋은 것이지 문항의 전제가 아니다.
 let materialChunksSupported = true;
 
@@ -844,6 +861,11 @@ const RAG_INDEX_WAIT_MS = 30_000;
 const RAG_PLAN_WAIT_MS = 30_000;
 /** 단위 검색(shadow·on, PR H)을 진단 기록 전에 기다리는 상한. 청크 벡터 1회 읽기 + 질의 임베딩 1회로 보통 수 초다. */
 const RAG_RETRIEVAL_WAIT_MS = 30_000;
+/**
+ * on(PR I)에서 묶음 생성 전에 근거 팩(인덱싱·계획·검색)을 기다리는 상한. 계획 콜 p95 16.6초 + 검색 수 초(PR G·H
+ * 실측)에 여유를 둔 값이다. 넘기면 현행 full-context 경로로 생성한다(원칙 4 — 가용성이 검사보다 위).
+ */
+const RAG_ON_WAIT_MS = 45_000;
 
 const MAX_REFERENCE_IMAGES = 6;
 /** 참고 자료 1건에서 형식 분석에 쓸 텍스트 상한(자). 형식만 보므로 앞부분이면 충분하다. */
@@ -1858,6 +1880,8 @@ async function runPrivateGeneration(
   // RAG 모드(v1.1 0-h). off 면 아래 인덱싱 경로를 아예 타지 않는다 — 현행과 같은 동작.
   const ragModeParsed = parseRagMode(process.env.PRIVATE_RAG_MODE);
   const RAG_MODE = ragModeParsed.mode;
+  // on(v1.1 5.2 G·H·I, PR I): 근거 팩이 준비되면 묶음 생성 입력을 근거 팩으로 바꾼다. shadow 는 생성 불변.
+  const ragOn = RAG_MODE === 'on';
   // 청크 인덱싱(shadow·on). 생성은 기다리지 않고 진단 직전에 합류한다. 실패 경로의 진단에서도
   // 읽을 수 있게 try 밖에 둔다.
   let ragIndexPromise: Promise<RagIndexResult> | null = null;
@@ -2409,7 +2433,8 @@ async function runPrivateGeneration(
     const early = await earlyText;
     const earlyFullText = early.text;
     const earlyPages = early.pages;
-    const canPrefire = batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
+    // on 에서는 선발사를 끈다 — 생성이 근거 팩(인덱싱·계획·검색)을 기다려야 한다(PR I).
+    const canPrefire = !ragOn && batchSizes.length > 1 && earlyFullText.trim().length >= 1000;
 
     /**
      * 청크를 결정론적 id(업로드·번호, v1.1 0-c)로 저장한다. 종전처럼 지우고 다시 넣지 않으므로
@@ -3393,6 +3418,8 @@ async function runPrivateGeneration(
       solution_conditions?: unknown;
       image_indices: number[];
       sub_topic_code: string | null;
+      /** RAG on(PR I) — [{id, quote}]. 서버가 근거 팩 원문과 대조한다(lib/rag/cite.ts). */
+      evidence_refs?: unknown;
     };
     type BatchResult = {
       generatedCount: number;
@@ -3456,6 +3483,12 @@ async function runPrivateGeneration(
        * "구간을 스스로 골라 출제하라"는 문구를 쓰지 않는다(이미 구간만 받았으므로).
        */
       segmented?: boolean;
+      /**
+       * RAG on(PR I) 묶음 근거. 있으면 contextText 가 근거 팩이고, 도구 스키마에 evidence_refs 가 필수로 붙고,
+       * 인용 검증(1회 교정 재생성)·검증기 근거 팩 입력·인용 기반 출처가 켜진다. 없으면 현행과 같다.
+       * figureGi = 계획 입력 그림 id(F1…) → 전역 이미지 인덱스(gi). 단위 그림을 [이미지 N] 으로 짚어 줄 때 쓴다.
+       */
+      evidence?: { ev: BatchEvidence; figureGi: ReadonlyMap<string, number> };
     };
 
     // 진단 카운터. generateAndPersistBatch 가 선발사 경로에서 일찍 호출되므로
@@ -3527,6 +3560,8 @@ async function runPrivateGeneration(
         style,
         topic: input.topic,
         keywords: input.keywords,
+        // RAG on: 출처는 근거 번호·원문 구절로 신고한다(쪽은 서버가 인용에서 파생, PR I).
+        ...(gen.evidence ? { citeMode: 'evidence' as const } : {}),
       });
       const userContent: Anthropic.MessageParam['content'] = [];
       // 형식 프로파일을 뽑았으면 그림을 배치마다 다시 보내지 않는다(P7).
@@ -3587,7 +3622,10 @@ async function runPrivateGeneration(
       const batchDirective =
         batchCount === 1
           ? ''
-          : (gen.segmented
+          : (gen.evidence
+              ? `\n\n위 근거 자료는 전체 출제 계획 ${batchCount}묶음 중 이번 묶음(${batchIndex + 1}번째)의 출제 단위에 맞춰 강의자료에서 고른 부분입니다. ` +
+                `다른 묶음은 다른 단위를 맡으므로, 출제 단위 목록의 단위마다 1문항씩 정확히 지정된 수만큼 만드세요.`
+              : gen.segmented
               ? `\n\n아래 출제 근거는 전체 자료를 ${batchCount}묶음으로 나눠 이번 묶음(${batchIndex + 1}번째)에 배정된 구간입니다. ` +
                 `다른 묶음이 나머지 구간을 담당하므로, 제시된 근거 안에서만 출제하고 정확히 지정된 수만큼 만드세요.`
               : `\n\n이번 묶음은 전체 출제 계획 ${batchCount}묶음 중 ${batchIndex + 1}번째 묶음입니다. ` +
@@ -3607,9 +3645,12 @@ async function runPrivateGeneration(
       // 초점 배정(P11) — "N번째 구간을 우선하라"는 말만으로는 배치들이 같은 증례를 만든다.
       // 같은 텍스트를 받은 모델들이 각자 고른 "N번째 구간"은 서로 다르지 않기 때문이다.
       // 자료의 소제목을 코드가 겹치지 않게 나눠 주고, 다른 묶음 몫도 함께 알려 준다.
-      const focusDirective = buildFocusDirective(
-        assignFocus(focusTopics, batchIndex, batchCount),
-      );
+      // RAG on: 출제 단위(주제·목표)가 초점 배정을 대신한다(PR I).
+      const focusDirective = gen.evidence
+        ? ''
+        : buildFocusDirective(
+            assignFocus(focusTopics, batchIndex, batchCount),
+          );
       if (focusDirective) batchDiag.focusAssigned = true;
       // 세션 간 중복(P11) — 같은 파일을 다시 올린 경우. 이전 발문 앞부분을 보여 주고 피하게 한다.
       const priorStems = await withDeadline(priorStemsPromise, PRIOR_STEMS_TIMEOUT_MS, [], () =>
@@ -3698,6 +3739,26 @@ async function runPrivateGeneration(
         '**"가장 적절한", "가장 가능성 높은", "다음 중"은 쓰지 않습니다**("가장 흔한 원인은?", ' +
         '"가장 먼저 시행할 검사는?"처럼 사실이 최빈값·순서인 경우만 예외). "~로 가장 적절한 것은?"은 ' +
         '"~는?"으로 바꿔 쓰세요. "무엇인가요?", "인가요?" 같은 구어체 종결도 쓰지 않습니다.';
+      // ── 근거 인용 지시(RAG on, v1.1 5.2 G · PR I). 단위가 그림을 가리키면 그 [이미지 N] 도 짚어 준다.
+      let ragDirective = '';
+      if (gen.evidence) {
+        const figureLines: string[] = [];
+        gen.evidence.ev.units.forEach((u, n) => {
+          if (!u.needsImage) return;
+          const idx = u.figures
+            .map((f) => gen.evidence!.figureGi.get(f))
+            .map((gi) => featured.findIndex((fi) => fi.gi === gi))
+            .filter((i) => i >= 0);
+          if (idx.length > 0) figureLines.push(`- 출제 단위 ${n + 1}: ${idx.map((i) => `[이미지 ${i}]`).join(', ')}`);
+        });
+        ragDirective =
+          '\n\n**근거 인용(필수)**: 모든 문항의 evidence_refs 에 정답과 핵심 조건을 뒷받침하는 근거를 1~3개 적습니다. ' +
+          'id 는 근거 자료의 번호(E1, E2 …) 그대로, quote 는 그 근거 본문에서 **연속된 구절을 글자 그대로 복사**한 15~120자입니다. ' +
+          '바꿔 쓰기·요약·번역·여러 곳 이어 붙이기는 안 됩니다 — 서버가 원문과 대조해 다르면 문항을 다시 만들게 합니다. ' +
+          '근거 자료로 뒷받침할 수 없는 내용을 정답이나 정답을 가르는 조건으로 쓰지 마세요. ' +
+          '해설에는 여전히 "자료에 따르면" 같은 출처 언급을 쓰지 않습니다.' +
+          (figureLines.length > 0 ? `\n\n**단위별 그림** — 그림 판독 문항은 그 단위의 그림으로 만드세요.\n${figureLines.join('\n')}` : '');
+      }
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
         : '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형("옳은 것을 모두 고른 것은?")을 **만들지 마세요.** 모든 문항을 단일 정답 5지선다로 만드세요.';
@@ -3706,7 +3767,7 @@ async function runPrivateGeneration(
         text:
           `다음은 필수 업로드 자료에서 추출한 출제 근거입니다. 기출 형식 참고 자료의 의학 내용은 사용하지 말고, 아래 내용과 필수 자료 이미지만으로 문항을 만드세요.\n\n` +
           (gen.contextText || '(추출된 텍스트·이미지 없음)') +
-          `\n\n${userMessage}${batchDirective}${focusDirective}${priorDirective}${noImageDirective}${clinicalDirective}${knowledgeDirective}${askRuleDirective}${comboDirective}`,
+          `\n\n${userMessage}${batchDirective}${focusDirective}${priorDirective}${noImageDirective}${clinicalDirective}${knowledgeDirective}${askRuleDirective}${comboDirective}${ragDirective}`,
       });
 
       // 해설 길이 상한(350자) 적용 후 문항당 실출력은 ~1,000토큰대. 다만 지시 이탈로
@@ -3721,7 +3782,8 @@ async function runPrivateGeneration(
               model: modelUsed,
               max_tokens: maxTokens,
               system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-              tools: [PRIVATE_GENERATION_TOOL_SCHEMA],
+              // RAG on: evidence_refs 필수 스키마(source_pages 는 서버가 인용에서 파생, PR I).
+              tools: [gen.evidence ? PRIVATE_GENERATION_TOOL_SCHEMA_RAG : PRIVATE_GENERATION_TOOL_SCHEMA],
               tool_choice: { type: 'tool', name: 'generate_private_questions' },
               messages: [{ role: 'user', content: userContent }],
             }),
@@ -3851,12 +3913,16 @@ async function runPrivateGeneration(
         judgeCount?: number | null;
         /** 판정기의 한 줄 근거(사람 재검토용). */
         judgeBasis?: string;
+        /** RAG on 인용 검증 결과(합격한 문항만 kept 에 들어온다). */
+        cite?: CitationVerdict;
       };
+      /** 인용 검증 기록 — 첫 응답·교정 응답의 통과율과 교정 대상 단위를 고르는 데 쓴다. */
+      type CiteRecord = { verdict: CitationVerdict; refs: string[]; stem: string };
       /**
        * 파싱 결과 → 저장 후보. 형식 오류·정답 길이 누출은 여기서 폐기한다.
        * (이미지 쿼터 교정 재생성이 같은 정규화를 다시 써야 해서 함수로 뺐다.)
        */
-      const buildKept = (questions: GeneratedQuestion[]): KeptItem[] => {
+      const buildKept = (questions: GeneratedQuestion[], citeSink?: CiteRecord[]): KeptItem[] => {
         const kept: KeptItem[] = [];
         for (const q of questions) {
           if (kept.length >= batchSize) break;
@@ -3895,14 +3961,137 @@ async function runPrivateGeneration(
             q.explanation = remapped;
             bumpGenDiag('explanationMarksRemapped');
           }
-          kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex });
+          // 인용 검증(RAG on, v1.1 5.2 H · PR I). quote 가 근거 원문에 없으면 저장 후보에서 뺀다 — 첫 응답이면
+          // 아래 1회 교정 재생성이 그 자리를 채우고, 교정 재생성(이미지·난이도·블라인드)의 결과면 그대로 버린다.
+          let cite: CitationVerdict | undefined;
+          if (gen.evidence) {
+            cite = verifyCitations(q.evidence_refs, gen.evidence.ev.chunks);
+            citeSink?.push({
+              verdict: cite,
+              refs: [...cite.citations.map((c) => c.ref), ...cite.failures.map((f) => f.ref)],
+              stem: String(q.stem ?? ''),
+            });
+            if (!cite.ok) {
+              if (!citeSink) bumpGenDiag('citeDroppedInFix');
+              continue;
+            }
+          }
+          kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex, ...(cite ? { cite } : {}) });
         }
         return kept;
       };
 
-      let kept: KeptItem[] = buildKept(parsed.questions);
+      /**
+       * 인용 검증 → 1회 교정 재생성(RAG on, v1.1 5.2 H · PR I).
+       *
+       * 첫 응답에서 인용이 원문과 맞지 않아 빠진 문항이 있으면, 그 문항들의 단위만 다시 만들게 한다(같은 메시지 =
+       * 근거 팩을 다시 보낸다 — 전체 컨텍스트 재전송 없음, F5). 새 문항도 같은 인용 검사를 통과해야 빈자리에 들어가고,
+       * 이미 채운 단위와 겹치지 않는 것을 먼저 쓴다. 재생성은 배치당 1회 — 그래도 못 채운 자리는 버리고 보충이 채운다.
+       */
+      const repairCitations = async (current: KeptItem[], first: CiteRecord[]): Promise<KeptItem[]> => {
+        const ev = gen.evidence;
+        if (!ev) return current;
+        const st = citationStats(first.map((r) => r.verdict));
+        batchDiag.citeFirst = st;
+        const add = (key: string, n: number) => {
+          diag.generation[key] = ((diag.generation[key] as number | undefined) ?? 0) + n;
+        };
+        add('citeChecked', st.questions);
+        add('citeFirstOk', st.ok);
+        add('citeFirstLenientOk', st.lenientOk);
+        add('citeReattributed', st.reattributed);
+        const failed = first.filter((r) => !r.verdict.ok);
+        if (failed.length === 0 || current.length >= batchSize) return current;
+        const unitNo = (refs: readonly string[]) => {
+          const u = ev.ev.units.findIndex((x) => refs.some((r) => x.refs.includes(r)));
+          return u >= 0 ? u + 1 : null;
+        };
+        const covered = new Set(current.map((k) => unitNo((k.cite?.citations ?? []).map((c) => c.ref))));
+        const targets = [...new Set(failed.map((r) => unitNo(r.refs)).filter((n): n is number => n !== null && !covered.has(n)))];
+        const need = batchSize - current.length;
+        bumpGenDiag('citeRepairAttempted');
+        warnings.push(
+          `배치 ${batchIndex + 1}: 근거 인용이 원문과 맞지 않는 문항 ${failed.length}개 — 1회 교정 재생성.`,
+        );
+        userContent.push({
+          type: 'text',
+          text:
+            `방금 만든 문항 중 ${failed.length}개는 evidence_refs 의 quote 가 근거 자료 원문과 맞지 않았습니다` +
+            `(없는 근거 번호, 원문을 바꿔 쓴 구절, 너무 짧은 구절). ` +
+            (targets.length > 0
+              ? `같은 근거로 **출제 단위 ${targets.join('·')}** 의 문항 ${need}개를 다시 만드세요. `
+              : `같은 근거로 문항 ${need}개를 다시 만드세요. `) +
+            `quote 는 근거 자료 [E번호] 본문에서 연속된 구절을 **띄어쓰기·기호까지 글자 그대로** 복사합니다. ` +
+            `요약·번역·여러 곳 이어 붙이기를 하지 말고, 근거 자료로 뒷받침할 수 없는 정답은 쓰지 마세요. ` +
+            `유형 배분·발문 규칙·이미지 판독 규칙은 그대로 지키세요.`,
+        });
+        let added: KeptItem[] = [];
+        try {
+          const tFix = Date.now();
+          const fixRes = await callGenerate(genMaxTokens);
+          batchDiag.citeFixMs = Date.now() - tFix;
+          const fixCost = calculateCost(
+            modelUsed,
+            fixRes.usage.input_tokens,
+            fixRes.usage.output_tokens,
+            fixRes.usage.cache_read_input_tokens ?? 0,
+            fixRes.usage.cache_creation_input_tokens ?? 0,
+          );
+          totalCost += fixCost;
+          aggInputTokens += fixRes.usage.input_tokens;
+          aggOutputTokens += fixRes.usage.output_tokens;
+          await recordAiCost({
+            userId: input.userId,
+            endpoint: 'private.generate',
+            model: modelUsed,
+            costUsd: fixCost,
+            inputTokens: fixRes.usage.input_tokens,
+            outputTokens: fixRes.usage.output_tokens,
+            metadata: { uploadId: uploadRow.id, batch: batchIndex + 1, citeFix: true },
+          });
+          const fixBlock = fixRes.content.find(
+            (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+          );
+          const fixParsed = fixBlock?.input as { questions?: GeneratedQuestion[] } | undefined;
+          if (Array.isArray(fixParsed?.questions) && fixParsed.questions.length > 0) {
+            const fixLog: CiteRecord[] = [];
+            const existing = new Set(current.map((k) => String(k.q.stem ?? '').trim()));
+            const candidates = buildKept(fixParsed.questions, fixLog).filter(
+              (c) => !existing.has(String(c.q.stem ?? '').trim()),
+            );
+            batchDiag.citeFix = citationStats(fixLog.map((r) => r.verdict));
+            add('citeFixChecked', fixLog.length);
+            add('citeFixOk', fixLog.filter((r) => r.verdict.ok).length);
+            // 아직 채우지 않은 단위의 문항을 먼저 쓴다(같은 단위 문항이 두 개 들어가지 않게).
+            const uncoveredFirst = [...candidates].sort(
+              (a, b) =>
+                Number(covered.has(unitNo((a.cite?.citations ?? []).map((c) => c.ref)))) -
+                Number(covered.has(unitNo((b.cite?.citations ?? []).map((c) => c.ref)))),
+            );
+            added = uncoveredFirst.slice(0, need);
+          }
+        } catch (e) {
+          warnings.push(
+            `인용 교정 재생성 실패 — 남은 자리는 보충으로. ${e instanceof Error ? e.message.slice(0, 120) : String(e)}`,
+          );
+        }
+        add('citeRepaired', added.length);
+        const discarded = Math.max(0, failed.length - added.length);
+        add('citeDiscarded', discarded);
+        batchDiag.citeRepaired = added.length;
+        batchDiag.citeDiscarded = discarded;
+        return [...current, ...added];
+      };
+
+      const citeFirst: CiteRecord[] = [];
+      let kept: KeptItem[] = buildKept(parsed.questions, gen.evidence ? citeFirst : undefined);
+      if (gen.evidence) kept = await repairCitations(kept, citeFirst);
       if (kept.length === 0) {
-        throw new Error(`생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`);
+        throw new Error(
+          gen.evidence && citeFirst.some((r) => !r.verdict.ok)
+            ? `생성된 문항이 모두 근거 인용 검증에 걸렸습니다 (batch=${batchIndex + 1})`
+            : `생성된 문항이 모두 형식 오류입니다 (batch=${batchIndex + 1})`,
+        );
       }
 
       // ── 이미지 판독 문항 쿼터 미준수 → 1회 교정 재생성
@@ -4183,7 +4372,12 @@ async function runPrivateGeneration(
               subTopicName: k.q.sub_topic_code ?? '미분류',
               isRiskCategory: false,
               mode: 'private',
-              sourceText: gen.contextText,
+              // RAG on: 배치 앞 12,000자 대신 그 문항의 근거 팩(v1.1 5.2 I · F4). 근거 팩만으로 만들게 했으므로
+              // 여기 정답 근거가 없으면 '근거 없음'이 의미를 갖는다.
+              sourceText: gen.evidence
+                ? questionEvidenceText(gen.evidence.ev, (k.cite?.citations ?? []).map((c) => c.ref), i)
+                : gen.contextText,
+              ...(gen.evidence ? { sourceKind: 'evidence' as const } : {}),
               question: {
                 ...k.q,
                 choices: k.choices,
@@ -4674,7 +4868,25 @@ async function runPrivateGeneration(
       // 구조적 출처(가리킨 페이지가 실제로 있는가)만 여기서 검사한다. 그 페이지의 내용이
       // 정말 이 문항의 근거인지(의미상 출처)는 전문가 검증 영역이고, 코드가 판정하는
       // 척해서는 안 된다 — 섞으면 "출처 유효성 98%" 가 "근거가 맞다"로 잘못 읽힌다.
-      {
+      if (gen.evidence) {
+        // RAG on(PR I): 출처는 검증된 인용에서 파생한다 — 쪽 = 인용 청크의 쪽, 청크 id = 인용 청크만.
+        // 인용 원문·일치율·검색 점수는 private_questions.evidence 에 남긴다(계획서 5.2 K, E4·R3 라벨의 원자료).
+        let withCite = 0;
+        kept.forEach((k, i) => {
+          const row = rows[i] as Record<string, unknown> | undefined;
+          if (!row) return;
+          const cites = k.cite?.citations ?? [];
+          if (cites.length > 0) withCite += 1;
+          row.source_refs = toStoredRefs(sourceRefsFromCitations(cites, contentSha256));
+          if (evidenceColumnSupported) row.evidence = storedEvidence(cites);
+        });
+        batchDiag.sourceReportRate = kept.length > 0 ? Math.round((withCite / kept.length) * 10000) / 10000 : null;
+        batchDiag.sourceLocationValidRate = withCite > 0 ? 1 : null;
+        batchDiag.sourceInvalidQuestions = 0;
+        batchDiag.evidenceChars = gen.evidence.ev.evidenceChars;
+        batchDiag.evidenceUnits = gen.evidence.ev.units.length;
+        batchDiag.evidenceInsufficient = gen.evidence.ev.units.filter((u) => u.insufficient).length;
+      } else {
         const availablePages = pagesInContext(gen.contextText || '');
         const sourceCheck = validateSourceRefs(
           kept.map((k) => ({ sourcePages: (k.q as { source_pages?: unknown }).source_pages })),
@@ -4728,6 +4940,9 @@ async function runPrivateGeneration(
       if (!sourceRefColumnSupported) {
         for (const row of rows) delete (row as Record<string, unknown>).source_refs;
       }
+      if (!evidenceColumnSupported) {
+        for (const row of rows) delete (row as Record<string, unknown>).evidence;
+      }
       const saveWithoutMetrics = () =>
         admin
           .from('private_questions')
@@ -4737,6 +4952,22 @@ async function runPrivateGeneration(
       let { data: inserted, error: insertErr } = questionMetricColumnsSupported
         ? await admin.from('private_questions').upsert(rows, upsertOptions).select('id')
         : await saveWithoutMetrics();
+      // 00045 미적용 환경(RAG on 만 해당): evidence 컬럼 때문에 거절되면 인용만 떼고 다시 넣는다.
+      // 출처 폴백보다 먼저 본다 — 아래 폴백은 누락 컬럼을 source_refs 로 가정한다.
+      if (
+        insertErr &&
+        evidenceColumnSupported &&
+        rows.some((row) => 'evidence' in row) &&
+        isMissingColumnError(insertErr) &&
+        /evidence/i.test(String((insertErr as { message?: string }).message ?? ''))
+      ) {
+        evidenceColumnSupported = false;
+        for (const row of rows) delete (row as Record<string, unknown>).evidence;
+        warnings.push('evidence 컬럼이 없어 인용 원문 없이 저장(마이그레이션 00045 미적용).');
+        ({ data: inserted, error: insertErr } = questionMetricColumnsSupported
+          ? await admin.from('private_questions').upsert(rows, upsertOptions).select('id')
+          : await saveWithoutMetrics());
+      }
       // 00043 미적용 환경: source_refs 컬럼 때문에 거절되면 출처만 떼고 다시 넣는다.
       // 계측 폴백보다 먼저 본다 — 둘 다 컬럼 누락이라 한쪽만 떼도 안 되면 아래에서 또 떨어진다.
       if (insertErr && sourceRefColumnSupported && isMissingColumnError(insertErr)) {
@@ -5032,7 +5263,98 @@ async function runPrivateGeneration(
       return Math.min(batchSize, supplyCap, quotaFor(batchIndex).image);
     };
 
+    // ── RAG on: 근거 팩 합류 (v1.1 5.2 G·H·I · PR I)
+    //
+    // 인덱싱·계획·검색이 끝나기를 상한(RAG_ON_WAIT_MS) 안에서 기다린다. 준비되면 묶음마다 칸에 배정된 단위(D3 교체
+    // 반영)의 근거 팩을 생성 입력으로 쓰고, 안 되면 현행 full-context 경로로 생성한다(원칙 4 — 사유는 진단에).
+    // 이미지는 이미지 칸 단위가 가리키는 그림만 준다(R5 — 캡션 일치가 없는 이미지 단위는 D3 가 텍스트 칸으로 넘겼다).
+    let ragEvidenceFor: ((slots: readonly number[]) => BatchEvidence | null) | null = null;
+    let ragFigureGi: ReadonlyMap<string, number> = new Map();
+    if (ragOn) {
+      const tWaitEvidence = Date.now();
+      const onDiag: Record<string, unknown> = { engaged: false };
+      diag.generation.ragOn = onDiag;
+      let evidenceTimedOut = false;
+      const run = ragRetrievalPromise
+        ? await withDeadline<RetrievalRun | null>(ragRetrievalPromise, RAG_ON_WAIT_MS, null, () => {
+            evidenceTimedOut = true;
+          })
+        : null;
+      // 검색이 끝났으면 계획도 끝나 있다(검색은 계획·인덱싱 결과로 돈다).
+      const plan = run && ragPlanPromise ? await ragPlanPromise : null;
+      onDiag.waitMs = Date.now() - tWaitEvidence;
+      const fallback = !ragRetrievalPromise
+        ? 'no_index'
+        : evidenceTimedOut
+          ? 'timeout'
+          : !run || !plan
+            ? 'error'
+            : !run.diag.ok
+              ? (run.diag.skipped ?? 'error')
+              : run.retrievals.length === 0
+                ? 'no_retrievals'
+                : null;
+      if (fallback !== null || !run || !plan) {
+        onDiag.fallback = fallback ?? 'error';
+        warnings.push(
+          `RAG on: 근거 팩을 준비하지 못해 현행 방식으로 생성(${String(onDiag.fallback)}` +
+            `${run?.diag.error ? `: ${run.diag.error}` : ''}).`,
+        );
+      } else {
+        const units = new Map(plan.units.map((u) => [u.id, u]));
+        const retrievals = new Map(run.retrievals.map((r) => [r.unitId, r]));
+        // 칸 배열의 순번 = generation_slot (assignUnitsToSlots 가 묶음 순·묶음 크기대로 칸을 만든다).
+        const after = new Map(run.slots.map((sl, i) => [i, { type: sl.type, unitId: sl.unitId }]));
+        const before = new Map(plan.slots.map((sl, i) => [i, { type: sl.type, unitId: sl.unitId }]));
+        // 계획 그림 id(F1…) → 크롭 지문(캡션 청크와 같은 해시) → 전역 이미지 인덱스.
+        const keyToGi = new Map(
+          featuredImages.map((fi) => [createHash('sha256').update(fi.c.png).digest('hex').slice(0, 32), fi.gi]),
+        );
+        const figureGi = new Map<string, number>();
+        for (const f of plan.figures) {
+          const gi = f.imageKey ? keyToGi.get(f.imageKey) : undefined;
+          if (gi !== undefined) figureGi.set(f.id, gi);
+        }
+        ragFigureGi = figureGi;
+        ragEvidenceFor = (slots) => buildBatchEvidence(slotEvidenceInputs({ slots, after, before, units, retrievals }));
+        onDiag.engaged = true;
+        onDiag.units = plan.units.length;
+        onDiag.slots = run.slots.length;
+        onDiag.slotsWithoutUnit = run.slots.filter((sl) => !sl.unitId).length;
+        onDiag.figures = figureGi.size;
+      }
+    }
+    /** RAG on 묶음의 이미지 — 이미지 칸 단위의 그림(정제 이전 목록 기준). 없으면 이미지를 주지 않는다. */
+    const featuredForEvidence = (ev: BatchEvidence): BatchImage[] => {
+      if (!useImages) return [];
+      const gis = new Set(
+        batchFigureIds(ev)
+          .map((f) => ragFigureGi.get(f))
+          .filter((gi): gi is number => gi !== undefined),
+      );
+      return featuredImages.filter((fi) => gis.has(fi.gi));
+    };
+
     const genFor = (batchIndex: number, batchCount: number): GenContext => {
+      // RAG on: 칸에 배정된 단위의 근거 팩. 팩이 있는 칸이 하나도 없는 묶음은 현행 구간으로 생성한다.
+      const evidence = ragEvidenceFor ? ragEvidenceFor(slotsFor(batchIndex)) : null;
+      if (evidence) {
+        bumpGenDiag('ragEvidenceBatches');
+        const assignedImages = featuredForEvidence(evidence);
+        return {
+          contextText: evidence.text,
+          evidence: { ev: evidence, figureGi: ragFigureGi },
+          featured: [],
+          resolveFeatured: () => resolveRefined(assignedImages),
+          imageQuotaFor: imageQuotaFor(batchIndex),
+          getDisplayPng,
+          segmented: false,
+          plannedQuota: quotaFor(batchIndex),
+          knowledgeAskKinds: knowledgeAskPlan(batchIndex, knowledgeQuotaFor(batchIndex)),
+          allowNegativeAsk: negativeBatches.has(batchIndex),
+        };
+      }
+      if (ragEvidenceFor) bumpGenDiag('ragFallbackBatches');
       const assigned = featuredForBatch(batchIndex, batchCount);
       return {
         contextText: segmentForBatch(batchIndex, batchCount),
@@ -5506,14 +5828,25 @@ async function runPrivateGeneration(
       roundRec.quotas = fillQuotas;
       await mapWithConcurrency(fillBatches, GEN_CONCURRENCY, async (slots, i) => {
         try {
+          // RAG on: 빈 칸의 단위 근거 팩으로 다시 만든다(같은 단위 재시도). 팩이 없으면 현행 구간.
+          const fillEvidence = ragEvidenceFor ? ragEvidenceFor(slots) : null;
           await generateAndPersistBatch(i, slots, fillBatches.length, {
             // 보충은 "빠르게 빈 칸만 채우는" 호출이다. 본 배치들이 방금 끝난 직후라
             // 같은 대용량 컨텍스트를 다시 실으면 입력 처리량이 커져 429 를 맞고,
             // 기본 백오프(최대 45초)를 기다리며 전체 소요를 지배한다(실측 66초 꼬리).
             // → 빈 슬롯이 속한 구간의 컨텍스트만 잘라 싣고, 재시도 대기도 짧게 잡는다.
-            contextText: backfillContext(slots[0]),
+            contextText: fillEvidence ? fillEvidence.text : backfillContext(slots[0]),
+            ...(fillEvidence ? { evidence: { ev: fillEvidence, figureGi: ragFigureGi } } : {}),
             featured: [],
-            resolveFeatured: () => resolveRefined(fillFeatured[i]),
+            // RAG on: 이미지는 빈 칸 단위의 그림 중 정제에 성공한 것만(R5). 마지막 라운드는 이미지 없이(위와 같은 이유).
+            resolveFeatured: () =>
+              resolveRefined(
+                fillEvidence
+                  ? isLastBackfillRound
+                    ? []
+                    : featuredForEvidence(fillEvidence).filter((fi) => refinedUsableGis.has(fi.gi))
+                  : fillFeatured[i],
+              ),
             // 본 배치와 달리 "남은 재사용 용량"으로 상한이 정해진다. 정제에서 한 장이
             // 더 빠질 수 있으므로 실제 확정 장수로도 한 번 더 조인다.
             imageQuotaFor: (featuredLen: number, batchSize: number) =>
@@ -5663,14 +5996,18 @@ async function runPrivateGeneration(
       // 계획 콜 비용도 이 업로드의 원가다(인덱싱과 같은 이유). 시간 초과면 비용 행이 진단보다 늦게 남는다.
       totalCost += ragPlanDiag.costUsd;
       if (ragPlanDiag.timedOut) warnings.push(`RAG 출제 계획이 ${RAG_PLAN_WAIT_MS / 1000}초 안에 끝나지 않음(뒤에서 계속).`);
-      else if (ragPlanDiag.fallback) warnings.push(`RAG 출제 계획 실패 — 현행 초점으로 대체(생성에는 영향 없음): ${ragPlanDiag.error ?? ''}`);
+      else if (ragPlanDiag.fallback)
+        warnings.push(
+          `RAG 출제 계획 실패 — 현행 초점으로 대체(${ragOn ? 'on: 초점 단위로 근거 검색' : '생성에는 영향 없음'}): ${ragPlanDiag.error ?? ''}`,
+        );
     }
     if (ragRetrievalPromise) {
       ragRetrievalDiag = await settleRetrieval(ragRetrievalPromise, RAG_RETRIEVAL_WAIT_MS);
       // 질의 임베딩 비용(rag.query)도 이 업로드의 원가다.
       totalCost += ragRetrievalDiag.costUsd;
       if (ragRetrievalDiag.timedOut) warnings.push(`RAG 단위 검색이 ${RAG_RETRIEVAL_WAIT_MS / 1000}초 안에 끝나지 않음(뒤에서 계속).`);
-      else if (ragRetrievalDiag.error) warnings.push(`RAG 단위 검색 실패(생성에는 영향 없음): ${ragRetrievalDiag.error}`);
+      else if (ragRetrievalDiag.error)
+        warnings.push(`RAG 단위 검색 실패(${ragOn ? 'on: 현행 방식으로 생성' : '생성에는 영향 없음'}): ${ragRetrievalDiag.error}`);
     }
     if (ragModeParsed.invalid) warnings.push('PRIVATE_RAG_MODE 값을 알 수 없어 off 로 처리함.');
 

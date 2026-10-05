@@ -119,7 +119,14 @@ check('PG: 검색은 계획과 인덱싱이 둘 다 끝난 뒤', /ragRetrievalPr
 const iPlanBlock = pg.indexOf('if (ragIndexingEnabled(RAG_MODE)) {\n      ragPlanPromise = runPlan(');
 const iRet = pg.indexOf('ragRetrievalPromise = Promise.all(');
 check('PG: 검색 시작은 shadow·on 계획 블록 안 한 곳', iPlanBlock > 0 && iRet > iPlanBlock && (pg.match(/runRetrieval\(/g) ?? []).length === 1);
-check('PG: 생성 경로에서 검색을 기다리지 않음', (pg.match(/await settleRetrieval\(ragRetrievalPromise/g) ?? []).length === 1 && !/await ragRetrievalPromise/.test(pg));
+// shadow 는 생성 경로에서 검색을 기다리지 않는다. on(PR I)만 근거 합류 블록에서 상한(RAG_ON_WAIT_MS)을 두고 기다린다.
+check(
+  'PG: 생성 경로는 on 근거 합류에서만 검색을 기다림(상한 있음)',
+  (pg.match(/await settleRetrieval\(ragRetrievalPromise/g) ?? []).length === 1 &&
+    !/await ragRetrievalPromise/.test(pg) &&
+    (pg.match(/withDeadline<RetrievalRun \| null>\(ragRetrievalPromise, RAG_ON_WAIT_MS/g) ?? []).length === 1 &&
+    /if \(ragOn\) \{[\s\S]{0,400}withDeadline<RetrievalRun \| null>\(ragRetrievalPromise/.test(pg),
+);
 check('PG: 상한을 두고 합류·비용을 원가에', /ragRetrievalDiag = await settleRetrieval\(ragRetrievalPromise, RAG_RETRIEVAL_WAIT_MS\);\s*(\/\/[^\n]*\n\s*)*totalCost \+= ragRetrievalDiag\.costUsd;/.test(pg));
 check('PG: 진단에 rag.retrieval', /\.\.\.\(ragRetrievalDiag \? \{ retrieval: ragRetrievalDiag \} : \{\}\)/.test(pg));
 check('PG: 그림 id 는 캡션 청크와 같은 계산', /imageIdOf: \(key\) => materialImageId\(uploadRow\.id, key\)/.test(pg) && /imageKey: c\.imageKey/.test(pg));
