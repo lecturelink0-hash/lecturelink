@@ -56,7 +56,8 @@ import { parseRagMode, ragConfigSnapshot, ragEmbedModel, ragIndexingEnabled } fr
 import { indexMaterialChunks, settleRagIndex, type RagIndexResult } from '@/lib/rag/indexing';
 import { captionChunkText, captionEligible } from '@/lib/rag/caption';
 import { captionImage } from '@/lib/extract/caption-image';
-import { runPlanForDiagnostics, settlePlan, type PlanDiag } from './rag-plan';
+import { runPlan, settlePlan, type PlanDiag, type PlanRun } from './rag-plan';
+import { runRetrieval, settleRetrieval, type RetrievalDiag, type RetrievalRun } from '@/lib/rag/retrieve';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -841,6 +842,8 @@ const RAG_INDEX_WAIT_MS = 30_000;
  * 그보다 훨씬 오래 걸려 대개 기다릴 일이 없다.
  */
 const RAG_PLAN_WAIT_MS = 30_000;
+/** 단위 검색(shadow·on, PR H)을 진단 기록 전에 기다리는 상한. 청크 벡터 1회 읽기 + 질의 임베딩 1회로 보통 수 초다. */
+const RAG_RETRIEVAL_WAIT_MS = 30_000;
 
 const MAX_REFERENCE_IMAGES = 6;
 /** 참고 자료 1건에서 형식 분석에 쓸 텍스트 상한(자). 형식만 보므로 앞부분이면 충분하다. */
@@ -1860,8 +1863,11 @@ async function runPrivateGeneration(
   let ragIndexPromise: Promise<RagIndexResult> | null = null;
   let ragDiag: RagIndexResult | null = null;
   // 출제 계획(shadow·on, v1.1 5.2 C·D). 인덱싱과 같은 방식 — 생성은 기다리지 않고 진단 직전에 합류한다.
-  let ragPlanPromise: Promise<PlanDiag> | null = null;
+  let ragPlanPromise: Promise<PlanRun> | null = null;
   let ragPlanDiag: PlanDiag | null = null;
+  // 단위 검색·근거 팩(shadow·on, v1.1 5.2 E·F). 계획과 인덱싱이 끝나면 돈다.
+  let ragRetrievalPromise: Promise<RetrievalRun> | null = null;
+  let ragRetrievalDiag: RetrievalDiag | null = null;
 
   try {
     // 2) 다운로드
@@ -1966,7 +1972,11 @@ async function runPrivateGeneration(
             attributed: attributedCostSnapshot(),
           },
           config: { ...configSnapshot(), retrieval: ragConfigSnapshot() },
-          rag: { ...(ragDiag ?? { mode: RAG_MODE }), ...(ragPlanDiag ? { plan: ragPlanDiag } : {}) },
+          rag: {
+            ...(ragDiag ?? { mode: RAG_MODE }),
+            ...(ragPlanDiag ? { plan: ragPlanDiag } : {}),
+            ...(ragRetrievalDiag ? { retrieval: ragRetrievalDiag } : {}),
+          },
           // 경고는 개수·페이지 번호 위주라 강의 내용이 들어가지 않는다. 방어적으로 길이 제한.
           warnings: warnings.slice(0, 60).map((w) => String(w).slice(0, 300)),
           finishedAt: new Date().toISOString(),
@@ -2894,13 +2904,14 @@ async function runPrivateGeneration(
     // 않는다 — 생성이 단위·근거 팩을 쓰는 것은 PR I 부터다. 본문이 없는 쪽(스캔)은 OCR 글자로 대신한다.
     // 그림은 캡션 청크와 같은 목록(문항 이미지 후보 중 캡션을 받은 것)을 준다.
     if (ragIndexingEnabled(RAG_MODE)) {
-      ragPlanPromise = runPlanForDiagnostics({
+      ragPlanPromise = runPlan({
         pages: slideSummaries.map((ss) => ({
           pageIndex: ss.pageIndex,
           text: ss.slideText || ss.ocrTexts.join('\n'),
         })),
-        captions: featuredImages.flatMap((fi) =>
-          fi.c.caption ? [{ pageIndex: fi.slide, text: captionChunkText(fi.c.caption) }] : [],
+        // 캡션 청크와 같은 본문·지문 — 검색이 이미지 단위의 그림을 캡션 청크(image_id)로 찾는다.
+        captions: slideSummaries.flatMap((ss) =>
+          ss.captions.map((c) => ({ pageIndex: ss.pageIndex, text: c.text, imageKey: c.imageKey })),
         ),
         request: {
           desiredCount,
@@ -2912,6 +2923,21 @@ async function runPrivateGeneration(
         fallbackTopics: () => focusTopics,
         userIdForLog: input.userId,
       });
+      // 단위 검색·근거 팩(v1.1 5.2 E·F, PR H): 계획과 인덱싱이 둘 다 끝나면 돈다. 이것도 생성은 기다리지 않는다.
+      if (ragIndexPromise) {
+        const indexP = ragIndexPromise;
+        ragRetrievalPromise = Promise.all([indexP, ragPlanPromise]).then(([index, plan]) =>
+          runRetrieval({
+            admin,
+            uploadId: uploadRow.id,
+            index,
+            plan,
+            difficulty: input.difficulty ?? null,
+            imageIdOf: (key) => materialImageId(uploadRow.id, key),
+            userIdForLog: input.userId,
+          }),
+        );
+      }
     }
 
     // 5.5) 추출 결과가 전부 비어 있으면 생성 호출은 의미 없음 → 명확한 실패 메시지.
@@ -5630,6 +5656,13 @@ async function runPrivateGeneration(
       totalCost += ragPlanDiag.costUsd;
       if (ragPlanDiag.timedOut) warnings.push(`RAG 출제 계획이 ${RAG_PLAN_WAIT_MS / 1000}초 안에 끝나지 않음(뒤에서 계속).`);
       else if (ragPlanDiag.fallback) warnings.push(`RAG 출제 계획 실패 — 현행 초점으로 대체(생성에는 영향 없음): ${ragPlanDiag.error ?? ''}`);
+    }
+    if (ragRetrievalPromise) {
+      ragRetrievalDiag = await settleRetrieval(ragRetrievalPromise, RAG_RETRIEVAL_WAIT_MS);
+      // 질의 임베딩 비용(rag.query)도 이 업로드의 원가다.
+      totalCost += ragRetrievalDiag.costUsd;
+      if (ragRetrievalDiag.timedOut) warnings.push(`RAG 단위 검색이 ${RAG_RETRIEVAL_WAIT_MS / 1000}초 안에 끝나지 않음(뒤에서 계속).`);
+      else if (ragRetrievalDiag.error) warnings.push(`RAG 단위 검색 실패(생성에는 영향 없음): ${ragRetrievalDiag.error}`);
     }
     if (ragModeParsed.invalid) warnings.push('PRIVATE_RAG_MODE 값을 알 수 없어 off 로 처리함.');
 

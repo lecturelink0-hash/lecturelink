@@ -39,13 +39,27 @@ export const ragGenerationEnabled = (mode: RagMode): boolean => mode === 'on';
  *  - 리랭커 불채택: +0.009(기준 +0.03 미달).
  *  - 청킹 1,200자 단독: 부모 확장 조건과 Recall 이 같고 근거 팩이 가장 작음.
  *  - τ 0.61: 단위 최고 코사인 분포에서 Recall 0.9 를 남기는 가장 높은 값(149단위 0.607, 검토 59단위 0.626).
+ *
+ * PR H 판정(2026-10-05, docs/naesin-rag-candidates/h-pack-results.md)
+ *  - τ 0.61 → 0.47: 운영 질의는 계획 콜(PR G)이 자료 요약만 보고 쓰므로 R1 질의보다 유사도가 낮다. 계획 단위를
+ *    장기 계통이 다른 자료로 검색한 음성 대조군의 통과율이 5% 이하가 되는 가장 작은 값이 0.47 이고, 그때
+ *    근거가 확인된 계획 단위는 전부 통과했다(0.61 에서는 84.5%). 같은 계통의 다른 강의는 41.5% 가 통과하므로
+ *    τ 는 '전혀 다른 내용'만 거르는 장치다 — 근거 충실도는 인용 검증(PR I)과 E5 에서 본다.
+ *  - MMR λ 0.7 채택: R1 Recall@6 0.970 → 0.988, 팩 안 청크 간 평균 코사인 0.697 → 0.662.
+ *  - 근거 팩 글자 상한 4,500자(≈3k 토큰): Recall@6 변화 없음. 난이도 '상'은 8개·6,000자(5.2 F).
  */
 export const RAG_DEFAULTS = {
   embedModel: 'voyage-4',
   dim: 1024,
   packSize: 6,
   candidateK: 20,
-  tau: 0.61,
+  tau: 0.47,
+  /** MMR 가중치(관련도 쪽). null 이면 RRF 순서 그대로. */
+  mmrLambda: 0.7 as number | null,
+  packChars: 4_500,
+  /** 난이도 '상' 단위. */
+  packSizeHard: 8,
+  packCharsHard: 6_000,
   sparse: false,
   reranker: null as string | null,
   chunkChars: 1200,
@@ -77,6 +91,9 @@ export function ragConfigSnapshot(env: Record<string, string | undefined> = proc
     candidateK: RAG_DEFAULTS.candidateK,
     packSize: RAG_DEFAULTS.packSize,
     tau: RAG_DEFAULTS.tau,
+    mmrLambda: RAG_DEFAULTS.mmrLambda,
+    packChars: RAG_DEFAULTS.packChars,
+    packSizeHard: RAG_DEFAULTS.packSizeHard,
     sparse: RAG_DEFAULTS.sparse,
     reranker: RAG_DEFAULTS.reranker,
     chunkChars: RAG_DEFAULTS.chunkChars,

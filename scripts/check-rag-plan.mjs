@@ -150,15 +150,15 @@ check('통계: 유형 가능 수·쪽 비율', st.units === 3 && st.needsImage =
 
 // ── 소스 대조
 const pg = readFileSync(new URL('../lib/ai/private-generation.ts', import.meta.url), 'utf8');
-check('PG: 계획 콜은 shadow·on 에서만', /if \(ragIndexingEnabled\(RAG_MODE\)\) \{\s*ragPlanPromise = runPlanForDiagnostics\(/.test(pg));
-check('PG: 계획 콜 시작은 한 곳', (pg.match(/runPlanForDiagnostics\(/g) ?? []).length === 1);
+check('PG: 계획 콜은 shadow·on 에서만', /if \(ragIndexingEnabled\(RAG_MODE\)\) \{\s*ragPlanPromise = runPlan\(/.test(pg));
+check('PG: 계획 콜 시작은 한 곳', (pg.match(/runPlan\(/g) ?? []).length === 1);
 check('PG: 생성 경로에서 계획을 기다리지 않음(진단 직전 합류만)', (pg.match(/await settlePlan\(ragPlanPromise/g) ?? []).length === 1 && !/await ragPlanPromise/.test(pg));
 check('PG: 상한을 두고 합류', /ragPlanDiag = await settlePlan\(ragPlanPromise, RAG_PLAN_WAIT_MS/.test(pg));
 check('PG: 계획 비용을 totalCost 에 더함', /ragPlanDiag = await settlePlan\([^;]*;\s*(\/\/[^\n]*\n\s*)*totalCost \+= ragPlanDiag\.costUsd;/.test(pg));
 check('PG: 진단에 rag.plan', /\.\.\.\(ragPlanDiag \? \{ plan: ragPlanDiag \} : \{\}\)/.test(pg));
 check('PG: 쿼터 칸은 type-plan 의 batchQuotas', /quotas: batchQuotas,/.test(pg) && /targets: typeTargets,/.test(pg));
 check('PG: 폴백은 현행 초점', /fallbackTopics: \(\) => focusTopics,/.test(pg));
-const iPlan = pg.indexOf('ragPlanPromise = runPlanForDiagnostics(');
+const iPlan = pg.indexOf('ragPlanPromise = runPlan(');
 const iFinal = pg.indexOf('const finalChunks = buildTextFirstChunks(slideSummaries);');
 check('PG: 계획은 최종 청크·캡션 확정 뒤', iFinal > 0 && iPlan > iFinal);
 

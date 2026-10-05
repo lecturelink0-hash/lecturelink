@@ -26,6 +26,7 @@ import {
   type PlanPage,
   type PlanRequest,
   type PlanUnit,
+  type SlotAssignment,
 } from '../rag/plan.ts';
 
 export interface PlanCallResult {
@@ -33,6 +34,8 @@ export interface PlanCallResult {
   units: PlanUnit[];
   /** 입력 규모(진단용). 그림 목록 자체는 싣지 않고 수만 남긴다(captionsIncluded). */
   input: Omit<PlanInput, 'text' | 'figures'> & { chars: number };
+  /** 그림 id(F1 …) → 출처(쪽·크롭 지문). 진단에는 싣지 않고 검색(이미지 단위의 캡션 청크 찾기)에만 쓴다. */
+  figures: PlanInput['figures'];
   dropped: number;
   repaired: number;
   model: string;
@@ -57,6 +60,7 @@ export async function planExamUnits(args: {
     ok: false,
     units: [],
     input: { ...inputMeta, chars: input.text.length },
+    figures: input.figures,
     dropped: 0,
     repaired: 0,
     model,
@@ -147,60 +151,78 @@ export interface PlanDiag {
   reserve: number;
 }
 
+/** 계획 한 번의 결과 — 진단 요약과, 검색(PR H)·생성(PR I)이 쓸 단위·칸 배정. */
+export interface PlanRun {
+  diag: PlanDiag;
+  units: PlanUnit[];
+  slots: SlotAssignment[];
+  figures: PlanInput['figures'];
+}
+
 /**
- * 계획 콜 → (실패 시 초점 폴백) → 쿼터 칸 배정까지 하고 진단 요약을 돌려준다. 던지지 않는다.
+ * 계획 콜 → (실패 시 초점 폴백) → 쿼터 칸 배정까지 한다. 던지지 않는다.
  * fallbackTopics 는 함수로 받는다 — 초점 목록은 계획 콜이 도는 사이에 OCR 포함 텍스트로 다시 뽑힐 수 있다.
  */
-export async function runPlanForDiagnostics(args: {
+export async function runPlan(args: {
   pages: readonly PlanPage[];
   captions?: readonly PlanCaption[];
   request: PlanRequest;
   quotas: readonly BatchQuota[];
   fallbackTopics: () => readonly string[];
   userIdForLog?: string;
-}): Promise<PlanDiag> {
+}): Promise<PlanRun> {
   const r = await planExamUnits(args);
   try {
     const units = r.ok ? r.units : fallbackUnitsFromTopics(args.fallbackTopics(), planUnitCount(args.request.desiredCount));
     const a = assignUnitsToSlots(units, args.quotas);
     return {
-      ok: r.ok,
-      fallback: !r.ok,
-      ...(r.error ? { error: r.error } : {}),
-      model: r.model,
-      costUsd: r.costUsd,
-      inputTokens: r.inputTokens,
-      outputTokens: r.outputTokens,
-      ms: r.ms,
-      input: r.input,
-      dropped: r.dropped,
-      repaired: r.repaired,
-      stats: planStats(units, r.input),
-      assignment: a.stats,
-      reserve: a.reserve.length,
+      diag: {
+        ok: r.ok,
+        fallback: !r.ok,
+        ...(r.error ? { error: r.error } : {}),
+        model: r.model,
+        costUsd: r.costUsd,
+        inputTokens: r.inputTokens,
+        outputTokens: r.outputTokens,
+        ms: r.ms,
+        input: r.input,
+        dropped: r.dropped,
+        repaired: r.repaired,
+        stats: planStats(units, r.input),
+        assignment: a.stats,
+        reserve: a.reserve.length,
+      },
+      units,
+      slots: a.slots,
+      figures: r.figures,
     };
   } catch (e) {
     return {
-      ok: false,
-      fallback: true,
-      error: (e instanceof Error ? e.message : String(e)).slice(0, 200),
-      model: r.model,
-      costUsd: r.costUsd,
-      inputTokens: r.inputTokens,
-      outputTokens: r.outputTokens,
-      ms: r.ms,
-      input: r.input,
-      dropped: r.dropped,
-      repaired: r.repaired,
-      stats: null,
-      assignment: null,
-      reserve: 0,
+      diag: {
+        ok: false,
+        fallback: true,
+        error: (e instanceof Error ? e.message : String(e)).slice(0, 200),
+        model: r.model,
+        costUsd: r.costUsd,
+        inputTokens: r.inputTokens,
+        outputTokens: r.outputTokens,
+        ms: r.ms,
+        input: r.input,
+        dropped: r.dropped,
+        repaired: r.repaired,
+        stats: null,
+        assignment: null,
+        reserve: 0,
+      },
+      units: [],
+      slots: [],
+      figures: [],
     };
   }
 }
 
 /** 진단 기록 전에 계획을 기다리되 상한을 둔다. 넘기면 timedOut 으로 남기고 비용은 뒤늦게 기록된다. */
-export async function settlePlan(pending: Promise<PlanDiag>, waitMs: number, model: string): Promise<PlanDiag> {
+export async function settlePlan(pending: Promise<PlanRun>, waitMs: number, model: string): Promise<PlanDiag> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<PlanDiag>((resolve) => {
     timer = setTimeout(
@@ -225,7 +247,7 @@ export async function settlePlan(pending: Promise<PlanDiag>, waitMs: number, mod
     );
   });
   try {
-    return await Promise.race([pending, timeout]);
+    return await Promise.race([pending.then((r) => r.diag), timeout]);
   } finally {
     if (timer) clearTimeout(timer);
   }
