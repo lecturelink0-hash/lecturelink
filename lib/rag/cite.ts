@@ -11,7 +11,8 @@
  *    청크 안에 그대로 있으면 1. 임계 0.90(E4 에서 다시 정함).
  *  - 정규화 후 8자 미만 quote 는 불합격(짧은 약어 하나는 어디에나 있다).
  *  - 같은 묶음의 다른 근거에서 일치하면 그 근거로 바로잡는다(재귀속). 원문에서 온 구절이라는 사실은 같다.
- *  - 문항 판정(엄격): 인용 1개 이상 + 모든 인용 합격. 관대 판정(합격 인용 1개 이상)도 같이 낸다.
+ *  - 문항 판정: 엄격(인용 1개 이상 + 모든 인용 합격)과 관대(합격 인용 1개 이상)를 둘 다 낸다. 생성 경로는 citationAccepted 로
+ *    고른다 — PR I 은 엄격, PR J 부터 관대(틀린 인용은 저장하지 않으므로 저장되는 인용은 전부 검증된 것). j-dedup-results.md 4장.
  *
  * 외부 모듈은 타입만 불러온다 — 검사 스크립트(`npm run check:rag-cite`)가 이 파일을 직접 불러온다.
  */
@@ -28,7 +29,18 @@ export const CITE_LIMITS = {
   maxQuoteChars: 1_500,
   /** 저장하는 quote 상한(원문 그대로, 정규화 전). */
   storedQuoteChars: 300,
+  /**
+   * 문항을 남기는 기준. 'lenient' = 원문과 맞는 인용이 1개 이상(틀린 인용은 버림), 'strict' = 모든 인용이 맞아야 함.
+   * PR J 수정(1회): 엄격 기준의 교정 뒤 폐기가 6.0~6.6% 로 I5(≤5%)를 넘었고, 실패 인용은 거의 다 "여러 줄을 건너뛰며 이어 붙인"
+   * 구절이라 정규화로 구제되지 않았다(재생 160문항 중 0). 관대 기준의 첫 응답 통과는 0.99.
+   */
+  questionRule: 'lenient' as 'lenient' | 'strict',
 } as const;
+
+/** 생성 경로가 문항을 남길지 — CITE_LIMITS.questionRule 을 따른다. */
+export function citationAccepted(v: { ok: boolean; lenientOk: boolean }, rule: 'lenient' | 'strict' = CITE_LIMITS.questionRule): boolean {
+  return rule === 'strict' ? v.ok : v.lenientOk;
+}
 
 /** 생성에 준 근거 청크 하나. text 는 모델에게 실제로 보인 글(팩에 잘려 담겼으면 잘린 글)이다. */
 export interface EvidenceChunk {

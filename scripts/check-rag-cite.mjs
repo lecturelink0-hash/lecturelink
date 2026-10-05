@@ -21,6 +21,7 @@ import {
   sourceRefsFromCitations,
   storedEvidence,
   citationStats,
+  citationAccepted,
 } from '../lib/rag/cite.ts';
 import {
   buildBatchEvidence,
@@ -95,6 +96,9 @@ const short = verifyCitations([{ id: 'E1', quote: '파열' }], ev);
 check('판정: 8자 미만 → short_quote', !short.ok && short.failures[0]?.reason === 'short_quote');
 const mixed = verifyCitations([{ id: 'E1', quote: '관상동맥 죽상경화반의 파열' }, { id: 'E2', quote: '흉통이 30분 이상 지속되면 의심한다' }], ev);
 check('판정: 하나라도 틀리면 엄격 불합격·관대 합격', !mixed.ok && mixed.lenientOk && mixed.citations.length === 1 && mixed.failures.length === 1);
+check('문항 기준: 관대(PR J) — 맞는 인용 1개 이상이면 남김, 엄격은 전부 맞아야', CITE_LIMITS.questionRule === 'lenient' && citationAccepted(mixed) && !citationAccepted(mixed, 'strict') && citationAccepted(okV, 'strict') && citationAccepted(okV));
+check('문항 기준: 맞는 인용이 없으면 관대여도 버림', !citationAccepted(mism) && !citationAccepted(short) && !citationAccepted(unknown) && !citationAccepted(verifyCitations([], ev)));
+check('문항 기준: 관대여도 저장 인용은 합격분만', mixed.citations.every((c) => c.match >= CITE_LIMITS.threshold) && storedEvidence(mixed.citations).length === 1);
 const boundary = verifyCitations([{ id: 'E1', quote: 'abcdefghij' }], new Map([['E1', { ...ev.get('E1'), text: 'xxabcdefghiQxx' }]]));
 check('판정: 일치율이 정확히 임계(0.9)면 합격', boundary.ok && boundary.citations[0].match === 0.9, JSON.stringify(boundary.citations));
 const below = verifyCitations([{ id: 'E1', quote: 'abcdefghij' }], new Map([['E1', { ...ev.get('E1'), text: 'xxabcdeQQhijxx' }]]));
@@ -176,8 +180,10 @@ check('PG: 도구 스키마는 근거가 있을 때만 on 변형', /tools: \[gen
 check('PG: 사용자 메시지 citeMode 는 근거가 있을 때만', /\.\.\.\(gen\.evidence \? \{ citeMode: 'evidence' as const \} : \{\}\)/.test(pg));
 check('PG: 인용 검사는 buildKept 안, 근거가 있을 때만', /if \(gen\.evidence\) \{\s*cite = verifyCitations\(q\.evidence_refs, gen\.evidence\.ev\.chunks\);/.test(pg));
 check('PG: 첫 응답 뒤 인용 교정은 근거가 있을 때만 1회', /let kept: KeptItem\[\] = buildKept\(parsed\.questions, gen\.evidence \? citeFirst : undefined\);\s*if \(gen\.evidence\) kept = await repairCitations\(kept, citeFirst\);/.test(pg) && count(/repairCitations\(/g) === 1 && count(/const repairCitations = async/g) === 1);
+check('PG: 문항을 남길지는 citationAccepted(관대) — 틀린 인용만 떼고 진단', /if \(!citationAccepted\(cite\)\) \{\s*if \(!citeSink\) bumpGenDiag\('citeDroppedInFix'\);\s*continue;\s*\}[\s\S]{0,200}if \(!cite\.ok\) bumpGenDiag\('citeRefsDropped'\);/.test(pg) && !/if \(!cite\.ok\) \{\s*if \(!citeSink\)/.test(pg));
 const repairBody = pg.slice(pg.indexOf('const repairCitations = async'), pg.indexOf('const citeFirst: CiteRecord[] = [];'));
 check('PG: 인용 교정은 생성 호출 1번·비용 기록(citeFix)·새 문항도 인용 검사', (repairBody.match(/callGenerate\(/g) ?? []).length === 1 && /citeFix: true/.test(repairBody) && /buildKept\(fixParsed\.questions, fixLog\)/.test(repairBody) && /totalCost \+= fixCost;/.test(repairBody));
+check('PG: 인용 교정 대상도 같은 기준(관대 합격은 교정하지 않음)', /const failed = first\.filter\(\(r\) => !citationAccepted\(r\.verdict\)\);/.test(repairBody) && !/!r\.verdict\.ok/.test(repairBody));
 check('PG: 인용 교정은 빈자리만 채움', /added = uncoveredFirst\.slice\(0, need\);/.test(repairBody) && /const need = batchSize - current\.length;/.test(repairBody));
 check('PG: 검증기 입력은 근거가 있을 때만 문항 근거 팩', /sourceText: gen\.evidence\s*\? questionEvidenceText\(gen\.evidence\.ev, \(k\.cite\?\.citations \?\? \[\]\)\.map\(\(c\) => c\.ref\), i\)\s*: gen\.contextText,/.test(pg) && /\.\.\.\(gen\.evidence \? \{ sourceKind: 'evidence' as const \} : \{\}\)/.test(pg));
 check('PG: 출처는 근거가 있으면 인용에서, 없으면 현행 검사', /if \(gen\.evidence\) \{[\s\S]{0,900}const refs = toStoredRefs\(sourceRefsFromCitations\(cites, contentSha256\)\);\s*row\.source_refs = refs \? \{ \.\.\.refs, retrieval: retrievalRefSnapshot\(packSizeFor\(input\.difficulty \?\? null\)\.size\) \} : null;/.test(pg) && /\} else \{\s*const availablePages = pagesInContext\(gen\.contextText \|\| ''\);/.test(pg));

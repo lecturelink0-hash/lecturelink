@@ -69,6 +69,7 @@ import { captionImage } from '@/lib/extract/caption-image';
 import { runPlan, settlePlan, type PlanDiag, type PlanRun } from './rag-plan';
 import { runRetrieval, settleRetrieval, type RetrievalDiag, type RetrievalRun } from '@/lib/rag/retrieve';
 import {
+  citationAccepted,
   citationStats,
   sourceRefsFromCitations,
   storedEvidence,
@@ -3986,10 +3987,12 @@ async function runPrivateGeneration(
               refs: [...cite.citations.map((c) => c.ref), ...cite.failures.map((f) => f.ref)],
               stem: String(q.stem ?? ''),
             });
-            if (!cite.ok) {
+            if (!citationAccepted(cite)) {
               if (!citeSink) bumpGenDiag('citeDroppedInFix');
               continue;
             }
+            // 관대 기준(PR J): 맞는 인용이 하나라도 있으면 남기고, 틀린 인용은 저장하지 않는다(cite.citations 는 합격분만).
+            if (!cite.ok) bumpGenDiag('citeRefsDropped');
           }
           kept.push({ q, choices: shuffled.choices, answerIndex: shuffled.answerIndex, ...(cite ? { cite } : {}) });
         }
@@ -4015,7 +4018,7 @@ async function runPrivateGeneration(
         add('citeFirstOk', st.ok);
         add('citeFirstLenientOk', st.lenientOk);
         add('citeReattributed', st.reattributed);
-        const failed = first.filter((r) => !r.verdict.ok);
+        const failed = first.filter((r) => !citationAccepted(r.verdict));
         if (failed.length === 0 || current.length >= batchSize) return current;
         const unitNo = (refs: readonly string[]) => {
           const u = ev.ev.units.findIndex((x) => refs.some((r) => x.refs.includes(r)));
