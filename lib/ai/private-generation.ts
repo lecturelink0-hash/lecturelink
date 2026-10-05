@@ -56,6 +56,7 @@ import { parseRagMode, ragConfigSnapshot, ragEmbedModel, ragIndexingEnabled } fr
 import { indexMaterialChunks, settleRagIndex, type RagIndexResult } from '@/lib/rag/indexing';
 import { captionChunkText, captionEligible } from '@/lib/rag/caption';
 import { captionImage } from '@/lib/extract/caption-image';
+import { runPlanForDiagnostics, settlePlan, type PlanDiag } from './rag-plan';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -835,6 +836,11 @@ export interface GenerationDiagnostics {
  * 넘기면 진단에 timedOut 을 남기고 작업은 뒤에서 계속된다(생성 완료를 늦추지 않기 위해).
  */
 const RAG_INDEX_WAIT_MS = 30_000;
+/**
+ * RAG 출제 계획 콜(shadow·on, PR G)을 진단 기록 전에 기다리는 상한. 계획 콜은 보통 10~15초이고, 생성이
+ * 그보다 훨씬 오래 걸려 대개 기다릴 일이 없다.
+ */
+const RAG_PLAN_WAIT_MS = 30_000;
 
 const MAX_REFERENCE_IMAGES = 6;
 /** 참고 자료 1건에서 형식 분석에 쓸 텍스트 상한(자). 형식만 보므로 앞부분이면 충분하다. */
@@ -1853,6 +1859,9 @@ async function runPrivateGeneration(
   // 읽을 수 있게 try 밖에 둔다.
   let ragIndexPromise: Promise<RagIndexResult> | null = null;
   let ragDiag: RagIndexResult | null = null;
+  // 출제 계획(shadow·on, v1.1 5.2 C·D). 인덱싱과 같은 방식 — 생성은 기다리지 않고 진단 직전에 합류한다.
+  let ragPlanPromise: Promise<PlanDiag> | null = null;
+  let ragPlanDiag: PlanDiag | null = null;
 
   try {
     // 2) 다운로드
@@ -1957,7 +1966,7 @@ async function runPrivateGeneration(
             attributed: attributedCostSnapshot(),
           },
           config: { ...configSnapshot(), retrieval: ragConfigSnapshot() },
-          rag: ragDiag ?? { mode: RAG_MODE },
+          rag: { ...(ragDiag ?? { mode: RAG_MODE }), ...(ragPlanDiag ? { plan: ragPlanDiag } : {}) },
           // 경고는 개수·페이지 번호 위주라 강의 내용이 들어가지 않는다. 방어적으로 길이 제한.
           warnings: warnings.slice(0, 60).map((w) => String(w).slice(0, 300)),
           finishedAt: new Date().toISOString(),
@@ -2879,6 +2888,30 @@ async function runPrivateGeneration(
       if (ragIndexingEnabled(RAG_MODE) && materialChunksSupported) {
         ragIndexPromise = indexMaterialChunks({ admin, uploadId: uploadRow.id, mode: RAG_MODE });
       }
+    }
+
+    // RAG 출제 계획(v1.1 5.2 C·D, PR G): shadow·on 에서 계획 콜 1회. 지금은 진단에만 남기고 생성은 기다리지
+    // 않는다 — 생성이 단위·근거 팩을 쓰는 것은 PR I 부터다. 본문이 없는 쪽(스캔)은 OCR 글자로 대신한다.
+    // 그림은 캡션 청크와 같은 목록(문항 이미지 후보 중 캡션을 받은 것)을 준다.
+    if (ragIndexingEnabled(RAG_MODE)) {
+      ragPlanPromise = runPlanForDiagnostics({
+        pages: slideSummaries.map((ss) => ({
+          pageIndex: ss.pageIndex,
+          text: ss.slideText || ss.ocrTexts.join('\n'),
+        })),
+        captions: featuredImages.flatMap((fi) =>
+          fi.c.caption ? [{ pageIndex: fi.slide, text: captionChunkText(fi.c.caption) }] : [],
+        ),
+        request: {
+          desiredCount,
+          selectedTypes,
+          difficulty: input.difficulty ?? '중',
+          targets: typeTargets,
+        },
+        quotas: batchQuotas,
+        fallbackTopics: () => focusTopics,
+        userIdForLog: input.userId,
+      });
     }
 
     // 5.5) 추출 결과가 전부 비어 있으면 생성 호출은 의미 없음 → 명확한 실패 메시지.
@@ -5590,6 +5623,13 @@ async function runPrivateGeneration(
       totalCost += ragDiag.costUsd;
       if (ragDiag.error) warnings.push(`RAG 인덱싱 실패(생성에는 영향 없음): ${ragDiag.error}`);
       if (ragDiag.timedOut) warnings.push(`RAG 인덱싱이 ${RAG_INDEX_WAIT_MS / 1000}초 안에 끝나지 않음(뒤에서 계속).`);
+    }
+    if (ragPlanPromise) {
+      ragPlanDiag = await settlePlan(ragPlanPromise, RAG_PLAN_WAIT_MS, MODELS.generation());
+      // 계획 콜 비용도 이 업로드의 원가다(인덱싱과 같은 이유). 시간 초과면 비용 행이 진단보다 늦게 남는다.
+      totalCost += ragPlanDiag.costUsd;
+      if (ragPlanDiag.timedOut) warnings.push(`RAG 출제 계획이 ${RAG_PLAN_WAIT_MS / 1000}초 안에 끝나지 않음(뒤에서 계속).`);
+      else if (ragPlanDiag.fallback) warnings.push(`RAG 출제 계획 실패 — 현행 초점으로 대체(생성에는 영향 없음): ${ragPlanDiag.error ?? ''}`);
     }
     if (ragModeParsed.invalid) warnings.push('PRIVATE_RAG_MODE 값을 알 수 없어 off 로 처리함.');
 
