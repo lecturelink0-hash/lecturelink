@@ -93,8 +93,3 @@ export function duplicateRate(items: readonly DedupItem[], threshold: number = D
   });
   return { duplicates, questions: sorted.length, rate: sorted.length ? Math.round((duplicates / sorted.length) * 10_000) / 10_000 : null };
 }
-
-/** pgvector 입력 글('[0.1,0.2,…]'). PostgREST 로 vector 컬럼에 쓸 때 쓴다. */
-export function toPgVector(vec: readonly number[]): string {
-  return `[${vec.map((v) => (Number.isFinite(v) ? Number(v.toFixed(7)) : 0)).join(',')}]`;
-}

@@ -39,6 +39,7 @@ check('임베딩 입력: 발문 / 발문+정답 / 발문+선지', questionEmbedd
 check('임베딩 입력 기본값 = DEDUP_DEFAULTS.input', questionEmbeddingText(q) === questionEmbeddingText(q, DEDUP_DEFAULTS.input));
 check('G1 정의 임계는 0.92 고정(계획서 7장)', DEDUP_DEFAULTS.g1Threshold === 0.92);
 check('폐기 임계는 0.85~0.98 (J1 규칙 범위)', DEDUP_DEFAULTS.threshold >= 0.85 && DEDUP_DEFAULTS.threshold <= 0.98, String(DEDUP_DEFAULTS.threshold));
+check('폐기 임계 = J1 판정값 0.93(G1 정의 0.92 와 별개)', DEDUP_DEFAULTS.threshold === 0.93 && DEDUP_DEFAULTS.threshold !== DEDUP_DEFAULTS.g1Threshold);
 const unit = (deg) => [Math.cos((deg * Math.PI) / 180), Math.sin((deg * Math.PI) / 180)];
 check('코사인(단위 벡터)', Math.abs(cosineUnit(unit(0), unit(60)) - 0.5) < 1e-9);
 const th = 0.9;
@@ -67,6 +68,7 @@ check('빈 세트 중복률 null', duplicateRate([], th).rate === null);
 check('쿼터 줄이기: 빠진 칸 유형부터', JSON.stringify(reduceQuota({ image: 0, knowledge: 1, clinical: 1, free: 0 }, ['clinical'])) === JSON.stringify({ image: 0, knowledge: 1, clinical: 0, free: 0 }));
 check('쿼터 줄이기: 그 유형이 0 이면 free → 지식 순', JSON.stringify(reduceQuota({ image: 0, knowledge: 1, clinical: 1, free: 0 }, ['image'])) === JSON.stringify({ image: 0, knowledge: 0, clinical: 1, free: 0 }));
 check('쿼터 줄이기: 합 = 남은 칸', Object.values(reduceQuota({ image: 1, knowledge: 1, clinical: 0, free: 0 }, ['free', 'free'])).reduce((a, b) => a + b, 0) === 0);
+check('쿼터 줄이기: 그 유형 몫이 있으면 free 보다 먼저', JSON.stringify(reduceQuota({ image: 0, knowledge: 1, clinical: 2, free: 1 }, ['clinical'])) === JSON.stringify({ image: 0, knowledge: 1, clinical: 1, free: 1 }));
 check('쿼터 펴기: 이미지 → 임상 → 지식 → free', expandQuota({ image: 1, knowledge: 1, clinical: 2, free: 1 }).join() === 'image,clinical,clinical,knowledge,free');
 const U = (id, askKinds, needsImage = false) => ({ id, topic: id, objective: '', askKinds, needsImage, figures: needsImage ? ['F1'] : [], pages: [], queries: { concept: '', clinical: '', compare: '' }, hydeStem: '' });
 const R = (unitId, sufficient = true, captionMatch = null) => ({ unitId, topScore: 0.6, sufficient, ranked: [], pack: [{ ref: 'x', chunkId: `c-${unitId}`, pageIndex: 1, kind: 'slide_text', score: 0.6, text: 't', truncated: false }], packChars: 1, captionScore: null, captionMatch });
@@ -94,6 +96,9 @@ check('보충: 이미지 칸은 그림 일치가 없는 예비를 쓰지 않음 
 const again = backfillSlotInputs({ slots: [7], wanted: ['clinical'], slotUnit: new Map([[7, 'K1']]), reserve: ['C2'], used, units, retrievals: retr });
 check('보충: 한 번 쓴 예비는 다시 쓰지 않음', again[0].unit.id === 'K1' && used.has('C2'));
 check('보충: free 칸은 원래 단위', backfillSlotInputs({ slots: [1], wanted: [], slotUnit: new Map([[1, 'K1']]), reserve: ['C1'], used: new Set(), units, retrievals: retr })[0].unit.id === 'K1');
+const ownFits = new Set();
+const keepOwn = backfillSlotInputs({ slots: [2], wanted: ['clinical'], slotUnit: new Map([[2, 'C1']]), reserve: ['C2'], used: ownFits, units, retrievals: retr });
+check('보충: 원래 단위가 맞으면 맞는 예비가 남아 있어도 쓰지 않음', keepOwn[0].unit.id === 'C1' && !keepOwn[0].fromReserve && ownFits.size === 0);
 
 // 이미지 칸 다시 고르기
 const IU = (id, figs) => ({ ...U(id, ['image_finding'], true), figures: figs });
@@ -114,6 +119,16 @@ check('이미지 칸: 같은 그림이면 쓸 수 있는 그림의 예비로(B�
 check('이미지 칸: 고를 게 없으면 텍스트 몫(free)으로, 단위는 그대로', img.slots[3].type === 'free' && img.slots[3].unitId === 'B');
 check('이미지 칸: 이미지 아닌 칸은 그대로', img.slots[2].unitId === 'K' && img.slots[2].type === 'knowledge');
 check('이미지 칸: 집계', img.kept === 1 && img.replaced === 1 && img.spilled === 1, JSON.stringify(img));
+const noImgUnit = assignImageSlots({
+  slots: [{ type: 'image', unitId: 'B' }],
+  units: new Map([['B', IU('B', ['F1'])], ['T', { ...U('T', ['definition']), figures: ['F2'] }]]),
+  retrievals: new Map([['B', R('B', true, true)], ['T', R('T', true, true)]]),
+  reserve: ['T'],
+  used: new Set(),
+  figureGi: new Map([['F1', 1], ['F2', 2]]),
+  usableGis: new Set([2]),
+});
+check('이미지 칸: 그림이 필요 없는 단위(needsImage=false)는 예비 이미지 단위로 쓰지 않음', noImgUnit.slots[0].type === 'free' && noImgUnit.replaced === 0, JSON.stringify(noImgUnit));
 
 // ── 3) 알림
 const base = { desiredCount: 10, wantsImages: false, featuredImageCount: 0, truncatedChars: 0, referenceSkipped: 0, batchFailureReasons: [], leakageDiscarded: 0, verifyRejected: 0 };
@@ -146,6 +161,7 @@ check('PG: 칸이 전부 근거 부족이면 현행 경로로', /if \(skip\.size
 check('PG: 본 묶음은 근거 부족 칸을 빼고, 쿼터도 줄임', /\.filter\(\(sl\) => !ragSkipSlots\.has\(sl\)\); \/\/ 근거 부족\(D3\)/.test(pg) && /plannedQuota: reduceQuota\(quotaFor\(batchIndex\), skippedTypes\)/.test(pg));
 check('PG: 보충은 근거 부족 칸을 채우지 않고 만들 수 기준으로 돈다', /saved\.length < deliverableCount; round\+\+/.test(pg) && /\(s\) => !usedSlots\.has\(s\) && !ragSkipSlots\.has\(s\)/.test(pg));
 check('PG: 유형 목표는 남은 칸 기준', /planTypeTargets\(\s*\/\/[^\n]*\n\s*deliverableCount,/.test(pg));
+check('PG: 만들 수 = 요청 − 근거 부족 칸', /const deliverableCount = desiredCount - ragSkipSlots\.size;/.test(pg));
 check('PG: 알림에 근거 부족 수', /insufficientEvidence: ragSkipSlots\.size,/.test(pg));
 check('PG: 보충은 부족 유형에 맞는 예비 단위(on)', /ragFillEvidenceFor = \(slots, quota\) => \{[\s\S]{0,400}backfillSlotInputs\(/.test(pg));
 
