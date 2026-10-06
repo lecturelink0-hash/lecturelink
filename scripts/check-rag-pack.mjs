@@ -125,7 +125,7 @@ check(
   (pg.match(/await settleRetrieval\(ragRetrievalPromise/g) ?? []).length === 1 &&
     !/await ragRetrievalPromise/.test(pg) &&
     (pg.match(/withDeadline<RetrievalRun \| null>\(ragRetrievalPromise, RAG_ON_WAIT_MS/g) ?? []).length === 1 &&
-    /if \(ragOn\) \{[\s\S]{0,400}withDeadline<RetrievalRun \| null>\(ragRetrievalPromise/.test(pg),
+    /if \(ragOn\) \{[\s\S]{0,1500}withDeadline<RetrievalRun \| null>\(ragRetrievalPromise/.test(pg),
 );
 check('PG: 상한을 두고 합류·비용을 원가에', /ragRetrievalDiag = await settleRetrieval\(ragRetrievalPromise, RAG_RETRIEVAL_WAIT_MS\);\s*(\/\/[^\n]*\n\s*)*totalCost \+= ragRetrievalDiag\.costUsd;/.test(pg));
 check('PG: 진단에 rag.retrieval', /\.\.\.\(ragRetrievalDiag \? \{ retrieval: ragRetrievalDiag \} : \{\}\)/.test(pg));

@@ -34,6 +34,7 @@
  *   --keep-voyage            VOYAGE_API_KEY 를 지우지 않는다. 운영 Voyage 키는 죽어 있으므로(F7)
  *                            기본값은 지우고 돈다 — 그래야 운영과 같은 경로를 탄다.
  *   --dry-run                계정·자료·환경 점검만 하고 생성하지 않는다.
+ *   --keep-prior             같은 파일의 이전 하네스 업로드 해시를 비우지 않는다(세트 간 중복 시험 — 다음 회차가 앞 회차 문항을 본다).
  *
  * 실행 간 격리
  *   생성 파이프라인은 같은 사용자가 같은 파일(content_sha256)을 전에 올렸으면 그때 만든 발문을
@@ -78,6 +79,7 @@ const only = (opt('--only') ?? '').split(',').map((s) => s.trim()).filter(Boolea
 const budgetUsd = Number(opt('--budget', '40'));
 const globalDayLimitUsd = Number(opt('--global-day-limit', '60'));
 const dryRun = flag('--dry-run');
+const keepPrior = flag('--keep-prior');
 
 function die(msg: string): never {
   console.error(msg);
@@ -334,7 +336,7 @@ async function main() {
         console.log(`- ${m.key} run${run}: 계정 주인이 같은 파일을 올린 이력 ${foreign.length}건 — 이전 발문이 섞이므로 건너뜀`);
         continue;
       }
-      const toClear = (sameSha ?? []).map((r) => r.id as string);
+      const toClear = keepPrior ? [] : (sameSha ?? []).map((r) => r.id as string);
       if (toClear.length > 0) {
         const { error: isoErr } = await db
           .from('user_uploads')

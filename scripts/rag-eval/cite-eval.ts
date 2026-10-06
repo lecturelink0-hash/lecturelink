@@ -126,6 +126,8 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + (Number(b) || 0), 0);
   const citeFixOk = sum(G.map((g) => g.citeFixOk));
   const citeDroppedInFix = sum(G.map((g) => g.citeDroppedInFix));
   const citeReattributed = sum(G.map((g) => g.citeReattributed));
+  // PR J 관대 기준: 틀린 인용만 떼고 남긴 문항(교정 묶음 포함)
+  const citeRefsDropped = sum(G.map((g) => g.citeRefsDropped));
   const reasons: Record<string, number> = {};
   for (const r of on) for (const b of r.diagnostics?.batches ?? []) for (const [k, v] of Object.entries(b.citeFirst?.reasons ?? {})) reasons[k] = (reasons[k] ?? 0) + Number(v);
   // I6·I7 원가·시간
@@ -151,12 +153,14 @@ const sum = (xs: number[]) => xs.reduce((a, b) => a + (Number(b) || 0), 0);
   const report = {
     lenientFirstRate: r4(citeChecked ? citeLenient / citeChecked : null),
     reattributed: citeReattributed,
+    refsDroppedKept: citeRefsDropped,
     firstFailReasons: reasons,
     repair: { attempted: citeRepairAttempted, repaired: citeRepaired, fixChecked: citeFixChecked, fixOk: citeFixOk, droppedInLaterFixes: citeDroppedInFix },
     verify: { on: verifyRate(on), base: verifyRate(base) },
     generateCalls: { on: genCalls(on), base: genCalls(base) },
     evidenceWaitMs: { median: median(on.map((r) => Number(r.diagnostics?.generation?.ragOn?.waitMs))), max: Math.max(...on.map((r) => Number(r.diagnostics?.generation?.ragOn?.waitMs ?? 0))) },
     d3: { slotsWithoutUnit: sum(on.map((r) => Number(r.diagnostics?.generation?.ragOn?.slotsWithoutUnit ?? 0))), insufficientUnitsInBatches: sum(on.flatMap((r) => (r.diagnostics?.batches ?? []).map((b: Rec) => Number(b.evidenceInsufficient ?? 0)))) },
+    imageSlots: on.filter((r) => r.diagnostics?.generation?.ragOn?.imageSlots).map((r) => ({ key: r.key, ...r.diagnostics.generation.ragOn.imageSlots })),
     evidenceChars: { median: median(on.flatMap((r) => (r.diagnostics?.batches ?? []).map((b: Rec) => Number(b.evidenceChars)))) },
     kinds: on.flatMap((r) => (r.questions ?? []).map((q: Rec) => q.kind)).reduce((a: Rec, k: string) => ((a[k] = (a[k] ?? 0) + 1), a), {}),
     totalUsd: r4(sum(on.map((r) => Number(r.cost?.totalUsd ?? 0)))),

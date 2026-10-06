@@ -11,7 +11,8 @@
  */
 import type { EvidenceChunk } from './cite.ts';
 import type { PackEntry, UnitRetrieval } from './pack.ts';
-import type { PlanUnit, SlotType } from './plan.ts';
+import { unitFits, type PlanUnit, type SlotType } from './plan.ts';
+import type { BatchQuota } from '../ai/type-plan.ts';
 
 export interface SlotEvidenceInput {
   /** generation_slot. */
@@ -176,4 +177,136 @@ export function slotEvidenceInputs(args: {
       insufficient: useBefore,
     };
   });
+}
+
+// ── 근거 부족(D3)·보충 (PR J) ────────────────────────────────────────────────
+
+/**
+ * 근거 부족 칸을 뺀 묶음 쿼터 — 빠진 칸의 유형(D3 교체 뒤)만큼 줄인다. 그 유형 몫이 이미 0 이면 free → 아무 유형 순으로 줄인다.
+ * 합은 남은 칸 수와 같다.
+ */
+export function reduceQuota(quota: BatchQuota, skippedTypes: readonly SlotType[]): BatchQuota {
+  const q = { ...quota };
+  for (const t of skippedTypes) {
+    const order: SlotType[] = [t, 'free', 'knowledge', 'clinical', 'image'];
+    const k = order.find((x) => q[x] > 0);
+    if (k) q[k] -= 1;
+  }
+  return q;
+}
+
+/** 쿼터를 칸 유형 목록으로 편다(이미지 → 임상 → 지식 → free, assignUnitsToSlots 와 같은 순서). */
+export function expandQuota(quota: BatchQuota): SlotType[] {
+  return [
+    ...Array<SlotType>(Math.max(0, quota.image)).fill('image'),
+    ...Array<SlotType>(Math.max(0, quota.clinical)).fill('clinical'),
+    ...Array<SlotType>(Math.max(0, quota.knowledge)).fill('knowledge'),
+    ...Array<SlotType>(Math.max(0, quota.free)).fill('free'),
+  ];
+}
+
+/**
+ * 보충 묶음의 칸마다 쓸 단위 — 부족 유형에 맞춰 다시 고른다(5.2 D3 '유형 교정은 대체된 단위 기준으로 다시 계산').
+ *  - 칸의 원래 단위가 원하는 유형에 맞으면 그대로
+ *  - 아니면 아직 안 쓴 예비 단위 중 근거가 충분하고(이미지면 그림 일치까지) 유형이 맞는 것
+ *  - 그것도 없으면 원래 단위
+ * used 는 고른 예비 단위를 기록한다(라운드를 넘어 같은 예비를 두 번 쓰지 않게 호출자가 들고 있는다).
+ */
+export function backfillSlotInputs(args: {
+  slots: readonly number[];
+  /** 칸별로 원하는 유형(보충 쿼터를 expandQuota 로 편 것). 모자라면 'free'. */
+  wanted: readonly SlotType[];
+  /** generation_slot → 칸의 단위(D3 교체 뒤). */
+  slotUnit: ReadonlyMap<number, string | null>;
+  /** 예비 단위 id(우선순). */
+  reserve: readonly string[];
+  used: Set<string>;
+  units: ReadonlyMap<string, PlanUnit>;
+  retrievals: ReadonlyMap<string, UnitRetrieval>;
+}): Array<SlotEvidenceInput & { fromReserve: boolean }> {
+  const ok = (id: string, t: SlotType) => {
+    const u = args.units.get(id);
+    const r = args.retrievals.get(id);
+    if (!u || !r?.sufficient || r.pack.length === 0) return false;
+    if (t === 'image' && r.captionMatch !== true) return false;
+    return unitFits(u, t);
+  };
+  return args.slots.map((slot, i) => {
+    const t: SlotType = args.wanted[i] ?? 'free';
+    const own = args.slotUnit.get(slot) ?? null;
+    let unitId = own;
+    let fromReserve = false;
+    if (!(own && ok(own, t)) && t !== 'free') {
+      const pick = args.reserve.find((id) => !args.used.has(id) && ok(id, t));
+      if (pick) {
+        args.used.add(pick);
+        unitId = pick;
+        fromReserve = true;
+      }
+    }
+    return {
+      slot,
+      type: t,
+      unit: unitId ? (args.units.get(unitId) ?? null) : null,
+      retrieval: unitId ? (args.retrievals.get(unitId) ?? null) : null,
+      insufficient: false,
+      fromReserve,
+    };
+  });
+}
+
+/**
+ * 이미지 칸 다시 고르기(PR J) — 이미지 칸 단위의 그림이 실제로 쓸 수 있는지(정제 성공)와, 칸끼리 같은 그림을 나눠 쓰는지 본다.
+ * PR I 실측: 계획이 이미지 단위 셋을 같은 그림 하나에 몰았고 그 그림이 정제에서 탈락해 이미지형이 0 이 됐다(R5 라 다른 그림을 주지 않는다).
+ *  - 칸 단위에 쓸 수 있고 아직 안 쓴 그림이 있으면 그대로(그 그림을 차지)
+ *  - 아니면 예비 이미지 단위(근거 충분·그림 일치·쓸 수 있는 새 그림) — used 에 기록(보충과 공유)
+ *  - 그것도 없으면 텍스트 몫(free)으로 넘긴다(단위는 그대로 — D3 교체 뒤라 텍스트 근거는 충분하다)
+ * 입력 칸 배열은 바꾸지 않는다.
+ */
+export function assignImageSlots(args: {
+  slots: ReadonlyArray<{ type: SlotType; unitId: string | null }>;
+  units: ReadonlyMap<string, PlanUnit>;
+  retrievals: ReadonlyMap<string, UnitRetrieval>;
+  reserve: readonly string[];
+  used: Set<string>;
+  /** 계획 그림 id → 전역 이미지 인덱스. */
+  figureGi: ReadonlyMap<string, number>;
+  /** 정제에 성공한 전역 이미지 인덱스. */
+  usableGis: ReadonlySet<number>;
+}): { slots: Array<{ type: SlotType; unitId: string | null }>; kept: number; replaced: number; spilled: number } {
+  const claimed = new Set<number>();
+  const freeFigure = (unitId: string | null) => {
+    const u = unitId ? args.units.get(unitId) : undefined;
+    if (!u) return undefined;
+    return u.figures
+      .map((f) => args.figureGi.get(f))
+      .find((gi): gi is number => gi !== undefined && args.usableGis.has(gi) && !claimed.has(gi));
+  };
+  let kept = 0;
+  let replaced = 0;
+  let spilled = 0;
+  const out = args.slots.map((s) => {
+    if (s.type !== 'image') return { ...s };
+    const own = freeFigure(s.unitId);
+    if (own !== undefined) {
+      claimed.add(own);
+      kept += 1;
+      return { ...s };
+    }
+    for (const id of args.reserve) {
+      if (args.used.has(id)) continue;
+      const u = args.units.get(id);
+      const r = args.retrievals.get(id);
+      if (!u?.needsImage || !r?.sufficient || r.captionMatch !== true || r.pack.length === 0) continue;
+      const gi = freeFigure(id);
+      if (gi === undefined) continue;
+      claimed.add(gi);
+      args.used.add(id);
+      replaced += 1;
+      return { type: 'image' as SlotType, unitId: id };
+    }
+    spilled += 1;
+    return { type: 'free' as SlotType, unitId: s.unitId };
+  });
+  return { slots: out, kept, replaced, spilled };
 }

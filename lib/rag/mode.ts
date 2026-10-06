@@ -81,6 +81,22 @@ export function embedProvider(model: string): EmbedProvider | null {
 }
 
 /** 진단·결과 보고에 싣는 검색 구성 스냅샷(가이드 §10.2 — 재현 조건을 남긴다). */
+/**
+ * 문항 출처(source_refs.retrieval)에 남기는 검색 구성 — 계획서 5.2 K {embed, k, fusion, reranker, topN, mmr}(+ τ).
+ * 근거 팩으로 만든 문항(on)에만 붙는다. topN = 그 요청의 근거 팩 크기(난이도 '상'이면 8).
+ */
+export function retrievalRefSnapshot(packSize: number, env: Record<string, string | undefined> = process.env) {
+  return {
+    embed: ragEmbedModel(env),
+    k: RAG_DEFAULTS.candidateK,
+    fusion: RAG_DEFAULTS.sparse ? 'rrf+trgm' : 'rrf',
+    reranker: RAG_DEFAULTS.reranker,
+    topN: packSize,
+    mmr: RAG_DEFAULTS.mmrLambda,
+    tau: RAG_DEFAULTS.tau,
+  };
+}
+
 export function ragConfigSnapshot(env: Record<string, string | undefined> = process.env): Record<string, unknown> {
   const parsed = parseRagMode(env.PRIVATE_RAG_MODE);
   return {
