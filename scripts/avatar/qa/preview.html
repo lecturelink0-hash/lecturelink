@@ -1,0 +1,79 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>patient glb qa</title>
+<style>body{margin:0;background:#dfe7ea;font-family:sans-serif}#ui{position:fixed;top:8px;left:8px;background:#fff9;padding:6px;font-size:12px}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><div id="ui"></div>
+<script type="module">
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js'
+const q = new URLSearchParams(location.search)
+const files = (q.get('files') || 'patient_male,patient_female').split(',')
+const dir = q.get('dir') || '/out/'
+const pose = q.get('pose') || 'stand'   // stand | lying | tpose
+const anim = q.get('anim') !== '0'
+const targetH = Number(q.get('h') || 1.55)
+const W = innerWidth, Hh = innerHeight
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
+renderer.setSize(W, Hh); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true
+document.body.appendChild(renderer.domElement)
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#dfe7ea')
+scene.add(new THREE.AmbientLight(0xffffff, 0.9))
+const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(2, 4, 3); scene.add(dl)
+const grid = new THREE.GridHelper(6, 12, 0x99a, 0xbbc); scene.add(grid)
+const camera = new THREE.PerspectiveCamera(40, W / Hh, 0.05, 100)
+if (pose === 'lying') { camera.position.set(0, 2.2, 2.6); camera.lookAt(0, 0.6, 0) }
+else if (q.get('view') === 'side') { camera.position.set(4.2, 0.95, 0); camera.lookAt(0, 0.85, 0) }
+else { camera.position.set(0, 0.95, 4.2); camera.lookAt(0, 0.85, 0) }
+const COLOR_FIX = { Skin: '#e8b89a', Face: '#3a2a20' }
+const loader = new GLTFLoader(); const mixers = []; const groups = []
+const spacing = Number(q.get('spacing') || 0.9)
+let i = 0
+for (const f of files) {
+  const url = dir + f + '.glb?cb=' + Date.now()
+  loader.load(url, (g) => {
+    const root = SkeletonUtils.clone(g.scene)
+    root.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (COLOR_FIX[m.name]) m.color.set(COLOR_FIX[m.name]); m.flatShading = true; m.needsUpdate = true }) })
+    root.updateMatrixWorld(true)
+    const box = new THREE.Box3(); const vv = new THREE.Vector3()
+    root.traverse((o) => {
+      if (!o.isMesh && !o.isSkinnedMesh) return
+      const pos = o.geometry.attributes.position
+      if (o.isSkinnedMesh) o.skeleton.update()
+      for (let k = 0; k < pos.count; k++) { vv.fromBufferAttribute(pos, k); if (o.isSkinnedMesh) o.applyBoneTransform(k, vv); vv.applyMatrix4(o.matrixWorld); box.expandByPoint(vv) }
+    })
+    const h = box.max.y - box.min.y
+    const hm = f.match(/_(\d{3})$/); const targetHf = hm ? Number(hm[1]) / 100 : targetH
+    ;(window.__boxes = window.__boxes || []).push({ f, min: box.min.toArray().map((v) => +v.toFixed(3)), max: box.max.toArray().map((v) => +v.toFixed(3)) })
+    if (q.get('center')) { root.position.x = -(box.min.x + box.max.x) / 2; root.position.z = -(box.min.z + box.max.z) / 2 }
+    const s = targetHf / h
+    const grp = new THREE.Group(); grp.add(root); root.position.y = -box.min.y; root.scale.setScalar(1)
+    grp.scale.setScalar(s)
+    const idx = files.indexOf(f)
+    const x = (idx - (files.length - 1) / 2) * spacing
+    if (pose === 'lying') { grp.rotation.set(-Math.PI / 2, 0, Math.PI / 2); grp.position.set(targetH - 0.775, 0.5 - box.min.z * s + 0.0, x * 1.2) }
+    else grp.position.set(x, 0, 0)
+    scene.add(grp); groups.push(grp)
+    if (anim && pose !== 'tpose') {
+      const pick = q.get('clip') || 'Idle_Neutral'
+      const clip = g.animations.find((a) => new RegExp('(^|\\|)' + pick + '$').test(a.name)) || g.animations.find((a) => a.name === 'Idle' || /(^|\|)Idle$/.test(a.name)) || (q.get('anyanim') ? g.animations[0] : null)
+      document.getElementById('ui').textContent += ' clip=' + (clip ? clip.name : 'none')
+      if (clip) { const m = new THREE.AnimationMixer(root); m.clipAction(clip).play(); mixers.push(m) }
+    }
+    // 진찰 부위 마커 (성인 비율표) — 눕기 뷰에서 확인용
+    if (pose === 'lying' && q.get('marks')) {
+      const FR = { head: .93, neck: .84, chest: .7, abdomen: .55, pelvis: .45, legs: .25, knee: .27, foot: .06 }
+      for (const [k, fr] of Object.entries(FR)) {
+        const mx = targetH * (1 - fr) - 0.775
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.02), new THREE.MeshBasicMaterial({ color: 0xff2020 }))
+        m.position.set(mx, 0.5 + 0.35, x * 1.2); scene.add(m)
+      }
+    }
+    document.getElementById('ui').textContent = 'loaded ' + (++i) + '/' + files.length + ' pose=' + pose
+  }, undefined, (e) => { document.getElementById('ui').textContent = 'ERR ' + url + ' ' + e.message })
+}
+const clock = new THREE.Clock()
+function tick() { const d = clock.getDelta(); mixers.forEach((m) => m.update(d)); renderer.render(scene, camera); requestAnimationFrame(tick) }
+tick()
+window.__ready = () => i === files.length
+</script></body></html>
