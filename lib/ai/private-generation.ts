@@ -3518,6 +3518,11 @@ async function runPrivateGeneration(
        * figureGi = 계획 입력 그림 id(F1…) → 전역 이미지 인덱스(gi). 단위 그림을 [이미지 N] 으로 짚어 줄 때 쓴다.
        */
       evidence?: { ev: BatchEvidence; figureGi: ReadonlyMap<string, number> };
+      /**
+       * 같은 세트에 이미 저장된 발문(PR K, RAG on 보충). 이전 업로드 발문(P11)보다 앞에 '이미 출제된 문항'으로 보여 준다 —
+       * 보충이 기존 문항과 거의 같은 문항을 다시 만들어 세트 중복으로 지워지던 것을 줄인다.
+       */
+      extraPriorStems?: readonly string[];
     };
 
     // 진단 카운터. generateAndPersistBatch 가 선발사 경로에서 일찍 호출되므로
@@ -3688,8 +3693,9 @@ async function runPrivateGeneration(
       const priorStems = await withDeadline(priorStemsPromise, PRIOR_STEMS_TIMEOUT_MS, [], () =>
         bumpGenDiag('priorStemsTimeout'),
       );
-      const priorDirective = buildPriorStemsDirective(priorStems ?? []);
+      const priorDirective = buildPriorStemsDirective([...(gen.extraPriorStems ?? []), ...(priorStems ?? [])]);
       if (priorDirective) batchDiag.priorStems = (priorStems ?? []).length;
+      if (gen.extraPriorStems?.length) batchDiag.setStems = gen.extraPriorStems.length;
       // 이미지를 받지 못한 배치가 발문에서 그림을 가리키면(예: "다음은 …모식도이다")
       // 학생 화면에 그림 없는 문항이 나온다. 배치 단위로 명시 금지한다.
       const noImageDirective =
@@ -5815,7 +5821,7 @@ async function runPrivateGeneration(
     };
     // 00045 의 문항 임베딩 컬럼·match_private_questions 는 생성된 DB 타입에 아직 없다 — 이 검사에서만 타입 없는 클라이언트로 부른다.
     const dedupDb = admin as unknown as SupabaseClient;
-    const enforceSetDuplicates = async (): Promise<void> => {
+    const enforceSetDuplicates = async (opts: { lastRound?: boolean } = {}): Promise<void> => {
       if (!ragIndexingEnabled(RAG_MODE) || !questionEmbeddingColumnsSupported) return;
       diag.generation.dedup = dedupDiag;
       try {
@@ -5881,8 +5887,18 @@ async function runPrivateGeneration(
         );
         dedupDiag.withinFound = Number(dedupDiag.withinFound) + within.length;
         dedupDiag.crossFound = Number(dedupDiag.crossFound) + cross.length;
-        const hits = [...within, ...cross];
+        let hits = [...within, ...cross];
         let remaining = items;
+        // 마지막 보충 라운드(PR K): 지우면 요청 수를 못 채우는 만큼은 지우지 않고 남긴다 — 수량 우선(마지막 라운드 그림 규칙과 같은 원칙).
+        if (ragOn && opts.lastRound && hits.length > 0) {
+          const room = Math.max(0, items.length - deliverableCount);
+          if (room < hits.length) {
+            const kept = hits.slice(room);
+            hits = hits.slice(0, room);
+            dedupDiag.keptLastRound = Number(dedupDiag.keptLastRound ?? 0) + kept.length;
+            warnings.push(`마지막 보충 라운드라 세트 중복 ${kept.length}문항은 지우지 않음(요청 수 우선).`);
+          }
+        }
         if (ragOn && hits.length > 0) {
           const ids = hits.map((h) => h.id);
           await admin.from('private_questions').delete().in('id', ids);
@@ -6106,6 +6122,12 @@ async function runPrivateGeneration(
         : undefined;
       const ragFillFigure =
         ragFillGiOk && ragFillFigureOk ? { unitOk: ragFillFigureOk, giOk: ragFillGiOk, claimed: new Set<number>() } : undefined;
+      // RAG on 보충: 지금 세트의 저장 발문(PR K 재조정 a) — 기존 문항과 거의 같은 문항을 다시 만들지 않게.
+      let ragSetStems: string[] = [];
+      if (ragFillEvidenceFor) {
+        const { data: stemRows } = await admin.from('private_questions').select('stem').eq('upload_id', uploadRow.id);
+        ragSetStems = (stemRows ?? []).map((r) => String(r.stem ?? '')).filter(Boolean);
+      }
       const imagesOffered = fillFeatured.reduce((n, f) => n + f.length, 0);
       roundRec.imagesOffered = imagesOffered;
       // 보충 묶음의 유형 쿼터 = **모자란 유형**부터(type-plan.ts planFillQuotas). 종전에는 묶음마다
@@ -6132,6 +6154,7 @@ async function runPrivateGeneration(
             // → 빈 슬롯이 속한 구간의 컨텍스트만 잘라 싣고, 재시도 대기도 짧게 잡는다.
             contextText: fillEvidence ? fillEvidence.text : backfillContext(slots[0]),
             ...(fillEvidence ? { evidence: { ev: fillEvidence, figureGi: ragFigureGi } } : {}),
+            ...(fillEvidence && ragSetStems.length > 0 ? { extraPriorStems: ragSetStems } : {}),
             featured: [],
             // RAG on: 이미지는 빈 칸 단위의 그림 중 정제 성공·블라인드 미탈락·잔여 용량이 있는 것만(R5, PR K F1).
             // 마지막 라운드는 이미지 없이(위와 같은 이유).
@@ -6175,8 +6198,8 @@ async function runPrivateGeneration(
       await removeBrokenFigureQuestions();
       // 보충·재작성도 표식 문항을 만든다 — 라운드마다 상한을 다시 강제한다.
       await enforceMarkerQuestionCap();
-      // 보충 문항도 세트 중복을 거친다(PR J) — 지운 칸은 다음 라운드가 채운다.
-      await enforceSetDuplicates();
+      // 보충 문항도 세트 중복을 거친다(PR J) — 지운 칸은 다음 라운드가 채운다. 마지막 라운드는 채울 기회가 없어 수량을 지킨다(PR K).
+      await enforceSetDuplicates({ lastRound: isLastBackfillRound });
       const beforeCount = saved.length;
       saved = await readSaved();
       roundRec.ms = Date.now() - tRound;

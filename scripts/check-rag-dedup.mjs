@@ -154,7 +154,7 @@ check('PG: 중복 검사는 shadow·on 에서만(off 는 임베딩도 안 함)',
 check('PG: 삭제는 on 에서만', /if \(ragOn && hits\.length > 0\) \{[\s\S]{0,200}\.delete\(\)\.in\('id', ids\)/.test(body) && count(/\.delete\(\)\.in\('id', ids\)/g) === 1);
 check('PG: 임베딩 비용 rag.question·원가 반영·문항 임베딩 저장', /endpoint: 'rag\.question'/.test(body) && /totalCost \+= emb\.costUsd;/.test(body) && /update\(\{ embedding: emb\.embeddings\[i\], embedding_model: dedupModel \}\)/.test(body));
 check('PG: 세트 간은 같은 자료·이번 업로드 제외·폐기 임계', /p_content_sha: contentSha256/.test(body) && /p_exclude_upload: uploadRow\.id/.test(body) && /p_threshold: DEDUP_DEFAULTS\.threshold/.test(body));
-check('PG: 저장 뒤 한 번 + 보충 라운드마다', count(/await enforceSetDuplicates\(\);/g) === 2 && /await enforceMarkerQuestionCap\(\);\s*\/\/[^\n]*\n\s*await enforceSetDuplicates\(\);/.test(pg));
+check('PG: 저장 뒤 한 번 + 보충 라운드마다', count(/await enforceSetDuplicates\(\);/g) === 1 && /await enforceMarkerQuestionCap\(\);\s*\/\/[^\n]*\n\s*await enforceSetDuplicates\(\{ lastRound: isLastBackfillRound \}\);/.test(pg));
 check('PG: 진단에 G1 중복률(남은 세트 기준)', /dedupDiag\.g1 = duplicateRate\(remaining, DEDUP_DEFAULTS\.g1Threshold\);/.test(body));
 check('PG: 근거 부족 칸은 on 블록에서만 정함', count(/ragSkipSlots = skip;/g) === 1 && /if \(ragOn\) \{[\s\S]{0,6000}ragSkipSlots = skip;/.test(pg));
 check('PG: 칸이 전부 근거 부족이면 현행 경로로', /if \(skip\.size >= desiredCount\) \{[\s\S]{0,300}'no_sufficient_units'/.test(pg));
@@ -170,5 +170,8 @@ check('PG: 이미지 칸 다시 고르기는 보충과 같은 예비 사용 기�
 
 // PR K: 주제 커버리지 진단(G1)
 check('PG: 커버리지 = 본 칸 단위 중 저장 문항이 그 단위 팩 청크를 인용한 비율(on 근거 경로에서만)', /ragCoverage = new Map\(\);\s*for \(const \[i, sl\] of after\) \{\s*if \(skip\.has\(i\) \|\| !sl\.unitId\) continue;/.test(pg) && /if \(ragCoverage && ragCoverage\.size > 0 && evidenceColumnSupported\) \{/.test(pg) && /diag\.generation\.ragCoverage = \{ units: ragCoverage\.size, covered, rate:/.test(pg));
+// PR K 재조정: 마지막 보충 라운드 수량 우선 · 보충에 세트 발문
+check('PG: 마지막 보충 라운드는 요청 수를 못 채우게 되는 만큼 중복을 남김(on)', /if \(ragOn && opts\.lastRound && hits\.length > 0\) \{\s*const room = Math\.max\(0, items\.length - deliverableCount\);/.test(body) && /hits = hits\.slice\(0, room\);/.test(body) && /await enforceSetDuplicates\(\{ lastRound: isLastBackfillRound \}\);/.test(pg) && count(/await enforceSetDuplicates\(\);/g) === 1);
+check('PG: on 보충은 지금 세트의 저장 발문을 이미 출제된 문항 앞에 보여 줌', /\.\.\.\(fillEvidence && ragSetStems\.length > 0 \? \{ extraPriorStems: ragSetStems \} : \{\}\)/.test(pg) && /buildPriorStemsDirective\(\[\.\.\.\(gen\.extraPriorStems \?\? \[\]\), \.\.\.\(priorStems \?\? \[\]\)\]\)/.test(pg) && /if \(ragFillEvidenceFor\) \{\s*const \{ data: stemRows \}/.test(pg));
 console.log(`${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
