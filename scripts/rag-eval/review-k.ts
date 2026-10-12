@@ -3,7 +3,7 @@
  *
  * 1) 페이지: npx tsx scripts/rag-eval/review-k.ts page --out <골든셋 결과 폴더> --on e5-on --off g0-off \
  *      --r2-cache <faithfulness 캐시.jsonl> --r3 <cite-labels 표본.json> --to <로컬 폴더>/review-k.html [--seed 20261012]
- *    R2 표본: on 30 + off 30(근거가 있는 판정분에서 자료·회차 층화 무작위). LLM 판정은 페이지에 보이지 않는다(앵커링 방지).
+ *    R2 표본: on 30 + off 30(근거 청크가 있는 문항에서 자료별 층화 무작위). LLM 판정은 페이지에 보이지 않는다(앵커링 방지).
  *    브라우저에서 고르면 자동 저장되고, '내보내기'로 review-k-labels.json 을 받는다.
  * 2) 집계: npx tsx scripts/rag-eval/review-k.ts stats --labels <review-k-labels.json> --r2-cache <캐시.jsonl>
  *    R2 사람–LLM κ(3분류·이분류)와 사람 기준 충실도. R3 는 cite-labels.ts judge --human 으로.
@@ -46,7 +46,6 @@ function page() {
   const outRoot = resolve(opt('--out') ?? '');
   const onLabel = opt('--on', 'e5-on')!;
   const offLabel = opt('--off', 'g0-off')!;
-  const cache = readCache(opt('--r2-cache')!);
   const rand = rng(Number(opt('--seed', '20261012')));
   const r2: Rec[] = [];
   for (const label of [onLabel, offLabel]) {
@@ -56,10 +55,10 @@ function page() {
       const chunkText = new Map<string, string>((r.chunks ?? []).map((c: Rec) => [String(c.id), String(c.text ?? '')]));
       for (const q of r.questions ?? []) {
         const key = `${label}|${r.key}|${r.run}|${q.id}`;
-        const j = cache.get(key);
-        if (!j || j.noEvidence) continue;
+        // 판정기와 같은 근거(faithfulness.ts evidenceChunkIds) — 근거 청크가 없는 문항은 표본에서 뺀다(판정기도 '근거 없음'으로 따로 셈).
         const ids: string[] = Array.isArray(q.evidence) && q.evidence.length ? q.evidence.map((e: Rec) => String(e.chunk_id)) : (q.source_refs?.chunkIds ?? []).map(String);
         const evidence = [...new Set(ids)].map((id) => chunkText.get(id)).filter(Boolean).join('\n\n— — —\n\n').slice(0, 9000);
+        if (!evidence.trim()) continue;
         (byMat.get(r.key) ?? byMat.set(r.key, []).get(r.key)!).push({ key, stem: q.stem, choices: q.choices, answer: q.answer_index, explanation: q.explanation, evidence });
       }
     }
