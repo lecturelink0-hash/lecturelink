@@ -30,6 +30,9 @@ on:
       - 'lib/ai/cost-cap.ts'
       - 'lib/ai/private-generation.ts'
       - 'lib/ai/kmle-format.ts'
+      - 'lib/ai/client.ts'
+      - 'lib/ai/gemini.ts'
+      - 'lib/ai/retry-policy.ts'
       - 'lib/utils/api.ts'
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
@@ -80,6 +83,9 @@ on:
       - 'lib/ai/cost-cap.ts'
       - 'lib/ai/private-generation.ts'
       - 'lib/ai/kmle-format.ts'
+      - 'lib/ai/client.ts'
+      - 'lib/ai/gemini.ts'
+      - 'lib/ai/retry-policy.ts'
       - 'lib/utils/api.ts'
       - 'app/(app)/admin/metrics/**'
       - 'datasets/**'
@@ -141,6 +147,7 @@ jobs:
       - run: npm run check:rag-cite
       # 세트 중복·근거 부족(D3)·검색 스냅샷 — 중복 검사는 shadow·on, 삭제는 on, D3 칸은 만들지 않고 알림 (RAG 실행계획 v1.1 5.2 J·K)
       - run: npm run check:rag-dedup
+      - run: npm run check:retry
       # 문항 통계·층화 추출 산식 — KR-20·변별도·point-biserial 손계산 대조 (분담표 A12·A13)
       - run: npm run check:item-stats
       # 데이터 누수 방지 — 잠긴 테스트셋이 개발 중에 바뀌지 않았는지 (가이드 10.2)
