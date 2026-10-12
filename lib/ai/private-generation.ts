@@ -5310,6 +5310,8 @@ async function runPrivateGeneration(
     let ragFigureGi: ReadonlyMap<string, number> = new Map();
     // 근거 부족(D3, PR J): 예비로도 못 채운 칸 — 만들지 않고 보충도 하지 않는다(적게 제공 + insufficient_evidence 알림).
     let ragSkipSlots: ReadonlySet<number> = new Set();
+    /** 주제 커버리지 진단(G1, PR K): 본 칸 단위 → 그 단위 근거 팩의 청크 id. on 이 근거 경로로 돌 때만 채운다. */
+    let ragCoverage: Map<string, Set<string>> | null = null;
     let ragSlotType: ReadonlyMap<number, SlotType> = new Map();
     // 보충 묶음이 부족 유형에 맞는 예비 단위를 고르는 함수(5.2 D3 유형 재계산). on 근거 경로에서만 있다.
     /** 보충 그림 조건(PR K F1·F3): 단위 조건·그림 조건·이번 라운드에 이미 실은 그림. */
@@ -5389,6 +5391,11 @@ async function runPrivateGeneration(
         } else {
           ragSkipSlots = skip;
           ragSlotType = new Map([...after.entries()].map(([i, sl]) => [i, sl.type]));
+          ragCoverage = new Map();
+          for (const [i, sl] of after) {
+            if (skip.has(i) || !sl.unitId) continue;
+            ragCoverage.set(sl.unitId, new Set((retrievals.get(sl.unitId)?.pack ?? []).map((e) => e.chunkId)));
+          }
           // 그림 대체 후보(PR K F3): 이미지 칸이 있는 묶음에 다른 이미지 단위의 그림을 함께 싣는다(칸 단위 그림 포함 최대 3장).
           // 본 묶음의 대체 그림은 이미지 칸이 차지한 그림을 피하고, 한 묶음에만 준다(같은 그림 문항이 상한을 넘지 않게).
           const imageFiguresOf = (inputs: readonly SlotEvidenceInput[], giOk: (gi: number) => boolean) =>
@@ -6191,6 +6198,22 @@ async function runPrivateGeneration(
       );
     }
     diag.timings.backfillMs = Date.now() - tBackfill;
+    // 주제 커버리지(G1 '출제 단위 중 문항이 배정된 비율', PR K): 본 칸 단위 중 저장 문항이 그 단위 근거 팩의 청크를
+    // 하나라도 인용한 단위의 비율. 팩끼리 청크가 겹치면 조금 높게 잡힌다. 진단만 — 실패해도 생성에는 영향 없다.
+    if (ragCoverage && ragCoverage.size > 0 && evidenceColumnSupported) {
+      try {
+        const { data: evRows } = await dedupDb.from('private_questions').select('evidence').eq('upload_id', uploadRow.id);
+        const cited = new Set<string>();
+        for (const r of (evRows ?? []) as Array<{ evidence?: Array<{ chunk_id?: string | null }> | null }>) {
+          for (const e of r.evidence ?? []) if (e?.chunk_id) cited.add(String(e.chunk_id));
+        }
+        let covered = 0;
+        for (const chunkIds of ragCoverage.values()) if ([...chunkIds].some((c) => cited.has(c))) covered += 1;
+        diag.generation.ragCoverage = { units: ragCoverage.size, covered, rate: Math.round((covered / ragCoverage.size) * 1000) / 1000 };
+      } catch {
+        // 진단만 — 무시
+      }
+    }
     const generatedCount = saved.length;
     const insertedIds = saved.map((r) => r.id);
     completedQuestions = generatedCount;

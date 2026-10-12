@@ -168,5 +168,7 @@ check('PG: 보충은 부족 유형에 맞는 예비 단위(on)', /ragFillEvidenc
 check('PG: on 에서 이미지 정제를 근거 대기와 겹쳐 미리 돌림', /const usableGisPromise: Promise<Set<number>> = useImages\s*\? Promise\.all\(featuredImages\.map\(\(fi\) => withRefineTimeout\(getDisplayPng\(fi\.gi\)\)/.test(pg) && /if \(ragOn\) \{[\s\S]{0,900}const usableGisPromise/.test(pg));
 check('PG: 이미지 칸 다시 고르기는 보충과 같은 예비 사용 기록을 씀', /assignImageSlots\(\{ slots: run\.slots, units, retrievals, reserve, used: usedReserve, figureGi, usableGis \}\)/.test(pg) && /used: usedReserve,/.test(pg));
 
+// PR K: 주제 커버리지 진단(G1)
+check('PG: 커버리지 = 본 칸 단위 중 저장 문항이 그 단위 팩 청크를 인용한 비율(on 근거 경로에서만)', /ragCoverage = new Map\(\);\s*for \(const \[i, sl\] of after\) \{\s*if \(skip\.has\(i\) \|\| !sl\.unitId\) continue;/.test(pg) && /if \(ragCoverage && ragCoverage\.size > 0 && evidenceColumnSupported\) \{/.test(pg) && /diag\.generation\.ragCoverage = \{ units: ragCoverage\.size, covered, rate:/.test(pg));
 console.log(`${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
