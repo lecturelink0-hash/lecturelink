@@ -110,6 +110,7 @@ import {
 } from './difficulty-conditions';
 import { judgeConditionsOnce } from './condition-judge';
 import { lintChoiceLeakage, remapChoiceMarks, shuffleChoices } from './kmle-format';
+import { isPermanentQuota429Message } from './retry-policy';
 import { buildUploadNotices } from './upload-notice';
 import {
   REFERENCE_PROFILE_SYSTEM_PROMPT,
@@ -564,6 +565,11 @@ function sanitizeErrorMessage(raw: unknown): string {
   // 조치(충전/한도 상향)로 이어지게 한다. 실측에서 이 경우 화면에는
   // "잠시 후 다시 시도해주세요"만 떠서 원인을 알 수 없었다.
   const lower = m.toLowerCase();
+  // 할당량 정보 없는 RESOURCE_EXHAUSTED 는 모델 쪽 일시적 용량 부족이다(retry-policy.ts). 재시도까지 실패했을 때
+  // "크레딧 소진"이라고 하면 원인을 잘못 알린다.
+  if (lower.includes('resource has been exhausted') && !isPermanentQuota429Message(m)) {
+    return 'AI 서버가 일시적으로 혼잡해 생성을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+  }
   if (
     lower.includes('credit') ||
     lower.includes('billing') ||

@@ -20,6 +20,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { isGeminiProvider, geminiCreateMessage, GEMINI_MODELS } from './gemini';
+import { isPermanentQuota429Message } from './retry-policy';
 
 let cachedClient: Anthropic | undefined;
 // 폴백(secondary) 키 클라이언트. primary 가 크레딧 소진/인증 실패일 때만 사용.
@@ -292,18 +293,13 @@ function getRetryStatus(error: unknown): number | undefined {
  * 재시도하면 호출당 최대 3회 × 45초 백오프를 쓰고, 파이프라인 전체로는 수십 건의
  * 호출이 같은 대기를 반복해 4분을 헛되게 쓴 뒤 실패한다(실측: Vision 25페이지 207초).
  * 이런 429 는 즉시 중단해 사용자에게 바로 원인을 알린다.
+ *
+ * 판단은 문구로만 한다(`retry-policy.ts`). Gemini 는 일시적인 용량 부족에도 상태값 RESOURCE_EXHAUSTED 를 붙이므로
+ * 상태값만으로 소진이라고 보면 잠깐 뒤 풀릴 호출까지 바로 실패한다.
  */
 export function isNonRetryableQuotaError(error: unknown): boolean {
   if (getRetryStatus(error) !== 429) return false;
-  const msg = (error instanceof Error ? error.message : String(error ?? '')).toLowerCase();
-  return (
-    msg.includes('credit') ||           // "prepayment credits are depleted"
-    msg.includes('billing') ||
-    msg.includes('quota exceeded') ||
-    msg.includes('exceeded your current quota') ||
-    msg.includes('resource_exhausted') ||
-    msg.includes('insufficient')
-  );
+  return isPermanentQuota429Message(error instanceof Error ? error.message : String(error ?? ''));
 }
 
 function isRetryableError(error: unknown): boolean {
