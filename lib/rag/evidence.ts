@@ -223,12 +223,18 @@ export function backfillSlotInputs(args: {
   used: Set<string>;
   units: ReadonlyMap<string, PlanUnit>;
   retrievals: ReadonlyMap<string, UnitRetrieval>;
+  /**
+   * 이미지 칸에 쓸 수 있는 그림이 단위에 남아 있는지(PR K F1 — 정제 성공·블라인드 미탈락·재사용 잔여 용량).
+   * 주면 이미지 칸은 칸 단위·예비 단위 모두 이 조건을 통과해야 한다. 안 주면 그림은 보지 않는다(PR J 동작).
+   */
+  figureOk?: (unit: PlanUnit) => boolean;
 }): Array<SlotEvidenceInput & { fromReserve: boolean }> {
   const ok = (id: string, t: SlotType) => {
     const u = args.units.get(id);
     const r = args.retrievals.get(id);
     if (!u || !r?.sufficient || r.pack.length === 0) return false;
     if (t === 'image' && r.captionMatch !== true) return false;
+    if (t === 'image' && args.figureOk && !args.figureOk(u)) return false;
     return unitFits(u, t);
   };
   return args.slots.map((slot, i) => {

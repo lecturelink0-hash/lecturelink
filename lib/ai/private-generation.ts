@@ -87,7 +87,7 @@ import {
   slotEvidenceInputs,
   type BatchEvidence,
 } from '@/lib/rag/evidence';
-import type { SlotType } from '@/lib/rag/plan';
+import type { PlanUnit, SlotType } from '@/lib/rag/plan';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
 import { CLINICAL_IMAGE_KINDS, imageKindLabel, stemModalityConflict } from './stem-modality';
 import {
@@ -126,7 +126,7 @@ import {
   PRIVATE_GENERATION_TOOL_SCHEMA_RAG,
   buildPrivateGenerationUserMessage,
 } from './prompts/private-generation';
-import { buildRagCiteDirective } from './prompts/rag-cite-directive';
+import { buildRagCiteDirective, RAG_FIGURE_DIRECTIVE } from './prompts/rag-cite-directive';
 import {
   STORAGE_BUCKET,
   questionImagePath,
@@ -3525,6 +3525,9 @@ async function runPrivateGeneration(
     // 배치 1개 생성+저장. function 선언 호이스팅 덕분에 OCR 이전의 선발사 호출부에서도
     // 사용할 수 있다 (참조하는 카탈로그·프롬프트는 모두 4)에서 미리 준비됨).
     // slots: 이 배치가 채울 generation_slot 목록(연속이 아닐 수 있다 — 부족분 보충용).
+    // 블라인드 검사에서 폐기·강등된 이미지 문항의 그림(전역 인덱스, PR K F1). RAG on 보충은 이 그림을 다시 싣지 않는다 —
+    // 같은 그림으로 다시 만들면 같은 이유로 또 걸렸다(j-on2 IM1: 이미지 2문항에 그림 1장).
+    const blindFailedGis = new Set<number>();
     async function generateAndPersistBatch(
       batchIndex: number,
       slots: number[],
@@ -3779,7 +3782,7 @@ async function runPrivateGeneration(
         // 인용 지시 본문은 prompts/rag-cite-directive.ts 한 곳에 둔다(PR J — 칸 유형별 지시 V1 실험이 같은 글을 바꿔 끼운다).
         ragDirective =
           buildRagCiteDirective() +
-          (figureLines.length > 0 ? `\n\n**단위별 그림** — 그림 판독 문항은 그 단위의 그림으로 만드세요.\n${figureLines.join('\n')}` : '');
+          (figureLines.length > 0 ? `${RAG_FIGURE_DIRECTIVE}\n${figureLines.join('\n')}` : '');
       }
       const comboDirective = comboBatches.has(batchIndex)
         ? '\n\n이번 묶음에서는 ㄱ/ㄴ/ㄷ 조합형을 **최대 1문항까지만** 포함할 수 있습니다(필요 없으면 넣지 않아도 됩니다). 나머지는 단일 정답 5지선다로 만드세요.'
@@ -4675,6 +4678,7 @@ async function runPrivateGeneration(
             const k = kept[i];
             if (!k) continue;
             if (BLIND_MODE === 'discard') {
+              for (const ix of k.q.image_indices ?? []) if (validImageIndex(ix)) blindFailedGis.add(featured[ix].gi);
               // 폐기는 **발문이 그림을 가리킬 때만** 한다.
               //
               // 종전에는 그림 없이 풀린 문항을 무조건 버렸다. 그런데 그런 문항은 "틀린
@@ -5300,7 +5304,9 @@ async function runPrivateGeneration(
     let ragSkipSlots: ReadonlySet<number> = new Set();
     let ragSlotType: ReadonlyMap<number, SlotType> = new Map();
     // 보충 묶음이 부족 유형에 맞는 예비 단위를 고르는 함수(5.2 D3 유형 재계산). on 근거 경로에서만 있다.
-    let ragFillEvidenceFor: ((slots: readonly number[], quota: BatchQuota) => BatchEvidence | null) | null = null;
+    let ragFillEvidenceFor:
+      | ((slots: readonly number[], quota: BatchQuota, figureOk?: (unit: PlanUnit) => boolean) => BatchEvidence | null)
+      | null = null;
     if (ragOn) {
       const tWaitEvidence = Date.now();
       const onDiag: Record<string, unknown> = { engaged: false };
@@ -5376,7 +5382,7 @@ async function runPrivateGeneration(
           ragEvidenceFor = (slots) =>
             buildBatchEvidence(slotEvidenceInputs({ slots: slots.filter((sl) => !skip.has(sl)), after, before, units, retrievals }));
           const slotUnit = new Map([...after.entries()].map(([i, sl]) => [i, sl.unitId]));
-          ragFillEvidenceFor = (slots, quota) => {
+          ragFillEvidenceFor = (slots, quota, figureOk) => {
             const live = slots.filter((sl) => !skip.has(sl));
             const picked = backfillSlotInputs({
               slots: live,
@@ -5386,6 +5392,7 @@ async function runPrivateGeneration(
               used: usedReserve,
               units,
               retrievals,
+              ...(figureOk ? { figureOk } : {}),
             });
             const fromReserve = picked.filter((x) => x.fromReserve).length;
             if (fromReserve > 0) {
@@ -6012,6 +6019,20 @@ async function runPrivateGeneration(
           fillImageQuota = fillBatches.map(() => 0);
         }
       }
+      // RAG on 보충의 그림 조건(PR K F1): 정제 성공 + 블라인드에서 걸리지 않음 + 재사용 잔여 용량. 마지막 라운드는 그림 없음.
+      let ragFillGiOk: ((gi: number) => boolean) | null = null;
+      if (ragFillEvidenceFor && useImages && !isLastBackfillRound) {
+        const ragLinks = await readImageLinkCounts().catch(() => new Map<number, number>());
+        ragFillGiOk = (gi) =>
+          refinedUsableGis.has(gi) && !blindFailedGis.has(gi) && MAX_QUESTIONS_PER_IMAGE - (ragLinks.get(gi) ?? 0) > 0;
+      }
+      const ragFillFigureOk = ragFillGiOk
+        ? (u: PlanUnit) =>
+            u.figures.some((f) => {
+              const gi = ragFigureGi.get(f);
+              return gi !== undefined && ragFillGiOk!(gi);
+            })
+        : undefined;
       const imagesOffered = fillFeatured.reduce((n, f) => n + f.length, 0);
       roundRec.imagesOffered = imagesOffered;
       // 보충 묶음의 유형 쿼터 = **모자란 유형**부터(type-plan.ts planFillQuotas). 종전에는 묶음마다
@@ -6030,7 +6051,7 @@ async function runPrivateGeneration(
         try {
           // RAG on: 빈 칸의 단위 근거 팩으로 다시 만든다(같은 단위 재시도). 팩이 없으면 현행 구간.
           // 부족 유형에 맞는 예비 단위를 먼저 고른다(5.2 D3 유형 재계산, PR J). 없으면 칸의 원래 단위.
-          const fillEvidence = ragFillEvidenceFor ? ragFillEvidenceFor(slots, fillQuotas[i]) : null;
+          const fillEvidence = ragFillEvidenceFor ? ragFillEvidenceFor(slots, fillQuotas[i], ragFillFigureOk) : null;
           await generateAndPersistBatch(i, slots, fillBatches.length, {
             // 보충은 "빠르게 빈 칸만 채우는" 호출이다. 본 배치들이 방금 끝난 직후라
             // 같은 대용량 컨텍스트를 다시 실으면 입력 처리량이 커져 429 를 맞고,
@@ -6039,13 +6060,14 @@ async function runPrivateGeneration(
             contextText: fillEvidence ? fillEvidence.text : backfillContext(slots[0]),
             ...(fillEvidence ? { evidence: { ev: fillEvidence, figureGi: ragFigureGi } } : {}),
             featured: [],
-            // RAG on: 이미지는 빈 칸 단위의 그림 중 정제에 성공한 것만(R5). 마지막 라운드는 이미지 없이(위와 같은 이유).
+            // RAG on: 이미지는 빈 칸 단위의 그림 중 정제 성공·블라인드 미탈락·잔여 용량이 있는 것만(R5, PR K F1).
+            // 마지막 라운드는 이미지 없이(위와 같은 이유).
             resolveFeatured: () =>
               resolveRefined(
                 fillEvidence
-                  ? isLastBackfillRound
-                    ? []
-                    : featuredForEvidence(fillEvidence).filter((fi) => refinedUsableGis.has(fi.gi))
+                  ? ragFillGiOk
+                    ? featuredForEvidence(fillEvidence).filter((fi) => ragFillGiOk!(fi.gi))
+                    : []
                   : fillFeatured[i],
               ),
             // 본 배치와 달리 "남은 재사용 용량"으로 상한이 정해진다. 정제에서 한 장이

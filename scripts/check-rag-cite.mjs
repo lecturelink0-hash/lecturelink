@@ -175,7 +175,7 @@ check('PG: on 판정은 RAG_MODE === \'on\' 한 곳', /const ragOn = RAG_MODE ==
 check('PG: on 에서 선발사 끔', /const canPrefire = !ragOn && batchSizes\.length > 1/.test(pg));
 check('PG: 근거 함수는 on 블록 안에서만 만든다', count(/ragEvidenceFor = \(slots\) =>/g) === 1 && /if \(ragOn\) \{[\s\S]{0,4000}ragEvidenceFor = \(slots\) =>/.test(pg) && /let ragEvidenceFor: [^\n]+ = null;/.test(pg));
 check('PG: 근거 대기는 상한(RAG_ON_WAIT_MS 45초)·폴백 사유 기록', /const RAG_ON_WAIT_MS = 45_000;/.test(pg) && /onDiag\.fallback = fallback \?\? 'error';/.test(pg) && /'timeout'/.test(pg) && /'no_index'/.test(pg));
-check('PG: 생성 묶음·보충 묶음만 근거를 받는다', count(/evidence: \{ ev: [a-zA-Z]+, figureGi: ragFigureGi \}/g) === 2 && /const fillEvidence = ragFillEvidenceFor \? ragFillEvidenceFor\(slots, fillQuotas\[i\]\) : null;/.test(pg));
+check('PG: 생성 묶음·보충 묶음만 근거를 받는다', count(/evidence: \{ ev: [a-zA-Z]+, figureGi: ragFigureGi \}/g) === 2 && /const fillEvidence = ragFillEvidenceFor \? ragFillEvidenceFor\(slots, fillQuotas\[i\], ragFillFigureOk\) : null;/.test(pg));
 check('PG: 도구 스키마는 근거가 있을 때만 on 변형', /tools: \[gen\.evidence \? PRIVATE_GENERATION_TOOL_SCHEMA_RAG : PRIVATE_GENERATION_TOOL_SCHEMA\]/.test(pg) && count(/PRIVATE_GENERATION_TOOL_SCHEMA_RAG/g) === 2);
 check('PG: 사용자 메시지 citeMode 는 근거가 있을 때만', /\.\.\.\(gen\.evidence \? \{ citeMode: 'evidence' as const \} : \{\}\)/.test(pg));
 check('PG: 인용 검사는 buildKept 안, 근거가 있을 때만', /if \(gen\.evidence\) \{\s*cite = verifyCitations\(q\.evidence_refs, gen\.evidence\.ev\.chunks\);/.test(pg));
@@ -189,7 +189,7 @@ check('PG: 검증기 입력은 근거가 있을 때만 문항 근거 팩', /sour
 check('PG: 출처는 근거가 있으면 인용에서, 없으면 현행 검사', /if \(gen\.evidence\) \{[\s\S]{0,900}const refs = toStoredRefs\(sourceRefsFromCitations\(cites, contentSha256\)\);\s*row\.source_refs = refs \? \{ \.\.\.refs, retrieval: retrievalRefSnapshot\(packSizeFor\(input\.difficulty \?\? null\)\.size\) \} : null;/.test(pg) && /\} else \{\s*const availablePages = pagesInContext\(gen\.contextText \|\| ''\);/.test(pg));
 check('PG: evidence 컬럼 폴백(00045 미적용)', /let evidenceColumnSupported = true;/.test(pg) && /if \(evidenceColumnSupported\) row\.evidence = storedEvidence\(cites\);/.test(pg) && /evidenceColumnSupported = false;/.test(pg));
 check('PG: on 묶음 이미지는 이미지 칸 단위 그림만', /const featuredForEvidence = \(ev: BatchEvidence\): BatchImage\[\] =>/.test(pg) && /batchFigureIds\(ev\)/.test(pg));
-check('PG: 보충 묶음 이미지도 근거가 있으면 단위 그림만(마지막 라운드 없음)', /fillEvidence\s*\? isLastBackfillRound\s*\? \[\]\s*: featuredForEvidence\(fillEvidence\)\.filter\(\(fi\) => refinedUsableGis\.has\(fi\.gi\)\)\s*: fillFeatured\[i\]/.test(pg));
+check('PG: 보충 묶음 이미지도 근거가 있으면 단위 그림만 — 정제 성공·블라인드 미탈락·잔여 용량(마지막 라운드 없음)', /fillEvidence\s*\? ragFillGiOk\s*\? featuredForEvidence\(fillEvidence\)\.filter\(\(fi\) => ragFillGiOk!\(fi\.gi\)\)\s*: \[\]\s*: fillFeatured\[i\]/.test(pg) && /if \(ragFillEvidenceFor && useImages && !isLastBackfillRound\) \{[\s\S]{0,300}refinedUsableGis\.has\(gi\) && !blindFailedGis\.has\(gi\) && MAX_QUESTIONS_PER_IMAGE - \(ragLinks\.get\(gi\) \?\? 0\) > 0;/.test(pg));
 const onBlock = pg.slice(pg.indexOf('if (ragOn) {\n      const tWaitEvidence'), pg.indexOf('const featuredForEvidence'));
 check('PG: on 진단은 수치·사유만(강의 문구 없음)', onBlock.length > 0 && !/topic|objective|hydeStem|\.text\b/.test(onBlock.replace(/run\?\.diag\.error/g, '')), onBlock.slice(0, 80));
 check('PG: 인용 진단은 citationStats(수치)만', /batchDiag\.citeFirst = st;/.test(pg) && /batchDiag\.citeFix = citationStats\(/.test(pg) && !/batchDiag\.[a-zA-Z]+ = [^;\n]*quote/.test(pg));

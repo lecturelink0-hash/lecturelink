@@ -163,7 +163,7 @@ check('PG: 보충은 근거 부족 칸을 채우지 않고 만들 수 기준으�
 check('PG: 유형 목표는 남은 칸 기준', /planTypeTargets\(\s*\/\/[^\n]*\n\s*deliverableCount,/.test(pg));
 check('PG: 만들 수 = 요청 − 근거 부족 칸', /const deliverableCount = desiredCount - ragSkipSlots\.size;/.test(pg));
 check('PG: 알림에 근거 부족 수', /insufficientEvidence: ragSkipSlots\.size,/.test(pg));
-check('PG: 보충은 부족 유형에 맞는 예비 단위(on)', /ragFillEvidenceFor = \(slots, quota\) => \{[\s\S]{0,400}backfillSlotInputs\(/.test(pg));
+check('PG: 보충은 부족 유형에 맞는 예비 단위(on)', /ragFillEvidenceFor = \(slots, quota, figureOk\) => \{[\s\S]{0,400}backfillSlotInputs\([\s\S]{0,300}\.\.\.\(figureOk \? \{ figureOk \} : \{\}\)/.test(pg));
 
 check('PG: on 에서 이미지 정제를 근거 대기와 겹쳐 미리 돌림', /const usableGisPromise: Promise<Set<number>> = useImages\s*\? Promise\.all\(featuredImages\.map\(\(fi\) => withRefineTimeout\(getDisplayPng\(fi\.gi\)\)/.test(pg) && /if \(ragOn\) \{[\s\S]{0,900}const usableGisPromise/.test(pg));
 check('PG: 이미지 칸 다시 고르기는 보충과 같은 예비 사용 기록을 씀', /assignImageSlots\(\{ slots: run\.slots, units, retrievals, reserve, used: usedReserve, figureGi, usableGis \}\)/.test(pg) && /used: usedReserve,/.test(pg));
