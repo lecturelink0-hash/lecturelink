@@ -32,6 +32,8 @@ export interface BatchEvidenceUnit {
   insufficient: boolean;
   needsImage: boolean;
   figures: string[];
+  /** 그림 대체 후보(PR K F3) — 칸이 아니라 이미지 칸이 고를 수 있는 다른 이미지 단위. 단위 목록 뒤에 따로 적는다. */
+  alternate?: boolean;
 }
 
 export interface BatchEvidence {
@@ -66,12 +68,19 @@ const oneLine = (s: string, max: number) => s.replace(/\s+/g, ' ').trim().slice(
  * 칸들의 단위 팩을 묶음 근거로 합친다. 팩이 있는 칸이 하나도 없으면 null(호출자는 현행 컨텍스트로 폴백).
  * 팩이 빈 칸은 단위 목록에서 빠진다 — 그 문항은 같은 묶음의 다른 근거로 만들어진다.
  */
-export function buildBatchEvidence(slots: readonly SlotEvidenceInput[]): BatchEvidence | null {
+export function buildBatchEvidence(
+  slots: readonly SlotEvidenceInput[],
+  /** 그림 대체 후보(PR K F3). 칸 팩이 하나도 없으면 후보만으로는 묶음 근거를 만들지 않는다. */
+  alternates: readonly SlotEvidenceInput[] = [],
+): BatchEvidence | null {
   const chunks = new Map<string, EvidenceChunk>();
   const refOfChunk = new Map<string, string>();
   const units: BatchEvidenceUnit[] = [];
   const lines: string[] = [];
-  for (const s of slots) {
+  const altLines: string[] = [];
+  const inputs = [...slots.map((s) => ({ s, alt: false })), ...alternates.map((s) => ({ s, alt: true }))];
+  for (const { s, alt } of inputs) {
+    if (alt && chunks.size === 0) break;
     const pack: readonly PackEntry[] = s.retrieval?.pack ?? [];
     if (!s.unit || pack.length === 0) continue;
     const refs: string[] = [];
@@ -101,17 +110,58 @@ export function buildBatchEvidence(slots: readonly SlotEvidenceInput[]): BatchEv
       insufficient: s.insufficient,
       needsImage: s.unit.needsImage,
       figures: [...s.unit.figures],
+      ...(alt ? { alternate: true } : {}),
     });
-    lines.push(
-      `${units.length}. [${SLOT_LABEL[s.type]}] 주제: ${oneLine(s.unit.topic, 80)} / 목표: ${oneLine(s.unit.objective, 160)} / 근거: ${refs.join(', ')}`,
-    );
+    if (alt) {
+      altLines.push(`대체 후보 ${altLines.length + 1}. 주제: ${oneLine(s.unit.topic, 80)} / 근거: ${refs.join(', ')}`);
+    } else {
+      lines.push(
+        `${lines.length + 1}. [${SLOT_LABEL[s.type]}] 주제: ${oneLine(s.unit.topic, 80)} / 목표: ${oneLine(s.unit.objective, 160)} / 근거: ${refs.join(', ')}`,
+      );
+    }
   }
   if (chunks.size === 0) return null;
   const evidenceText = [...chunks.values()].map(formatEvidenceChunk).join('\n\n');
   const text =
     `### 근거 자료 (강의자료에서 이번 묶음의 출제 단위에 맞춰 고른 부분)\n${evidenceText}\n\n` +
-    `### 출제 단위 (문항 1개씩, 이 순서대로)\n${lines.join('\n')}`;
+    `### 출제 단위 (문항 1개씩, 이 순서대로)\n${lines.join('\n')}` +
+    (altLines.length > 0
+      ? `\n\n### 그림 대체 후보 (문항 수에 들지 않음 — 그림 판독 칸의 그림으로 판독 문항이 잘 안 되면 이 단위의 그림과 근거로 만들어도 됩니다)\n${altLines.join('\n')}`
+      : '');
   return { text, chunks, units, evidenceChars: evidenceText.length };
+}
+
+/**
+ * 그림 대체 후보 고르기(PR K F3). 이미지 칸 묶음에 실을 다른 이미지 단위를 계획 순서대로 고른다.
+ *  - 그림이 필요하고 근거가 충분하며 그림 일치(captionMatch)인 단위, 묶음에 이미 있는 단위는 제외
+ *  - 그 단위의 그림 중 giOk 를 통과하고 claimed 에 없는 것이 있어야 함(단위마다 한 장을 차지)
+ *  - 최대 maxFigures 개
+ * claimed 에 고른 그림을 더한다(호출자가 묶음 간에 들고 있으면 같은 대체 그림을 두 묶음에 주지 않는다).
+ */
+export function pickImageAlternates(args: {
+  units: ReadonlyMap<string, PlanUnit>;
+  retrievals: ReadonlyMap<string, UnitRetrieval>;
+  exclude: ReadonlySet<string>;
+  figureGi: ReadonlyMap<string, number>;
+  giOk: (gi: number) => boolean;
+  claimed: Set<number>;
+  maxFigures: number;
+}): SlotEvidenceInput[] {
+  const out: SlotEvidenceInput[] = [];
+  if (args.maxFigures <= 0) return out;
+  for (const [id, u] of args.units) {
+    if (out.length >= args.maxFigures) break;
+    if (args.exclude.has(id) || !u.needsImage) continue;
+    const r = args.retrievals.get(id);
+    if (!r?.sufficient || r.captionMatch !== true || r.pack.length === 0) continue;
+    const gi = u.figures
+      .map((f) => args.figureGi.get(f))
+      .find((g): g is number => g !== undefined && args.giOk(g) && !args.claimed.has(g));
+    if (gi === undefined) continue;
+    args.claimed.add(gi);
+    out.push({ slot: -1, type: 'image', unit: u, retrieval: r, insufficient: false });
+  }
+  return out;
 }
 
 /**

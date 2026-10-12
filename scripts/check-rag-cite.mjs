@@ -173,9 +173,9 @@ const pg = readFileSync(new URL('../lib/ai/private-generation.ts', import.meta.u
 const count = (re) => (pg.match(re) ?? []).length;
 check('PG: on 판정은 RAG_MODE === \'on\' 한 곳', /const ragOn = RAG_MODE === 'on';/.test(pg) && count(/RAG_MODE === 'on'/g) === 1);
 check('PG: on 에서 선발사 끔', /const canPrefire = !ragOn && batchSizes\.length > 1/.test(pg));
-check('PG: 근거 함수는 on 블록 안에서만 만든다', count(/ragEvidenceFor = \(slots\) =>/g) === 1 && /if \(ragOn\) \{[\s\S]{0,4000}ragEvidenceFor = \(slots\) =>/.test(pg) && /let ragEvidenceFor: [^\n]+ = null;/.test(pg));
+check('PG: 근거 함수는 on 블록 안에서만 만든다', count(/ragEvidenceFor = \(slots\) =>/g) === 1 && /if \(ragOn\) \{[\s\S]{0,6000}ragEvidenceFor = \(slots\) =>/.test(pg) && /let ragEvidenceFor: [^\n]+ = null;/.test(pg));
 check('PG: 근거 대기는 상한(RAG_ON_WAIT_MS 45초)·폴백 사유 기록', /const RAG_ON_WAIT_MS = 45_000;/.test(pg) && /onDiag\.fallback = fallback \?\? 'error';/.test(pg) && /'timeout'/.test(pg) && /'no_index'/.test(pg));
-check('PG: 생성 묶음·보충 묶음만 근거를 받는다', count(/evidence: \{ ev: [a-zA-Z]+, figureGi: ragFigureGi \}/g) === 2 && /const fillEvidence = ragFillEvidenceFor \? ragFillEvidenceFor\(slots, fillQuotas\[i\], ragFillFigureOk\) : null;/.test(pg));
+check('PG: 생성 묶음·보충 묶음만 근거를 받는다', count(/evidence: \{ ev: [a-zA-Z]+, figureGi: ragFigureGi \}/g) === 2 && /const fillEvidence = ragFillEvidenceFor \? ragFillEvidenceFor\(slots, fillQuotas\[i\], ragFillFigure\) : null;/.test(pg));
 check('PG: 도구 스키마는 근거가 있을 때만 on 변형', /tools: \[gen\.evidence \? PRIVATE_GENERATION_TOOL_SCHEMA_RAG : PRIVATE_GENERATION_TOOL_SCHEMA\]/.test(pg) && count(/PRIVATE_GENERATION_TOOL_SCHEMA_RAG/g) === 2);
 check('PG: 사용자 메시지 citeMode 는 근거가 있을 때만', /\.\.\.\(gen\.evidence \? \{ citeMode: 'evidence' as const \} : \{\}\)/.test(pg));
 check('PG: 인용 검사는 buildKept 안, 근거가 있을 때만', /if \(gen\.evidence\) \{\s*cite = verifyCitations\(q\.evidence_refs, gen\.evidence\.ev\.chunks\);/.test(pg));

@@ -82,10 +82,12 @@ import {
   batchFigureIds,
   buildBatchEvidence,
   expandQuota,
+  pickImageAlternates,
   questionEvidenceText,
   reduceQuota,
   slotEvidenceInputs,
   type BatchEvidence,
+  type SlotEvidenceInput,
 } from '@/lib/rag/evidence';
 import type { PlanUnit, SlotType } from '@/lib/rag/plan';
 import { stemDeclaresFigureText, stemDependsOnImageText } from './figure-stem';
@@ -367,6 +369,8 @@ async function toGenerationImageBase64(png: Uint8Array): Promise<string> {
 // 동일 이미지 1장을 문항에 연결할 수 있는 상한. 저장 후 정리(초과 연결 제거)뿐 아니라
 // 이미지 배치 예약 수·배치별 최소 이미지 문항 수·보충 배치의 이미지 재투입 판단이 공유한다.
 const MAX_QUESTIONS_PER_IMAGE = 2;
+/** RAG on 이미지 칸 묶음에 싣는 그림 상한 — 칸 단위 그림 + 그림 대체 후보(PR K F3). */
+const RAG_ALT_MAX_FIGURES = 3;
 // 생성에 투입하는 텍스트 상한(자). 유료 티어(대컨텍스트)이므로 상향해 대용량(30~50p) 강의록의
 // 뒷부분 내용이 잘리지 않게 한다. (기존 40,000자 → 30페이지 뒷부분 누락 원인)
 const MAX_GEN_TEXT_CHARS = 150_000;
@@ -3771,13 +3775,17 @@ async function runPrivateGeneration(
       let ragDirective = '';
       if (gen.evidence) {
         const figureLines: string[] = [];
+        let altNo = 0;
         gen.evidence.ev.units.forEach((u, n) => {
           if (!u.needsImage) return;
+          if (u.alternate) altNo += 1;
           const idx = u.figures
             .map((f) => gen.evidence!.figureGi.get(f))
             .map((gi) => featured.findIndex((fi) => fi.gi === gi))
             .filter((i) => i >= 0);
-          if (idx.length > 0) figureLines.push(`- 출제 단위 ${n + 1}: ${idx.map((i) => `[이미지 ${i}]`).join(', ')}`);
+          if (idx.length > 0) {
+            figureLines.push(`- ${u.alternate ? `그림 대체 후보 ${altNo}` : `출제 단위 ${n + 1}`}: ${idx.map((i) => `[이미지 ${i}]`).join(', ')}`);
+          }
         });
         // 인용 지시 본문은 prompts/rag-cite-directive.ts 한 곳에 둔다(PR J — 칸 유형별 지시 V1 실험이 같은 글을 바꿔 끼운다).
         ragDirective =
@@ -5304,9 +5312,9 @@ async function runPrivateGeneration(
     let ragSkipSlots: ReadonlySet<number> = new Set();
     let ragSlotType: ReadonlyMap<number, SlotType> = new Map();
     // 보충 묶음이 부족 유형에 맞는 예비 단위를 고르는 함수(5.2 D3 유형 재계산). on 근거 경로에서만 있다.
-    let ragFillEvidenceFor:
-      | ((slots: readonly number[], quota: BatchQuota, figureOk?: (unit: PlanUnit) => boolean) => BatchEvidence | null)
-      | null = null;
+    /** 보충 그림 조건(PR K F1·F3): 단위 조건·그림 조건·이번 라운드에 이미 실은 그림. */
+    type RagFillFigure = { unitOk: (unit: PlanUnit) => boolean; giOk: (gi: number) => boolean; claimed: Set<number> };
+    let ragFillEvidenceFor: ((slots: readonly number[], quota: BatchQuota, figure?: RagFillFigure) => BatchEvidence | null) | null = null;
     if (ragOn) {
       const tWaitEvidence = Date.now();
       const onDiag: Record<string, unknown> = { engaged: false };
@@ -5363,9 +5371,11 @@ async function runPrivateGeneration(
         const assigned = new Set(run.slots.map((sl) => sl.unitId).filter((x): x is string => Boolean(x)));
         const reserve = plan.units.map((u) => u.id).filter((id) => !assigned.has(id));
         const usedReserve = new Set<string>();
+        let mainUsableGis: ReadonlySet<number> | null = null;
         // 이미지 칸 다시 고르기(PR J): 쓸 수 있는 그림·칸마다 다른 그림. 못 고르면 텍스트 몫으로.
         if (useImages && run.slots.some((sl) => sl.type === 'image')) {
           const usableGis = await usableGisPromise;
+          mainUsableGis = usableGis;
           const img = assignImageSlots({ slots: run.slots, units, retrievals, reserve, used: usedReserve, figureGi, usableGis });
           img.slots.forEach((sl, i) => after.set(i, { type: sl.type, unitId: sl.unitId }));
           onDiag.imageSlots = { kept: img.kept, replaced: img.replaced, spilled: img.spilled, usableFigures: usableGis.size };
@@ -5379,10 +5389,49 @@ async function runPrivateGeneration(
         } else {
           ragSkipSlots = skip;
           ragSlotType = new Map([...after.entries()].map(([i, sl]) => [i, sl.type]));
-          ragEvidenceFor = (slots) =>
-            buildBatchEvidence(slotEvidenceInputs({ slots: slots.filter((sl) => !skip.has(sl)), after, before, units, retrievals }));
+          // 그림 대체 후보(PR K F3): 이미지 칸이 있는 묶음에 다른 이미지 단위의 그림을 함께 싣는다(칸 단위 그림 포함 최대 3장).
+          // 본 묶음의 대체 그림은 이미지 칸이 차지한 그림을 피하고, 한 묶음에만 준다(같은 그림 문항이 상한을 넘지 않게).
+          const imageFiguresOf = (inputs: readonly SlotEvidenceInput[], giOk: (gi: number) => boolean) =>
+            new Set(
+              inputs
+                .filter((x) => x.type === 'image' && x.unit?.needsImage)
+                .flatMap((x) => x.unit!.figures.map((f) => figureGi.get(f)))
+                .filter((g): g is number => g !== undefined && giOk(g)),
+            );
+          const mainAltClaimed = new Set<number>();
+          for (const [, sl] of after) {
+            if (sl.type !== 'image' || !sl.unitId) continue;
+            for (const f of units.get(sl.unitId)?.figures ?? []) {
+              const g = figureGi.get(f);
+              if (g !== undefined) mainAltClaimed.add(g);
+            }
+          }
+          const mainEvidence = new Map<string, BatchEvidence | null>();
+          ragEvidenceFor = (slots) => {
+            const key = slots.join(',');
+            if (mainEvidence.has(key)) return mainEvidence.get(key) ?? null;
+            const inputs = slotEvidenceInputs({ slots: slots.filter((sl) => !skip.has(sl)), after, before, units, retrievals });
+            let alternates: SlotEvidenceInput[] = [];
+            if (mainUsableGis && inputs.some((x) => x.type === 'image')) {
+              const usable = mainUsableGis;
+              const giOk = (g: number) => usable.has(g);
+              alternates = pickImageAlternates({
+                units,
+                retrievals,
+                exclude: new Set(inputs.flatMap((x) => (x.unit ? [x.unit.id] : []))),
+                figureGi,
+                giOk,
+                claimed: mainAltClaimed,
+                maxFigures: RAG_ALT_MAX_FIGURES - imageFiguresOf(inputs, giOk).size,
+              });
+              if (alternates.length > 0) diag.generation.ragImageAlternates = ((diag.generation.ragImageAlternates as number | undefined) ?? 0) + alternates.length;
+            }
+            const ev = buildBatchEvidence(inputs, alternates);
+            mainEvidence.set(key, ev);
+            return ev;
+          };
           const slotUnit = new Map([...after.entries()].map(([i, sl]) => [i, sl.unitId]));
-          ragFillEvidenceFor = (slots, quota, figureOk) => {
+          ragFillEvidenceFor = (slots, quota, figure) => {
             const live = slots.filter((sl) => !skip.has(sl));
             const picked = backfillSlotInputs({
               slots: live,
@@ -5392,13 +5441,28 @@ async function runPrivateGeneration(
               used: usedReserve,
               units,
               retrievals,
-              ...(figureOk ? { figureOk } : {}),
+              ...(figure ? { figureOk: figure.unitOk } : {}),
             });
+            let alternates: SlotEvidenceInput[] = [];
+            if (figure && picked.some((x) => x.type === 'image')) {
+              const offered = imageFiguresOf(picked, figure.giOk);
+              for (const g of offered) figure.claimed.add(g);
+              alternates = pickImageAlternates({
+                units,
+                retrievals,
+                exclude: new Set(picked.flatMap((x) => (x.unit ? [x.unit.id] : []))),
+                figureGi,
+                giOk: figure.giOk,
+                claimed: figure.claimed,
+                maxFigures: RAG_ALT_MAX_FIGURES - offered.size,
+              });
+              if (alternates.length > 0) diag.generation.ragFillImageAlternates = ((diag.generation.ragFillImageAlternates as number | undefined) ?? 0) + alternates.length;
+            }
             const fromReserve = picked.filter((x) => x.fromReserve).length;
             if (fromReserve > 0) {
               diag.generation.ragFillReserveUnits = ((diag.generation.ragFillReserveUnits as number | undefined) ?? 0) + fromReserve;
             }
-            return buildBatchEvidence(picked);
+            return buildBatchEvidence(picked, alternates);
           };
           onDiag.engaged = true;
           onDiag.units = plan.units.length;
@@ -6033,6 +6097,8 @@ async function runPrivateGeneration(
               return gi !== undefined && ragFillGiOk!(gi);
             })
         : undefined;
+      const ragFillFigure =
+        ragFillGiOk && ragFillFigureOk ? { unitOk: ragFillFigureOk, giOk: ragFillGiOk, claimed: new Set<number>() } : undefined;
       const imagesOffered = fillFeatured.reduce((n, f) => n + f.length, 0);
       roundRec.imagesOffered = imagesOffered;
       // 보충 묶음의 유형 쿼터 = **모자란 유형**부터(type-plan.ts planFillQuotas). 종전에는 묶음마다
@@ -6051,7 +6117,7 @@ async function runPrivateGeneration(
         try {
           // RAG on: 빈 칸의 단위 근거 팩으로 다시 만든다(같은 단위 재시도). 팩이 없으면 현행 구간.
           // 부족 유형에 맞는 예비 단위를 먼저 고른다(5.2 D3 유형 재계산, PR J). 없으면 칸의 원래 단위.
-          const fillEvidence = ragFillEvidenceFor ? ragFillEvidenceFor(slots, fillQuotas[i], ragFillFigureOk) : null;
+          const fillEvidence = ragFillEvidenceFor ? ragFillEvidenceFor(slots, fillQuotas[i], ragFillFigure) : null;
           await generateAndPersistBatch(i, slots, fillBatches.length, {
             // 보충은 "빠르게 빈 칸만 채우는" 호출이다. 본 배치들이 방금 끝난 직후라
             // 같은 대용량 컨텍스트를 다시 실으면 입력 처리량이 커져 429 를 맞고,

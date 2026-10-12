@@ -8,7 +8,7 @@
  *   node --experimental-strip-types --no-warnings scripts/check-rag-figure.mjs
  */
 import { readFileSync } from 'node:fs';
-import { backfillSlotInputs } from '../lib/rag/evidence.ts';
+import { backfillSlotInputs, buildBatchEvidence, pickImageAlternates, batchFigureIds } from '../lib/rag/evidence.ts';
 import { RAG_FIGURE_DIRECTIVE, RAG_CITE_DIRECTIVE_V0, buildRagCiteDirective } from '../lib/ai/prompts/rag-cite-directive.ts';
 
 let passed = 0;
@@ -61,6 +61,33 @@ check('보충 이미지 칸: 칸 단위 그림이 쓸 수 있으면 그대로', 
 const legacy = backfillSlotInputs({ slots: [1], wanted: ['image'], slotUnit: new Map([[1, 'IA']]), reserve: ['IB'], used: new Set(), units, retrievals: retr });
 check('figureOk 없으면 그림은 보지 않음(PR J 동작)', legacy[0].unit.id === 'IA' && !legacy[0].fromReserve);
 
+// ── 1-b) 그림 대체 후보(F3)
+const altUnits = new Map([
+  ['IA', U('IA', ['image_finding'], true, ['F1'])],
+  ['IB', U('IB', ['image_finding'], true, ['F2'])],
+  ['IC', U('IC', ['image_finding'], true, ['F3'])],
+  ['ID', U('ID', ['image_finding'], true, ['F4'])],
+  ['IN', U('IN', ['image_finding'], true, ['F5'])], // 그림 일치 아님
+  ['K1', U('K1', ['definition'])],
+]);
+const altRetr = new Map([['IA', R('IA', true, true)], ['IB', R('IB', true, true)], ['IC', R('IC', true, true)], ['ID', R('ID', true, true)], ['IN', R('IN', true, false)], ['K1', R('K1')]]);
+const fg = new Map([['F1', 1], ['F2', 2], ['F3', 3], ['F4', 4], ['F5', 5]]);
+const claimed = new Set([1]);
+const alts = pickImageAlternates({ units: altUnits, retrievals: altRetr, exclude: new Set(['IA', 'K1']), figureGi: fg, giOk: (g) => g !== 3, claimed, maxFigures: 2 });
+check('대체 후보: 묶음 단위·그림 일치 아님·못 쓰는 그림 제외, 상한까지 계획 순서로', JSON.stringify(alts.map((a) => a.unit.id)) === JSON.stringify(['IB', 'ID']) && alts.every((a) => a.type === 'image' && a.slot === -1), JSON.stringify(alts.map((a) => a.unit.id)));
+check('대체 후보: 고른 그림을 claimed 에 더함(다음 묶음은 피함)', claimed.has(2) && claimed.has(4) && !claimed.has(3));
+const altsAll = pickImageAlternates({ units: altUnits, retrievals: altRetr, exclude: new Set(['IA', 'K1']), figureGi: fg, giOk: (g) => g !== 3, claimed: new Set(), maxFigures: 5 });
+check('대체 후보: 묶음에 있는 단위는 그림이 비어 있어도 제외, 그림 일치 아닌 단위 제외', JSON.stringify(altsAll.map((a) => a.unit.id)) === JSON.stringify(['IB', 'ID']), JSON.stringify(altsAll.map((a) => a.unit.id)));
+check('대체 후보: 상한 0 이면 없음', pickImageAlternates({ units: altUnits, retrievals: altRetr, exclude: new Set(), figureGi: fg, giOk: () => true, claimed: new Set(), maxFigures: 0 }).length === 0);
+const slotIn = [{ slot: 4, type: 'image', unit: altUnits.get('IA'), retrieval: altRetr.get('IA'), insufficient: false }, { slot: 5, type: 'knowledge', unit: altUnits.get('K1'), retrieval: altRetr.get('K1'), insufficient: false }];
+const evNo = buildBatchEvidence(slotIn);
+const evAlt = buildBatchEvidence(slotIn, alts);
+check('묶음 근거: 대체 후보가 없으면 PR J 와 같은 글', evNo.text === buildBatchEvidence(slotIn, []).text && !evNo.text.includes('그림 대체 후보'));
+check('묶음 근거: 대체 후보는 단위 목록 뒤 따로(문항 수에 들지 않음)', evAlt.text.includes('### 그림 대체 후보 (문항 수에 들지 않음') && evAlt.text.indexOf('### 출제 단위') < evAlt.text.indexOf('### 그림 대체 후보') && /대체 후보 1\. 주제: IB/.test(evAlt.text) && !/3\. \[/.test(evAlt.text));
+check('묶음 근거: 대체 후보 팩도 근거 번호를 받고 alternate 표시', evAlt.units.filter((u) => u.alternate).length === 2 && evAlt.units.filter((u) => !u.alternate).length === 2 && evAlt.chunks.size === 4);
+check('묶음 근거: 대체 후보 그림도 묶음 그림에 들어감', JSON.stringify(batchFigureIds(evAlt)) === JSON.stringify(['F1', 'F2', 'F4']));
+check('묶음 근거: 칸 팩이 없으면 대체 후보만으로 만들지 않음', buildBatchEvidence([{ slot: 1, type: 'image', unit: altUnits.get('IA'), retrieval: { ...altRetr.get('IA'), pack: [] }, insufficient: false }], alts) === null);
+
 // ── 2) 그림 판독 칸 지시
 check('그림 지시: 소견은 그림에서, 지문에 옮기지 않음', RAG_FIGURE_DIRECTIVE.includes('그림에서 읽게') && RAG_FIGURE_DIRECTIVE.includes('지문에 글로 옮겨 쓰지 않습니다'));
 check('그림 지시: 선지는 그림 없이 못 고르게', RAG_FIGURE_DIRECTIVE.includes('그림을 보지 않으면 고를 수 없어야'));
@@ -75,7 +102,12 @@ check('PG: 그림 지시는 근거가 있을 때(on)만 붙음', count(/RAG_FIGU
 const fixLoop = pg.slice(pg.indexOf('for (const { i, basis } of stillFailed) {'), pg.indexOf("bumpGenDiag('blindDemoted');"));
 check('PG: 블라인드에서 걸린 그림은 폐기·강등 전에 기록', /for \(const ix of k\.q\.image_indices \?\? \[\]\) if \(validImageIndex\(ix\)\) blindFailedGis\.add\(featured\[ix\]\.gi\);/.test(fixLoop) && fixLoop.indexOf('blindFailedGis.add') < fixLoop.indexOf('k.q.image_indices = [];'));
 check('PG: 블라인드 그림 기록은 실행 단위(묶음 함수 밖) 하나', count(/const blindFailedGis = new Set<number>\(\);/g) === 1 && pg.indexOf('const blindFailedGis') < pg.indexOf('async function generateAndPersistBatch('));
-check('PG: 보충 단위 고르기에 같은 그림 조건을 넘김', /const ragFillFigureOk = ragFillGiOk\s*\? \(u: PlanUnit\) =>\s*u\.figures\.some\(\(f\) => \{\s*const gi = ragFigureGi\.get\(f\);\s*return gi !== undefined && ragFillGiOk!\(gi\);/.test(pg));
+check('PG: 보충 단위 고르기에 같은 그림 조건을 넘김', /const ragFillFigureOk = ragFillGiOk\s*\? \(u: PlanUnit\) =>\s*u\.figures\.some\(\(f\) => \{\s*const gi = ragFigureGi\.get\(f\);\s*return gi !== undefined && ragFillGiOk!\(gi\);/.test(pg) && /ragFillGiOk && ragFillFigureOk \? \{ unitOk: ragFillFigureOk, giOk: ragFillGiOk, claimed: new Set<number>\(\) \} : undefined;/.test(pg));
+check('PG: 대체 후보는 이미지 칸이 있는 묶음에만, 칸 그림 포함 최대 3장', /const RAG_ALT_MAX_FIGURES = 3;/.test(pg) && count(/maxFigures: RAG_ALT_MAX_FIGURES - /g) === 2 && /if \(mainUsableGis && inputs\.some\(\(x\) => x\.type === 'image'\)\) \{/.test(pg) && /if \(figure && picked\.some\(\(x\) => x\.type === 'image'\)\) \{/.test(pg));
+check('PG: 본 묶음 대체 그림은 이미지 칸 그림을 피하고 한 묶음에만(공유 claimed)', /const mainAltClaimed = new Set<number>\(\);\s*for \(const \[, sl\] of after\) \{\s*if \(sl\.type !== 'image' \|\| !sl\.unitId\) continue;/.test(pg) && /claimed: mainAltClaimed,/.test(pg) && /const key = slots\.join\(','\);\s*if \(mainEvidence\.has\(key\)\)/.test(pg));
+check('PG: 보충 대체 그림은 F1 조건(giOk)과 라운드 공유 claimed', /for \(const g of offered\) figure\.claimed\.add\(g\);/.test(pg) && /giOk: figure\.giOk,\s*claimed: figure\.claimed,/.test(pg));
+check('PG: 본·보충 묶음 근거에 대체 후보를 넣음', /const ev = buildBatchEvidence\(inputs, alternates\);/.test(pg) && /return buildBatchEvidence\(picked, alternates\);/.test(pg));
+check('PG: 단위별 그림 블록이 대체 후보를 따로 표시', /\$\{u\.alternate \? `그림 대체 후보 \$\{altNo\}` : `출제 단위 \$\{n \+ 1\}`\}/.test(pg));
 check('PG: off·shadow 보충 그림 경로는 그대로', /: fillFeatured\[i\],\s*\),/.test(pg));
 
 console.log(`${passed} passed, ${failed} failed`);
